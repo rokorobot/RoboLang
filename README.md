@@ -43,33 +43,50 @@ It allows engineers and AI systems to describe *what to do*, not *how to move ea
 
 ## 🧩 Repository Contents
 
-```
-robolang/
-├── src/
-│   ├── robolang_adapter.py
-│   ├── robolang_runtime.py
-│   └── __init__.py
-├── stdlib/
-│   └── robolang_std_v1.rob
-├── examples/
-│   ├── pick_and_place.rob
-│   ├── inspect_object.rob
-│   └── handover.rob
-├── docs/
-│   ├── RoboLang_v1_Ebook.pdf
-│   ├── RoboLang_v1_Library_ROS2_Adapter.pdf
-│   ├── RoboLang_v1_Developer_Guide.pdf
-│   └── overview.md
-├── docker/
-│   ├── Dockerfile
-│   └── docker-compose.yml
-├── README.md
-├── LICENSE
-├── requirements.txt
-└── setup.py
-```
+---
 
 ---
+
+## 📂 Project Layout
+
+```text
+robolang/
+├── src/
+│   ├── robolang_adapter.py              # Simulated adapter (prints commands)
+│   ├── robolang_adapter_ros2.py         # ROS2 adapter (connects to real robot actions/services)
+│   ├── robolang_runtime.py              # Core RoboLang interpreter and executor
+│   ├── robolang_ros2_main.py            # ROS2 runtime entrypoint (used by ros2 run)
+│   └── __init__.py
+│
+├── stdlib/
+│   └── robolang_std_v1.rob              # Standard library of RoboLang primitives and macros
+│
+├── examples/
+│   ├── pick_and_place.rob               # Basic pick & place example
+│   ├── inspect_object.rob               # Inspection task example
+│   └── handover.rob                     # Multi-robot handover example
+│
+├── docs/
+│   ├── RoboLang_v1_Ebook.pdf            # Complete language manual and exercises
+│   ├── RoboLang_v1_Library_ROS2_Adapter.pdf # Library + ROS2 mapping documentation
+│   ├── RoboLang_v1_Developer_Guide.pdf  # Developer setup and internal architecture
+│   ├── RoboLang_v1_ROS2_Integration.pdf # (optional) Full ROS2 setup & hardware integration guide
+│   ├── robolang_banner.png              # Project banner image for README
+│   └── index.md                         # Documentation homepage for GitHub Pages
+│
+├── docker/
+│   ├── Dockerfile                       # Environment container setup (Python + RoboLang)
+│   └── docker-compose.yml               # Optional orchestrator for multi-robot simulation
+│
+├── README.md                            # Project overview and documentation
+├── LICENSE                              # Apache 2.0 license
+├── requirements.txt                     # Python dependencies (for local use)
+└── setup.py                             # Package configuration + ROS2 entrypoint
+
+
+
+
+```
 
 ## ⚙️ Getting Started
 
