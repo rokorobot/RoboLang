@@ -269,3 +269,110 @@ set_gripper()
 communicate()
 
 Simulates robot motion and communication in the terminal
+
+---
+
+## 🦾 Connecting RoboLang to Real Robots (ROS2 Integration)
+
+RoboLang is fully compatible with **ROS2-based robotic systems**.  
+This allows tasks written in `.rob` format to be executed on **real robot hardware** running ROS2.
+
+---
+
+### 🧭 Architecture Overview
+
+| Layer | Purpose | Runs On | Example Files |
+|-------|----------|----------|----------------|
+| **Language / Runtime** | Parses `.rob` task files, runs logic flow | Any OS (Windows, macOS, Linux) | `src/robolang_runtime.py`, `examples/` |
+| **Simulated Adapter** | Prints fake actions for quick testing | Any OS | `src/robolang_adapter.py` |
+| **ROS2 Adapter** | Sends real ROS2 actions & topics | **Robot / ROS2 Host (Linux)** | `src/robolang_adapter_ros2.py` |
+| **ROS2 Entrypoint** | Runs RoboLang runtime inside a ROS2 node | **Robot / ROS2 Host (Linux)** | `src/robolang_ros2_main.py` |
+
+---
+
+### ⚙️ Setup on the Robot’s ROS2 Machine
+
+These steps must be done on the **robot controller or any Ubuntu 22.04 machine with ROS2 Humble or Iron installed**.
+
+1. **Open a terminal on the ROS2 system:**
+   ```bash
+   cd ~/ros2_ws/src
+2. Clone the RoboLang repository:
+   ```bash
+   git clone https://github.com/rokorobot/RoboLang.git robolang
+3. Add a minimal package.xml if not present:
+   ```bash
+   <?xml version="1.0"?>
+   <package format="3">
+    <name>robolang</name>
+    <version>1.0.0</version>
+    <description>RoboLang — AI-readable DSL for robots using ROS2</description>
+    <maintainer email="rokorobot@users.noreply.github.com">Robert Konecny</maintainer>
+    <license>Apache-2.0</license>
+    <exec_depend>rclpy</exec_depend>
+    <exec_depend>control_msgs</exec_depend>
+    <exec_depend>trajectory_msgs</exec_depend>
+    <exec_depend>std_msgs</exec_depend>
+   </package>
+   ```
+4. Build the workspace:
+   ```bash
+   cd ~/ros2_ws
+   colcon build
+   source install/setup.bash
+5. Run a RoboLang task inside ROS2:
+   ```bash
+   ros2 run robolang ros2_runtime examples/pick_and_place.rob
+If your robot’s ROS2 action servers are active (e.g. /arm_controller/follow_joint_trajectory and /gripper_controller/gripper_action), RoboLang will send real commands to move the robot arm, grasp objects, and perform communications.
+
+🧩 Supported ROS2 Actions (v1)
+| RoboLang Command                                | ROS2 Mapping                           | Message Type                                |
+| ----------------------------------------------- | -------------------------------------- | ------------------------------------------- |
+| `move r to X`                                   | `FollowJointTrajectory`                | `control_msgs/action/FollowJointTrajectory` |
+| `grasp r object`                                | `GripperCommand`                       | `control_msgs/action/GripperCommand`        |
+| `place r object at dst`                         | `GripperCommand (open)`                | `control_msgs/action/GripperCommand`        |
+| `inspect r object`                              | Custom service (e.g. `/sensor_status`) | `my_msgs/srv/SensorStatus`                  |
+| `communicate r to "fleet" with "TASK_COMPLETE"` | Topic publish                          | `std_msgs/msg/String`                       |
+
+🧪 Testing Safely in Simulation
+
+Before connecting to real hardware, you can test RoboLang inside:
+
+🧠 Gazebo Sim (with your arm model + MoveIt2)
+
+🧩 ROS2 Dummy Action Servers
+
+💻 Headless test that simply confirms goal publishing and topic messages
+
+⚠️ Hardware Safety Notice
+
+RoboLang is designed for structured, safe task execution — but it does not override your robot’s safety system.
+Before running on real hardware:
+
+Confirm joint limits and velocity limits are respected
+
+Validate every command in simulation first
+
+Use @safety annotations in your .rob tasks to define constraints
+
+🌐 Architecture Recap
+
+┌─────────────────────┐
+│   Developer (PC)    │
+│  - Edits .rob files │
+│  - Commits to GitHub│
+└─────────┬───────────┘
+          │
+          ▼
+┌─────────────────────┐
+│  ROS2 Host / Robot  │
+│  - Pulls from GitHub│
+│  - Runs ROS2 adapter│
+│  - Executes actions │
+└─────────────────────┘
+
+This section defines exactly what parts of RoboLang must run on robotic hardware versus your development environment.
+
+
+
+
