@@ -1,0 +1,19 @@
+// examples/pick_and_place.rob
+// Minimal example executed by the simple runtime.
+
+task demo_pick_and_place(robot r, object box, location src, location dst, region cell) {
+    @safety max_speed 0.5;
+
+    pre {
+        robot_ready r;
+        region_clear cell;
+    }
+
+    plan {
+        move r to src;
+        grasp r box;
+        move r to dst;
+        place r box at dst;
+        communicate r to "fleet" with "TASK_COMPLETE";
+    }
+}
