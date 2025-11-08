@@ -60,9 +60,22 @@ task pick_and_place(robot r, object box, location src, location dst, region cell
 
 For a quick, simulated demo (no ROS2 required), see the main README.md:
 
----bash 
+```bash
 git clone https://github.com/rokorobot/RoboLang.git
 cd RoboLang
 python src/robolang_runtime.py examples/pick_and_place.rob
----
+```
+🛰️ Where to go next
+
+Read the Language Manual to learn the syntax and patterns
+
+Use the Library + ROS2 Adapter Guide when wiring RoboLang into real robots
+
+Follow the Developer Guide if you want to extend the runtime or build your
+own planner/integration
+
+RoboLang aims to be the bridge between natural language, intelligent planning,
+and safe robot execution.
+
+
 
