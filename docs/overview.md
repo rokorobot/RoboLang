@@ -53,3 +53,16 @@ task pick_and_place(robot r, object box, location src, location dst, region cell
         communicate r to "fleet" with "TASK_COMPLETE";
     }
 }
+```
+
+
+🧪 Quick Start
+
+For a quick, simulated demo (no ROS2 required), see the main README.md:
+
+---bash 
+git clone https://github.com/rokorobot/RoboLang.git
+cd RoboLang
+python src/robolang_runtime.py examples/pick_and_place.rob
+---
+
