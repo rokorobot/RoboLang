@@ -70,7 +70,7 @@ robolang/
 │   ├── RoboLang_v1_Ebook.pdf            # Complete language manual and exercises
 │   ├── RoboLang_v1_Library_ROS2_Adapter.pdf # Library + ROS2 mapping documentation
 │   ├── RoboLang_v1_Developer_Guide.pdf  # Developer setup and internal architecture
-│   ├── RoboLang_v1_ROS2_Integration.pdf # (optional) Full ROS2 setup & hardware integration guide
+│   ├── RoboLang_v1_ROS2_Integration.pdf # Full ROS2 setup & hardware integration guide
 │   ├── robolang_banner.png              # Project banner image for README
 │   └── index.md                         # Documentation homepage for GitHub Pages
 │
