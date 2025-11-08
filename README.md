@@ -194,3 +194,65 @@ You’re free to use, modify, and distribute RoboLang in open or commercial robo
 ### 🦾 *RoboLang is to robots what Python was to software.*
 
 Bridging human intent and machine execution — safely, clearly, and universally.
+
+---
+
+## 🧪 Run the Demo
+
+RoboLang comes with a ready-to-run **simulated pick-and-place example** — no ROS2 required.
+
+### 1️⃣ Prerequisites
+- **Python 3.11+** (tested successfully on Python 3.13)
+- **Git**
+
+### 2️⃣ Clone the repository
+```bash
+git clone https://github.com/rokorobot/RoboLang.git
+cd RoboLang
+```
+
+### 3️⃣ Run the demo
+
+Use Python to execute the RoboLang runtime with the included .rob example:
+```bash
+python src/robolang_runtime.py examples/pick_and_place.rob
+```
+### 4️⃣ Expected output
+[RUNTIME] executing: move r to src;
+
+[MOVE] robot_arm_1 → joints=[0.0, -1.0, 1.0, 0.0, 1.0, 0.0] (duration=2.0s)
+
+[RUNTIME] executing: grasp r box;
+
+[GRIPPER] robot_arm_1 → CLOSE (position=1.0, max_effort=50.0)
+
+[RUNTIME] executing: move r to dst;
+
+[MOVE] robot_arm_1 → joints=[0.0, -1.0, 1.0, 0.0, 1.0, 0.0] (duration=2.0s)
+
+[RUNTIME] executing: place r box at dst;
+
+[GRIPPER] robot_arm_1 → OPEN (position=0.0, max_effort=50.0)
+
+[RUNTIME] executing: communicate r to "fleet" with "TASK_COMPLETE";
+
+[COMM] robot_arm_1@fleet → TASK_COMPLETE
+
+If you see this output — congratulations 🎉
+Your RoboLang v1 runtime and simulated adapter are working!
+
+🧩 What this demo does
+
+Parses a .rob task file (examples/pick_and_place.rob)
+
+Interprets the plan { ... } block
+
+Calls RobotAdapter primitives:
+
+move_to_pose()
+
+set_gripper()
+
+communicate()
+
+Simulates robot motion and communication in the terminal
