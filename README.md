@@ -133,9 +133,11 @@ python3 src/robolang_runtime.py examples/pick_and_place.rob
 
 | Guide | Description |
 |-------|--------------|
-| [RoboLang v1 Language Manual (PDF)](docs/RoboLang_v1_Ebook.pdf) | Learn the syntax and semantics. |
-| [Standard Library + ROS2 Adapter (PDF)](docs/RoboLang_v1_Library_ROS2_Adapter.pdf) | Ready-to-use task definitions and mapping guide. |
-| [Developer Guide (PDF)](docs/RoboLang_v1_Developer_Guide.pdf) | Build and deploy the runtime interpreter. |
+| [RoboLang v1 Language Manual (PDF)](docs/RoboLang_v1_Ebook.pdf) | Learn the syntax and semantics of RoboLang. |
+| [Standard Library + ROS2 Adapter (PDF)](docs/RoboLang_v1_Library_ROS2_Adapter.pdf) | Ready-to-use task definitions and ROS2 mapping guide. |
+| [Developer Guide (PDF)](docs/RoboLang_v1_Developer_Guide.pdf) | Build and deploy the RoboLang runtime interpreter. |
+| [ROS2 Integration & Hardware Setup (PDF)](docs/RoboLang_v1_ROS2_Integration.pdf) | Step-by-step guide for deploying RoboLang on real robots and ROS2 environments. |
+
 
 ---
 
