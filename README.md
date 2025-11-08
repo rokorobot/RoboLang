@@ -10,6 +10,9 @@
   <b>RoboLang</b> — An AI-readable domain-specific language for programming and coordinating robots.<br/>
   Built by <a href="https://github.com/rokorobot">@rokorobot</a>
 </p>
+<p align="center">
+  <img src="docs/robolang_banner.png" width="600" alt="RoboLang Logo"/>
+</p>
 
 ---
 
