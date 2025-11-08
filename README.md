@@ -1,9 +1,19 @@
-# 🤖 RoboLang v1 — The AI-Readable Programming Language for Robots
+<p align="center">
+  <img src="https://img.shields.io/badge/version-v1.0.0-blue?style=for-the-badge" alt="version"/>
+  <img src="https://img.shields.io/badge/python-3.11%2B-brightgreen?style=for-the-badge" alt="python"/>
+  <img src="https://img.shields.io/github/license/rokorobot/RoboLang?style=for-the-badge" alt="license"/>
+  <img src="https://img.shields.io/github/stars/rokorobot/RoboLang?style=for-the-badge" alt="stars"/>
+  <img src="https://img.shields.io/github/forks/rokorobot/RoboLang?style=for-the-badge" alt="forks"/>
+</p>
 
-[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
-[![ROS2](https://img.shields.io/badge/ROS2-Humble-green.svg)](https://docs.ros.org/en/humble/)
-[![Python](https://img.shields.io/badge/Python-3.11%2B-yellow.svg)](https://www.python.org/)
-[![Status](https://img.shields.io/badge/version-v1.0.0-success.svg)]()
+<p align="center">
+  <b>RoboLang</b> — An AI-readable domain-specific language for programming and coordinating robots.<br/>
+  Built by <a href="https://github.com/rokorobot">@rokorobot</a>
+</p>
+
+---
+
+# 🤖 RoboLang v1 — The AI-Readable Programming Language for Robots
 
 ---
 
