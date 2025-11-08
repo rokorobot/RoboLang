@@ -24,6 +24,11 @@ domain-specific language (DSL) for programming and coordinating robots.
   Covers parsing, execution, preconditions, and deployment.
 
 ---
+## 📚 Downloadable Guides
+
+- [RoboLang v1 Language Manual (PDF)](RoboLang_v1_Ebook.pdf)
+- [Standard Library + ROS2 Adapter (PDF)](RoboLang_v1_Library_ROS2_Adapter.pdf)
+- [Developer Guide (PDF)](RoboLang_v1_Developer_Guide.pdf)
 
 ## 🧠 What is RoboLang?
 
@@ -76,6 +81,7 @@ own planner/integration
 
 RoboLang aims to be the bridge between natural language, intelligent planning,
 and safe robot execution.
+
 
 
 
