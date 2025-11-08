@@ -358,17 +358,29 @@ Use @safety annotations in your .rob tasks to define constraints
 🌐 Architecture Recap
 
 ┌─────────────────────┐
-│   Developer (PC)    │
-│  - Edits .rob files │
-│  - Commits to GitHub│
+
+│  ------- Developer (PC)  ..---------...          │
+
+│  ------- Edits .rob files   ..----------...      │
+
+│  ------- Commits to GitHub  ..----...      │
+
 └─────────┬───────────┘
-          │
-          ▼
+
+                  │
+          
+                  ▼
+          
 ┌─────────────────────┐
-│  ROS2 Host / Robot  │
-│  - Pulls from GitHub│
-│  - Runs ROS2 adapter│
-│  - Executes actions │
+
+│ ---- ROS2 Host / Robot ------- ....       │
+
+│  ---- Pulls from GitHub --------  ....    │
+
+│  ---- Runs ROS2 adapter ------- ....     │
+
+│  ---- Executes actions  ---------- ....     │
+
 └─────────────────────┘
 
 This section defines exactly what parts of RoboLang must run on robotic hardware versus your development environment.
