@@ -20,10 +20,35 @@
 
 ---
 
-> **RoboLang** is a new domain-specific language (DSL) for robotic programming — readable by humans, executable by ROS2, and understandable by AI models.  
-> It bridges natural language, LLM planning, and physical robot execution.
+> **RoboLang** is a new domain-specific language (DSL) for robotic programming — designed to be readable by humans, executable through ROS2, and understandable by AI models.
+> Its goal is to bridge natural language, LLM planning, and robot execution.
 
 Created and maintained by **Robert Konecny (@rokorobot)**.
+
+---
+
+## 🚦 Project Status
+
+RoboLang v1 is an **early prototype**. This section is the reference for what works today; other sections also describe design goals.
+
+| Area | Status |
+|------|--------|
+| Simulated pick-and-place demo (`src/robolang_runtime.py` + `src/robolang_adapter.py`) | ✅ Implemented, covered by automated tests |
+| Line-based interpreter for `move`, `grasp`, `place`, `inspect`, `wait for`, `communicate` inside `plan { ... }` | ✅ Implemented (prefix matching only, no grammar) |
+| `pre { ... }` preconditions | ⚠️ Accepted in source but **not evaluated** |
+| `@safety` annotations | ⚠️ Accepted in source but **not enforced** |
+| `move` destinations | ⚠️ **Ignored** — every `move` sends the same fixed demo joint values |
+| Decimal durations (`wait for 2.5s`) | ⚠️ Truncated to whole seconds |
+| Unknown or misspelled instructions | ⚠️ Printed as ignored; execution continues |
+| ROS2 adapter (`src/robolang_adapter_ros2.py`) | 🧪 Written, **never validated** against ROS2, a simulator or a robot; no ROS2 tests |
+| Formal grammar, parser, type checking | 🗓️ Planned |
+| MoveIt2 integration, multi-robot handover, LLM planner | 🗓️ Planned |
+| `requirements.txt`, `docker/*`, `examples/inspect_object.rob`, `examples/handover.rob` | 🗓️ Empty placeholders |
+
+The limitations above are pinned down by `tests/test_known_limitations.py`.
+
+> ⚠️ **Physical robot execution is not validated and is outside the approved scope of this project.**
+> Do not run RoboLang against real hardware. The interpreter does not check preconditions, enforce safety limits or resolve motion targets, and the ROS2 adapter reports success without checking action results.
 
 ---
 
@@ -34,16 +59,10 @@ It allows engineers and AI systems to describe *what to do*, not *how to move ea
 
 ### ✳️ Core Concepts
 - **Declarative Syntax** — Simple, readable `task { plan { ... } }` structure.  
-- **Safety Annotations** — Explicit `@safety` and `pre { ... }` sections for guard conditions.  
-- **AI-Ready** — Designed for generation and reasoning by large language models (LLMs).  
-- **ROS2 Integration** — Maps directly to MoveIt, GripperCommand, and custom services.  
-- **Multi-Robot Collaboration** — Built-in `communicate` primitives for task handoffs.
-
----
-
-## 🧩 Repository Contents
-
----
+- **Safety Annotations** — Explicit `@safety` and `pre { ... }` sections for guard conditions *(syntax only; not enforced yet)*.
+- **AI-Ready** — Designed for generation and reasoning by large language models (LLMs) *(no LLM integration yet)*.
+- **ROS2 Integration** — An experimental adapter targets `FollowJointTrajectory`, `GripperCommand` and custom services *(unvalidated; MoveIt is planned)*.
+- **Multi-Robot Collaboration** — A `communicate` primitive that sends a plain string *(handoff protocol planned)*.
 
 ---
 
@@ -63,8 +82,10 @@ robolang/
 │
 ├── examples/
 │   ├── pick_and_place.rob               # Basic pick & place example
-│   ├── inspect_object.rob               # Inspection task example
-│   └── handover.rob                     # Multi-robot handover example
+│   ├── inspect_object.rob               # Inspection task example (empty placeholder)
+│   └── handover.rob                     # Multi-robot handover example (empty placeholder)
+│
+├── tests/                               # pytest suite: smoke tests + known-limitation tests
 │
 ├── docs/
 │   ├── RoboLang_v1_Ebook.pdf            # Complete language manual and exercises
@@ -75,46 +96,45 @@ robolang/
 │   └── index.md                         # Documentation homepage for GitHub Pages
 │
 ├── docker/
-│   ├── Dockerfile                       # Environment container setup (Python + RoboLang)
-│   └── docker-compose.yml               # Optional orchestrator for multi-robot simulation
+│   ├── Dockerfile                       # Empty placeholder
+│   └── docker-compose.yml               # Empty placeholder
 │
 ├── README.md                            # Project overview and documentation
 ├── LICENSE                              # Apache 2.0 license
-├── requirements.txt                     # Python dependencies (for local use)
+├── requirements.txt                     # Runtime dependencies (none; the demo uses only the standard library)
+├── requirements-dev.txt                 # Test dependencies (pytest)
+├── pytest.ini                           # Test configuration
 └── setup.py                             # Package configuration + ROS2 entrypoint
-
-
-
-
 ```
 
 ## ⚙️ Getting Started
 
 ### 1. Prerequisites
 
-- **Python 3.11+**
-- **ROS2 Humble or newer**
-- Optional: MoveIt2, Gazebo, FastAPI
+- **Python 3.11+** — the simulated demo needs nothing else
+- ROS2 is only needed for the experimental ROS2 adapter (see below)
 
-### 2. Install RoboLang
-
-```bash
-git clone https://github.com/rokorobot/robolang.git
-cd robolang
-pip install -r requirements.txt
-```
-
-### 3. Run an Example
+### 2. Get RoboLang
 
 ```bash
-ros2 run robolang runtime examples/pick_and_place.rob
+git clone https://github.com/rokorobot/RoboLang.git
+cd RoboLang
 ```
 
-or directly with Python:
+### 3. Run the Example
 
 ```bash
-python3 src/robolang_runtime.py examples/pick_and_place.rob
+python src/robolang_runtime.py examples/pick_and_place.rob
 ```
+
+### 4. Run the Tests
+
+```bash
+python -m pip install -r requirements-dev.txt
+python -m pytest -q
+```
+
+Tests marked `xfail` describe planned behavior that is not implemented yet.
 
 ---
 
@@ -123,9 +143,10 @@ python3 src/robolang_runtime.py examples/pick_and_place.rob
 | Component | Description |
 |------------|--------------|
 | `RoboLang DSL` | The language syntax defining `task`, `pre`, `plan`, and `@safety`. |
-| `robolang_std_v1.rob` | The standard library with reusable actions like `pick_and_place`, `inspect_object`, etc. |
-| `robolang_adapter.py` | Maps RoboLang actions to ROS2 entities (MoveIt, GripperCommand, etc). |
-| `robolang_runtime.py` | Minimal interpreter that parses `.rob` files and executes them via the adapter. |
+| `robolang_std_v1.rob` | The standard library; currently one task, `pick_and_place`. |
+| `robolang_adapter.py` | Simulated adapter that prints each action; no ROS2 required. |
+| `robolang_adapter_ros2.py` | Experimental, unvalidated adapter mapping actions to ROS2 (`FollowJointTrajectory`, `GripperCommand`, topics). |
+| `robolang_runtime.py` | Minimal line-based interpreter that scans the `plan { ... }` block of a `.rob` file and calls the adapter. |
 
 ---
 
@@ -164,6 +185,8 @@ task pick_and_place(robot r, object box, location src, location dst, region cell
 
 ## 🛰️ Integration Architecture
 
+Target architecture. Today only the interpreter and the simulated adapter are exercised; there is no LLM planner or MoveIt integration.
+
 ```
 [ Human / AI Prompt ]
           ↓
@@ -182,7 +205,7 @@ task pick_and_place(robot r, object box, location src, location dst, region cell
 
 | Version | Focus |
 |----------|-------|
-| v1.0.0 | Language, Library, ROS2 Adapter |
+| v1.0.0 | Prototype interpreter, simulated demo, experimental ROS2 adapter |
 | v1.1.0 | Full Grammar Parser, Unit Tests |
 | v1.2.0 | LLM-Driven Task Planner Integration |
 | v2.0.0 | Multi-Robot Runtime, Safety Simulation |
@@ -215,11 +238,9 @@ You’re free to use, modify, and distribute RoboLang in open or commercial robo
 
 ## 🌍 Links & Resources
 
-- 📘 [Official Docs](https://rokorobot.github.io/robolang)
-- 💬 [Discussion Board](https://github.com/rokorobot/robolang/discussions)
-- 🐳 [Docker Image (coming soon)](https://hub.docker.com/r/rokorobot/robolang)
-- 🤖 [ROS Index Listing](https://index.ros.org/p/robolang/)
-- 🧠 [Hugging Face Space for LLM Integration (planned)](https://huggingface.co/spaces/rokorobot/robolang)
+- 📘 [Official Docs](https://rokorobot.github.io/RoboLang/)
+- 🐞 [Issues](https://github.com/rokorobot/RoboLang/issues)
+- Planned, not available yet: Docker image, ROS Index listing, Hugging Face Space for LLM integration
 
 ---
 
@@ -291,10 +312,13 @@ Simulates robot motion and communication in the terminal
 
 ---
 
-## 🦾 Connecting RoboLang to Real Robots (ROS2 Integration)
+## 🦾 ROS2 Integration (Experimental, Unvalidated)
 
-RoboLang is fully compatible with **ROS2-based robotic systems**.  
-This allows tasks written in `.rob` format to be executed on **real robot hardware** running ROS2.
+> ⚠️ Everything in this section describes the **intended** ROS2 workflow. It has not been validated end to end:
+> the repository ships no `package.xml` or ROS2 tests, and the steps below have not been reproduced on a clean ROS2 install.
+> Physical robot execution is outside the approved scope — see [Project Status](#-project-status).
+
+The ROS2 adapter is meant to let tasks written in `.rob` format drive ROS2 action servers, starting with simulated or fake ones.
 
 ---
 
@@ -316,11 +340,13 @@ These steps must be done on the **robot controller or any Ubuntu 22.04 machine w
 1. **Open a terminal on the ROS2 system:**
    ```bash
    cd ~/ros2_ws/src
+   ```
 2. Clone the RoboLang repository:
    ```bash
    git clone https://github.com/rokorobot/RoboLang.git robolang
+   ```
 3. Add a minimal package.xml if not present:
-   ```bash
+   ```xml
    <?xml version="1.0"?>
    <package format="3">
     <name>robolang</name>
@@ -339,12 +365,16 @@ These steps must be done on the **robot controller or any Ubuntu 22.04 machine w
    cd ~/ros2_ws
    colcon build
    source install/setup.bash
+   ```
 5. Run a RoboLang task inside ROS2:
    ```bash
    ros2 run robolang ros2_runtime examples/pick_and_place.rob
-If your robot’s ROS2 action servers are active (e.g. /arm_controller/follow_joint_trajectory and /gripper_controller/gripper_action), RoboLang will send real commands to move the robot arm, grasp objects, and perform communications.
+   ```
 
-🧩 Supported ROS2 Actions (v1)
+If ROS2 action servers are active (e.g. `/arm_controller/follow_joint_trajectory` and `/gripper_controller/gripper_action`), the adapter sends goals to them. Note that every `move` currently sends the same fixed joint values with no joint names, whatever the destination.
+
+🧩 Intended ROS2 Mapping (v1, unvalidated)
+
 | RoboLang Command                                | ROS2 Mapping                           | Message Type                                |
 | ----------------------------------------------- | -------------------------------------- | ------------------------------------------- |
 | `move r to X`                                   | `FollowJointTrajectory`                | `control_msgs/action/FollowJointTrajectory` |
@@ -365,14 +395,13 @@ Before connecting to real hardware, you can test RoboLang inside:
 
 ⚠️ Hardware Safety Notice
 
-RoboLang is designed for structured, safe task execution — but it does not override your robot’s safety system.
-Before running on real hardware:
+RoboLang v1 is a non-safety-certified demonstration and must not be used to move physical hardware.
 
-Confirm joint limits and velocity limits are respected
+`@safety` annotations and `pre { ... }` blocks are not enforced by the current interpreter.
 
-Validate every command in simulation first
+A `@safety` annotation is never a substitute for emergency stops, protective stops or a robot risk assessment.
 
-Use @safety annotations in your .rob tasks to define constraints
+Hardware execution would require a separate safety review and explicit owner approval.
 
 🌐 Architecture Recap
 
