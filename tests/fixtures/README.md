@@ -2,8 +2,14 @@
 
 Conformance fixtures for the draft [v1.1 specification](../../spec/robolang-v1.1.md).
 
-**No parser exists yet.** Nothing in the test suite reads these files; they are the target
-for RL-11B (parser) and RL-11C (static checks). Until then they are reviewed by hand.
+`tests/test_fixtures.py` runs them against the lexer and parser in `src/robolang/`:
+
+- every file in `valid/` must parse, with exactly the warnings its header states;
+- every `invalid/` file whose stage is `lexical` or `syntax` must be rejected with the stated
+  code and line;
+- `invalid/` files whose stage is `static` (`E3xx`) are **not** checked for rejection yet.
+  Static validation is RL-11C. Until then the suite only confirms that they are
+  syntactically valid.
 
 ## Layout
 

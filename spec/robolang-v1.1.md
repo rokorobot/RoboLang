@@ -1,8 +1,10 @@
 # RoboLang v1.1 Language Specification
 
 **Status:** RL-11A specification, approved by the owner on 2026-10-12.
-**Nothing in this document is implemented.**
-The repository still runs the v1 line-based interpreter described in the README.
+**Implementation:** the lexer, parser and AST (sections 2 to 4 and 7, codes `E1xx`, `E2xx`,
+`W401`) are implemented in `src/robolang/` (RL-11B). The static rules of section 5 (`E3xx`)
+are not implemented. The front end is not connected to execution: the repository still runs
+the v1 line-based interpreter described in the README.
 **Syntax version:** 1.1
 **Grammar:** [`grammar.ebnf`](grammar.ebnf)
 **Fixtures:** [`tests/fixtures/`](../tests/fixtures/README.md)
@@ -239,6 +241,11 @@ Format:
 
 Every diagnostic carries a stable code, the position of the offending token and a reason.
 Where a fixed set was expected, the message lists it. A front end may stop at the first error.
+
+Stages run in order: lexical, then syntax, then static. A lexical error anywhere in the file
+is reported before any syntax error, even one that appears earlier in the text. The one
+exception is the version marker: an unsupported version (`E213`) is reported without
+examining anything after it (section 4.1).
 
 | Code | Stage | Meaning |
 |---|---|---|
