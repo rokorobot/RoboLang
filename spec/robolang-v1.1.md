@@ -544,7 +544,7 @@ None.
 | Lexer, parser and AST (sections 2 to 4 and 7; `E1xx`, `E2xx`, `W401`) | Implemented in `src/robolang/` (RL-11B) |
 | Static rules (section 5; `E301`–`E308`) | Implemented in `src/robolang/validator.py` (RL-11C) |
 | Versioned IR ([`ir-schema-v1.0.md`](ir-schema-v1.0.md)), `validate` / `inspect` commands, task selection for inspection | Implemented in `src/robolang/ir.py` and `cli.py` (RL-11D) |
-| Installable package and console command | Not implemented. RL-11E |
+| Installable package and `robolang` console command | Implemented in `pyproject.toml` (RL-11E); installed from a clone, not published |
 | Execution of parsed tasks | Not implemented. The repository still runs the v1 interpreter |
 
 Conformance checked by CI (`tests/test_fixtures.py`): all 76 fixtures.
