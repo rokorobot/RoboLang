@@ -271,7 +271,7 @@ def test_error_in_an_earlier_task_body_precedes_a_later_duplicate_task_name():
 
 
 def test_pre_is_checked_before_plan_and_annotations_before_pre():
-    assert rejected(task(f"move r to nowhere;", pre=f"region_clear {MARK}zone;")).code == "E303"
+    assert rejected(task("move r to nowhere;", pre=f"region_clear {MARK}zone;")).code == "E303"
     assert rejected(task(pre="region_clear zone;", safety=f"@safety max_speed {MARK}0 m/s;")).code == "E305"
 
 

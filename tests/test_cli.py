@@ -4,6 +4,7 @@ from __future__ import annotations
 import io
 import json
 import os
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -288,10 +289,35 @@ def test_inspect_help_documents_its_options(capsys):
     assert "--task NAME" in text and "--json" in text and "Nothing is executed" in text
 
 
-def test_version_reports_language_and_schema_versions_separately(capsys):
+def test_version_reports_distribution_language_and_schema_versions_separately(capsys):
     code, _, _ = cli("--version")
+    text = capsys.readouterr().out
+
     assert code == EXIT_OK
-    assert capsys.readouterr().out == "RoboLang language 1.1, IR schema 1.0\n"
+    assert re.fullmatch(
+        r"robolang (\d+\.\d+\.\d+\S*|unknown \(not installed, running from source\)) "
+        r"\(language 1\.1, IR schema 1\.0\)\n",
+        text,
+    ), text
+
+
+def test_version_text_uses_the_installed_distribution_version(monkeypatch):
+    from robolang import cli as cli_module
+
+    monkeypatch.setattr(cli_module.metadata, "version", lambda name: "9.8.7")
+    assert cli_module.version_text() == "robolang 9.8.7 (language 1.1, IR schema 1.0)"
+
+
+def test_version_text_when_running_from_source(monkeypatch):
+    from robolang import cli as cli_module
+
+    def missing(name):
+        raise cli_module.metadata.PackageNotFoundError(name)
+
+    monkeypatch.setattr(cli_module.metadata, "version", missing)
+    assert cli_module.version_text() == (
+        "robolang unknown (not installed, running from source) (language 1.1, IR schema 1.0)"
+    )
 
 
 # -------- real processes: launchers, encodings, determinism --------

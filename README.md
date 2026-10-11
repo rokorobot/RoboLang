@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://img.shields.io/badge/version-v1.0.0-blue?style=for-the-badge" alt="version"/>
+  <img src="https://img.shields.io/badge/version-v0.1.0a1-blue?style=for-the-badge" alt="version"/>
   <img src="https://img.shields.io/badge/python-3.11%2B-brightgreen?style=for-the-badge" alt="python"/>
   <img src="https://img.shields.io/github/license/rokorobot/RoboLang?style=for-the-badge" alt="license"/>
   <img src="https://img.shields.io/github/stars/rokorobot/RoboLang?style=for-the-badge" alt="stars"/>
@@ -43,8 +43,9 @@ RoboLang v1 is an **early prototype**. This section is the reference for what wo
 | ROS2 adapter (`src/robolang_adapter_ros2.py`) | 🧪 Written, **never validated** against ROS2, a simulator or a robot; no ROS2 tests |
 | v1.1 specification and grammar ([`spec/`](spec/robolang-v1.1.md)) | ✅ Written |
 | v1.1 lexer, parser, AST and static checks (`src/robolang/`) | ✅ Implemented and tested; **not connected to the interpreter**, which still runs v1 behavior |
-| `validate` / `inspect` commands and versioned task IR ([schema](spec/ir-schema-v1.0.md)) | ✅ Implemented and tested; read-only, run from a checkout (not pip-installable yet) |
-| Execution of validated tasks, installable package | 🗓️ Planned |
+| `validate` / `inspect` commands and versioned task IR ([schema](spec/ir-schema-v1.0.md)) | ✅ Implemented and tested; read-only |
+| Installable package with a `robolang` command (`python -m pip install .`) | ✅ Wheel and source distribution are built and install-tested in CI on Ubuntu and Windows; not published on PyPI |
+| Execution of validated tasks | 🗓️ Planned |
 | MoveIt2 integration, multi-robot handover, LLM planner | 🗓️ Planned |
 | `requirements.txt`, `docker/*`, `examples/inspect_object.rob`, `examples/handover.rob` | 🗓️ Empty placeholders |
 
@@ -105,62 +106,116 @@ robolang/
 ├── README.md                            # Project overview and documentation
 ├── LICENSE                              # Apache 2.0 license
 ├── requirements.txt                     # Runtime dependencies (none; the demo uses only the standard library)
-├── requirements-dev.txt                 # Test dependencies (pytest)
+├── requirements-dev.txt                 # Development tools (pytest, ruff, build)
 ├── pytest.ini                           # Test configuration
-└── setup.py                             # Package configuration + ROS2 entrypoint
+├── pyproject.toml                       # Package metadata, console commands, lint settings
+├── MANIFEST.in                          # Extra files for the source distribution
+├── tools/smoke_install.py               # Builds, installs and runs the package in clean environments
+└── setup.py                             # Shim for tools that still call setup.py; metadata is in pyproject.toml
 ```
 
-## ⚙️ Getting Started
+## ⚙️ Quickstart
 
-### 1. Prerequisites
-
-- **Python 3.11+** — the simulated demo needs nothing else
-- ROS2 is only needed for the experimental ROS2 adapter (see below)
-
-### 2. Get RoboLang
+You need **Python 3.11 or newer** and Git. No ROS2, no robot and no other packages.
 
 ```bash
 git clone https://github.com/rokorobot/RoboLang.git
+```
+
+```bash
 cd RoboLang
 ```
 
-### 3. Run the Example
-
 ```bash
-python src/robolang_runtime.py examples/pick_and_place.rob
+python -m pip install .
 ```
 
-### 4. Validate and Inspect a Task File
+```bash
+robolang validate examples/pick_and_place.rob
+```
 
-RoboLang v1.1 has two read-only commands. They need only Python: no ROS2, no robot, nothing to install.
-Run them from the repository root:
+```bash
+robolang inspect examples/pick_and_place.rob
+```
+
+```bash
+robolang inspect examples/pick_and_place.rob --json
+```
+
+What you should see from `validate`:
+
+```text
+examples/pick_and_place.rob:5:23: warning[W401]: 'max_speed' has no unit; write 'm/s' or 'rad/s'. A unitless limit is deprecated and is never treated as an enforced limit
+examples/pick_and_place.rob: valid RoboLang 1.1 (1 task, 1 warning)
+Validation covers the text of the program only. It does not make a task safe to run on a robot.
+```
+
+- `validate` checks the whole file (syntax, names, types, values) and prints `file:line:column` diagnostics. Exit status is 0 if valid, 1 if not, 2 for a bad argument or unreadable file.
+- `inspect` validates first, then shows what the file describes, as text or as versioned JSON IR. `--task NAME` shows one task.
+- Neither command executes a task, and there is no command that does. Validation covers the text of the program only; it does not make a task safe to run on a robot.
+
+Installing into a [virtual environment](https://docs.python.org/3/library/venv.html) is recommended. RoboLang is installed from a clone; it is not published on PyPI.
+
+### Three version numbers
+
+`robolang --version` prints all three. They change independently.
+
+| Version | Current | What it identifies |
+|---|---|---|
+| Distribution | `0.1.0a1` | The installable Python package (`pyproject.toml`). A pre-release: `a1` means first alpha |
+| Language | `1.1` | The syntax and rules of `.rob` files ([specification](spec/robolang-v1.1.md)) |
+| IR schema | `1.0` | The shape of the JSON printed by `inspect --json` ([schema](spec/ir-schema-v1.0.md)) |
+
+### Without installing
+
+The same commands run straight from the clone:
 
 ```bash
 python src/robolang validate examples/pick_and_place.rob
 ```
 
-```bash
-python src/robolang inspect examples/pick_and_place.rob
-```
+### The v1 simulated demo (from the clone only)
 
 ```bash
-python src/robolang inspect examples/pick_and_place.rob --json
+python src/robolang_runtime.py examples/pick_and_place.rob
 ```
 
-- `validate` checks the whole file (syntax, names, types, values) and prints `file:line:column` diagnostics. Exit status is 0 if valid, 1 if not, 2 for a bad argument or unreadable file.
-- `inspect` validates first, then shows what the file describes, as text or as versioned JSON IR. `--task NAME` shows one task.
-- Neither command executes a task. Validation covers the text of the program only; it does not make a task safe to run on a robot.
+This runs the older v1 line-based interpreter with a simulated adapter that only prints. It does not use the validation above (see [Project Status](#-project-status)). It works from a clone of the repository; it is not part of the installed package.
 
-These commands are not installed by `pip install` yet. The simulated demo in step 3 still runs the older v1 interpreter and does not use this validation.
-
-### 5. Run the Tests
+### Development
 
 ```bash
 python -m pip install -r requirements-dev.txt
+```
+
+```bash
 python -m pytest -q
 ```
 
-Tests marked `xfail` describe planned behavior that is not implemented yet.
+```bash
+python -m ruff check .
+```
+
+```bash
+python tools/smoke_install.py
+```
+
+Tests marked `xfail` describe planned behavior that is not implemented yet. The last command builds the wheel and source distribution, installs each into a fresh virtual environment and runs the installed `robolang` command; it needs network access.
+
+### What is installed, and what is only in the repository
+
+| | Installed by `python -m pip install .` | In the repository |
+|---|---|---|
+| `robolang` package: lexer, parser, validator, IR, `validate` / `inspect` | ✅ Yes. This is the supported package | `src/robolang/` |
+| v1 prototype: `robolang_runtime.py`, `robolang_adapter.py` (interpreter and simulated adapter) | ❌ No | `src/`, historical source; runs from a clone |
+| v1 ROS2 code: `robolang_adapter_ros2.py`, `robolang_ros2_main.py` | ❌ No | `src/`, historical source; never validated |
+
+The installed package is read-only tooling. It has no ROS2 dependency, installs one command (`robolang`) and contains **no code that can execute a task or move a robot**.
+
+The v1 prototype files are kept in the repository unchanged, as the historical starting point of the project. They are not installed because they act without passing through the validator. As a consequence:
+
+- Earlier versions of `setup.py` installed those four modules and a `ros2_runtime` console command. As of distribution `0.1.0a1` neither is installed. This is a deliberate compatibility change.
+- The ROS2 integration has never been validated, and how it will be installed in future has not been decided.
 
 ---
 
@@ -340,8 +395,12 @@ Simulates robot motion and communication in the terminal
 
 ## 🦾 ROS2 Integration (Experimental, Unvalidated)
 
-> ⚠️ Everything in this section describes the **intended** ROS2 workflow. It has not been validated end to end:
+> ⚠️ Everything in this section describes the **originally intended** ROS2 workflow. It has not been validated end to end:
 > the repository ships no `package.xml` or ROS2 tests, and the steps below have not been reproduced on a clean ROS2 install.
+>
+> **These steps no longer work as written.** As of distribution `0.1.0a1` the package installs neither the `ros2_runtime`
+> command that step 5 uses nor the v1 interpreter and ROS2 adapter behind it, because that code acts without any validation.
+> The section is kept as a record of the design; a supported ROS2 installation path has not been defined.
 > Physical robot execution is outside the approved scope — see [Project Status](#-project-status).
 
 The ROS2 adapter is meant to let tasks written in `.rob` format drive ROS2 action servers, starting with simulated or fake ones.

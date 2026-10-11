@@ -17,6 +17,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from importlib import metadata
 from pathlib import Path
 
 from . import ir as task_ir
@@ -47,6 +48,23 @@ exit status:
   1  the file is not valid; diagnostics are printed to stderr
   2  bad arguments, unreadable file, or unknown task name
 """
+
+
+def distribution_version() -> str | None:
+    """Version of the installed `robolang` distribution, or None when running from a source checkout."""
+    try:
+        return metadata.version("robolang")
+    except metadata.PackageNotFoundError:
+        return None
+
+
+def version_text() -> str:
+    """The three independent versions: distribution, language and IR schema."""
+    distribution = distribution_version() or "unknown (not installed, running from source)"
+    return (
+        f"robolang {distribution} "
+        f"(language {task_ir.LANGUAGE_VERSION}, IR schema {task_ir.IR_SCHEMA_VERSION})"
+    )
 
 
 class _CommandError(Exception):
@@ -184,7 +202,8 @@ def _parser(prog: str) -> argparse.ArgumentParser:
     parser.add_argument(
         "--version",
         action="version",
-        version=f"RoboLang language {task_ir.LANGUAGE_VERSION}, IR schema {task_ir.IR_SCHEMA_VERSION}",
+        version=version_text(),
+        help="show the distribution, language and IR schema versions and exit",
     )
     commands = parser.add_subparsers(dest="command", metavar="COMMAND", required=True)
 

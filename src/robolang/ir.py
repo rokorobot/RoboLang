@@ -5,8 +5,10 @@ The IR is a description of validated tasks with source details removed:
 no spans, comments or formatting. Two sources that differ only in layout
 produce identical IR.
 
-It can only be built from a program that passes static validation, and it is
-data, not permission: holding an IR never authorizes anything to be executed.
+IR produced through the compiler API comes from statically validated source.
+IR objects constructed directly or received externally carry no such guarantee.
+Either way the IR is data, not permission: holding one never authorizes
+anything to be executed.
 """
 
 from __future__ import annotations
