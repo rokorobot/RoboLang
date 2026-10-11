@@ -280,7 +280,7 @@ examining anything after it (section 4.1).
 When several codes could apply, the more specific wins: `E211` over `E203`/`E204`/`E205`/`E207`,
 and `E202`, `E206`, `E209` over `E201`.
 
-Exit status (for the RL-11D command line): zero when there are no errors, non-zero otherwise.
+Exit status of the command line: zero when there are no errors, non-zero otherwise.
 Warnings alone do not change the exit status.
 
 ## 7. Abstract syntax tree
@@ -502,15 +502,16 @@ Defined here as syntax and static contract only:
 | Enforcing `max_speed`; how declared linear and angular limits relate to a robot's capabilities | v1.2 (RL-12B) |
 | `wait until`: polling, cancellation, what happens on timeout | v1.2 (RL-12A/B) |
 | Resolving a `location` to a motion target | v1.2 (RL-12C) |
-| Binding task parameters to real robots, objects, poses and regions | RL-11C/RL-11D |
+| Binding task parameters to real robots, objects, poses and regions | Not defined yet; v1.2 (RL-12C) |
 | Sensor and channel names: which exist, capability checks | v1.2 / v1.3 |
 | Structured messages instead of free-text strings | v1.3 (RL-13C) |
-| Versioned IR, `validate` / `inspect` commands | RL-11D |
+| Versioned IR, `validate` / `inspect` commands | Done in RL-11D: [`ir-schema-v1.0.md`](ir-schema-v1.0.md) |
 
 **Task selection.** A file may hold several tasks. Execution must name the task to run. When a
 file holds exactly one task, that task may be selected implicitly, which keeps the current
-demo command working. Running "all tasks in the file" is never a default. The selection
-mechanism is part of RL-11D.
+demo command working. Running "all tasks in the file" is never a default. RL-11D
+provides selection for inspection only (`inspect --task NAME`); selecting a task for execution
+belongs to the executor, which does not exist yet.
 
 ## 10. Resolved questions
 
@@ -542,7 +543,8 @@ None.
 |---|---|
 | Lexer, parser and AST (sections 2 to 4 and 7; `E1xx`, `E2xx`, `W401`) | Implemented in `src/robolang/` (RL-11B) |
 | Static rules (section 5; `E301`–`E308`) | Implemented in `src/robolang/validator.py` (RL-11C) |
-| Versioned IR, `validate` / `inspect` commands, task selection | Not implemented. RL-11D |
+| Versioned IR ([`ir-schema-v1.0.md`](ir-schema-v1.0.md)), `validate` / `inspect` commands, task selection for inspection | Implemented in `src/robolang/ir.py` and `cli.py` (RL-11D) |
+| Installable package and console command | Not implemented. RL-11E |
 | Execution of parsed tasks | Not implemented. The repository still runs the v1 interpreter |
 
 Conformance checked by CI (`tests/test_fixtures.py`): all 76 fixtures.

@@ -1,0 +1,36 @@
+{
+  "ir_schema": "robolang.task-ir",
+  "ir_schema_version": "1.0",
+  "language_version": "1.1",
+  "tasks": [
+    {
+      "name": "t",
+      "parameters": [
+        {
+          "name": "s",
+          "type": "robot"
+        },
+        {
+          "name": "min",
+          "type": "location"
+        }
+      ],
+      "safety": [],
+      "preconditions": [],
+      "steps": [
+        {
+          "kind": "move",
+          "robot": "s",
+          "target": "min"
+        },
+        {
+          "kind": "wait_for",
+          "duration": {
+            "value": "1",
+            "unit": "s"
+          }
+        }
+      ]
+    }
+  ]
+}

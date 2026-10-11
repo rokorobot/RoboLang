@@ -1,0 +1,80 @@
+{
+  "ir_schema": "robolang.task-ir",
+  "ir_schema_version": "1.0",
+  "language_version": "1.1",
+  "tasks": [
+    {
+      "name": "handover",
+      "parameters": [
+        {
+          "name": "arm",
+          "type": "robot"
+        },
+        {
+          "name": "box",
+          "type": "object"
+        },
+        {
+          "name": "pickup",
+          "type": "location"
+        },
+        {
+          "name": "handoff",
+          "type": "location"
+        }
+      ],
+      "safety": [],
+      "preconditions": [
+        {
+          "kind": "object_exists",
+          "object": "box"
+        }
+      ],
+      "steps": [
+        {
+          "kind": "move",
+          "robot": "arm",
+          "target": "pickup"
+        },
+        {
+          "kind": "grasp",
+          "robot": "arm",
+          "object": "box"
+        },
+        {
+          "kind": "move",
+          "robot": "arm",
+          "target": "handoff"
+        },
+        {
+          "kind": "communicate",
+          "robot": "arm",
+          "channel": "mobile_bot",
+          "message": "HANDOFF_READY"
+        }
+      ]
+    },
+    {
+      "name": "retreat",
+      "parameters": [
+        {
+          "name": "arm",
+          "type": "robot"
+        },
+        {
+          "name": "home",
+          "type": "location"
+        }
+      ],
+      "safety": [],
+      "preconditions": [],
+      "steps": [
+        {
+          "kind": "move",
+          "robot": "arm",
+          "target": "home"
+        }
+      ]
+    }
+  ]
+}

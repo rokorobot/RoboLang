@@ -1,0 +1,74 @@
+{
+  "ir_schema": "robolang.task-ir",
+  "ir_schema_version": "1.0",
+  "language_version": "1.1",
+  "tasks": [
+    {
+      "name": "t",
+      "parameters": [
+        {
+          "name": "r",
+          "type": "robot"
+        },
+        {
+          "name": "box",
+          "type": "object"
+        },
+        {
+          "name": "src",
+          "type": "location"
+        },
+        {
+          "name": "dst",
+          "type": "location"
+        },
+        {
+          "name": "cell",
+          "type": "region"
+        }
+      ],
+      "safety": [],
+      "preconditions": [],
+      "steps": [
+        {
+          "kind": "wait_until",
+          "condition": {
+            "kind": "region_clear",
+            "region": "cell"
+          },
+          "timeout": {
+            "value": "30",
+            "unit": "s"
+          }
+        },
+        {
+          "kind": "wait_until",
+          "condition": {
+            "kind": "sensor_ok",
+            "sensor": "camera_top"
+          },
+          "timeout": {
+            "value": "5",
+            "unit": "s"
+          }
+        },
+        {
+          "kind": "wait_until",
+          "condition": {
+            "kind": "object_exists",
+            "object": "box"
+          },
+          "timeout": {
+            "value": "2",
+            "unit": "min"
+          }
+        },
+        {
+          "kind": "move",
+          "robot": "r",
+          "target": "src"
+        }
+      ]
+    }
+  ]
+}

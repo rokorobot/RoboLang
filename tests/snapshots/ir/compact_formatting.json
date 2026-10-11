@@ -1,0 +1,61 @@
+{
+  "ir_schema": "robolang.task-ir",
+  "ir_schema_version": "1.0",
+  "language_version": "1.1",
+  "tasks": [
+    {
+      "name": "t",
+      "parameters": [
+        {
+          "name": "r",
+          "type": "robot"
+        },
+        {
+          "name": "box",
+          "type": "object"
+        },
+        {
+          "name": "dst",
+          "type": "location"
+        }
+      ],
+      "safety": [],
+      "preconditions": [],
+      "steps": [
+        {
+          "kind": "grasp",
+          "robot": "r",
+          "object": "box"
+        },
+        {
+          "kind": "place",
+          "robot": "r",
+          "object": "box",
+          "target": "dst"
+        }
+      ]
+    },
+    {
+      "name": "u",
+      "parameters": [
+        {
+          "name": "r",
+          "type": "robot"
+        },
+        {
+          "name": "dst",
+          "type": "location"
+        }
+      ],
+      "safety": [],
+      "preconditions": [],
+      "steps": [
+        {
+          "kind": "move",
+          "robot": "r",
+          "target": "dst"
+        }
+      ]
+    }
+  ]
+}
