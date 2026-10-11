@@ -1,6 +1,6 @@
 # RoboLang v1.1 fixtures
 
-Conformance fixtures for the draft [v1.1 specification](../../spec/robolang-v1.1.md).
+Conformance fixtures for the [v1.1 specification](../../spec/robolang-v1.1.md).
 
 `tests/test_fixtures.py` runs them against the lexer and parser in `src/robolang/`.
 62 of the 76 fixtures are checked for conformance and 14 are reserved for RL-11C:
