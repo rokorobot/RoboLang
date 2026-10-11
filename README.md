@@ -43,7 +43,8 @@ RoboLang v1 is an **early prototype**. This section is the reference for what wo
 | ROS2 adapter (`src/robolang_adapter_ros2.py`) | 🧪 Written, **never validated** against ROS2, a simulator or a robot; no ROS2 tests |
 | v1.1 specification and grammar ([`spec/`](spec/robolang-v1.1.md)) | ✅ Written |
 | v1.1 lexer, parser, AST and static checks (`src/robolang/`) | ✅ Implemented and tested; **not connected to the interpreter**, which still runs v1 behavior |
-| v1.1 CLI, versioned IR, execution of validated tasks | 🗓️ Planned |
+| `validate` / `inspect` commands and versioned task IR ([schema](spec/ir-schema-v1.0.md)) | ✅ Implemented and tested; read-only, run from a checkout (not pip-installable yet) |
+| Execution of validated tasks, installable package | 🗓️ Planned |
 | MoveIt2 integration, multi-robot handover, LLM planner | 🗓️ Planned |
 | `requirements.txt`, `docker/*`, `examples/inspect_object.rob`, `examples/handover.rob` | 🗓️ Empty placeholders |
 
@@ -129,7 +130,30 @@ cd RoboLang
 python src/robolang_runtime.py examples/pick_and_place.rob
 ```
 
-### 4. Run the Tests
+### 4. Validate and Inspect a Task File
+
+RoboLang v1.1 has two read-only commands. They need only Python: no ROS2, no robot, nothing to install.
+Run them from the repository root:
+
+```bash
+python src/robolang validate examples/pick_and_place.rob
+```
+
+```bash
+python src/robolang inspect examples/pick_and_place.rob
+```
+
+```bash
+python src/robolang inspect examples/pick_and_place.rob --json
+```
+
+- `validate` checks the whole file (syntax, names, types, values) and prints `file:line:column` diagnostics. Exit status is 0 if valid, 1 if not, 2 for a bad argument or unreadable file.
+- `inspect` validates first, then shows what the file describes, as text or as versioned JSON IR. `--task NAME` shows one task.
+- Neither command executes a task. Validation covers the text of the program only; it does not make a task safe to run on a robot.
+
+These commands are not installed by `pip install` yet. The simulated demo in step 3 still runs the older v1 interpreter and does not use this validation.
+
+### 5. Run the Tests
 
 ```bash
 python -m pip install -r requirements-dev.txt
