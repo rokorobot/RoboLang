@@ -2,7 +2,8 @@
 
 Conformance fixtures for the draft [v1.1 specification](../../spec/robolang-v1.1.md).
 
-`tests/test_fixtures.py` runs them against the lexer and parser in `src/robolang/`:
+`tests/test_fixtures.py` runs them against the lexer and parser in `src/robolang/`.
+62 of the 76 fixtures are checked for conformance and 14 are reserved for RL-11C:
 
 - every file in `valid/` must parse, with exactly the warnings its header states;
 - every `invalid/` file whose stage is `lexical` or `syntax` must be rejected with the stated

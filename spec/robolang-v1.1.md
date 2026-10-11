@@ -533,9 +533,26 @@ Decided by the owner on 2026-10-12; recorded in
 
 ## 11. Remaining questions
 
-None. Follow-up work outside this specification:
+None.
 
-- **RL-11B:** lexer, parser and AST, with the fixtures in `tests/fixtures/` wired into
-  automated tests. Until then, conformance to this specification is not verified by CI.
-- **Documentation alignment:** the PDFs in `docs/` describe v1, including the deferred
-  constructs and unitless forms. They are kept as historical documentation.
+## 12. Implementation status
+
+| Part of this specification | Status |
+|---|---|
+| Lexer, parser and AST (sections 2 to 4 and 7; `E1xx`, `E2xx`, `W401`) | Implemented in `src/robolang/` (RL-11B) |
+| Static rules (section 5; `E3xx`) | Not implemented. RL-11C |
+| Versioned IR, `validate` / `inspect` commands, task selection | Not implemented. RL-11D |
+| Execution of parsed tasks | Not implemented. The repository still runs the v1 interpreter |
+
+Conformance checked by CI (`tests/test_fixtures.py`), out of 76 fixtures:
+
+- **62 are checked for conformance:** the 15 valid fixtures must parse with exactly the
+  warnings they state, and the 47 lexical and syntax fixtures must be rejected with the
+  stated code and line.
+- **14 are not:** the static fixtures (`E3xx`) are reserved for RL-11C. Until then CI only
+  confirms that they are syntactically valid; a file that breaks a static rule is currently
+  accepted by the front end.
+
+Follow-up outside this specification: the PDFs in `docs/` describe v1, including the deferred
+constructs and unitless forms. They are kept as historical documentation; aligning them is a
+separate task.
