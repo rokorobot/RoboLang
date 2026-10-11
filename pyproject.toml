@@ -1,0 +1,63 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "robolang"
+# Distribution version. It is independent of the language version (1.1) and
+# the IR schema version (1.0), which are defined in src/robolang/.
+version = "1.0.0"
+description = "RoboLang: a task description language for robots, with a parser, validator and read-only developer tools."
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [{ name = "Robert Konecny" }]
+keywords = ["robotics", "dsl", "task-language", "validation"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Software Development :: Compilers",
+]
+# No runtime dependencies. In particular there is no dependency on rclpy:
+# ROS 2 Python packages are not distributed on PyPI. See the ros2_runtime note below.
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff>=0.6", "build>=1.2"]
+
+[project.urls]
+Repository = "https://github.com/rokorobot/RoboLang"
+Documentation = "https://rokorobot.github.io/RoboLang/"
+Issues = "https://github.com/rokorobot/RoboLang/issues"
+
+[project.scripts]
+# Read-only developer tools: `robolang validate FILE`, `robolang inspect FILE`.
+robolang = "robolang.cli:run"
+# Experimental and unvalidated. Starts only inside a ROS 2 environment that
+# provides rclpy, control_msgs, trajectory_msgs and std_msgs; without one it
+# stops with an ImportError. Kept from the original setup.py.
+ros2_runtime = "robolang_ros2_main:main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+packages = ["robolang"]
+# The v1 prototype: line-based interpreter, simulated adapter, ROS 2 adapter and entry point.
+py-modules = [
+    "robolang_adapter",
+    "robolang_adapter_ros2",
+    "robolang_runtime",
+    "robolang_ros2_main",
+]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W"]

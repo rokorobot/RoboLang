@@ -1,0 +1,8 @@
+# Extra content for the source distribution. Wheels contain only the Python code.
+include LICENSE
+include requirements.txt requirements-dev.txt pytest.ini
+graft examples
+graft stdlib
+graft spec
+graft tests
+global-exclude __pycache__ *.py[cod]

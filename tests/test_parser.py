@@ -190,7 +190,9 @@ def test_unitless_max_speed_is_accepted_with_w401_and_no_unit():
 
 
 def test_linear_and_angular_limits_parse_in_source_order():
-    parsed = only_task(HEAD + "    @safety max_speed 1.0 rad/s;\n    @safety max_speed 0.5 m/s;\n    plan { move r to src; }\n}\n")
+    parsed = only_task(
+        HEAD + "    @safety max_speed 1.0 rad/s;\n    @safety max_speed 0.5 m/s;\n    plan { move r to src; }\n}\n"
+    )
     assert [a.value.unit for a in parsed.annotations] == [ast.SpeedUnit.RAD_PER_S, ast.SpeedUnit.M_PER_S]
 
 
