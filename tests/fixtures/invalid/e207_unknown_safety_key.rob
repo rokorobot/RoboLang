@@ -1,0 +1,10 @@
+// RoboLang v1.1 fixture: invalid
+// expect: error E207 (syntax) line 6
+// why: 'max_force' is not a @safety key
+
+task t(robot r, object box, location src, location dst, region cell) {
+    @safety max_force 10;
+    plan {
+        move r to src;
+    }
+}

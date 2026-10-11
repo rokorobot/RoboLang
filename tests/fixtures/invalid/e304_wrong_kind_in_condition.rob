@@ -1,0 +1,12 @@
+// RoboLang v1.1 fixture: invalid
+// expect: error E304 (static) line 7
+// why: region_clear takes a region, not a location
+
+task t(robot r, object box, location src, location dst, region cell) {
+    pre {
+        region_clear dst;
+    }
+    plan {
+        move r to src;
+    }
+}

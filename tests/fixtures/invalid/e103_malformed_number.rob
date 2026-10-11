@@ -1,0 +1,9 @@
+// RoboLang v1.1 fixture: invalid
+// expect: error E103 (lexical) line 7
+// why: a decimal point needs digits on both sides
+
+task t(robot r, object box, location src, location dst, region cell) {
+    plan {
+        wait for 5.s;
+    }
+}

@@ -1,0 +1,9 @@
+// RoboLang v1.1 fixture: invalid
+// expect: error E211 (syntax) line 7
+// why: with_approach / in_region are documented in the v1 manual but not part of v1.1
+
+task t(robot r, object box, location src, location dst, region cell) {
+    plan {
+        move r to src with_approach 0.1 in_region cell;
+    }
+}

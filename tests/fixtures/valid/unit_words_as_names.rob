@@ -1,0 +1,10 @@
+// RoboLang v1.1 fixture: valid
+// expect: ok
+// why: unit words (s, ms, min) are not reserved and may be used as names
+
+task t(robot s, location min) {
+    plan {
+        move s to min;
+        wait for 1s;
+    }
+}

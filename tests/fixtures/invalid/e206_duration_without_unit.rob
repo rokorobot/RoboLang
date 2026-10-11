@@ -1,0 +1,9 @@
+// RoboLang v1.1 fixture: invalid
+// expect: error E206 (syntax) line 7
+// why: durations need a unit; the v1 runtime assumed seconds
+
+task t(robot r, object box, location src, location dst, region cell) {
+    plan {
+        wait for 5;
+    }
+}

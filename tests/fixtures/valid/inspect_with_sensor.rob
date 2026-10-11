@@ -1,0 +1,10 @@
+// RoboLang v1.1 fixture: valid
+// expect: ok
+// why: inspect names its sensor explicitly
+
+task inspect_part(robot r, object part, location cam_pos) {
+    plan {
+        move r to cam_pos;
+        inspect r part using "camera_top";
+    }
+}

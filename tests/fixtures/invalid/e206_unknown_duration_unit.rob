@@ -1,0 +1,9 @@
+// RoboLang v1.1 fixture: invalid
+// expect: error E206 (syntax) line 7
+// why: 'sec' is not a duration unit (ms, s, min)
+
+task t(robot r, object box, location src, location dst, region cell) {
+    plan {
+        wait for 5sec;
+    }
+}

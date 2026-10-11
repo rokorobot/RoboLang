@@ -1,0 +1,9 @@
+// RoboLang v1.1 fixture: invalid
+// expect: error E209 (syntax) line 7
+// why: inspect must name its sensor; no default sensor is chosen
+
+task t(robot r, object box, location src, location dst, region cell) {
+    plan {
+        inspect r box;
+    }
+}

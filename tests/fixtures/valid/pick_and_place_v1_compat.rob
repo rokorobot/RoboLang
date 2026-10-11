@@ -1,0 +1,20 @@
+// RoboLang v1.1 fixture: valid
+// expect: ok, warning W401 line 6
+// why: examples/pick_and_place.rob unchanged; unitless max_speed is deprecated
+
+task demo_pick_and_place(robot r, object box, location src, location dst, region cell) {
+    @safety max_speed 0.5;
+
+    pre {
+        robot_ready r;
+        region_clear cell;
+    }
+
+    plan {
+        move r to src;
+        grasp r box;
+        move r to dst;
+        place r box at dst;
+        communicate r to "fleet" with "TASK_COMPLETE";
+    }
+}

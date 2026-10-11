@@ -1,0 +1,10 @@
+// RoboLang v1.1 fixture: invalid
+// expect: error E206 (syntax) line 6
+// why: 'mph' is not a speed unit (m/s, rad/s)
+
+task t(robot r, object box, location src, location dst, region cell) {
+    @safety max_speed 2 mph;
+    plan {
+        move r to src;
+    }
+}

@@ -1,0 +1,11 @@
+// RoboLang v1.1 fixture: invalid
+// expect: error E202 (syntax) line 8
+// why: every statement ends with ';'
+
+task t(robot r, object box, location src, location dst, region cell) {
+    plan {
+        move r to src;
+        grasp r box
+        move r to dst;
+    }
+}

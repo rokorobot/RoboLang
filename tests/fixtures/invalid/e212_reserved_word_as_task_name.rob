@@ -1,0 +1,9 @@
+// RoboLang v1.1 fixture: invalid
+// expect: error E212 (syntax) line 5
+// why: 'inspect' is reserved; the v1 manual names a task this way
+
+task inspect(robot r, object obj) {
+    plan {
+        grasp r obj;
+    }
+}

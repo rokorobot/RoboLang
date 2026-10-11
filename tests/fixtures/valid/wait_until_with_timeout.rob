@@ -1,0 +1,12 @@
+// RoboLang v1.1 fixture: valid
+// expect: ok
+// why: wait until takes any condition and requires a timeout
+
+task t(robot r, object box, location src, location dst, region cell) {
+    plan {
+        wait until region_clear cell timeout 30s;
+        wait until sensor_ok "camera_top" timeout 5s;
+        wait until object_exists box timeout 2min;
+        move r to src;
+    }
+}

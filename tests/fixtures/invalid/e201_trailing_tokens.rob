@@ -1,0 +1,10 @@
+// RoboLang v1.1 fixture: invalid
+// expect: error E201 (syntax) line 10
+// why: only tasks may appear at the top level
+
+task t(robot r, object box, location src, location dst, region cell) {
+    plan {
+        move r to src;
+    }
+}
+}

@@ -1,0 +1,10 @@
+// RoboLang v1.1 fixture: invalid
+// expect: error E211 (syntax) line 7
+// why: message_received is documented in the v1 manual but not part of v1.1
+
+task receive_box(robot mobile, location handoff) {
+    plan {
+        wait until message_received "HANDOFF_READY" timeout 60s;
+        move mobile to handoff;
+    }
+}

@@ -1,0 +1,13 @@
+// RoboLang v1.1 fixture: invalid
+// expect: error E208 (syntax) line 9
+// why: task-level @safety annotations come before pre
+
+task t(robot r, object box, location src, location dst, region cell) {
+    pre {
+        robot_ready r;
+    }
+    @safety max_speed 0.5 m/s;
+    plan {
+        move r to src;
+    }
+}

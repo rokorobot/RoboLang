@@ -1,0 +1,9 @@
+// RoboLang v1.1 fixture: invalid
+// expect: error E303 (static) line 7
+// why: 'nowhere' is not a parameter of the task
+
+task t(robot r, object box, location src, location dst, region cell) {
+    plan {
+        move r to nowhere;
+    }
+}

@@ -1,0 +1,20 @@
+// RoboLang v1.1 fixture: valid
+// expect: ok
+// why: whitespace and line breaks are not significant; comments are skipped
+
+task t(robot r,object box,location dst){pre{}plan{grasp r box;place r box at dst;}} // trailing comment
+// a comment between tasks
+task
+u
+(
+    robot r   ,
+    location dst
+)
+{
+    plan
+    {
+        move
+            r to dst
+        ;   // the ';' may sit on its own line
+    }
+}

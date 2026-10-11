@@ -1,0 +1,9 @@
+// RoboLang v1.1 fixture: invalid
+// expect: error E101 (lexical) line 5
+// why: names must start with a letter
+
+task t(robot _r, location dst) {
+    plan {
+        move _r to dst;
+    }
+}

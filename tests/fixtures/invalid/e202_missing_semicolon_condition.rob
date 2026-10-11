@@ -1,0 +1,12 @@
+// RoboLang v1.1 fixture: invalid
+// expect: error E202 (syntax) line 7
+// why: every condition ends with ';'
+
+task t(robot r, object box, location src, location dst, region cell) {
+    pre {
+        robot_ready r
+    }
+    plan {
+        move r to src;
+    }
+}

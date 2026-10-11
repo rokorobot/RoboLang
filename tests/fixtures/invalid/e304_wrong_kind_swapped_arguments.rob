@@ -1,0 +1,9 @@
+// RoboLang v1.1 fixture: invalid
+// expect: error E304 (static) line 7
+// why: move takes a robot then a location
+
+task t(robot r, object box, location src, location dst, region cell) {
+    plan {
+        move src to r;
+    }
+}

@@ -1,0 +1,10 @@
+// RoboLang v1.1 fixture: invalid
+// expect: error E211 (syntax) line 6
+// why: @safety no_go_region is documented in the v1 manual but not part of v1.1
+
+task t(robot r, object box, location src, location dst, region cell) {
+    @safety no_go_region cell;
+    plan {
+        move r to src;
+    }
+}

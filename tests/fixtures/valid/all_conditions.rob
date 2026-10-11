@@ -1,0 +1,15 @@
+// RoboLang v1.1 fixture: valid
+// expect: ok
+// why: every v1.1 condition in a pre block
+
+task t(robot r, object box, location src, location dst, region cell) {
+    pre {
+        robot_ready r;
+        region_clear cell;
+        object_exists box;
+        sensor_ok "camera_top";
+    }
+    plan {
+        grasp r box;
+    }
+}
