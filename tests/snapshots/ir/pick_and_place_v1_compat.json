@@ -1,0 +1,80 @@
+{
+  "ir_schema": "robolang.task-ir",
+  "ir_schema_version": "1.0",
+  "language_version": "1.1",
+  "tasks": [
+    {
+      "name": "demo_pick_and_place",
+      "parameters": [
+        {
+          "name": "r",
+          "type": "robot"
+        },
+        {
+          "name": "box",
+          "type": "object"
+        },
+        {
+          "name": "src",
+          "type": "location"
+        },
+        {
+          "name": "dst",
+          "type": "location"
+        },
+        {
+          "name": "cell",
+          "type": "region"
+        }
+      ],
+      "safety": [
+        {
+          "kind": "max_speed",
+          "limit": {
+            "value": "0.5",
+            "unit": null
+          }
+        }
+      ],
+      "preconditions": [
+        {
+          "kind": "robot_ready",
+          "robot": "r"
+        },
+        {
+          "kind": "region_clear",
+          "region": "cell"
+        }
+      ],
+      "steps": [
+        {
+          "kind": "move",
+          "robot": "r",
+          "target": "src"
+        },
+        {
+          "kind": "grasp",
+          "robot": "r",
+          "object": "box"
+        },
+        {
+          "kind": "move",
+          "robot": "r",
+          "target": "dst"
+        },
+        {
+          "kind": "place",
+          "robot": "r",
+          "object": "box",
+          "target": "dst"
+        },
+        {
+          "kind": "communicate",
+          "robot": "r",
+          "channel": "fleet",
+          "message": "TASK_COMPLETE"
+        }
+      ]
+    }
+  ]
+}

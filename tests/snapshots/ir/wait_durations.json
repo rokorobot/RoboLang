@@ -1,0 +1,36 @@
+{
+  "ir_schema": "robolang.task-ir",
+  "ir_schema_version": "1.0",
+  "language_version": "1.1",
+  "tasks": [
+    {
+      "name": "pause",
+      "parameters": [],
+      "safety": [],
+      "preconditions": [],
+      "steps": [
+        {
+          "kind": "wait_for",
+          "duration": {
+            "value": "500",
+            "unit": "ms"
+          }
+        },
+        {
+          "kind": "wait_for",
+          "duration": {
+            "value": "2.5",
+            "unit": "s"
+          }
+        },
+        {
+          "kind": "wait_for",
+          "duration": {
+            "value": "1",
+            "unit": "min"
+          }
+        }
+      ]
+    }
+  ]
+}

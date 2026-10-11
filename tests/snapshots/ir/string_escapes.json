@@ -1,0 +1,54 @@
+{
+  "ir_schema": "robolang.task-ir",
+  "ir_schema_version": "1.0",
+  "language_version": "1.1",
+  "tasks": [
+    {
+      "name": "t",
+      "parameters": [
+        {
+          "name": "r",
+          "type": "robot"
+        },
+        {
+          "name": "box",
+          "type": "object"
+        },
+        {
+          "name": "src",
+          "type": "location"
+        },
+        {
+          "name": "dst",
+          "type": "location"
+        },
+        {
+          "name": "cell",
+          "type": "region"
+        }
+      ],
+      "safety": [],
+      "preconditions": [],
+      "steps": [
+        {
+          "kind": "communicate",
+          "robot": "r",
+          "channel": "fleet",
+          "message": "said \"done\""
+        },
+        {
+          "kind": "communicate",
+          "robot": "r",
+          "channel": "log",
+          "message": "path C:\\cell\\a"
+        },
+        {
+          "kind": "communicate",
+          "robot": "r",
+          "channel": "log",
+          "message": "line one\nline two\tend"
+        }
+      ]
+    }
+  ]
+}

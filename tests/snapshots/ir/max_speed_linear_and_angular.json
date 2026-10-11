@@ -1,0 +1,56 @@
+{
+  "ir_schema": "robolang.task-ir",
+  "ir_schema_version": "1.0",
+  "language_version": "1.1",
+  "tasks": [
+    {
+      "name": "t",
+      "parameters": [
+        {
+          "name": "r",
+          "type": "robot"
+        },
+        {
+          "name": "box",
+          "type": "object"
+        },
+        {
+          "name": "src",
+          "type": "location"
+        },
+        {
+          "name": "dst",
+          "type": "location"
+        },
+        {
+          "name": "cell",
+          "type": "region"
+        }
+      ],
+      "safety": [
+        {
+          "kind": "max_speed",
+          "limit": {
+            "value": "0.5",
+            "unit": "m/s"
+          }
+        },
+        {
+          "kind": "max_speed",
+          "limit": {
+            "value": "1",
+            "unit": "rad/s"
+          }
+        }
+      ],
+      "preconditions": [],
+      "steps": [
+        {
+          "kind": "move",
+          "robot": "r",
+          "target": "src"
+        }
+      ]
+    }
+  ]
+}

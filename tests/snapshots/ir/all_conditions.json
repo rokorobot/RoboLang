@@ -1,0 +1,58 @@
+{
+  "ir_schema": "robolang.task-ir",
+  "ir_schema_version": "1.0",
+  "language_version": "1.1",
+  "tasks": [
+    {
+      "name": "t",
+      "parameters": [
+        {
+          "name": "r",
+          "type": "robot"
+        },
+        {
+          "name": "box",
+          "type": "object"
+        },
+        {
+          "name": "src",
+          "type": "location"
+        },
+        {
+          "name": "dst",
+          "type": "location"
+        },
+        {
+          "name": "cell",
+          "type": "region"
+        }
+      ],
+      "safety": [],
+      "preconditions": [
+        {
+          "kind": "robot_ready",
+          "robot": "r"
+        },
+        {
+          "kind": "region_clear",
+          "region": "cell"
+        },
+        {
+          "kind": "object_exists",
+          "object": "box"
+        },
+        {
+          "kind": "sensor_ok",
+          "sensor": "camera_top"
+        }
+      ],
+      "steps": [
+        {
+          "kind": "grasp",
+          "robot": "r",
+          "object": "box"
+        }
+      ]
+    }
+  ]
+}
