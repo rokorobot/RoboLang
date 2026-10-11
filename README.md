@@ -238,7 +238,7 @@ You’re free to use, modify, and distribute RoboLang in open or commercial robo
 
 ## 🌍 Links & Resources
 
-- 📘 [Documentation overview](docs/index.md)
+- 📘 [Official Docs](https://rokorobot.github.io/RoboLang/)
 - 🐞 [Issues](https://github.com/rokorobot/RoboLang/issues)
 - Planned, not available yet: Docker image, ROS Index listing, Hugging Face Space for LLM integration
 
