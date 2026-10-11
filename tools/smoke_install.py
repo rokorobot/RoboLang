@@ -30,6 +30,9 @@ INVALID = REPO / "tests" / "fixtures" / "invalid" / "e303_undeclared_name.rob"
 SNAPSHOT = REPO / "tests" / "snapshots" / "ir" / "multiple_tasks.json"
 MULTI = REPO / "tests" / "fixtures" / "valid" / "multiple_tasks.rob"
 FORBIDDEN = ("rclpy", "control_msgs", "trajectory_msgs", "std_msgs")
+# The v1 prototype: repository source only, never part of an installation.
+LEGACY = ("robolang_runtime", "robolang_adapter", "robolang_adapter_ros2", "robolang_ros2_main")
+ROS_STUBS = ("rclpy", "rclpy.node", "rclpy.action", "trajectory_msgs.msg", "control_msgs.action", "std_msgs.msg")
 VERSION = tomllib.loads((REPO / "pyproject.toml").read_text(encoding="utf-8"))["project"]["version"]
 
 
@@ -77,7 +80,9 @@ def build(dist: Path) -> tuple[Path, Path]:
     expect(f"Version: {VERSION}" in headers, f"wheel version is {VERSION}")
     expect("Requires-Python: >=3.11" in headers, "wheel requires Python 3.11 or newer")
     expect("robolang/cli.py" in names and "robolang/ir.py" in names, "wheel contains the robolang package")
-    expect("robolang_runtime.py" in names and "robolang_ros2_main.py" in names, "wheel contains the legacy modules")
+    expect(not any(f"{m}.py" in names for m in LEGACY), "wheel contains none of the four legacy modules")
+    code = sorted(n for n in names if ".dist-info/" not in n)
+    expect(all(n.startswith("robolang/") for n in code), f"wheel code is only the robolang package ({len(code)} files)")
     section = entry_points.split("[console_scripts]", 1)[1].split("[", 1)[0]
     scripts = [line.strip() for line in section.splitlines() if line.strip()]
     expect(scripts == ["robolang = robolang.cli:run"], f"the only console script is robolang ({scripts})")
@@ -143,13 +148,52 @@ def check_install(artifact: Path, work: Path):
     module = run([python, "-m", "robolang", "--version"], cwd=outside, env=env).stdout.decode().strip()
     expect(module == version, "python -m robolang works")
 
-    legacy = run([python, "-c", "import robolang_runtime, robolang_adapter"], cwd=outside, env=env, check=False)
-    expect(legacy.returncode == 0, "the legacy interpreter modules are importable")
+    check_no_legacy_code(python, outside, env, work)
 
-    ros = run([python, "-c", "import robolang_ros2_main"], cwd=outside, env=env, check=False)
+
+PROBE = """
+import importlib, importlib.metadata, importlib.util, json, sys
+legacy = sys.argv[1].split(",")
+found = {m: importlib.util.find_spec(m) is not None for m in legacy}
+errors = {}
+for m in legacy:
+    try:
+        importlib.import_module(m)
+        errors[m] = "imported"
+    except ModuleNotFoundError as error:
+        errors[m] = error.name
+files = sorted({str(f).replace(chr(92), "/").split("/")[0] for f in importlib.metadata.files("robolang")})
+print(json.dumps({"found": found, "errors": errors, "top": files}))
+"""
+
+
+def check_no_legacy_code(python: Path, outside: Path, env: dict, work: Path):
+    """The installation holds only the read-only package, also when ROS 2 modules are importable."""
+    result = json.loads(run([python, "-c", PROBE, ",".join(LEGACY)], cwd=outside, env=env).stdout)
+    expect(not any(result["found"].values()), "none of the four legacy modules can be found in the environment")
     expect(
-        ros.returncode != 0 and b"rclpy" in ros.stderr,
-        "the legacy ROS 2 module cannot even be imported here: it needs rclpy, which is not installed",
+        all(result["errors"][m] == m for m in LEGACY),
+        "importing each legacy module fails because the module itself is absent",
+    )
+    top = [name for name in result["top"] if name not in ("..", "") and not name.endswith(".dist-info")]
+    expect(top == ["robolang"], f"the distribution installs only the robolang package ({top})")
+
+    # Same check with stand-ins for the ROS 2 Python modules importable, as on a ROS 2 machine:
+    # the legacy code must be absent, not merely blocked by a missing rclpy.
+    stubs = work / "ros_stubs"
+    for module in ROS_STUBS:
+        package = stubs.joinpath(*module.split("."))
+        package.mkdir(parents=True, exist_ok=True)
+        for directory in (package, *package.relative_to(stubs).parents):
+            (stubs / directory / "__init__.py").touch()
+    with_ros = dict(env, PYTHONPATH=str(stubs))
+    probe = "import rclpy.node, control_msgs.action, std_msgs.msg, trajectory_msgs.msg"
+    expect(run([python, "-c", probe], cwd=outside, env=with_ros, check=False).returncode == 0,
+           "stand-in ROS 2 modules are importable in this second check")
+    result = json.loads(run([python, "-c", PROBE, ",".join(LEGACY)], cwd=outside, env=with_ros).stdout)
+    expect(
+        not any(result["found"].values()) and all(result["errors"][m] == m for m in LEGACY),
+        "with ROS 2 modules importable, the four legacy modules are still absent",
     )
 
 

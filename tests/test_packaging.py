@@ -47,6 +47,26 @@ def test_setup_py_adds_no_metadata_of_its_own():
     assert "console_scripts" not in source
 
 
+LEGACY_MODULES = ("robolang_runtime", "robolang_adapter", "robolang_adapter_ros2", "robolang_ros2_main")
+
+
+def test_only_the_read_only_package_is_installed():
+    """The v1 prototype modules must not be part of the installed distribution."""
+    setuptools = PYPROJECT["tool"]["setuptools"]
+
+    assert setuptools["packages"] == ["robolang"]
+    assert "py-modules" not in setuptools
+    assert not ({"find", "packages.find"} & set(setuptools))
+
+
 def test_legacy_sources_are_still_in_the_repository():
-    for module in PYPROJECT["tool"]["setuptools"]["py-modules"]:
+    for module in LEGACY_MODULES:
         assert (REPO_ROOT / "src" / f"{module}.py").is_file(), module
+
+
+def test_read_only_package_does_not_depend_on_the_legacy_modules():
+    package = REPO_ROOT / "src" / "robolang"
+    for path in package.glob("*.py"):
+        text = path.read_text(encoding="utf-8")
+        for module in LEGACY_MODULES:
+            assert f"import {module}" not in text and f"from {module}" not in text, (path.name, module)

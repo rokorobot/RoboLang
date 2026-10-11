@@ -174,13 +174,13 @@ The same commands run straight from the clone:
 python src/robolang validate examples/pick_and_place.rob
 ```
 
-### The v1 simulated demo
+### The v1 simulated demo (from the clone only)
 
 ```bash
 python src/robolang_runtime.py examples/pick_and_place.rob
 ```
 
-This runs the older v1 line-based interpreter with a simulated adapter that only prints. It does not use the validation above (see [Project Status](#-project-status)).
+This runs the older v1 line-based interpreter with a simulated adapter that only prints. It does not use the validation above (see [Project Status](#-project-status)). It works from a clone of the repository; it is not part of the installed package.
 
 ### Development
 
@@ -202,14 +202,19 @@ python tools/smoke_install.py
 
 Tests marked `xfail` describe planned behavior that is not implemented yet. The last command builds the wheel and source distribution, installs each into a fresh virtual environment and runs the installed `robolang` command; it needs network access.
 
-### ROS2 is not part of this installation
+### What is installed, and what is only in the repository
 
-`python -m pip install .` installs one command, `robolang`, with the read-only `validate` and `inspect` subcommands. It has no ROS2 dependency and installs **no command that can execute a task or move a robot**.
+| | Installed by `python -m pip install .` | In the repository |
+|---|---|---|
+| `robolang` package: lexer, parser, validator, IR, `validate` / `inspect` | ✅ Yes. This is the supported package | `src/robolang/` |
+| v1 prototype: `robolang_runtime.py`, `robolang_adapter.py` (interpreter and simulated adapter) | ❌ No | `src/`, historical source; runs from a clone |
+| v1 ROS2 code: `robolang_adapter_ros2.py`, `robolang_ros2_main.py` | ❌ No | `src/`, historical source; never validated |
 
-The experimental ROS2 execution path (`src/robolang_ros2_main.py` with the v1 interpreter and ROS2 adapter) is not part of the supported developer installation:
+The installed package is read-only tooling. It has no ROS2 dependency, installs one command (`robolang`) and contains **no code that can execute a task or move a robot**.
 
-- Earlier versions of `setup.py` defined a `ros2_runtime` console command. As of distribution `0.1.0a1` it is **no longer installed**. This is a deliberate compatibility change: that command leads to code which does not pass through the validator.
-- The source files are kept unchanged in the repository.
+The v1 prototype files are kept in the repository unchanged, as the historical starting point of the project. They are not installed because they act without passing through the validator. As a consequence:
+
+- Earlier versions of `setup.py` installed those four modules and a `ros2_runtime` console command. As of distribution `0.1.0a1` neither is installed. This is a deliberate compatibility change.
 - The ROS2 integration has never been validated, and how it will be installed in future has not been decided.
 
 ---
@@ -393,8 +398,8 @@ Simulates robot motion and communication in the terminal
 > ⚠️ Everything in this section describes the **originally intended** ROS2 workflow. It has not been validated end to end:
 > the repository ships no `package.xml` or ROS2 tests, and the steps below have not been reproduced on a clean ROS2 install.
 >
-> **These steps no longer work as written.** As of distribution `0.1.0a1` the package does not install the `ros2_runtime`
-> command that step 5 uses, because it leads to the v1 interpreter and ROS2 adapter without any validation.
+> **These steps no longer work as written.** As of distribution `0.1.0a1` the package installs neither the `ros2_runtime`
+> command that step 5 uses nor the v1 interpreter and ROS2 adapter behind it, because that code acts without any validation.
 > The section is kept as a record of the design; a supported ROS2 installation path has not been defined.
 > Physical robot execution is outside the approved scope — see [Project Status](#-project-status).
 
