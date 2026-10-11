@@ -39,7 +39,17 @@ The seven deferred constructs are `with_approach`, `in_region`, `@safety no_go_r
 `@safety require_guard`, action-level `@safety`, `message_received`, and `scalar` / `duration`
 parameters.
 
-## 4. Parser approach for RL-11B
+## 4. Third round: remaining questions
+
+| Question | Decision |
+|---|---|
+| Position of `E306` / `E308` | Keep the later annotation as the error location. A future improvement may also reference the original annotation. |
+| `robolang 1.0;` | Reject with `E213`. Do not silently treat an explicitly versioned 1.0 file as 1.1. |
+| Escapes in sensor and channel names | Accept lexically. Whether the resulting name is supported belongs to later capability and semantic validation. |
+| Existing PDFs | Leave unchanged for RL-11A and preserve them as historical v1 documentation. Schedule a separate documentation-alignment task. |
+| `receive_box` example | Labeled a non-equivalent illustrative redesign that requires manual workflow review. Sensor health and receipt of a handoff event are different conditions; it is not an automatic or behavior-preserving migration. Message-driven coordination remains deferred to v1.3. |
+
+## 5. Parser approach for RL-11B
 
 **Decided: hand-written recursive descent.**
 
@@ -55,7 +65,7 @@ parameters.
 Considered and not chosen: Lark (executable grammar, but adds a dependency and needs custom
 handling to map generic parse errors to the specific codes).
 
-## 5. How the specification implements round two
+## 6. How the specification implements round two
 
 | Decision | In the specification |
 |---|---|
@@ -64,9 +74,9 @@ handling to map generic parse errors to the specific codes).
 | Dual speed limits | Section 4.4; static rules 6 and 7; `E306` redefined per unit type; new code `E308` for unitless combined with explicit |
 | Migration of documented examples | Section 8.5 |
 
-## 6. Syntax compatibility
+## 7. Syntax compatibility
 
 Set out in section 8 of the specification: existing repository sources stay valid (with
 `W401`), the seven deferred constructs are rejected with `E211`, the permissive behaviors of
-the v1 runtime listed in 8.3 become errors, and the four affected documented examples have
-written migrations in 8.5.
+the v1 runtime listed in 8.3 become errors, and the four affected documented examples are
+worked through in 8.5 (three migrations and one redesign).

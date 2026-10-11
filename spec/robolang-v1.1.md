@@ -1,6 +1,6 @@
 # RoboLang v1.1 Language Specification
 
-**Status:** Draft (RL-11A), revised after owner review on 2026-10-12; awaiting final approval.
+**Status:** RL-11A specification, approved by the owner on 2026-10-12.
 **Nothing in this document is implemented.**
 The repository still runs the v1 line-based interpreter described in the README.
 **Syntax version:** 1.1
@@ -351,11 +351,11 @@ Notes:
 | Developer guide `store_box` | Valid |
 | Manual ch. 1 `store_red_box` | Migration required: `with_approach`, `in_region` |
 | Manual ch. 5 `inspect` | Migration required: task is named `inspect` (reserved), uses `in_region` |
-| Manual ch. 9 `receive_box` | Migration required: `message_received`, no `timeout`, `box` undeclared, `region_clear` applied to a location |
+| Manual ch. 9 `receive_box` | No equivalent in v1.1: `message_received` (also no `timeout`, `box` undeclared, `region_clear` applied to a location). Needs a redesign and manual review. |
 | Library guide `inspect_object` | Migration required: `scalar` parameter, `wait for dwell_s` |
 
-"Manual", "Library guide" and "Developer guide" are the PDFs in `docs/`. The four migrations
-are written out in section 8.5.
+"Manual", "Library guide" and "Developer guide" are the PDFs in `docs/`. The four affected
+examples are worked through in section 8.5.
 
 ### 8.2 Documented v1 constructs not in v1.1
 
@@ -399,8 +399,10 @@ Files that the v1 interpreter accepted and v1.1 rejects:
 
 ### 8.5 Migrating the affected documented examples
 
-Each migrated task below is valid v1.1. Where a v1 construct has no v1.1 equivalent, the
-migration **drops** it; it does not emulate it. What is lost is stated for each case.
+Each task below is valid v1.1. Where a v1 construct has no v1.1 equivalent, the migration
+**drops** it; it does not emulate it. What is lost is stated for each case. None of these is
+an automatic rewrite: each needs its author's review, and `receive_box` in particular is a
+redesign, not a migration.
 
 **Manual ch. 1 — `store_red_box`.** Remove `with_approach` and `in_region`; give `max_speed`
 a unit.
@@ -440,10 +442,13 @@ task inspect_object(robot r, object obj, location cam_pos, region zone) {
 Lost: the restriction of the move to `zone`. The `zone` parameter is now unused, which is
 allowed.
 
-**Manual ch. 9 — `receive_box`.** `message_received` has no v1.1 equivalent. The library guide
-documents the receiver as waiting on a sensor signal instead, which v1.1 can express. The
-task must also declare `box`, give `wait until` a timeout, and apply `region_clear` to a
-region rather than to the `handoff` location.
+**Manual ch. 9 — `receive_box` — non-equivalent illustrative redesign; requires manual
+workflow review.** `message_received` has no v1.1 equivalent, so this example **cannot be
+migrated**. The task below is a different workflow that happens to be expressible in v1.1: it
+follows the library guide, which shows the receiver waiting on a sensor signal. It is not an
+automatic or behavior-preserving migration. The redesign also declares `box`, gives
+`wait until` a timeout, and applies `region_clear` to a region rather than to the `handoff`
+location.
 
 ```rob
 task receive_box(robot mobile, object box, location handoff, region handoff_zone) {
@@ -456,9 +461,11 @@ task receive_box(robot mobile, object box, location handoff, region handoff_zone
 }
 ```
 
-Lost: reacting to the `HANDOFF_READY` message itself. Waiting on `"handoff_signal"` is a
-different trigger, not a translation; message-driven handoff arrives with the v1.3 protocol.
-The 60s timeout is an example value.
+Not equivalent: `sensor_ok "handoff_signal"` reports the health of a sensor. It does not mean
+that a `HANDOFF_READY` message was received, and it must not be read as a handoff event.
+Whether a sensor-based trigger is acceptable for a given cell is a workflow decision for a
+person to make. Message-driven coordination remains deferred to v1.3. The 60s timeout is an
+example value.
 
 **Library guide — `inspect_object`.** Remove the `scalar dwell_s` parameter and write the
 dwell time as a literal duration.
@@ -512,17 +519,16 @@ Decided by the owner on 2026-10-12; recorded in
 | String escapes | `\"`, `\\`, `\n`, `\t`. Unknown escapes are rejected (`E104`). |
 | Empty `plan` | Rejected (`E208`). Empty `pre` is valid. |
 | Linear and angular `max_speed` | Both allowed, at most once per unit type. Unitless form only as a single legacy annotation. |
+| Position of `E306` / `E308` | The later annotation. A future improvement may also reference the original one. |
+| `robolang 1.0;` | Rejected with `E213`. An explicitly versioned 1.0 file is never silently read as 1.1. |
+| Escapes in sensor and channel names | Accepted lexically. Whether the resulting name is supported belongs to later capability and semantic validation. |
+| PDFs in `docs/` | Left unchanged as historical v1 documentation. Aligning them is a separate task. |
 
 ## 11. Remaining questions
 
-None of these block RL-11B. Each is a detail this draft settles provisionally.
+None. Follow-up work outside this specification:
 
-1. **Error position for conflicting limits.** `E306` and `E308` are reported at the later
-   annotation. Alternative: report both positions.
-2. **Version strictness.** `robolang 1.0;` is rejected like any other non-1.1 version, even
-   though unmarked v1 files are accepted. Alternative: accept `1.0` as an alias.
-3. **Escapes in names.** Sensor and channel strings may contain escapes (for example a tab)
-   because the lexer treats all strings alike. Restricting what a sensor or channel name may
-   contain is left to the capability checks in v1.2 / v1.3.
-4. **Documentation.** The PDFs in `docs/` still describe the seven deferred constructs and the
-   unitless forms. Updating or annotating them is outside RL-11A.
+- **RL-11B:** lexer, parser and AST, with the fixtures in `tests/fixtures/` wired into
+  automated tests. Until then, conformance to this specification is not verified by CI.
+- **Documentation alignment:** the PDFs in `docs/` describe v1, including the deferred
+  constructs and unitless forms. They are kept as historical documentation.
