@@ -19,6 +19,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import tomllib
 import venv
 import zipfile
 from pathlib import Path
@@ -29,6 +30,7 @@ INVALID = REPO / "tests" / "fixtures" / "invalid" / "e303_undeclared_name.rob"
 SNAPSHOT = REPO / "tests" / "snapshots" / "ir" / "multiple_tasks.json"
 MULTI = REPO / "tests" / "fixtures" / "valid" / "multiple_tasks.rob"
 FORBIDDEN = ("rclpy", "control_msgs", "trajectory_msgs", "std_msgs")
+VERSION = tomllib.loads((REPO / "pyproject.toml").read_text(encoding="utf-8"))["project"]["version"]
 
 
 def run(command, cwd, check=True, env=None) -> subprocess.CompletedProcess:
@@ -72,11 +74,14 @@ def build(dist: Path) -> tuple[Path, Path]:
         not any(name in line for line in requires for name in FORBIDDEN),
         "no dependency, required or optional, names a ROS 2 package",
     )
-    expect("Version: 1.0.0" in headers and "Requires-Python: >=3.11" in headers, "wheel version and Python requirement")
+    expect(f"Version: {VERSION}" in headers, f"wheel version is {VERSION}")
+    expect("Requires-Python: >=3.11" in headers, "wheel requires Python 3.11 or newer")
     expect("robolang/cli.py" in names and "robolang/ir.py" in names, "wheel contains the robolang package")
     expect("robolang_runtime.py" in names and "robolang_ros2_main.py" in names, "wheel contains the legacy modules")
-    expect("robolang = robolang.cli:run" in entry_points, "wheel defines the robolang command")
-    expect("ros2_runtime = robolang_ros2_main:main" in entry_points, "wheel keeps the ros2_runtime entry point")
+    section = entry_points.split("[console_scripts]", 1)[1].split("[", 1)[0]
+    scripts = [line.strip() for line in section.splitlines() if line.strip()]
+    expect(scripts == ["robolang = robolang.cli:run"], f"the only console script is robolang ({scripts})")
+    expect("ros2_runtime" not in entry_points, "wheel defines no ros2_runtime entry point")
     return wheel, sdist
 
 
@@ -107,9 +112,17 @@ def check_install(artifact: Path, work: Path):
     expect(env_dir.resolve() in Path(location).resolve().parents, "the package is imported from the environment")
     expect(REPO.resolve() not in Path(location).resolve().parents, "the package is not imported from the checkout")
     expect(robolang.exists(), "the robolang command exists")
+    commands = sorted(p.stem for p in bin_dir.iterdir() if p.stem.lower().startswith(("robolang", "ros2")))
+    expect(commands == ["robolang"], f"robolang is the only RoboLang command installed ({commands})")
+    expect(not list(bin_dir.glob("ros2_runtime*")), "no ros2_runtime command is installed")
+    help_text = run([robolang, "--help"], cwd=outside, env=env).stdout.decode()
+    expect("validate" in help_text and "inspect" in help_text, "the command offers validate and inspect")
+    for word in ("run", "execute", "ros2_runtime"):
+        attempt = run([robolang, word, EXAMPLE], cwd=outside, env=env, check=False)
+        expect(attempt.returncode == 2, f"'robolang {word}' is not a command (exit 2)")
 
     version = run([robolang, "--version"], cwd=outside, env=env).stdout.decode().strip()
-    expect(version == "robolang 1.0.0 (language 1.1, IR schema 1.0)", f"--version: {version}")
+    expect(version == f"robolang {VERSION} (language 1.1, IR schema 1.0)", f"--version: {version}")
 
     valid = run([robolang, "validate", EXAMPLE], cwd=outside, env=env)
     expect(b"valid RoboLang 1.1 (1 task, 1 warning)" in valid.stdout, "validate accepts the example")
@@ -136,7 +149,7 @@ def check_install(artifact: Path, work: Path):
     ros = run([python, "-c", "import robolang_ros2_main"], cwd=outside, env=env, check=False)
     expect(
         ros.returncode != 0 and b"rclpy" in ros.stderr,
-        "the ROS 2 entry point needs rclpy, which the default installation does not provide",
+        "the legacy ROS 2 module cannot even be imported here: it needs rclpy, which is not installed",
     )
 
 

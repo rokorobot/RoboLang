@@ -4,9 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "robolang"
-# Distribution version. It is independent of the language version (1.1) and
-# the IR schema version (1.0), which are defined in src/robolang/.
-version = "1.0.0"
+# Distribution version: the maturity of this package (a pre-release).
+# It is independent of the language version (1.1) and the IR schema
+# version (1.0), which are defined in src/robolang/.
+version = "0.1.0a1"
 description = "RoboLang: a task description language for robots, with a parser, validator and read-only developer tools."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -24,7 +25,7 @@ classifiers = [
     "Topic :: Software Development :: Compilers",
 ]
 # No runtime dependencies. In particular there is no dependency on rclpy:
-# ROS 2 Python packages are not distributed on PyPI. See the ros2_runtime note below.
+# ROS 2 Python packages are not distributed on PyPI.
 dependencies = []
 
 [project.optional-dependencies]
@@ -36,17 +37,19 @@ Documentation = "https://rokorobot.github.io/RoboLang/"
 Issues = "https://github.com/rokorobot/RoboLang/issues"
 
 [project.scripts]
-# Read-only developer tools: `robolang validate FILE`, `robolang inspect FILE`.
+# The only installed command. Read-only: `robolang validate FILE`, `robolang inspect FILE`.
+#
+# The original setup.py also defined `ros2_runtime = robolang_ros2_main:main`.
+# It is deliberately NOT installed: it leads to the v1 interpreter and the
+# unvalidated ROS 2 adapter, which do not pass through the static validator.
+# Do not add an execution command here without an explicit owner decision.
 robolang = "robolang.cli:run"
-# Experimental and unvalidated. Starts only inside a ROS 2 environment that
-# provides rclpy, control_msgs, trajectory_msgs and std_msgs; without one it
-# stops with an ImportError. Kept from the original setup.py.
-ros2_runtime = "robolang_ros2_main:main"
 
 [tool.setuptools]
 package-dir = { "" = "src" }
 packages = ["robolang"]
-# The v1 prototype: line-based interpreter, simulated adapter, ROS 2 adapter and entry point.
+# The v1 prototype sources: line-based interpreter, simulated adapter, ROS 2
+# adapter and its entry-point module. Shipped unchanged; no command starts them.
 py-modules = [
     "robolang_adapter",
     "robolang_adapter_ros2",
