@@ -1,10 +1,9 @@
 # RoboLang v1.1 Language Specification
 
 **Status:** RL-11A specification, approved by the owner on 2026-10-12.
-**Implementation:** the lexer, parser and AST (sections 2 to 4 and 7, codes `E1xx`, `E2xx`,
-`W401`) are implemented in `src/robolang/` (RL-11B). The static rules of section 5 (`E3xx`)
-are not implemented. The front end is not connected to execution: the repository still runs
-the v1 line-based interpreter described in the README.
+**Implementation:** the lexer, parser and AST (RL-11B) and the static rules of section 5
+(RL-11C) are implemented in `src/robolang/`; see section 12. The front end is not connected
+to execution: the repository still runs the v1 line-based interpreter described in the README.
 **Syntax version:** 1.1
 **Grammar:** [`grammar.ebnf`](grammar.ebnf)
 **Fixtures:** [`tests/fixtures/`](../tests/fixtures/README.md)
@@ -213,8 +212,7 @@ checked only; their evaluation is defined in v1.2.
 
 ## 5. Static rules
 
-Static validation runs after a successful parse and before anything executes. It is specified
-here and implemented in RL-11C.
+Static validation runs after a successful parse and before anything executes.
 
 1. Task names are unique within a file.
 2. Parameter names are unique within a task.
@@ -227,6 +225,9 @@ here and implemented in RL-11C.
 8. Strings naming a sensor, channel or message are not empty after escapes are decoded.
 
 For rules 6 and 7 the diagnostic is reported at the later of the conflicting annotations.
+
+Static errors are reported in source order, by the position at which each is reported. A
+front end that stops at the first error therefore reports the earliest one in the file.
 
 An unused parameter is not an error.
 
@@ -540,18 +541,21 @@ None.
 | Part of this specification | Status |
 |---|---|
 | Lexer, parser and AST (sections 2 to 4 and 7; `E1xx`, `E2xx`, `W401`) | Implemented in `src/robolang/` (RL-11B) |
-| Static rules (section 5; `E3xx`) | Not implemented. RL-11C |
+| Static rules (section 5; `E301`–`E308`) | Implemented in `src/robolang/validator.py` (RL-11C) |
 | Versioned IR, `validate` / `inspect` commands, task selection | Not implemented. RL-11D |
 | Execution of parsed tasks | Not implemented. The repository still runs the v1 interpreter |
 
-Conformance checked by CI (`tests/test_fixtures.py`), out of 76 fixtures:
+Conformance checked by CI (`tests/test_fixtures.py`): all 76 fixtures.
 
-- **62 are checked for conformance:** the 15 valid fixtures must parse with exactly the
-  warnings they state, and the 47 lexical and syntax fixtures must be rejected with the
-  stated code and line.
-- **14 are not:** the static fixtures (`E3xx`) are reserved for RL-11C. Until then CI only
-  confirms that they are syntactically valid; a file that breaks a static rule is currently
-  accepted by the front end.
+- The 15 valid fixtures must pass the complete front end with exactly the warnings they state.
+- The 47 lexical and syntax fixtures must be rejected by the parser with the stated code and
+  line.
+- The 14 static fixtures must be syntactically valid and then rejected by static validation
+  with the stated code and line.
+
+Passing every fixture shows agreement with these 76 cases. It is not a proof that the
+implementation matches the specification everywhere, and it says nothing about whether any
+accepted task is safe to execute.
 
 Follow-up outside this specification: the PDFs in `docs/` describe v1, including the deferred
 constructs and unitless forms. They are kept as historical documentation; aligning them is a
