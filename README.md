@@ -41,7 +41,9 @@ RoboLang v1 is an **early prototype**. This section is the reference for what wo
 | Decimal durations (`wait for 2.5s`) | ⚠️ Truncated to whole seconds |
 | Unknown or misspelled instructions | ⚠️ Printed as ignored; execution continues |
 | ROS2 adapter (`src/robolang_adapter_ros2.py`) | 🧪 Written, **never validated** against ROS2, a simulator or a robot; no ROS2 tests |
-| Formal grammar, parser, type checking | 🗓️ Planned |
+| v1.1 specification and grammar ([`spec/`](spec/robolang-v1.1.md)) | ✅ Written |
+| v1.1 lexer, parser and AST (`src/robolang/`) | ✅ Implemented and tested; **not connected to the interpreter**, which still runs v1 behavior |
+| v1.1 static checks (names, types, limits), CLI, execution of parsed tasks | 🗓️ Planned |
 | MoveIt2 integration, multi-robot handover, LLM planner | 🗓️ Planned |
 | `requirements.txt`, `docker/*`, `examples/inspect_object.rob`, `examples/handover.rob` | 🗓️ Empty placeholders |
 
