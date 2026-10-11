@@ -1,12 +1,13 @@
 """
-Runs the v1.1 conformance fixtures (tests/fixtures) against the lexer and parser.
+Runs all v1.1 conformance fixtures (tests/fixtures) against the front end.
 
-Covered here: every valid fixture and every invalid fixture whose expected
-error is lexical (E1xx) or syntactic (E2xx).
+- valid fixtures must pass the complete front end (`check_file`) with exactly
+  the warnings their header states;
+- lexical (E1xx) and syntax (E2xx) fixtures must be rejected by the parser;
+- static (E3xx) fixtures must get past the parser and be rejected by static
+  validation.
 
-Not covered: the static fixtures (E3xx). Static validation is RL-11C. For those
-this module only checks that the file is syntactically valid, so the error they
-describe really is a static one.
+Each rejection is checked for the expected code and line.
 """
 
 from __future__ import annotations
@@ -15,7 +16,7 @@ from pathlib import Path
 
 import pytest
 
-from robolang import RoboLangError, parse_file
+from robolang import RoboLangError, check_file, parse_file
 
 FIXTURES = Path(__file__).parent / "fixtures"
 EXPECT = re.compile(
@@ -51,9 +52,9 @@ def test_fixture_inventory():
 
 
 @pytest.mark.parametrize("path", VALID)
-def test_valid_fixture_parses(path):
+def test_valid_fixture_passes_the_complete_front_end(path):
     expected = expectation(path)
-    result = parse_file(path)
+    result = check_file(path)
 
     warnings = [(w.code, w.line) for w in result.warnings]
     if expected["wcode"]:
@@ -63,19 +64,27 @@ def test_valid_fixture_parses(path):
 
 
 @pytest.mark.parametrize("path", INVALID_SYNTAX)
-def test_invalid_fixture_is_rejected(path):
+def test_lexical_or_syntax_fixture_is_rejected_by_the_parser(path):
     expected = expectation(path)
 
-    with pytest.raises(RoboLangError) as raised:
-        parse_file(path)
+    for front_end in (parse_file, check_file):
+        with pytest.raises(RoboLangError) as raised:
+            front_end(path)
 
-    assert raised.value.code == expected["code"], raised.value
-    if expected["line"]:
-        assert raised.value.line == int(expected["line"]), raised.value
-    assert raised.value.code[1] == {"lexical": "1", "syntax": "2"}[expected["stage"]]
+        assert raised.value.code == expected["code"], raised.value
+        if expected["line"]:
+            assert raised.value.line == int(expected["line"]), raised.value
+        assert raised.value.code[1] == {"lexical": "1", "syntax": "2"}[expected["stage"]]
 
 
 @pytest.mark.parametrize("path", INVALID_STATIC)
-def test_static_fixture_is_syntactically_valid(path):
-    """E3xx fixtures must get past the parser; rejecting them is RL-11C."""
-    parse_file(path)
+def test_static_fixture_is_rejected_by_static_validation(path):
+    expected = expectation(path)
+
+    parse_file(path)  # syntactically valid: the error is a static one
+    with pytest.raises(RoboLangError) as raised:
+        check_file(path)
+
+    assert raised.value.code == expected["code"], raised.value
+    assert raised.value.line == int(expected["line"]), raised.value
+    assert raised.value.code[1] == "3"
