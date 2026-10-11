@@ -1,10 +1,10 @@
 // RoboLang v1.1 fixture: invalid
 // expect: error E306 (static) line 7
-// why: a @safety key may appear once per task
+// why: the deprecated unitless form may appear only once
 
 task t(robot r, object box, location src, location dst, region cell) {
-    @safety max_speed 0.5 m/s;
-    @safety max_speed 1.0 m/s;
+    @safety max_speed 0.5;
+    @safety max_speed 0.4;
     plan {
         move r to src;
     }

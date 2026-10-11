@@ -1,6 +1,7 @@
 # RoboLang v1.1 Language Specification
 
-**Status:** Draft for owner review (RL-11A). **Nothing in this document is implemented.**
+**Status:** Draft (RL-11A), revised after owner review on 2026-10-12; awaiting final approval.
+**Nothing in this document is implemented.**
 The repository still runs the v1 line-based interpreter described in the README.
 **Syntax version:** 1.1
 **Grammar:** [`grammar.ebnf`](grammar.ebnf)
@@ -11,9 +12,17 @@ This specification defines what a v1.1 `.rob` file *is*: its tokens, its grammar
 abstract syntax tree and the errors a conforming front end must report. It does not define
 how a task is executed. Execution semantics belong to v1.2 (see [Deferred semantics](#9-deferred-semantics)).
 
-> RoboLang v1.1 is a task description language. It is not a safety system. A file that
-> validates is well-formed; it is not thereby safe to run. Physical robot execution is not
-> validated and is outside the approved scope of this project.
+> **Three separate questions.** RoboLang keeps these apart, and an answer to one is never an
+> answer to the next:
+>
+> 1. **Valid syntax** — the file matches the grammar (sections 2 to 4).
+> 2. **Valid task semantics** — names, types and values are consistent (section 5).
+> 3. **Safe physical execution** — a property of a specific robot, cell, controller and risk
+>    assessment. No part of this language decides it.
+>
+> A program accepted by the parser and the static checker is well-formed. It must never be
+> treated, automatically or by default, as safe to run on real hardware. Physical robot
+> execution is not validated and is outside the approved scope of this project.
 
 ---
 
@@ -49,7 +58,7 @@ action can occur.**
 |---|---|---|
 | `IDENT` | letter, then letters, digits or `_` | ASCII only. Must start with a letter. Must not be a reserved word. |
 | `NUMBER` | `digits` or `digits.digits` | Unsigned decimal. No sign, exponent, leading or trailing `.`. |
-| `STRING` | `"…"` | No escape sequences. May not contain `"` or a line break. |
+| `STRING` | `"…"` | May not contain a line break. Escapes: section 3.1. |
 | `SPEED_UNIT` | `m/s`, `rad/s` | |
 | `DURATION_UNIT` | `ms`, `s`, `min` | |
 | punctuation | `( ) { } , ;` and `@safety` | |
@@ -57,10 +66,27 @@ action can occur.**
 Whitespace between a number and its unit is optional: `5s` and `5 s` are equivalent, as are
 `0.5m/s` and `0.5 m/s`.
 
+### 3.1 String escapes
+
+Inside a string, `\` starts an escape sequence. Exactly four exist:
+
+| Written | Character |
+|---|---|
+| `\"` | `"` |
+| `\\` | `\` |
+| `\n` | line feed |
+| `\t` | horizontal tab |
+
+Any other character after `\` is an error (`E104`); a backslash is never passed through
+literally. A string cannot span lines: a line break before the closing `"` is `E102`, also
+directly after a `\`. The value of a string is its content after escapes are decoded.
+
+### 3.2 Reserved words
+
 **Reserved words** cannot be used as names:
 
 ```text
-task pre plan robot object location region
+robolang task pre plan robot object location region
 move grasp place inspect wait communicate
 to at using with for until timeout
 robot_ready region_clear object_exists sensor_ok
@@ -81,7 +107,8 @@ in their grammatical position.
 The normative grammar is [`grammar.ebnf`](grammar.ebnf). In summary:
 
 ```text
-program     = task+
+program     = version? task+
+version     = "robolang" "1.1" ";"
 task        = "task" NAME "(" params? ")" "{" annotation* pre? plan "}"
 params      = type NAME ("," type NAME)*          type = robot | object | location | region
 annotation  = "@safety" "max_speed" NUMBER SPEED_UNIT? ";"
@@ -89,7 +116,20 @@ pre         = "pre" "{" (condition ";")* "}"
 plan        = "plan" "{" (statement ";")+ "}"
 ```
 
-### 4.1 Task structure
+### 4.1 Version marker
+
+```rob
+robolang 1.1;
+```
+
+- The marker is optional. A file without one is read as v1.1, so existing files stay valid.
+- If present it must be the first construct in the file (comments may precede it) and may
+  appear only once.
+- The version is written exactly `1.1`. Any other version, older or newer, is rejected with
+  `E213`, and the rest of the file is not interpreted: a front end must not guess at the
+  syntax of a version it does not implement.
+
+### 4.2 Task structure
 
 - A file contains one or more tasks. A file with no task is an error.
 - Inside a task the order is fixed: `@safety` annotations, then an optional `pre` block, then
@@ -98,12 +138,12 @@ plan        = "plan" "{" (statement ";")+ "}"
 - A task may have zero parameters.
 - Blocks do not nest.
 
-### 4.2 Parameter types
+### 4.3 Parameter types
 
 `robot`, `object`, `location`, `region`. A parameter is a symbolic name. How a name is bound
 to a real robot, pose or zone is not part of the language (section 9).
 
-### 4.3 Safety annotations
+### 4.4 Safety annotations
 
 ```rob
 @safety max_speed 0.5 m/s;
@@ -112,15 +152,28 @@ to a real robot, pose or zone is not part of the language (section 9).
 
 - `max_speed` is the only key in v1.1. Any other key is an error.
 - The unit is mandatory: `m/s` (linear) or `rad/s` (angular).
-- **Deprecated form:** `@safety max_speed 0.5;` without a unit is accepted with warning
-  `W401`, so that existing v1 files stay valid. Its unit is recorded as *unspecified*. A front
-  end must not assume or convert a unit for it, and no execution path may treat an
-  unspecified-unit limit as an enforced physical limit.
-- The value must be greater than zero, and a key may appear once per task.
-- In v1.1 an annotation is a declaration with a static contract. Nothing enforces it at run
-  time until v1.2.
+- A task may declare both a linear and an angular limit, in either order:
 
-### 4.4 Conditions
+  ```rob
+  @safety max_speed 0.5 m/s;
+  @safety max_speed 1.0 rad/s;
+  ```
+
+  Each unit type may appear **at most once** per task. A second limit of the same unit type
+  is an error (`E306`).
+- **Deprecated form:** `@safety max_speed 0.5;` without a unit is accepted with warning
+  `W401`, so that existing v1 files stay valid.
+  - Its unit is recorded as *unspecified*. A front end must not assume or convert a unit for
+    it, and no execution path may treat an unspecified-unit limit as an enforced physical
+    limit.
+  - It is allowed only as the task's single `max_speed` annotation. Combining it with any
+    explicit-unit limit is an error (`E308`); two unitless limits are a duplicate (`E306`).
+- The value must be greater than zero.
+- In v1.1 an annotation is a declaration with a static contract. Nothing enforces it at run
+  time. Enforcement, and how declared limits relate to what a given robot can do, belong to
+  v1.2.
+
+### 4.5 Conditions
 
 | Condition | Argument | Kind |
 |---|---|---|
@@ -132,7 +185,7 @@ to a real robot, pose or zone is not part of the language (section 9).
 Conditions appear in `pre` blocks and in `wait until`. In v1.1 they are parsed and statically
 checked only; their evaluation is defined in v1.2.
 
-### 4.5 Statements
+### 4.6 Statements
 
 | Statement | Form | Argument kinds |
 |---|---|---|
@@ -153,6 +206,8 @@ checked only; their evaluation is defined in v1.2.
 - Statement keywords match whole words. `movement r to src;` is an unknown statement, not a
   `move`.
 - Sensor, channel and message strings must not be empty.
+- Strings may use the escapes of section 3.1, for example
+  `communicate r to "fleet" with "said \"done\"";`.
 
 ## 5. Static rules
 
@@ -163,10 +218,13 @@ here and implemented in RL-11C.
 2. Parameter names are unique within a task.
 3. Every name used in `pre` or `plan` is a parameter of the enclosing task. Names are local to
    their task; there are no globals and no shadowing.
-4. Every name is used where its declared type is expected (tables in 4.4 and 4.5).
+4. Every name is used where its declared type is expected (tables in 4.5 and 4.6).
 5. `max_speed` and every duration are greater than zero.
-6. A `@safety` key appears at most once per task.
-7. Strings naming a sensor, channel or message are not empty.
+6. A task has at most one `max_speed` limit per unit type (`m/s`, `rad/s`).
+7. A unitless `max_speed` is the only `max_speed` annotation of its task.
+8. Strings naming a sensor, channel or message are not empty after escapes are decoded.
+
+For rules 6 and 7 the diagnostic is reported at the later of the conflicting annotations.
 
 An unused parameter is not an error.
 
@@ -187,6 +245,7 @@ Where a fixed set was expected, the message lists it. A front end may stop at th
 | `E101` | lexical | Unexpected character |
 | `E102` | lexical | Unterminated string |
 | `E103` | lexical | Malformed number |
+| `E104` | lexical | Unknown escape sequence in a string |
 | `E201` | syntax | Unexpected token (general case; message states what was expected) |
 | `E202` | syntax | Missing `;` (reported at the end of the unterminated construct) |
 | `E203` | syntax | Unknown statement |
@@ -199,13 +258,15 @@ Where a fixed set was expected, the message lists it. A front end may stop at th
 | `E210` | syntax | No task in file |
 | `E211` | syntax | Construct documented for v1 but not part of v1.1 (section 8) |
 | `E212` | syntax | Reserved word used as a name |
+| `E213` | syntax | Unsupported language version in the version marker |
 | `E301` | static | Duplicate task name |
 | `E302` | static | Duplicate parameter name |
 | `E303` | static | Undeclared name |
 | `E304` | static | Name used with the wrong type |
 | `E305` | static | Value out of range |
-| `E306` | static | Duplicate `@safety` key |
+| `E306` | static | Duplicate `max_speed` limit for the same unit type (including two unitless limits) |
 | `E307` | static | Empty string |
+| `E308` | static | Unitless `max_speed` combined with an explicit-unit `max_speed` |
 | `W401` | warning | `max_speed` without a unit (deprecated) |
 
 When several codes could apply, the more specific wins: `E211` over `E203`/`E204`/`E205`/`E207`,
@@ -234,11 +295,12 @@ class SpeedUnit(Enum):     M_PER_S = "m/s"; RAD_PER_S = "rad/s"
 class DurationUnit(Enum):  MS = "ms"; S = "s"; MIN = "min"
 
 Name(text: str, span)                       # a use or declaration of an identifier
-StringLit(value: str, span)                 # value excludes the quotes
+StringLit(value: str, span)                 # decoded value: no quotes, escapes resolved
+VersionDecl(version: str, span)             # "1.1"
 Duration(value: Decimal, unit: DurationUnit, span)
 Speed(value: Decimal, unit: SpeedUnit | None, span)    # None = deprecated unitless form
 
-Program(tasks: tuple[Task, ...], span)
+Program(version: VersionDecl | None, tasks: tuple[Task, ...], span)   # None = unmarked file
 Task(name: Name, params: tuple[Param, ...], annotations: tuple[SafetyAnnotation, ...],
      pre: PreBlock | None, plan: PlanBlock, span)
 Param(type: ParamType, name: Name, span)
@@ -265,6 +327,9 @@ Communicate(robot: Name, channel: StringLit, message: StringLit, span)
 Notes:
 
 - Numeric values are `Decimal`, parsed from the source digits, so `2.5s` is exactly 2.5.
+- `Task.annotations` holds zero, one or two `SafetyAnnotation` nodes in source order.
+- The span of a `StringLit` covers the source text including quotes and escapes; its `value`
+  is the decoded text.
 - `pre: None` (block absent) and an empty `PreBlock` are distinct in the AST and equivalent in
   meaning.
 - Comments and whitespace are not represented.
@@ -289,7 +354,8 @@ Notes:
 | Manual ch. 9 `receive_box` | Migration required: `message_received`, no `timeout`, `box` undeclared, `region_clear` applied to a location |
 | Library guide `inspect_object` | Migration required: `scalar` parameter, `wait for dwell_s` |
 
-"Manual", "Library guide" and "Developer guide" are the PDFs in `docs/`.
+"Manual", "Library guide" and "Developer guide" are the PDFs in `docs/`. The four migrations
+are written out in section 8.5.
 
 ### 8.2 Documented v1 constructs not in v1.1
 
@@ -331,6 +397,86 @@ Files that the v1 interpreter accepted and v1.1 rejects:
   migration notes.
 - `W401` (unitless `max_speed`) is the only deprecation in v1.1.
 
+### 8.5 Migrating the affected documented examples
+
+Each migrated task below is valid v1.1. Where a v1 construct has no v1.1 equivalent, the
+migration **drops** it; it does not emulate it. What is lost is stated for each case.
+
+**Manual ch. 1 — `store_red_box`.** Remove `with_approach` and `in_region`; give `max_speed`
+a unit.
+
+```rob
+task store_red_box(robot r, object box, location conveyor, location shelf, region cell) {
+    @safety max_speed 0.5 m/s;
+    pre {
+        object_exists box;
+        robot_ready r;
+    }
+    plan {
+        move r to conveyor;
+        grasp r box;
+        move r to shelf;
+        place r box at shelf;
+    }
+}
+```
+
+Lost: the 0.1 approach offset and the restriction of the first move to `cell`. Neither was
+ever applied by the v1 runtime. Whether 0.5 meant m/s is the author's call; the unit must be
+chosen, not assumed.
+
+**Manual ch. 5 — `inspect`.** Rename the task (`inspect` is reserved) and remove `in_region`.
+
+```rob
+task inspect_object(robot r, object obj, location cam_pos, region zone) {
+    pre { object_exists obj; }
+    plan {
+        move r to cam_pos;
+        inspect r obj using "camera_top";
+    }
+}
+```
+
+Lost: the restriction of the move to `zone`. The `zone` parameter is now unused, which is
+allowed.
+
+**Manual ch. 9 — `receive_box`.** `message_received` has no v1.1 equivalent. The library guide
+documents the receiver as waiting on a sensor signal instead, which v1.1 can express. The
+task must also declare `box`, give `wait until` a timeout, and apply `region_clear` to a
+region rather than to the `handoff` location.
+
+```rob
+task receive_box(robot mobile, object box, location handoff, region handoff_zone) {
+    pre { region_clear handoff_zone; }
+    plan {
+        wait until sensor_ok "handoff_signal" timeout 60s;
+        move mobile to handoff;
+        grasp mobile box;
+    }
+}
+```
+
+Lost: reacting to the `HANDOFF_READY` message itself. Waiting on `"handoff_signal"` is a
+different trigger, not a translation; message-driven handoff arrives with the v1.3 protocol.
+The 60s timeout is an example value.
+
+**Library guide — `inspect_object`.** Remove the `scalar dwell_s` parameter and write the
+dwell time as a literal duration.
+
+```rob
+task inspect_object(robot r, object obj, location cam_pos, region cell) {
+    plan {
+        move r to cam_pos;
+        inspect r obj using "camera_top";
+        wait for 2s;
+    }
+}
+```
+
+Lost: passing the dwell time as an argument. The 2s value is an example.
+
+The PDFs themselves are not changed by this specification and still show the v1 forms.
+
 ## 9. Deferred semantics
 
 Defined here as syntax and static contract only:
@@ -338,7 +484,7 @@ Defined here as syntax and static contract only:
 | Topic | Decided in |
 |---|---|
 | Evaluating `pre` conditions; freshness and failure behavior | v1.2 (RL-12B) |
-| Enforcing `max_speed`; meaning for a robot with both linear and angular limits | v1.2 (RL-12B) |
+| Enforcing `max_speed`; how declared linear and angular limits relate to a robot's capabilities | v1.2 (RL-12B) |
 | `wait until`: polling, cancellation, what happens on timeout | v1.2 (RL-12A/B) |
 | Resolving a `location` to a motion target | v1.2 (RL-12C) |
 | Binding task parameters to real robots, objects, poses and regions | RL-11C/RL-11D |
@@ -351,22 +497,32 @@ file holds exactly one task, that task may be selected implicitly, which keeps t
 demo command working. Running "all tasks in the file" is never a default. The selection
 mechanism is part of RL-11D.
 
-## 10. Open questions for the owner
+## 10. Resolved questions
 
-1. **`inspect` keyword.** This draft uses `using "sensor"`, the form in the v1 manual and
-   library guide. The owner decision of 2026-10-12 was written with `with "sensor"`, based on
-   a proposal made before the PDFs were checked. `using` keeps the published examples valid;
-   `with` would break them. Confirm `using`, or choose `with` (a one-word change here).
-2. **`object_exists`.** Added beyond the approved condition list because most documented
-   `pre` blocks use it. Keep or remove?
-3. **Deferred v1 constructs (8.2).** All seven are rejected in v1.1. Should any of them
-   (`in_region` is the simplest) be brought into v1.1 instead?
-4. **Reserved statement words as task names.** `task inspect(…)` from the manual is invalid
-   because `inspect` is reserved. Acceptable, or should keywords be contextual?
-5. **Version marker.** Files carry no syntax version; a v1.1 front end treats every file as
-   v1.1. Should a marker (for example a first-line `robolang 1.1;`) be introduced now or with
-   the IR in RL-11D?
-6. **String escapes.** None in v1.1, so a message cannot contain `"`. Enough for now?
-7. **Empty `plan`.** Rejected (`E208`). Empty `pre` is allowed. Agreed?
-8. **`max_speed` kind.** One `max_speed` per task means a task declares either a linear or an
-   angular limit, not both. Should both be expressible (for example separate keys)?
+Decided by the owner on 2026-10-12; recorded in
+[decision record 0001](decisions/0001-rl-11a-language-decisions.md).
+
+| Question | Decision |
+|---|---|
+| `inspect` sensor clause keyword | `using`, as documented in the v1 manual. The sensor stays mandatory. |
+| `object_exists` condition | Included. Runtime evaluation deferred. |
+| Seven documented v1 constructs (8.2) | Stay deferred; each rejected with `E211`. |
+| Statement keywords as task names | Keywords stay reserved. `task inspect(…)` is invalid. |
+| Version marker | Optional `robolang 1.1;`. Unmarked files are v1.1. Other versions fail (`E213`). |
+| String escapes | `\"`, `\\`, `\n`, `\t`. Unknown escapes are rejected (`E104`). |
+| Empty `plan` | Rejected (`E208`). Empty `pre` is valid. |
+| Linear and angular `max_speed` | Both allowed, at most once per unit type. Unitless form only as a single legacy annotation. |
+
+## 11. Remaining questions
+
+None of these block RL-11B. Each is a detail this draft settles provisionally.
+
+1. **Error position for conflicting limits.** `E306` and `E308` are reported at the later
+   annotation. Alternative: report both positions.
+2. **Version strictness.** `robolang 1.0;` is rejected like any other non-1.1 version, even
+   though unmarked v1 files are accepted. Alternative: accept `1.0` as an alias.
+3. **Escapes in names.** Sensor and channel strings may contain escapes (for example a tab)
+   because the lexer treats all strings alike. Restricting what a sensor or channel name may
+   contain is left to the capability checks in v1.2 / v1.3.
+4. **Documentation.** The PDFs in `docs/` still describe the seven deferred constructs and the
+   unitless forms. Updating or annotating them is outside RL-11A.

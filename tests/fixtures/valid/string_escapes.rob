@@ -1,0 +1,12 @@
+// RoboLang v1.1 fixture: valid
+// expect: ok
+// why: the four escapes: quote, backslash, newline, tab
+
+task t(robot r, object box, location src, location dst, region cell) {
+
+    plan {
+        communicate r to "fleet" with "said \"done\"";
+        communicate r to "log" with "path C:\\cell\\a";
+        communicate r to "log" with "line one\nline two\tend";
+    }
+}

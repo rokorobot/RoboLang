@@ -1,0 +1,10 @@
+// RoboLang v1.1 fixture: invalid
+// expect: error E102 (lexical) line 8
+// why: the backslash escapes the quote, so the string never closes
+
+task t(robot r, object box, location src, location dst, region cell) {
+
+    plan {
+        communicate r to "fleet" with "DONE\";
+    }
+}

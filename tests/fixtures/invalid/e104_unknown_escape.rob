@@ -1,0 +1,10 @@
+// RoboLang v1.1 fixture: invalid
+// expect: error E104 (lexical) line 8
+// why: only the escapes for quote, backslash, n and t exist; backslash-c is not one
+
+task t(robot r, object box, location src, location dst, region cell) {
+
+    plan {
+        communicate r to "log" with "C:\cell";
+    }
+}

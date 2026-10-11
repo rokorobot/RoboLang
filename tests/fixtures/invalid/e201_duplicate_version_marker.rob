@@ -1,0 +1,10 @@
+// RoboLang v1.1 fixture: invalid
+// expect: error E201 (syntax) line 6
+// why: at most one version marker per file
+
+robolang 1.1;
+robolang 1.1;
+
+task go(robot r, location dst) {
+    plan { move r to dst; }
+}
