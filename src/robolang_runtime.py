@@ -98,7 +98,22 @@ class RoboLangRuntime:
             print(f"[RUNTIME] (ignored line): {line}")
 
 
+def _ensure_unicode_output():
+    """
+    The simulated adapter prints '→'. Windows consoles and pipes often default
+    to cp1252, which cannot encode it, so fall back to UTF-8 in that case.
+    """
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            "→".encode(stream.encoding or "ascii")
+        except (UnicodeEncodeError, LookupError):
+            if hasattr(stream, "reconfigure"):
+                stream.reconfigure(encoding="utf-8")
+
+
 def main():
+    _ensure_unicode_output()
+
     if len(sys.argv) < 2:
         print("Usage: python -m robolang_runtime <file.rob>")
         sys.exit(1)
