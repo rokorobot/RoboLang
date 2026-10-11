@@ -1,0 +1,5 @@
+// RoboLang v1.1 fixture: invalid
+// expect: error E201 (syntax) line 5
+// why: statements are only allowed inside plan
+
+move r to src;

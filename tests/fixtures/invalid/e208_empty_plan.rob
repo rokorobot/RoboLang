@@ -1,0 +1,8 @@
+// RoboLang v1.1 fixture: invalid
+// expect: error E208 (syntax) line 7
+// why: a plan must contain at least one statement
+
+task t(robot r, object box, location src, location dst, region cell) {
+    plan {
+    }
+}

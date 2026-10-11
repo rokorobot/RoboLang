@@ -1,0 +1,12 @@
+// RoboLang v1.1 fixture: invalid
+// expect: error E208 (syntax) line 9
+// why: block order is fixed: @safety, pre, plan
+
+task t(robot r, object box, location src, location dst, region cell) {
+    plan {
+        move r to src;
+    }
+    pre {
+        robot_ready r;
+    }
+}

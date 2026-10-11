@@ -1,0 +1,12 @@
+// RoboLang v1.1 fixture: valid
+// expect: ok
+// why: optional version marker as the first construct; comments may precede it
+
+// a comment before the marker is fine
+robolang 1.1;
+
+task go(robot r, location dst) {
+    plan {
+        move r to dst;
+    }
+}

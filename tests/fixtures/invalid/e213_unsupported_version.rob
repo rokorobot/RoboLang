@@ -1,0 +1,9 @@
+// RoboLang v1.1 fixture: invalid
+// expect: error E213 (syntax) line 5
+// why: a v1.1 front end accepts only version 1.1
+
+robolang 2.0;
+
+task go(robot r, location dst) {
+    plan { move r to dst; }
+}

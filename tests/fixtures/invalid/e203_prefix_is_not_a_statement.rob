@@ -1,0 +1,9 @@
+// RoboLang v1.1 fixture: invalid
+// expect: error E203 (syntax) line 7
+// why: the v1 runtime ran this as 'move' by prefix match
+
+task t(robot r, object box, location src, location dst, region cell) {
+    plan {
+        movement r to src;
+    }
+}

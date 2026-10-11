@@ -1,0 +1,10 @@
+// RoboLang v1.1 fixture: valid
+// expect: ok
+// why: max_speed with the explicit unit rad/s, no space before the unit
+
+task t(robot r, object box, location src, location dst, region cell) {
+    @safety max_speed 1.5rad/s;
+    plan {
+        move r to src;
+    }
+}

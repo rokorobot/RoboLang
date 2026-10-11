@@ -1,0 +1,12 @@
+// RoboLang v1.1 fixture: invalid
+// expect: error E201 (syntax) line 8
+// why: plan blocks do not nest
+
+task t(robot r, object box, location src, location dst, region cell) {
+    plan {
+        move r to src;
+        {
+            grasp r box;
+        }
+    }
+}

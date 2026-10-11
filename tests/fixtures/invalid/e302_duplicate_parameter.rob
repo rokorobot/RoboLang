@@ -1,0 +1,9 @@
+// RoboLang v1.1 fixture: invalid
+// expect: error E302 (static) line 5
+// why: parameter names are unique within a task
+
+task t(robot r, location dst, location dst) {
+    plan {
+        move r to dst;
+    }
+}

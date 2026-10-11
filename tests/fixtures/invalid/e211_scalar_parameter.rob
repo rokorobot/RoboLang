@@ -1,0 +1,9 @@
+// RoboLang v1.1 fixture: invalid
+// expect: error E211 (syntax) line 5
+// why: scalar parameters are documented in the v1 library guide but not part of v1.1
+
+task inspect_object(robot r, object obj, location cam_pos, scalar dwell_s) {
+    plan {
+        move r to cam_pos;
+    }
+}

@@ -1,0 +1,9 @@
+// RoboLang v1.1 fixture: invalid
+// expect: error E307 (static) line 7
+// why: sensor, channel and message strings must not be empty
+
+task t(robot r, object box, location src, location dst, region cell) {
+    plan {
+        inspect r box using "";
+    }
+}

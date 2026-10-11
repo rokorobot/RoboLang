@@ -1,0 +1,9 @@
+// RoboLang v1.1 fixture: invalid
+// expect: error E202 (syntax) line 5
+// why: the version marker ends with ';'
+
+robolang 1.1
+
+task go(robot r, location dst) {
+    plan { move r to dst; }
+}

@@ -1,0 +1,9 @@
+// RoboLang v1.1 fixture: invalid
+// expect: error E205 (syntax) line 5
+// why: 'gripper' is not a parameter type
+
+task t(robot r, gripper g, location dst) {
+    plan {
+        move r to dst;
+    }
+}

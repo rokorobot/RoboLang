@@ -1,0 +1,10 @@
+// RoboLang v1.1 fixture: invalid
+// expect: error E305 (static) line 6
+// why: max_speed must be greater than zero
+
+task t(robot r, object box, location src, location dst, region cell) {
+    @safety max_speed 0 m/s;
+    plan {
+        move r to src;
+    }
+}

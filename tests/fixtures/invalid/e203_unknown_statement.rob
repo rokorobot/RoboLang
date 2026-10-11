@@ -1,0 +1,10 @@
+// RoboLang v1.1 fixture: invalid
+// expect: error E203 (syntax) line 8
+// why: 'fly' is not a statement; nothing in the file may execute
+
+task t(robot r, object box, location src, location dst, region cell) {
+    plan {
+        grasp r box;
+        fly r to moon;
+    }
+}

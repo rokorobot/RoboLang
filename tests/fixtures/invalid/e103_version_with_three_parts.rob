@@ -1,0 +1,9 @@
+// RoboLang v1.1 fixture: invalid
+// expect: error E103 (lexical) line 5
+// why: the version is written like a NUMBER (1.1), not 1.1.0
+
+robolang 1.1.0;
+
+task go(robot r, location dst) {
+    plan { move r to dst; }
+}

@@ -1,0 +1,9 @@
+// RoboLang v1.1 fixture: invalid
+// expect: error E206 (syntax) line 7
+// why: the wait until timeout is a duration and needs a unit
+
+task t(robot r, object box, location src, location dst, region cell) {
+    plan {
+        wait until region_clear cell timeout 30;
+    }
+}

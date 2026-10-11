@@ -1,0 +1,10 @@
+// RoboLang v1.1 fixture: invalid
+// expect: error E202 (syntax) line 6
+// why: every @safety annotation ends with ';'
+
+task t(robot r, object box, location src, location dst, region cell) {
+    @safety max_speed 0.5 m/s
+    plan {
+        move r to src;
+    }
+}

@@ -1,0 +1,12 @@
+// RoboLang v1.1 fixture: invalid
+// expect: error E204 (syntax) line 7
+// why: 'battery_ok' is not a condition
+
+task t(robot r, object box, location src, location dst, region cell) {
+    pre {
+        battery_ok r;
+    }
+    plan {
+        move r to src;
+    }
+}

@@ -1,0 +1,12 @@
+// RoboLang v1.1 fixture: invalid
+// expect: error E306 (static) line 8
+// why: at most one rad/s limit per task
+
+task t(robot r, object box, location src, location dst, region cell) {
+    @safety max_speed 1.0 rad/s;
+    @safety max_speed 0.5 m/s;
+    @safety max_speed 2.0 rad/s;
+    plan {
+        move r to src;
+    }
+}

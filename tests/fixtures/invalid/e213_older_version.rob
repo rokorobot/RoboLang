@@ -1,0 +1,9 @@
+// RoboLang v1.1 fixture: invalid
+// expect: error E213 (syntax) line 5
+// why: 1.0 is not accepted either; unmarked files are read as 1.1
+
+robolang 1.0;
+
+task go(robot r, location dst) {
+    plan { move r to dst; }
+}

@@ -1,0 +1,9 @@
+// RoboLang v1.1 fixture: invalid
+// expect: error E209 (syntax) line 7
+// why: the sensor clause keyword is 'using', as in the v1 manual
+
+task t(robot r, object box, location src, location dst, region cell) {
+    plan {
+        inspect r box with "camera_top";
+    }
+}

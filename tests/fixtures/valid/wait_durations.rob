@@ -1,0 +1,11 @@
+// RoboLang v1.1 fixture: valid
+// expect: ok
+// why: wait for with each duration unit, including a decimal value
+
+task pause() {
+    plan {
+        wait for 500ms;
+        wait for 2.5s;
+        wait for 1 min;
+    }
+}
