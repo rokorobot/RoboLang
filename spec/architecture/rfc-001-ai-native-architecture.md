@@ -3,7 +3,7 @@
 **Status:** Draft for owner review. The owner has approved the documentation-only scope of
 RL-ARCH-01. None of the substantive decisions in section 20 is approved; they are recorded as
 pending in [decision record 0002](../decisions/0002-ai-native-architecture.md).
-**Date:** 2026-10-19 (revision 5)
+**Date:** 2026-10-19 (revision 6)
 **Milestone:** RL-ARCH-01
 **Changes to RoboLang 1.1:** None. The language, the grammar, IR schema 1.0, the `robolang`
 command and every other implemented behavior are unchanged by this RFC.
@@ -711,11 +711,17 @@ either side, before the commit point: REJECTED | TIMED_OUT → giver keeps desig
     never accepted a release, stay in their safe states, report custody as `unknown` to their
     authorities and to the requester, and escalate under local policy (for example to a named
     human). Neither may resolve the doubt on its own by assuming the other has the thing. A
-    receiver that did accept the release is unaffected: it is responsible and continues under
-    rule 6.
+    receiver that did accept the release keeps designated responsibility (rule 13).
 12. **Physical action and custody are separate.** A gripper opening, or a robot driving away,
     is a physical event. It does not by itself transfer custody, and custody records never
     claim a physical state that was not observed.
+
+13. **Expiry does not reverse custody, and custody does not extend permission.** Expiry of a
+    commitment does not reverse a completed custody transfer: the receiver retains designated
+    responsibility for the thing. It must still follow its local expiry and safe-state policy
+    (11.1), and any further work that required the expired commitment, such as continuing
+    to transport the thing, must be separately authorized under its local policy (13.2,
+    13.3) and, where it serves another participant, covered by a new commitment.
 
 A message sent is never a handover (plan v1.3 exit gate).
 
@@ -735,6 +741,9 @@ Commitments, reservations and standing authorizations (13.3) all use the same le
   - a reservation holder must leave, or not enter, the reserved resource;
   - the creditor treats the obligation as unfulfilled.
 - A lapsed commitment cannot be revived. Continuing requires a new commitment.
+- Expiry ends the permission to work under the commitment, not responsibility for things
+  already in a participant's custody. A completed custody transfer stays completed (10.4
+  rule 13).
 - When contact returns, each side reports the state it reached, using `unknown` where it does
   not know the physical result.
 - Leases should be short relative to how long a robot can safely continue without contact.
@@ -799,7 +808,7 @@ question (section 21).
 | Network partition during motion | The robot's own policy and safety systems govern. No remote party is assumed to be able to stop it |
 | Custody transfer interrupted before the commit point | Giver keeps designated responsibility; the receiver does not act as holder; the giver reports physical custody `unknown` if it cannot observe the thing (10.4 rules 3 and 10) |
 | Acknowledgement of `custody_released` lost | The receiver has durably accepted the release, is responsible and may proceed under its local authorization, a fresh observation and its constraints. The giver is `IN_DOUBT`, does not interfere and reconciles with `custody_query` before any action that depends on retaining custody (10.4 rules 5 to 9) |
-| Partition outlasts the lease during a custody transfer | A giver in doubt and a receiver without an accepted release stay in safe states, report custody `unknown` and escalate; neither assumes the other has the thing. A receiver that accepted the release continues as the responsible participant (10.4 rule 11) |
+| Partition outlasts the lease during a custody transfer | A giver in doubt and a receiver without an accepted release stay in safe states, report custody `unknown` and escalate; neither assumes the other has the thing. A receiver that accepted the release keeps designated responsibility, follows its local expiry and safe-state policy, and needs separate authorization for further work under the expired commitment (10.4 rules 11 and 13) |
 | Stale observation | Treated as unknown; criteria depending on it are not met (11.3) |
 | Conflicting observations | Not resolved by voting. For decisions about its own motion a robot relies on its own sensing; otherwise it reports the conflict and the affected outcome is `unknown` |
 | Backend reports success without evidence | Outcome is `unknown`, not `succeeded` |
