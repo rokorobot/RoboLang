@@ -3,7 +3,7 @@
 **Status:** Draft for owner review. The owner has approved the documentation-only scope of
 RL-ARCH-01. None of the substantive decisions in section 20 is approved; they are recorded as
 pending in [decision record 0002](../decisions/0002-ai-native-architecture.md).
-**Date:** 2026-10-19 (revision 3)
+**Date:** 2026-10-19 (revision 4)
 **Milestone:** RL-ARCH-01
 **Changes to RoboLang 1.1:** None. The language, the grammar, IR schema 1.0, the `robolang`
 command and every other implemented behavior are unchanged by this RFC.
@@ -159,19 +159,26 @@ until the owner decides.
 profiles, lifecycle, lease, replay, evidence and failure semantics, trust and authority
 rules, and the boundaries to bindings and execution backends.
 
-**Not in scope, now or later:**
+**Out of scope for RoboLang Core and the initial A2R and R2R profiles.** These capabilities
+may be provided through independent modules, execution backends or future extensions,
+without becoming mandatory Core requirements:
 
 - Real-time or closed-loop control. A2R and R2R carry goals, commitments and evidence, not
   servo set-points or control loops.
-- Safety-rated functions. Emergency stops, protective stops, speed and separation monitoring
-  and risk assessment stay in independent, safety-rated systems. Nothing in RoboLang replaces
-  them.
-- Motion planning, kinematics, perception and learned policies. These are execution
-  backends.
+- Motion planning, kinematics, perception and learned policies. Today these are execution
+  backends; how they are described and exchanged (for example as capabilities or portable
+  skills) is an open question, not an exclusion (section 21).
 - A new network stack where existing transports suffice.
-- Group consensus among many robots. Version 0 defines **bilateral** commitments only
-  (section 10). Multi-party coordination is a later question.
-- Any claim to be the first robot communication protocol. Related work exists (section 15).
+- Multi-party consensus among many robots. Version 0 defines **bilateral** commitments only
+  (section 10); multi-party coordination may be added by a later extension.
+
+**Outside the authority of the Core protocol.** Independent safety-rated functions
+(emergency stops, protective stops, speed and separation monitoring) and risk assessment stay
+in independent, safety-rated systems. No RoboLang message, profile or extension can command,
+override or disable them.
+
+RoboLang does not claim to be the first robot communication protocol. Related work exists
+(section 15).
 
 ## 4. Principles
 
@@ -620,6 +627,7 @@ PROPOSED → ASSESSING → REJECTED
 | `reserve` | Request a leased hold on a shared resource such as a handoff region |
 | `coordinate` | Agree on phase changes in a joint activity (for example "ready to hand over") |
 | `transfer_custody`, `custody_confirmed`, `custody_released` | Hand responsibility for a thing to a peer (10.4) |
+| `custody_query`, `custody_state` | Reconcile custody after a lost acknowledgement or a partition (10.4) |
 | `outcome` | Report the result of a commitment, with verification |
 
 ### 10.2 Commitments
@@ -639,31 +647,62 @@ robots (section 21).
 
 ### 10.4 Custody transfer
 
-Custody is responsibility for a thing: knowing where it is and keeping it safe. The rules
-extend the RL-13D handoff states:
+Custody is responsibility for a thing: knowing where it is and keeping it safe. Over an
+unreliable network two robots cannot always know that they agree, so the rules separate three
+things:
+
+| Term | Meaning | Who can know it |
+|---|---|---|
+| **Designated responsibility** | Who is responsible according to the protocol's commit rule (rule 3 below) | Defined at every moment, but a participant may not be able to tell which side of the commit point the transfer is on |
+| **Local custody state** | What a participant's own records say | Each participant, about itself. The two local states may disagree for a while |
+| **Verified physical custody** | Where the thing actually is, as shown by a fresh observation (11.3) | Only a participant that can observe the thing now |
+
+States, extending the RL-13D handoff states:
 
 ```text
-giver:     HOLDING → OFFERED → AWAITING_CONFIRMATION → RELEASED
-receiver:            ACKNOWLEDGED → ACCEPTED → CONFIRMED (holds custody)
-any time before RELEASED:  REJECTED | TIMED_OUT | UNKNOWN  → giver keeps custody
+giver:    HOLDING → OFFERED → AWAITING_CONFIRMATION → RELEASE_SENT → RELEASED     (release acknowledged)
+                                                                   → IN_DOUBT     (no acknowledgement)
+                                                                       → reconcile → RELEASED | HOLDING
+receiver:           ACKNOWLEDGED → ACCEPTED → CONFIRMATION_SENT → HOLDING        (release received)
+either side, before the commit point: REJECTED | TIMED_OUT → giver keeps designated responsibility
 ```
 
-1. **Never zero holders.** At every moment exactly one participant is responsible for the
-   thing. During a transfer that is the **giver**, until rule 4 completes.
-2. **Receiver confirms with its own evidence.** The receiver sends `custody_confirmed` only
+1. **Receiver confirms with its own evidence.** The receiver sends `custody_confirmed` only
    with a fresh observation of the thing made by its own sensors, meeting the criteria agreed
    for the handover (for example "C42 seated on my deck, confidence ≥ 0.9, age ≤ 2 s").
-3. **Giver verifies before releasing.** The giver checks the receiver's evidence, and its own
+2. **Giver verifies before releasing.** The giver checks the receiver's evidence, and its own
    observation where it has one, and only then sends `custody_released`.
-4. **Transfer completes on release.** Custody passes when the receiver has received
-   `custody_released`, and the receiver acknowledges it. The giver keeps the release
-   acknowledgement as its record.
-5. **Failure keeps custody with the giver.** If any step is rejected, times out or leaves the
-   physical state uncertain, the giver remains responsible and reports the custody state as
-   `unknown` if it cannot observe the thing. It does not silently assume either side has it.
-6. **Physical action and custody are separate.** A gripper opening, or a robot driving away,
-   is a physical event. It does not by itself transfer custody, and custody records never
-   claim a physical state that was not observed.
+3. **Commit rule.** Designated responsibility passes to the receiver **at the moment the
+   receiver accepts a valid `custody_released`**. Before that moment it is the giver's. There
+   is therefore exactly one designated responsible participant at every moment.
+4. **The receiver always knows the designation.** It either has accepted the release or it
+   has not. It acknowledges the release; the acknowledgement is the giver's record.
+5. **Only the giver can be in doubt.** A giver that sent `custody_released` and has no
+   acknowledgement cannot tell whether the commit point was reached. Its local state is
+   `IN_DOUBT`.
+6. **No incompatible actions under doubt.** While a participant is in doubt, or cannot
+   observe the thing, it must take no action that would be wrong under either possibility:
+   - the giver does not touch, move or re-grasp the thing, starts no new transfer of it and
+     makes no commitment that depends on holding it;
+   - a receiver that has **not** accepted a release does not move the thing out of the
+     handover position, does not hand it on and makes no commitment that depends on it;
+   - both keep the thing in its handover position and stay in their locally defined safe
+     state for the activity (11.1).
+7. **Reconciliation before continuing.** A giver in doubt sends `custody_query`. The receiver
+   answers with a signed `custody_state` that names the release message it accepted, or states
+   that it accepted none, together with a fresh observation of the thing where it can make
+   one. The giver resolves to `RELEASED` or back to `HOLDING` from that answer. Neither side
+   continues work involving the thing until reconciliation succeeds.
+8. **Verify physical custody before acting.** Whoever holds designated responsibility after
+   reconciliation makes a fresh observation of the thing before moving it. If it cannot,
+   physical custody is `unknown` and rule 6 continues to apply.
+9. **No reconciliation before the lease expires.** Both sides stay in their safe states, report
+   custody as `unknown` to their authorities and to the requester, and escalate under local
+   policy (for example to a named human). Neither side may resolve the doubt on its own by
+   assuming the other has the thing.
+10. **Physical action and custody are separate.** A gripper opening, or a robot driving away,
+    is a physical event. It does not by itself transfer custody, and custody records never
+    claim a physical state that was not observed.
 
 A message sent is never a handover (plan v1.3 exit gate).
 
@@ -745,7 +784,9 @@ question (section 21).
 | Peer silent, lease running | Wait; start no new physical work that depends on the peer |
 | Lease expired | Commitment or reservation lapses; each side moves to its local safe state and later reports what it reached (11.1) |
 | Network partition during motion | The robot's own policy and safety systems govern. No remote party is assumed to be able to stop it |
-| Custody transfer interrupted | Giver keeps custody; reports `unknown` if it cannot observe the thing (10.4) |
+| Custody transfer interrupted before the commit point | Giver keeps designated responsibility; reports physical custody `unknown` if it cannot observe the thing (10.4) |
+| Acknowledgement of `custody_released` lost | Giver is `IN_DOUBT`; neither side acts on the thing; reconciliation by `custody_query` before continuing (10.4 rules 5 to 7) |
+| Partition outlasts the lease during a custody transfer | Both stay in safe states, report custody `unknown` and escalate; neither assumes the other has the thing (10.4 rule 9) |
 | Stale observation | Treated as unknown; criteria depending on it are not met (11.3) |
 | Conflicting observations | Not resolved by voting. For decisions about its own motion a robot relies on its own sensing; otherwise it reports the conflict and the affected outcome is `unknown` |
 | Backend reports success without evidence | Outcome is `unknown`, not `succeeded` |
@@ -946,7 +987,8 @@ authorizations for R2R transport and custody transfer in their domain, in simula
 | Step 5 replayed after its expiry | Rejected |
 | amr-07 goes silent after step 6 | Lease lapses at 10:25; arm-02 keeps custody, moves to its safe state, reports `failed` or `unknown` |
 | `custody_confirmed` arrives with a 40 s old observation | Stale; arm-02 does not release; custody stays with arm-02 |
-| Connection lost between steps 11 and 12 | arm-02 keeps custody; reports custody `unknown` if it cannot observe C42 |
+| Connection lost between steps 11 and 12 | Commit point not reached: arm-02 keeps designated responsibility; amr-07 does not drive off with C42; both reconcile before continuing |
+| Acknowledgement of step 12 lost | arm-02 is `IN_DOUBT` and does not touch C42; amr-07 has accepted the release and holds custody, verifies C42 on its deck before moving; arm-02 resolves with `custody_query` |
 | amr-07 reports "arrived" without an observation of C42 in S3 | Sub-goal outcome `unknown`; goal not `succeeded` |
 | planner-1 re-verifies the outcome and the evidence is too old | planner-1 treats the goal as `unknown` |
 | planner-1 tries to authorize the goal itself | Rejected: the requester is not an authority |
