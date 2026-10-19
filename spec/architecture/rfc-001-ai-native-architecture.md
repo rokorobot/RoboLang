@@ -1,16 +1,16 @@
 # RFC-001 — RoboLang AI-native semantic and communication architecture
 
-**Status:** Draft for owner review. The owner has approved the documentation-only scope of
-RL-ARCH-01. None of the substantive decisions in section 20 is approved; they are recorded as
-pending in [decision record 0002](../decisions/0002-ai-native-architecture.md).
-**Date:** 2026-10-19 (revision 6)
+**Status:** Architecture approved by the owner on 2026-10-19: decisions D1–D9, with
+qualifications on D5 and D8, recorded in [decision record 0002](../decisions/0002-ai-native-architecture.md).
+The decisions were taken on revision 6; revision 7 records them and changes no content.
+**Date:** 2026-10-19 (revision 7)
 **Milestone:** RL-ARCH-01
 **Changes to RoboLang 1.1:** None. The language, the grammar, IR schema 1.0, the `robolang`
 command and every other implemented behavior are unchanged by this RFC.
 
-> This RFC proposes a direction and the decisions needed to follow it. It defines no
-> implemented behavior. Every message format and schema below is a **proposal for
-> discussion**, not a published protocol, and nothing here describes a capability RoboLang
+> The architecture in this RFC is approved. It defines no implemented behavior. Every
+> message format and schema below is a **draft (Core version 0.x)**, to be validated by
+> RL-ARCH-02, not a published protocol, and nothing here describes a capability RoboLang
 > has today.
 
 ---
@@ -21,7 +21,7 @@ RoboLang 1.1 is a validated task-description language for a single robot: a type
 written, checked and turned into a versioned intermediate representation (IR). It does not
 execute anything and it does not communicate.
 
-This RFC proposes that RoboLang's long-term identity is **RoboLang Core: a shared,
+This RFC establishes that RoboLang's long-term identity is **RoboLang Core: a shared,
 transport-independent semantic foundation for intelligent machines working in the physical
 world**, used by two interaction profiles:
 
@@ -43,12 +43,13 @@ interoperability target, but not as a required transport: Core messages are mean
 without it, and two robots must be able to cooperate with no A2A service, no cloud and no AI
 model available.
 
-The RFC asks the owner for nine decisions (section 20) and proposes one small executable
-proof (section 19) before any protocol is formalized.
+The owner approved nine decisions (section 20) on 2026-10-19. The next planned milestone is
+one small executable proof (section 19), before any protocol is formalized; its
+implementation requires separate owner authorization.
 
-### 1.1 Long-term ambition (proposed)
+### 1.1 Long-term ambition
 
-The proposed mission (decision D1) is:
+The mission, approved as decision D1, is:
 
 > RoboLang is an open, AI-native interoperability platform for embodied intelligence. It
 > defines shared semantic contracts, A2R and R2R communication profiles, portable robotic
@@ -106,7 +107,7 @@ project can make publicly until independent implementations interoperate (sectio
 | Binding rules: what any binding must preserve (section 14) | Particular bindings beyond A2A and the local transport |
 | Conformance tests for all of the above | Skill registry, packaging and distribution |
 
-Everything in this RFC is still a proposal. "Proposed for standardization" means the part
+The architecture is approved, but no part of it is a standard yet. "Proposed for standardization" means the part
 other implementations would have to follow; it becomes binding only after review, a stable
 version and passing interoperability gates.
 
@@ -150,8 +151,8 @@ What changes is the **order and the center of gravity**:
 - ROS 2, MoveIt and vendor SDKs become execution backends behind bindings, chosen per robot,
   instead of the model the language is shaped after.
 
-Section 17 lists where the plan and this RFC currently disagree. The plan is not changed
-until the owner decides.
+Section 17 lists where the plan and this RFC disagree. The decisions are taken; the plan is
+updated in a separate, owner-approved change.
 
 ## 3. Scope and non-goals
 
@@ -955,10 +956,10 @@ RFC therefore uses A2R and R2R only as names of **RoboLang interaction profiles*
 ## 17. Consistency with the development plan
 
 Checked against [`docs/DEVELOPMENT_PLAN.md`](../../docs/DEVELOPMENT_PLAN.md) as of this
-revision. The plan is **not** changed by this RFC. If the owner approves the decisions in
-section 20, these are the places the plan would need to change:
+revision. The plan is **not** changed by this RFC. With decisions D1–D9 approved, these are the places
+the plan needs to change, in a separate, owner-approved update:
 
-| Plan location | Plan says | This RFC proposes | Related decision |
+| Plan location | Plan says | This RFC (approved) | Related decision |
 |---|---|---|---|
 | Mission statement | A task specification and coordination language that delegates execution to ROS 2 controllers | An open, AI-native interoperability platform for embodied intelligence (section 1.1), with execution through interchangeable backends | D1 |
 | Decision A6 | Python 3.11+ for language tooling | Compatible: Python remains the reference implementation language, but P10 requires the Core to be implementable without it | D9 |
@@ -1018,14 +1019,14 @@ authorizations for R2R transport and custody transfer in their domain, in simula
 | Unsigned or wrongly signed `commit` | Rejected |
 | arm-02's descriptor lists no grasp capability | Assessment fails before any commitment |
 
-## 19. Proposed next steps
+## 19. Next steps
 
 | Step | Deliverable | Boundaries |
 |---|---|---|
-| **RL-ARCH-01** (this RFC) | Owner decisions on section 20, recorded in decision record 0002 | Documentation only |
-| **RL-ARCH-02 — executable proof** | Draft Core JSON Schemas (message, capability descriptor). An in-process Python simulation of section 18 with one agent stub and two robot stubs, each with a minimal executor, local policy and a simulated world. Tests for every failure variant in section 18 | No ROS 2, no network transport, no AI model calls, no hardware. Simulation only. Does not change the 1.1 parser or IR. **Not started**; requires decision D8 |
+| **RL-ARCH-01** (this RFC) | Owner decisions on section 20: approved 2026-10-19, recorded in decision record 0002 | Documentation only |
+| **RL-ARCH-02 — executable proof** | Draft Core JSON Schemas (message, capability descriptor). An in-process Python simulation of section 18 with one agent stub and two robot stubs, each with a minimal executor, local policy and a simulated world. Tests for every failure variant in section 18 | No ROS 2, no network transport, no AI model calls, no hardware. Simulation only. Does not change the 1.1 parser or IR. **Not started.** Approved as the next planned milestone (D8); implementation requires separate explicit owner authorization |
 | **Independent-implementation gate** | A participant written independently, in a different codebase, interoperates with the reference using only the published schemas and this specification (gate 2, section 1.4) | Later; not yet scoped or approved. Requires stable Core schemas first |
-| **Re-scope RL-12 and RL-13** | Revised development plan (section 17) | After the decisions; owner approval required |
+| **Re-scope RL-12 and RL-13** | Revised development plan (section 17) | Separate change; owner approval required |
 | **Later** | A2A binding, local transport, ROS 2 backend, ontology alignment, portable skills, conformance suite, language constructs | Each its own milestone |
 
 Not proposed now: a RoboLang distribution, package manager or skill marketplace, a runtime
@@ -1039,22 +1040,23 @@ motion where none is allowed; every run produces a reconstructable message and e
 The developer-preview pilot of RoboLang 1.1 is independent of this RFC and stays the
 immediate product-validation step.
 
-## 20. Decisions requested from the owner
+## 20. Owner decisions
 
-All nine are **pending**. Their status is tracked in
+All nine were **approved by the owner on 2026-10-19**, with qualifications on D5 and D8. They
+are recorded in
 [decision record 0002](../decisions/0002-ai-native-architecture.md).
 
-| # | Decision | Proposal |
-|---|---|---|
-| D1 | Revise the mission statement of the development plan | From "task specification language that delegates execution to ROS 2" to the mission in section 1.1: "an open, AI-native interoperability platform for embodied intelligence", supporting a vendor-neutral ecosystem of interoperable implementations |
-| D2 | Core schemas are the contract | Versioned Core JSON schemas define interoperability; task IR 1.0 is one supported plan representation; `.rob` is an authoring format |
-| D3 | Naming | Use "RoboLang A2R" and "RoboLang R2R" as profile names; do not present "R2R" as a standalone standard |
-| D4 | A2A | First-class interoperability target from the start, implemented after the proof; not a mandatory transport |
-| D5 | Commitments | Bilateral and leased only in version 0; no multi-party consensus |
-| D6 | Authority | Adopt section 13: authorization is local; a requester is never its own authority; autonomous action through bounded, leased, revocable standing authorizations |
-| D7 | Non-goal wording in the plan | Keep "distributed consensus" as a non-goal. Clarify that "inventing an emergent robot language" means a language robots develop themselves, which A2R and R2R are not |
-| D8 | Next milestone | Approve RL-ARCH-02 as defined in section 19, after or in parallel with the pilot |
-| D9 | Ecosystem before implementation | Adopt principle P10 and the two interoperability gates of section 1.4: the Core must be implementable from the specification alone, and the ambition is measured by an independent implementation interoperating with the reference (gate 2) |
+| # | Decision | Content | Status |
+|---|---|---|---|
+| D1 | Revise the mission statement of the development plan | From "task specification language that delegates execution to ROS 2" to the mission in section 1.1: "an open, AI-native interoperability platform for embodied intelligence", supporting a vendor-neutral ecosystem of interoperable implementations | APPROVED — 2026-10-19 |
+| D2 | Core schemas are the contract | Versioned Core JSON schemas define interoperability; task IR 1.0 is one supported plan representation; `.rob` is an authoring format | APPROVED — 2026-10-19 |
+| D3 | Naming | Use "RoboLang A2R" and "RoboLang R2R" as profile names; do not present "R2R" as a standalone standard | APPROVED — 2026-10-19 |
+| D4 | A2A | First-class interoperability target from the start, implemented after the proof; not a mandatory transport | APPROVED — 2026-10-19 |
+| D5 | Commitments | Bilateral and leased only in version 0; no multi-party consensus | APPROVED — 2026-10-19, for protocol version 0 only. Future multi-party coordination remains open |
+| D6 | Authority | Adopt section 13: authorization is local; a requester is never its own authority; autonomous action through bounded, leased, revocable standing authorizations | APPROVED — 2026-10-19 |
+| D7 | Non-goal wording in the plan | Keep "distributed consensus" as a non-goal. Clarify that "inventing an emergent robot language" means a language robots develop themselves, which A2R and R2R are not | APPROVED — 2026-10-19 |
+| D8 | Next milestone | Approve RL-ARCH-02 as defined in section 19, after or in parallel with the pilot | APPROVED — 2026-10-19 as the next planned milestone. Implementation requires separate explicit owner authorization |
+| D9 | Ecosystem before implementation | Adopt principle P10 and the two interoperability gates of section 1.4: the Core must be implementable from the specification alone, and the ambition is measured by an independent implementation interoperating with the reference (gate 2) | APPROVED — 2026-10-19 |
 
 ## 21. Open questions
 
