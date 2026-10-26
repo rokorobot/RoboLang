@@ -1,13 +1,14 @@
 # RL-FOUNDATION-02 — Engineering contracts for the thirteen domains
 
 **Date:** 2026-10-27
-**Status:** **Proposed.** Decisions G3–G7 in
-[decision record 0005](../decisions/0005-ai-first-charter-and-domain-contracts.md). Nothing in
-this document is approved, and no implementation is authorized by it.
+**Status:** **Approved by the owner on 2026-10-27** (decisions G3–G7 in
+[decision record 0005](../decisions/0005-ai-first-charter-and-domain-contracts.md)). No
+implementation is authorized by it: BASIC-1 still needs the separate RL-BASIC-01b
+implementation authorization.
 **Builds on:** [RFC-001](rfc-001-ai-native-architecture.md) (D1–D9),
 [RL-FOUNDATION-01](rl-foundation-01-language-foundation.md) (F1–F5),
 [`simulation-v1.0.md`](../simulation-v1.0.md) (B1–B16), the
-[AI-First Language Design Charter](ai-first-language-charter.md) (proposed)
+[AI-First Language Design Charter](ai-first-language-charter.md) (G1–G3)
 **Scope:** Documentation only. No change to RoboLang 1.1, Task IR 1.0, the CLI, the
 simulation specification, RFC-001 or any approved decision.
 
@@ -291,7 +292,7 @@ Foundation 1 exit gate (F3).
 
 Each is a versioned language specification (the RL-11A pattern) followed by an
 implementation, defined first as IR forms (AF1). They do not block Track A or RL-ARCH-02
-(F3, F5). Proposed order:
+(F3, F5). Order (G6):
 
 | Item | Content | Domains |
 |---|---|---|
@@ -382,6 +383,6 @@ and 6 expected failures; ruff reports no issues; CI passes on Ubuntu and Windows
 
 ## 7. Decisions
 
-The charter, the four homes, these contracts, the work breakdown, CORE-1 and the scope of BASIC-1 are
-proposed in [decision record 0005](../decisions/0005-ai-first-charter-and-domain-contracts.md).
+The charter, the four homes, these contracts, the work breakdown, CORE-1 and the scope of BASIC-1 were
+approved on 2026-10-27 and are recorded in [decision record 0005](../decisions/0005-ai-first-charter-and-domain-contracts.md).
 No approved decision is amended.

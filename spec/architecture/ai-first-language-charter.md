@@ -1,9 +1,9 @@
 # AI-First Language Design Charter
 
 **Date:** 2026-10-27
-**Status:** **Proposed.** Decisions G1–G3 in
-[decision record 0005](../decisions/0005-ai-first-charter-and-domain-contracts.md). Nothing in
-this document is approved.
+**Status:** **Approved by the owner on 2026-10-27** (decisions G1–G3 in
+[decision record 0005](../decisions/0005-ai-first-charter-and-domain-contracts.md)). It
+authorizes no implementation.
 **Builds on:** [RFC-001](rfc-001-ai-native-architecture.md) (D1–D9),
 [RL-FOUNDATION-01](rl-foundation-01-language-foundation.md) (F1–F5),
 [`simulation-v1.0.md`](../simulation-v1.0.md) (B1–B16)
