@@ -1,7 +1,8 @@
 # RL-FOUNDATION-01 — RoboLang Language Foundation
 
 **Date:** 2026-10-26
-**Status:** **Proposed.** Nothing in this document is approved. The decisions it needs are
+**Status:** **Proposed**, revised 2026-10-26 after owner review. Nothing in this document is
+approved. The decisions it needs are
 listed in [decision record 0003](../decisions/0003-language-foundation.md).
 **Scope:** Documentation only. No change to the RoboLang 1.1 language, grammar, parser,
 validator, IR schema 1.0, CLI or v1 runtime, to [RFC-001](rfc-001-ai-native-architecture.md),
@@ -23,8 +24,8 @@ replacing it:
    language functions to intelligent behavior to advanced robotics.
 4. **RL-BASIC-01** (section 6) is the first milestone that executes RoboLang 1.1 tasks, in
    simulation only, with defined scope and acceptance tests.
-5. **A D8 scheduling amendment** (section 7) proposes that Foundation 1, including
-   RL-BASIC-01, comes before RL-ARCH-02.
+5. **A D8 scheduling amendment** (section 7) proposes that RL-BASIC-01 comes before
+   RL-ARCH-02. Language extensions beyond RoboLang 1.1 do not delay RL-ARCH-02.
 
 The order in section 7 takes effect only after the owner explicitly approves the D8
 amendment. Until then, D8 as approved on 2026-10-19 stands: RL-ARCH-02 is the next planned
@@ -42,15 +43,23 @@ the Core, the message envelope, the A2R and R2R profiles or any approved decisio
 the proposed amendment of D8's scheduling in section 7. The layers fit together like this:
 
 ```text
-.rob authoring (RoboLang 1.x)            Core JSON documents (RFC-001)
-            |                                        |
-   Language Kernel: lexer -> parser ->               |
-   typed AST -> validator -> Task IR 1.0             |
-            |                                        |
-            +---------------> execution <------------+
+.rob authoring (RoboLang 1.x)              Core JSON documents (RFC-001)
+            |                                          |
+   Language Kernel:                           Core validation:
+   lexer -> parser -> typed AST ->            schema validation ->
+   static validator -> Task IR 1.0            semantic checks
+            |                                          |
+            +--------> local authorization <-----------+
+                       (RFC-001 section 13)
+                                |
+                            execution
                   simulation (RL-BASIC-01, RL-ARCH-02)
                   later: robot adapters, AI and planning backends
 ```
+
+Neither path reaches execution without its own validation and the robot's local
+authorization. A Core JSON document is not compiled by the Language Kernel and does not
+bypass either step.
 
 Where a domain in section 3 overlaps a Core concept, the Core definition in RFC-001 is
 authoritative, and any `.rob` construct for it must map onto the Core rather than define a
@@ -131,8 +140,10 @@ is the RoboLang 1.1 front end. This section names it; it adds no code.
 
 Rules for evolving the kernel:
 
-1. **One engine.** New language features extend this front end. No parallel parser,
-   validator or IR is started for a new domain.
+1. **One engine.** The kernel is the single language engine for `.rob`. New language
+   features extend this front end. No parallel parser, validator or IR is started for a new
+   domain. Core JSON documents keep their own schema and semantic validation path (RFC-001
+   section 6), which is not part of the kernel and does not bypass local authorization.
 2. **Versioned, compatible extensions.** Every valid RoboLang 1.1 file stays valid with the
    same meaning, or a change is listed as breaking with a migration note, as RL-11A did
    (`robolang-v1.1.md` section 8).
@@ -173,14 +184,15 @@ runs, first in simulation. This is RL-BASIC-01 (section 6). It adds no syntax.
 
 **Part B: language extensions.** Variables beyond task parameters, structured data and
 expressions are not in RoboLang 1.1. Each is a separate, versioned language proposal with
-its own specification, fixtures and owner decision, following kernel rules 2 and 3. Part B
-does not block RL-BASIC-01, and RL-BASIC-01 does not need it. The individual proposals are
-not defined in this document; they are scoped after RL-BASIC-01, when execution semantics
+its own specification, fixtures and owner decision, following kernel rules 2 and 3. Part B is
+scheduled independently: it is not a prerequisite for RL-BASIC-01, for the Foundation 1 exit
+gate or for RL-ARCH-02. The individual proposals are not defined in this document; they are
+scoped when the owner selects them, preferably after RL-BASIC-01, when execution semantics
 exist for the new constructs to build on.
 
-**Foundation 1 exit gate (proposed):** RL-BASIC-01 accepted; the Part B proposals the owner
-selects for Foundation 1 specified, implemented and accepted; all RoboLang 1.1 fixtures still
-pass; owner approval.
+**Foundation 1 exit gate (proposed):** the essential foundation is complete when RL-BASIC-01
+passes its approved acceptance tests, all RoboLang 1.1 fixtures still pass, and the owner
+signs off. Part B extensions are not part of this gate.
 
 ## 6. RL-BASIC-01 — functional simulation executor
 
@@ -215,7 +227,11 @@ simulator), restricted to simulation. RL-12D (ROS 2) is not part of it.
 5. **Semantics.** Section 6.3.
 6. **Outcome record.** A JSON run record: run ID, task name, a hash of the source and of the
    world file, final state, per-step status, events with simulated timestamps, failure code
-   and reason where applicable, and `"mode": "simulation"`. The record is designed so that it
+   and reason where applicable, the status of each declared safety limit, and
+   `"mode": "simulation"`. The run ID is deterministic: it is derived from the source hash,
+   the world-file hash, the selected task and an explicit run seed, so the same inputs give
+   the same ID and the same record. There is no wall-clock time or random source in the
+   record. RL-BASIC-01a fixes the derivation. The record is designed so that it
    can later be mapped onto Core outcomes (RFC-001 section 7.10), but it is not a Core
    document and claims no Core conformance.
 7. **Command.** `robolang simulate FILE.rob --world WORLD.json [--task NAME]`, kept separate
@@ -227,6 +243,12 @@ simulator), restricted to simulation. RL-12D (ROS 2) is not part of it.
 These are proposals for the owner to decide. The RL-BASIC-01 specification PR freezes them
 before implementation.
 
+**Simulated movement is symbolic.** In RL-BASIC-01 a robot's position is a declared
+location, and `move` changes it in one step. There is no motion planning, path, kinematics,
+collision checking, speed or acceleration. Nothing in a run record is evidence of how a
+real robot would move, and RL-BASIC-01 enforces no speed limit. Motion planning and speed
+enforcement remain RL-12B and RL-12C work.
+
 | Construct | Proposed behavior in simulation |
 |---|---|
 | `pre` block | Every condition is evaluated before the first step. False or unknown fails the run with zero steps executed |
@@ -234,14 +256,14 @@ before implementation.
 | `region_clear c` | True only if the world declares `c` clear at the current simulated time. Undeclared is unknown, which fails closed |
 | `object_exists o` | True only if `o` is present in the world |
 | `sensor_ok "s"` | True only if a sensor `s` is declared and available |
-| `move r to dst` | Requires `r` ready. Sets the location of `r` to `dst`; an object held by `r` moves with it |
+| `move r to dst` | Requires `r` ready. Sets the location of `r` to `dst` symbolically; an object held by `r` moves with it |
 | `grasp r o` | Requires a gripper in the profile of `r`, an empty gripper, and `o` at the location of `r` |
 | `place r o at dst` | Requires `r` to hold `o` and to be at `dst`. Puts `o` at `dst` and empties the gripper |
 | `inspect r o using "s"` | Requires sensor `s` on `r` and available. Records an observation of `o` in the trace. No default sensor |
 | `wait for d` | Advances the simulated clock by `d`. Never sleeps in real time |
 | `wait until c timeout d` | Advances the simulated clock through scripted events until `c` is true, or fails with a timeout code when `d` expires |
 | `communicate r to "ch" with "m"` | Appends the message to the simulated channel log. It records sending only; it does not claim delivery or acknowledgement |
-| `@safety max_speed` | Recorded in the run record with its unit. A limit with a unit is checked against the robot profile, and a limit above the profile's maximum fails before the first step. A unitless limit (`W401`) is recorded as declared and not enforced. Motion timing is not modelled |
+| `@safety max_speed` | Never enforced in simulation, because no speed is simulated. A limit with a unit is compared with the robot profile before the first step, and a limit above the profile's maximum fails the run; that is a configuration check, not speed enforcement. The run record states the status of each limit: a limit with a unit as "checked against profile, not enforced", a unitless limit (`W401`) as "unit unspecified, not enforced". No record presents any limit as an enforced safety limit |
 | Failing step | The run ends `FAILED` at that step. Later steps do not run. No step is skipped |
 | Injected fault | A fault scripted for a step fails that step; the run is `FAILED`, never `SUCCEEDED` |
 | Cancellation | A cancellation scripted at a step ends the run `CANCELLED` before that step |
@@ -257,7 +279,7 @@ existing ones.
 
 | # | Case | Expected result |
 |---|---|---|
-| T1 | `pick_and_place.rob` with a complete world | `SUCCEEDED`; box at `dst`; gripper empty; five steps succeeded; one message on `fleet` |
+| T1 | `pick_and_place.rob` with a complete world | `SUCCEEDED`; box at `dst`; gripper empty; five steps succeeded; one message on `fleet`; its unitless `max_speed` recorded as "unit unspecified, not enforced" |
 | T2 | Each existing invalid fixture | Front-end error exit code; no run record; zero simulated steps |
 | T3 | `region_clear` false in `pre` | `FAILED` before the first step; zero steps executed |
 | T4 | A condition the world does not declare | `FAILED`; unknown is treated as false |
@@ -267,14 +289,14 @@ existing ones.
 | T8 | `inspect` with a missing or unavailable sensor | `FAILED` at `inspect` |
 | T9 | `wait until` whose condition becomes true through a scripted event before the timeout, and the same without the event | First continues; second `FAILED` with the timeout code at the stated simulated time |
 | T10 | `communicate` | Message in the channel log; run record does not claim delivery |
-| T11 | Same source, world and run seed twice | Byte-identical run records |
+| T11 | Same source, world, task and run seed twice; then a different seed | Byte-identical run records with the same run ID; a different seed gives a different run ID |
 | T12 | File with two tasks and no `--task` | Error; no execution. Single-task file runs without `--task` |
 | T13 | Parameter unbound in the world, or bound to an entity of the wrong type | World-file error before `RUNNING`; zero steps |
 | T14 | World file with an unknown field or version | Rejected before execution |
 | T15 | Injected fault at step 3 | `FAILED` at step 3, never `SUCCEEDED` |
 | T16 | Cancellation scripted at step 2 | `CANCELLED`; step 2 and later not run |
 | T17 | `max_speed` above the robot profile's maximum | `FAILED` before the first step |
-| T18 | Import check | The executor package imports no ROS 2 or adapter module; every run record says `"mode": "simulation"` |
+| T18 | Import check | The executor package imports no ROS 2 or adapter module; every run record says `"mode": "simulation"`; no run record marks any safety limit as enforced |
 | T19 | Regression | All 76 RoboLang 1.1 fixtures and the existing test suite pass unchanged |
 
 ### 6.5 Out of scope
@@ -288,10 +310,11 @@ AI model calls; changes to the v1 interpreter and its demo, which keep working u
 Two pull requests, each needing owner approval to merge:
 
 1. **RL-BASIC-01a — specification.** The simulation semantics of section 6.3 as decided by
-   the owner, the world-file and run-record formats, and the fixtures for section 6.4.
-   Documentation and fixtures only.
+   the owner, the run-ID derivation, the world-file and run-record formats, and the fixtures
+   for section 6.4. Documentation and fixtures only.
 2. **RL-BASIC-01b — implementation.** Executor, simulated world and `simulate` command, with
-   the tests of section 6.4.
+   the tests of section 6.4. Starts only after RL-BASIC-01a is approved and the owner
+   separately authorizes implementation.
 
 **Exit gate (proposed):** T1–T19 pass in CI on every supported platform; the README states
 that `simulate` is simulation only; owner approval.
@@ -301,10 +324,15 @@ that `simulate` is simulation only; owner approval.
 **Approved D8 (2026-10-19):** RL-ARCH-02 is the next planned milestone; its implementation
 requires separate explicit owner authorization.
 
-**Proposed amendment:** Foundation 1, including RL-BASIC-01, is prioritized before
-RL-ARCH-02. RL-ARCH-02 stays approved as a milestone and still needs its own explicit
-authorization. It is scheduled after the Foundation 1 exit gate and does not have to wait for
-Foundation 2.
+**Proposed amendment:** RL-BASIC-01 is prioritized before RL-ARCH-02, in this order:
+
+1. RL-BASIC-01a specification;
+2. RL-BASIC-01b implementation and acceptance, separately authorized;
+3. RL-ARCH-02, subject to its existing requirement of separate explicit implementation
+   authorization (D8).
+
+RL-ARCH-02 stays approved as a milestone. Foundation 1 Part B extensions are scheduled
+independently and do not delay RL-ARCH-02, and RL-ARCH-02 does not wait for Foundation 2.
 
 Proposed development sequence:
 
@@ -313,9 +341,10 @@ Proposed development sequence:
 | 1 | RFC-001 | Approved and merged |
 | 2 | Development-plan alignment (rokorobot/RoboLang#9) | Ready for review |
 | 3 | Language Foundation specification (this document) | Proposed |
-| 4 | Foundation 1: continue developing the original RoboLang functions | After approval of this document |
-| 5 | RL-BASIC-01: functional simulation executor | After approval of this document and of RL-BASIC-01a |
-| 6 | RL-ARCH-02 | After the Foundation 1 exit gate and separate authorization |
+| 4 | RL-BASIC-01a: simulation semantics specification | After approval of this document |
+| 5 | RL-BASIC-01b: functional simulation executor, implementation and acceptance | After approval of RL-BASIC-01a and separate implementation authorization |
+| 6 | RL-ARCH-02 | After RL-BASIC-01b acceptance and its own separate implementation authorization |
+| — | Foundation 1 Part B extensions | Scheduled independently; not a prerequisite for steps 4–6 |
 
 Reasons:
 

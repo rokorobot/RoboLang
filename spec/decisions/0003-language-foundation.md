@@ -1,32 +1,35 @@
 # Decision record 0003 — RoboLang Language Foundation (RL-FOUNDATION-01)
 
 **Date:** 2026-10-26
-**Status:** **Proposed. No decision has been made.**
+**Status:** **Revised proposal, awaiting final owner approval.** The owner reviewed the first
+draft on 2026-10-26 and proposed the amended wording of F1–F5 below. None of them is approved
+yet.
 **Applies to:** [`spec/architecture/rl-foundation-01-language-foundation.md`](../architecture/rl-foundation-01-language-foundation.md)
 
 ## 1. What this record does and does not do
 
-It lists the owner decisions the Language Foundation document needs. Until the owner
-approves a row, that row has no effect.
+It lists the owner decisions the Language Foundation document needs. Until the owner gives
+final approval to a row, that row has no effect.
 
 It does not:
 
 - change RoboLang 1.1, its grammar, parser, validator, IR schema 1.0, CLI or v1 runtime;
 - change RFC-001 or the approved rows of
-  [decision record 0002](0002-ai-native-architecture.md);
+  [decision record 0002](0002-ai-native-architecture.md). In particular, D8's requirement of a
+  separate explicit owner authorization before RL-ARCH-02 is implemented stays in force;
 - change [`docs/DEVELOPMENT_PLAN.md`](../../docs/DEVELOPMENT_PLAN.md). If F5 is approved, the
   plan is updated in a separate PR;
 - authorize implementation of RL-BASIC-01 or RL-ARCH-02.
 
 ## 2. Proposed decisions
 
-| # | Topic | Proposal | Status |
+| # | Topic | Proposal (as revised by the owner on 2026-10-26) | Status |
 |---|---|---|---|
-| F1 | Thirteen domains | Adopt the thirteen domains in four families (section 3) as RoboLang's architectural taxonomy. They place work; they are not modules and not a requirement to cover every domain before RL-BASIC-01 | PROPOSED |
-| F2 | Language Kernel | The existing RoboLang 1.1 front end (lexer, parser, typed AST, validator, Task IR 1.0, CLI) is the Language Kernel. New features extend it under the five rules of section 4; no second language engine is started | PROPOSED |
-| F3 | Foundations 1–3 | Adopt the three development stages of section 5. Foundation 1 Part A is RL-BASIC-01; Part B language extensions (variables, structured data, expressions) are separate versioned proposals, each needing its own owner decision | PROPOSED |
-| F4 | RL-BASIC-01 | Adopt RL-BASIC-01 as defined in section 6: simulation-only execution of RoboLang 1.1 tasks, delivered as a specification PR (RL-BASIC-01a) and then an implementation PR (RL-BASIC-01b). The simulation semantics of section 6.3 are decided in RL-BASIC-01a, not by this row | PROPOSED |
-| F5 | D8 scheduling amendment | Prioritize Foundation 1, including RL-BASIC-01, before RL-ARCH-02. RL-ARCH-02 stays approved as a milestone, still needs separate explicit authorization, and is scheduled after the Foundation 1 exit gate. The developer-preview pilot stays independent | PROPOSED |
+| F1 | Thirteen domains | Approve the thirteen-domain taxonomy in four families (section 3) as RoboLang's architectural taxonomy. The domains place work; they are not modules and not a requirement to cover every domain before RL-BASIC-01 | PROPOSED — awaiting final approval |
+| F2 | Language Kernel | Approve the existing RoboLang 1.1 front end (lexer, parser, typed AST, validator, Task IR 1.0, CLI) as the single `.rob` language engine. New `.rob` features extend it under the rules of section 4. Core JSON documents use their own schema and semantic validation path, and neither path bypasses local authorization (section 2) | PROPOSED — awaiting final approval |
+| F3 | Foundations 1–3 | Approve the three development stages of section 5. Foundation 1 Part A is RL-BASIC-01, and the Foundation 1 exit gate is RL-BASIC-01 passing its approved acceptance tests with owner sign-off. Part B extensions (variables, expressions, structured data beyond RoboLang 1.1) are scheduled independently, each needing its own owner decision, and are not a prerequisite for the exit gate or for RL-ARCH-02 | PROPOSED — awaiting final approval |
+| F4 | RL-BASIC-01 | Approve RL-BASIC-01 (section 6) as the planned simulation-only milestone, delivered as a specification PR (RL-BASIC-01a) and a separate implementation PR (RL-BASIC-01b). This does not authorize implementation. The simulation semantics of section 6.3 are decided in RL-BASIC-01a, not by this row | PROPOSED — awaiting final approval |
+| F5 | D8 scheduling amendment | Amend D8's order to: RL-BASIC-01a specification → separately authorized RL-BASIC-01b implementation and acceptance → RL-ARCH-02, subject to its existing separate implementation authorization. Foundation 1 Part B extensions must not delay RL-ARCH-02. The developer-preview pilot stays independent | PROPOSED — awaiting final approval |
 
 Section numbers refer to the Language Foundation document.
 
@@ -39,11 +42,21 @@ RL-BASIC-01 specification is reviewed:
 2. A condition the world does not declare is unknown and fails closed.
 3. `wait until` that times out ends the run `FAILED`.
 4. A `max_speed` with a unit above the robot profile's maximum fails the run before the first
-   step; a unitless limit is recorded as not enforced.
+   step, as a configuration check. No limit is enforced in simulation, and a unitless limit
+   is recorded as "unit unspecified, not enforced".
 5. `communicate` records sending only, not delivery.
+
+RL-BASIC-01a must also define how the deterministic run ID is derived (section 6.2).
 
 ## 4. Relationship to open questions
 
 None of RFC-001's open questions (decision record 0002, section 4) is resolved here. In
 particular, open question 8 (whether goals and outcomes get `.rob` syntax) stays open:
 RL-BASIC-01 produces a run record, not new syntax.
+
+## 5. Revision history
+
+| Date | Change |
+|---|---|
+| 2026-10-26 | First draft: F1–F5 proposed |
+| 2026-10-26 | Owner review. F2 clarified (Core JSON keeps its own validation path; no bypass of authorization). F3 amended (the Foundation 1 exit gate is RL-BASIC-01 acceptance; Part B is independent of RL-ARCH-02). F4 states that it does not authorize implementation. F5 given the exact order RL-BASIC-01a → RL-BASIC-01b → RL-ARCH-02. Document corrections: the layer diagram shows Core JSON validation and local authorization before execution; RL-BASIC-01 run IDs are deterministic; simulated movement is symbolic and no limit is enforced in simulation |
