@@ -1,9 +1,10 @@
 # RL-FOUNDATION-01 — RoboLang Language Foundation
 
 **Date:** 2026-10-26
-**Status:** **Proposed**, revised 2026-10-26 after owner review. Nothing in this document is
-approved. The decisions it needs are
-listed in [decision record 0003](../decisions/0003-language-foundation.md).
+**Status:** **Decisions F1–F5 APPROVED — 2026-10-26**, as revised after owner review and
+recorded in [decision record 0003](../decisions/0003-language-foundation.md). The simulation
+semantics of section 6.3 remain proposals, decided in RL-BASIC-01a. Approval does not
+authorize implementation of RL-BASIC-01b or RL-ARCH-02.
 **Scope:** Documentation only. No change to the RoboLang 1.1 language, grammar, parser,
 validator, IR schema 1.0, CLI or v1 runtime, to [RFC-001](rfc-001-ai-native-architecture.md),
 to [decision record 0002](../decisions/0002-ai-native-architecture.md) or to
@@ -13,7 +14,7 @@ to [decision record 0002](../decisions/0002-ai-native-architecture.md) or to
 
 RoboLang 1.1 already has a working language front end: a formal grammar, a parser with
 source positions, a static validator and a versioned task IR, with `validate` and
-`inspect` commands. This document proposes how to keep developing that language instead of
+`inspect` commands. This document sets out how to keep developing that language instead of
 replacing it:
 
 1. **Thirteen domains** (section 3) give an architectural taxonomy of what a robot language
@@ -24,12 +25,12 @@ replacing it:
    language functions to intelligent behavior to advanced robotics.
 4. **RL-BASIC-01** (section 6) is the first milestone that executes RoboLang 1.1 tasks, in
    simulation only, with defined scope and acceptance tests.
-5. **A D8 scheduling amendment** (section 7) proposes that RL-BASIC-01 comes before
-   RL-ARCH-02. Language extensions beyond RoboLang 1.1 do not delay RL-ARCH-02.
+5. **A D8 scheduling amendment** (section 7) puts RL-BASIC-01 before RL-ARCH-02. Language
+   extensions beyond RoboLang 1.1 do not delay RL-ARCH-02.
 
-The order in section 7 takes effect only after the owner explicitly approves the D8
-amendment. Until then, D8 as approved on 2026-10-19 stands: RL-ARCH-02 is the next planned
-milestone.
+The D8 amendment was approved on 2026-10-26 (decision F5), so the order in section 7 is in
+effect. D8's requirement of a separate explicit authorization before RL-ARCH-02 is
+implemented is unchanged.
 
 ## 2. Relationship to RFC-001
 
@@ -40,7 +41,7 @@ and 16).
 
 This document is about that authoring language and its implementation. It does not change
 the Core, the message envelope, the A2R and R2R profiles or any approved decision except
-the proposed amendment of D8's scheduling in section 7. The layers fit together like this:
+the amendment of D8's scheduling in section 7 (decision F5). The layers fit together like this:
 
 ```text
 .rob authoring (RoboLang 1.x)              Core JSON documents (RFC-001)
@@ -190,7 +191,7 @@ gate or for RL-ARCH-02. The individual proposals are not defined in this documen
 scoped when the owner selects them, preferably after RL-BASIC-01, when execution semantics
 exist for the new constructs to build on.
 
-**Foundation 1 exit gate (proposed):** the essential foundation is complete when RL-BASIC-01
+**Foundation 1 exit gate (approved 2026-10-26, decision F3):** the essential foundation is complete when RL-BASIC-01
 passes its approved acceptance tests, all RoboLang 1.1 fixtures still pass, and the owner
 signs off. Part B extensions are not part of this gate.
 
@@ -316,15 +317,16 @@ Two pull requests, each needing owner approval to merge:
    the tests of section 6.4. Starts only after RL-BASIC-01a is approved and the owner
    separately authorizes implementation.
 
-**Exit gate (proposed):** T1–T19 pass in CI on every supported platform; the README states
+**Exit gate:** T1–T19, as finalized in RL-BASIC-01a, pass in CI on every supported platform; the README states
 that `simulate` is simulation only; owner approval.
 
-## 7. Proposed D8 scheduling amendment
+## 7. D8 scheduling amendment (approved 2026-10-26, decision F5)
 
 **Approved D8 (2026-10-19):** RL-ARCH-02 is the next planned milestone; its implementation
 requires separate explicit owner authorization.
 
-**Proposed amendment:** RL-BASIC-01 is prioritized before RL-ARCH-02, in this order:
+**Approved amendment (2026-10-26):** RL-BASIC-01 is prioritized before RL-ARCH-02, in this
+order:
 
 1. RL-BASIC-01a specification;
 2. RL-BASIC-01b implementation and acceptance, separately authorized;
@@ -334,14 +336,14 @@ requires separate explicit owner authorization.
 RL-ARCH-02 stays approved as a milestone. Foundation 1 Part B extensions are scheduled
 independently and do not delay RL-ARCH-02, and RL-ARCH-02 does not wait for Foundation 2.
 
-Proposed development sequence:
+Development sequence:
 
 | # | Step | State |
 |---|---|---|
 | 1 | RFC-001 | Approved and merged |
 | 2 | Development-plan alignment (rokorobot/RoboLang#9) | Ready for review |
-| 3 | Language Foundation specification (this document) | Proposed |
-| 4 | RL-BASIC-01a: simulation semantics specification | After approval of this document |
+| 3 | Language Foundation specification (this document) | Decisions F1–F5 approved 2026-10-26 |
+| 4 | RL-BASIC-01a: simulation semantics specification | Next; a documentation and fixtures PR |
 | 5 | RL-BASIC-01b: functional simulation executor, implementation and acceptance | After approval of RL-BASIC-01a and separate implementation authorization |
 | 6 | RL-ARCH-02 | After RL-BASIC-01b acceptance and its own separate implementation authorization |
 | — | Foundation 1 Part B extensions | Scheduled independently; not a prerequisite for steps 4–6 |
@@ -357,6 +359,6 @@ Reasons:
 
 The developer-preview pilot of RoboLang 1.1 stays independent of this order, as before.
 
-If the amendment is approved, its approval and date are recorded in decision record 0003
-(the approved rows of decision record 0002 are not rewritten), and the plan's milestone order in
+The amendment's approval and date are recorded in decision record 0003 (the approved rows
+of decision record 0002 are not rewritten), and the plan's milestone order in
 `docs/DEVELOPMENT_PLAN.md` is updated in a separate PR.
