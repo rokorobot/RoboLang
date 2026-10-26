@@ -47,14 +47,15 @@ robolang = "robolang.cli:run"
 
 [tool.setuptools]
 package-dir = { "" = "src" }
-# The installed distribution contains exactly this package: read-only tooling.
+# The installed distribution is the `robolang` package and its simulation-only
+# `robolang.sim` subpackage (no adapter, no ROS 2).
 #
 # The v1 prototype in src/ (robolang_runtime, robolang_adapter,
 # robolang_adapter_ros2, robolang_ros2_main) is historical source kept in the
 # repository. It is deliberately NOT installed: it can drive ROS 2 without
 # passing through the validator. Do not add `py-modules` here without an
 # explicit owner decision.
-packages = ["robolang"]
+packages = ["robolang", "robolang.sim"]
 
 [tool.ruff]
 line-length = 120
