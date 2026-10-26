@@ -171,7 +171,7 @@ true (section 4.4).
 |---|---|---|
 | `location` | yes | ID of a declared location |
 | `gripper` | yes | `true` if the robot has a gripper |
-| `ready` | no | `true` or `false`; omitted means unknown |
+| `ready` | no | `true` or `false`; omitted means unknown. Readiness for physical actions (4.5) |
 | `max_speed` | no | Array of quantities with unit `m/s` or `rad/s`, at most one per unit. The robot's declared maxima (section 4.3) |
 
 **Object:**
@@ -332,6 +332,13 @@ Each step first checks for a scripted fault (4.6), then its requirements in the 
 and fails with the first unmet requirement. A step whose requirements are met has its effect
 and succeeds.
 
+**Readiness.** A robot's `ready` fact, and the `robot_ready` condition, mean that the robot
+is ready for **physical actions**: `move`, `grasp` and `place`. It is not a statement about
+every subsystem of the robot. `inspect` depends on its sensor's own `available` fact instead,
+and `communicate` only records a simulated message. That a simulated `inspect` or
+`communicate` succeeds for a robot that is not ready does not imply that real sensing or
+communication hardware would work on such a robot.
+
 | Statement | Requirements, in order | Effect |
 |---|---|---|
 | `move r to dst` | `r` is ready (`S201` false, `S202` unknown) | `r` is at `dst`. An object `r` holds moves with it |
@@ -487,6 +494,10 @@ run_id            = "sim-" + lowercase hex SHA-256 of preimage
   file's formatting gives a different ID.
 - The same source, world, task and seed always give the same ID; a different seed gives a
   different ID.
+- The ID identifies an **input-equivalent simulation run**, not an occurrence. Running the
+  same inputs twice with the same seed intentionally produces the same ID and the same
+  record. It is not an invocation identifier; a future operational executor may need a
+  separate one for each invocation.
 - The ID identifies a simulated run. It is not a signature and proves nothing about who
   produced a record (`ir-schema-v1.0.md` section 2).
 
