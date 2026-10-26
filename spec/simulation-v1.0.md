@@ -1,13 +1,13 @@
 # RoboLang simulation — semantics, world file 1.0 and run record 1.0
 
-**Status:** RL-BASIC-01a specification, **proposed**. Every choice in it is listed for owner
-decision in [decision record 0004](decisions/0004-rl-basic-01a-simulation-semantics.md); none
-is approved.
+**Status:** RL-BASIC-01a specification, **approved by the owner on 2026-10-26**. Every choice
+in it is recorded in [decision record 0004](decisions/0004-rl-basic-01a-simulation-semantics.md)
+(B1–B16).
 **Milestone:** RL-BASIC-01, as approved in
 [decision record 0003](decisions/0003-language-foundation.md) (F4) and defined in
 [RL-FOUNDATION-01 section 6](architecture/rl-foundation-01-language-foundation.md#6-rl-basic-01--functional-simulation-executor).
-**Implementation:** none. RL-BASIC-01b implements this specification only after it is
-approved and the owner separately authorizes implementation.
+**Implementation:** none. RL-BASIC-01b implements this specification only after the owner
+separately authorizes implementation.
 **Language:** RoboLang 1.1 ([`robolang-v1.1.md`](robolang-v1.1.md)), unchanged.
 **IR:** Task IR 1.0 ([`ir-schema-v1.0.md`](ir-schema-v1.0.md)), unchanged.
 **Fixtures:** [`tests/fixtures/simulation/`](../tests/fixtures/simulation/README.md)
@@ -565,6 +565,6 @@ are consistent with this specification and with the existing front end; it execu
 
 ## 9. Decisions
 
-Every choice above is proposed in
+Every choice above was approved on 2026-10-26 and is recorded in
 [decision record 0004](decisions/0004-rl-basic-01a-simulation-semantics.md). The five choices
 deferred by decision record 0003 section 3 are rows B1–B5 there.
