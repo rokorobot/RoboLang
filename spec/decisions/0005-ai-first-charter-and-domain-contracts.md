@@ -38,3 +38,10 @@ on: 1 (ontology) for Memory & Knowledge, 2 (world-model depth) for Data & World 
 (time) for Time & Coordination, 8 (text syntax for goals and outcomes) for Goals & Tasks and
 Outcomes & Recovery, 11 (policy language) for Safety & Authorization, and 12 (skills) for
 Goals & Tasks and Capabilities & Resources.
+
+## 4. Revision history
+
+| Date | Change |
+|---|---|
+| 2026-10-27 | First draft: G1–G7 proposed |
+| 2026-10-27 | Owner refinements before final review; documentation only, G1–G7 and the work breakdown unchanged. Charter: the central abstraction (a verifiable transition from an observed world state toward a desired outcome) at the start of section 1; a comparison with traditional languages (1.1); MC1 limited to the same inputs in the same canonical representation; the thirteen domains described as one semantic language, not thirteen implementations. Contracts: trajectories and trajectory evidence (01), hypotheses distinct from observations (05), temporal relationships (10), capability prerequisites (11). Correction to 11: RL-BASIC-01 checks capabilities in stages (speed maxima before authorization, gripper and sensors at their steps), and a comprehensive preflight is planned later; the approved simulator behavior and fixtures are unchanged |

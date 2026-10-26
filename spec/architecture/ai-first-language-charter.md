@@ -15,6 +15,14 @@ RoboLang is written primarily for AI systems to generate, read, exchange, valida
 Humans design, review and authorize it. This charter states what that means for the design of
 every one of the thirteen domains, and how to check that a design meets it.
 
+> **Central abstraction.** RoboLang's fundamental abstraction is a **verifiable transition from
+> an observed world state toward a desired outcome**. Actions, plans and communication are
+> means to achieve that outcome; execution alone does not establish success.
+
+In RFC-001 terms, the observed state is made of observations (7.6), the desired outcome is a
+goal with success criteria (7.7), the means are plans (7.8) and commitments (7.9), and the
+transition is established only by an outcome verified against evidence (7.10, 11.3).
+
 The direction is already largely approved. RFC-001 puts semantics before syntax (P1), makes
 versioned JSON schemas the interoperability contract (P2), and defines observations with
 confidence and provenance (section 7.6), goals with success criteria (7.7) and outcomes that
@@ -26,6 +34,23 @@ demonstrates it.
 the single *`.rob`* engine; decision D2 already lets an AI produce Core JSON directly, without
 `.rob`. If applying the charter to a domain ever needs a change to D1–D9, F1–F5 or B1–B16, that
 change is proposed as its own row in a decision record, never made in passing.
+
+### 1.1 How RoboLang differs from a traditional language
+
+| Traditional programming language | AI-native RoboLang |
+|---|---|
+| Humans write sequences of instructions | AI systems express goals, plans, constraints and actions |
+| Syntax is organized around human readability | The representation is organized around reliable machine generation and validation |
+| Variables and functions dominate | Entities, capabilities, relationships and state transitions are first-class |
+| The programmer controls most behavior directly | AI proposes behavior; it runs only within authority granted by the robot's local policy |
+| Errors are mostly programming mistakes | Uncertainty, stale observations and unsuccessful actions are normal outcomes, with defined handling |
+| Execution usually assumes one computer | Execution may span several robots and AI systems |
+| Success is inferred from a function returning | Success requires explicit, verified outcome evidence |
+
+This is why RoboLang puts goals, typed semantics, uncertainty, authorization and verified
+outcomes first, and treats a sequence of instructions as one possible means, not the
+language's centre. It keeps what has proven itself regardless of origin: static typing,
+units, deterministic validation and explicit execution authority (AF10).
 
 ## 2. Three parts, two representations, one meaning
 
@@ -68,7 +93,7 @@ hold. Each criterion names the artifact that demonstrates it.
 
 | # | Criterion | Measure | Demonstrated by | Available |
 |---|---|---|---|---|
-| MC1 | Unambiguous typed representation | Every supported construct has exactly one canonical JSON form, and the same meaning always produces byte-identical JSON | IR golden snapshots (`tests/snapshots/ir/`); run-record determinism (T11) | IR now; run record in RL-BASIC-01b |
+| MC1 | Unambiguous typed representation | Every supported construct has exactly one canonical JSON form. The same inputs in the same canonical representation always produce byte-identical output. Equivalent content written in different authoring formats (for example `.rob` and Core JSON) must have the same meaning, not necessarily identical bytes | IR golden snapshots (`tests/snapshots/ir/`); run-record determinism (T11) | IR now; run record in RL-BASIC-01b |
 | MC2 | Deterministic rejection | 100% of a published negative corpus is rejected with the stated code, and no rejected input reaches execution | The 76 v1.1 fixtures; world-file fixtures `E5xx`; each new slice adds its own | Now, extended per slice |
 | MC3 | Unknown never counts as true | Every fixture where a required fact is unknown or stale ends without the dependent action | T4, T8 (`S102`, `S233`); staleness fixtures with Core observations | RL-BASIC-01b; Foundation 2 |
 | MC4 | Proposal, authorization, execution and outcome are distinguishable | A record or document always states which of the four it is; a success without evidence is rejected | Run-record states (B14); Core outcome rules in RL-ARCH-02 tests | RL-BASIC-01b; RL-ARCH-02 |
@@ -78,6 +103,10 @@ hold. Each criterion names the artifact that demonstrates it.
 | MC8 | Reproducibility | Identical inputs give identical records on every supported platform | T11 on Ubuntu and Windows CI | RL-BASIC-01b |
 
 ## 5. Consequences for the thirteen domains
+
+The thirteen domains describe everything RoboLang is meant to express. They are not thirteen
+implementations: what unifies them, and what is new, is one AI-native semantic language with
+shared types, truth values, evidence and authority rules.
 
 The [domain contracts](rl-foundation-02-domain-contracts.md) apply this charter to each
 domain. In particular:

@@ -92,13 +92,13 @@ form "7.6" refer to RFC-001.
 | Aspect | Contract |
 |---|---|
 | Reuse | `move r to dst` (grammar, static rules, IR kind `move`); `location` type; simulated `move` (B1, B7, B8); RL-12C target resolution; places 7.5 |
-| Missing | Geometric places and frames; poses and orientation; approach and reach; motion constraints (speed per goal, places to avoid); path evidence; real motion backends |
+| Missing | Geometric places and frames; poses and orientation; approach and reach; motion constraints (speed per goal, places to avoid); trajectories, and trajectory evidence (the motion actually performed); real motion backends |
 | Representation | Core: places 7.5 (`pose`, `region`, `named_place`), goal constraints `max_speed` and `avoid_place` (7.7). IR: `move` unchanged; any new motion kind is an additive IR 1.x kind. `.rob`: no new syntax proposed |
-| Types and rules | A frame is always named; geometry in different frames is compared only through an explicit transform, otherwise the comparison fails (7.5). SI units as exact decimals. Simulated positions are symbolic |
+| Types and rules | A frame is always named; geometry in different frames is compared only through an explicit transform, otherwise the comparison fails (7.5). SI units as exact decimals. A trajectory is a plan for motion in a named frame; it is never evidence that the motion happened. Only trajectory evidence, recorded as observations of the motion actually performed, can support an outcome. Simulated positions are symbolic and have no trajectory |
 | IR and compatibility | IR 1.0 `move` keeps its meaning. New kinds are added, never folded into `move` |
 | Validation and authorization | Static: `location` typing. Runtime: readiness (B8), reach and operating area from the capability descriptor (7.3), speed limits against the profile (B4). Authorization is local to the robot (13.2); physical mode disabled by default (A5) |
 | Simulation and backends | Simulation: symbolic relocation in zero time. Backend contract: a motion request returns a final, verified result; acceptance of a goal is never success (RL-12D) |
-| Acceptance tests | Positive: T1 move effects; later, one named place resolved differently on two profiles (RL-13B). Negative: `S201`/`S202`; unbound or undeclared place (`E505`–`E507`); geometry in an unrelated frame rejected; limit above profile (`S001`) |
+| Acceptance tests | Positive: T1 move effects; later, one named place resolved differently on two profiles (RL-13B). Negative: `S201`/`S202`; unbound or undeclared place (`E505`–`E507`); geometry in an unrelated frame rejected; a planned trajectory offered as evidence of completed motion is rejected; limit above profile (`S001`) |
 | Dependencies and priority | Needs 07, 11, 12. **Priority 1** (Foundation 1 through RL-BASIC-01b); geometry with RL-ARCH-02 and Foundation 3 |
 
 ### 4.2 Domain 02 — Physical Manipulation
@@ -148,13 +148,13 @@ form "7.6" refer to RFC-001.
 | Aspect | Contract |
 |---|---|
 | Reuse | AI content is untrusted (13.4); RoboLang components stay deterministic (A4); provider-neutral generation and repair loop (RL-20A, RL-20B); machine-actionable diagnostics (AF8) |
-| Missing | A proposal contract; alternatives and predictions; rationale and provenance; deterministic selection among alternatives |
+| Missing | A proposal contract; hypotheses; alternatives and predictions; rationale and provenance; deterministic selection among alternatives |
 | Representation | Ext: a reasoner returns proposals. A proposal is a Core goal or plan with provenance (7.11: provider, model, time), an optional predicted outcome and a confidence. Core: proposals travel as goals and plans with `requested_by`. `.rob`: none |
-| Types and rules | A proposal never carries authority. A predicted outcome is not an observation. Confidence never replaces evidence (AF5) |
+| Types and rules | A proposal never carries authority. A **hypothesis** is a candidate belief produced by reasoning, kept distinct from a verified observation: it carries the reasoner's provenance, never counts as a fact or as evidence, and can only be confirmed or refuted by an observation. A predicted outcome is not an observation. Confidence never replaces evidence (AF5) |
 | IR and compatibility | Unchanged; proposed plans are ordinary plans |
 | Validation and authorization | Every proposal passes the Core path or the kernel, the capability check and local authorization. Attempts are bounded (RL-20B). Selection among valid proposals uses a declared, deterministic policy |
 | Simulation and backends | A deterministic stub reasoner with fixed proposals for tests. Real reasoners (language models, planners) are external, behind RL-20A |
-| Acceptance tests | Positive: a valid proposal becomes a validated plan that waits for authorization. Negative: a malformed proposal is rejected with diagnostics; a proposal claiming authority is rejected; a proposal needing an unsupported capability is rejected deterministically; an unavailable reasoner causes no action |
+| Acceptance tests | Positive: a valid proposal becomes a validated plan that waits for authorization. Negative: a malformed proposal is rejected with diagnostics; a proposal claiming authority is rejected; a proposal needing an unsupported capability is rejected deterministically; a hypothesis offered as evidence for a success criterion is rejected; an unavailable reasoner causes no action |
 | Dependencies and priority | Needs 04, 06, 07, 12, 13. **Priority 3** (Foundation 2, interfaces only) |
 
 ### 4.6 Domain 06 — Memory & Knowledge
@@ -218,13 +218,13 @@ form "7.6" refer to RFC-001.
 | Aspect | Contract |
 |---|---|
 | Reuse | `wait for`, `wait until … timeout`; exact simulated clock (B7); deadlines (7.7); leases (11.1); time assumptions (11.4) |
-| Missing | Task deadlines; scheduling; synchronization between robots; parallel branches; clock synchronization (open question 3) |
-| Representation | Core: deadlines and leases. Plan: parallel blocks later (Foundation 3). `.rob`: no new syntax proposed now |
-| Types and rules | Durations are exact (K2). Absolute times are UTC. An expired lease fails closed |
+| Missing | Task deadlines; temporal relationships between events, goals and actions (before, after, during, within a bound); scheduling; synchronization between robots; parallel branches; clock synchronization (open question 3) |
+| Representation | Core: deadlines, leases, and temporal relationships stated between identified events, goals and actions. Plan: parallel blocks later (Foundation 3). `.rob`: no new syntax proposed now |
+| Types and rules | Durations are exact (K2). Absolute times are UTC. A temporal relationship names both sides and an explicit bound; one whose truth cannot be established (for example, a missing timestamp) is unknown and fails closed. An expired lease fails closed |
 | IR and compatibility | Unchanged until parallel blocks |
 | Validation and authorization | A deadline already in the past is rejected; waits always carry a timeout (already in 1.1) |
 | Simulation and backends | The simulated clock; concurrency semantics with Foundation 3 |
-| Acceptance tests | Positive: T9 cases. Negative: `S241`; an expired lease blocks the dependent action (RL-ARCH-02) |
+| Acceptance tests | Positive: T9 cases; later, a relationship such as "action after observation, within 10 s" holds on recorded times. Negative: `S241`; an expired lease blocks the dependent action (RL-ARCH-02); a relationship referring to an unknown event is rejected |
 | Dependencies and priority | Needs 07, 09. **Priority 1** for the clock; concurrency is Foundation 3 |
 
 ### 4.11 Domain 11 — Capabilities & Resources
@@ -232,13 +232,13 @@ form "7.6" refer to RFC-001.
 | Aspect | Contract |
 |---|---|
 | Reuse | Simulated robot profile (B13); capability descriptor 7.3 (RL-13A); resources 10.3 |
-| Missing | The descriptor schema; discovery; a task's derived requirements; reservation and allocation of resources; expiry |
+| Missing | The descriptor schema; discovery; dependencies and prerequisites between capabilities; a task's derived requirements; a comprehensive capability preflight; reservation and allocation of resources; expiry |
 | Representation | Core: capability descriptor (schema drafted in RL-ARCH-02). Sim: the profile is a subset of a descriptor. Plan: a task's requirements are derived from its IR (which actions and sensors it uses), never declared separately |
-| Types and rules | A capability is declared, not proven. `unsupported` is explicit. A stale descriptor counts as absent |
+| Types and rules | A capability is declared, not proven. `unsupported` is explicit. A capability may declare prerequisites (placing requires grasping; inspecting requires a mounted, available sensor); a capability whose prerequisite is unsupported or unavailable counts as unavailable. A stale descriptor counts as absent |
 | IR and compatibility | Unchanged; requirements are computed from IR 1.0 |
-| Validation and authorization | A plan's requirements must be covered by the robot's capabilities before authorization |
+| Validation and authorization | **Staged.** In RL-BASIC-01, as approved (B4, B13; `simulation-v1.0.md` 4.3 and 4.5), capabilities are checked at two points: speed maxima before `AUTHORIZED` (`S001`, `S002`), and the gripper and sensors at the step that needs them (`S211`, `S231`–`S233`), so earlier steps may already have run. A **comprehensive preflight**, deriving all of a plan's requirements and their prerequisites from the IR and checking them before `RUNNING`, is planned later, with capability descriptors (RL-ARCH-02), and needs its own specification. It does not change the approved simulator behavior or fixtures |
 | Simulation and backends | Profile checks (`S211`, `S231`, `S002`) |
-| Acceptance tests | Positive: the requirements derived from `pick_and_place.rob` are movement, a gripper and placing. Negative: a missing capability is rejected before `RUNNING`; a stale descriptor is treated as absent |
+| Acceptance tests | Positive: the requirements derived from `pick_and_place.rob` are movement, a gripper and placing. Negative, RL-BASIC-01: a robot without a gripper fails at `grasp` (`S211`) after its first `move` has run (`t05_no_gripper`). Negative, with the later preflight: the same plan is rejected before `RUNNING`; a capability whose prerequisite is missing is unavailable; a stale descriptor is treated as absent |
 | Dependencies and priority | Needs 07. **Priority 1** for the profile; descriptors with RL-ARCH-02; resources Foundation 3 |
 
 ### 4.12 Domain 12 — Safety & Authorization
