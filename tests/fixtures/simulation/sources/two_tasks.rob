@@ -1,0 +1,12 @@
+// RL-BASIC-01a simulation fixture (spec/simulation-v1.0.md)
+task first(robot r, location dst) {
+    plan {
+        move r to dst;
+    }
+}
+
+task second(robot r, location dst) {
+    plan {
+        move r to dst;
+    }
+}

@@ -1,0 +1,8 @@
+// RL-BASIC-01a simulation fixture (spec/simulation-v1.0.md)
+task place_elsewhere(robot r, object box, location src, location dst) {
+    plan {
+        move r to src;
+        grasp r box;
+        place r box at dst;
+    }
+}

@@ -1,0 +1,6 @@
+// RL-BASIC-01a simulation fixture (spec/simulation-v1.0.md)
+task inspect_box(robot r, object box) {
+    plan {
+        inspect r box using "camera_top";
+    }
+}
