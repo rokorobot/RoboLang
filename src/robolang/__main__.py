@@ -1,5 +1,5 @@
 """
-Entry point for the read-only RoboLang commands.
+Entry point for the robolang command (validate, inspect, simulate).
 
     python -m robolang validate FILE.rob      (with src/ on the import path)
     python src/robolang validate FILE.rob     (straight from a checkout, nothing installed)
