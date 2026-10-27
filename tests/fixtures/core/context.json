@@ -1,0 +1,39 @@
+{
+  "now": "2026-10-19T10:14:00.500Z",
+  "clock_tolerance": {
+    "value": "500",
+    "unit": "ms"
+  },
+  "max_message_lifetime": {
+    "value": "60",
+    "unit": "s"
+  },
+  "receiver": "the message's recipient, unless the case names another",
+  "receiver_mode": "simulation, unless the case names another",
+  "keys": {
+    "rl:agent:planner-1#k1": {
+      "participant": "rl:agent:planner-1",
+      "alg": "sim-hmac-sha256",
+      "secret": "321ba514747960ba0c7a3c816c4224ca0e262a50a78b62c65bfc4a6f12bf46c8"
+    },
+    "rl:robot:arm-02#k1": {
+      "participant": "rl:robot:arm-02",
+      "alg": "sim-hmac-sha256",
+      "secret": "0c626221e484d7ab451fca9a26424f28ffc92956160e78a1f8fd87a040bc001c"
+    },
+    "rl:robot:amr-07#k1": {
+      "participant": "rl:robot:amr-07",
+      "alg": "sim-hmac-sha256",
+      "secret": "60f7e905bc6358c52fc21705a4a08701386f563d7f6b31f24c4003d6c7ddc0eb"
+    },
+    "rl:human:shift-lead-3#k1": {
+      "participant": "rl:human:shift-lead-3",
+      "alg": "sim-hmac-sha256",
+      "secret": "1efc64d613a5a14dbabcd8caab7b22e82e2bcae753494bb1ed6a0103e0ddad98"
+    }
+  },
+  "authorities": {
+    "rl:robot:arm-02": "rl:human:shift-lead-3",
+    "rl:robot:amr-07": "rl:human:shift-lead-3"
+  }
+}

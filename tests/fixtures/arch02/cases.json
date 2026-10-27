@@ -1,0 +1,873 @@
+{
+  "fixture_set": "robolang.arch02.acceptance",
+  "spec": "spec/reference-simulation-v0.1.md",
+  "scenario": "tests/fixtures/arch02/scenario.json",
+  "cases": [
+    {
+      "id": "happy_path",
+      "tests": [
+        "A-T1",
+        "A-T15"
+      ],
+      "seed": "0",
+      "faults": [],
+      "expect": {
+        "planner_status": "succeeded",
+        "arm02_goal_state": "SUCCEEDED",
+        "message_types": [
+          [
+            "propose_goal",
+            "rl:agent:planner-1",
+            "rl:robot:arm-02"
+          ],
+          [
+            "assessment",
+            "rl:robot:arm-02",
+            "rl:agent:planner-1"
+          ],
+          [
+            "request_assistance",
+            "rl:robot:arm-02",
+            "rl:robot:amr-07"
+          ],
+          [
+            "offer_assistance",
+            "rl:robot:amr-07",
+            "rl:robot:arm-02"
+          ],
+          [
+            "commit",
+            "rl:robot:arm-02",
+            "rl:robot:amr-07"
+          ],
+          [
+            "reserve",
+            "rl:robot:amr-07",
+            "rl:robot:arm-02"
+          ],
+          [
+            "reservation_decision",
+            "rl:robot:arm-02",
+            "rl:robot:amr-07"
+          ],
+          [
+            "accept",
+            "rl:robot:arm-02",
+            "rl:agent:planner-1"
+          ],
+          [
+            "authorization_request",
+            "rl:robot:arm-02",
+            "rl:human:shift-lead-3"
+          ],
+          [
+            "authorization_decision",
+            "rl:human:shift-lead-3",
+            "rl:robot:arm-02"
+          ],
+          [
+            "coordinate",
+            "rl:robot:amr-07",
+            "rl:robot:arm-02"
+          ],
+          [
+            "coordinate",
+            "rl:robot:arm-02",
+            "rl:robot:amr-07"
+          ],
+          [
+            "transfer_custody",
+            "rl:robot:arm-02",
+            "rl:robot:amr-07"
+          ],
+          [
+            "acknowledge",
+            "rl:robot:amr-07",
+            "rl:robot:arm-02"
+          ],
+          [
+            "coordinate",
+            "rl:robot:arm-02",
+            "rl:robot:amr-07"
+          ],
+          [
+            "custody_confirmed",
+            "rl:robot:amr-07",
+            "rl:robot:arm-02"
+          ],
+          [
+            "custody_released",
+            "rl:robot:arm-02",
+            "rl:robot:amr-07"
+          ],
+          [
+            "acknowledge",
+            "rl:robot:amr-07",
+            "rl:robot:arm-02"
+          ],
+          [
+            "outcome",
+            "rl:robot:amr-07",
+            "rl:robot:arm-02"
+          ],
+          [
+            "outcome",
+            "rl:robot:arm-02",
+            "rl:agent:planner-1"
+          ]
+        ],
+        "rejections": [],
+        "duplicates": [],
+        "motion": {
+          "rl:robot:arm-02": 1,
+          "rl:robot:amr-07": 2
+        },
+        "custody": {
+          "designated": "rl:robot:amr-07",
+          "rl:robot:arm-02": "RELEASED",
+          "rl:robot:amr-07": "HOLDING"
+        },
+        "escalated": [],
+        "final_world": [
+          {
+            "subject": "rl:thing:container-c42",
+            "property": "located_in",
+            "value": "rl:place:station-s3"
+          },
+          {
+            "subject": "rl:thing:container-c42",
+            "property": "carried_by",
+            "value": "rl:robot:amr-07"
+          }
+        ]
+      }
+    },
+    {
+      "id": "happy_path_seed_1",
+      "tests": [
+        "A-T15"
+      ],
+      "seed": "1",
+      "faults": [],
+      "expect": {
+        "planner_status": "succeeded",
+        "message_types": [
+          [
+            "propose_goal",
+            "rl:agent:planner-1",
+            "rl:robot:arm-02"
+          ],
+          [
+            "assessment",
+            "rl:robot:arm-02",
+            "rl:agent:planner-1"
+          ],
+          [
+            "request_assistance",
+            "rl:robot:arm-02",
+            "rl:robot:amr-07"
+          ],
+          [
+            "offer_assistance",
+            "rl:robot:amr-07",
+            "rl:robot:arm-02"
+          ],
+          [
+            "commit",
+            "rl:robot:arm-02",
+            "rl:robot:amr-07"
+          ],
+          [
+            "reserve",
+            "rl:robot:amr-07",
+            "rl:robot:arm-02"
+          ],
+          [
+            "reservation_decision",
+            "rl:robot:arm-02",
+            "rl:robot:amr-07"
+          ],
+          [
+            "accept",
+            "rl:robot:arm-02",
+            "rl:agent:planner-1"
+          ],
+          [
+            "authorization_request",
+            "rl:robot:arm-02",
+            "rl:human:shift-lead-3"
+          ],
+          [
+            "authorization_decision",
+            "rl:human:shift-lead-3",
+            "rl:robot:arm-02"
+          ],
+          [
+            "coordinate",
+            "rl:robot:amr-07",
+            "rl:robot:arm-02"
+          ],
+          [
+            "coordinate",
+            "rl:robot:arm-02",
+            "rl:robot:amr-07"
+          ],
+          [
+            "transfer_custody",
+            "rl:robot:arm-02",
+            "rl:robot:amr-07"
+          ],
+          [
+            "acknowledge",
+            "rl:robot:amr-07",
+            "rl:robot:arm-02"
+          ],
+          [
+            "coordinate",
+            "rl:robot:arm-02",
+            "rl:robot:amr-07"
+          ],
+          [
+            "custody_confirmed",
+            "rl:robot:amr-07",
+            "rl:robot:arm-02"
+          ],
+          [
+            "custody_released",
+            "rl:robot:arm-02",
+            "rl:robot:amr-07"
+          ],
+          [
+            "acknowledge",
+            "rl:robot:amr-07",
+            "rl:robot:arm-02"
+          ],
+          [
+            "outcome",
+            "rl:robot:amr-07",
+            "rl:robot:arm-02"
+          ],
+          [
+            "outcome",
+            "rl:robot:arm-02",
+            "rl:agent:planner-1"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "v01_declines",
+      "tests": [
+        "A-T2"
+      ],
+      "seed": "0",
+      "faults": [
+        {
+          "kind": "override",
+          "path": "/policies/rl:robot:amr-07/accept_assistance",
+          "value": false
+        }
+      ],
+      "expect": {
+        "planner_status": "rejected",
+        "reasons": [
+          "assistance_unavailable"
+        ],
+        "motion": {
+          "rl:robot:arm-02": 0,
+          "rl:robot:amr-07": 0
+        },
+        "message_types": [
+          [
+            "propose_goal",
+            "rl:agent:planner-1",
+            "rl:robot:arm-02"
+          ],
+          [
+            "assessment",
+            "rl:robot:arm-02",
+            "rl:agent:planner-1"
+          ],
+          [
+            "request_assistance",
+            "rl:robot:arm-02",
+            "rl:robot:amr-07"
+          ],
+          [
+            "decline",
+            "rl:robot:amr-07",
+            "rl:robot:arm-02"
+          ],
+          [
+            "assessment",
+            "rl:robot:arm-02",
+            "rl:agent:planner-1"
+          ],
+          [
+            "reject",
+            "rl:robot:arm-02",
+            "rl:agent:planner-1"
+          ]
+        ],
+        "custody": {
+          "designated": "rl:robot:arm-02"
+        }
+      }
+    },
+    {
+      "id": "v02_duplicate_commit",
+      "tests": [
+        "A-T3"
+      ],
+      "seed": "0",
+      "faults": [
+        {
+          "kind": "duplicate",
+          "match": {
+            "type": "commit",
+            "sender": "rl:robot:arm-02",
+            "n": 1
+          },
+          "after": {
+            "value": "1",
+            "unit": "s"
+          }
+        }
+      ],
+      "expect": {
+        "planner_status": "succeeded",
+        "duplicates": [
+          [
+            "commit",
+            "rl:robot:amr-07"
+          ]
+        ],
+        "rejections": [],
+        "motion": {
+          "rl:robot:arm-02": 1,
+          "rl:robot:amr-07": 2
+        }
+      }
+    },
+    {
+      "id": "v03_replayed_commit",
+      "tests": [
+        "A-T4"
+      ],
+      "seed": "0",
+      "faults": [
+        {
+          "kind": "replay",
+          "match": {
+            "type": "commit",
+            "sender": "rl:robot:arm-02",
+            "n": 1
+          },
+          "at": "2026-10-19T10:16:00.000Z"
+        }
+      ],
+      "expect": {
+        "planner_status": "succeeded",
+        "rejections": [
+          [
+            "commit",
+            "rl:robot:amr-07",
+            "C301"
+          ]
+        ],
+        "motion": {
+          "rl:robot:arm-02": 1,
+          "rl:robot:amr-07": 2
+        }
+      }
+    },
+    {
+      "id": "v04_assistant_silent",
+      "tests": [
+        "A-T5"
+      ],
+      "seed": "0",
+      "faults": [
+        {
+          "kind": "silence",
+          "participant": "rl:robot:amr-07",
+          "from": {
+            "type": "reservation_decision",
+            "sender": "rl:robot:arm-02",
+            "n": 1
+          }
+        }
+      ],
+      "expect": {
+        "planner_status": "failed",
+        "arm02_goal_state": "FAILED",
+        "reasons": [
+          "lease_expired"
+        ],
+        "motion": {
+          "rl:robot:arm-02": 0,
+          "rl:robot:amr-07": 0
+        },
+        "messages_absent": [
+          [
+            "coordinate",
+            "rl:robot:amr-07"
+          ]
+        ],
+        "custody": {
+          "designated": "rl:robot:arm-02"
+        },
+        "final_world": [
+          {
+            "subject": "rl:thing:container-c42",
+            "property": "located_in",
+            "value": "rl:place:cell-a2"
+          }
+        ]
+      }
+    },
+    {
+      "id": "v05_stale_confirmation",
+      "tests": [
+        "A-T6"
+      ],
+      "seed": "0",
+      "faults": [
+        {
+          "kind": "sensor_lag",
+          "participant": "rl:robot:amr-07",
+          "sensor": "deck_camera",
+          "lag": {
+            "value": "40",
+            "unit": "s"
+          }
+        }
+      ],
+      "expect": {
+        "planner_status": "failed",
+        "reasons": [
+          "evidence_stale",
+          "lease_expired"
+        ],
+        "motion": {
+          "rl:robot:arm-02": 1,
+          "rl:robot:amr-07": 1
+        },
+        "messages_absent": [
+          [
+            "custody_released",
+            "rl:robot:arm-02"
+          ]
+        ],
+        "escalated": [
+          "rl:robot:amr-07"
+        ],
+        "custody": {
+          "designated": "rl:robot:arm-02",
+          "rl:robot:arm-02": "TIMED_OUT",
+          "rl:robot:amr-07": "TIMED_OUT"
+        }
+      }
+    },
+    {
+      "id": "v06_partition_before_release",
+      "tests": [
+        "A-T7"
+      ],
+      "seed": "0",
+      "faults": [
+        {
+          "kind": "partition",
+          "between": [
+            "rl:robot:arm-02",
+            "rl:robot:amr-07"
+          ],
+          "from": {
+            "type": "custody_confirmed",
+            "sender": "rl:robot:amr-07",
+            "n": 1
+          },
+          "until": "2026-10-19T10:26:00.000Z"
+        }
+      ],
+      "expect": {
+        "planner_status": "unknown",
+        "reasons": [
+          "custody_unknown",
+          "lease_expired"
+        ],
+        "motion": {
+          "rl:robot:arm-02": 1,
+          "rl:robot:amr-07": 1
+        },
+        "messages_present": [
+          [
+            "custody_released",
+            "rl:robot:arm-02"
+          ],
+          [
+            "custody_query",
+            "rl:robot:arm-02"
+          ]
+        ],
+        "escalated": [
+          "rl:robot:arm-02",
+          "rl:robot:amr-07"
+        ],
+        "custody": {
+          "designated": "rl:robot:arm-02",
+          "rl:robot:arm-02": "IN_DOUBT",
+          "rl:robot:amr-07": "TIMED_OUT"
+        }
+      }
+    },
+    {
+      "id": "v07_release_ack_lost",
+      "tests": [
+        "A-T8"
+      ],
+      "seed": "0",
+      "faults": [
+        {
+          "kind": "drop",
+          "match": {
+            "type": "acknowledge",
+            "sender": "rl:robot:amr-07",
+            "n": 2
+          }
+        }
+      ],
+      "expect": {
+        "planner_status": "succeeded",
+        "motion": {
+          "rl:robot:arm-02": 1,
+          "rl:robot:amr-07": 2
+        },
+        "messages_present": [
+          [
+            "custody_query",
+            "rl:robot:arm-02"
+          ],
+          [
+            "custody_state",
+            "rl:robot:amr-07"
+          ]
+        ],
+        "custody": {
+          "designated": "rl:robot:amr-07",
+          "rl:robot:arm-02": "RELEASED",
+          "rl:robot:amr-07": "HOLDING"
+        }
+      }
+    },
+    {
+      "id": "v08_arrived_without_evidence",
+      "tests": [
+        "A-T9"
+      ],
+      "seed": "0",
+      "faults": [
+        {
+          "kind": "sensor_unavailable",
+          "participant": "rl:robot:amr-07",
+          "sensor": "deck_camera",
+          "from": "2026-10-19T10:15:00.000Z"
+        }
+      ],
+      "expect": {
+        "planner_status": "unknown",
+        "reasons": [
+          "evidence_missing"
+        ],
+        "motion": {
+          "rl:robot:arm-02": 1,
+          "rl:robot:amr-07": 2
+        },
+        "custody": {
+          "designated": "rl:robot:amr-07"
+        },
+        "final_world": [
+          {
+            "subject": "rl:thing:container-c42",
+            "property": "located_in",
+            "value": "rl:place:station-s3"
+          }
+        ]
+      }
+    },
+    {
+      "id": "v09_stale_reverification",
+      "tests": [
+        "A-T10"
+      ],
+      "seed": "0",
+      "faults": [
+        {
+          "kind": "delay",
+          "match": {
+            "type": "outcome",
+            "sender": "rl:robot:arm-02",
+            "n": 1
+          },
+          "by": {
+            "value": "15",
+            "unit": "s"
+          }
+        }
+      ],
+      "expect": {
+        "planner_status": "unknown",
+        "arm02_goal_state": "SUCCEEDED",
+        "motion": {
+          "rl:robot:arm-02": 1,
+          "rl:robot:amr-07": 2
+        }
+      }
+    },
+    {
+      "id": "v10_requester_authorizes",
+      "tests": [
+        "A-T11"
+      ],
+      "seed": "0",
+      "faults": [
+        {
+          "kind": "inject",
+          "at": "2026-10-19T10:14:01.000Z",
+          "message": {
+            "type": "authorization_decision",
+            "profile": "a2r",
+            "sender": "rl:agent:planner-1",
+            "recipient": "rl:robot:arm-02",
+            "payload": {
+              "goal": "rl:goal:c42-to-s3",
+              "decision": "granted",
+              "mode": "simulation",
+              "constraints": [],
+              "lease": {
+                "granted_at": "2026-10-19T10:14:01.000Z",
+                "expires_at": "2026-10-19T11:00:00Z",
+                "renewal": 0
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "planner_status": "succeeded",
+        "rejections": [
+          [
+            "authorization_decision",
+            "rl:robot:arm-02",
+            "C401"
+          ]
+        ],
+        "motion": {
+          "rl:robot:arm-02": 1,
+          "rl:robot:amr-07": 2
+        }
+      }
+    },
+    {
+      "id": "v11_payload_beyond_standing_authorization",
+      "tests": [
+        "A-T12"
+      ],
+      "seed": "0",
+      "faults": [
+        {
+          "kind": "override",
+          "path": "/things/0/mass/value",
+          "value": "35"
+        },
+        {
+          "kind": "override",
+          "path": "/descriptors/rl:robot:arm-02/capabilities/0/max_mass/value",
+          "value": "40"
+        }
+      ],
+      "expect": {
+        "planner_status": "rejected",
+        "reasons": [
+          "assistance_unavailable"
+        ],
+        "motion": {
+          "rl:robot:arm-02": 0,
+          "rl:robot:amr-07": 0
+        },
+        "messages_present": [
+          [
+            "authorization_request",
+            "rl:robot:amr-07"
+          ],
+          [
+            "authorization_decision",
+            "rl:human:shift-lead-3"
+          ],
+          [
+            "outcome",
+            "rl:robot:amr-07"
+          ]
+        ],
+        "messages_absent": [
+          [
+            "reserve",
+            "rl:robot:amr-07"
+          ],
+          [
+            "accept",
+            "rl:robot:arm-02"
+          ]
+        ],
+        "custody": {
+          "designated": "rl:robot:arm-02"
+        }
+      }
+    },
+    {
+      "id": "v12a_unsigned_commit",
+      "tests": [
+        "A-T13"
+      ],
+      "seed": "0",
+      "faults": [
+        {
+          "kind": "strip_signature",
+          "match": {
+            "type": "commit",
+            "sender": "rl:robot:arm-02",
+            "n": 1
+          }
+        }
+      ],
+      "expect": {
+        "planner_status": "rejected",
+        "reasons": [
+          "assistance_unavailable",
+          "lease_expired"
+        ],
+        "motion": {
+          "rl:robot:arm-02": 0,
+          "rl:robot:amr-07": 0
+        },
+        "rejections": [
+          [
+            "commit",
+            "rl:robot:amr-07",
+            "C201"
+          ]
+        ],
+        "messages_absent": [
+          [
+            "reserve",
+            "rl:robot:amr-07"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "v12b_wrongly_signed_commit",
+      "tests": [
+        "A-T13"
+      ],
+      "seed": "0",
+      "faults": [
+        {
+          "kind": "corrupt_signature",
+          "match": {
+            "type": "commit",
+            "sender": "rl:robot:arm-02",
+            "n": 1
+          }
+        }
+      ],
+      "expect": {
+        "planner_status": "rejected",
+        "reasons": [
+          "assistance_unavailable",
+          "lease_expired"
+        ],
+        "motion": {
+          "rl:robot:arm-02": 0,
+          "rl:robot:amr-07": 0
+        },
+        "rejections": [
+          [
+            "commit",
+            "rl:robot:amr-07",
+            "C202"
+          ]
+        ],
+        "messages_absent": [
+          [
+            "reserve",
+            "rl:robot:amr-07"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "v13_no_grasp",
+      "tests": [
+        "A-T14"
+      ],
+      "seed": "0",
+      "faults": [
+        {
+          "kind": "override",
+          "path": "/descriptors/rl:robot:arm-02/capabilities",
+          "value": [
+            {
+              "kind": "inspect",
+              "sensor": "cell_camera",
+              "properties": [
+                "located_in",
+                "carried_by"
+              ],
+              "places": [
+                "rl:place:cell-a2",
+                "rl:place:handoff-h1"
+              ]
+            }
+          ]
+        },
+        {
+          "kind": "override",
+          "path": "/descriptors/rl:robot:arm-02/unsupported",
+          "value": [
+            "transport_payload",
+            "dock_at",
+            "grasp"
+          ]
+        }
+      ],
+      "expect": {
+        "planner_status": "rejected",
+        "reasons": [
+          "capability_unsupported"
+        ],
+        "motion": {
+          "rl:robot:arm-02": 0,
+          "rl:robot:amr-07": 0
+        },
+        "message_types": [
+          [
+            "propose_goal",
+            "rl:agent:planner-1",
+            "rl:robot:arm-02"
+          ],
+          [
+            "assessment",
+            "rl:robot:arm-02",
+            "rl:agent:planner-1"
+          ],
+          [
+            "reject",
+            "rl:robot:arm-02",
+            "rl:agent:planner-1"
+          ]
+        ]
+      }
+    }
+  ]
+}

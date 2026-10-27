@@ -1,0 +1,53 @@
+{
+  "schema": "robolang.core.message",
+  "schema_version": "0.1",
+  "message_id": "m-9f1c1e9993060c175337d19ea6112c06",
+  "conversation_id": "rl:conv:c42-delivery",
+  "sequence": 1,
+  "in_reply_to": null,
+  "profile": "a2r",
+  "type": "propose_goal",
+  "sender": "rl:agent:planner-1",
+  "recipient": "rl:robot:arm-02",
+  "sent_at": "2026-10-19T10:14:00.400Z",
+  "expires_at": "2026-10-19T10:14:30.400Z",
+  "payload": {
+    "goal": {
+      "kind": "goal",
+      "id": "rl:goal:c42-to-s3",
+      "requested_by": "rl:agent:planner-1",
+      "desired_state": [
+        {
+          "subject": "rl:thing:container-c42",
+          "property": "located_in",
+          "value": "rl:place:station-s3"
+        }
+      ],
+      "success_criteria": [],
+      "constraints": [
+        {
+          "kind": "deadline",
+          "at": "2026-10-19T10:30:00Z"
+        }
+      ],
+      "priority": "normal"
+    },
+    "things": [
+      {
+        "kind": "thing",
+        "id": "rl:thing:container-c42",
+        "class": "container",
+        "mass": {
+          "value": "25",
+          "unit": "kg",
+          "uncertainty": "2"
+        }
+      }
+    ]
+  },
+  "signature": {
+    "alg": "sim-hmac-sha256",
+    "key": "rl:agent:planner-1#k1",
+    "value": "6a01c3b3c77bc873faebb47d134959618bfacd2f2e167dacb2a501029658514e"
+  }
+}

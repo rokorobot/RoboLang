@@ -1,0 +1,30 @@
+{
+  "schema": "robolang.core.message",
+  "schema_version": "0.1",
+  "message_id": "m-98fc77737da1dcecf77a88f218800760",
+  "conversation_id": "rl:conv:c42-delivery",
+  "sequence": 1,
+  "in_reply_to": null,
+  "profile": "a2r",
+  "type": "authorization_decision",
+  "sender": "rl:human:shift-lead-3",
+  "recipient": "rl:robot:arm-02",
+  "sent_at": "2026-10-19T10:14:00.400Z",
+  "expires_at": "2026-10-19T10:14:30.400Z",
+  "payload": {
+    "goal": "rl:goal:c42-to-s3",
+    "decision": "granted",
+    "mode": "simulation",
+    "constraints": [],
+    "lease": {
+      "granted_at": "2026-10-19T10:14:00.400Z",
+      "expires_at": "2026-10-19T11:00:00Z",
+      "renewal": 0
+    }
+  },
+  "signature": {
+    "alg": "sim-hmac-sha256",
+    "key": "rl:human:shift-lead-3#k1",
+    "value": "2bdedd0691f0628ac378feb176c2bc6e016ea158e3c9b99712d8eb89b3ad00cb"
+  }
+}
