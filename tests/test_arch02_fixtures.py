@@ -213,3 +213,38 @@ def test_happy_path_messages_match_the_specification_table():
     happy = next(case for case in ARCH_CASES if case["id"] == "happy_path")
     assert [entry[0] for entry in happy["expect"]["message_types"]] == expected
     assert len(expected) == 20
+
+
+# -------- sequencing cases (decision record 0008, proposed; A-T20) --------
+
+SEQ_CASES = load(ARCH / "sequencing_cases.json")["cases"]
+CLOCK = re.compile(r"[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{3}")
+
+
+def test_sequencing_cases_match_the_specification_table():
+    listed = [row[0].strip("`") for row in table_column(SIM_SPEC, "### 8.1 Sequencing cases")]
+    assert [case["id"] for case in SEQ_CASES] == listed
+    assert len(listed) == 8 and all(case["tests"] == ["A-T20"] for case in SEQ_CASES)
+    assert SCENARIO["parameters"]["max_hold"] == {"value": "5", "unit": "s"}
+
+
+@pytest.mark.parametrize("case", SEQ_CASES, ids=lambda case: case["id"])
+def test_sequencing_case_is_consistent(case):
+    participants = {p["id"] for p in SCENARIO["participants"]}
+    for fault in case["faults"]:
+        assert fault["kind"] in FAULT_KINDS
+        if "match" in fault:
+            assert fault["match"]["type"] in DEFINED_TYPES and fault["match"]["sender"] in participants
+        if fault["kind"] == "inject":
+            assert fault["message"]["type"] in DEFINED_TYPES
+    expect = case["expect"]
+    assert set(expect) <= EXPECT_FIELDS
+    assert expect["planner_status"] in STATUSES
+    for mtype, receiver, held_at, released_at, result in expect.get("held", []):
+        assert mtype in DEFINED_TYPES and receiver in participants
+        assert CLOCK.fullmatch(held_at) and CLOCK.fullmatch(released_at) and held_at < released_at
+        assert result == "accepted" or result in CODES
+    for mtype, receiver, code in expect.get("rejections", []):
+        assert mtype in DEFINED_TYPES and receiver in participants and code in CODES
+    for receiver, types in expect.get("processed_by", {}).items():
+        assert receiver in participants and set(types) <= set(DEFINED_TYPES)

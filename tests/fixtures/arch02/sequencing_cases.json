@@ -1,0 +1,388 @@
+{
+  "fixture_set": "robolang.arch02.sequencing",
+  "spec": "spec/reference-simulation-v0.1.md",
+  "decision": "spec/decisions/0008-core-sequencing-per-recipient.md",
+  "scenario": "tests/fixtures/arch02/scenario.json",
+  "cases": [
+    {
+      "id": "seq_gap_filled",
+      "tests": [
+        "A-T20"
+      ],
+      "seed": "0",
+      "faults": [
+        {
+          "kind": "delay",
+          "match": {
+            "type": "assessment",
+            "sender": "rl:robot:arm-02",
+            "n": 1
+          },
+          "by": {
+            "value": "1",
+            "unit": "s"
+          }
+        }
+      ],
+      "expect": {
+        "planner_status": "succeeded",
+        "held": [
+          [
+            "accept",
+            "rl:agent:planner-1",
+            "10:14:00.600",
+            "10:14:01.100",
+            "accepted"
+          ]
+        ],
+        "rejections": [],
+        "processed_by": {
+          "rl:agent:planner-1": [
+            "assessment",
+            "accept",
+            "outcome"
+          ]
+        }
+      }
+    },
+    {
+      "id": "seq_gap_abandoned",
+      "tests": [
+        "A-T20"
+      ],
+      "seed": "0",
+      "faults": [
+        {
+          "kind": "delay",
+          "match": {
+            "type": "assessment",
+            "sender": "rl:robot:arm-02",
+            "n": 1
+          },
+          "by": {
+            "value": "40",
+            "unit": "s"
+          }
+        }
+      ],
+      "expect": {
+        "planner_status": "succeeded",
+        "held": [
+          [
+            "accept",
+            "rl:agent:planner-1",
+            "10:14:00.600",
+            "10:14:05.600",
+            "accepted"
+          ]
+        ],
+        "rejections": [
+          [
+            "assessment",
+            "rl:agent:planner-1",
+            "C301"
+          ]
+        ],
+        "processed_by": {
+          "rl:agent:planner-1": [
+            "accept",
+            "outcome"
+          ]
+        }
+      }
+    },
+    {
+      "id": "seq_held_message_expires",
+      "tests": [
+        "A-T20"
+      ],
+      "seed": "0",
+      "faults": [
+        {
+          "kind": "delay",
+          "match": {
+            "type": "assessment",
+            "sender": "rl:robot:arm-02",
+            "n": 1
+          },
+          "by": {
+            "value": "40",
+            "unit": "s"
+          }
+        },
+        {
+          "kind": "delay",
+          "match": {
+            "type": "accept",
+            "sender": "rl:robot:arm-02",
+            "n": 1
+          },
+          "by": {
+            "value": "27",
+            "unit": "s"
+          }
+        }
+      ],
+      "expect": {
+        "planner_status": "succeeded",
+        "held": [
+          [
+            "accept",
+            "rl:agent:planner-1",
+            "10:14:27.600",
+            "10:14:30.000",
+            "C301"
+          ]
+        ],
+        "rejections": [
+          [
+            "accept",
+            "rl:agent:planner-1",
+            "C301"
+          ],
+          [
+            "assessment",
+            "rl:agent:planner-1",
+            "C301"
+          ]
+        ],
+        "processed_by": {
+          "rl:agent:planner-1": [
+            "outcome"
+          ]
+        }
+      }
+    },
+    {
+      "id": "seq_duplicate_while_held",
+      "tests": [
+        "A-T20"
+      ],
+      "seed": "0",
+      "faults": [
+        {
+          "kind": "delay",
+          "match": {
+            "type": "assessment",
+            "sender": "rl:robot:arm-02",
+            "n": 1
+          },
+          "by": {
+            "value": "2",
+            "unit": "s"
+          }
+        },
+        {
+          "kind": "duplicate",
+          "match": {
+            "type": "accept",
+            "sender": "rl:robot:arm-02",
+            "n": 1
+          },
+          "after": {
+            "value": "500",
+            "unit": "ms"
+          }
+        }
+      ],
+      "expect": {
+        "planner_status": "succeeded",
+        "held": [
+          [
+            "accept",
+            "rl:agent:planner-1",
+            "10:14:00.600",
+            "10:14:02.100",
+            "accepted"
+          ]
+        ],
+        "duplicates": [
+          [
+            "accept",
+            "rl:agent:planner-1"
+          ]
+        ],
+        "rejections": [],
+        "processed_by": {
+          "rl:agent:planner-1": [
+            "assessment",
+            "accept",
+            "outcome"
+          ]
+        }
+      }
+    },
+    {
+      "id": "seq_replay_while_fresh",
+      "tests": [
+        "A-T20"
+      ],
+      "seed": "0",
+      "faults": [
+        {
+          "kind": "replay",
+          "match": {
+            "type": "commit",
+            "sender": "rl:robot:arm-02",
+            "n": 1
+          },
+          "at": "2026-10-19T10:14:10.000Z"
+        }
+      ],
+      "expect": {
+        "planner_status": "succeeded",
+        "held": [],
+        "duplicates": [
+          [
+            "commit",
+            "rl:robot:amr-07"
+          ]
+        ],
+        "rejections": []
+      }
+    },
+    {
+      "id": "seq_stale_nonduplicate",
+      "tests": [
+        "A-T20"
+      ],
+      "seed": "0",
+      "faults": [
+        {
+          "kind": "inject",
+          "at": "2026-10-19T10:14:05.000Z",
+          "message": {
+            "type": "assessment",
+            "profile": "a2r",
+            "sender": "rl:robot:arm-02",
+            "recipient": "rl:agent:planner-1",
+            "sequence": 1,
+            "message_id": "m-equivocating-assessment-1",
+            "payload": {
+              "goal": "rl:goal:c42-to-s3",
+              "result": "feasible",
+              "reasons": []
+            }
+          }
+        }
+      ],
+      "expect": {
+        "planner_status": "succeeded",
+        "held": [],
+        "rejections": [
+          [
+            "assessment",
+            "rl:agent:planner-1",
+            "C306"
+          ]
+        ],
+        "processed_by": {
+          "rl:agent:planner-1": [
+            "assessment",
+            "accept",
+            "outcome"
+          ]
+        }
+      }
+    },
+    {
+      "id": "seq_unsigned_not_held",
+      "tests": [
+        "A-T20"
+      ],
+      "seed": "0",
+      "faults": [
+        {
+          "kind": "strip_signature",
+          "match": {
+            "type": "accept",
+            "sender": "rl:robot:arm-02",
+            "n": 1
+          }
+        },
+        {
+          "kind": "delay",
+          "match": {
+            "type": "assessment",
+            "sender": "rl:robot:arm-02",
+            "n": 1
+          },
+          "by": {
+            "value": "1",
+            "unit": "s"
+          }
+        }
+      ],
+      "expect": {
+        "planner_status": "succeeded",
+        "held": [
+          [
+            "outcome",
+            "rl:agent:planner-1",
+            "10:15:51.400",
+            "10:15:56.400",
+            "accepted"
+          ]
+        ],
+        "rejections": [
+          [
+            "accept",
+            "rl:agent:planner-1",
+            "C201"
+          ]
+        ],
+        "processed_by": {
+          "rl:agent:planner-1": [
+            "assessment",
+            "outcome"
+          ]
+        }
+      }
+    },
+    {
+      "id": "seq_lost_ack_holds_next",
+      "tests": [
+        "A-T20"
+      ],
+      "seed": "0",
+      "faults": [
+        {
+          "kind": "drop",
+          "match": {
+            "type": "acknowledge",
+            "sender": "rl:robot:amr-07",
+            "n": 2
+          }
+        }
+      ],
+      "expect": {
+        "planner_status": "succeeded",
+        "held": [
+          [
+            "custody_state",
+            "rl:robot:arm-02",
+            "10:14:56.300",
+            "10:15:01.300",
+            "accepted"
+          ]
+        ],
+        "rejections": [],
+        "messages_present": [
+          [
+            "custody_query",
+            "rl:robot:arm-02"
+          ],
+          [
+            "custody_state",
+            "rl:robot:amr-07"
+          ]
+        ],
+        "custody": {
+          "designated": "rl:robot:amr-07",
+          "rl:robot:arm-02": "RELEASED",
+          "rl:robot:amr-07": "HOLDING"
+        }
+      }
+    }
+  ]
+}

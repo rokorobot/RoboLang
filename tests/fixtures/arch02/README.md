@@ -16,6 +16,12 @@ statuses, reasons and participants are defined.
   specification sections 2 to 7.
 - `cases.json` — one case per acceptance test (specification section 12): `id`, `tests`,
   `seed`, `faults` (section 10) and `expect` (section 11).
+- `sequencing_cases.json` — the eight sequencing cases of specification section 8.1
+  (acceptance test A-T20), added by
+  [decision record 0008](../../../spec/decisions/0008-core-sequencing-per-recipient.md),
+  which is **proposed**. They describe per-recipient sequencing, which ARCH-2 does not yet
+  implement, so `tests/test_arch02.py` does not run them; until then only their
+  consistency is checked.
 
 A case's `expect` lists only what that case checks. Determinism (A-T15) is checked by running
 every case twice and comparing the run records byte for byte.

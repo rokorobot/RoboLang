@@ -4,6 +4,9 @@
 [decision record 0007](decisions/0007-rl-arch-02-core-and-reference-simulation.md) (R1–R14),
 approved 2026-10-27.
 **Version:** `0.1`. Experimental: until Core 1.0 any change may be breaking (RFC-001 6.2).
+**Erratum (proposed):** sections 3 and 8 are amended by
+[decision record 0008](decisions/0008-core-sequencing-per-recipient.md) (Q1–Q9, PROPOSED):
+sequence numbers per sender and recipient, and holding on gaps. The amended text is marked.
 **Builds on:** [RFC-001](architecture/rfc-001-ai-native-architecture.md) sections 6–13
 (decisions D1–D9), unchanged.
 **Schemas:** [`core/message-0.1.schema.json`](core/message-0.1.schema.json),
@@ -97,7 +100,7 @@ A `robolang.core.message` document. Every field is required.
 | `schema`, `schema_version` | `"robolang.core.message"`, `"0.1"` |
 | `message_id` | Unique per sender; makes handling idempotent (8.4) |
 | `conversation_id` | Identifier of the conversation. In 0.1 a conversation is one top-level goal and everything done for it |
-| `sequence` | Integer ≥ 1. Increases by one for each message a sender sends within a conversation |
+| `sequence` | Integer ≥ 1. Counts per sender, recipient and conversation: the first message a sender sends to a recipient in a conversation has sequence 1, and each further one to the same recipient increases it by one (amended by 0008, Q1) |
 | `in_reply_to` | The `message_id` this message answers, or `null` |
 | `profile` | `"a2r"` or `"r2r"`, as section 4 fixes for the type (`C107`) |
 | `type` | A defined type (section 4.1). A reserved name is `C106`, anything else `C105` |
@@ -327,7 +330,8 @@ A receiver handles each message in this order and stops at the first failure:
 2. **Signature** (`C201`–`C204`), before anything else about the content is considered
    (RFC-001 11.2).
 3. **Freshness:** expiry, lifetime and clock (`C301`–`C303`), then **recipient** (`C307`).
-4. **Duplicate and order** (8.4).
+4. **Duplicate and order** (8.4). Only a message that passed stages 1 to 3 reaches this stage:
+   a rejected message is never held and does not count in its stream (0008, Q2).
 5. **Meaning:** authority, outcome and state rules (`C306`, `C401`–`C404`).
 
 Two failures that the schema also detects are reported with their specific code, not the
@@ -356,7 +360,7 @@ Clock comparisons apply the deployment's clock tolerance in the safe direction (
 | `C301` | freshness | Expired: `expires_at` is past |
 | `C302` | freshness | `expires_at` is not after `sent_at`, or is beyond the maximum lifetime |
 | `C303` | freshness | `sent_at` is in the future beyond the clock tolerance |
-| `C306` | meaning | The message would cause an impossible state transition |
+| `C306` | meaning | The message would cause an impossible state transition, or it is stale: at or below the last processed or skipped sequence of its stream, and not a duplicate (8.4) |
 | `C307` | freshness | `recipient` is not this participant |
 | `C401` | meaning | Authority: a decision not from the recipient's authority, or a requester authorizing its own goal |
 | `C402` | meaning | `succeeded` without a verification in which every criterion is met |
@@ -375,11 +379,27 @@ message rejection. It makes the criterion not met and the outcome `failed` or `u
 
 ### 8.4 Duplicates and order
 
-- A receiver keeps the message IDs it has processed, per sender, until each message's
-  `expires_at` plus the clock tolerance. A repeated message ID is not processed again; the
-  reply sent to the original, if any, is sent again.
-- Within a conversation, messages from each sender are processed in `sequence` order. A
-  message after a gap is held until the missing one arrives or the held message expires.
+*Amended by decision record 0008 (Q2–Q6).* A **stream** is the messages one sender sends to
+one recipient in one conversation (section 3).
+
+- **Duplicates.** A receiver keeps the message IDs it has processed or is holding, per
+  sender, until each message's `expires_at` plus the clock tolerance. A repeated message ID
+  is not processed again and is not held again; the reply sent to the original, if any, is
+  sent again.
+- **Order.** The receiver processes each stream in `sequence` order, starting at 1.
+- **Gaps.** A message whose sequence is above the next expected one is **held**. A held
+  message has no effect of any kind and gets no reply until it becomes eligible. It becomes
+  eligible when the missing messages have been processed, or when the deployment's
+  `max_hold` has passed since its delivery; in that case the missing sequence numbers are
+  skipped. Held messages that become eligible together are processed in sequence order.
+- **Expiry while held.** A held message that expires before it becomes eligible (judged in
+  the safe direction, 8.1) is rejected with `C301` at that moment, and its stream advances
+  past it.
+- **Stale.** A message at or below the last processed or skipped sequence of its stream that
+  is not a duplicate is rejected with `C306`.
+
+`max_hold` is a deployment parameter shorter than the message lifetime. It bounds how long
+one lost message can delay the messages after it.
 
 ## 9. Conformance of documents
 

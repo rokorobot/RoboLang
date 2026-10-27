@@ -27,6 +27,10 @@
       "value": "30",
       "unit": "s"
     },
+    "max_hold": {
+      "value": "5",
+      "unit": "s"
+    },
     "authority_delay": {
       "value": "20",
       "unit": "s"
