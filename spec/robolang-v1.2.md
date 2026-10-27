@@ -1,12 +1,11 @@
 # RoboLang v1.2 Language Specification — LANG-1 combined conditions
 
-**Status:** LANG-1 specification, **proposed for owner review**. Every open choice is a row in
-[decision record 0006](decisions/0006-lang-1-combined-conditions.md) (L1–L10), status PROPOSED.
+**Status:** LANG-1 specification, **approved by the owner on 2026-10-27**. Every choice is a row
+in [decision record 0006](decisions/0006-lang-1-combined-conditions.md) (L1–L10).
 **Work item:** LANG-1 of Track B (Foundation 1 Part B language extensions,
 [RL-FOUNDATION-02 section 5.2](architecture/rl-foundation-02-domain-contracts.md#52-track-b--foundation-1-part-b-language-extensions-independent-owner-selected)).
 Domain 09, Logic & Control Flow (contract 4.9).
-**Implementation:** none. LANG-1b implements this specification only after it is approved and
-the owner separately authorizes implementation.
+**Implementation:** none yet. LANG-1b implementation was authorized by the owner on 2026-10-27.
 **Syntax version:** 1.2
 **Builds on:** [RoboLang 1.1](robolang-v1.1.md), unchanged; [Task IR 1.0](ir-schema-v1.0.md),
 unchanged; [simulation 1.0](simulation-v1.0.md), unchanged

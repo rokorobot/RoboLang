@@ -1,4 +1,4 @@
-(* RoboLang v1.2 grammar -- PROPOSED (LANG-1), not yet implemented.
+(* RoboLang v1.2 grammar -- APPROVED 2026-10-27 (LANG-1), not yet implemented.
    RoboLang 1.1 plus combined conditions. Differences from grammar.ebnf are marked [1.2].
    Notation: ISO-style EBNF.  { x } = zero or more, [ x ] = optional, | = choice.
    Normative text, diagnostics and static rules: spec/robolang-v1.2.md *)
