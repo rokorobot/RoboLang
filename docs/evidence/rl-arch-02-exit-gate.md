@@ -196,3 +196,13 @@ simulation only) is met on `main` at `6df6fa0`, with owner approval the only ope
 Signing off gate 1 authorizes nothing further: not gate 2, not CORE-1, not any Foundation 2 or 3
 item, no real network interoperability, and not any physical execution. Follow-ups F1–F3
 (section 9) remain open and non-blocking; each needs its own scope and authorization.
+
+## 11. Addendum: follow-ups after sign-off
+
+Sections 1–10 are kept as signed. This section records follow-up work done afterwards.
+
+| # | Follow-up | Status |
+|---|---|---|
+| F1 | Golden records: `tests/fixtures/arch02/golden_records.json` pins the run ID and the record SHA-256 of all 24 cases; `tests/test_arch02_golden.py` recomputes them on every CI job (Ubuntu and Windows, Python 3.11 and 3.13). The pinned values equal those of section 4, taken at `6df6fa0` | Authorized and delivered 2026-10-27 |
+| F2 | RFC-001 status annotations (section 8) | Open |
+| F3 | Gate 2 proposal | Open; not authorized |

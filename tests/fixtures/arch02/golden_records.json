@@ -1,0 +1,103 @@
+{
+  "fixture_set": "robolang.arch02.golden",
+  "spec": "spec/reference-simulation-v0.1.md",
+  "hash": "SHA-256 of the record's JSON text (to_json, ASCII, LF)",
+  "records": {
+    "cases.json#happy_path": {
+      "run_id": "arch02-b15d8830279932950822877f5de7252f6f3aef2b2623f385369f736a9207cb82",
+      "record_sha256": "b368933e321e4df8d4cce5ae3d19963522741161b03f8d6fafc99434d3eaa1ce"
+    },
+    "cases.json#happy_path_seed_1": {
+      "run_id": "arch02-b324b0fe802148204e330a5716a2ea7379b7bcb9e70abede56d13a6abbd5914e",
+      "record_sha256": "dad8f12a9349cb27bd9696d44e9e1e34fc98b5ecc38fc641bacc83fe4feabe06"
+    },
+    "cases.json#v01_declines": {
+      "run_id": "arch02-e166ece009318e02a169cccb1743685793d98abe50216ec6b2c073fbeb25a757",
+      "record_sha256": "b5085f83d313a7899e9ac86019d24ef153290b240f9dd1fb3036b746b8591ba6"
+    },
+    "cases.json#v02_duplicate_commit": {
+      "run_id": "arch02-ed82670d905f5b981ca5ecc1a2b920fcfebeb272b053b0553c4885f6b779ddf5",
+      "record_sha256": "2d10a72b871d7c0335d30621f22e76250c5a276550aac55509cdd95616d6b7eb"
+    },
+    "cases.json#v03_replayed_commit": {
+      "run_id": "arch02-caf4e8d84bf6ca69b048bf587b31f0b74a93ea42c0d9c354e06853804f53a848",
+      "record_sha256": "1c7397503c0eb44da08d9e44814b7cce0a2480c19657675a7ab5e876913e170f"
+    },
+    "cases.json#v04_assistant_silent": {
+      "run_id": "arch02-57ee49a8972e392142513cbef77d41b88d3177a04feb75ec4bf137019bfae3d6",
+      "record_sha256": "bc3f78c88a2a927d5a125b83bdf11e8d9e1e504ba8c041da131c74801a09cfcd"
+    },
+    "cases.json#v05_stale_confirmation": {
+      "run_id": "arch02-79fa4cfcdd4febedad1bdb9d94e8d5777d98e33ee8830bc41a27b8de886e73b2",
+      "record_sha256": "d24e050aedb2f4ae86dd7884f0fd8407f1dd32919070f2e3de95631a8ff23631"
+    },
+    "cases.json#v06_partition_before_release": {
+      "run_id": "arch02-0be8e15746df1ee215e2d51e3366accad768c5f4ffae61448d4efcaab063717e",
+      "record_sha256": "7dd26e370f0a3a928080bec437af4c2ed99cf792a70d03c32f7b5dd5f3c107ce"
+    },
+    "cases.json#v07_release_ack_lost": {
+      "run_id": "arch02-65ad935dd8d1671a266a804017272e11869f528eca5216c4f5f35ec7691755e4",
+      "record_sha256": "a56d8f0e3f4a708ba2bbb0030362af2c0d740d4be7110bd1b95c91813c4a7783"
+    },
+    "cases.json#v08_arrived_without_evidence": {
+      "run_id": "arch02-5867134fe34736dad5ed290598ca2af9896893d3839716ab71098c364e3b3027",
+      "record_sha256": "3b4e3f26e788b9c92ae48cbab5fb49f3f4a32b07bf5fdc57d5eb5f21c3a9f0ea"
+    },
+    "cases.json#v09_stale_reverification": {
+      "run_id": "arch02-4ecfb92fe5cbde151b55b3c30341242ec704f3a3a20baca3d2d099aa37e3e760",
+      "record_sha256": "5e1d22c9f8f8f7d65687d107e794f4da4386a2e117a21fe30b4410f57fe36fdb"
+    },
+    "cases.json#v10_requester_authorizes": {
+      "run_id": "arch02-52046f143fafb2ff3c121f0e5c2b7bbcec831ccd301078089944b8eae3fab444",
+      "record_sha256": "8a9d3df887aaf6ba6ab6666ded082a890395f9956f5f6708338aa5f8edf2e8ea"
+    },
+    "cases.json#v11_payload_beyond_standing_authorization": {
+      "run_id": "arch02-3efb508107f58324690d978048ee84a382e658ad8e1a7e7f301cbc0191312a32",
+      "record_sha256": "016714fe1f0cf8939798c1b4f486101e2564eba30c7f173c98c433ee0dfa5995"
+    },
+    "cases.json#v12a_unsigned_commit": {
+      "run_id": "arch02-7808906d916bcb915b1ea66d62bbf1f703e391c78b94a5489a406b66ab6be6c4",
+      "record_sha256": "347f96e29fa8209f196789db16dc1079bd44960159ba628c1e0206f011566cdd"
+    },
+    "cases.json#v12b_wrongly_signed_commit": {
+      "run_id": "arch02-59af7997a729872274047335e86ae6b1701a73480262e010e40b32b567b669b5",
+      "record_sha256": "57a83ade5e79ad63366d827a99e80ab4be4998407c29eadf0669b5085495f816"
+    },
+    "cases.json#v13_no_grasp": {
+      "run_id": "arch02-ea8b32e4e4df65de3b53882941b956f196473274e8469c8103c438818c7ede25",
+      "record_sha256": "ddae698ce7cf0cb0e3188cb8e6e94a1076fb2ae8cff70ce1cb2c86bc9e277a3e"
+    },
+    "sequencing_cases.json#seq_gap_filled": {
+      "run_id": "arch02-776066983ce8ff7aa6d811a6068ea9dea22645ff2a651587e883ae99f524fdb5",
+      "record_sha256": "9786d05b57f715395753126b57ee50bb0ee4b8762116e724d421d78adc5aa720"
+    },
+    "sequencing_cases.json#seq_gap_abandoned": {
+      "run_id": "arch02-0a9ea51669050d8785a61879ec842d236c93f0393ab80def85c7d3df13266575",
+      "record_sha256": "4b7be79fbf149f5ab24f53f5de5e61362e0d37ee1373573890acf11bb8f58d0c"
+    },
+    "sequencing_cases.json#seq_held_message_expires": {
+      "run_id": "arch02-c2e90fff2ed55f4596031f785cdd77731f2a71a33ee7c336ca3ff861a1d49be1",
+      "record_sha256": "2d108070590dd19b2e5ca61eb0ae40c4ad66c4000161d7cbf2eabfc59a4c254d"
+    },
+    "sequencing_cases.json#seq_duplicate_while_held": {
+      "run_id": "arch02-c7fe20f6d26fa7597d2983bc5ed7cfd1ac08869cf23262f7ddf360fac1e7724d",
+      "record_sha256": "7af80821880f8e8cf178a48717cb88ebd9e054299a211b960cfc553875c57bd2"
+    },
+    "sequencing_cases.json#seq_replay_while_fresh": {
+      "run_id": "arch02-25f98f5701271febfc2b0b495879605f8720abe2b72aa45ffd187caf6d9673c5",
+      "record_sha256": "d42d46f130eca163ba2f1897ba7365c9fcccbcbcbb4a31d4a41399ac04714497"
+    },
+    "sequencing_cases.json#seq_stale_nonduplicate": {
+      "run_id": "arch02-f9a335f491820d64e4f22b5cee704cc3a64a2e8f3cde7705767b52cb976eaffb",
+      "record_sha256": "e60b43745aeaf64c0b5e553b3260927078b916f3094c065d541d8c031d9f05fe"
+    },
+    "sequencing_cases.json#seq_unsigned_not_held": {
+      "run_id": "arch02-8c74489e919c147928d21184660def661761338de91daaf472f6c82826029c20",
+      "record_sha256": "22473677b6f8dcb31cd2ad313fa3374b7d0beed3e814dbc1feccc342ded563e6"
+    },
+    "sequencing_cases.json#seq_lost_ack_holds_next": {
+      "run_id": "arch02-c0e5bce63ad463dcf75bfe0e8b2893aa7f2e0ecfd73bb25ac95465efe5b5c894",
+      "record_sha256": "69759484322d8dee28c7e5be564cc1878161a92f1c942b64c1797ebdf75472d1"
+    }
+  }
+}
