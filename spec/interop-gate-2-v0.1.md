@@ -1,8 +1,8 @@
 # RL-INTEROP-01 — Gate 2: independent interoperability, version 0.1 (draft)
 
-**Status:** specification, **proposed for owner review**. Every choice is a row in
+**Status:** specification, **approved by the owner on 2026-10-27**. Every choice is a row in
 [decision record 0009](decisions/0009-gate-2-independent-interoperability.md) (I1–I12),
-status PROPOSED. **No work under it is authorized**: each slice of section 11 needs its own
+approved 2026-10-27. **No work under it is authorized**: each slice of section 11 needs its own
 authorization.
 **Gate:** Gate 2 — independent implementation ([RFC-001 section 1.4](architecture/rfc-001-ai-native-architecture.md#14-how-the-ambition-is-tested);
 decision D9).
@@ -318,5 +318,5 @@ physical execution; the language front end (`.rob`, Task IR).
 
 | Part | Status |
 |---|---|
-| This specification, decision record 0009 | Proposed; not approved |
+| This specification, decision record 0009 | Approved 2026-10-27 (on the text at `508f5f9`) |
 | INTEROP-1 to INTEROP-4 | Not started; not authorized |
