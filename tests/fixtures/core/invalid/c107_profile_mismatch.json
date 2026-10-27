@@ -1,0 +1,42 @@
+{
+  "schema": "robolang.core.message",
+  "schema_version": "0.1",
+  "message_id": "m-487618d89196691b3fe56a976b7e997b",
+  "conversation_id": "rl:conv:c42-delivery",
+  "sequence": 3,
+  "in_reply_to": null,
+  "profile": "a2r",
+  "type": "commit",
+  "sender": "rl:robot:arm-02",
+  "recipient": "rl:robot:amr-07",
+  "sent_at": "2026-10-19T10:14:00.400Z",
+  "expires_at": "2026-10-19T10:14:30.400Z",
+  "payload": {
+    "commitment": {
+      "kind": "commitment",
+      "id": "rl:commit:c42-transport",
+      "debtor": "rl:robot:amr-07",
+      "creditor": "rl:robot:arm-02",
+      "obligation": {
+        "goal": "rl:goal:c42-to-s3-sub-1"
+      },
+      "conditions": [
+        {
+          "kind": "resource_held",
+          "resource": "rl:place:handoff-h1"
+        }
+      ],
+      "lease": {
+        "granted_at": "2026-10-19T10:14:00.200Z",
+        "expires_at": "2026-10-19T10:25:00.000Z",
+        "renewal": 0
+      },
+      "state": "active"
+    }
+  },
+  "signature": {
+    "alg": "sim-hmac-sha256",
+    "key": "rl:robot:arm-02#k1",
+    "value": "fc5e5625dd8d29db22287ce0254b0d8738f3c65c868077fd6e35e9c203648887"
+  }
+}

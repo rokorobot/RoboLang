@@ -1,0 +1,485 @@
+{
+  "scenario_schema": "robolang.arch02.scenario",
+  "scenario_schema_version": "0.1",
+  "parameters": {
+    "epoch": "2026-10-19T10:14:00.000Z",
+    "latency": {
+      "value": "100",
+      "unit": "ms"
+    },
+    "message_ttl": {
+      "value": "30",
+      "unit": "s"
+    },
+    "max_message_lifetime": {
+      "value": "60",
+      "unit": "s"
+    },
+    "clock_tolerance": {
+      "value": "500",
+      "unit": "ms"
+    },
+    "ack_timeout": {
+      "value": "5",
+      "unit": "s"
+    },
+    "query_interval": {
+      "value": "30",
+      "unit": "s"
+    },
+    "authority_delay": {
+      "value": "20",
+      "unit": "s"
+    },
+    "offer_lease_end": "2026-10-19T10:25:00.000Z",
+    "reservation_end": "2026-10-19T10:20:00.000Z"
+  },
+  "conversation_id": "rl:conv:c42-delivery",
+  "participants": [
+    {
+      "kind": "agent",
+      "id": "rl:agent:planner-1",
+      "display_name": "Planner 1",
+      "keys": [
+        "rl:agent:planner-1#k1"
+      ],
+      "capability_descriptor": null,
+      "authority_domain": "rl:domain:warehouse-north",
+      "core_versions": [
+        "0.1"
+      ]
+    },
+    {
+      "kind": "robot",
+      "id": "rl:robot:arm-02",
+      "display_name": "Arm 02",
+      "keys": [
+        "rl:robot:arm-02#k1"
+      ],
+      "capability_descriptor": "rl:capdesc:arm-02@1",
+      "authority_domain": "rl:domain:warehouse-north",
+      "core_versions": [
+        "0.1"
+      ]
+    },
+    {
+      "kind": "robot",
+      "id": "rl:robot:amr-07",
+      "display_name": "AMR 07",
+      "keys": [
+        "rl:robot:amr-07#k1"
+      ],
+      "capability_descriptor": "rl:capdesc:amr-07@1",
+      "authority_domain": "rl:domain:warehouse-north",
+      "core_versions": [
+        "0.1"
+      ]
+    },
+    {
+      "kind": "human_interface",
+      "id": "rl:human:shift-lead-3",
+      "display_name": "Shift lead 3",
+      "keys": [
+        "rl:human:shift-lead-3#k1"
+      ],
+      "capability_descriptor": null,
+      "authority_domain": "rl:domain:warehouse-north",
+      "core_versions": [
+        "0.1"
+      ]
+    }
+  ],
+  "keys": {
+    "rl:agent:planner-1#k1": {
+      "participant": "rl:agent:planner-1",
+      "alg": "sim-hmac-sha256",
+      "secret": "321ba514747960ba0c7a3c816c4224ca0e262a50a78b62c65bfc4a6f12bf46c8"
+    },
+    "rl:robot:arm-02#k1": {
+      "participant": "rl:robot:arm-02",
+      "alg": "sim-hmac-sha256",
+      "secret": "0c626221e484d7ab451fca9a26424f28ffc92956160e78a1f8fd87a040bc001c"
+    },
+    "rl:robot:amr-07#k1": {
+      "participant": "rl:robot:amr-07",
+      "alg": "sim-hmac-sha256",
+      "secret": "60f7e905bc6358c52fc21705a4a08701386f563d7f6b31f24c4003d6c7ddc0eb"
+    },
+    "rl:human:shift-lead-3#k1": {
+      "participant": "rl:human:shift-lead-3",
+      "alg": "sim-hmac-sha256",
+      "secret": "1efc64d613a5a14dbabcd8caab7b22e82e2bcae753494bb1ed6a0103e0ddad98"
+    }
+  },
+  "authorities": {
+    "rl:robot:arm-02": "rl:human:shift-lead-3",
+    "rl:robot:amr-07": "rl:human:shift-lead-3"
+  },
+  "descriptors": {
+    "rl:robot:arm-02": {
+      "schema": "robolang.core.capability-descriptor",
+      "schema_version": "0.1",
+      "id": "rl:capdesc:arm-02@1",
+      "robot": "rl:robot:arm-02",
+      "capabilities": [
+        {
+          "kind": "grasp",
+          "max_mass": {
+            "value": "30",
+            "unit": "kg"
+          },
+          "reach": [
+            "rl:place:cell-a2",
+            "rl:place:handoff-h1"
+          ]
+        },
+        {
+          "kind": "inspect",
+          "sensor": "cell_camera",
+          "properties": [
+            "located_in",
+            "carried_by"
+          ],
+          "places": [
+            "rl:place:cell-a2",
+            "rl:place:handoff-h1"
+          ]
+        }
+      ],
+      "unsupported": [
+        "transport_payload",
+        "dock_at"
+      ],
+      "issued_at": "2026-10-19T06:00:00Z",
+      "valid_until": "2026-10-19T18:00:00Z",
+      "signature": {
+        "alg": "sim-hmac-sha256",
+        "key": "rl:robot:arm-02#k1",
+        "value": "561eeee50dfe9b4d0462ca2414fbd8c79aeaa7696c1fa529e1dd4203cba6dea6"
+      }
+    },
+    "rl:robot:amr-07": {
+      "schema": "robolang.core.capability-descriptor",
+      "schema_version": "0.1",
+      "id": "rl:capdesc:amr-07@1",
+      "robot": "rl:robot:amr-07",
+      "capabilities": [
+        {
+          "kind": "transport_payload",
+          "max_mass": {
+            "value": "40",
+            "unit": "kg"
+          },
+          "max_speed": {
+            "value": "1.2",
+            "unit": "m/s"
+          },
+          "operating_area": "rl:place:warehouse-north-floor"
+        },
+        {
+          "kind": "dock_at",
+          "places": [
+            "rl:place:dock-d1",
+            "rl:place:handoff-h1",
+            "rl:place:station-s3"
+          ]
+        },
+        {
+          "kind": "inspect",
+          "sensor": "deck_camera",
+          "properties": [
+            "located_in",
+            "carried_by"
+          ],
+          "places": [
+            "rl:place:dock-d1",
+            "rl:place:handoff-h1",
+            "rl:place:station-s3"
+          ]
+        }
+      ],
+      "unsupported": [
+        "grasp"
+      ],
+      "issued_at": "2026-10-19T06:00:00Z",
+      "valid_until": "2026-10-19T18:00:00Z",
+      "signature": {
+        "alg": "sim-hmac-sha256",
+        "key": "rl:robot:amr-07#k1",
+        "value": "36a679564d8c9ab49e3e1989a570fce0e85907a96dca799927d93d7a72b78826"
+      }
+    }
+  },
+  "standing_authorizations": {
+    "rl:robot:arm-02": {
+      "kind": "standing_authorization",
+      "id": "rl:auth:wn-arm-02-2026-10-19",
+      "issued_by": "rl:human:shift-lead-3",
+      "authority_domain": "rl:domain:warehouse-north",
+      "grantee": "rl:robot:arm-02",
+      "scope": {
+        "profiles": [
+          "r2r"
+        ],
+        "goal_classes": [
+          "transport_payload",
+          "custody_transfer"
+        ],
+        "places": [
+          "rl:place:warehouse-north-floor"
+        ],
+        "counterparts": [
+          "rl:domain:warehouse-north"
+        ],
+        "max_mass": {
+          "value": "30",
+          "unit": "kg"
+        }
+      },
+      "constraints": [
+        {
+          "kind": "max_speed",
+          "limit": {
+            "value": "1.0",
+            "unit": "m/s"
+          }
+        }
+      ],
+      "lease": {
+        "granted_at": "2026-10-19T06:00:00Z",
+        "expires_at": "2026-10-19T18:00:00Z",
+        "renewal": 0
+      },
+      "mode": "simulation",
+      "signature": {
+        "alg": "sim-hmac-sha256",
+        "key": "rl:human:shift-lead-3#k1",
+        "value": "d42d2969bbb87caca3b0aae42d7979345bb0cd64098968c4102e4181dcb5b00a"
+      }
+    },
+    "rl:robot:amr-07": {
+      "kind": "standing_authorization",
+      "id": "rl:auth:wn-amr-07-2026-10-19",
+      "issued_by": "rl:human:shift-lead-3",
+      "authority_domain": "rl:domain:warehouse-north",
+      "grantee": "rl:robot:amr-07",
+      "scope": {
+        "profiles": [
+          "r2r"
+        ],
+        "goal_classes": [
+          "transport_payload",
+          "custody_transfer"
+        ],
+        "places": [
+          "rl:place:warehouse-north-floor"
+        ],
+        "counterparts": [
+          "rl:domain:warehouse-north"
+        ],
+        "max_mass": {
+          "value": "30",
+          "unit": "kg"
+        }
+      },
+      "constraints": [
+        {
+          "kind": "max_speed",
+          "limit": {
+            "value": "1.0",
+            "unit": "m/s"
+          }
+        }
+      ],
+      "lease": {
+        "granted_at": "2026-10-19T06:00:00Z",
+        "expires_at": "2026-10-19T18:00:00Z",
+        "renewal": 0
+      },
+      "mode": "simulation",
+      "signature": {
+        "alg": "sim-hmac-sha256",
+        "key": "rl:human:shift-lead-3#k1",
+        "value": "18c82308030b0ea0b0cb29b275ee6bf2dd0d6709900b896893ab4e070348f2b7"
+      }
+    }
+  },
+  "places": {
+    "rl:place:cell-a2": {
+      "within": "rl:place:warehouse-north-floor"
+    },
+    "rl:place:handoff-h1": {
+      "within": "rl:place:warehouse-north-floor"
+    },
+    "rl:place:station-s3": {
+      "within": "rl:place:warehouse-north-floor"
+    },
+    "rl:place:dock-d1": {
+      "within": "rl:place:warehouse-north-floor"
+    }
+  },
+  "things": [
+    {
+      "kind": "thing",
+      "id": "rl:thing:container-c42",
+      "class": "container",
+      "mass": {
+        "value": "25",
+        "unit": "kg",
+        "uncertainty": "2"
+      }
+    }
+  ],
+  "initial_facts": [
+    {
+      "subject": "rl:thing:container-c42",
+      "property": "located_in",
+      "value": "rl:place:cell-a2"
+    },
+    {
+      "subject": "rl:robot:arm-02",
+      "property": "located_in",
+      "value": "rl:place:cell-a2"
+    },
+    {
+      "subject": "rl:robot:amr-07",
+      "property": "located_in",
+      "value": "rl:place:dock-d1"
+    }
+  ],
+  "initial_custody": {
+    "rl:thing:container-c42": "rl:robot:arm-02"
+  },
+  "sensors": [
+    {
+      "participant": "rl:robot:arm-02",
+      "sensor": "cell_camera",
+      "places": [
+        "rl:place:cell-a2",
+        "rl:place:handoff-h1"
+      ],
+      "valid_for": {
+        "value": "30",
+        "unit": "s"
+      },
+      "confidence": "0.95",
+      "method": "vision"
+    },
+    {
+      "participant": "rl:robot:amr-07",
+      "sensor": "deck_camera",
+      "places": "own_deck",
+      "valid_for": {
+        "value": "30",
+        "unit": "s"
+      },
+      "confidence": "0.95",
+      "method": "vision"
+    }
+  ],
+  "durations": [
+    {
+      "action": "move",
+      "from": "rl:place:dock-d1",
+      "to": "rl:place:handoff-h1",
+      "duration": {
+        "value": "30",
+        "unit": "s"
+      }
+    },
+    {
+      "action": "move",
+      "from": "rl:place:handoff-h1",
+      "to": "rl:place:station-s3",
+      "duration": {
+        "value": "60",
+        "unit": "s"
+      }
+    },
+    {
+      "action": "handover_place",
+      "duration": {
+        "value": "20",
+        "unit": "s"
+      }
+    }
+  ],
+  "arbiters": {
+    "rl:place:handoff-h1": "rl:robot:arm-02"
+  },
+  "peers": {
+    "rl:robot:arm-02": [
+      "rl:robot:amr-07"
+    ]
+  },
+  "policies": {
+    "rl:agent:planner-1": {
+      "reverify_outcomes": true
+    },
+    "rl:robot:arm-02": {
+      "accept_assistance": true
+    },
+    "rl:robot:amr-07": {
+      "accept_assistance": true
+    }
+  },
+  "authority_table": [
+    {
+      "grantee": "rl:robot:arm-02",
+      "goal": "rl:goal:c42-to-s3",
+      "decision": "granted"
+    }
+  ],
+  "goal": {
+    "kind": "goal",
+    "id": "rl:goal:c42-to-s3",
+    "requested_by": "rl:agent:planner-1",
+    "desired_state": [
+      {
+        "subject": "rl:thing:container-c42",
+        "property": "located_in",
+        "value": "rl:place:station-s3"
+      }
+    ],
+    "success_criteria": [
+      {
+        "kind": "observed",
+        "subject": "rl:thing:container-c42",
+        "property": "located_in",
+        "value": "rl:place:station-s3",
+        "min_confidence": "0.9",
+        "max_age": {
+          "value": "10",
+          "unit": "s"
+        },
+        "accepted_sources": [
+          "any_participant_in_domain"
+        ]
+      }
+    ],
+    "constraints": [
+      {
+        "kind": "deadline",
+        "at": "2026-10-19T10:30:00Z"
+      }
+    ],
+    "priority": "normal"
+  },
+  "goal_recipient": "rl:robot:arm-02",
+  "handover_criteria": [
+    {
+      "kind": "observed",
+      "subject": "rl:thing:container-c42",
+      "property": "carried_by",
+      "value": "rl:robot:amr-07",
+      "min_confidence": "0.9",
+      "max_age": {
+        "value": "2",
+        "unit": "s"
+      },
+      "accepted_sources": [
+        "rl:robot:amr-07"
+      ]
+    }
+  ]
+}

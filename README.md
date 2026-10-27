@@ -67,7 +67,7 @@ treated as untrusted input that deterministic software checks before use.
 | Language | RoboLang **1.1**, and **1.2** (adds `and`, `or`, `not` in conditions) |
 | Python package | **0.1.0a1** (alpha; installed from a clone, not published on PyPI) |
 | Foundation 1 (simulation-only execution) | **Delivered**, exit gate signed off 2026-10-27 ([evidence](docs/evidence/rl-basic-01-exit-gate.md)) |
-| Next milestone | **RL-ARCH-02**, needs separate owner authorization |
+| Next milestone | **RL-ARCH-02**: specification proposed ([Core 0.1](spec/core-v0.1.md), [reference simulation](spec/reference-simulation-v0.1.md)); implementation needs separate owner authorization |
 
 ## Implemented today
 

@@ -1,0 +1,150 @@
+{
+  "fixture_set": "robolang.core.0.1",
+  "spec": "spec/core-v0.1.md",
+  "cases": [
+    {
+      "file": "valid/propose_goal.json",
+      "expect": "accepted"
+    },
+    {
+      "file": "valid/assessment.json",
+      "expect": "accepted"
+    },
+    {
+      "file": "valid/commit.json",
+      "expect": "accepted"
+    },
+    {
+      "file": "valid/custody_confirmed.json",
+      "expect": "accepted"
+    },
+    {
+      "file": "valid/authorization_decision.json",
+      "expect": "accepted"
+    },
+    {
+      "file": "valid/outcome_succeeded.json",
+      "expect": "accepted"
+    },
+    {
+      "file": "valid/descriptor_arm_02.json",
+      "expect": "accepted"
+    },
+    {
+      "file": "valid/descriptor_amr_07.json",
+      "expect": "accepted"
+    },
+    {
+      "file": "invalid/c101_duplicate_key.json",
+      "expect": "C101",
+      "stage": "form"
+    },
+    {
+      "file": "invalid/c101_non_integer_number.json",
+      "expect": "C101",
+      "stage": "form"
+    },
+    {
+      "file": "invalid/c101_byte_order_mark.json",
+      "expect": "C101",
+      "stage": "form"
+    },
+    {
+      "file": "invalid/c102_unsupported_version.json",
+      "expect": "C102",
+      "stage": "form"
+    },
+    {
+      "file": "invalid/c103_unknown_field.json",
+      "expect": "C103",
+      "stage": "form"
+    },
+    {
+      "file": "invalid/c104_missing_field.json",
+      "expect": "C104",
+      "stage": "form"
+    },
+    {
+      "file": "invalid/c104_goal_without_criteria.json",
+      "expect": "C104",
+      "stage": "form"
+    },
+    {
+      "file": "invalid/c105_unknown_type.json",
+      "expect": "C105",
+      "stage": "form"
+    },
+    {
+      "file": "invalid/c106_reserved_type.json",
+      "expect": "C106",
+      "stage": "form"
+    },
+    {
+      "file": "invalid/c107_profile_mismatch.json",
+      "expect": "C107",
+      "stage": "form"
+    },
+    {
+      "file": "invalid/c201_unsigned.json",
+      "expect": "C201",
+      "stage": "signature"
+    },
+    {
+      "file": "invalid/c202_wrong_signature.json",
+      "expect": "C202",
+      "stage": "signature"
+    },
+    {
+      "file": "invalid/c203_key_not_the_senders.json",
+      "expect": "C203",
+      "stage": "signature"
+    },
+    {
+      "file": "invalid/c204_simulation_signature_in_physical_mode.json",
+      "expect": "C204",
+      "stage": "signature",
+      "receiver_mode": "physical"
+    },
+    {
+      "file": "invalid/c301_expired.json",
+      "expect": "C301",
+      "stage": "freshness"
+    },
+    {
+      "file": "invalid/c302_lifetime_too_long.json",
+      "expect": "C302",
+      "stage": "freshness"
+    },
+    {
+      "file": "invalid/c303_sent_in_the_future.json",
+      "expect": "C303",
+      "stage": "freshness"
+    },
+    {
+      "file": "invalid/c307_wrong_recipient.json",
+      "expect": "C307",
+      "stage": "freshness",
+      "receiver": "rl:robot:amr-07"
+    },
+    {
+      "file": "invalid/c401_requester_authorizes_its_own_goal.json",
+      "expect": "C401",
+      "stage": "meaning"
+    },
+    {
+      "file": "invalid/c402_succeeded_without_verification.json",
+      "expect": "C402",
+      "stage": "meaning"
+    },
+    {
+      "file": "invalid/c402_succeeded_with_unmet_criterion.json",
+      "expect": "C402",
+      "stage": "meaning"
+    },
+    {
+      "file": "invalid/c404_physical_mode.json",
+      "expect": "C404",
+      "stage": "meaning"
+    }
+  ]
+}

@@ -1,0 +1,51 @@
+{
+  "schema": "robolang.core.capability-descriptor",
+  "schema_version": "0.1",
+  "id": "rl:capdesc:amr-07@1",
+  "robot": "rl:robot:amr-07",
+  "capabilities": [
+    {
+      "kind": "transport_payload",
+      "max_mass": {
+        "value": "40",
+        "unit": "kg"
+      },
+      "max_speed": {
+        "value": "1.2",
+        "unit": "m/s"
+      },
+      "operating_area": "rl:place:warehouse-north-floor"
+    },
+    {
+      "kind": "dock_at",
+      "places": [
+        "rl:place:dock-d1",
+        "rl:place:handoff-h1",
+        "rl:place:station-s3"
+      ]
+    },
+    {
+      "kind": "inspect",
+      "sensor": "deck_camera",
+      "properties": [
+        "located_in",
+        "carried_by"
+      ],
+      "places": [
+        "rl:place:dock-d1",
+        "rl:place:handoff-h1",
+        "rl:place:station-s3"
+      ]
+    }
+  ],
+  "unsupported": [
+    "grasp"
+  ],
+  "issued_at": "2026-10-19T06:00:00Z",
+  "valid_until": "2026-10-19T18:00:00Z",
+  "signature": {
+    "alg": "sim-hmac-sha256",
+    "key": "rl:robot:amr-07#k1",
+    "value": "36a679564d8c9ab49e3e1989a570fce0e85907a96dca799927d93d7a72b78826"
+  }
+}

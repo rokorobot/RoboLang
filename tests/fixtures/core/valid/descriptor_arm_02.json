@@ -1,0 +1,42 @@
+{
+  "schema": "robolang.core.capability-descriptor",
+  "schema_version": "0.1",
+  "id": "rl:capdesc:arm-02@1",
+  "robot": "rl:robot:arm-02",
+  "capabilities": [
+    {
+      "kind": "grasp",
+      "max_mass": {
+        "value": "30",
+        "unit": "kg"
+      },
+      "reach": [
+        "rl:place:cell-a2",
+        "rl:place:handoff-h1"
+      ]
+    },
+    {
+      "kind": "inspect",
+      "sensor": "cell_camera",
+      "properties": [
+        "located_in",
+        "carried_by"
+      ],
+      "places": [
+        "rl:place:cell-a2",
+        "rl:place:handoff-h1"
+      ]
+    }
+  ],
+  "unsupported": [
+    "transport_payload",
+    "dock_at"
+  ],
+  "issued_at": "2026-10-19T06:00:00Z",
+  "valid_until": "2026-10-19T18:00:00Z",
+  "signature": {
+    "alg": "sim-hmac-sha256",
+    "key": "rl:robot:arm-02#k1",
+    "value": "561eeee50dfe9b4d0462ca2414fbd8c79aeaa7696c1fa529e1dd4203cba6dea6"
+  }
+}
