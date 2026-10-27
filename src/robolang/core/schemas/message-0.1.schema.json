@@ -1,0 +1,1775 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:robolang:core:message:0.1",
+  "title": "RoboLang Core message, version 0.1 (draft)",
+  "description": "spec/core-v0.1.md. Validity under this schema is necessary, not sufficient: core-v0.1.md sections 7 and 8 add signature, time and meaning checks. A valid message never grants permission to act.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "schema_version",
+    "message_id",
+    "conversation_id",
+    "sequence",
+    "in_reply_to",
+    "profile",
+    "type",
+    "sender",
+    "recipient",
+    "sent_at",
+    "expires_at",
+    "payload",
+    "signature"
+  ],
+  "properties": {
+    "schema": {
+      "const": "robolang.core.message"
+    },
+    "schema_version": {
+      "const": "0.1"
+    },
+    "message_id": {
+      "$ref": "#/$defs/message_id"
+    },
+    "conversation_id": {
+      "$ref": "#/$defs/identifier"
+    },
+    "sequence": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "in_reply_to": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/message_id"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "profile": {
+      "enum": [
+        "a2r",
+        "r2r"
+      ]
+    },
+    "type": {
+      "enum": [
+        "propose_goal",
+        "assessment",
+        "accept",
+        "reject",
+        "authorization_request",
+        "authorization_decision",
+        "request_assistance",
+        "offer_assistance",
+        "decline",
+        "commit",
+        "reserve",
+        "reservation_decision",
+        "coordinate",
+        "transfer_custody",
+        "custody_confirmed",
+        "custody_released",
+        "acknowledge",
+        "custody_query",
+        "custody_state",
+        "outcome"
+      ]
+    },
+    "sender": {
+      "$ref": "#/$defs/identifier"
+    },
+    "recipient": {
+      "$ref": "#/$defs/identifier"
+    },
+    "sent_at": {
+      "$ref": "#/$defs/time"
+    },
+    "expires_at": {
+      "$ref": "#/$defs/time"
+    },
+    "payload": {
+      "type": "object"
+    },
+    "signature": {
+      "$ref": "#/$defs/signature"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "propose_goal"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "profile": {
+            "const": "a2r"
+          },
+          "payload": {
+            "$ref": "#/$defs/payload_propose_goal"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "assessment"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "profile": {
+            "const": "a2r"
+          },
+          "payload": {
+            "$ref": "#/$defs/payload_assessment"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "accept"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "profile": {
+            "const": "a2r"
+          },
+          "payload": {
+            "$ref": "#/$defs/payload_accept"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "reject"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "profile": {
+            "const": "a2r"
+          },
+          "payload": {
+            "$ref": "#/$defs/payload_reject"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "authorization_request"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "profile": {
+            "const": "a2r"
+          },
+          "payload": {
+            "$ref": "#/$defs/payload_authorization_request"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "authorization_decision"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "profile": {
+            "const": "a2r"
+          },
+          "payload": {
+            "$ref": "#/$defs/payload_authorization_decision"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "request_assistance"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "profile": {
+            "const": "r2r"
+          },
+          "payload": {
+            "$ref": "#/$defs/payload_request_assistance"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "offer_assistance"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "profile": {
+            "const": "r2r"
+          },
+          "payload": {
+            "$ref": "#/$defs/payload_offer_assistance"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "decline"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "profile": {
+            "const": "r2r"
+          },
+          "payload": {
+            "$ref": "#/$defs/payload_decline"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "commit"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "profile": {
+            "const": "r2r"
+          },
+          "payload": {
+            "$ref": "#/$defs/payload_commit"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "reserve"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "profile": {
+            "const": "r2r"
+          },
+          "payload": {
+            "$ref": "#/$defs/payload_reserve"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "reservation_decision"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "profile": {
+            "const": "r2r"
+          },
+          "payload": {
+            "$ref": "#/$defs/payload_reservation_decision"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "coordinate"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "profile": {
+            "const": "r2r"
+          },
+          "payload": {
+            "$ref": "#/$defs/payload_coordinate"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "transfer_custody"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "profile": {
+            "const": "r2r"
+          },
+          "payload": {
+            "$ref": "#/$defs/payload_transfer_custody"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "custody_confirmed"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "profile": {
+            "const": "r2r"
+          },
+          "payload": {
+            "$ref": "#/$defs/payload_custody_confirmed"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "custody_released"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "profile": {
+            "const": "r2r"
+          },
+          "payload": {
+            "$ref": "#/$defs/payload_custody_released"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "acknowledge"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "profile": {
+            "const": "r2r"
+          },
+          "payload": {
+            "$ref": "#/$defs/payload_acknowledge"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "custody_query"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "profile": {
+            "const": "r2r"
+          },
+          "payload": {
+            "$ref": "#/$defs/payload_custody_query"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "custody_state"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "profile": {
+            "const": "r2r"
+          },
+          "payload": {
+            "$ref": "#/$defs/payload_custody_state"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "outcome"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "profile": {
+            "enum": [
+              "a2r",
+              "r2r"
+            ]
+          },
+          "payload": {
+            "$ref": "#/$defs/payload_outcome"
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "identifier": {
+      "description": "Opaque identifier (core-v0.1.md 2.4).",
+      "type": "string",
+      "pattern": "^rl:[a-z][a-z_]*:[A-Za-z0-9][A-Za-z0-9._:@#-]{0,127}$"
+    },
+    "key_ref": {
+      "description": "A key of a participant: an identifier with a '#' fragment.",
+      "type": "string",
+      "pattern": "^rl:[a-z][a-z_]*:[A-Za-z0-9][A-Za-z0-9._:@-]{0,127}#[A-Za-z0-9._-]{1,64}$"
+    },
+    "message_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9._-]{1,128}$"
+    },
+    "time": {
+      "description": "UTC time, RFC 3339, at most millisecond precision, 'Z' suffix.",
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{1,3})?Z$"
+    },
+    "decimal": {
+      "type": "string",
+      "pattern": "^[0-9]+(\\.[0-9]+)?$"
+    },
+    "positive_decimal": {
+      "type": "string",
+      "pattern": "^(0*[1-9][0-9]*(\\.[0-9]+)?|0+\\.[0-9]*[1-9][0-9]*)$"
+    },
+    "confidence": {
+      "type": "string",
+      "pattern": "^(0(\\.[0-9]+)?|1(\\.0+)?)$"
+    },
+    "duration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "value",
+        "unit"
+      ],
+      "properties": {
+        "value": {
+          "$ref": "#/$defs/positive_decimal"
+        },
+        "unit": {
+          "enum": [
+            "ms",
+            "s",
+            "min"
+          ]
+        }
+      }
+    },
+    "mass": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "value",
+        "unit"
+      ],
+      "properties": {
+        "value": {
+          "$ref": "#/$defs/positive_decimal"
+        },
+        "unit": {
+          "const": "kg"
+        }
+      }
+    },
+    "mass_with_uncertainty": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "value",
+        "unit",
+        "uncertainty"
+      ],
+      "properties": {
+        "value": {
+          "$ref": "#/$defs/positive_decimal"
+        },
+        "unit": {
+          "const": "kg"
+        },
+        "uncertainty": {
+          "$ref": "#/$defs/decimal"
+        }
+      }
+    },
+    "speed": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "value",
+        "unit"
+      ],
+      "properties": {
+        "value": {
+          "$ref": "#/$defs/positive_decimal"
+        },
+        "unit": {
+          "const": "m/s"
+        }
+      }
+    },
+    "signature": {
+      "description": "core-v0.1.md section 7. Covers the enclosing object without this field, in JCS form.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "alg",
+        "key",
+        "value"
+      ],
+      "properties": {
+        "alg": {
+          "enum": [
+            "ed25519",
+            "sim-hmac-sha256"
+          ]
+        },
+        "key": {
+          "$ref": "#/$defs/key_ref"
+        },
+        "value": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{1,512}$"
+        }
+      }
+    },
+    "mode": {
+      "enum": [
+        "simulation",
+        "physical"
+      ]
+    },
+    "property": {
+      "enum": [
+        "located_in",
+        "carried_by"
+      ]
+    },
+    "reason": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "code"
+      ],
+      "properties": {
+        "code": {
+          "enum": [
+            "capability_unsupported",
+            "capability_insufficient",
+            "assistance_required",
+            "assistance_unavailable",
+            "participant_busy",
+            "outside_standing_authorization",
+            "authorization_denied",
+            "lease_expired",
+            "evidence_missing",
+            "evidence_stale",
+            "custody_unknown",
+            "deadline_passed"
+          ]
+        }
+      }
+    },
+    "capability_kind": {
+      "enum": [
+        "transport_payload",
+        "dock_at",
+        "grasp",
+        "inspect"
+      ]
+    },
+    "triple": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "subject",
+        "property",
+        "value"
+      ],
+      "properties": {
+        "subject": {
+          "$ref": "#/$defs/identifier"
+        },
+        "property": {
+          "$ref": "#/$defs/property"
+        },
+        "value": {
+          "$ref": "#/$defs/identifier"
+        }
+      }
+    },
+    "criterion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "subject",
+        "property",
+        "value",
+        "min_confidence",
+        "max_age",
+        "accepted_sources"
+      ],
+      "properties": {
+        "kind": {
+          "const": "observed"
+        },
+        "subject": {
+          "$ref": "#/$defs/identifier"
+        },
+        "property": {
+          "$ref": "#/$defs/property"
+        },
+        "value": {
+          "$ref": "#/$defs/identifier"
+        },
+        "min_confidence": {
+          "$ref": "#/$defs/confidence"
+        },
+        "max_age": {
+          "$ref": "#/$defs/duration"
+        },
+        "accepted_sources": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              {
+                "$ref": "#/$defs/identifier"
+              },
+              {
+                "const": "any_participant_in_domain"
+              }
+            ]
+          },
+          "minItems": 1
+        }
+      }
+    },
+    "constraint": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "at"
+          ],
+          "properties": {
+            "kind": {
+              "const": "deadline"
+            },
+            "at": {
+              "$ref": "#/$defs/time"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "limit"
+          ],
+          "properties": {
+            "kind": {
+              "const": "max_speed"
+            },
+            "limit": {
+              "$ref": "#/$defs/speed"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "place"
+          ],
+          "properties": {
+            "kind": {
+              "const": "avoid_place"
+            },
+            "place": {
+              "$ref": "#/$defs/identifier"
+            }
+          }
+        }
+      ]
+    },
+    "goal": {
+      "description": "RFC-001 7.7. Success criteria are mandatory.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "id",
+        "requested_by",
+        "desired_state",
+        "success_criteria",
+        "constraints",
+        "priority"
+      ],
+      "properties": {
+        "kind": {
+          "const": "goal"
+        },
+        "id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "requested_by": {
+          "$ref": "#/$defs/identifier"
+        },
+        "desired_state": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/triple"
+          },
+          "minItems": 1
+        },
+        "success_criteria": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/criterion"
+          },
+          "minItems": 1
+        },
+        "constraints": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/constraint"
+          }
+        },
+        "priority": {
+          "enum": [
+            "low",
+            "normal",
+            "high"
+          ]
+        }
+      }
+    },
+    "thing": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "id",
+        "class",
+        "mass"
+      ],
+      "properties": {
+        "kind": {
+          "const": "thing"
+        },
+        "id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "class": {
+          "type": "string",
+          "pattern": "^[a-z][a-z_]{0,63}$"
+        },
+        "mass": {
+          "$ref": "#/$defs/mass_with_uncertainty"
+        }
+      }
+    },
+    "observation": {
+      "description": "RFC-001 7.6. Evidence of its source's belief, not a fact.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "id",
+        "subject",
+        "property",
+        "value",
+        "observed_at",
+        "valid_for",
+        "confidence",
+        "source",
+        "signature"
+      ],
+      "properties": {
+        "kind": {
+          "const": "observation"
+        },
+        "id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "subject": {
+          "$ref": "#/$defs/identifier"
+        },
+        "property": {
+          "$ref": "#/$defs/property"
+        },
+        "value": {
+          "$ref": "#/$defs/identifier"
+        },
+        "observed_at": {
+          "$ref": "#/$defs/time"
+        },
+        "valid_for": {
+          "$ref": "#/$defs/duration"
+        },
+        "confidence": {
+          "$ref": "#/$defs/confidence"
+        },
+        "source": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "participant",
+            "sensor",
+            "method"
+          ],
+          "properties": {
+            "participant": {
+              "$ref": "#/$defs/identifier"
+            },
+            "sensor": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            "method": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            }
+          }
+        },
+        "signature": {
+          "$ref": "#/$defs/signature"
+        }
+      }
+    },
+    "lease": {
+      "description": "RFC-001 11.1. Core 0.1 defines no renewal, so 'renewal' is 0.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "granted_at",
+        "expires_at",
+        "renewal"
+      ],
+      "properties": {
+        "granted_at": {
+          "$ref": "#/$defs/time"
+        },
+        "expires_at": {
+          "$ref": "#/$defs/time"
+        },
+        "renewal": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 0
+        }
+      }
+    },
+    "condition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "resource"
+      ],
+      "properties": {
+        "kind": {
+          "const": "resource_held"
+        },
+        "resource": {
+          "$ref": "#/$defs/identifier"
+        }
+      }
+    },
+    "commitment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "id",
+        "debtor",
+        "creditor",
+        "obligation",
+        "conditions",
+        "lease",
+        "state"
+      ],
+      "properties": {
+        "kind": {
+          "const": "commitment"
+        },
+        "id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "debtor": {
+          "$ref": "#/$defs/identifier"
+        },
+        "creditor": {
+          "$ref": "#/$defs/identifier"
+        },
+        "obligation": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "goal"
+          ],
+          "properties": {
+            "goal": {
+              "$ref": "#/$defs/identifier"
+            }
+          }
+        },
+        "conditions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/condition"
+          }
+        },
+        "lease": {
+          "$ref": "#/$defs/lease"
+        },
+        "state": {
+          "enum": [
+            "active",
+            "fulfilled",
+            "lapsed",
+            "failed"
+          ]
+        }
+      }
+    },
+    "verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "verified_by",
+        "method",
+        "evaluated_at",
+        "criteria_results"
+      ],
+      "properties": {
+        "verified_by": {
+          "$ref": "#/$defs/identifier"
+        },
+        "method": {
+          "enum": [
+            "criteria_evaluated",
+            "self_reported"
+          ]
+        },
+        "evaluated_at": {
+          "$ref": "#/$defs/time"
+        },
+        "criteria_results": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "criterion",
+              "met",
+              "evidence"
+            ],
+            "properties": {
+              "criterion": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "met": {
+                "type": "boolean"
+              },
+              "evidence": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/identifier"
+                }
+              }
+            }
+          },
+          "minItems": 1
+        }
+      }
+    },
+    "outcome": {
+      "description": "RFC-001 7.10. 'succeeded' needs a verification in which every criterion is met (C402).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "goal",
+        "status",
+        "verification",
+        "reasons",
+        "reported_by",
+        "reported_at"
+      ],
+      "properties": {
+        "kind": {
+          "const": "outcome"
+        },
+        "goal": {
+          "$ref": "#/$defs/identifier"
+        },
+        "status": {
+          "enum": [
+            "succeeded",
+            "failed",
+            "cancelled",
+            "timed_out",
+            "rejected",
+            "unknown"
+          ]
+        },
+        "verification": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/verification"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "reasons": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/reason"
+          }
+        },
+        "reported_by": {
+          "$ref": "#/$defs/identifier"
+        },
+        "reported_at": {
+          "$ref": "#/$defs/time"
+        }
+      },
+      "if": {
+        "properties": {
+          "status": {
+            "const": "succeeded"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "verification": {
+            "$ref": "#/$defs/verification"
+          }
+        }
+      }
+    },
+    "standing_authorization": {
+      "description": "RFC-001 13.3. Configuration installed on the grantee; not sent in a Core 0.1 message.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "id",
+        "issued_by",
+        "authority_domain",
+        "grantee",
+        "scope",
+        "constraints",
+        "lease",
+        "mode",
+        "signature"
+      ],
+      "properties": {
+        "kind": {
+          "const": "standing_authorization"
+        },
+        "id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "issued_by": {
+          "$ref": "#/$defs/identifier"
+        },
+        "authority_domain": {
+          "$ref": "#/$defs/identifier"
+        },
+        "grantee": {
+          "$ref": "#/$defs/identifier"
+        },
+        "scope": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "profiles",
+            "goal_classes",
+            "places",
+            "counterparts",
+            "max_mass"
+          ],
+          "properties": {
+            "profiles": {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "a2r",
+                  "r2r"
+                ]
+              },
+              "minItems": 1
+            },
+            "goal_classes": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[a-z][a-z_]{0,63}$"
+              },
+              "minItems": 1
+            },
+            "places": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/identifier"
+              },
+              "minItems": 1
+            },
+            "counterparts": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/identifier"
+              },
+              "minItems": 1
+            },
+            "max_mass": {
+              "$ref": "#/$defs/mass"
+            }
+          }
+        },
+        "constraints": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/constraint"
+          }
+        },
+        "lease": {
+          "$ref": "#/$defs/lease"
+        },
+        "mode": {
+          "$ref": "#/$defs/mode"
+        },
+        "signature": {
+          "$ref": "#/$defs/signature"
+        }
+      }
+    },
+    "participant": {
+      "description": "RFC-001 7.2. Configuration; discovery messages are reserved in Core 0.1.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "id",
+        "display_name",
+        "keys",
+        "capability_descriptor",
+        "authority_domain",
+        "core_versions"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "robot",
+            "agent",
+            "human_interface"
+          ]
+        },
+        "id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "display_name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "keys": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/key_ref"
+          },
+          "minItems": 1
+        },
+        "capability_descriptor": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/identifier"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "authority_domain": {
+          "$ref": "#/$defs/identifier"
+        },
+        "core_versions": {
+          "type": "array",
+          "items": {
+            "const": "0.1"
+          },
+          "minItems": 1
+        }
+      }
+    },
+    "payload_propose_goal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "goal",
+        "things"
+      ],
+      "properties": {
+        "goal": {
+          "$ref": "#/$defs/goal"
+        },
+        "things": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/thing"
+          }
+        }
+      }
+    },
+    "payload_assessment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "goal",
+        "result",
+        "reasons"
+      ],
+      "properties": {
+        "goal": {
+          "$ref": "#/$defs/identifier"
+        },
+        "result": {
+          "enum": [
+            "feasible",
+            "feasible_with_assistance",
+            "feasible_with_changes",
+            "infeasible"
+          ]
+        },
+        "reasons": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/reason"
+          }
+        }
+      }
+    },
+    "payload_accept": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "goal"
+      ],
+      "properties": {
+        "goal": {
+          "$ref": "#/$defs/identifier"
+        }
+      }
+    },
+    "payload_reject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "goal",
+        "reasons"
+      ],
+      "properties": {
+        "goal": {
+          "$ref": "#/$defs/identifier"
+        },
+        "reasons": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/reason"
+          }
+        }
+      }
+    },
+    "payload_authorization_request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "goal",
+        "things",
+        "mode",
+        "reasons"
+      ],
+      "properties": {
+        "goal": {
+          "$ref": "#/$defs/goal"
+        },
+        "things": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/thing"
+          }
+        },
+        "mode": {
+          "$ref": "#/$defs/mode"
+        },
+        "reasons": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/reason"
+          }
+        }
+      }
+    },
+    "payload_authorization_decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "goal",
+        "decision",
+        "mode",
+        "constraints",
+        "lease"
+      ],
+      "properties": {
+        "goal": {
+          "$ref": "#/$defs/identifier"
+        },
+        "decision": {
+          "enum": [
+            "granted",
+            "denied"
+          ]
+        },
+        "mode": {
+          "$ref": "#/$defs/mode"
+        },
+        "constraints": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/constraint"
+          }
+        },
+        "lease": {
+          "$ref": "#/$defs/lease"
+        }
+      }
+    },
+    "payload_request_assistance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "goal",
+        "things",
+        "parent_goal"
+      ],
+      "properties": {
+        "goal": {
+          "$ref": "#/$defs/goal"
+        },
+        "things": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/thing"
+          }
+        },
+        "parent_goal": {
+          "$ref": "#/$defs/identifier"
+        }
+      }
+    },
+    "payload_offer_assistance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "goal",
+        "conditions",
+        "lease"
+      ],
+      "properties": {
+        "goal": {
+          "$ref": "#/$defs/identifier"
+        },
+        "conditions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/condition"
+          }
+        },
+        "lease": {
+          "$ref": "#/$defs/lease"
+        }
+      }
+    },
+    "payload_decline": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "goal",
+        "reasons"
+      ],
+      "properties": {
+        "goal": {
+          "$ref": "#/$defs/identifier"
+        },
+        "reasons": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/reason"
+          }
+        }
+      }
+    },
+    "payload_commit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "commitment"
+      ],
+      "properties": {
+        "commitment": {
+          "$ref": "#/$defs/commitment"
+        }
+      }
+    },
+    "payload_reserve": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "resource",
+        "commitment",
+        "lease"
+      ],
+      "properties": {
+        "resource": {
+          "$ref": "#/$defs/identifier"
+        },
+        "commitment": {
+          "$ref": "#/$defs/identifier"
+        },
+        "lease": {
+          "$ref": "#/$defs/lease"
+        }
+      }
+    },
+    "payload_reservation_decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "resource",
+        "decision",
+        "lease"
+      ],
+      "properties": {
+        "resource": {
+          "$ref": "#/$defs/identifier"
+        },
+        "decision": {
+          "enum": [
+            "granted",
+            "denied"
+          ]
+        },
+        "lease": {
+          "$ref": "#/$defs/lease"
+        }
+      }
+    },
+    "payload_coordinate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "commitment",
+        "phase"
+      ],
+      "properties": {
+        "commitment": {
+          "$ref": "#/$defs/identifier"
+        },
+        "phase": {
+          "enum": [
+            "ready_for_handover",
+            "placed"
+          ]
+        }
+      }
+    },
+    "payload_transfer_custody": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "thing",
+        "commitment",
+        "criteria"
+      ],
+      "properties": {
+        "thing": {
+          "$ref": "#/$defs/identifier"
+        },
+        "commitment": {
+          "$ref": "#/$defs/identifier"
+        },
+        "criteria": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/criterion"
+          },
+          "minItems": 1
+        }
+      }
+    },
+    "payload_custody_confirmed": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "thing",
+        "observations"
+      ],
+      "properties": {
+        "thing": {
+          "$ref": "#/$defs/identifier"
+        },
+        "observations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/observation"
+          },
+          "minItems": 1
+        }
+      }
+    },
+    "payload_custody_released": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "thing",
+        "confirmation"
+      ],
+      "properties": {
+        "thing": {
+          "$ref": "#/$defs/identifier"
+        },
+        "confirmation": {
+          "$ref": "#/$defs/message_id"
+        }
+      }
+    },
+    "payload_acknowledge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "acknowledged",
+        "accepted"
+      ],
+      "properties": {
+        "acknowledged": {
+          "$ref": "#/$defs/message_id"
+        },
+        "accepted": {
+          "type": "boolean"
+        }
+      }
+    },
+    "payload_custody_query": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "thing"
+      ],
+      "properties": {
+        "thing": {
+          "$ref": "#/$defs/identifier"
+        }
+      }
+    },
+    "payload_custody_state": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "thing",
+        "accepted_release",
+        "observations"
+      ],
+      "properties": {
+        "thing": {
+          "$ref": "#/$defs/identifier"
+        },
+        "accepted_release": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/message_id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "observations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/observation"
+          }
+        }
+      }
+    },
+    "payload_outcome": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "outcome",
+        "evidence"
+      ],
+      "properties": {
+        "outcome": {
+          "$ref": "#/$defs/outcome"
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/observation"
+          }
+        }
+      }
+    }
+  }
+}

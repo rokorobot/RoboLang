@@ -78,6 +78,7 @@ treated as untrusted input that deterministic software checks before use.
 | Task IR 1.0 and 1.1 | `src/robolang/ir.py` | Versioned, deterministic JSON form of a validated task ([1.0](spec/ir-schema-v1.0.md), [1.1](spec/ir-schema-v1.1.md)) |
 | Symbolic executor | `src/robolang/sim/` | Runs one validated task against a declared world file, fail-closed: false or unknown preconditions stop the run |
 | Run records | `src/robolang/sim/record.py` | Versioned JSON record of every state, precondition, step and the final world, with a run ID derived from the inputs |
+| Core 0.1 checks | `src/robolang/core/` | Per-message checks of RoboLang Core 0.1 documents: strict JSON, schemas, RFC 8785 canonical form, simulation-only signatures, stable rejection codes ([spec](spec/core-v0.1.md)). No transport, no participants yet |
 | `robolang` command | `src/robolang/cli.py` | `validate`, `inspect`, `simulate` |
 
 The behaviour is specified in [`robolang-v1.1.md`](spec/robolang-v1.1.md),

@@ -152,11 +152,24 @@ def check_install(artifact: Path, work: Path):
         "simulate runs the example in simulation and it SUCCEEDED (exit 0)",
     )
 
+    message = REPO / "tests" / "fixtures" / "core" / "valid" / "commit.json"
+    core = run([python, "-c", CORE_PROBE, message], cwd=outside, env=env).stdout.decode().split()
+    expect(core == ["0", "0"], "the installed robolang.core ships both Core 0.1 schemas and validates a message")
+
     module = run([python, "-m", "robolang", "--version"], cwd=outside, env=env).stdout.decode().strip()
     expect(module == version, "python -m robolang works")
 
     check_no_legacy_code(python, outside, env, work)
 
+
+CORE_PROBE = """
+import sys
+import robolang.core as core
+document = core.read_document(open(sys.argv[1], "rb").read())
+descriptor = core.load_schema(core.DESCRIPTOR_SCHEMA)
+shipped = descriptor["$id"] == "urn:robolang:core:capability-descriptor:0.1"
+print(len(core.validate(document, core.MESSAGE_SCHEMA)), 0 if shipped else 1)
+"""
 
 PROBE = """
 import importlib, importlib.metadata, importlib.util, json, sys
