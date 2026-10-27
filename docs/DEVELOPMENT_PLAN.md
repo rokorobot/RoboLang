@@ -388,7 +388,7 @@ A milestone is **not done** because the README says it is. It is done when:
 
 ### Immediate next action
 
-**As of 2026-10-27:** RL-BASIC-01 is delivered and Foundation 1 is signed off. The next planned milestone is **RL-ARCH-02** (section 1), which waits for the owner's separate implementation authorization. CORE-1, the Part B language extensions and Foundation 2 items are each started only on their own authorization.
+**As of 2026-10-27:** RL-BASIC-01 is delivered and Foundation 1 is signed off. **RL-ARCH-02** (section 1) is implemented in simulation; its gate 1 exit evidence ([`docs/evidence/rl-arch-02-exit-gate.md`](evidence/rl-arch-02-exit-gate.md)) awaits owner sign-off. Gate 2, CORE-1, the Part B language extensions and Foundation 2 items are each started only on their own authorization.
 
 *Historical (2026-10-11):* Start with `RL-11A — Specification and grammar` and no runtime rewrite. It gives Claude Code a deterministic contract, exposes ambiguities early and prevents the following stages from building safety claims on top of a permissive text scanner.
 
