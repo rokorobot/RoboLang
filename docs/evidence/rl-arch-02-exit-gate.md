@@ -1,8 +1,9 @@
 # RL-ARCH-02 / Gate 1 exit — evidence
 
 **Date:** 2026-10-27
-**Status:** **Prepared for owner review (RL-ARCH-02-GATE-01). Not signed off.** This document
-changes no implementation, dependency or approved contract.
+**Status:** **Gate 1 — PASS. Signed off by the owner on 2026-10-27**, on the evidence at `6df6fa0`
+(section 10). A separate technical review also approved gate 1 as PASS with no blocking
+exceptions. This document changes no implementation, dependency or approved contract.
 **Gate:** Gate 1 — reproducible reference ([RFC-001 section 1.4](../../spec/architecture/rfc-001-ai-native-architecture.md#14-how-the-ambition-is-tested)),
 the RL-ARCH-02 exit gate of [`reference-simulation-v0.1.md`](../../spec/reference-simulation-v0.1.md)
 section 12.
@@ -19,7 +20,7 @@ decision records [0007](../../spec/decisions/0007-rl-arch-02-core-and-reference-
 | The happy path ends in a verified `succeeded` outcome; every failure variant ends in its stated result with no simulated motion where none is allowed; every run produces a reconstructable message and event log | RFC-001 19 (acceptance) | A-T1, A-T2–A-T14, A-T15; section 5 | Yes |
 | A-T1 to A-T20 pass in CI on every supported platform | Reference simulation 12 (as amended by 0008, Q9) | Section 3; CI in section 2 (Ubuntu and Windows, Python 3.11 and 3.13) | Yes |
 | The README states that the reference simulation is simulation only | Reference simulation 12 | `README.md`: the `arch02` Quickstart bullet ("**Simulation only**: one process, a symbolic world, no network, no ROS 2, no hardware, and simulation-only signatures") and the Implemented-today row | Yes |
-| Owner approval | Reference simulation 12 | Section 10 | **Pending** |
+| Owner approval | Reference simulation 12 | Section 10 | Yes — 2026-10-27 |
 
 ## 2. Implementation traceability
 
@@ -189,7 +190,9 @@ simulation only) is met on `main` at `6df6fa0`, with owner approval the only ope
 
 | Item | Decision | Date |
 |---|---|---|
-| RL-ARCH-02 / gate 1 exit met (sections 1–5) | **Pending** | — |
+| RL-ARCH-02 / gate 1 exit met (sections 1–5) | **PASS — signed off by the owner**, on the evidence at `6df6fa0` | 2026-10-27 |
+| Technical review (architecture and technical reviewer) | Gate 1 APPROVED, PASS; no blocking exceptions; F1–F3 non-blocking | 2026-10-27 |
 
 Signing off gate 1 authorizes nothing further: not gate 2, not CORE-1, not any Foundation 2 or 3
-item, and not any physical execution.
+item, no real network interoperability, and not any physical execution. Follow-ups F1–F3
+(section 9) remain open and non-blocking; each needs its own scope and authorization.
