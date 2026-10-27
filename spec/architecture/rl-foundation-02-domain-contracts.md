@@ -172,6 +172,25 @@ form "7.6" refer to RFC-001.
 | Acceptance tests | Positive: recall returns the latest valid record with its provenance. Negative: an expired record yields unknown; a record without provenance is rejected; recalled content cannot satisfy an authorization check |
 | Dependencies and priority | Needs 03, 07, 10, 13. **Priority 3** (Foundation 2). Vocabulary alignment is RFC-001 open question 1 |
 
+#### Candidate memory backends (non-normative)
+
+The Memory & Knowledge domain remains independent of any particular storage technology. The
+proposed implementation sequence is:
+
+1. Define the versioned knowledge-store interface.
+2. Implement an in-memory reference store and conformance tests.
+3. Evaluate SQLite as the first persistent reference backend for structured queries by
+   subject, property and time, preserving provenance, validity and expiry.
+4. Evaluate Memvid v2 as an optional semantic and episodic recall backend for similarity
+   searches across historical observations, missions and outcomes.
+
+All backends must implement the memory contracts above. Retrieved information remains
+evidence, not verified current state or authorization. Memvid adoption is conditional on
+interoperability and performance testing against the SQLite baseline.
+
+This note introduces no new work item, dependency, implementation authorization or change to
+the approved development sequence.
+
 ### 4.7 Domain 07 — Data & World Model
 
 | Aspect | Contract |
