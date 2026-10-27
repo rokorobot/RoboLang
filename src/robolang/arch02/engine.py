@@ -6,6 +6,10 @@ delivery with a fixed latency, and the scripted faults. Every delivery gets a re
 per-message Core 0.1 checks of `robolang.core`, then duplicate and order handling, then the
 participant's own state rules (`C306`, `C403`).
 
+Order follows decision record 0008: sequence numbers count per sender, recipient and
+conversation; a message after a gap is held, with no effect, until the gap is filled or
+`max_hold` has passed; a message that expires while held is rejected (`C301`).
+
 SIMULATION ONLY. Nothing here opens a connection, loads an adapter or moves a robot: the
 world is symbolic and every "motion" is a recorded event (decision R8).
 """
@@ -43,8 +47,8 @@ class Delivery:
     t_ms: int
     message: int  # index into the sent messages
     receiver: str
-    kind: str  # original, duplicate, replay, resend
-    receipt: str  # accepted, duplicate, rejected, not_handled
+    kind: str  # original, duplicate, replay, resend, released (a held message leaving the hold)
+    receipt: str  # accepted, duplicate, held, rejected, not_handled
     code: str | None
 
 
@@ -76,9 +80,19 @@ class RunResult:
     end_t_ms: int
 
 
-def _message_id(sender: str, conversation: str, sequence: int) -> str:
-    text = f"robolang-arch02-msg/0.1\n{sender}\n{conversation}\n{sequence}"
+def _message_id(sender: str, recipient: str, conversation: str, sequence: int) -> str:
+    """Spec 5.2 as amended by decision record 0008, Q7: the recipient is part of the ID."""
+    text = f"robolang-arch02-msg/0.1-seq\n{sender}\n{recipient}\n{conversation}\n{sequence}"
     return "m-" + hashlib.sha256(text.encode("utf-8")).hexdigest()[:32]
+
+
+@dataclass
+class _Held:
+    """A message waiting for a gap in its stream (Core 8.4); it has had no effect yet."""
+
+    document: dict
+    index: int
+    held_at_ms: int
 
 
 def _matches(rule: dict, document: dict, count: int) -> bool:
@@ -106,6 +120,7 @@ class Simulation:
         self.ack_timeout_ms = ms(p["ack_timeout"])
         self.query_interval_ms = ms(p["query_interval"])
         self.authority_delay_ms = ms(p["authority_delay"])
+        self.max_hold_ms = ms(p["max_hold"])
         self.conversation = self.scenario["conversation_id"]
         self.keys: dict[str, Key] = keys_of(self.scenario)
         self.world = World(self.scenario["initial_facts"])
@@ -118,14 +133,15 @@ class Simulation:
             )
         self._queue: list = []
         self._order = 0
-        self._sequence: dict[str, int] = {}
+        self._sequence: dict[tuple[str, str], int] = {}  # (sender, recipient) -> last sequence sent
         self._type_counts: dict[tuple[str, str], int] = {}
         self._observation_counts: dict[str, int] = {}
         self._sent: list[SentMessage] = []
         self._deliveries: list[Delivery] = []
         self._events: list[Event] = []
         self._processed: dict[str, dict[tuple[str, str], int]] = {}
-        self._last_sequence: dict[tuple[str, str], int] = {}
+        self._next: dict[tuple[str, str], int] = {}  # (receiver, sender) -> next expected sequence
+        self._held: dict[tuple[str, str], dict[int, _Held]] = {}  # (receiver, sender) -> sequence -> held
         self._replies: dict[str, list[int]] = {}
         self._silent: set[str] = set()
         self._partitions: list[_Partition] = []
@@ -164,14 +180,17 @@ class Simulation:
     # -------- messages --------
 
     def send(self, sender: str, mtype: str, profile: str, recipient: str, payload: dict,
-             in_reply_to: str | None = None, injected: bool = False) -> dict | None:
+             in_reply_to: str | None = None, injected: bool = False,
+             sequence: int | None = None, message_id: str | None = None) -> dict | None:
+        """Send one message. An explicit `sequence` or `message_id` is only for injected test messages."""
         if sender in self._silent:
             return None
-        sequence = self._sequence.get(sender, 0) + 1
-        self._sequence[sender] = sequence
+        if sequence is None:
+            sequence = self._sequence.get((sender, recipient), 0) + 1
+            self._sequence[(sender, recipient)] = sequence
         document = sign_sim({
             "schema": "robolang.core.message", "schema_version": "0.1",
-            "message_id": _message_id(sender, self.conversation, sequence),
+            "message_id": message_id or _message_id(sender, recipient, self.conversation, sequence),
             "conversation_id": self.conversation, "sequence": sequence, "in_reply_to": in_reply_to,
             "profile": profile, "type": mtype, "sender": sender, "recipient": recipient,
             "sent_at": self.time(), "expires_at": time_text(self.now + self.ttl_ms), "payload": payload,
@@ -250,28 +269,75 @@ class Simulation:
         receipt = check_message(data, context)
         if not receipt.accepted:
             return record("rejected", receipt.code)
+        # Only a message that passed form, signature, freshness and recipient reaches this point:
+        # a rejected one is never held and does not count in its stream (0008, Q2).
         document = json.loads(data)
         sender, message_id = document["sender"], document["message_id"]
+        stream = (receiver, sender)
         processed = self._processed.setdefault(receiver, {})
-        if (sender, message_id) in processed and self.now <= processed[(sender, message_id)]:
-            record("duplicate")
+        held = self._held.setdefault(stream, {})
+        if ((sender, message_id) in processed and self.now <= processed[(sender, message_id)]) or any(
+            h.document["message_id"] == message_id for h in held.values()
+        ):
+            record("duplicate")  # Q5: processed or held already; no second effect
             for reply in self._replies.get(message_id, []):  # the original reply is sent again
                 reply_doc = self._sent[reply].document
                 self.after(self.latency_ms, None, self._deliver, json.dumps(reply_doc).encode("utf-8"), reply, "resend")
             return
-        # Order (Core 8.4). A sender's `sequence` counts its messages to every recipient in the
-        # conversation, so a receiver cannot tell a gap from a message sent to someone else, and
-        # cannot hold for it. A message older than one already processed from the same sender
-        # would be an out-of-order transition: it is rejected.
-        if document["sequence"] <= self._last_sequence.get((receiver, sender), 0):
-            return record("rejected", "C306")
+        sequence = document["sequence"]
+        expected = self._next.get(stream, 1)
+        if sequence < expected:
+            return record("rejected", "C306")  # Q6: stale and not a duplicate
+        if sequence > expected:
+            # Q3: held, with no effect and no reply, until the gap is filled, `max_hold` has
+            # passed (Q4) or the message expires (judged in the safe direction).
+            held[sequence] = _Held(document, index, self.now)
+            record("held")
+            expires_safe_ms = time_ms(document["expires_at"]) - self.tolerance_ms
+            self.at(expires_safe_ms, None, self._check_held, stream, sequence)
+            self.at(self.now + self.max_hold_ms, None, self._check_held, stream, sequence)
+            return
+        self._process(document, index, receiver, kind)
+        self._drain(stream)
+
+    def _process(self, document: dict, index: int, receiver: str, kind: str) -> None:
+        """Hand a message that is next in its stream to the participant; the stream advances."""
+        stream = (receiver, document["sender"])
+        self._next[stream] = document["sequence"] + 1
+        if receiver in self._silent:
+            self._deliveries.append(Delivery(self.now, index, receiver, kind, "not_handled", None))
+            return
         try:
             self.participants[receiver].handle(document)
         except Reject as rejection:
-            return record("rejected", rejection.code)
-        processed[(sender, message_id)] = time_ms(document["expires_at"]) + self.tolerance_ms
-        self._last_sequence[(receiver, sender)] = document["sequence"]
-        record("accepted")
+            self._deliveries.append(Delivery(self.now, index, receiver, kind, "rejected", rejection.code))
+            return
+        expiry = time_ms(document["expires_at"]) + self.tolerance_ms
+        self._processed.setdefault(receiver, {})[(document["sender"], document["message_id"])] = expiry
+        self._deliveries.append(Delivery(self.now, index, receiver, kind, "accepted", None))
+
+    def _drain(self, stream: tuple[str, str]) -> None:
+        """Process the held messages that the stream has now reached, in sequence order."""
+        held = self._held.get(stream, {})
+        while self._next.get(stream, 1) in held:
+            entry = held.pop(self._next[stream])
+            self._process(entry.document, entry.index, stream[0], "released")
+
+    def _check_held(self, stream: tuple[str, str], sequence: int) -> None:
+        """End a hold that expired (`C301`) or reached `max_hold` (the gap is skipped)."""
+        entry = self._held.get(stream, {}).get(sequence)
+        if entry is None:
+            return  # already released
+        if self.now >= time_ms(entry.document["expires_at"]) - self.tolerance_ms:
+            del self._held[stream][sequence]
+            self._deliveries.append(Delivery(self.now, entry.index, stream[0], "released", "rejected", "C301"))
+            self._next[stream] = max(self._next.get(stream, 1), sequence + 1)
+        elif self.now >= entry.held_at_ms + self.max_hold_ms:
+            del self._held[stream][sequence]
+            self._process(entry.document, entry.index, stream[0], "released")
+        else:
+            return
+        self._drain(stream)
 
     # -------- world --------
 
@@ -327,7 +393,8 @@ class Simulation:
 
     def _inject(self, message: dict) -> None:
         self.send(message["sender"], message["type"], message["profile"], message["recipient"],
-                  message["payload"], injected=True)
+                  message["payload"], injected=True,
+                  sequence=message.get("sequence"), message_id=message.get("message_id"))
 
     def _result(self) -> RunResult:
         designated = dict(self.scenario["initial_custody"])

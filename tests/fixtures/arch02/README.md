@@ -19,9 +19,8 @@ statuses, reasons and participants are defined.
 - `sequencing_cases.json` — the eight sequencing cases of specification section 8.1
   (acceptance test A-T20), added by
   [decision record 0008](../../../spec/decisions/0008-core-sequencing-per-recipient.md),
-  approved on 2026-10-27. They describe per-recipient sequencing, which ARCH-2 does not yet
-  implement, so `tests/test_arch02.py` does not run them; until then only their
-  consistency is checked.
+  approved on 2026-10-27. `tests/test_arch02.py` runs them against `robolang.arch02`
+  (ARCH-SEQ), including the `held` and `processed_by` expectations.
 
 A case's `expect` lists only what that case checks. Determinism (A-T15) is checked by running
 every case twice and comparing the run records byte for byte.
