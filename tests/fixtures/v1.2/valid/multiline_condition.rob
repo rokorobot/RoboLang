@@ -1,0 +1,15 @@
+// RoboLang v1.2 fixture: valid
+// expect: ok
+// why: a combined condition may span lines and hold comments
+
+robolang 1.2;
+
+task t(robot r, object box, location dst, region cell, region left, region right) {
+    pre {
+        region_clear left // either side
+            or region_clear right;
+    }
+    plan {
+        move r to dst;
+    }
+}

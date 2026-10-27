@@ -1,0 +1,12 @@
+// RoboLang v1.1 fixture: compat
+// expect: error E202 (syntax) line 7
+// why: combined conditions need robolang 1.2; an unmarked file reports what 1.1 reports today
+
+task t(robot r, object box, location dst, region cell, region left, region right) {
+    pre {
+        robot_ready r and region_clear cell;
+    }
+    plan {
+        move r to dst;
+    }
+}

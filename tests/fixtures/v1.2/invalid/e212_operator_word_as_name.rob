@@ -1,0 +1,11 @@
+// RoboLang v1.2 fixture: invalid
+// expect: error E212 (syntax) line 7
+// why: and is reserved in a 1.2 file
+
+robolang 1.2;
+
+task t(robot and, location dst) {
+    plan {
+        move and to dst;
+    }
+}

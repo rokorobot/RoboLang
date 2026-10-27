@@ -1,0 +1,15 @@
+// RoboLang v1.2 fixture: valid
+// expect: ok
+// why: and and or mixed only through parentheses
+
+robolang 1.2;
+
+task t(robot r, object box, location dst, region cell, region left, region right) {
+    pre {
+        (robot_ready r and region_clear cell) or sensor_ok "camera_top";
+        robot_ready r and (region_clear left or region_clear right);
+    }
+    plan {
+        move r to dst;
+    }
+}

@@ -1,0 +1,14 @@
+// RoboLang v1.2 fixture: invalid
+// expect: error E201 (syntax) line 9
+// why: not needs an operand
+
+robolang 1.2;
+
+task t(robot r, object box, location dst, region cell, region left, region right) {
+    pre {
+        not ;
+    }
+    plan {
+        move r to dst;
+    }
+}

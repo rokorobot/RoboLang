@@ -1,0 +1,12 @@
+// RoboLang v1.2 fixture: invalid
+// expect: error E214 (syntax) line 10
+// why: the same rule holds in wait until
+
+robolang 1.2;
+
+task t(robot r, object box, location dst, region cell, region left, region right) {
+    plan {
+        move r to dst;
+        wait until region_clear left or region_clear right and robot_ready r timeout 5s;
+    }
+}

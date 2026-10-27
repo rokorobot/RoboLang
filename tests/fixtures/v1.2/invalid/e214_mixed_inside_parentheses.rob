@@ -1,0 +1,14 @@
+// RoboLang v1.2 fixture: invalid
+// expect: error E214 (syntax) line 9
+// why: the rule holds at every level
+
+robolang 1.2;
+
+task t(robot r, object box, location dst, region cell, region left, region right) {
+    pre {
+        robot_ready r and (region_clear left or region_clear right and region_clear cell);
+    }
+    plan {
+        move r to dst;
+    }
+}

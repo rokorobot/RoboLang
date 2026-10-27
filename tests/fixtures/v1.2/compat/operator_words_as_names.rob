@@ -1,0 +1,14 @@
+// RoboLang v1.1 fixture: compat
+// expect: ok
+// why: unmarked file: 1.1, where and, or and not are names
+
+task t(robot and, region or, object not, location dst) {
+    pre {
+        robot_ready and;
+        region_clear or;
+        object_exists not;
+    }
+    plan {
+        move and to dst;
+    }
+}
