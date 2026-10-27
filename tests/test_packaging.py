@@ -54,7 +54,7 @@ def test_only_the_read_only_package_is_installed():
     """The v1 prototype modules must not be part of the installed distribution."""
     setuptools = PYPROJECT["tool"]["setuptools"]
 
-    assert setuptools["packages"] == ["robolang"]
+    assert setuptools["packages"] == ["robolang", "robolang.sim"]
     assert "py-modules" not in setuptools
     assert not ({"find", "packages.find"} & set(setuptools))
 
@@ -66,7 +66,7 @@ def test_legacy_sources_are_still_in_the_repository():
 
 def test_read_only_package_does_not_depend_on_the_legacy_modules():
     package = REPO_ROOT / "src" / "robolang"
-    for path in package.glob("*.py"):
+    for path in package.rglob("*.py"):
         text = path.read_text(encoding="utf-8")
         for module in LEGACY_MODULES:
             assert f"import {module}" not in text and f"from {module}" not in text, (path.name, module)
