@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 import copy
+import dataclasses
 import json
 import subprocess
 import sys
@@ -95,6 +96,25 @@ def test_base_world_content():
     assert world.task.faults == () and world.task.cancel_before_step is None
     kinds = [world.kind_of(i) for i in ("home", "cell", "arm1", "box1", "nope")]
     assert kinds == ["location", "region", "robot", "object", None]
+
+
+def test_loaded_world_is_read_only():
+    """A validated world is a trustworthy starting snapshot: callers cannot change it."""
+    world = load_file("base.json")
+    arm2 = world.robots["arm2"]
+    for mapping, key in ((world.robots, "arm1"), (world.objects, "box1"), (world.regions, "cell"),
+                         (world.sensors, "camera_top")):
+        with pytest.raises(TypeError):
+            mapping[key] = arm2
+        with pytest.raises(TypeError):
+            del mapping[key]
+        with pytest.raises(TypeError):
+            mapping["new"] = arm2
+    with pytest.raises(dataclasses.FrozenInstanceError):
+        world.robots = {}
+    with pytest.raises(dataclasses.FrozenInstanceError):
+        world.robots["arm1"].ready = False
+    assert world == load_file("base.json")
 
 
 def test_events_and_script_fixtures():
