@@ -30,7 +30,8 @@ operand       = "not" , operand
               | "(" , condition , ")"
               | atom ;
 (* "and" and "or" are never mixed at one level without parentheses: E214.
-   At most 8 levels of nesting; each "not" and each "(" opens one level: E215. *)
+   Depth at most 8 (spec section 3.3): each "not", each "( )" and each and/or
+   chain adds one level to the depth of its deepest operand: E215. *)
 
 atom          = "robot_ready"   , IDENT
               | "region_clear"  , IDENT

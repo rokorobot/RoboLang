@@ -76,8 +76,9 @@ The five duties of 1.0 section 2 apply. For duty 1, a schema 1.1 consumer also r
 
 - an `and` or `or` with fewer than two operands, or with a direct operand of its own kind;
 - a `not` without exactly one `condition`;
-- a condition nested more than 8 levels deep, counting each `and`, `or` and `not` object as
-  one level. (The source bound of `robolang-v1.2.md` section 3.3 counts parentheses, so every
-  IR this compiler produces is within this bound.)
+- a condition deeper than 8. An atomic condition has depth 0; an `and`, `or` or `not` object
+  has the largest depth of its operands plus 1. The source depth of `robolang-v1.2.md`
+  section 3.3 is never smaller than this IR depth, so every IR this compiler produces is within
+  this bound.
 
 Nothing in this repository reads IR yet; reading and re-validating IR is work item CORE-1.

@@ -47,7 +47,7 @@ def defined_codes(text: str) -> set[str]:
 def test_fixture_counts_match_the_specification():
     counts = {folder: len(list((FIXTURES / folder).glob("*.rob"))) for folder in ("valid", "invalid", "compat")}
     cases = json.loads((FIXTURES / "simulation" / "cases.json").read_text(encoding="utf-8"))["cases"]
-    assert counts == {"valid": 9, "invalid": 14, "compat": 3}
+    assert counts == {"valid": 10, "invalid": 15, "compat": 3}
     assert len(cases) == 12
     for folder, count in counts.items():
         assert f"| `{folder}/` |" in SPEC and f"| {count} |" in SPEC

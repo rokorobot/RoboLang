@@ -1,0 +1,14 @@
+// RoboLang v1.2 fixture: valid
+// expect: ok
+// why: depth 8: seven not inside an and chain; its IR depth is also 8
+
+robolang 1.2;
+
+task t(robot r, object box, location dst, region cell, region left, region right) {
+    pre {
+        not not not not not not not robot_ready r and region_clear cell;
+    }
+    plan {
+        move r to dst;
+    }
+}

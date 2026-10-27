@@ -126,13 +126,34 @@ task deliver(robot r, object box, location src, location dst, region left, regio
 
 ### 3.3 Nesting bound (L5)
 
-A condition has at most **8 levels of nesting**. Each `not` and each pair of parentheses opens
-one level; `and` and `or` do not. Redundant parentheses count. Deeper nesting is `E215`,
-reported at the token that opens the ninth level.
+A condition has a **depth** of at most 8:
 
-`robot_ready r and region_clear c and sensor_ok "s"` has level 0 throughout;
-`not (robot_ready r or not region_clear c)` reaches level 3. The bound keeps conditions
-reviewable and the parser's recursion bounded (AF3).
+| Form | Depth |
+|---|---|
+| atom | 0 |
+| `not x` | depth of `x` + 1 |
+| `( x )` | depth of `x` + 1 |
+| `x₁ and … and xₙ`, `x₁ or … or xₙ` | largest depth of its operands + 1 |
+
+Redundant parentheses count. A `pre` entry or `wait until` condition deeper than 8 is `E215`,
+reported at its first token.
+
+| Condition | Depth |
+|---|---|
+| `robot_ready r and region_clear c and sensor_ok "s"` | 1 |
+| `not (robot_ready r or not region_clear c)` | 4 |
+| `((((not not not not robot_ready r))))` | 8, valid |
+| `not not not not not not not robot_ready r and region_clear c` | 8, valid |
+| `not not not not not not not not robot_ready r and region_clear c` | 9, `E215` |
+
+**Source depth bounds IR depth.** Every IR `not` comes from a source `not`, and every IR `and`
+or `or` from a source chain of the same operator; parentheses and flattening only remove
+levels. The IR depth of a compiled condition (IR schema 1.1 section 4) is therefore never
+greater than its source depth, so a compiler that enforces this bound never produces IR that a
+conforming IR consumer must reject.
+
+The bound keeps conditions reviewable and the parser's recursion bounded (AF3): each `not` and
+each `(` already adds a level, so a parser can stop at the ninth open group.
 
 ## 4. Static rules
 
@@ -151,7 +172,7 @@ make sense is the author's concern.
 | Code | Stage | Meaning |
 |---|---|---|
 | `E214` | syntax | `and` and `or` mixed at one level without parentheses |
-| `E215` | syntax | Condition nested deeper than 8 levels |
+| `E215` | syntax | Condition deeper than 8 (section 3.3) |
 
 And these clarifications, all with existing codes:
 
@@ -280,8 +301,8 @@ ID. The run-ID derivation (simulation section 6) is unchanged for both.
 
 | Set | Content | Count |
 |---|---|---|
-| `valid/` | 1.2 files a conforming front end must accept | 9 |
-| `invalid/` | 1.2 files it must reject, with code, stage and line | 14 |
+| `valid/` | 1.2 files a conforming front end must accept | 10 |
+| `invalid/` | 1.2 files it must reject, with code, stage and line | 15 |
 | `compat/` | 1.1 files whose result must not change | 3 |
 | `simulation/` | Sources, worlds and cases for section 8, in the format of `tests/fixtures/simulation/` | 12 cases |
 
