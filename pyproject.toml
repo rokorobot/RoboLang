@@ -8,7 +8,7 @@ name = "robolang"
 # It is independent of the language version (1.1) and the IR schema
 # version (1.0), which are defined in src/robolang/.
 version = "0.1.0a1"
-description = "RoboLang: a task description language for robots, with a parser, validator and read-only developer tools."
+description = "RoboLang: a task description language for robots, with a parser, validator and simulation-only task execution."
 readme = "README.md"
 requires-python = ">=3.11"
 authors = [{ name = "Robert Konecny" }]
