@@ -5,6 +5,7 @@ A-T1 to A-T14: every case of tests/fixtures/arch02/cases.json gives exactly its 
 results. A-T15 (in memory): every run is deterministic. A-T18 (part): the package loads no
 network or adapter module and imports nothing from the language or `robolang.sim`. Also the
 conversation-state rules (C306, C403) and the happy path's timeline against the spec table.
+A-T20: the sequencing cases of decision record 0008 (tests/fixtures/arch02/sequencing_cases.json).
 The JSON run record and the run ID are ARCH-3.
 """
 
@@ -24,6 +25,7 @@ ROOT = Path(__file__).parent.parent
 FIXTURES = ROOT / "tests" / "fixtures" / "arch02"
 SCENARIO = load_scenario((FIXTURES / "scenario.json").read_bytes())
 CASES = json.loads((FIXTURES / "cases.json").read_text(encoding="utf-8"))["cases"]
+SEQ_CASES = json.loads((FIXTURES / "sequencing_cases.json").read_text(encoding="utf-8"))["cases"]
 SPEC = (ROOT / "spec" / "reference-simulation-v0.1.md").read_text(encoding="utf-8")
 P, A, M, H = "rl:agent:planner-1", "rl:robot:arm-02", "rl:robot:amr-07", "rl:human:shift-lead-3"
 C42 = "rl:thing:container-c42"
@@ -37,7 +39,11 @@ def result(case: dict) -> RunResult:
 
 
 def case_named(name: str) -> dict:
-    return next(case for case in CASES if case["id"] == name)
+    return next(case for case in CASES + SEQ_CASES if case["id"] == name)
+
+
+def clock(t_ms: int) -> str:
+    return time_text(t_ms)[11:23]
 
 
 # -------- what each expectation field means (spec section 11) --------
@@ -71,11 +77,27 @@ def observed(r: RunResult, field: str, expect: dict):
     if field == "final_world":
         facts = {(f.subject, f.property, f.value) for f in r.final_world}
         return [x for x in expect[field] if (x["subject"], x["property"], x["value"]) in facts]
+    if field == "held":
+        out = []
+        for d in r.deliveries:
+            if d.receipt != "held":
+                continue
+            release = next(x for x in r.deliveries
+                           if x.kind == "released" and (x.message, x.receiver) == (d.message, d.receiver))
+            result_text = "accepted" if release.receipt == "accepted" else release.code
+            mtype = r.sent[d.message].document["type"]
+            out.append([mtype, d.receiver, clock(d.t_ms), clock(release.t_ms), result_text])
+        return out
+    if field == "processed_by":
+        accepted = [d for d in r.deliveries if d.receipt == "accepted"]
+        return {p: [r.sent[d.message].document["type"] for d in accepted if d.receiver == p]
+                for p in expect["processed_by"]}
     raise KeyError(field)
 
 
 EXPECTATIONS = [
-    pytest.param(case, field, id=f"{case['id']}:{field}") for case in CASES for field in case["expect"]
+    pytest.param(case, field, id=f"{case['id']}:{field}")
+    for case in CASES + SEQ_CASES for field in case["expect"]
 ]
 
 
@@ -180,13 +202,39 @@ def test_message_with_no_transition_is_c306():
     assert r.planner_status == "succeeded"
 
 
-def test_message_overtaken_by_a_later_one_is_rejected_as_out_of_order():
-    # arm-02's first assessment is delayed past its later `accept`: processing it after would go backwards.
-    delay = {"kind": "delay", "match": {"type": "assessment", "sender": A, "n": 1}, "by": {"value": "1", "unit": "s"}}
-    r = custom([delay])
-    assert [[r.sent[d.message].document["type"], d.code] for d in r.deliveries if d.receipt == "rejected"] == [
-        ["assessment", "C306"]
-    ]
+# -------- A-T20: sequencing (decision record 0008) --------
+
+def test_every_sequencing_case_is_run():
+    assert len(SEQ_CASES) == 8 and all(case["id"].startswith("seq_") for case in SEQ_CASES)
+
+
+def test_held_message_has_no_effect_until_released():
+    # Owner's acceptance condition: planner-1 records the `accept` only when it is released.
+    r = result(case_named("seq_gap_filled"))
+    records = [(clock(e.t_ms), e.get("record")) for e in r.events if e.participant == P and e.kind == "state"]
+    assert records[:2] == [("10:14:01.200", "assessment"), ("10:14:01.200", "accepted")]
+    # arm-02 resolves its doubt only when the held `custody_state` is released, not on arrival.
+    r = result(case_named("seq_lost_ack_holds_next"))
+    released = [clock(e.t_ms) for e in r.events
+                if e.participant == A and e.get("record") == "custody" and e.get("state") == "RELEASED"]
+    assert released == ["10:15:01.300"]
+
+
+def test_sequence_numbers_count_per_stream():
+    r = result(case_named("happy_path"))
+    streams: dict[tuple[str, str], list[int]] = {}
+    for s in r.sent:
+        streams.setdefault((s.document["sender"], s.document["recipient"]), []).append(s.document["sequence"])
+    assert all(numbers == list(range(1, len(numbers) + 1)) for numbers in streams.values())
+    assert streams[(A, P)] == [1, 2, 3] and streams[(M, A)] == [1, 2, 3, 4, 5, 6, 7]
+    ids = [(s.document["sender"], s.document["message_id"]) for s in r.sent]
+    assert len(ids) == len(set(ids))
+
+
+def test_existing_cases_hold_nothing_except_v07():
+    for case in CASES:
+        held = [d for d in result(case).deliveries if d.receipt == "held"]
+        assert len(held) == (1 if case["id"] == "v07_release_ack_lost" else 0), case["id"]
 
 
 # -------- A-T18: isolation (part) --------

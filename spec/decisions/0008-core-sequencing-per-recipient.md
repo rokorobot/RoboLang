@@ -2,7 +2,8 @@
 
 **Date:** 2026-10-27
 **Status:** **All nine decisions APPROVED — 2026-10-27**, including Q4 (final approval given on the
-text at commit `6837c4e`). No implementation is authorized: ARCH-SEQ needs its own authorization.
+text at commit `6837c4e`). Implementation (ARCH-SEQ) authorized on 2026-10-27 and done in
+`robolang.arch02`.
 **Applies to:** [`spec/core-v0.1.md`](../core-v0.1.md) sections 3 and 8,
 [`spec/reference-simulation-v0.1.md`](../reference-simulation-v0.1.md) sections 3, 5.2, 9–12,
 [`tests/fixtures/arch02/`](../../tests/fixtures/arch02/README.md)
@@ -64,3 +65,4 @@ When this is implemented (a separate, authorized PR):
 |---|---|
 | 2026-10-27 | First draft: Q1–Q9 proposed |
 | 2026-10-27 | Final owner approval of Q1–Q9 as proposed, including Q4, on the text at commit `6837c4e`. Status updated to APPROVED; no change to the decision text. Implementation not authorized |
+| 2026-10-27 | ARCH-SEQ implementation authorized. Correction found while implementing it, decision text unchanged: three arrival times in `reference-simulation-v0.1.md` section 8.1 and two release times in `sequencing_cases.json` were 100 ms early. A `delay` counts from the normal delivery time (section 10), not from the send time, so the delayed assessment arrives at 10:14:01.200, 10:14:02.200 and 10:14:40.200 |

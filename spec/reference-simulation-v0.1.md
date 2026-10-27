@@ -297,10 +297,10 @@ effect until it is released (Core 8.4), and every case ends with planner-1 recor
 
 | Case | Faults | Expected |
 |---|---|---|
-| `seq_gap_filled` | Delay arm-02's first `assessment` by 1 s | planner-1 holds `accept` (2) from 10:14:00.600. The assessment (1) arrives at 10:14:01.100; both are processed in order then. No rejection |
-| `seq_gap_abandoned` | Delay the `assessment` by 40 s | `accept` is held from 10:14:00.600 and processed at 10:14:05.600, after `max_hold`; sequence 1 is skipped. The assessment arrives at 10:14:40.100 expired: `C301` |
+| `seq_gap_filled` | Delay arm-02's first `assessment` by 1 s | planner-1 holds `accept` (2) from 10:14:00.600. The assessment (1) arrives at 10:14:01.200; both are processed in order then. No rejection |
+| `seq_gap_abandoned` | Delay the `assessment` by 40 s | `accept` is held from 10:14:00.600 and processed at 10:14:05.600, after `max_hold`; sequence 1 is skipped. The assessment arrives at 10:14:40.200 expired: `C301` |
 | `seq_held_message_expires` | Delay the `assessment` by 40 s and `accept` by 27 s | `accept` is held from 10:14:27.600 and expires at 10:14:30.000 (safe direction) before `max_hold`: `C301` at that moment, and the stream advances past it. The assessment arrives expired: `C301`. The `outcome` (3) is processed normally |
-| `seq_duplicate_while_held` | Delay the `assessment` by 2 s; duplicate `accept` after 0.5 s | The copy at 10:14:01.100 is a duplicate of the held message. `accept` is processed once, at 10:14:02.100 |
+| `seq_duplicate_while_held` | Delay the `assessment` by 2 s; duplicate `accept` after 0.5 s | The copy at 10:14:01.100 is a duplicate of the held message. `accept` is processed once, at 10:14:02.200 |
 | `seq_replay_while_fresh` | Replay `commit` at 10:14:10.000 | amr-07 records a duplicate and no second commitment. (Replayed after its expiry it is `C301`: V3) |
 | `seq_stale_nonduplicate` | Inject at 10:14:05.000 another `assessment` from arm-02 to planner-1 with sequence 1 and a different message ID | Stale and not a duplicate: `C306` |
 | `seq_unsigned_not_held` | Remove the signature of `accept`; delay the `assessment` by 1 s | `accept` is rejected at once with `C201`: never held, not counted. The `outcome` (3) is held from 10:15:51.400 and processed at 10:15:56.400; planner-1's re-verification finds the evidence 5.2 s old, within its 10 s limit |
@@ -422,7 +422,7 @@ the README states that the reference simulation is simulation only; owner approv
 | **RL-ARCH-02a** — this specification | Core 0.1, the two schemas, this document, decision record 0007, fixtures and a consistency test that executes nothing | Fixture consistency |
 | **ARCH-1** | `robolang.core`: strict JSON reading, Core 0.1 schema and rule checks, JCS canonical form, `sim-hmac-sha256`, receipt codes | A-T16, A-T17 |
 | **ARCH-2** | `robolang.arch02`: symbolic world, sensors, scheduler and delivery, faults, participants and policy | A-T1, A-T2 to A-T14 in progress |
-| **ARCH-SEQ** | Decision record 0008 implemented in `robolang.arch02` (approved 2026-10-27; needs separate implementation authorization) | A-T20, and A-T1 to A-T15 unchanged |
+| **ARCH-SEQ** | Decision record 0008 implemented in `robolang.arch02` (approved and authorized 2026-10-27) | A-T20, and A-T1 to A-T15 unchanged |
 | **ARCH-3** | Run record and run ID, a `robolang arch02` command or test entry point, README; isolation | A-T1 to A-T20 |
 
 Each slice is one pull request and needs owner approval to merge. ARCH-1 starts only after
@@ -445,6 +445,6 @@ A2A; any AI model; physical execution.
 |---|---|
 | Core 0.1 per-message checks, schemas, canonical form, `sim-hmac-sha256` (ARCH-1) | Implemented in `src/robolang/core/`; A-T16 and A-T17 pass (`tests/test_core.py`) |
 | World, participants, delivery, faults, conversation-state checks (ARCH-2) | Implemented in `src/robolang/arch02/`; A-T1 to A-T14 pass, A-T15 in memory (`tests/test_arch02.py`) |
-| Sequencing per recipient (decision record 0008) | Approved 2026-10-27; not implemented. ARCH-2 still numbers per sender and rejects older messages (`C306`) without holding |
+| Sequencing per recipient (decision record 0008) | Implemented in `src/robolang/arch02/engine.py` (ARCH-SEQ); A-T20 passes, and A-T1 to A-T15 are unchanged (`tests/test_arch02.py`) |
 | Run record, run ID, entry point, README (ARCH-3) | Specified, not implemented |
 | Scenario fixtures (section 11) | Run by `tests/test_arch02.py`; consistency also checked by `tests/test_arch02_fixtures.py` |
