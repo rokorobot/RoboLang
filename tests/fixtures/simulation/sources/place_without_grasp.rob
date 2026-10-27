@@ -1,0 +1,7 @@
+// RL-BASIC-01a simulation fixture (spec/simulation-v1.0.md)
+task place_without_grasp(robot r, object box, location dst) {
+    plan {
+        move r to dst;
+        place r box at dst;
+    }
+}

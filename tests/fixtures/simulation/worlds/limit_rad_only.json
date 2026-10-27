@@ -1,0 +1,108 @@
+{
+  "world_schema": "robolang.sim.world",
+  "world_schema_version": "1.0",
+  "locations": [
+    "home",
+    "shelf",
+    "table"
+  ],
+  "regions": {
+    "cell": {
+      "clear": true
+    }
+  },
+  "robots": {
+    "arm1": {
+      "ready": true,
+      "location": "home",
+      "gripper": true,
+      "max_speed": [
+        {
+          "value": "1",
+          "unit": "rad/s"
+        }
+      ]
+    },
+    "arm2": {
+      "ready": true,
+      "location": "home",
+      "gripper": false
+    }
+  },
+  "objects": {
+    "box1": {
+      "present": true,
+      "location": "shelf"
+    }
+  },
+  "sensors": {
+    "camera_top": {
+      "robot": "arm1",
+      "available": true
+    }
+  },
+  "events": [],
+  "tasks": {
+    "demo_pick_and_place": {
+      "bindings": {
+        "r": "arm1",
+        "box": "box1",
+        "src": "shelf",
+        "dst": "table",
+        "cell": "cell"
+      }
+    },
+    "move_only": {
+      "bindings": {
+        "r": "arm1",
+        "dst": "table"
+      }
+    },
+    "move_with_limit": {
+      "bindings": {
+        "r": "arm1",
+        "dst": "table"
+      }
+    },
+    "place_without_grasp": {
+      "bindings": {
+        "r": "arm1",
+        "box": "box1",
+        "dst": "table"
+      }
+    },
+    "place_elsewhere": {
+      "bindings": {
+        "r": "arm1",
+        "box": "box1",
+        "src": "shelf",
+        "dst": "table"
+      }
+    },
+    "inspect_box": {
+      "bindings": {
+        "r": "arm1",
+        "box": "box1"
+      }
+    },
+    "wait_for_region": {
+      "bindings": {
+        "r": "arm1",
+        "dst": "table",
+        "cell": "cell"
+      }
+    },
+    "first": {
+      "bindings": {
+        "r": "arm1",
+        "dst": "shelf"
+      }
+    },
+    "second": {
+      "bindings": {
+        "r": "arm1",
+        "dst": "table"
+      }
+    }
+  }
+}

@@ -1,0 +1,8 @@
+// RL-BASIC-01a simulation fixture (spec/simulation-v1.0.md)
+task wait_for_region(robot r, location dst, region cell) {
+    plan {
+        wait for 2.5s;
+        wait until region_clear cell timeout 30s;
+        move r to dst;
+    }
+}
