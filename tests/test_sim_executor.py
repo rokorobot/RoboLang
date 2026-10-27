@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 import copy
+import dataclasses
 import json
 import subprocess
 import sys
@@ -10,8 +11,9 @@ from pathlib import Path
 
 import pytest
 
+from robolang import ir
 from robolang.ir import compile_source
-from robolang.sim import Truth, load_world, ms_text, run
+from robolang.sim import SimulationInputError, Truth, load_world, ms_text, run
 
 ROOT = Path(__file__).resolve().parent.parent
 FIXTURES = ROOT / "tests" / "fixtures" / "simulation"
@@ -118,9 +120,36 @@ def test_same_inputs_give_equal_results():
 def test_run_does_not_modify_the_world():
     for case in RUN_CASES:
         task, world = case_input(case)
-        before = copy.deepcopy(world)
         run(task, world)
-        assert world == before, case["id"]
+        assert world == case_input(case)[1], case["id"]  # a freshly loaded, equal snapshot
+
+
+# -------- trust boundary --------
+
+def pick_inputs(world_file="base.json"):
+    case = {"source": "examples/pick_and_place.rob", "task": None,
+            "world": f"tests/fixtures/simulation/worlds/{world_file}"}
+    return case_input(case)
+
+
+def mismatches():
+    task, world = pick_inputs()
+    params = task.parameters
+    retyped = tuple(dataclasses.replace(p, type="location") if p.name == "cell" else p for p in params)
+    other = task_of("task demo_other(robot r, location dst) { plan { move r to dst; } }")
+    yield "another task", other, world
+    yield "fewer parameters", dataclasses.replace(task, parameters=params[:-1]), world
+    yield "parameter of another type", dataclasses.replace(task, parameters=retyped), world
+    yield "undeclared name", dataclasses.replace(task, steps=(ir.Move(robot="r", target="nowhere"),)), world
+    faulted_task, faulted_world = pick_inputs("fault_step_3.json")
+    yield "script outside the plan", dataclasses.replace(faulted_task, steps=faulted_task.steps[:2]), faulted_world
+    yield "not a task", "demo_pick_and_place", world
+
+
+@pytest.mark.parametrize("label, task, world", list(mismatches()), ids=lambda v: v if isinstance(v, str) else "")
+def test_run_rejects_a_task_and_world_that_do_not_belong_together(label, task, world):
+    with pytest.raises(SimulationInputError):
+        run(task, world)
 
 
 # -------- direct tests --------

@@ -21,6 +21,7 @@ from .executor import (
     RobotState,
     RunResult,
     SensorState,
+    SimulationInputError,
     StepResult,
     run,
 )
@@ -52,6 +53,7 @@ __all__ = [
     "RobotState",
     "RunResult",
     "SensorState",
+    "SimulationInputError",
     "StepResult",
     "run",
     "DURATION_UNITS",
