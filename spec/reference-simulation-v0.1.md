@@ -5,8 +5,8 @@
 approved 2026-10-27.
 **Milestone:** RL-ARCH-02 (RFC-001 section 19; decision D8). Gate 1 of RFC-001 section 1.4.
 **Core:** [Core 0.1](core-v0.1.md)
-**Erratum (proposed):** sections 3, 5.2 and 8 to 13 are amended by
-[decision record 0008](decisions/0008-core-sequencing-per-recipient.md) (Q1–Q9, PROPOSED):
+**Erratum (approved 2026-10-27):** sections 3, 5.2 and 8 to 13 are amended by
+[decision record 0008](decisions/0008-core-sequencing-per-recipient.md) (Q1–Q9, approved 2026-10-27):
 per-recipient sequencing, holding on gaps, and the sequencing cases (A-T20). The amended text
 is marked.
 **Fixtures:** [`tests/fixtures/arch02/`](../tests/fixtures/arch02/README.md)
@@ -412,7 +412,7 @@ rules.
 | A-T19 | Regression | — | The RoboLang 1.1 and 1.2 suites, every IR snapshot, every RL-BASIC-01 and LANG-1 simulation case and run-ID vector pass unchanged |
 | A-T20 | Sequencing (0008) | `sequencing_cases.json` (8 cases) | Section 8.1; a held message has no effect before it is released |
 
-**Exit gate (gate 1 of RFC-001 1.4):** A-T1 to A-T20 pass (A-T20 added by 0008, proposed) in CI on every supported platform;
+**Exit gate (gate 1 of RFC-001 1.4):** A-T1 to A-T20 pass (A-T20 added by 0008, approved 2026-10-27) in CI on every supported platform;
 the README states that the reference simulation is simulation only; owner approval.
 
 ## 13. Delivery
@@ -422,7 +422,7 @@ the README states that the reference simulation is simulation only; owner approv
 | **RL-ARCH-02a** — this specification | Core 0.1, the two schemas, this document, decision record 0007, fixtures and a consistency test that executes nothing | Fixture consistency |
 | **ARCH-1** | `robolang.core`: strict JSON reading, Core 0.1 schema and rule checks, JCS canonical form, `sim-hmac-sha256`, receipt codes | A-T16, A-T17 |
 | **ARCH-2** | `robolang.arch02`: symbolic world, sensors, scheduler and delivery, faults, participants and policy | A-T1, A-T2 to A-T14 in progress |
-| **ARCH-SEQ** | Decision record 0008 implemented in `robolang.arch02` (proposed; separate authorization) | A-T20, and A-T1 to A-T15 unchanged |
+| **ARCH-SEQ** | Decision record 0008 implemented in `robolang.arch02` (approved 2026-10-27; needs separate implementation authorization) | A-T20, and A-T1 to A-T15 unchanged |
 | **ARCH-3** | Run record and run ID, a `robolang arch02` command or test entry point, README; isolation | A-T1 to A-T20 |
 
 Each slice is one pull request and needs owner approval to merge. ARCH-1 starts only after
@@ -445,6 +445,6 @@ A2A; any AI model; physical execution.
 |---|---|
 | Core 0.1 per-message checks, schemas, canonical form, `sim-hmac-sha256` (ARCH-1) | Implemented in `src/robolang/core/`; A-T16 and A-T17 pass (`tests/test_core.py`) |
 | World, participants, delivery, faults, conversation-state checks (ARCH-2) | Implemented in `src/robolang/arch02/`; A-T1 to A-T14 pass, A-T15 in memory (`tests/test_arch02.py`) |
-| Sequencing per recipient (decision record 0008) | Proposed; not implemented. ARCH-2 still numbers per sender and rejects older messages (`C306`) without holding |
+| Sequencing per recipient (decision record 0008) | Approved 2026-10-27; not implemented. ARCH-2 still numbers per sender and rejects older messages (`C306`) without holding |
 | Run record, run ID, entry point, README (ARCH-3) | Specified, not implemented |
 | Scenario fixtures (section 11) | Run by `tests/test_arch02.py`; consistency also checked by `tests/test_arch02_fixtures.py` |

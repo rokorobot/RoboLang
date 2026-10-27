@@ -4,8 +4,8 @@
 [decision record 0007](decisions/0007-rl-arch-02-core-and-reference-simulation.md) (R1–R14),
 approved 2026-10-27.
 **Version:** `0.1`. Experimental: until Core 1.0 any change may be breaking (RFC-001 6.2).
-**Erratum (proposed):** sections 3 and 8 are amended by
-[decision record 0008](decisions/0008-core-sequencing-per-recipient.md) (Q1–Q9, PROPOSED):
+**Erratum (approved 2026-10-27):** sections 3 and 8 are amended by
+[decision record 0008](decisions/0008-core-sequencing-per-recipient.md) (Q1–Q9, approved 2026-10-27):
 sequence numbers per sender and recipient, and holding on gaps. The amended text is marked.
 **Builds on:** [RFC-001](architecture/rfc-001-ai-native-architecture.md) sections 6–13
 (decisions D1–D9), unchanged.
