@@ -1,13 +1,13 @@
 # RoboLang Core 0.1 fixtures
 
-Conformance fixtures for [Core 0.1](../../../spec/core-v0.1.md) (RL-ARCH-02a). **No Core
-implementation exists yet**: ARCH-1 will run these cases (acceptance tests A-T16 and A-T17 of
-the [reference simulation](../../../spec/reference-simulation-v0.1.md)).
+Conformance fixtures for [Core 0.1](../../../spec/core-v0.1.md) (RL-ARCH-02a).
+`tests/test_core.py` runs them against `robolang.core` (ARCH-1): every case gets its stated
+receipt (A-T16), and the schema files are checked with the `jsonschema` library (A-T17).
 
-Until then, `tests/test_arch02_fixtures.py` checks only that the fixtures are consistent with
-the specification: every file is used, codes and stages are defined, file names match codes,
-and the `sim-hmac-sha256` signatures of the valid documents verify under the canonical form
-of Core section 7. It executes no Core check.
+`tests/test_arch02_fixtures.py` additionally checks that the fixtures are consistent with the
+specification: every file is used, codes and stages are defined, file names match codes, and
+the `sim-hmac-sha256` signatures of the valid documents verify under the canonical form of
+Core section 7.
 
 ## Layout
 

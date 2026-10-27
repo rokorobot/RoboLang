@@ -10,8 +10,9 @@ approved 2026-10-27.
 [`core/capability-descriptor-0.1.schema.json`](core/capability-descriptor-0.1.schema.json)
 (JSON Schema draft 2020-12)
 **Fixtures:** [`tests/fixtures/core/`](../tests/fixtures/core/README.md)
-**Implementation:** none. RL-ARCH-02b implements it only after approval and a separate
-implementation authorization (D8).
+**Implementation:** the per-message checks of sections 2 to 8 are implemented in
+`src/robolang/core/` (ARCH-1, authorized 2026-10-27); duplicates, ordering, `C306` and `C403`
+need conversation state and come with the participants (ARCH-2).
 
 This document is the RoboLang Core contract at version 0.1: the documents two participants
 exchange, what every field means, and what a receiver must check. It is written so that a

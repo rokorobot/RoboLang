@@ -1,3 +1,5 @@
 pytest>=8
 ruff>=0.6
 build>=1.2
+# Test only: checks the Core 0.1 schema files and fixtures (decision R12). Not a runtime dependency.
+jsonschema>=4.18
