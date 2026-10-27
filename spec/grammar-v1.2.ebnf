@@ -1,0 +1,86 @@
+(* RoboLang v1.2 grammar -- APPROVED 2026-10-27 (LANG-1), not yet implemented.
+   RoboLang 1.1 plus combined conditions. Differences from grammar.ebnf are marked [1.2].
+   Notation: ISO-style EBNF.  { x } = zero or more, [ x ] = optional, | = choice.
+   Normative text, diagnostics and static rules: spec/robolang-v1.2.md *)
+
+(* ---------- syntactic grammar ---------- *)
+
+program       = version_decl , task , { task } ;                (* [1.2] marker required *)
+
+version_decl  = "robolang" , NUMBER , ";" ;                (* [1.2] NUMBER written exactly 1.2 *)
+
+task          = "task" , IDENT , "(" , [ param , { "," , param } ] , ")" ,
+                "{" , { annotation } , [ pre ] , plan , "}" ;
+
+param         = type , IDENT ;
+type          = "robot" | "object" | "location" | "region" ;
+
+annotation    = "@safety" , safety_rule , ";" ;
+safety_rule   = "max_speed" , NUMBER , [ SPEED_UNIT ] ;   (* omitting the unit is deprecated: W401 *)
+(* Static rule: per task at most one m/s limit and one rad/s limit; the unitless
+   form is allowed only as the task's single max_speed annotation. *)
+
+pre           = "pre" , "{" , { condition , ";" } , "}" ;
+plan          = "plan" , "{" , statement , { statement } , "}" ;
+
+(* [1.2] combined conditions *)
+condition     = operand , [ "and" , operand , { "and" , operand }
+                          | "or"  , operand , { "or"  , operand } ] ;
+operand       = "not" , operand
+              | "(" , condition , ")"
+              | atom ;
+(* "and" and "or" are never mixed at one level without parentheses: E214.
+   Depth at most 8 (spec section 3.3): each "not", each "( )" and each and/or
+   chain adds one level to the depth of its deepest operand: E215. *)
+
+atom          = "robot_ready"   , IDENT
+              | "region_clear"  , IDENT
+              | "object_exists" , IDENT
+              | "sensor_ok"     , STRING ;
+
+statement     = ( move | grasp | place | inspect | wait | communicate ) , ";" ;
+
+move          = "move" , IDENT , "to" , IDENT ;
+grasp         = "grasp" , IDENT , IDENT ;
+place         = "place" , IDENT , IDENT , "at" , IDENT ;
+inspect       = "inspect" , IDENT , IDENT , "using" , STRING ;
+wait          = "wait" , "for" , duration
+              | "wait" , "until" , condition , "timeout" , duration ;
+communicate   = "communicate" , IDENT , "to" , STRING , "with" , STRING ;
+
+duration      = NUMBER , DURATION_UNIT ;
+
+(* ---------- lexical grammar ---------- *)
+
+IDENT         = letter , { letter | digit | "_" } ;       (* must not be a reserved word *)
+NUMBER        = digit , { digit } , [ "." , digit , { digit } ] ;
+STRING        = '"' , { string_char } , '"' ;
+SPEED_UNIT    = "m/s" | "rad/s" ;
+DURATION_UNIT = "ms" | "s" | "min" ;
+
+letter        = "A" .. "Z" | "a" .. "z" ;
+digit         = "0" .. "9" ;
+string_char   = ? any character except '"', '\' and line terminators ?
+              | escape ;
+escape        = '\' , ( '"' | '\' | "n" | "t" ) ;         (* any other character after '\' is an error *)
+
+comment       = "//" , { ? any character except line terminators ? } ;
+whitespace    = " " | "\t" | "\r" | "\n" ;
+
+(* Comments and whitespace separate tokens and are otherwise ignored.
+   Whitespace between a NUMBER and its unit is optional: "5s" and "5 s" are the same.
+
+   A file without a marker, or with "robolang 1.1;", is RoboLang 1.1 and follows
+   grammar.ebnf, where "and", "or" and "not" are ordinary names.
+
+   Reserved words in a 1.2 file (never valid as IDENT):
+     robolang task pre plan robot object location region
+     move grasp place inspect wait communicate
+     to at using with for until timeout
+     robot_ready region_clear object_exists sensor_ok
+     and or not                                            [1.2]
+   Reserved for constructs documented in v1 but not part of v1.1 or v1.2:
+     with_approach in_region no_go_region require_guard message_received scalar duration
+
+   Not reserved (recognized only in their grammatical position):
+     max_speed, and the unit words ms s min *)

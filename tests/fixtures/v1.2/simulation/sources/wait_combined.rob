@@ -1,0 +1,9 @@
+// LANG-1 simulation fixture (spec/robolang-v1.2.md section 8)
+robolang 1.2;
+
+task wait_combined(robot r, location dst, region cell) {
+    plan {
+        wait until region_clear cell and sensor_ok "camera_top" timeout 10s;
+        move r to dst;
+    }
+}

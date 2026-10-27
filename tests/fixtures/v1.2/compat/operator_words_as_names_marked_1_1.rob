@@ -1,0 +1,16 @@
+// RoboLang v1.1 fixture: compat
+// expect: ok
+// why: a robolang 1.1 file is read as 1.1, where and, or and not are names
+
+robolang 1.1;
+
+task t(robot and, region or, object not, location dst) {
+    pre {
+        robot_ready and;
+        region_clear or;
+        object_exists not;
+    }
+    plan {
+        move and to dst;
+    }
+}

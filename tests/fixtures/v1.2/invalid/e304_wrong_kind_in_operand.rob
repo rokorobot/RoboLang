@@ -1,0 +1,14 @@
+// RoboLang v1.2 fixture: invalid
+// expect: error E304 (static) line 9
+// why: types are checked at any depth
+
+robolang 1.2;
+
+task t(robot r, object box, location dst, region cell, region left, region right) {
+    pre {
+        not (robot_ready r and region_clear dst);
+    }
+    plan {
+        move r to dst;
+    }
+}

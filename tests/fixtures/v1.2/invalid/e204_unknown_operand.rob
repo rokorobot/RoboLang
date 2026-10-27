@@ -1,0 +1,14 @@
+// RoboLang v1.2 fixture: invalid
+// expect: error E204 (syntax) line 9
+// why: only the four conditions are operands
+
+robolang 1.2;
+
+task t(robot r, object box, location dst, region cell, region left, region right) {
+    pre {
+        robot_ready r and flying r;
+    }
+    plan {
+        move r to dst;
+    }
+}

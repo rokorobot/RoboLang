@@ -1,0 +1,452 @@
+{
+  "fixture_set": "robolang.lang1.sim",
+  "spec": "spec/robolang-v1.2.md",
+  "cases": [
+    {
+      "id": "l1_and_true",
+      "tests": [
+        "L-T5"
+      ],
+      "source": "tests/fixtures/v1.2/simulation/sources/pre_and.rob",
+      "task": null,
+      "world": "tests/fixtures/v1.2/simulation/worlds/base.json",
+      "seed": "0",
+      "expect": {
+        "exit": 0,
+        "states": [
+          "CREATED",
+          "VALIDATED",
+          "AUTHORIZED",
+          "RUNNING",
+          "SUCCEEDED"
+        ],
+        "state": "SUCCEEDED",
+        "failure": null,
+        "preconditions": [
+          "true"
+        ],
+        "steps": [
+          "succeeded"
+        ],
+        "end_t_ms": "0"
+      }
+    },
+    {
+      "id": "l1_and_false_unknown",
+      "tests": [
+        "L-T5",
+        "L-T6"
+      ],
+      "source": "tests/fixtures/v1.2/simulation/sources/pre_and.rob",
+      "task": null,
+      "world": "tests/fixtures/v1.2/simulation/worlds/and_false_unknown.json",
+      "seed": "0",
+      "expect": {
+        "exit": 4,
+        "states": [
+          "CREATED",
+          "VALIDATED",
+          "AUTHORIZED",
+          "RUNNING",
+          "FAILED"
+        ],
+        "state": "FAILED",
+        "failure": {
+          "code": "S101",
+          "phase": "precondition",
+          "step": null,
+          "precondition": 1,
+          "safety_limit": null,
+          "robot": null
+        },
+        "preconditions": [
+          "false"
+        ],
+        "steps": [
+          "not_run"
+        ],
+        "end_t_ms": "0"
+      }
+    },
+    {
+      "id": "l1_and_true_unknown",
+      "tests": [
+        "L-T5"
+      ],
+      "source": "tests/fixtures/v1.2/simulation/sources/pre_and.rob",
+      "task": null,
+      "world": "tests/fixtures/v1.2/simulation/worlds/cell_unknown.json",
+      "seed": "0",
+      "expect": {
+        "exit": 4,
+        "states": [
+          "CREATED",
+          "VALIDATED",
+          "AUTHORIZED",
+          "RUNNING",
+          "FAILED"
+        ],
+        "state": "FAILED",
+        "failure": {
+          "code": "S102",
+          "phase": "precondition",
+          "step": null,
+          "precondition": 1,
+          "safety_limit": null,
+          "robot": null
+        },
+        "preconditions": [
+          "unknown"
+        ],
+        "steps": [
+          "not_run"
+        ],
+        "end_t_ms": "0"
+      }
+    },
+    {
+      "id": "l1_or_true_unknown",
+      "tests": [
+        "L-T5",
+        "L-T6"
+      ],
+      "source": "tests/fixtures/v1.2/simulation/sources/pre_or.rob",
+      "task": null,
+      "world": "tests/fixtures/v1.2/simulation/worlds/base.json",
+      "seed": "0",
+      "expect": {
+        "exit": 0,
+        "states": [
+          "CREATED",
+          "VALIDATED",
+          "AUTHORIZED",
+          "RUNNING",
+          "SUCCEEDED"
+        ],
+        "state": "SUCCEEDED",
+        "failure": null,
+        "preconditions": [
+          "true"
+        ],
+        "steps": [
+          "succeeded"
+        ],
+        "end_t_ms": "0"
+      }
+    },
+    {
+      "id": "l1_or_false_unknown",
+      "tests": [
+        "L-T5"
+      ],
+      "source": "tests/fixtures/v1.2/simulation/sources/pre_or.rob",
+      "task": null,
+      "world": "tests/fixtures/v1.2/simulation/worlds/right_blocked.json",
+      "seed": "0",
+      "expect": {
+        "exit": 4,
+        "states": [
+          "CREATED",
+          "VALIDATED",
+          "AUTHORIZED",
+          "RUNNING",
+          "FAILED"
+        ],
+        "state": "FAILED",
+        "failure": {
+          "code": "S102",
+          "phase": "precondition",
+          "step": null,
+          "precondition": 1,
+          "safety_limit": null,
+          "robot": null
+        },
+        "preconditions": [
+          "unknown"
+        ],
+        "steps": [
+          "not_run"
+        ],
+        "end_t_ms": "0"
+      }
+    },
+    {
+      "id": "l1_or_false_false",
+      "tests": [
+        "L-T5"
+      ],
+      "source": "tests/fixtures/v1.2/simulation/sources/pre_or.rob",
+      "task": null,
+      "world": "tests/fixtures/v1.2/simulation/worlds/both_blocked.json",
+      "seed": "0",
+      "expect": {
+        "exit": 4,
+        "states": [
+          "CREATED",
+          "VALIDATED",
+          "AUTHORIZED",
+          "RUNNING",
+          "FAILED"
+        ],
+        "state": "FAILED",
+        "failure": {
+          "code": "S101",
+          "phase": "precondition",
+          "step": null,
+          "precondition": 1,
+          "safety_limit": null,
+          "robot": null
+        },
+        "preconditions": [
+          "false"
+        ],
+        "steps": [
+          "not_run"
+        ],
+        "end_t_ms": "0"
+      }
+    },
+    {
+      "id": "l1_not_false",
+      "tests": [
+        "L-T5"
+      ],
+      "source": "tests/fixtures/v1.2/simulation/sources/pre_not.rob",
+      "task": null,
+      "world": "tests/fixtures/v1.2/simulation/worlds/base.json",
+      "seed": "0",
+      "expect": {
+        "exit": 0,
+        "states": [
+          "CREATED",
+          "VALIDATED",
+          "AUTHORIZED",
+          "RUNNING",
+          "SUCCEEDED"
+        ],
+        "state": "SUCCEEDED",
+        "failure": null,
+        "preconditions": [
+          "true"
+        ],
+        "steps": [
+          "succeeded"
+        ],
+        "end_t_ms": "0"
+      }
+    },
+    {
+      "id": "l1_not_unknown",
+      "tests": [
+        "L-T5"
+      ],
+      "source": "tests/fixtures/v1.2/simulation/sources/pre_not.rob",
+      "task": null,
+      "world": "tests/fixtures/v1.2/simulation/worlds/box_unknown.json",
+      "seed": "0",
+      "expect": {
+        "exit": 4,
+        "states": [
+          "CREATED",
+          "VALIDATED",
+          "AUTHORIZED",
+          "RUNNING",
+          "FAILED"
+        ],
+        "state": "FAILED",
+        "failure": {
+          "code": "S102",
+          "phase": "precondition",
+          "step": null,
+          "precondition": 1,
+          "safety_limit": null,
+          "robot": null
+        },
+        "preconditions": [
+          "unknown"
+        ],
+        "steps": [
+          "not_run"
+        ],
+        "end_t_ms": "0"
+      }
+    },
+    {
+      "id": "l1_not_true",
+      "tests": [
+        "L-T5"
+      ],
+      "source": "tests/fixtures/v1.2/simulation/sources/pre_not.rob",
+      "task": null,
+      "world": "tests/fixtures/v1.2/simulation/worlds/box_present.json",
+      "seed": "0",
+      "expect": {
+        "exit": 4,
+        "states": [
+          "CREATED",
+          "VALIDATED",
+          "AUTHORIZED",
+          "RUNNING",
+          "FAILED"
+        ],
+        "state": "FAILED",
+        "failure": {
+          "code": "S101",
+          "phase": "precondition",
+          "step": null,
+          "precondition": 1,
+          "safety_limit": null,
+          "robot": null
+        },
+        "preconditions": [
+          "false"
+        ],
+        "steps": [
+          "not_run"
+        ],
+        "end_t_ms": "0"
+      }
+    },
+    {
+      "id": "l1_wait_and_events",
+      "tests": [
+        "L-T5"
+      ],
+      "source": "tests/fixtures/v1.2/simulation/sources/wait_combined.rob",
+      "task": null,
+      "world": "tests/fixtures/v1.2/simulation/worlds/wait_events.json",
+      "seed": "0",
+      "expect": {
+        "exit": 0,
+        "states": [
+          "CREATED",
+          "VALIDATED",
+          "AUTHORIZED",
+          "RUNNING",
+          "SUCCEEDED"
+        ],
+        "state": "SUCCEEDED",
+        "failure": null,
+        "preconditions": [],
+        "steps": [
+          "succeeded",
+          "succeeded"
+        ],
+        "end_t_ms": "5000",
+        "step_times": [
+          [
+            "0",
+            "5000"
+          ],
+          [
+            "5000",
+            "5000"
+          ]
+        ],
+        "events_applied": [
+          {
+            "t_ms": "2000",
+            "fact": "region_clear",
+            "target": "cell",
+            "value": true
+          },
+          {
+            "t_ms": "5000",
+            "fact": "sensor_available",
+            "target": "camera_top",
+            "value": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "l1_wait_and_timeout_unknown",
+      "tests": [
+        "L-T5"
+      ],
+      "source": "tests/fixtures/v1.2/simulation/sources/wait_combined.rob",
+      "task": null,
+      "world": "tests/fixtures/v1.2/simulation/worlds/sensor_unknown.json",
+      "seed": "0",
+      "expect": {
+        "exit": 4,
+        "states": [
+          "CREATED",
+          "VALIDATED",
+          "AUTHORIZED",
+          "RUNNING",
+          "FAILED"
+        ],
+        "state": "FAILED",
+        "failure": {
+          "code": "S241",
+          "phase": "step",
+          "step": 1,
+          "precondition": null,
+          "safety_limit": null,
+          "robot": null
+        },
+        "preconditions": [],
+        "steps": [
+          "failed",
+          "not_run"
+        ],
+        "end_t_ms": "10000",
+        "step_times": [
+          [
+            "0",
+            "10000"
+          ],
+          null
+        ],
+        "events_applied": []
+      }
+    },
+    {
+      "id": "l1_wait_not",
+      "tests": [
+        "L-T5"
+      ],
+      "source": "tests/fixtures/v1.2/simulation/sources/wait_not.rob",
+      "task": null,
+      "world": "tests/fixtures/v1.2/simulation/worlds/cell_cleared_then_blocked.json",
+      "seed": "0",
+      "expect": {
+        "exit": 0,
+        "states": [
+          "CREATED",
+          "VALIDATED",
+          "AUTHORIZED",
+          "RUNNING",
+          "SUCCEEDED"
+        ],
+        "state": "SUCCEEDED",
+        "failure": null,
+        "preconditions": [],
+        "steps": [
+          "succeeded",
+          "succeeded"
+        ],
+        "end_t_ms": "3000",
+        "step_times": [
+          [
+            "0",
+            "3000"
+          ],
+          [
+            "3000",
+            "3000"
+          ]
+        ],
+        "events_applied": [
+          {
+            "t_ms": "3000",
+            "fact": "region_clear",
+            "target": "cell",
+            "value": false
+          }
+        ]
+      }
+    }
+  ]
+}

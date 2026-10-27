@@ -1,0 +1,15 @@
+// RoboLang v1.2 fixture: valid
+// expect: ok
+// why: not applies to the operand after it
+
+robolang 1.2;
+
+task t(robot r, object box, location dst, region cell, region left, region right) {
+    pre {
+        not object_exists box;
+        not sensor_ok "camera_top" and robot_ready r;
+    }
+    plan {
+        move r to dst;
+    }
+}

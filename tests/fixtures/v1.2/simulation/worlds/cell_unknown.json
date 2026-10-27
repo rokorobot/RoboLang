@@ -1,0 +1,72 @@
+{
+  "world_schema": "robolang.sim.world",
+  "world_schema_version": "1.0",
+  "locations": [
+    "home",
+    "table"
+  ],
+  "regions": {
+    "cell": {},
+    "left": {},
+    "right": {
+      "clear": true
+    }
+  },
+  "robots": {
+    "arm1": {
+      "ready": true,
+      "location": "home",
+      "gripper": true
+    }
+  },
+  "objects": {
+    "box1": {
+      "present": false
+    }
+  },
+  "sensors": {
+    "camera_top": {
+      "robot": "arm1",
+      "available": true
+    }
+  },
+  "events": [],
+  "tasks": {
+    "pre_and": {
+      "bindings": {
+        "r": "arm1",
+        "dst": "table",
+        "cell": "cell"
+      }
+    },
+    "pre_or": {
+      "bindings": {
+        "r": "arm1",
+        "dst": "table",
+        "left": "left",
+        "right": "right"
+      }
+    },
+    "pre_not": {
+      "bindings": {
+        "r": "arm1",
+        "box": "box1",
+        "dst": "table"
+      }
+    },
+    "wait_combined": {
+      "bindings": {
+        "r": "arm1",
+        "dst": "table",
+        "cell": "cell"
+      }
+    },
+    "wait_not": {
+      "bindings": {
+        "r": "arm1",
+        "dst": "table",
+        "cell": "cell"
+      }
+    }
+  }
+}

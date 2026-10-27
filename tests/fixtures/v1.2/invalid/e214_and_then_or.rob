@@ -1,0 +1,15 @@
+// RoboLang v1.2 fixture: invalid
+// expect: error E214 (syntax) line 10
+// why: and and or are not mixed without parentheses
+
+robolang 1.2;
+
+task t(robot r, object box, location dst, region cell, region left, region right) {
+    pre {
+        robot_ready r;
+        robot_ready r and region_clear cell or sensor_ok "camera_top";
+    }
+    plan {
+        move r to dst;
+    }
+}

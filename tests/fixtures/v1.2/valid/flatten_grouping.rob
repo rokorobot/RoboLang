@@ -1,0 +1,16 @@
+// RoboLang v1.2 fixture: valid
+// expect: ok
+// why: three groupings of one conjunction; all three have the same IR (IR 1.1 section 2.1)
+
+robolang 1.2;
+
+task t(robot r, object box, location dst, region cell, region left, region right) {
+    pre {
+        (robot_ready r and region_clear cell) and object_exists box;
+        robot_ready r and (region_clear cell and object_exists box);
+        robot_ready r and region_clear cell and object_exists box;
+    }
+    plan {
+        move r to dst;
+    }
+}

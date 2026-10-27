@@ -1,0 +1,15 @@
+// RoboLang v1.2 fixture: valid
+// expect: ok
+// why: not of a parenthesized group, and a parenthesized atom
+
+robolang 1.2;
+
+task t(robot r, object box, location dst, region cell, region left, region right) {
+    pre {
+        not (region_clear left or region_clear right);
+        (robot_ready r);
+    }
+    plan {
+        move r to dst;
+    }
+}

@@ -1,0 +1,15 @@
+// RoboLang v1.2 fixture: invalid
+// expect: error E215 (syntax) line 10
+// why: depth 9: eight not inside an and chain; the and counts, so the IR could not exceed the bound
+
+robolang 1.2;
+
+task t(robot r, object box, location dst, region cell, region left, region right) {
+    pre {
+        robot_ready r;
+        not not not not not not not not robot_ready r and region_clear cell;
+    }
+    plan {
+        move r to dst;
+    }
+}

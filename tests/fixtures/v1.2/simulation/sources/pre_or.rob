@@ -1,0 +1,11 @@
+// LANG-1 simulation fixture (spec/robolang-v1.2.md section 8)
+robolang 1.2;
+
+task pre_or(robot r, location dst, region left, region right) {
+    pre {
+        region_clear left or region_clear right;
+    }
+    plan {
+        move r to dst;
+    }
+}

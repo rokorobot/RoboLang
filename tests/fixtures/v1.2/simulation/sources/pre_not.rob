@@ -1,0 +1,11 @@
+// LANG-1 simulation fixture (spec/robolang-v1.2.md section 8)
+robolang 1.2;
+
+task pre_not(robot r, object box, location dst) {
+    pre {
+        not object_exists box;
+    }
+    plan {
+        move r to dst;
+    }
+}
