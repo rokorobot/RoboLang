@@ -3,6 +3,8 @@
 **Date:** 2026-10-27
 **Status:** **Signed off by the owner on 2026-10-27**, on the evidence at `f5b3d23`. At the owner's request a
 docstring-only commit followed (`800fa27`); the stack head is now `69a71e3`, re-tested below. Nothing here is merged.
+**Addendum (2026-10-27):** sections 1–7 describe the stack before integration and are kept as
+written. The stack has since been merged into `main` at `efd5a73`; see [section 8](#8-post-merge-addendum).
 **Gate:** RL-BASIC-01 exit gate ([RL-FOUNDATION-01 section 6.6](../../spec/architecture/rl-foundation-01-language-foundation.md#66-delivery)),
 which is also the Foundation 1 exit gate (decision F3, [decision record 0003](../../spec/decisions/0003-language-foundation.md)).
 **Specification:** [`spec/simulation-v1.0.md`](../../spec/simulation-v1.0.md) (B1–B16, [decision record 0004](../../spec/decisions/0004-rl-basic-01a-simulation-semantics.md))
@@ -141,3 +143,51 @@ observed on 2026-10-27. The installed `robolang simulate` command is checked by
 
 The sign-off does not authorize merging any pull request, starting RL-ARCH-02, CORE-1,
 any LANG item or any Foundation 2 item. Each still needs its own decision.
+
+## 8. Post-merge addendum
+
+**Date:** 2026-10-27. Added after integration. Sections 1–7 are historical: their "nothing
+merged" wording and their commit and CI references describe the stack before it was merged.
+The owner sign-off in section 7 stands as given, on the evidence at `f5b3d23`.
+
+The owner authorized sequential squash-merging of the stack on 2026-10-27. Each pull request
+was merged at a head whose CI passed 4/4, and its effective diff against `main` was
+byte-identical to the approved diff.
+
+| Pull request | Approved head | Squash commit on `main` |
+|---|---|---|
+| [#9](https://github.com/rokorobot/RoboLang/pull/9) Development plan aligned with RFC-001 | `fc59718` | `5308e32` |
+| [#10](https://github.com/rokorobot/RoboLang/pull/10) RL-FOUNDATION-01 | `dcfd565` | `2ac0f67` |
+| [#11](https://github.com/rokorobot/RoboLang/pull/11) RL-BASIC-01a | `c90b94a` | `64bdda9` |
+| [#12](https://github.com/rokorobot/RoboLang/pull/12) RL-FOUNDATION-02 | `e69823a` | `65c1fac` |
+| [#13](https://github.com/rokorobot/RoboLang/pull/13) BASIC-1 | `c5a61e3` | `ed91e10` |
+| [#17](https://github.com/rokorobot/RoboLang/pull/17) BASIC-2, replacing [#14](https://github.com/rokorobot/RoboLang/pull/14) | `800fa27` (#14) | `ff71b3b` |
+| [#15](https://github.com/rokorobot/RoboLang/pull/15) BASIC-3 | `69a71e3` | `fe71548` |
+| [#16](https://github.com/rokorobot/RoboLang/pull/16) This evidence | `4936d10` | `efd5a73` |
+
+- **#14:** an integration script error squash-merged #14 into its former base branch instead of
+  `main`. Its approved changes reached `main` through #17, verified identical to #14's approved
+  diff. A comment on #14 records this.
+- **Conflicts:** two add/add conflicts in `src/robolang/sim/__init__.py`, during the #17 and #15
+  integrations, were resolved by taking the approved head's file, as the owner authorized; the
+  identical-diff check then passed.
+- **The resulting `main`** equals the approved final head `4936d10` plus exactly #9's approved
+  diff.
+
+**Verification of `main` at `efd5a73`:**
+
+| Check | Result |
+|---|---|
+| CI run [40431537343](https://github.com/rokorobot/RoboLang/actions/runs/40431537343) | 4/4 jobs passed (Ubuntu and Windows, Python 3.11 and 3.13) |
+| Tests in every CI job | 868 passed, 6 expected failures |
+| Lint | `ruff` passed |
+| Installed command (`tools/smoke_install.py`) | The installed `robolang simulate` ran the example to `SUCCEEDED` in simulation mode |
+| Run-ID vectors | The fixture vector tests pass; a run on `main` reproduced the T1 run ID `sim-74e8880d…` |
+| Pages deployment [40431536651](https://github.com/rokorobot/RoboLang/actions/runs/40431536651) | Succeeded |
+
+**After integration:** the F5 development-plan update ([#18](https://github.com/rokorobot/RoboLang/pull/18))
+was merged as `776a0ad`, with CI run [40434729106](https://github.com/rokorobot/RoboLang/actions/runs/40434729106)
+and Pages deployment [40434728854](https://github.com/rokorobot/RoboLang/actions/runs/40434728854)
+both successful. Branch protection on `main` was enabled on 2026-10-27. Merging into `main`
+now requires a pull request and the four CI jobs above; force-pushes and deletion are
+disabled.
