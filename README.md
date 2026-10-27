@@ -22,11 +22,12 @@ RoboLang is an open, robot-independent project for expressing, validating and co
 robotic tasks, goals and verifiable outcomes across AI systems and heterogeneous robots.
 
 - **Available today:** RoboLang 1.1 and 1.2 language tooling, deterministic validation, Task IR 1.0
-  and 1.1, and simulation-only task execution with reproducible run records.
-- **Core 0.1, simulation only:** versioned semantic contracts (goals, capabilities, commitments,
-  custody, evidence and outcomes) with JSON Schemas and per-message checks, exercised by an
-  in-process simulation of AI-to-Robot (A2R) and Robot-to-Robot (R2R) exchanges.
-- **Not implemented:** network bindings, production authentication and physical execution.
+  and simulation-only task execution with reproducible run records.
+- **Implemented in simulation only:** a draft RoboLang Core 0.1 (message and capability-descriptor
+  schemas and checks) and the RFC-001 reference scenario, in which stub AI and robot participants
+  exchange A2R and R2R messages with local authorization and verified outcomes (`robolang arch02`).
+- **Specified and approved, not implemented:** Core beyond the 0.1 draft, A2R and R2R over real
+  transports and bindings, independent implementations, and anything on a real robot.
 
 > ⚠️ **Physical robot execution is not implemented or authorized.** RoboLang does not replace
 > ROS 2, MoveIt 2, Nav2 or hardware safety controllers. Do not run RoboLang against real
@@ -69,7 +70,7 @@ treated as untrusted input that deterministic software checks before use.
 | Language | RoboLang **1.1**, and **1.2** (adds `and`, `or`, `not` in conditions) |
 | Python package | **0.1.0a1** (alpha; installed from a clone, not published on PyPI) |
 | Foundation 1 (simulation-only execution) | **Delivered**, exit gate signed off 2026-10-27 ([evidence](docs/evidence/rl-basic-01-exit-gate.md)) |
-| RL-ARCH-02 (Core 0.1, simulation only) | **Implemented** ([Core 0.1](spec/core-v0.1.md), [reference simulation](spec/reference-simulation-v0.1.md)); gate 1 exit needs owner sign-off |
+| RL-ARCH-02 (reference simulation) | **Implemented, simulation only** ([Core 0.1](spec/core-v0.1.md), [reference simulation](spec/reference-simulation-v0.1.md)); gate 1 **PASS**, signed off 2026-10-27 ([evidence](docs/evidence/rl-arch-02-exit-gate.md)) |
 
 ## Implemented today
 
@@ -249,7 +250,8 @@ symbolic executor                  CREATED → VALIDATED → AUTHORIZED → RUNN
 run record 1.0                     deterministic, run ID derived from the inputs
 ```
 
-**Approved target, partly implemented** (Core 0.1 covers the first slice, simulation only) — defined in
+**Approved target** — exercised so far only by the draft Core 0.1 reference simulation
+(`robolang arch02`), not implemented for real robots, networks or bindings — defined in
 [RFC-001](spec/architecture/rfc-001-ai-native-architecture.md) and the
 [charter](spec/architecture/ai-first-language-charter.md):
 
@@ -278,9 +280,9 @@ authorization and outcomes, described in
   and reported in the run record, never enforced. A unitless limit is deprecated and reported
   as not enforced.
 - **No hardware and no ROS 2 runtime.** No adapter is loaded and nothing is sent to a robot.
-- **Core 0.1 is simulation only.** Its two schemas and per-message checks exist, but there is
-  no transport or network binding, signatures are simulation-only, and no independent
-  implementation has tested interoperability.
+- **Core 0.1 is a draft, exercised only in simulation.** Its schemas (`spec/core/`) and checks
+  run in the reference simulation, with simulation-only signatures. There is no transport or
+  binding, and no independently written implementation yet (gate 2).
 - **Plans are sequential.** RoboLang 1.2 adds combined conditions (`and`, `or`, `not`, with
   three-valued logic) but no branching, loops, structured data or local bindings (planned as
   Track B language extensions).
@@ -300,13 +302,13 @@ implementation item needs owner authorization before it starts. Full detail in t
 |---|---|---|
 | 1 | v1.1 — language correctness | Delivered |
 | 2 | RL-BASIC-01 — simulation-only execution of RoboLang 1.1 tasks (Foundation 1) | Delivered, signed off 2026-10-27 |
-| 3 | RL-ARCH-02 — in-process simulation of the RFC-001 reference scenario: one AI agent stub, two robot stubs, failure variants | Implemented ([Core 0.1](spec/core-v0.1.md), [reference simulation](spec/reference-simulation-v0.1.md)): ARCH-1, ARCH-2, ARCH-SEQ, ARCH-3. Gate 1 exit needs owner sign-off |
+| 3 | RL-ARCH-02 — in-process simulation of the RFC-001 reference scenario: one AI agent stub, two robot stubs, failure variants | Implemented ([Core 0.1](spec/core-v0.1.md), [reference simulation](spec/reference-simulation-v0.1.md)): ARCH-1, ARCH-2, ARCH-SEQ, ARCH-3. Gate 1 PASS, signed off 2026-10-27 |
 
 | Track | Content | State |
 |---|---|---|
 | A — Foundation 1 | Simulation executor, run records, `robolang simulate` | Delivered |
 | B — Language extensions | Combined conditions, branching, bounded repetition, typed values, local bindings, structured data | LANG-1 (combined conditions, RoboLang 1.2) delivered; the rest not started |
-| C — Core | IR reader and re-validator; RL-ARCH-02 | RL-ARCH-02 implemented (simulation only); gate 1 exit needs owner sign-off. IR reader not started |
+| C — Core | IR reader and re-validator; RL-ARCH-02 | RL-ARCH-02 implemented (simulation only); gate 1 PASS, signed off 2026-10-27. IR reader not started |
 | D — Foundation 2 | Goal execution, Core-shaped observations, knowledge store, reasoner proposals, bounded recovery, world-model depth | Not started |
 | E — Foundation 3 | Concurrency, resources, portable skills, ROS 2 backend, two-profile portability, A2A binding | Later |
 
