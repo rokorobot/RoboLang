@@ -145,6 +145,13 @@ def check_install(artifact: Path, work: Path):
     document = run([robolang, "inspect", MULTI, "--json"], cwd=outside, env=env).stdout
     expect(document == SNAPSHOT.read_text(encoding="ascii").encode("ascii"), "inspect --json matches the IR snapshot")
 
+    world = REPO / "tests" / "fixtures" / "simulation" / "worlds" / "base.json"
+    simulated = run([robolang, "simulate", EXAMPLE, "--world", world], cwd=outside, env=env)
+    expect(
+        b'"mode": "simulation"' in simulated.stdout and b'"state": "SUCCEEDED"' in simulated.stdout,
+        "simulate runs the example in simulation and it SUCCEEDED (exit 0)",
+    )
+
     module = run([python, "-m", "robolang", "--version"], cwd=outside, env=env).stdout.decode().strip()
     expect(module == version, "python -m robolang works")
 

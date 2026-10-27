@@ -45,7 +45,7 @@ RoboLang v1 is an **early prototype**. This section is the reference for what wo
 | v1.1 lexer, parser, AST and static checks (`src/robolang/`) | ✅ Implemented and tested; **not connected to the interpreter**, which still runs v1 behavior |
 | `validate` / `inspect` commands and versioned task IR ([schema](spec/ir-schema-v1.0.md)) | ✅ Implemented and tested; read-only |
 | Installable package with a `robolang` command (`python -m pip install .`) | ✅ Wheel and source distribution are built and install-tested in CI on Ubuntu and Windows; not published on PyPI |
-| Execution of validated tasks | 🗓️ Planned |
+| `robolang simulate`: validated tasks run in a symbolic, deterministic simulation ([spec](spec/simulation-v1.0.md)) | ✅ Implemented and tested; simulation only, no robot, no ROS 2. Physical execution is not planned or approved |
 | MoveIt2 integration, multi-robot handover, LLM planner | 🗓️ Planned |
 | `requirements.txt`, `docker/*`, `examples/inspect_object.rob`, `examples/handover.rob` | 🗓️ Empty placeholders |
 
@@ -142,6 +142,10 @@ robolang inspect examples/pick_and_place.rob
 robolang inspect examples/pick_and_place.rob --json
 ```
 
+```bash
+robolang simulate examples/pick_and_place.rob --world tests/fixtures/simulation/worlds/base.json
+```
+
 What you should see from `validate`:
 
 ```text
@@ -152,7 +156,7 @@ Validation covers the text of the program only. It does not make a task safe to 
 
 - `validate` checks the whole file (syntax, names, types, values) and prints `file:line:column` diagnostics. Exit status is 0 if valid, 1 if not, 2 for a bad argument or unreadable file.
 - `inspect` validates first, then shows what the file describes, as text or as versioned JSON IR. `--task NAME` shows one task.
-- Neither command executes a task, and there is no command that does. Validation covers the text of the program only; it does not make a task safe to run on a robot.
+- `validate` and `inspect` never execute anything. `simulate` runs a validated task only in a symbolic, deterministic simulation (no robot, no ROS 2) and prints a run record; its exit status is 0 (succeeded), 1 (invalid source), 2 (usage error), 3 (invalid world file), 4 (failed) or 5 (cancelled). A simulation result is not evidence that a task is safe on hardware. Validation covers the text of the program only; it does not make a task safe to run on a robot.
 
 Installing into a [virtual environment](https://docs.python.org/3/library/venv.html) is recommended. RoboLang is installed from a clone; it is not published on PyPI.
 
