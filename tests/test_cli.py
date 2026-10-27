@@ -1,4 +1,5 @@
-"""Tests for the read-only commands (src/robolang/cli.py): validate and inspect."""
+"""Tests for the commands in src/robolang/cli.py: validate and inspect (read-only) and the
+simulation-only simulate (its record and exit statuses are tested in test_sim_cli.py)."""
 
 from __future__ import annotations
 import io
@@ -263,17 +264,18 @@ def test_bad_arguments_are_usage_errors(args, capsys):
 
 
 def test_there_is_no_command_that_runs_a_task(capsys):
+    """The only command that runs a task is the simulation-only `simulate`; none runs or executes one."""
     cli("--help")
     help_text = capsys.readouterr().out
 
     assert "validate" in help_text and "inspect" in help_text
-    for word in ("run ", "execute", "simulate"):
+    for word in ("run ", "execute"):
         assert f"\n    {word}" not in help_text
 
 
 # -------- help and version --------
 
-@pytest.mark.parametrize("args", [["--help"], ["validate", "--help"], ["inspect", "--help"]])
+@pytest.mark.parametrize("args", [["--help"], ["validate", "--help"], ["inspect", "--help"], ["simulate", "--help"]])
 def test_help_explains_scope_and_exit_status(args, capsys):
     code, _, _ = cli(*args)
     text = capsys.readouterr().out

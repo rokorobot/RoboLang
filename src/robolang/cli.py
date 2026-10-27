@@ -1,16 +1,24 @@
 """
-Read-only developer commands for RoboLang v1.1.
+Developer commands for RoboLang v1.1.
 
     validate FILE          check a .rob file against the language contract
     inspect  FILE          show what a validated file describes (text or JSON IR)
+    simulate FILE --world WORLD
+                           run a validated task in a symbolic simulation
 
-Neither command executes anything, imports an adapter or contacts a robot.
+`validate` and `inspect` never execute anything. `simulate` runs only in a symbolic,
+deterministic simulation (spec/simulation-v1.0.md): it never loads a robot adapter or connects
+to ROS 2 or hardware, and its result is not evidence that a task is safe on a robot.
 
 Exit status:
-    0  the file is valid (warnings do not change this)
+    0  validate/inspect: the file is valid (warnings do not change this);
+       simulate: the run ended SUCCEEDED
     1  the file is not valid RoboLang v1.1; diagnostics are on stderr
-    2  the command could not be carried out: bad arguments, unreadable file,
-       unknown task name
+    2  the command could not be carried out: bad arguments or seed, unreadable file,
+       unknown task name, several tasks and no --task
+    3  simulate: the world file is not valid
+    4  simulate: the run ended FAILED
+    5  simulate: the run ended CANCELLED
 """
 
 from __future__ import annotations
@@ -22,10 +30,15 @@ from pathlib import Path
 
 from . import ir as task_ir
 from .diagnostics import RoboLangError
+from .sim import DEFAULT_SEED, SEED, WorldError, load_world, run_id, sha256_normalized, to_json, to_record
+from .sim import run as simulate_task
 
 EXIT_OK = 0
 EXIT_INVALID = 1
 EXIT_USAGE = 2
+EXIT_WORLD_INVALID = 3
+EXIT_FAILED = 4
+EXIT_CANCELLED = 5
 
 NOT_A_SAFETY_CHECK = (
     "Validation covers the text of the program only. "
@@ -34,19 +47,34 @@ NOT_A_SAFETY_CHECK = (
 NOTHING_EXECUTED = "This is a description only. Nothing was executed."
 
 _DESCRIPTION = f"""\
-Read-only tools for RoboLang v{task_ir.LANGUAGE_VERSION} task files.
+Tools for RoboLang v{task_ir.LANGUAGE_VERSION} task files.
 
-These commands check and describe .rob files. They never execute a task,
-load a robot adapter or connect to ROS 2 or hardware.
+validate and inspect check and describe .rob files; they never execute anything.
+simulate runs a validated task in a symbolic, deterministic simulation only: it never loads a
+robot adapter or connects to ROS 2 or hardware, and its result is not evidence that a task is
+safe on a robot.
 
 {NOT_A_SAFETY_CHECK}
 """
 
 _EPILOG = """\
 exit status:
-  0  the file is valid (warnings do not change this)
+  0  the file is valid (warnings do not change this); for simulate: the run SUCCEEDED
   1  the file is not valid; diagnostics are printed to stderr
   2  bad arguments, unreadable file, or unknown task name
+  3  simulate only: the world file is not valid
+  4  simulate only: the run ended FAILED
+  5  simulate only: the run ended CANCELLED
+"""
+
+_SIMULATE_EPILOG = """\
+exit status:
+  0  the run ended SUCCEEDED; the run record is on stdout
+  1  the source file is not valid RoboLang; nothing is run
+  2  bad arguments or seed, unreadable file, unknown task name, or several tasks and no --task
+  3  the world file is not valid; diagnostics are printed to stderr
+  4  the run ended FAILED; the run record is on stdout
+  5  the run ended CANCELLED; the run record is on stdout
 """
 
 
@@ -79,12 +107,20 @@ def _quoted(text: str) -> str:
     return json.dumps(text, ensure_ascii=True)
 
 
-def _compile(path: str, err) -> task_ir.CompileResult:
-    """Validate the whole file and lower it. Prints warnings; raises on any error."""
+def _read_bytes(path: str) -> bytes:
     try:
-        source = Path(path).read_bytes().decode("utf-8")
+        return Path(path).read_bytes()
     except OSError as error:
         raise _CommandError(f"cannot read '{path}': {error.strerror or error}") from None
+
+
+def _compile(path: str, err, data: bytes | None = None) -> task_ir.CompileResult:
+    """
+    Validate the whole file and lower it. Prints warnings; raises on any error.
+    `data` is the file's content when the caller has already read it.
+    """
+    try:
+        source = (_read_bytes(path) if data is None else data).decode("utf-8")
     except UnicodeDecodeError:
         raise _CommandError(f"cannot read '{path}': the file is not valid UTF-8") from None
     result = task_ir.compile_source(source, path)
@@ -190,6 +226,53 @@ def _inspect(args, out, err) -> int:
     return EXIT_OK
 
 
+# -------- simulate --------
+
+_SIMULATE_EXIT = {"SUCCEEDED": EXIT_OK, "FAILED": EXIT_FAILED, "CANCELLED": EXIT_CANCELLED}
+
+
+def _simulate(args, out, err) -> int:
+    seed = args.seed
+    if not SEED.fullmatch(seed):
+        raise _CommandError("invalid --seed: use 1 to 64 characters from A-Z a-z 0-9 . _ -")
+    source_bytes = _read_bytes(args.file)  # read once: the run ID describes exactly what was run
+    result = _compile(args.file, err, source_bytes)
+    tasks = result.ir.tasks
+    if args.task is None:
+        if len(tasks) != 1:
+            names = ", ".join(t.name for t in tasks)
+            raise _CommandError(f"'{args.file}' has several tasks; choose one with --task: {names}")
+        task = tasks[0]
+    else:
+        try:
+            task = result.ir.select(args.task).tasks[0]
+        except KeyError:
+            names = ", ".join(t.name for t in tasks)
+            raise _CommandError(f"no task named '{args.task}' in '{args.file}'; tasks in this file: {names}") from None
+    world_bytes = _read_bytes(args.world)
+    try:
+        world = load_world(world_bytes, args.world, task)
+    except WorldError as error:
+        print(error.format(), file=err)
+        return EXIT_WORLD_INVALID
+    run_result = simulate_task(task, world)
+    identifier = run_id(source_bytes, world_bytes, task.name, seed)
+    record = to_record(
+        run_result,
+        task=task,
+        run_id=identifier,
+        source_sha256=sha256_normalized(source_bytes),
+        world_sha256=sha256_normalized(world_bytes),
+        seed=seed,
+    )
+    out.write(to_json(record))
+    summary = f"simulation only: run {identifier}: {run_result.state}"
+    if run_result.failure is not None:
+        summary += f" ({run_result.failure.code})"
+    print(summary, file=err)
+    return _SIMULATE_EXIT[run_result.state]
+
+
 # -------- entry point --------
 
 def _parser(prog: str) -> argparse.ArgumentParser:
@@ -239,6 +322,29 @@ def _parser(prog: str) -> argparse.ArgumentParser:
         help=f"print the versioned IR (schema {task_ir.IR_SCHEMA_VERSION}) as JSON instead of text",
     )
     inspect.set_defaults(run=_inspect)
+
+    simulate = commands.add_parser(
+        "simulate",
+        help="run a validated task in a symbolic simulation (no robot, no ROS 2)",
+        description=(
+            "Validate FILE, then run one task against the world described by WORLD in a symbolic,\n"
+            "deterministic simulation and print the run record (JSON) on stdout.\n"
+            "Simulation only: nothing is sent to a robot, no adapter is loaded and ROS 2 is not used.\n"
+            "The result is not evidence that a task is safe on a robot.\n\n" + NOT_A_SAFETY_CHECK
+        ),
+        epilog=_SIMULATE_EPILOG,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    simulate.add_argument("file", metavar="FILE", help="path to a .rob file")
+    simulate.add_argument("--world", metavar="WORLD", required=True, help="path to a world file (schema 1.0)")
+    simulate.add_argument("--task", metavar="NAME", help="the task to run (required when FILE has several tasks)")
+    simulate.add_argument(
+        "--seed",
+        metavar="SEED",
+        default=DEFAULT_SEED,
+        help=f"1 to 64 characters from A-Z a-z 0-9 . _ - (default {DEFAULT_SEED}); only distinguishes runs",
+    )
+    simulate.set_defaults(run=_simulate)
     return parser
 
 
