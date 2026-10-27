@@ -2,11 +2,11 @@
 
 **Project:** [rokorobot/RoboLang](https://github.com/rokorobot/RoboLang)  
 **Plan date:** 2026-10-11  
-**Revised:** 2026-10-19, aligned with the approved [RFC-001](../spec/architecture/rfc-001-ai-native-architecture.md) ([decision record 0002](../spec/decisions/0002-ai-native-architecture.md))  
-**Status:** Proposed roadmap; **not yet implemented or approved for deployment**  
+**Revised:** 2026-10-19, aligned with the approved [RFC-001](../spec/architecture/rfc-001-ai-native-architecture.md) ([decision record 0002](../spec/decisions/0002-ai-native-architecture.md)); 2026-10-27, milestone order amended by decision F5 and development tracks added ([decision records 0003](../spec/decisions/0003-language-foundation.md), [0004](../spec/decisions/0004-rl-basic-01a-simulation-semantics.md), [0005](../spec/decisions/0005-ai-first-charter-and-domain-contracts.md))  
+**Status:** Active development roadmap; RoboLang 1.1 and simulation-only Foundation 1 delivered. **Physical execution remains unauthorized.**  
 **Maintainer/Product owner:** Repository owner  
-**Scope:** Formal language → Core and A2R/R2R proof → safe task execution → robot interoperability → AI-native generation  
-**Reference baseline:** `main`, last public commit inspected: `9e9f92f` (2025-11-08)
+**Scope:** Formal language → simulated execution of the language (RL-BASIC-01) → Core and A2R/R2R proof → safe task execution → robot interoperability → AI-native generation  
+**Reference baseline:** `main` at `efd5a73` (2026-10-27), the Foundation 1 integration. The original plan inspected `9e9f92f` (2025-11-08); section 2 records that historical baseline.
 
 > **Mission (approved 2026-10-19, decision D1):** RoboLang is an open, AI-native interoperability platform for embodied intelligence. It defines shared semantic contracts, A2R and R2R communication profiles, portable robotic capabilities, and verifiable cooperation across heterogeneous robots, AI systems and execution technologies. RoboLang is designed to support a vendor-neutral ecosystem of interoperable implementations, reference runtimes, developer tools and reusable skills, without requiring one operating system, middleware, controller, AI model or cloud provider.
 >
@@ -29,7 +29,27 @@ Build four **sequential, evidence-gated milestones**. Do not begin the next mile
 
 **Non-goals for this roadmap:** writing new motor controllers, replacing ROS 2, open-ended autonomous operation in public spaces, safety certification, new robot hardware purchases, distributed consensus (RFC-001 version 0 uses bilateral, leased commitments only; decision D5), inventing an emergent robot language (meaning a language robots develop among themselves; the A2R and R2R profiles are designed and specified, not emergent; decision D7), or incorporating Bend proofs into production before a separate feasibility study.
 
-**Milestone order after RFC-001 (decision D8, approved 2026-10-19):** v1.1 is delivered (RL-11A to RL-11E). The next planned milestone is **RL-ARCH-02**, an in-process simulation of the RFC-001 reference scenario (one AI agent stub and two robot stubs) with its failure variants; its implementation requires separate explicit owner authorization. The v1.2 and v1.3 work packages below remain, re-framed: v1.2 execution work becomes the execution side of A2R, and the v1.3 communication work is superseded by the RFC-001 Core envelope and R2R profile (see the notes in sections 5 and 6). The developer-preview pilot of v1.1 is independent of this order.
+**Milestone order (decision D8, approved 2026-10-19; amended by decision F5, approved 2026-10-26):**
+
+| # | Milestone | State |
+|---|---|---|
+| 1 | v1.1 — language correctness (RL-11A to RL-11E) | Delivered |
+| 2 | **RL-BASIC-01** — simulation-only execution of RoboLang 1.1 tasks: specification RL-BASIC-01a ([`simulation-v1.0.md`](../spec/simulation-v1.0.md)), implementation BASIC-1 to BASIC-3 (`robolang simulate`) | **Delivered.** RL-BASIC-01 and Foundation 1 exit gates signed off by the owner on 2026-10-27 ([evidence](evidence/rl-basic-01-exit-gate.md)); merged into `main` |
+| 3 | **RL-ARCH-02** — an in-process simulation of the RFC-001 reference scenario (one AI agent stub and two robot stubs) with its failure variants | **Next planned milestone.** Its implementation requires separate explicit owner authorization (D8) |
+
+D8 as first approved named RL-ARCH-02 as the next milestone; F5 placed RL-BASIC-01 before it, and language extensions beyond RoboLang 1.1 do not delay it. The v1.2 and v1.3 work packages below remain, re-framed: v1.2 execution work becomes the execution side of A2R, and the v1.3 communication work is superseded by the RFC-001 Core envelope and R2R profile (see the notes in sections 5 and 6). The developer-preview pilot of v1.1 is independent of this order.
+
+**Language Foundation and development tracks (decisions F1–F5, G1–G7):** RoboLang is developed as one AI-first language covering thirteen domains ([RL-FOUNDATION-01](../spec/architecture/rl-foundation-01-language-foundation.md), [AI-First Language Design Charter](../spec/architecture/ai-first-language-charter.md)), in three stages: Foundation 1 (essential language), Foundation 2 (intelligent behavior) and Foundation 3 (advanced robotics). The work is broken down into five tracks ([RL-FOUNDATION-02 section 5](../spec/architecture/rl-foundation-02-domain-contracts.md#5-work-breakdown)):
+
+| Track | Content | State |
+|---|---|---|
+| A — Foundation 1 | BASIC-1, BASIC-2, BASIC-3 (RL-BASIC-01b) | Delivered; Foundation 1 exit gate signed off 2026-10-27 |
+| B — Part B language extensions | LANG-1 to LANG-6: combined conditions, branching, bounded repetition, typed values and comparisons, local bindings, structured data | Not started. Scheduled independently by the owner; each needs a versioned specification and owner decision; none delays RL-ARCH-02 |
+| C — Core | CORE-1 (IR reader and re-validator) and RL-ARCH-02 | Not started. Each needs separate implementation authorization |
+| D — Foundation 2 | F2-1 to F2-6: goal execution, Core-shaped observations, knowledge store, reasoner proposals, bounded recovery, world-model depth | Not started. Its gate (Foundation 1) is met. Each item needs owner authorization before implementation, and its own versioned specification where it adds `.rob` syntax, an IR kind or a Core schema (G5, G6) |
+| E — Foundation 3 | F3-1 to F3-6: concurrency, resources, portable skills, ROS 2 backend, two-profile portability, A2A binding | Later, once the basic semantics are proven |
+
+Listing a track or item here authorizes nothing: every implementation item needs owner authorization before it starts.
 
 **Release numbering:** Versions above are *targets*, not existing releases. Breaking syntax changes require migration notes and a declared compatibility policy. Avoid new versions solely for publicity.
 
@@ -161,6 +181,8 @@ This proposed restructuring must be performed incrementally without breaking exi
 **Objective:** Turn typed tasks into a traceable, correctly bounded simulation/ROS 2 execution state machine. Runtime checks must have real meaning, not merely syntactic presence.
 
 > **RFC-001 alignment (2026-10-19):** These work packages are re-framed as the execution side of A2R (RFC-001 sections 9 and 13): the executor is what lets a robot report a verified outcome. Their safety semantics are unchanged. Scheduling follows RL-ARCH-02 (decision D8).
+>
+> **RL-BASIC-01 (2026-10-27):** RL-BASIC-01 delivered the simulation-only first slice of RL-12A (executor state machine), RL-12B (precondition evaluation; speed limits checked against the robot profile, not enforced), RL-12C (parameter binding to declared entities) and RL-12E (deterministic simulator and run records). It is symbolic: no motion planning, speed enforcement or ROS 2. The rest of these packages is still open; RL-12D (ROS 2 adapter) is item F3-4 of Track E.
 
 | Work package / suggested PR | Implementation | Evidence and acceptance |
 |---|---|---|
@@ -366,7 +388,9 @@ A milestone is **not done** because the README says it is. It is done when:
 
 ### Immediate next action
 
-**Start with `RL-11A — Specification and grammar` and no runtime rewrite.** It gives Claude Code a deterministic contract, exposes ambiguities early and prevents the following stages from building safety claims on top of a permissive text scanner.
+**As of 2026-10-27:** RL-BASIC-01 is delivered and Foundation 1 is signed off. The next planned milestone is **RL-ARCH-02** (section 1), which waits for the owner's separate implementation authorization. CORE-1, the Part B language extensions and Foundation 2 items are each started only on their own authorization.
+
+*Historical (2026-10-11):* Start with `RL-11A — Specification and grammar` and no runtime rewrite. It gives Claude Code a deterministic contract, exposes ambiguities early and prevents the following stages from building safety claims on top of a permissive text scanner.
 
 ---
 
