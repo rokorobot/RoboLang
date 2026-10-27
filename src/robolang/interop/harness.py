@@ -65,7 +65,7 @@ class ExternalParticipant:
         self._lines: queue.Queue = queue.Queue()
         self._pending: tuple[int, str, Any] | None = None  # the delivery awaiting its receipt
         self._held: dict[tuple[str, str], int] = {}  # (sender, message_id) -> index, held by the participant
-        self._names: set[str] = set()  # timer, sense request and action names: unique within a run
+        self._names: dict[str, set[str]] = {}  # per kind (timer, sense request, action): no reuse in a run
         self._delivered: set[str] = set()  # message IDs delivered to the participant
         self._accepted: list[dict] = []  # documents the participant accepted
         self._sent: list[dict] = []  # documents the participant sent
@@ -113,9 +113,10 @@ class ExternalParticipant:
         return self.sim.now - self.sim.epoch_ms
 
     def _name(self, name: Any, what: str) -> str:
-        if not isinstance(name, str) or name in self._names:
+        names = self._names.setdefault(what, set())
+        if not isinstance(name, str) or name in names:
             raise BindingFailure(f"{what} name {name!r} missing or reused")
-        self._names.add(name)
+        names.add(name)
         return name
 
     def _cycle(self, frame: dict) -> None:
