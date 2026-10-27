@@ -20,7 +20,7 @@ import pytest
 from robolang.arch02 import Simulation, load_scenario, to_json
 from robolang.interop import (
     AMR,
-    EVENT_KINDS,
+    EVENT_KINDS_0009,
     BindingFailure,
     InconsistentClaim,
     build_view,
@@ -54,12 +54,12 @@ def test_external_amr07_reproduces_the_golden_record(key):
     assert hashlib.sha256(to_json(record).encode("ascii")).hexdigest() == GOLDEN[key]["record_sha256"], key
 
 
-def test_finding_e1_event_kinds_of_6_3_alone_lose_lease_expired():
-    """With only the event kinds 6.3 lists, amr-07's `lease_expired` claim has no frame (E1)."""
+def test_finding_e1_event_kinds_of_0009_alone_lose_lease_expired():
+    """With only the event kinds 0009 approved, amr-07's `lease_expired` claim has no frame (E1, erratum 0010)."""
     failing = []
     for case_id in ("v05_stale_confirmation", "v06_partition_before_release", "happy_path"):
         try:
-            run_case_external(PARSED, case(case_id), event_kinds=EVENT_KINDS)
+            run_case_external(PARSED, case(case_id), event_kinds=EVENT_KINDS_0009)
         except BindingFailure as failure:
             assert "lease_expired" in str(failure)
             failing.append(case_id)
@@ -164,8 +164,61 @@ def test_binding_failures(command, message):
      "real = p.Runtime.send\n"
      "p.Runtime.send = lambda self, s, *a, **k: real(self, 'rl:robot:arm-02', *a, **k)",
      "as someone else"),
+    # Erratum 0010, B1: a lease_expired claim before the lease has expired.
+    ("happy_path",
+     "real = Amr.on_commit\n"
+     "def early(self, d):\n"
+     "    real(self, d); self.event('lease_expired', lease='commitment', commitment=self.commitment['id'])\n"
+     "Amr.on_commit = early",
+     "lease_expired claim not established"),
+    # B1: a lease_expired claim for a commitment that was never accepted.
+    ("v12a_unsigned_commit",
+     "real = Amr.on_request_assistance\n"
+     "def lie(self, d):\n"
+     "    real(self, d); self.event('lease_expired', lease='commitment', commitment='rl:commit:c42-transport')\n"
+     "Amr.on_request_assistance = lie",
+     "lease_expired claim not established"),
+    # B2: a commitment state with no accepted commitment.
+    ("happy_path",
+     "real = Amr.on_request_assistance\n"
+     "def lie(self, d):\n    real(self, d); self.commitment_state = 'active'\n"
+     "Amr.on_request_assistance = lie",
+     "commitment state None -> active not supported"),
+    # B2: a transition Core 5.8 does not allow (straight to failed, never active).
+    ("happy_path",
+     "real = Amr.on_commit\n"
+     "def skip(self, d):\n    real(self, d); self.commitment_state = 'failed'\n"
+     "Amr.on_commit = skip",
+     "commitment state None -> failed not supported"),
+    # B2, after a corroborated `active`: lapsed before the lease has expired.
+    ("happy_path",
+     "real = Amr.on_reservation_decision\n"
+     "def lapse(self, d):\n    real(self, d); self.commitment_state = 'lapsed'\n"
+     "Amr.on_reservation_decision = lapse",
+     "commitment state lapsed not supported by the wire"),
+    # B2: fulfilled with no successful outcome on the wire.
+    ("happy_path",
+     "real = Amr.on_reservation_decision\n"
+     "def done(self, d):\n    real(self, d); self.commitment_state = 'fulfilled'\n"
+     "Amr.on_reservation_decision = done",
+     "commitment state fulfilled not supported by the wire"),
+    # B2: fulfilled with a succeeded outcome but no evidence the harness observed.
+    ("happy_path",
+     "def arrived(self):\n"
+     "    self.commitment_state = 'fulfilled'; self._state('SUCCEEDED')\n"
+     "    self._outcome('succeeded', verification=None, evidence=())\n"
+     "Amr._arrived = arrived",
+     "commitment state fulfilled not supported by the wire"),
+    # B2: failed without any outcome sent.
+    ("happy_path",
+     "real = Amr.on_reservation_decision\n"
+     "def fail(self, d):\n    real(self, d); self.commitment_state = 'failed'\n"
+     "Amr.on_reservation_decision = fail",
+     "commitment state failed not supported by the wire"),
 ], ids=["receipt_stage_2", "motion_unauthorized", "authorization_claim", "commit_point", "succeeded",
-        "escalation", "impersonation"])
+        "escalation", "impersonation", "lease_expired_early", "lease_expired_no_commitment",
+        "commitment_without_commit", "commitment_transition", "lapsed_early", "fulfilled_without_outcome",
+        "fulfilled_without_evidence", "failed_without_outcome"])
 def test_inconsistent_claims_fail_the_run(case_id, patch, message):
     with pytest.raises(InconsistentClaim, match=message):
         run_case_external(PARSED, case(case_id), command=patched(patch))

@@ -152,7 +152,7 @@ class Runtime:
         self._claim_commitment()
 
     def _claim_commitment(self) -> None:
-        """Commitment state changes are claims too (6.3); the reference Amr keeps them as a field."""
+        """Commitment state changes are claims too (6.3, erratum 0010 B2); the reference Amr keeps them as a field."""
         state = self.participant.commitment_state
         if state != self._claimed_commitment:
             self._claimed_commitment = state

@@ -29,9 +29,9 @@ from .view import build_view
 
 AMR = "rl:robot:amr-07"
 FRAME_TIMEOUT_S = 10.0  # 6.5 rule 4, per expected frame
-EVENT_KINDS = ("state", "authorization", "escalated", "custody_committed")  # 6.3
-# Not in 6.3, but the reference amr-07 records it and the run record carries it: finding E1.
-PROPOSED_EVENT_KINDS = ("lease_expired",)
+EVENT_KINDS_0009 = ("state", "authorization", "escalated", "custody_committed")  # 6.3 as approved in 0009
+EVENT_KINDS = EVENT_KINDS_0009 + ("lease_expired",)  # with erratum 0010, B1 (finding E1)
+COMMITMENT_STATES = {None: ("active",), "active": ("fulfilled", "failed", "lapsed")}  # Core 5.8; 0010, B2
 RECEIPTS = ("accepted", "duplicate", "held", "rejected")
 PARTICIPANT_CODES = ("C306", "C403")  # stages 4-5: a participant may reject with these after core accepts
 
@@ -53,7 +53,7 @@ class ExternalParticipant:
     """The engine's view of a participant that runs as a child process: participant and inbox."""
 
     def __init__(self, sim: Simulation, pid: str, command: list[str] | None = None,
-                 frame_timeout_s: float = FRAME_TIMEOUT_S, event_kinds=EVENT_KINDS + PROPOSED_EVENT_KINDS):
+                 frame_timeout_s: float = FRAME_TIMEOUT_S, event_kinds=EVENT_KINDS):
         self.sim, self.id = sim, pid
         self.command = command or participant_command()
         self.frame_timeout_s = frame_timeout_s
@@ -243,9 +243,7 @@ class ExternalParticipant:
             raise BindingFailure(f"unknown event: {frame!r:.120}")
         self._claims.append((kind, detail))
         if kind == "state" and detail.get("record") == "commitment":
-            # The reference records no event for these (finding E4): final state only.
-            self.commitment_state = detail.get("state")
-            return
+            return  # 0010, B2: the final state only, set once corroborated; the reference records no event
         self.sim.event(kind, self.id, **detail)
         if kind == "state" and detail.get("record") == "goal":
             self.goal_state = detail.get("state")
@@ -274,6 +272,39 @@ class ExternalParticipant:
         return {d["payload"]["acknowledged"] for d in self._sent if d["type"] == "acknowledge"
                 and d["payload"].get("accepted") is True and d["payload"]["acknowledged"] in released}
 
+    def _commitments(self) -> dict[str, dict]:
+        """Commitments the participant accepted in a `commit`, by ID, where it is the debtor."""
+        return {c["payload"]["commitment"]["id"]: c["payload"]["commitment"] for c in self._accepted_of("commit")
+                if c["payload"]["commitment"]["debtor"] == self.id}
+
+    def _lease_expired(self, commitment: dict) -> bool:
+        return self.sim.now >= time_ms(commitment["lease"]["expires_at"])
+
+    def _observed(self, observation: dict) -> bool:
+        """An observation in the participant's evidence that the harness itself made (sense)."""
+        return any(e.kind == "observation" and e.participant == self.id and dict(e.detail) == {
+            "id": observation.get("id"), "subject": observation.get("subject"),
+            "property": observation.get("property"), "value": observation.get("value")} for e in self.sim._events)
+
+    def _commitment_claim(self, state: Any) -> None:
+        """0010, B2: a supported transition, backed by an accepted commitment and the wire."""
+        commitments = self._commitments()
+        if state not in COMMITMENT_STATES.get(self.commitment_state, ()) or not commitments:
+            raise InconsistentClaim(f"commitment state {self.commitment_state} -> {state} not supported")
+        outcomes = [d["payload"] for d in self._sent if d["type"] == "outcome"]
+        if state == "fulfilled":
+            ok = any(o["outcome"]["status"] == "succeeded" and o["evidence"]
+                     and all(self._observed(e) for e in o["evidence"]) for o in outcomes)
+        elif state == "failed":
+            ok = any(o["outcome"]["status"] != "succeeded" for o in outcomes)
+        elif state == "lapsed":
+            ok = any(self._lease_expired(c) for c in commitments.values())
+        else:
+            ok = True
+        if not ok:
+            raise InconsistentClaim(f"commitment state {state} not supported by the wire")
+        self.commitment_state = state
+
     def _corroborate(self) -> None:
         """Check this cycle's claims and actions against the wire and the world, at the end of the cycle."""
         claims, acts, self._claims, self._acts = self._claims, self._acts, [], []
@@ -299,10 +330,14 @@ class ExternalParticipant:
                 if not any(d["type"] == "outcome" and d["payload"]["outcome"]["status"] == "succeeded"
                            for d in self._sent):
                     raise InconsistentClaim("SUCCEEDED goal without a sent outcome of succeeded")
+            elif kind == "lease_expired":
+                commitment = self._commitments().get(detail.get("commitment"))
+                if detail.get("lease") != "commitment" or commitment is None or not self._lease_expired(commitment):
+                    raise InconsistentClaim(f"lease_expired claim not established: {detail}")
+            elif kind == "state" and detail.get("record") == "commitment":
+                self._commitment_claim(detail.get("state"))
             elif kind == "escalated":
-                commits = self._accepted_of("commit")
-                expired = any(self.sim.now >= time_ms(c["payload"]["commitment"]["lease"]["expires_at"])
-                              for c in commits)
+                expired = any(self._lease_expired(c) for c in self._commitments().values())
                 if not expired or self._committed():
                     raise InconsistentClaim("escalation without an expired lease and unresolved custody")
 

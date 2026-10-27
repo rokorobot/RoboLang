@@ -10,7 +10,7 @@ from __future__ import annotations
 from .harness import (
     AMR,
     EVENT_KINDS,
-    PROPOSED_EVENT_KINDS,
+    EVENT_KINDS_0009,
     BindingFailure,
     ExternalParticipant,
     InconsistentClaim,
@@ -22,7 +22,7 @@ from .view import build_view
 __all__ = [
     "AMR",
     "EVENT_KINDS",
-    "PROPOSED_EVENT_KINDS",
+    "EVENT_KINDS_0009",
     "BindingFailure",
     "ExternalParticipant",
     "InconsistentClaim",
