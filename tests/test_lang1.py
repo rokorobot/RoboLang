@@ -5,7 +5,7 @@ import json
 
 import pytest
 
-from robolang import RoboLangError, check, parse
+from robolang import RoboLangError, TokenKind, check, parse, tokenize
 from robolang import nodes as ast
 from robolang.ir import compile_source, to_dict, to_json
 from robolang.nodes import Span
@@ -37,6 +37,15 @@ def test_operator_words_are_names_in_v1_1_and_reserved_in_v1_2():
     assert check("robolang 1.1;\n" + source).program.version.version == "1.1"
     raised = error("robolang 1.2;\n" + source)
     assert (raised.code, raised.line, raised.column) == ("E212", 2, 14)
+
+
+@pytest.mark.parametrize(
+    ("marker", "kind"),
+    [("", TokenKind.IDENT), ("robolang 1.1; ", TokenKind.IDENT), ("robolang 1.2; ", TokenKind.KEYWORD)],
+)
+def test_tokenize_follows_the_version_marker_like_the_parser(marker, kind):
+    words = [t for t in tokenize(marker + "and or not and_x") if t.text in ("and", "or", "not", "and_x")]
+    assert [t.kind for t in words] == [kind, kind, kind, TokenKind.IDENT]
 
 
 def test_combined_conditions_need_the_v1_2_marker():

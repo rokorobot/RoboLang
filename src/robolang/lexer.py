@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from .diagnostics import Diagnostic, RoboLangError
 from .nodes import Span
-from .tokens import ESCAPES, RESERVED, SPEED_UNITS, Token, TokenKind
+from .tokens import ESCAPES, RESERVED, RESERVED_V1_2, SPEED_UNITS, Token, TokenKind
 
 _LETTERS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 _DIGITS = "0123456789"
@@ -157,7 +157,12 @@ class Lexer:
 
 
 def tokenize(source: str, filename: str = "<string>") -> list[Token]:
-    """All tokens of `source`, ending with an EOF token."""
+    """
+    All tokens of `source`, ending with an EOF token.
+
+    Reserved words follow the version marker, as in the parser: the 1.2 set after a leading
+    `robolang 1.2`, otherwise the 1.1 set, where `and`, `or` and `not` are names.
+    """
     lexer = Lexer(source, filename)
     tokens = []
     while True:
@@ -165,3 +170,5 @@ def tokenize(source: str, filename: str = "<string>") -> list[Token]:
         tokens.append(token)
         if token.kind is TokenKind.EOF:
             return tokens
+        if len(tokens) == 2 and tokens[0].text == "robolang" and token.text == "1.2":
+            lexer.reserved = RESERVED_V1_2
