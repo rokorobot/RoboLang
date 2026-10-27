@@ -125,6 +125,10 @@ class RunResult:
     final_world: FinalWorld
 
 
+class SimulationInputError(ValueError):
+    """`run` was given a task and a world that do not belong together. Nothing was run."""
+
+
 class _StepFailed(Exception):
     def __init__(self, code: str, condition_result: Truth | None = None):
         super().__init__(code)
@@ -290,8 +294,44 @@ def _not_run(task: ir.Task, first: int = 1) -> list[StepResult]:
     ]
 
 
+def _names(node) -> list[str]:
+    """The parameter names a condition or step refers to."""
+    if isinstance(node, ir.WaitUntil):
+        return _names(node.condition)
+    return [getattr(node, f) for f in ("robot", "region", "obj", "target") if hasattr(node, f)]
+
+
+def _check_inputs(task: ir.Task, world: World) -> None:
+    """The trust boundary of `run`: the world must have been validated for this very task."""
+    if not isinstance(task, ir.Task) or not isinstance(world, World):
+        raise SimulationInputError("run() needs an ir.Task and a World from load_world")
+    if world.task.name != task.name:
+        raise SimulationInputError(f"the world was validated for task '{world.task.name}', not '{task.name}'")
+    bound = dict(world.task.bindings)
+    if [name for name, _ in world.task.bindings] != [p.name for p in task.parameters]:
+        raise SimulationInputError(f"the world's bindings do not match the parameters of task '{task.name}'")
+    for parameter in task.parameters:
+        if world.kind_of(bound[parameter.name]) != parameter.type:
+            raise SimulationInputError(f"parameter '{parameter.name}' is not bound to a {parameter.type}")
+    for node in (*task.preconditions, *task.steps):
+        for name in _names(node):
+            if name not in bound:
+                raise SimulationInputError(f"task '{task.name}' refers to '{name}', which is not a parameter")
+    script = world.task
+    for index in (*script.faults, *(() if script.cancel_before_step is None else (script.cancel_before_step,))):
+        if not 1 <= index <= len(task.steps):
+            raise SimulationInputError(f"the world scripts step {index}, outside the plan of task '{task.name}'")
+
+
 def run(task: ir.Task, world: World) -> RunResult:
-    """Run `task` against `world` in simulation (section 4). Never mutates `world`."""
+    """
+    Run `task` against `world` in simulation (section 4). Never mutates `world`.
+
+    `task` must come from the compiler (`compile_source`) and `world` from `load_world` for that
+    same task, as `robolang simulate` does. `run` re-checks that they belong together and raises
+    `SimulationInputError` otherwise, before anything runs.
+    """
+    _check_inputs(task, world)
     bindings = world.task.bindings
     bound = dict(bindings)
     limits, authorization = _authorize(task, world, bindings)
