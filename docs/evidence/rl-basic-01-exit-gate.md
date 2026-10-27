@@ -1,7 +1,8 @@
 # RL-BASIC-01 / Foundation 1 exit gate — evidence
 
 **Date:** 2026-10-27
-**Status:** **Signed off by the owner on 2026-10-27**, on the evidence at `f5b3d23`. Nothing here is merged.
+**Status:** **Signed off by the owner on 2026-10-27**, on the evidence at `f5b3d23`. At the owner's request a
+docstring-only commit followed (`800fa27`); the stack head is now `69a71e3`, re-tested below. Nothing here is merged.
 **Gate:** RL-BASIC-01 exit gate ([RL-FOUNDATION-01 section 6.6](../../spec/architecture/rl-foundation-01-language-foundation.md#66-delivery)),
 which is also the Foundation 1 exit gate (decision F3, [decision record 0003](../../spec/decisions/0003-language-foundation.md)).
 **Specification:** [`spec/simulation-v1.0.md`](../../spec/simulation-v1.0.md) (B1–B16, [decision record 0004](../../spec/decisions/0004-rl-basic-01a-simulation-semantics.md))
@@ -25,10 +26,11 @@ Windows, Python 3.11 and 3.13.
 | Slice | Pull request | Head commit | CI run | Result |
 |---|---|---|---|---|
 | BASIC-1 — values and world file 1.0 | [rokorobot/RoboLang#13](https://github.com/rokorobot/RoboLang/pull/13) | `c5a61e30bf5c7d8698e5b66593e2fed7d19b13aa` | [40426572425](https://github.com/rokorobot/RoboLang/actions/runs/40426572425) | 4/4 passed |
-| BASIC-2 — executor | [rokorobot/RoboLang#14](https://github.com/rokorobot/RoboLang/pull/14) | `2bacd7d02b2e49f84f27a8a69ab5d48b4d558ce8` | [40426575056](https://github.com/rokorobot/RoboLang/actions/runs/40426575056) | 4/4 passed |
-| BASIC-3 — run record, run ID, `robolang simulate` | [rokorobot/RoboLang#15](https://github.com/rokorobot/RoboLang/pull/15) | `f5b3d23cd8f6c8de4fd3663e48a381898a116f4d` | [40426572766](https://github.com/rokorobot/RoboLang/actions/runs/40426572766) | 4/4 passed |
+| BASIC-2 — executor | [rokorobot/RoboLang#14](https://github.com/rokorobot/RoboLang/pull/14) | `800fa275c360e9429731dc53be0974b37b7aaf67` | [40427544813](https://github.com/rokorobot/RoboLang/actions/runs/40427544813) | 4/4 passed |
+| BASIC-3 — run record, run ID, `robolang simulate` | [rokorobot/RoboLang#15](https://github.com/rokorobot/RoboLang/pull/15) | `69a71e3fe70346d612b7591c2315baed4e5f86bb` | [40427546315](https://github.com/rokorobot/RoboLang/actions/runs/40427546315) | 4/4 passed |
 
-`f5b3d23` contains all three slices. The acceptance tests are judged at that commit.
+`69a71e3` contains all three slices. The acceptance tests are judged at that commit. It differs from
+`f5b3d23`, the commit signed off, only by the docstring of `run()` (`800fa27`).
 
 Commits in the three slices, oldest first:
 
@@ -40,9 +42,11 @@ Commits in the three slices, oldest first:
 | `c5a61e3` | BASIC-1 review fix: the loaded world is a read-only snapshot |
 | `355dda6` | Merge of the BASIC-1 fix into BASIC-2 |
 | `2bacd7d` | BASIC-2 review fix: `run()` rejects a task and world that do not belong together |
-| `f5b3d23` | Merge of the BASIC-2 fix into BASIC-3 |
+| `f5b3d23` | Merge of the BASIC-2 fix into BASIC-3 (evidence signed off) |
+| `800fa27` | BASIC-2: docstring states that externally supplied IR is unsupported by `run()` (owner request; no behavior change) |
+| `69a71e3` | Merge of the docstring into BASIC-3 |
 
-**Local run at `f5b3d23`** (Windows, Python 3.11.15): `python -m pytest -q` gives 868 passed,
+**Local run at `69a71e3`** (Windows, Python 3.11.15): `python -m pytest -q` gives 868 passed,
 6 xfailed, 0 failed; `python -m ruff check .` gives no issues. The 6 expected failures are the
 documented v1 interpreter limitations in `tests/test_known_limitations.py`, unchanged.
 
@@ -52,7 +56,7 @@ Fixture cases are defined in [`tests/fixtures/simulation/cases.json`](../../test
 Each case is checked at three layers: the world loader (`test_sim_world.py::test_fixture_case`),
 the executor (`test_sim_executor.py::test_fixture_case`) and the real command
 (`test_sim_cli.py::test_case`). `test_simulation_fixtures.py` checks the fixtures themselves
-against the specification. Counts are passing tests at `f5b3d23`.
+against the specification. Counts are passing tests at `69a71e3`.
 
 | Test | Requirement | Fixture cases | Passing tests (CLI / executor / world / fixture check) |
 |---|---|---|---|
@@ -86,7 +90,7 @@ normalization across BOM and CRLF.
 
 ## 4. Demonstration
 
-Run from a clone at `f5b3d23` as `PYTHONPATH=src python -m robolang simulate …` on Windows,
+Run from a clone at `f5b3d23` (unchanged at `69a71e3`: docstring only) as `PYTHONPATH=src python -m robolang simulate …` on Windows,
 observed on 2026-10-27. The installed `robolang simulate` command is checked by
 `tools/smoke_install.py` in each CI job (section 2).
 
@@ -108,6 +112,7 @@ observed on 2026-10-27. The installed `robolang simulate` command is checked by
 | BASIC-3 build | The source file was read twice, so the run ID could describe different text from what ran | The source is read once; the same bytes are compiled and hashed | `7fad80c` |
 | Owner review of #13 | `World` held mutable dictionaries | Read-only mappings; test that changes fail | `c5a61e3` |
 | Owner review of #14 | `run()` could fail with an uncaught lookup error on mismatched inputs | `SimulationInputError` before anything runs; six mismatch tests. `robolang simulate` always loads the world for the selected task | `2bacd7d` |
+| Owner review of #14 | The trust boundary of `run()` should state that externally supplied IR is unsupported | One docstring sentence; CORE-1 is the planned IR reader | `800fa27` |
 
 ## 6. Known limitations and risk statement
 
