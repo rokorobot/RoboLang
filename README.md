@@ -237,13 +237,13 @@ implementation item needs owner authorization before it starts. Full detail in t
 |---|---|---|
 | 1 | v1.1 — language correctness | Delivered |
 | 2 | RL-BASIC-01 — simulation-only execution of RoboLang 1.1 tasks (Foundation 1) | Delivered, signed off 2026-10-27 |
-| 3 | RL-ARCH-02 — in-process simulation of the RFC-001 reference scenario: one AI agent stub, two robot stubs, failure variants | Next; needs separate authorization |
+| 3 | RL-ARCH-02 — in-process simulation of the RFC-001 reference scenario: one AI agent stub, two robot stubs, failure variants | Next. Specification proposed for owner review ([Core 0.1](spec/core-v0.1.md), [reference simulation](spec/reference-simulation-v0.1.md)); implementation needs separate authorization |
 
 | Track | Content | State |
 |---|---|---|
 | A — Foundation 1 | Simulation executor, run records, `robolang simulate` | Delivered |
 | B — Language extensions | Combined conditions, branching, bounded repetition, typed values, local bindings, structured data | LANG-1 (combined conditions, RoboLang 1.2) delivered; the rest not started |
-| C — Core | IR reader and re-validator; RL-ARCH-02 | Not started |
+| C — Core | IR reader and re-validator; RL-ARCH-02 | RL-ARCH-02 specification proposed for owner review; not implemented. IR reader not started |
 | D — Foundation 2 | Goal execution, Core-shaped observations, knowledge store, reasoner proposals, bounded recovery, world-model depth | Not started |
 | E — Foundation 3 | Concurrency, resources, portable skills, ROS 2 backend, two-profile portability, A2A binding | Later |
 

@@ -66,7 +66,9 @@ does not support (`C102`). Correct version identifiers are claims, not evidence.
 - Duplicate keys in any object are rejected (`C101`).
 - **Numbers are integers only**, and appear only where a field table says "integer"
   (`sequence`, `renewal`, `criterion`). Every measured value is an exact decimal string. A
-  JSON number with a fraction or exponent is rejected (`C101`).
+  JSON number with a fraction or exponent is rejected (`C101`). The JSON reader enforces this,
+  not the schema files: JSON Schema's `integer` type accepts `1.0`, so a receiver must not
+  rely on schema validation alone for this rule.
 - Unknown fields are rejected at every level (`C103`). Core 0.1 has no extension points.
 - Every field listed for an object is required. Where a value may be absent, the table says
   "or `null`", and the field is still present. One document shape per object keeps
@@ -384,8 +386,10 @@ A document conforms to Core 0.1 when it validates against the schema file for it
 and satisfies the rules of sections 2 to 7 that a schema cannot express: signature checks,
 key ownership, time ordering (`expires_at` after `sent_at`, `valid_until` after `issued_at`,
 lease end after start), the integer-only rule, uniqueness of capability kinds, and the
-`succeeded` rule. `tests/fixtures/core/` holds one valid document per defined message type
-that the scenario uses, and one invalid document per code.
+`succeeded` rule. `tests/fixtures/core/` holds valid documents for the message types listed in
+its `cases.json` and both capability descriptors, and at least one invalid document for every
+code a receiver can check on a single message. `C306` and `C403` depend on conversation state
+and are covered by the reference scenario instead.
 
 Conformance of a participant (what it does with a valid message) is tested by the reference
 scenario, not by this document. A conformance programme is RFC-001 open question 13.

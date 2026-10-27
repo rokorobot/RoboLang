@@ -109,6 +109,10 @@ interval it names (R8).
 | `cell_camera` | arm-02 | `located_in` and `carried_by` of things at `cell-a2` and `handoff-h1` |
 | `deck_camera` | amr-07 | `carried_by amr-07` for things on its deck, and their `located_in` |
 
+In the scenario file a sensor's `scope` is either `places` (it observes things at the listed
+`places`) or `own_deck` (it observes what its robot carries, wherever the robot is; `places`
+is then `null`).
+
 An observation is the ground truth at the moment it is made: `observed_at` is the current
 time (minus any scripted sensor lag, 10), `valid_for` 30 s, `confidence` `0.95`, `method`
 `vision`, signed by the observing robot. A sensor that is scripted unavailable makes no
@@ -341,11 +345,14 @@ rules.
 [`tests/fixtures/arch02/`](../tests/fixtures/arch02/README.md):
 
 - `scenario.json` — `robolang.arch02.scenario` version `0.1`: the deployment parameters
-  (section 3), participants and keys, the capability descriptors, standing authorizations,
-  places, things, initial facts, sensors, durations, policies, the authority table and the
-  goal planner-1 proposes.
-- `cases.json` — one case per acceptance test row in section 12: `id`, `tests`, `faults`, and
-  `expect`.
+  (section 3, `parameters`), `conversation_id`, `participants`, `keys`, `authorities`, the
+  capability `descriptors`, `standing_authorizations`, `places`, `things`, `initial_facts`,
+  `initial_custody`, `sensors`, `durations`, `arbiters` (7.5), `peers` (whom a robot may ask
+  for assistance), `policies`, the `authority_table` (7.3), the `goal` planner-1 proposes,
+  its `goal_recipient`, and the `handover_criteria` arm-02 puts in `transfer_custody`.
+- `cases.json` — one case per scenario acceptance test, A-T1 to A-T15 (section 12): `id`,
+  `tests`, `seed`, `faults` and `expect`. A-T16 to A-T19 use the Core fixtures, the schema
+  files and the existing suite instead.
 
 `expect` fields (absent means not checked):
 

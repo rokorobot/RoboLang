@@ -354,6 +354,7 @@
     {
       "participant": "rl:robot:arm-02",
       "sensor": "cell_camera",
+      "scope": "places",
       "places": [
         "rl:place:cell-a2",
         "rl:place:handoff-h1"
@@ -368,7 +369,8 @@
     {
       "participant": "rl:robot:amr-07",
       "sensor": "deck_camera",
-      "places": "own_deck",
+      "scope": "own_deck",
+      "places": null,
       "valid_for": {
         "value": "30",
         "unit": "s"
