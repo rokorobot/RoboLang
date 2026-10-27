@@ -156,6 +156,14 @@ def check_install(artifact: Path, work: Path):
     core = run([python, "-c", CORE_PROBE, message], cwd=outside, env=env).stdout.decode().split()
     expect(core == ["0", "0"], "the installed robolang.core ships both Core 0.1 schemas and validates a message")
 
+    fixtures = REPO / "tests" / "fixtures" / "arch02"
+    reference = run([robolang, "arch02", "--scenario", fixtures / "scenario.json", "--cases",
+                     fixtures / "cases.json", "--case", "happy_path"], cwd=outside, env=env)
+    expect(
+        b'"mode": "simulation"' in reference.stdout and b'"planner_status": "succeeded"' in reference.stdout,
+        "arch02 runs the reference scenario's happy path in simulation (exit 0)",
+    )
+
     module = run([python, "-m", "robolang", "--version"], cwd=outside, env=env).stdout.decode().strip()
     expect(module == version, "python -m robolang works")
 

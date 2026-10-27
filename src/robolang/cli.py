@@ -5,10 +5,14 @@ Developer commands for RoboLang v1.1 and v1.2.
     inspect  FILE          show what a validated file describes (text or JSON IR)
     simulate FILE --world WORLD
                            run a validated task in a symbolic simulation
+    arch02 --scenario SCENARIO --cases CASES --case ID
+                           run one case of the RFC-001 reference scenario in simulation
 
 `validate` and `inspect` never execute anything. `simulate` runs only in a symbolic,
 deterministic simulation (spec/simulation-v1.0.md): it never loads a robot adapter or connects
-to ROS 2 or hardware, and its result is not evidence that a task is safe on a robot.
+to ROS 2 or hardware, and its result is not evidence that a task is safe on a robot. `arch02`
+runs the Core 0.1 reference simulation (spec/reference-simulation-v0.1.md) in one process: no
+network, no ROS 2, no hardware.
 
 Exit status:
     0  validate/inspect: the file is valid (warnings do not change this);
@@ -16,7 +20,7 @@ Exit status:
     1  the file is not valid RoboLang; diagnostics are on stderr
     2  the command could not be carried out: bad arguments or seed, unreadable file,
        unknown task name, several tasks and no --task
-    3  simulate: the world file is not valid
+    3  simulate: the world file is not valid; arch02: the scenario or cases file is not valid
     4  simulate: the run ended FAILED
     5  simulate: the run ended CANCELLED
 """
@@ -29,6 +33,9 @@ from importlib import metadata
 from pathlib import Path
 
 from . import ir as task_ir
+from .arch02 import ScenarioError, simulate_case
+from .arch02 import to_json as arch02_json
+from .core import ReadError
 from .diagnostics import RoboLangError
 from .sim import DEFAULT_SEED, SEED, WorldError, load_world, run_id, sha256_normalized, to_json, to_record
 from .sim import run as simulate_task
@@ -75,6 +82,13 @@ exit status:
   3  the world file is not valid; diagnostics are printed to stderr
   4  the run ended FAILED; the run record is on stdout
   5  the run ended CANCELLED; the run record is on stdout
+"""
+
+_ARCH02_EPILOG = """\
+exit status:
+  0  the case ran; the run record is on stdout (the planner's recorded status is in it, and on stderr)
+  2  bad arguments or seed, unreadable file, or no case with that ID
+  3  the scenario or cases file is not valid
 """
 
 
@@ -275,6 +289,33 @@ def _simulate(args, out, err) -> int:
     return _SIMULATE_EXIT[run_result.state]
 
 
+# -------- arch02 --------
+
+def _arch02(args, out, err) -> int:
+    if args.seed is not None and not SEED.fullmatch(args.seed):
+        raise _CommandError("invalid --seed: use 1 to 64 characters from A-Z a-z 0-9 . _ -")
+    scenario = _read_bytes(args.scenario)
+    cases_data = _read_bytes(args.cases)
+    try:
+        cases = json.loads(cases_data.decode("utf-8"))["cases"]
+        case = next((c for c in cases if c.get("id") == args.case), None)
+    except (ValueError, KeyError, TypeError, AttributeError):
+        print(f"{args.cases}: error: not a cases file with a 'cases' list", file=err)
+        return EXIT_WORLD_INVALID
+    if case is None:
+        ids = ", ".join(str(c.get("id")) for c in cases)
+        raise _CommandError(f"no case '{args.case}' in '{args.cases}'; cases: {ids}")
+    try:
+        record = simulate_case(scenario, case, args.seed)
+    except (ScenarioError, ReadError, KeyError, TypeError, ValueError) as error:
+        print(f"{args.scenario}: error: the scenario or case is not valid ({error})", file=err)
+        return EXIT_WORLD_INVALID
+    out.write(arch02_json(record))
+    status = record["final"]["planner_status"]
+    print(f"simulation only: run {record['run_id']}: planner-1 recorded {status}", file=err)
+    return EXIT_OK
+
+
 # -------- entry point --------
 
 def _parser(prog: str) -> argparse.ArgumentParser:
@@ -347,6 +388,24 @@ def _parser(prog: str) -> argparse.ArgumentParser:
         help=f"1 to 64 characters from A-Z a-z 0-9 . _ - (default {DEFAULT_SEED}); only distinguishes runs",
     )
     simulate.set_defaults(run=_simulate)
+
+    arch02 = commands.add_parser(
+        "arch02",
+        help="run one case of the RFC-001 reference scenario in simulation (no network, no robot)",
+        description=(
+            "Run one case of the Core 0.1 reference simulation (spec/reference-simulation-v0.1.md)\n"
+            "and print its run record (JSON) on stdout.\n"
+            "Simulation only: one process, a symbolic world, no network, no ROS 2, no hardware.\n"
+            "The record is not evidence about real robots, networks or signatures."
+        ),
+        epilog=_ARCH02_EPILOG,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    arch02.add_argument("--scenario", metavar="SCENARIO", required=True, help="path to a scenario file (0.1)")
+    arch02.add_argument("--cases", metavar="CASES", required=True, help="path to a cases file")
+    arch02.add_argument("--case", metavar="ID", required=True, help="the ID of the case to run")
+    arch02.add_argument("--seed", metavar="SEED", help="replaces the case's seed; only distinguishes runs")
+    arch02.set_defaults(run=_arch02)
     return parser
 
 

@@ -75,6 +75,7 @@ class RunResult:
     planner_status: str | None
     goal_states: tuple[tuple[str, str], ...]  # (participant, final state of its goal)
     custody: tuple[tuple[str, str], ...]  # (participant, final local custody state)
+    commitments: tuple[tuple[str, str], ...]  # (participant, final local commitment state)
     designated_custody: tuple[tuple[str, str], ...]  # (thing, responsible participant)
     final_world: tuple[Fact, ...]
     end_t_ms: int
@@ -413,6 +414,8 @@ class Simulation:
                                      if getattr(p, "goal_state", None))),
             custody=tuple(sorted((pid, p.custody) for pid, p in self.participants.items()
                                  if getattr(p, "custody", None))),
+            commitments=tuple(sorted((pid, p.commitment_state) for pid, p in self.participants.items()
+                                     if getattr(p, "commitment_state", None))),
             designated_custody=tuple(sorted(designated.items())),
             final_world=self.world.facts(),
             end_t_ms=max([s.t_sent_ms for s in self._sent] + [d.t_ms for d in self._deliveries]
