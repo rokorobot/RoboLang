@@ -164,6 +164,7 @@ def check_install(artifact: Path, work: Path):
 
 CORE_PROBE = """
 import sys
+import robolang.arch02  # noqa: F401  (installed and importable)
 import robolang.core as core
 document = core.read_document(open(sys.argv[1], "rb").read())
 descriptor = core.load_schema(core.DESCRIPTOR_SCHEMA)
