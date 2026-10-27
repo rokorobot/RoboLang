@@ -9,7 +9,7 @@ from conftest import PICK_AND_PLACE, REPO_ROOT, task
 
 DEMO_JOINTS = [0.0, -1.0, 1.0, 0.0, 1.0, 0.0]
 
-# Mirrors the "Expected output" section of the README.
+# Mirrors the "Expected output" section of docs/legacy-v1.md.
 EXPECTED_DEMO_OUTPUT = """\
 [RUNTIME] executing: move r to src;
 [MOVE] robot_arm_1 → joints=[0.0, -1.0, 1.0, 0.0, 1.0, 0.0] (duration=2.0s)
