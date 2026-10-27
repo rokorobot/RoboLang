@@ -558,9 +558,7 @@ class Amr(Participant):
     def _move(self, to: str, done) -> None:
         if self.goal_state != "RUNNING" or self.commitment_state != "active":
             return self.event("state", record="motion_refused", to=to)
-        here = self.sim.world.get(self.id, "located_in")
-        self.sim.start_action(self.id, "move", duration(self.sim, "move", here, to),
-                              lambda: self.sim.world.set(self.id, "located_in", to), done, to=to)
+        self.sim.move(self.id, to, done)  # the world and the durations are the simulation's
 
     def on_coordinate(self, document: dict) -> None:
         phase = document["payload"]["phase"]
