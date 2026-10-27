@@ -413,5 +413,6 @@ A2A; any AI model; physical execution.
 | Part | Status |
 |---|---|
 | Core 0.1 per-message checks, schemas, canonical form, `sim-hmac-sha256` (ARCH-1) | Implemented in `src/robolang/core/`; A-T16 and A-T17 pass (`tests/test_core.py`) |
-| World, participants, faults, run record (ARCH-2, ARCH-3) | Specified, not implemented |
-| Scenario fixtures (section 11) | Checked for consistency only by `tests/test_arch02_fixtures.py`, which runs nothing |
+| World, participants, delivery, faults, conversation-state checks (ARCH-2) | Implemented in `src/robolang/arch02/`; A-T1 to A-T14 pass, A-T15 in memory (`tests/test_arch02.py`) |
+| Run record, run ID, entry point, README (ARCH-3) | Specified, not implemented |
+| Scenario fixtures (section 11) | Run by `tests/test_arch02.py`; consistency also checked by `tests/test_arch02_fixtures.py` |
