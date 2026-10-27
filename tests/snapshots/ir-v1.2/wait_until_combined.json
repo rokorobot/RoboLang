@@ -1,0 +1,88 @@
+{
+  "ir_schema": "robolang.task-ir",
+  "ir_schema_version": "1.1",
+  "language_version": "1.2",
+  "tasks": [
+    {
+      "name": "t",
+      "parameters": [
+        {
+          "name": "r",
+          "type": "robot"
+        },
+        {
+          "name": "box",
+          "type": "object"
+        },
+        {
+          "name": "dst",
+          "type": "location"
+        },
+        {
+          "name": "cell",
+          "type": "region"
+        },
+        {
+          "name": "left",
+          "type": "region"
+        },
+        {
+          "name": "right",
+          "type": "region"
+        }
+      ],
+      "safety": [],
+      "preconditions": [],
+      "steps": [
+        {
+          "kind": "wait_until",
+          "condition": {
+            "kind": "and",
+            "conditions": [
+              {
+                "kind": "or",
+                "conditions": [
+                  {
+                    "kind": "region_clear",
+                    "region": "left"
+                  },
+                  {
+                    "kind": "region_clear",
+                    "region": "right"
+                  }
+                ]
+              },
+              {
+                "kind": "sensor_ok",
+                "sensor": "camera_top"
+              }
+            ]
+          },
+          "timeout": {
+            "value": "30",
+            "unit": "s"
+          }
+        },
+        {
+          "kind": "wait_until",
+          "condition": {
+            "kind": "not",
+            "condition": {
+              "kind": "object_exists",
+              "object": "box"
+            }
+          },
+          "timeout": {
+            "value": "500",
+            "unit": "ms"
+          }
+        },
+        {
+          "kind": "move",
+          "robot": "r",
+          "target": "dst"
+        }
+      ]
+    }
+  ]
+}

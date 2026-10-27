@@ -1,7 +1,7 @@
 # RoboLang Task IR — schema 1.1
 
 **Status:** LANG-1 specification, **approved by the owner on 2026-10-27** (decision record
-[0006](decisions/0006-lang-1-combined-conditions.md), L6). Not implemented yet.
+[0006](decisions/0006-lang-1-combined-conditions.md), L6). Implemented in `src/robolang/ir.py` (LANG-1b).
 **Schema identifier:** `robolang.task-ir`
 **Schema version:** `1.1`
 **Produced from:** RoboLang language version `1.2` ([specification](robolang-v1.2.md))

@@ -5,7 +5,7 @@ in [decision record 0006](decisions/0006-lang-1-combined-conditions.md) (L1–L1
 **Work item:** LANG-1 of Track B (Foundation 1 Part B language extensions,
 [RL-FOUNDATION-02 section 5.2](architecture/rl-foundation-02-domain-contracts.md#52-track-b--foundation-1-part-b-language-extensions-independent-owner-selected)).
 Domain 09, Logic & Control Flow (contract 4.9).
-**Implementation:** none yet. LANG-1b implementation was authorized by the owner on 2026-10-27.
+**Implementation:** LANG-1b, in `src/robolang/` (section 12). Authorized by the owner on 2026-10-27.
 **Syntax version:** 1.2
 **Builds on:** [RoboLang 1.1](robolang-v1.1.md), unchanged; [Task IR 1.0](ir-schema-v1.0.md),
 unchanged; [simulation 1.0](simulation-v1.0.md), unchanged
@@ -317,9 +317,9 @@ Acceptance tests for LANG-1b:
 | L-T6 | Kleene logic | `l1_and_false_unknown` fails with `S101`, not `S102`; `l1_or_true_unknown` succeeds |
 | L-T7 | Regression | The 76 RoboLang 1.1 fixtures, every golden IR snapshot, every RL-BASIC-01 simulation case and run-ID vector, and the full suite pass unchanged |
 
-Until LANG-1b exists, `tests/test_v1_2_fixtures.py` checks only that the fixtures are well
-formed and consistent with this specification, and that today's 1.1 front end rejects every
-1.2 file with `E213` and gives every `compat/` file its stated result. It executes nothing.
+`tests/test_v1_2_fixtures.py` runs L-T1 to L-T6 against these fixtures, with golden IR snapshots
+in `tests/snapshots/ir-v1.2/`; `tests/test_lang1.py` adds unit tests for each section. L-T7 is
+the existing suite, unchanged.
 
 ## 11. Delivery
 
@@ -334,5 +334,9 @@ formed and consistent with this specification, and that today's 1.1 front end re
 
 | Part | Status |
 |---|---|
-| Sections 2–8 | Specified, not implemented |
-| Fixtures (section 10) | Added; checked for consistency only |
+| Version marker and reserved words (section 2) | Implemented in `lexer.py`, `parser.py` (LANG-1b) |
+| Syntax, `E214`, `E215`, AST (sections 3, 5, 6) | Implemented in `parser.py`, `nodes.py` |
+| Static rules at any depth (section 4) | Implemented in `validator.py` |
+| Task IR 1.1 (section 7) | Implemented in `ir.py` |
+| Three-valued evaluation, run record 1.1 (section 8) | Implemented in `sim/values.py`, `sim/executor.py`, `sim/record.py` |
+| Acceptance tests L-T1 to L-T7 (section 10) | Pass in CI |

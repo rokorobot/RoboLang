@@ -1,5 +1,5 @@
 """
-Recursive-descent parser for RoboLang v1.1 (spec/grammar.ebnf).
+Recursive-descent parser for RoboLang v1.1 (spec/grammar.ebnf) and v1.2 (spec/grammar-v1.2.ebnf).
 
 Produces the AST of `nodes.py` or raises RoboLangError for the first error.
 Stages run in order: a lexical error anywhere in the file is reported before
@@ -25,6 +25,7 @@ from .tokens import (
     CONDITIONS,
     DURATION_UNITS,
     PARAM_TYPES,
+    RESERVED_V1_2,
     SAFETY_KEYS,
     SPEED_UNITS,
     STATEMENTS,
@@ -32,7 +33,10 @@ from .tokens import (
     TokenKind,
 )
 
-SUPPORTED_VERSION = "1.1"
+DEFAULT_VERSION = "1.1"  # the version of a file without a marker
+SUPPORTED_VERSIONS = ("1.1", "1.2")
+SUPPORTED_VERSION = DEFAULT_VERSION  # kept for existing imports
+MAX_CONDITION_DEPTH = 8  # spec/robolang-v1.2.md section 3.3
 
 _NOT_IN_V1_1 = "is documented for v1 but is not part of v1.1"
 
@@ -54,6 +58,7 @@ class _Parser:
         self._warnings: list[Diagnostic] = []
         self._prev: Token | None = None
         self._buffer: deque[Token] = deque()
+        self._language = DEFAULT_VERSION
         self._tok = lexer.next_token()
 
     # -------- helpers --------
@@ -139,12 +144,16 @@ class _Parser:
 
     def _version(self) -> ast.VersionDecl:
         start = self._advance()
-        if self._at(TokenKind.NUMBER) and self._tok.text != SUPPORTED_VERSION:
+        if self._at(TokenKind.NUMBER) and self._tok.text not in SUPPORTED_VERSIONS:
             self._error(
                 "E213",
-                f"unsupported language version {self._tok.text}; this front end implements {SUPPORTED_VERSION}",
+                f"unsupported language version {self._tok.text}; "
+                f"this front end implements {' and '.join(SUPPORTED_VERSIONS)}",
             )
-        number = self._expect(TokenKind.NUMBER, f"a version number after 'robolang' (for example {SUPPORTED_VERSION})")
+        number = self._expect(TokenKind.NUMBER, f"a version number after 'robolang' (for example {DEFAULT_VERSION})")
+        self._language = number.text
+        if self._language == "1.2":
+            self._lexer.reserved = RESERVED_V1_2  # the token after ';' is not lexed yet
         end = self._semicolon("the version marker")
         return ast.VersionDecl(number.text, start.span.to(end.span))
 
@@ -250,6 +259,60 @@ class _Parser:
     # -------- conditions --------
 
     def _condition(self, expected: str) -> ast.Condition:
+        """One atom in 1.1; a combined condition in 1.2 (spec/robolang-v1.2.md section 3)."""
+        if self._language != "1.2":
+            return self._atom(expected)
+        start = self._tok
+        condition, depth = self._combined(expected, start, 0)
+        if depth > MAX_CONDITION_DEPTH:
+            self._too_deep(start)
+        return condition
+
+    def _too_deep(self, start: Token) -> NoReturn:
+        self._error(
+            "E215",
+            f"condition is deeper than {MAX_CONDITION_DEPTH} levels; "
+            "each 'not', each '( )' and each and/or chain is a level",
+            start.span,
+        )
+
+    def _combined(self, expected: str, start: Token, groups: int) -> tuple[ast.Condition, int]:
+        """Operands joined by one operator word, and the depth of the result (section 3.3)."""
+        first, depth = self._operand(expected, start, groups)
+        if not self._at_keyword("and", "or"):
+            return first, depth
+        word = self._tok.text
+        operands = [first]
+        while self._at_keyword(word):
+            self._advance()
+            operand, operand_depth = self._operand(f"a condition after '{word}'", start, groups)
+            operands.append(operand)
+            depth = max(depth, operand_depth)
+        if self._at_keyword("and", "or"):
+            other = self._tok.text
+            self._error(
+                "E214",
+                f"'{other}' cannot follow '{word}' at the same level; "
+                f"group with parentheses, for example '(a {word} b) {other} c'",
+            )
+        node = ast.And if word == "and" else ast.Or
+        return node(tuple(operands), operands[0].span.to(operands[-1].span)), depth + 1
+
+    def _operand(self, expected: str, start: Token, groups: int) -> tuple[ast.Condition, int]:
+        """`not` operand, `( condition )` or an atom. `groups` counts the open `not` and `(`."""
+        if not (self._at_keyword("not") or self._at(TokenKind.LPAREN)):
+            return self._atom(expected), 0
+        if groups == MAX_CONDITION_DEPTH:
+            self._too_deep(start)  # depth is at least the number of open groups
+        token = self._advance()
+        if token.kind is TokenKind.LPAREN:
+            inner, depth = self._combined("a condition after '('", start, groups + 1)
+            self._expect(TokenKind.RPAREN, "')' to close the group")
+            return inner, depth + 1
+        operand, depth = self._operand("a condition after 'not'", start, groups + 1)
+        return ast.Not(operand, token.span.to(operand.span)), depth + 1
+
+    def _atom(self, expected: str) -> ast.Condition:
         token = self._tok
         if self._at_keyword("message_received"):
             self._error("E211", f"'message_received' {_NOT_IN_V1_1}")
@@ -362,7 +425,7 @@ class _Parser:
 
 
 def parse(source: str, filename: str = "<string>") -> ParseResult:
-    """Parse RoboLang v1.1 source. Raises RoboLangError on the first lexical or syntax error."""
+    """Parse RoboLang v1.1 or v1.2 source. Raises RoboLangError on the first lexical or syntax error."""
     return _Parser(Lexer(source, filename), filename).parse_program()
 
 

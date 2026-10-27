@@ -21,7 +21,7 @@
 RoboLang is an open, robot-independent project for expressing, validating and coordinating
 robotic tasks, goals and verifiable outcomes across AI systems and heterogeneous robots.
 
-- **Available today:** RoboLang 1.1 language tooling, deterministic validation, Task IR 1.0
+- **Available today:** RoboLang 1.1 and 1.2 language tooling, deterministic validation, Task IR 1.0
   and simulation-only task execution with reproducible run records.
 - **Specified and approved, not implemented:** versioned Core semantic contracts, AI-to-Robot
   (A2R) and Robot-to-Robot (R2R) interoperability, observations, capabilities, authorization
@@ -64,7 +64,7 @@ treated as untrusted input that deterministic software checks before use.
 
 | Maturity | Status |
 |---|---|
-| Language | RoboLang **1.1** |
+| Language | RoboLang **1.1**, and **1.2** (adds `and`, `or`, `not` in conditions) |
 | Python package | **0.1.0a1** (alpha; installed from a clone, not published on PyPI) |
 | Foundation 1 (simulation-only execution) | **Delivered**, exit gate signed off 2026-10-27 ([evidence](docs/evidence/rl-basic-01-exit-gate.md)) |
 | Next milestone | **RL-ARCH-02**, needs separate owner authorization |
@@ -73,14 +73,15 @@ treated as untrusted input that deterministic software checks before use.
 
 | Component | Where | What it does |
 |---|---|---|
-| Lexer and parser | `src/robolang/lexer.py`, `parser.py` | Formal grammar ([EBNF](spec/grammar.ebnf)), typed AST with source positions |
+| Lexer and parser | `src/robolang/lexer.py`, `parser.py` | Formal grammar ([1.1](spec/grammar.ebnf), [1.2](spec/grammar-v1.2.ebnf)), typed AST with source positions |
 | Validator | `src/robolang/validator.py` | Names, types, values and units; stable diagnostic codes with `file:line:column` |
-| Task IR 1.0 | `src/robolang/ir.py` | Versioned, deterministic JSON form of a validated task ([schema](spec/ir-schema-v1.0.md)) |
+| Task IR 1.0 and 1.1 | `src/robolang/ir.py` | Versioned, deterministic JSON form of a validated task ([1.0](spec/ir-schema-v1.0.md), [1.1](spec/ir-schema-v1.1.md)) |
 | Symbolic executor | `src/robolang/sim/` | Runs one validated task against a declared world file, fail-closed: false or unknown preconditions stop the run |
 | Run records | `src/robolang/sim/record.py` | Versioned JSON record of every state, precondition, step and the final world, with a run ID derived from the inputs |
 | `robolang` command | `src/robolang/cli.py` | `validate`, `inspect`, `simulate` |
 
 The behaviour is specified in [`robolang-v1.1.md`](spec/robolang-v1.1.md),
+[`robolang-v1.2.md`](spec/robolang-v1.2.md), [`ir-schema-v1.1.md`](spec/ir-schema-v1.1.md),
 [`ir-schema-v1.0.md`](spec/ir-schema-v1.0.md) and [`simulation-v1.0.md`](spec/simulation-v1.0.md).
 CI runs the full test suite, lint and an install test of the wheel and source distribution on
 Ubuntu and Windows.
@@ -144,11 +145,12 @@ commands also run from the clone without installing: `python src/robolang valida
 | Version | Current | What it identifies |
 |---|---|---|
 | Distribution | `0.1.0a1` | The installable Python package (`pyproject.toml`). A pre-release: `a1` means first alpha |
-| Language | `1.1` | The syntax and rules of `.rob` files ([specification](spec/robolang-v1.1.md)) |
-| IR schema | `1.0` | The shape of the JSON printed by `inspect --json` ([schema](spec/ir-schema-v1.0.md)) |
+| Language | `1.1`, `1.2` | The syntax and rules of `.rob` files ([1.1](spec/robolang-v1.1.md), [1.2](spec/robolang-v1.2.md)). A file is 1.2 only with the marker `robolang 1.2;` |
+| IR schema | `1.0`, `1.1` | The shape of the JSON printed by `inspect --json`: 1.0 for a 1.1 source, 1.1 for a 1.2 source ([1.0](spec/ir-schema-v1.0.md), [1.1](spec/ir-schema-v1.1.md)) |
 
-The simulation world file and run record have their own schema versions (both `1.0`), defined in
-[`simulation-v1.0.md`](spec/simulation-v1.0.md).
+The simulation world file and run record have their own schema versions, defined in
+[`simulation-v1.0.md`](spec/simulation-v1.0.md): the world file is `1.0`; the run record is `1.0` for a
+1.1 source and `1.1` for a 1.2 source ([`robolang-v1.2.md`](spec/robolang-v1.2.md) section 8.3).
 
 ### Example task
 
@@ -216,8 +218,9 @@ authorization and outcomes, described in
 - **No hardware and no ROS 2 runtime.** No adapter is loaded and nothing is sent to a robot.
 - **No Core schemas yet.** Core JSON, A2R and R2R are specified in RFC-001; their schemas are
   drafted in RL-ARCH-02.
-- **RoboLang 1.1 syntax is sequential.** No branching, loops, structured data or local bindings
-  (planned as Track B language extensions).
+- **Plans are sequential.** RoboLang 1.2 adds combined conditions (`and`, `or`, `not`, with
+  three-valued logic) but no branching, loops, structured data or local bindings (planned as
+  Track B language extensions).
 - **Placeholders:** `requirements.txt` (no runtime dependencies), `docker/*`,
   `examples/inspect_object.rob` and `examples/handover.rob` are empty.
 - **Legacy v1 code** (`src/robolang_runtime.py`, the adapters and the ROS 2 entry point) stays in
@@ -239,7 +242,7 @@ implementation item needs owner authorization before it starts. Full detail in t
 | Track | Content | State |
 |---|---|---|
 | A — Foundation 1 | Simulation executor, run records, `robolang simulate` | Delivered |
-| B — Language extensions | Combined conditions, branching, bounded repetition, typed values, local bindings, structured data | Not started |
+| B — Language extensions | Combined conditions, branching, bounded repetition, typed values, local bindings, structured data | LANG-1 (combined conditions, RoboLang 1.2) delivered; the rest not started |
 | C — Core | IR reader and re-validator; RL-ARCH-02 | Not started |
 | D — Foundation 2 | Goal execution, Core-shaped observations, knowledge store, reasoner proposals, bounded recovery, world-model depth | Not started |
 | E — Foundation 3 | Concurrency, resources, portable skills, ROS 2 backend, two-profile portability, A2A binding | Later |
@@ -249,7 +252,8 @@ implementation item needs owner authorization before it starts. Full detail in t
 **Normative specifications**
 
 - [RoboLang 1.1 language](spec/robolang-v1.1.md) and [grammar](spec/grammar.ebnf)
-- [Task IR schema 1.0](spec/ir-schema-v1.0.md)
+- [RoboLang 1.2 language](spec/robolang-v1.2.md) (combined conditions) and [grammar](spec/grammar-v1.2.ebnf)
+- [Task IR schema 1.0](spec/ir-schema-v1.0.md) and [1.1](spec/ir-schema-v1.1.md)
 - [Simulation semantics, world file 1.0 and run record 1.0](spec/simulation-v1.0.md)
 
 **Architecture**

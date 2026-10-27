@@ -96,7 +96,12 @@ class _Validator:
     # -------- conditions and statements --------
 
     def _condition(self, condition: ast.Condition):
-        if isinstance(condition, ast.RobotReady):
+        if isinstance(condition, (ast.And, ast.Or)):
+            for operand in condition.operands:
+                self._condition(operand)
+        elif isinstance(condition, ast.Not):
+            self._condition(condition.operand)
+        elif isinstance(condition, ast.RobotReady):
             self._use(condition.robot, ParamType.ROBOT, "robot_ready")
         elif isinstance(condition, ast.RegionClear):
             self._use(condition.region, ParamType.REGION, "region_clear")

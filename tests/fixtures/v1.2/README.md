@@ -1,15 +1,16 @@
 # RoboLang v1.2 fixtures (LANG-1)
 
 Conformance fixtures for the [v1.2 specification](../../../spec/robolang-v1.2.md): combined
-conditions. **No v1.2 front end exists yet**; LANG-1b will run these fixtures.
+conditions. `tests/test_v1_2_fixtures.py` runs them (acceptance tests L-T1 to L-T6):
 
-Until then, `tests/test_v1_2_fixtures.py` checks only that they are well formed and consistent
-with the specification, and that today's 1.1 front end:
+- every file in `valid/` passes the complete front end and matches its golden IR snapshot in
+  `tests/snapshots/ir-v1.2/` (language 1.2, IR schema 1.1);
+- every file in `invalid/` is rejected with the code and line its header states;
+- every file in `compat/` keeps its RoboLang 1.1 result;
+- every case in `simulation/cases.json` gives the stated exit status and run-record fields.
 
-- rejects every file in `valid/` and `invalid/` with `E213` at its version marker, so a 1.2
-  file is never misread by a 1.1 front end;
-- gives every file in `compat/` the result its header states, which must not change when
-  LANG-1b is implemented.
+To regenerate the snapshots after an intended IR change:
+`ROBOLANG_UPDATE_SNAPSHOTS=1 python -m pytest tests/test_v1_2_fixtures.py`.
 
 These fixtures are separate from the 76 RoboLang 1.1 fixtures in `../valid/` and
 `../invalid/` and from the RL-BASIC-01 simulation fixtures in `../simulation/`, which are

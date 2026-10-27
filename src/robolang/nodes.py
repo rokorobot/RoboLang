@@ -1,5 +1,5 @@
 """
-Abstract syntax tree for RoboLang v1.1 (spec/robolang-v1.1.md, section 7).
+Abstract syntax tree for RoboLang v1.1 and v1.2 (robolang-v1.1.md section 7, robolang-v1.2.md 6).
 
 Nodes are immutable and record the source faithfully: names are unresolved,
 units are kept as written and nothing is normalized. Binding and type checks
@@ -111,7 +111,31 @@ class SensorOk:
     span: Span
 
 
-Condition = Union[RobotReady, RegionClear, ObjectExists, SensorOk]
+@dataclass(frozen=True)
+class And:
+    """RoboLang 1.2. Two or more operands in source order; grouping is kept as written."""
+
+    operands: tuple[Condition, ...]
+    span: Span
+
+
+@dataclass(frozen=True)
+class Or:
+    """RoboLang 1.2. Two or more operands in source order; grouping is kept as written."""
+
+    operands: tuple[Condition, ...]
+    span: Span
+
+
+@dataclass(frozen=True)
+class Not:
+    """RoboLang 1.2."""
+
+    operand: Condition
+    span: Span
+
+
+Condition = Union[RobotReady, RegionClear, ObjectExists, SensorOk, And, Or, Not]
 
 
 # -------- statements --------
