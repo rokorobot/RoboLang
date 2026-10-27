@@ -9,8 +9,10 @@ Validation runs after the task is selected (3.8). Nothing here executes a task.
 from __future__ import annotations
 import json
 import re
+from collections.abc import Mapping
 from dataclasses import dataclass
 from decimal import Decimal
+from types import MappingProxyType
 
 from .. import ir
 from .values import DURATION_UNITS, SPEED_UNITS, Speed, duration_ms, parse_decimal
@@ -86,11 +88,13 @@ class TaskScript:
 
 @dataclass(frozen=True)
 class World:
+    """A validated, read-only snapshot. Its mappings cannot be changed; execution works on a copy."""
+
     locations: tuple[str, ...]
-    regions: dict
-    robots: dict
-    objects: dict
-    sensors: dict
+    regions: Mapping[str, Region]
+    robots: Mapping[str, Robot]
+    objects: Mapping[str, WorldObject]
+    sensors: Mapping[str, Sensor]
     events: tuple[Event, ...]  # stably sorted by at_ms: equal times keep file order
     task: TaskScript
 
@@ -282,7 +286,15 @@ class _Loader:
         self.check_events(world, events)
         script = self.check_task(world, entries)
         ordered = tuple(sorted(events, key=lambda e: e.at_ms))  # stable: ties keep file order
-        return World(world.locations, regions, robots, objects, sensors, ordered, script)
+        return World(
+            world.locations,
+            MappingProxyType(regions),
+            MappingProxyType(robots),
+            MappingProxyType(objects),
+            MappingProxyType(sensors),
+            ordered,
+            script,
+        )
 
     # -- sections: form --
 
