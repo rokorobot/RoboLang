@@ -1,5 +1,5 @@
 """
-Developer commands for RoboLang v1.1.
+Developer commands for RoboLang v1.1 and v1.2.
 
     validate FILE          check a .rob file against the language contract
     inspect  FILE          show what a validated file describes (text or JSON IR)
@@ -13,7 +13,7 @@ to ROS 2 or hardware, and its result is not evidence that a task is safe on a ro
 Exit status:
     0  validate/inspect: the file is valid (warnings do not change this);
        simulate: the run ended SUCCEEDED
-    1  the file is not valid RoboLang v1.1; diagnostics are on stderr
+    1  the file is not valid RoboLang; diagnostics are on stderr
     2  the command could not be carried out: bad arguments or seed, unreadable file,
        unknown task name, several tasks and no --task
     3  simulate: the world file is not valid
@@ -47,7 +47,7 @@ NOT_A_SAFETY_CHECK = (
 NOTHING_EXECUTED = "This is a description only. Nothing was executed."
 
 _DESCRIPTION = f"""\
-Tools for RoboLang v{task_ir.LANGUAGE_VERSION} task files.
+Tools for RoboLang v1.1 and v1.2 task files.
 
 validate and inspect check and describe .rob files; they never execute anything.
 simulate runs a validated task in a symbolic, deterministic simulation only: it never loads a
@@ -91,7 +91,8 @@ def version_text() -> str:
     distribution = distribution_version() or "unknown (not installed, running from source)"
     return (
         f"robolang {distribution} "
-        f"(language {task_ir.LANGUAGE_VERSION}, IR schema {task_ir.IR_SCHEMA_VERSION})"
+        f"(language {' and '.join(task_ir.IR_SCHEMA_VERSIONS)}, "
+        f"IR schema {' and '.join(task_ir.IR_SCHEMA_VERSIONS.values())})"
     )
 
 
@@ -264,6 +265,7 @@ def _simulate(args, out, err) -> int:
         source_sha256=sha256_normalized(source_bytes),
         world_sha256=sha256_normalized(world_bytes),
         seed=seed,
+        language_version=result.ir.language_version,
     )
     out.write(to_json(record))
     summary = f"simulation only: run {identifier}: {run_result.state}"

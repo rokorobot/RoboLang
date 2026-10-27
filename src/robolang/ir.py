@@ -1,5 +1,5 @@
 """
-Versioned task IR for RoboLang (spec/ir-schema-v1.0.md).
+Versioned task IR for RoboLang (spec/ir-schema-v1.0.md; schema 1.1 for RoboLang 1.2: ir-schema-v1.1.md).
 
 The IR is a description of validated tasks with source details removed:
 no spans, comments or formatting. Two sources that differ only in layout
@@ -20,12 +20,14 @@ from typing import ClassVar, Union
 
 from . import nodes as ast
 from .diagnostics import Diagnostic
-from .parser import SUPPORTED_VERSION
+from .parser import DEFAULT_VERSION
 from .validator import check, validate
 
 IR_SCHEMA = "robolang.task-ir"
 IR_SCHEMA_VERSION = "1.0"
-LANGUAGE_VERSION = SUPPORTED_VERSION
+LANGUAGE_VERSION = DEFAULT_VERSION
+# Language version -> the IR schema version it compiles to (ir-schema-v1.1.md section 1).
+IR_SCHEMA_VERSIONS = {"1.1": "1.0", "1.2": "1.1"}
 
 
 def _key(name: str):
@@ -81,7 +83,31 @@ class SensorOk:
     sensor: str
 
 
-Condition = Union[RobotReady, RegionClear, ObjectExists, SensorOk]
+@dataclass(frozen=True)
+class And:
+    """Schema 1.1. Two or more operands; never directly contains an `And` (grouping is flattened)."""
+
+    KIND: ClassVar[str] = "and"
+    conditions: tuple[Condition, ...]
+
+
+@dataclass(frozen=True)
+class Or:
+    """Schema 1.1. Two or more operands; never directly contains an `Or` (grouping is flattened)."""
+
+    KIND: ClassVar[str] = "or"
+    conditions: tuple[Condition, ...]
+
+
+@dataclass(frozen=True)
+class Not:
+    """Schema 1.1. Never removed or pushed inward."""
+
+    KIND: ClassVar[str] = "not"
+    condition: Condition
+
+
+Condition = Union[RobotReady, RegionClear, ObjectExists, SensorOk, And, Or, Not]
 
 
 # -------- steps --------
@@ -183,6 +209,15 @@ def _quantity(node: ast.Duration | ast.Speed) -> Quantity:
 
 
 def _condition(node: ast.Condition) -> Condition:
+    if isinstance(node, (ast.And, ast.Or)):
+        kind = And if isinstance(node, ast.And) else Or
+        conditions: list[Condition] = []
+        for operand in node.operands:
+            lowered = _condition(operand)
+            conditions.extend(lowered.conditions if isinstance(lowered, kind) else (lowered,))
+        return kind(tuple(conditions))  # canonical form: grouping flattened, order kept (section 2.1)
+    if isinstance(node, ast.Not):
+        return Not(_condition(node.operand))
     if isinstance(node, ast.RobotReady):
         return RobotReady(node.robot.text)
     if isinstance(node, ast.RegionClear):
@@ -219,7 +254,8 @@ def _task(node: ast.Task) -> Task:
 
 
 def _lower(program: ast.Program) -> TaskIR:
-    return TaskIR(tuple(_task(t) for t in program.tasks))
+    language = program.version.version if program.version else LANGUAGE_VERSION
+    return TaskIR(tuple(_task(t) for t in program.tasks), language, IR_SCHEMA, IR_SCHEMA_VERSIONS[language])
 
 
 def compile_program(program: ast.Program, filename: str = "<string>") -> TaskIR:

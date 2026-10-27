@@ -187,6 +187,12 @@ def _require_ready(ready: bool | None) -> None:
 
 
 def _evaluate(state: _State, bound: dict[str, str], condition: ir.Condition) -> Truth:
+    if isinstance(condition, ir.Not):
+        return _evaluate(state, bound, condition.condition).negate()
+    if isinstance(condition, ir.And):
+        return Truth.all_of(_evaluate(state, bound, c) for c in condition.conditions)
+    if isinstance(condition, ir.Or):
+        return Truth.any_of(_evaluate(state, bound, c) for c in condition.conditions)
     if isinstance(condition, ir.RobotReady):
         return Truth.of(state.ready[bound[condition.robot]])
     if isinstance(condition, ir.RegionClear):
@@ -296,7 +302,9 @@ def _not_run(task: ir.Task, first: int = 1) -> list[StepResult]:
 
 def _names(node) -> list[str]:
     """The parameter names a condition or step refers to."""
-    if isinstance(node, ir.WaitUntil):
+    if isinstance(node, (ir.And, ir.Or)):
+        return [name for condition in node.conditions for name in _names(condition)]
+    if isinstance(node, (ir.WaitUntil, ir.Not)):
         return _names(node.condition)
     return [getattr(node, f) for f in ("robot", "region", "obj", "target") if hasattr(node, f)]
 

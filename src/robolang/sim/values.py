@@ -31,6 +31,26 @@ class Truth(Enum):
             return Truth.UNKNOWN
         return Truth.TRUE if value else Truth.FALSE
 
+    def negate(self) -> Truth:
+        """`not` (robolang-v1.2.md section 8.1): unknown stays unknown."""
+        return {Truth.TRUE: Truth.FALSE, Truth.FALSE: Truth.TRUE}.get(self, Truth.UNKNOWN)
+
+    @staticmethod
+    def all_of(values) -> Truth:
+        """Kleene `and`: false if any value is false, otherwise unknown if any is unknown."""
+        values = tuple(values)
+        if Truth.FALSE in values:
+            return Truth.FALSE
+        return Truth.UNKNOWN if Truth.UNKNOWN in values else Truth.TRUE
+
+    @staticmethod
+    def any_of(values) -> Truth:
+        """Kleene `or`: true if any value is true, otherwise unknown if any is unknown."""
+        values = tuple(values)
+        if Truth.TRUE in values:
+            return Truth.TRUE
+        return Truth.UNKNOWN if Truth.UNKNOWN in values else Truth.FALSE
+
 
 def parse_decimal(text: str) -> Decimal:
     """Digits with an optional fractional part: no sign, no exponent, no spaces."""

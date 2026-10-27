@@ -1,4 +1,4 @@
-"""Token definitions and word sets for RoboLang v1.1 (spec/robolang-v1.1.md, section 3)."""
+"""Token definitions and word sets for RoboLang v1.1 and v1.2 (robolang-v1.1.md section 3, robolang-v1.2.md 2.2)."""
 
 from __future__ import annotations
 from dataclasses import dataclass
@@ -46,6 +46,10 @@ FUTURE_RESERVED = frozenset(
 )
 
 RESERVED = KEYWORDS | FUTURE_RESERVED
+
+# Reserved in RoboLang 1.2 files only; in 1.1 files they are names (spec/robolang-v1.2.md section 2.2).
+OPERATORS = ("and", "or", "not")
+RESERVED_V1_2 = RESERVED | frozenset(OPERATORS)
 
 # Recognized only in their grammatical position; not reserved.
 SAFETY_KEYS = ("max_speed",)

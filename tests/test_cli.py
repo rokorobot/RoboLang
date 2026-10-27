@@ -298,7 +298,7 @@ def test_version_reports_distribution_language_and_schema_versions_separately(ca
     assert code == EXIT_OK
     assert re.fullmatch(
         r"robolang (\d+\.\d+\.\d+\S*|unknown \(not installed, running from source\)) "
-        r"\(language 1\.1, IR schema 1\.0\)\n",
+        r"\(language 1\.1 and 1\.2, IR schema 1\.0 and 1\.1\)\n",
         text,
     ), text
 
@@ -307,7 +307,7 @@ def test_version_text_uses_the_installed_distribution_version(monkeypatch):
     from robolang import cli as cli_module
 
     monkeypatch.setattr(cli_module.metadata, "version", lambda name: "9.8.7")
-    assert cli_module.version_text() == "robolang 9.8.7 (language 1.1, IR schema 1.0)"
+    assert cli_module.version_text() == "robolang 9.8.7 (language 1.1 and 1.2, IR schema 1.0 and 1.1)"
 
 
 def test_version_text_when_running_from_source(monkeypatch):
@@ -318,7 +318,7 @@ def test_version_text_when_running_from_source(monkeypatch):
 
     monkeypatch.setattr(cli_module.metadata, "version", missing)
     assert cli_module.version_text() == (
-        "robolang unknown (not installed, running from source) (language 1.1, IR schema 1.0)"
+        "robolang unknown (not installed, running from source) (language 1.1 and 1.2, IR schema 1.0 and 1.1)"
     )
 
 

@@ -17,6 +17,8 @@ from .world import WORLD_SCHEMA_VERSION
 
 RUN_RECORD_SCHEMA = "robolang.sim.run"
 RUN_RECORD_SCHEMA_VERSION = "1.0"
+# Language version -> run record schema version (robolang-v1.2.md section 8.3).
+RUN_RECORD_SCHEMA_VERSIONS = {"1.1": "1.0", "1.2": "1.1"}
 SEED = re.compile(r"[A-Za-z0-9._-]{1,64}")
 DEFAULT_SEED = "0"
 
@@ -100,12 +102,22 @@ def _final_world(world) -> dict:
 
 
 def to_record(
-    result: RunResult, *, task: ir.Task, run_id: str, source_sha256: str, world_sha256: str, seed: str
+    result: RunResult,
+    *,
+    task: ir.Task,
+    run_id: str,
+    source_sha256: str,
+    world_sha256: str,
+    seed: str,
+    language_version: str = ir.LANGUAGE_VERSION,
 ) -> dict:
-    """The run record 1.0 (section 5) as a dict with the key order of the specification."""
+    """
+    The run record (section 5) as a dict with the key order of the specification: schema 1.0
+    for a RoboLang 1.1 source, 1.1 for a 1.2 source (same shape, embedding Task IR 1.1).
+    """
     return {
         "run_record_schema": RUN_RECORD_SCHEMA,
-        "run_record_schema_version": RUN_RECORD_SCHEMA_VERSION,
+        "run_record_schema_version": RUN_RECORD_SCHEMA_VERSIONS[language_version],
         "mode": "simulation",
         "run_id": run_id,
         "inputs": {
@@ -113,8 +125,8 @@ def to_record(
             "world_sha256": world_sha256,
             "task": result.task_name,
             "seed": seed,
-            "language_version": ir.LANGUAGE_VERSION,
-            "ir_schema_version": ir.IR_SCHEMA_VERSION,
+            "language_version": language_version,
+            "ir_schema_version": ir.IR_SCHEMA_VERSIONS[language_version],
             "world_schema_version": WORLD_SCHEMA_VERSION,
         },
         "task": ir.to_dict(task),

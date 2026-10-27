@@ -1,9 +1,10 @@
 """
-Lexer for RoboLang v1.1 (spec/robolang-v1.1.md, sections 2 and 3).
+Lexer for RoboLang v1.1 and v1.2 (spec/robolang-v1.1.md, sections 2 and 3).
 
 Tokens are produced on demand. The parser uses this to reject an unsupported
 language version (E213) without interpreting the rest of the file; after the
-version marker it lexes the remainder in one go.
+version marker it lexes the remainder in one go. A `robolang 1.2;` marker switches
+the reserved words to the 1.2 set before any later word is lexed.
 """
 
 from __future__ import annotations
@@ -34,6 +35,7 @@ class Lexer:
         self._pos = 0
         self._line = 1
         self._col = 1
+        self.reserved = RESERVED  # RESERVED_V1_2 after a `robolang 1.2;` marker
 
     # -------- helpers --------
 
@@ -151,7 +153,7 @@ class Lexer:
         while self._peek(i) and self._peek(i) in _WORD_CHARS:
             i += 1
         word = self._src[self._pos:self._pos + i]
-        return self._take(TokenKind.KEYWORD if word in RESERVED else TokenKind.IDENT, i)
+        return self._take(TokenKind.KEYWORD if word in self.reserved else TokenKind.IDENT, i)
 
 
 def tokenize(source: str, filename: str = "<string>") -> list[Token]:
