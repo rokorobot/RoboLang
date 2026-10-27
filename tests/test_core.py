@@ -236,12 +236,15 @@ def test_a_lease_must_end_after_it_starts():
 # -------- isolation (part of A-T18) --------
 
 FORBIDDEN_IMPORTS = ("socket", "http", "urllib", "rclpy", "robolang_adapter", "robolang_runtime")
+# Modules that can open connections or drive a robot. `urllib.parse` is not among them: it only
+# parses strings, and the standard library's own `pathlib` imports it on Python 3.11.
+FORBIDDEN_LOADED = ("socket", "ssl", "http", "urllib.request", "rclpy", "robolang_adapter", "robolang_runtime")
 
 
 def test_importing_robolang_core_loads_no_network_or_adapter_module():
     probe = (
         "import sys, robolang.core; "
-        f"print([m for m in sys.modules if m.split('.')[0] in {FORBIDDEN_IMPORTS!r}])"
+        f"print([m for m in sys.modules if any(m == f or m.startswith(f + '.') for f in {FORBIDDEN_LOADED!r})])"
     )
     result = subprocess.run([sys.executable, "-c", probe], capture_output=True, text=True, check=True,
                             env={**__import__("os").environ, "PYTHONPATH": str(ROOT / "src")})
