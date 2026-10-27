@@ -5,6 +5,10 @@
 approved 2026-10-27.
 **Milestone:** RL-ARCH-02 (RFC-001 section 19; decision D8). Gate 1 of RFC-001 section 1.4.
 **Core:** [Core 0.1](core-v0.1.md)
+**Erratum (approved 2026-10-27):** sections 3, 5.2 and 8 to 13 are amended by
+[decision record 0008](decisions/0008-core-sequencing-per-recipient.md) (Q1–Q9, approved 2026-10-27):
+per-recipient sequencing, holding on gaps, and the sequencing cases (A-T20). The amended text
+is marked.
 **Fixtures:** [`tests/fixtures/arch02/`](../tests/fixtures/arch02/README.md)
 **Implementation:** none. RL-ARCH-02b implements it only after this specification is approved
 and the owner separately authorizes implementation (D8).
@@ -61,6 +65,7 @@ From the scenario file (section 11), with these values in the base scenario:
 | `clock_tolerance` | 500 ms | Applied in the safe direction (Core 8.1) |
 | `ack_timeout` | 5 s | A giver without an `acknowledge` of its `custody_released` enters `IN_DOUBT` |
 | `query_interval` | 30 s | A giver in doubt repeats `custody_query` at this interval |
+| `max_hold` | 5 s | The longest a message after a sequence gap is held (Core 8.4; 0008, Q4) |
 | `authority_delay` | 20 s | The authority stub answers this long after receiving a request |
 | `offer_lease_end` | `10:25:00.000Z` | amr-07 proposes this lease end in `offer_assistance` |
 | `reservation_end` | `10:20:00.000Z` | amr-07 asks for H1 until then |
@@ -130,12 +135,13 @@ in the order this document lists.
 
 ### 5.2 Identifiers
 
-Message IDs are derived, so that runs are reproducible (R9):
+Message IDs are derived, so that runs are reproducible (R9, amended by 0008, Q7). Sequence
+numbers count per sender, recipient and conversation (Core 3):
 
 ```text
-message_id = "m-" + first 32 hex digits of SHA-256( "robolang-arch02-msg/0.1\n"
-                                                   + sender + "\n" + conversation_id + "\n"
-                                                   + decimal sequence )
+message_id = "m-" + first 32 hex digits of SHA-256( "robolang-arch02-msg/0.1-seq\n"
+                                                   + sender + "\n" + recipient + "\n"
+                                                   + conversation_id + "\n" + decimal sequence )
 ```
 
 This is a property of the reference simulation, not a Core rule: Core 0.1 requires only that
@@ -280,6 +286,26 @@ already beyond arm-02's 30 kg grasp limit, so the run would stop at arm-02's ass
 never test amr-07's standing authorization. The variant therefore raises arm-02's limit to
 40 kg. R11 asks the owner to confirm this.
 
+### 8.1 Sequencing cases
+
+*Added by decision record 0008 (Q9).* Each case is the base scenario with the faults given,
+in `tests/fixtures/arch02/sequencing_cases.json`. Sequence numbers are per stream (Core 3), so
+arm-02's stream to planner-1 is `assessment` 1, `accept` 2, `outcome` 3, and amr-07's stream
+to arm-02 runs from `offer_assistance` 1 to `outcome` 8. In every case a held message has no
+effect until it is released (Core 8.4), and every case ends with planner-1 recording
+`succeeded`.
+
+| Case | Faults | Expected |
+|---|---|---|
+| `seq_gap_filled` | Delay arm-02's first `assessment` by 1 s | planner-1 holds `accept` (2) from 10:14:00.600. The assessment (1) arrives at 10:14:01.100; both are processed in order then. No rejection |
+| `seq_gap_abandoned` | Delay the `assessment` by 40 s | `accept` is held from 10:14:00.600 and processed at 10:14:05.600, after `max_hold`; sequence 1 is skipped. The assessment arrives at 10:14:40.100 expired: `C301` |
+| `seq_held_message_expires` | Delay the `assessment` by 40 s and `accept` by 27 s | `accept` is held from 10:14:27.600 and expires at 10:14:30.000 (safe direction) before `max_hold`: `C301` at that moment, and the stream advances past it. The assessment arrives expired: `C301`. The `outcome` (3) is processed normally |
+| `seq_duplicate_while_held` | Delay the `assessment` by 2 s; duplicate `accept` after 0.5 s | The copy at 10:14:01.100 is a duplicate of the held message. `accept` is processed once, at 10:14:02.100 |
+| `seq_replay_while_fresh` | Replay `commit` at 10:14:10.000 | amr-07 records a duplicate and no second commitment. (Replayed after its expiry it is `C301`: V3) |
+| `seq_stale_nonduplicate` | Inject at 10:14:05.000 another `assessment` from arm-02 to planner-1 with sequence 1 and a different message ID | Stale and not a duplicate: `C306` |
+| `seq_unsigned_not_held` | Remove the signature of `accept`; delay the `assessment` by 1 s | `accept` is rejected at once with `C201`: never held, not counted. The `outcome` (3) is held from 10:15:51.400 and processed at 10:15:56.400; planner-1's re-verification finds the evidence 5.2 s old, within its 10 s limit |
+| `seq_lost_ack_holds_next` | Drop amr-07's second `acknowledge` (as V7) | amr-07's `custody_state` (7) is held at arm-02 from 10:14:56.300 and processed at 10:15:01.300, when arm-02 resolves to `RELEASED` |
+
 ## 9. Run record
 
 A run writes one JSON document, `robolang.arch02.run` version `0.1`, with the IR determinism
@@ -291,7 +317,7 @@ rules (two-space indentation, ASCII, LF, one trailing newline):
 | `mode` | Always `"simulation"` |
 | `run_id` | Section 9.1 |
 | `inputs` | `scenario_sha256`, `case`, `seed`, `core_version` (`"0.1"`) |
-| `messages` | Every message sent, in send order: `t_sent_ms`, `t_delivered_ms` (or `null` if lost), `fate` (`delivered`, `dropped`, `duplicated`, `replayed`, `injected`), the full Core document, and the receipt: `accepted`, `duplicate`, `held` or `rejected` with its Core code |
+| `messages` | Every message sent, in send order: `t_sent_ms`, `t_delivered_ms` (or `null` if lost), `fate` (`delivered`, `dropped`, `duplicated`, `replayed`, `injected`), the full Core document, and the receipt: `accepted`, `duplicate`, `held` or `rejected` with its Core code. A held message gets a second receipt, `accepted` or `rejected`, when it is released (0008) |
 | `events` | Every event in time order: `motion`, `effect`, `observation`, `state` (goal, commitment, custody or reservation state changes), `authorization` (decision and its basis), `lease_expired`, `escalated` |
 | `final` | Per participant: goal states, commitment states, local custody states; the planner's recorded goal status |
 | `designated_custody` | Who is responsible for each thing under the commit rule (RFC-001 10.4 rule 3), as the harness computes it from the record |
@@ -326,7 +352,7 @@ A case applies a list of these to the base scenario. Messages are selected by
 | `replay` | `match`, `at` (time) | A byte-identical copy is delivered at `at` |
 | `strip_signature` | `match` | The `signature` field is removed in transit |
 | `corrupt_signature` | `match` | The signature value is altered in transit |
-| `inject` | `at`, `message` | A message built from the given fields is signed by its sender and sent at `at` |
+| `inject` | `at`, `message` | A message built from the given fields is signed by its sender and sent at `at`. `message` may set `sequence` and `message_id` explicitly, to test stale and equivocating messages (0008, Q9); otherwise they follow 5.2 |
 | `silence` | `participant`, `from` (a message delivery) | From that delivery on, including it, the participant handles no message, sends nothing and starts no action |
 | `partition` | `between` (two participants), `from` (a message delivery), `until` (time) | Starting just after that delivery and until `until`, every message between the two is dropped |
 | `sensor_lag` | `participant`, `sensor`, `lag` | Observations are dated `lag` earlier than the moment they are made |
@@ -353,6 +379,7 @@ rules.
 - `cases.json` — one case per scenario acceptance test, A-T1 to A-T15 (section 12): `id`,
   `tests`, `seed`, `faults` and `expect`. A-T16 to A-T19 use the Core fixtures, the schema
   files and the existing suite instead.
+- `sequencing_cases.json` — the cases of 8.1, in the same form, for A-T20 (0008, Q9).
 
 `expect` fields (absent means not checked):
 
@@ -369,6 +396,8 @@ rules.
 | `reasons` | Reason codes of the outcome or reject that planner-1 receives last |
 | `escalated` | Participants that recorded `escalated` |
 | `final_world` | A subset of the final facts |
+| `held` | `(type, receiver, held at, released at, result)` for every held message, in order; result `accepted` or a code (0008) |
+| `processed_by` | Per participant, the types of the messages it processed (accepted receipts), in processing order (0008) |
 
 ## 12. Acceptance tests
 
@@ -381,8 +410,9 @@ rules.
 | A-T17 | Schemas | `spec/core/*.schema.json` | Both are valid JSON Schema 2020-12; every valid Core fixture validates; every schema-stage invalid fixture fails (R12) |
 | A-T18 | Isolation and mode | All runs | The package imports no `rclpy`, `robolang_adapter*`, `socket`, `http` or `urllib` module; every record says `"mode": "simulation"`; a standing authorization or decision with mode `physical` is rejected (`C404`) |
 | A-T19 | Regression | — | The RoboLang 1.1 and 1.2 suites, every IR snapshot, every RL-BASIC-01 and LANG-1 simulation case and run-ID vector pass unchanged |
+| A-T20 | Sequencing (0008) | `sequencing_cases.json` (8 cases) | Section 8.1; a held message has no effect before it is released |
 
-**Exit gate (gate 1 of RFC-001 1.4):** A-T1 to A-T19 pass in CI on every supported platform;
+**Exit gate (gate 1 of RFC-001 1.4):** A-T1 to A-T20 pass (A-T20 added by 0008, approved 2026-10-27) in CI on every supported platform;
 the README states that the reference simulation is simulation only; owner approval.
 
 ## 13. Delivery
@@ -392,7 +422,8 @@ the README states that the reference simulation is simulation only; owner approv
 | **RL-ARCH-02a** — this specification | Core 0.1, the two schemas, this document, decision record 0007, fixtures and a consistency test that executes nothing | Fixture consistency |
 | **ARCH-1** | `robolang.core`: strict JSON reading, Core 0.1 schema and rule checks, JCS canonical form, `sim-hmac-sha256`, receipt codes | A-T16, A-T17 |
 | **ARCH-2** | `robolang.arch02`: symbolic world, sensors, scheduler and delivery, faults, participants and policy | A-T1, A-T2 to A-T14 in progress |
-| **ARCH-3** | Run record and run ID, a `robolang arch02` command or test entry point, README; isolation | A-T1 to A-T19 |
+| **ARCH-SEQ** | Decision record 0008 implemented in `robolang.arch02` (approved 2026-10-27; needs separate implementation authorization) | A-T20, and A-T1 to A-T15 unchanged |
+| **ARCH-3** | Run record and run ID, a `robolang arch02` command or test entry point, README; isolation | A-T1 to A-T20 |
 
 Each slice is one pull request and needs owner approval to merge. ARCH-1 starts only after
 RL-ARCH-02a is approved and implementation is authorized (D8).
@@ -414,5 +445,6 @@ A2A; any AI model; physical execution.
 |---|---|
 | Core 0.1 per-message checks, schemas, canonical form, `sim-hmac-sha256` (ARCH-1) | Implemented in `src/robolang/core/`; A-T16 and A-T17 pass (`tests/test_core.py`) |
 | World, participants, delivery, faults, conversation-state checks (ARCH-2) | Implemented in `src/robolang/arch02/`; A-T1 to A-T14 pass, A-T15 in memory (`tests/test_arch02.py`) |
+| Sequencing per recipient (decision record 0008) | Approved 2026-10-27; not implemented. ARCH-2 still numbers per sender and rejects older messages (`C306`) without holding |
 | Run record, run ID, entry point, README (ARCH-3) | Specified, not implemented |
 | Scenario fixtures (section 11) | Run by `tests/test_arch02.py`; consistency also checked by `tests/test_arch02_fixtures.py` |
