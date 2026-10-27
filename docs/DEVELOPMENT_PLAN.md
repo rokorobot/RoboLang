@@ -2,12 +2,17 @@
 
 **Project:** [rokorobot/RoboLang](https://github.com/rokorobot/RoboLang)  
 **Plan date:** 2026-10-11  
+**Revised:** 2026-10-19, aligned with the approved [RFC-001](../spec/architecture/rfc-001-ai-native-architecture.md) ([decision record 0002](../spec/decisions/0002-ai-native-architecture.md))  
 **Status:** Proposed roadmap; **not yet implemented or approved for deployment**  
 **Maintainer/Product owner:** Repository owner  
-**Scope:** Formal language → safe task execution → robot interoperability → AI-native generation  
+**Scope:** Formal language → Core and A2R/R2R proof → safe task execution → robot interoperability → AI-native generation  
 **Reference baseline:** `main`, last public commit inspected: `9e9f92f` (2025-11-08)
 
-> **Mission:** Make RoboLang a trustworthy, robot-independent *task specification and coordination language* that can express what a robot should do, validate constraints, and delegate execution to established ROS 2 controllers. RoboLang is **not** intended to replace C++, Python, ROS 2, MoveIt 2, Nav2, or hardware safety controllers.
+> **Mission (approved 2026-10-19, decision D1):** RoboLang is an open, AI-native interoperability platform for embodied intelligence. It defines shared semantic contracts, A2R and R2R communication profiles, portable robotic capabilities, and verifiable cooperation across heterogeneous robots, AI systems and execution technologies. RoboLang is designed to support a vendor-neutral ecosystem of interoperable implementations, reference runtimes, developer tools and reusable skills, without requiring one operating system, middleware, controller, AI model or cloud provider.
+>
+> RoboLang is **not** intended to replace C++, Python, ROS 2, MoveIt 2, Nav2, or hardware safety controllers. Execution goes through interchangeable backends, ROS 2 among them. The architecture is defined in [RFC-001](../spec/architecture/rfc-001-ai-native-architecture.md).
+
+> **Previous mission (2026-10-11, superseded):** Make RoboLang a trustworthy, robot-independent *task specification and coordination language* that can express what a robot should do, validate constraints, and delegate execution to established ROS 2 controllers.
 
 ---
 
@@ -22,7 +27,9 @@ Build four **sequential, evidence-gated milestones**. Do not begin the next mile
 | **v1.3 — Interoperability** | Same task on two different simulated robot profiles; typed messages with acknowledgement | Portable task and robot-to-robot handoff pass the integration suite | Multi-robot simulation |
 | **v2.0 — AI-native language** | Provider-agnostic language generation, deterministic validation and measured effectiveness | Held-out LLM task benchmark; unsafe proposals reliably rejected before execution | Controlled AI-generated task planning |
 
-**Non-goals for this roadmap:** writing new motor controllers, replacing ROS 2, open-ended autonomous operation in public spaces, safety certification, new robot hardware purchases, distributed consensus, inventing an emergent robot language, or incorporating Bend proofs into production before a separate feasibility study.
+**Non-goals for this roadmap:** writing new motor controllers, replacing ROS 2, open-ended autonomous operation in public spaces, safety certification, new robot hardware purchases, distributed consensus (RFC-001 version 0 uses bilateral, leased commitments only; decision D5), inventing an emergent robot language (meaning a language robots develop among themselves; the A2R and R2R profiles are designed and specified, not emergent; decision D7), or incorporating Bend proofs into production before a separate feasibility study.
+
+**Milestone order after RFC-001 (decision D8, approved 2026-10-19):** v1.1 is delivered (RL-11A to RL-11E). The next planned milestone is **RL-ARCH-02**, an in-process simulation of the RFC-001 reference scenario (one AI agent stub and two robot stubs) with its failure variants; its implementation requires separate explicit owner authorization. The v1.2 and v1.3 work packages below remain, re-framed: v1.2 execution work becomes the execution side of A2R, and the v1.3 communication work is superseded by the RFC-001 Core envelope and R2R profile (see the notes in sections 5 and 6). The developer-preview pilot of v1.1 is independent of this order.
 
 **Release numbering:** Versions above are *targets*, not existing releases. Breaking syntax changes require migration notes and a declared compatibility policy. Avoid new versions solely for publicity.
 
@@ -49,7 +56,7 @@ Inspected files: [`README.md`](https://github.com/rokorobot/RoboLang/blob/main/R
 
 ```mermaid
 flowchart TD
-  H[Human or AI task intent] --> P[.rob source]
+  H[Human or AI task intent] --> P[.rob source, or Core JSON documents per RFC-001]
   P --> L[Strict lexer/parser]
   L --> A[Typed AST + source locations]
   A --> S[Symbol, capability and constraint validation]
@@ -70,9 +77,9 @@ flowchart TD
 - **A1 — One authoritative front end:** Use a proper parser and a typed intermediate representation (IR) shared by validation, dry-run, simulation and ROS 2 execution. No separate interpretation of arbitrary text in the ROS adapter.
 - **A2 — Fail closed:** Unknown syntax, missing symbols, unsupported robot capabilities, unavailable safety status, stale status, rejected action results or unspecified safety-relevant behavior must **block the affected operation** with a nonzero error; do not silently skip or assume safe.
 - **A3 — Separate policy from hardware:** The grammar and IR describe the task; robot-specific adapters resolve coordinates, kinematics and controller semantics. Never encode hard-coded joint values as the meaning of `move r to dst`.
-- **A4 — Deterministic core:** The compiler/validator/executor should not invoke an LLM at runtime. AI proposes `.rob` source; deterministic software checks it before use.
-- **A5 — Simulation-first:** Physical robot execution is *disabled by default* and needs separate explicit enablement, robot risk assessment, independent emergency-stop/protective controls, and owner approval. A `@safety` DSL annotation is not a hardware safety system.
-- **A6 — Technology:** Python 3.11+ for language tooling; `pytest` for tests; a mature parser generator such as **Lark** may be adopted after a small spike. ROS 2 integration is isolated and tested separately; prefer ROS 2 Jazzy on the existing Ubuntu 24.04 environment, subject to compatibility verification.
+- **A4 — Deterministic core:** The compiler/validator/executor should not invoke an LLM at runtime. AI proposes `.rob` source or, per RFC-001 (decision D2), Core JSON documents directly; deterministic software checks it before use. A robot may run a model for its own decisions, but RoboLang components stay deterministic and model output is untrusted input (RFC-001 section 13.4).
+- **A5 — Simulation-first:** Physical robot execution is *disabled by default* and needs separate explicit enablement, robot risk assessment, independent emergency-stop/protective controls, and owner approval. A `@safety` DSL annotation is not a hardware safety system. Restated in RFC-001 section 13.3: standing authorizations carry an explicit `simulation` or `physical` mode.
+- **A6 — Technology:** Python 3.11+ for language tooling and the reference implementation. Under principle P10 (RFC-001, decision D9) the Core must remain implementable from the specification alone, without the Python package; `pytest` for tests; a mature parser generator such as **Lark** may be adopted after a small spike. ROS 2 integration is isolated and tested separately; prefer ROS 2 Jazzy on the existing Ubuntu 24.04 environment, subject to compatibility verification.
 - **A7 — Compatibility:** Keep and test original `examples/pick_and_place.rob` as a v1 compatibility fixture, or document an explicit intentional migration. No silent semantic drift.
 - **A8 — Provider independence:** AI clients for OpenAI and Anthropic must produce the same `.rob`/IR contract. No provider-specific logic in the language compiler or executor.
 
@@ -153,6 +160,8 @@ This proposed restructuring must be performed incrementally without breaking exi
 
 **Objective:** Turn typed tasks into a traceable, correctly bounded simulation/ROS 2 execution state machine. Runtime checks must have real meaning, not merely syntactic presence.
 
+> **RFC-001 alignment (2026-10-19):** These work packages are re-framed as the execution side of A2R (RFC-001 sections 9 and 13): the executor is what lets a robot report a verified outcome. Their safety semantics are unchanged. Scheduling follows RL-ARCH-02 (decision D8).
+
 | Work package / suggested PR | Implementation | Evidence and acceptance |
 |---|---|---|
 | **RL-12A — Executor state machine** | States `CREATED → VALIDATED → AUTHORIZED → RUNNING → SUCCEEDED/FAILED/CANCELLED`; per-step status, unique run ID, structured execution trace; no implicit skip. | Unit tests for every state transition, failure propagation and non-runnable states. |
@@ -193,8 +202,8 @@ This proposed restructuring must be performed incrementally without breaking exi
 |---|---|---|
 | **RL-13A — Capability descriptor schema** | Versioned robot profile describing actions, frames, reach/workspace, gripper, sensor services and communication endpoints; explicit unsupported capabilities. | Schema validation tests; descriptors for two *different* simulated manipulators plus a negative profile lacking a gripper. |
 | **RL-13B — Two simulation adapters** | Two robot-specific adapters implement one stable typed interface; resolve destinations differently while executing the **same** RoboLang IR. | One pick-and-place task passes on both profiles; incompatible profile fails before movement. |
-| **RL-13C — Structured communication protocol** | Typed envelope with schema version, sender, recipient, task ID, correlation/message ID, message type, timestamp, payload and expiry; avoid free-text as the only contract. | Schema/serialization tests; invalid and unrecognized message types rejected. |
-| **RL-13D — Handoff state machine** | States `OFFERED → ACKNOWLEDGED → ACCEPTED → COMPLETED` or explicit reject/timeout; retries with deduplication, idempotent handling, policy-driven ownership and cancellation. | Tests for lost ACK, duplicate message, stale message, receiver unavailable, rejected handoff and recovery. |
+| **RL-13C — Structured communication protocol** *(superseded by the RFC-001 Core message envelope, section 8)* | Typed envelope with schema version, sender, recipient, task ID, correlation/message ID, message type, timestamp, payload and expiry; avoid free-text as the only contract. | Schema/serialization tests; invalid and unrecognized message types rejected. |
+| **RL-13D — Handoff state machine** *(superseded by the RFC-001 R2R custody rules, section 10.4)* | States `OFFERED → ACKNOWLEDGED → ACCEPTED → COMPLETED` or explicit reject/timeout; retries with deduplication, idempotent handling, policy-driven ownership and cancellation. | Tests for lost ACK, duplicate message, stale message, receiver unavailable, rejected handoff and recovery. |
 | **RL-13E — Integration harness** | Repeatable ROS 2 + simulator composition, fake publishers/action servers where appropriate, log capture, scripted scenario and CI instructions. | Portable two-robot demo is reproducible from a clean supported environment. |
 
 **Specific demo:** Robot A picks an object and places it in a shared handoff region; Robot B acknowledges ownership only when its declared capabilities and safety preconditions permit the next task. Repeat using two differently configured robot profiles. A third, gripper-less profile must reject the task.
@@ -218,7 +227,7 @@ This proposed restructuring must be performed incrementally without breaking exi
 | Work package / suggested PR | Implementation | Evidence and acceptance |
 |---|---|---|
 | **RL-20A — Provider-neutral generation contract** | `TaskGenerator` interface; adapters for OpenAI and Anthropic, configurable model settings and budgets; no provider imports in the parser/executor. | Both providers yield text/structured proposal processed through the **same** validator/IR. |
-| **RL-20B — Restricted generation and repair loop** | Prompt with RoboLang v1.3 language spec, grammar and capabilities; bounded attempts; machine-readable compiler diagnostics fed back to agent; no hidden execution. | Invalid generations cannot invoke adapters; retry counts and cost recorded; owner can inspect proposals. |
+| **RL-20B — Restricted generation and repair loop** | Prompt with RoboLang v1.3 language spec, grammar and capabilities, and, per RFC-001 (decision D2), the Core schemas for generating Core documents directly; bounded attempts; machine-readable compiler diagnostics fed back to agent; no hidden execution. | Invalid generations cannot invoke adapters; retry counts and cost recorded; owner can inspect proposals. |
 | **RL-20C — Safety/authorization and provenance** | Explicit review gate for plans, immutable input/output hashes, model/provider identifiers, validator version, robot profile, policy decision and audit trail; no secrets in logs. | Fully traceable proposal-to-approved-simulation chain; rejected or unreviewed tasks do not execute. |
 | **RL-20D — Evaluation harness** | Held-out task benchmark; diverse robot profiles, impossible tasks, adversarial inputs and ambiguous instructions. Record valid-program rate, iterations, constraint-rejection rate, task success, cost and latency. | Reproducible benchmark report including failure examples and confidence intervals where appropriate. |
 | **RL-20E — Comparative study and documentation** | Compare RoboLang generation against a baseline using structured Python/ROS 2 tasks and identical simulated scenarios; publish limits and negative results. | Evidence-based release decision; tests demonstrate reproducibility rather than marketing assertions. |
