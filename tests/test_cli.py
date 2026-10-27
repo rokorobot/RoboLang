@@ -197,6 +197,63 @@ def test_inspect_json_keeps_warnings_off_stdout():
     assert "warning[W401]" in err
 
 
+V12_VALID = sorted((FIXTURES / "v1.2" / "valid").glob("*.rob"))
+
+
+@pytest.mark.parametrize("path", V12_VALID, ids=lambda p: p.name)
+def test_inspect_text_describes_every_valid_v12_file(path):
+    code, out, err = cli("inspect", str(path.relative_to(REPO_ROOT)))
+
+    assert code == EXIT_OK, err
+    assert "RoboLang 1.2 | IR schema 1.1" in out
+    assert out.endswith("This is a description only. Nothing was executed.\n")
+
+
+def _preconditions(path: str) -> list[str]:
+    lines = cli("inspect", path)[1].splitlines()
+    start = lines.index("  preconditions:") + 1
+    return [line.strip() for line in lines[start:lines.index("  plan:")]]
+
+
+def test_inspect_text_renders_and():
+    assert _preconditions("tests/fixtures/v1.2/valid/and_in_pre.rob") == ["robot_ready r and region_clear cell"]
+
+
+def test_inspect_text_renders_or():
+    assert _preconditions("tests/fixtures/v1.2/valid/or_in_pre.rob") == [
+        "region_clear cell or region_clear left or region_clear right",
+    ]
+
+
+def test_inspect_text_renders_not_on_its_single_operand():
+    assert _preconditions("tests/fixtures/v1.2/valid/not_in_pre.rob") == [
+        "not object_exists box",
+        'not sensor_ok "camera_top" and robot_ready r',
+    ]
+
+
+def test_inspect_text_parenthesizes_nested_combinations():
+    """`and`/`or` never mix unparenthesized, and `not` of a group keeps its parentheses."""
+    assert _preconditions("tests/fixtures/v1.2/valid/parenthesized_mix.rob") == [
+        '(robot_ready r and region_clear cell) or sensor_ok "camera_top"',
+        "robot_ready r and (region_clear left or region_clear right)",
+    ]
+    assert _preconditions("tests/fixtures/v1.2/valid/not_of_group.rob") == [
+        "not (region_clear left or region_clear right)",
+        "robot_ready r",
+    ]
+
+
+def test_inspect_text_renders_combined_wait_until():
+    out = cli("inspect", "tests/fixtures/v1.2/valid/wait_until_combined.rob")[1]
+
+    assert (
+        '    1. wait until (region_clear left or region_clear right) and sensor_ok "camera_top" timeout 30 s\n'
+        in out
+    )
+    assert "    2. wait until not object_exists box timeout 500 ms\n" in out
+
+
 def test_selecting_a_task_still_validates_the_whole_file(tmp_path):
     """An error in another task blocks inspection of the selected one."""
     source = (
