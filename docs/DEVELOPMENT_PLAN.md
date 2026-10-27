@@ -3,10 +3,10 @@
 **Project:** [rokorobot/RoboLang](https://github.com/rokorobot/RoboLang)  
 **Plan date:** 2026-10-11  
 **Revised:** 2026-10-19, aligned with the approved [RFC-001](../spec/architecture/rfc-001-ai-native-architecture.md) ([decision record 0002](../spec/decisions/0002-ai-native-architecture.md)); 2026-10-27, milestone order amended by decision F5 and development tracks added ([decision records 0003](../spec/decisions/0003-language-foundation.md), [0004](../spec/decisions/0004-rl-basic-01a-simulation-semantics.md), [0005](../spec/decisions/0005-ai-first-charter-and-domain-contracts.md))  
-**Status:** Proposed roadmap; **not yet implemented or approved for deployment**  
+**Status:** Active development roadmap; RoboLang 1.1 and simulation-only Foundation 1 delivered. **Physical execution remains unauthorized.**  
 **Maintainer/Product owner:** Repository owner  
 **Scope:** Formal language → simulated execution of the language (RL-BASIC-01) → Core and A2R/R2R proof → safe task execution → robot interoperability → AI-native generation  
-**Reference baseline:** `main`, last public commit inspected: `9e9f92f` (2025-11-08)
+**Reference baseline:** `main` at `efd5a73` (2026-10-27), the Foundation 1 integration. The original plan inspected `9e9f92f` (2025-11-08); section 2 records that historical baseline.
 
 > **Mission (approved 2026-10-19, decision D1):** RoboLang is an open, AI-native interoperability platform for embodied intelligence. It defines shared semantic contracts, A2R and R2R communication profiles, portable robotic capabilities, and verifiable cooperation across heterogeneous robots, AI systems and execution technologies. RoboLang is designed to support a vendor-neutral ecosystem of interoperable implementations, reference runtimes, developer tools and reusable skills, without requiring one operating system, middleware, controller, AI model or cloud provider.
 >
@@ -46,7 +46,7 @@ D8 as first approved named RL-ARCH-02 as the next milestone; F5 placed RL-BASIC-
 | A — Foundation 1 | BASIC-1, BASIC-2, BASIC-3 (RL-BASIC-01b) | Delivered; Foundation 1 exit gate signed off 2026-10-27 |
 | B — Part B language extensions | LANG-1 to LANG-6: combined conditions, branching, bounded repetition, typed values and comparisons, local bindings, structured data | Not started. Scheduled independently by the owner; each needs a versioned specification and owner decision; none delays RL-ARCH-02 |
 | C — Core | CORE-1 (IR reader and re-validator) and RL-ARCH-02 | Not started. Each needs separate implementation authorization |
-| D — Foundation 2 | F2-1 to F2-6: goal execution, Core-shaped observations, knowledge store, reasoner proposals, bounded recovery, world-model depth | Not started. Its gate (Foundation 1) is met; each item needs its own specification and authorization |
+| D — Foundation 2 | F2-1 to F2-6: goal execution, Core-shaped observations, knowledge store, reasoner proposals, bounded recovery, world-model depth | Not started. Its gate (Foundation 1) is met. Each item needs owner authorization before implementation, and its own versioned specification where it adds `.rob` syntax, an IR kind or a Core schema (G5, G6) |
 | E — Foundation 3 | F3-1 to F3-6: concurrency, resources, portable skills, ROS 2 backend, two-profile portability, A2A binding | Later, once the basic semantics are proven |
 
 Listing a track or item here authorizes nothing: every implementation item needs owner authorization before it starts.
