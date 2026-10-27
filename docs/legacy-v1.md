@@ -4,7 +4,7 @@
 > interpreter, a simulated adapter that only prints, and an experimental ROS 2 adapter. None of
 > it is part of the installed `robolang` package, none of it passes through the RoboLang 1.1
 > validator, and the ROS 2 adapter has **never been validated** against ROS 2, a simulator or a
-> robot. The supported tooling is described in the [README](../README.md).
+> robot. The supported tooling is described in the [README](https://github.com/rokorobot/RoboLang#readme).
 >
 > **Do not run any of this against real hardware.** Physical robot execution is not implemented
 > or authorized.

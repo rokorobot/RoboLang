@@ -2,8 +2,10 @@
 
 **Status:** RL-11A specification, approved by the owner on 2026-10-12.
 **Implementation:** the lexer, parser and AST (RL-11B) and the static rules of section 5
-(RL-11C) are implemented in `src/robolang/`; see section 12. The front end is not connected
-to execution: the repository still runs the v1 line-based interpreter described in the README.
+(RL-11C) are implemented in `src/robolang/`; see section 12. Validated tasks run only in the
+symbolic simulation of [`simulation-v1.0.md`](simulation-v1.0.md) (`robolang simulate`);
+physical execution is not implemented. The v1 line-based interpreter is kept as history
+([`docs/legacy-v1.md`](../docs/legacy-v1.md)).
 **Syntax version:** 1.1
 **Grammar:** [`grammar.ebnf`](grammar.ebnf)
 **Fixtures:** [`tests/fixtures/`](../tests/fixtures/README.md)
@@ -352,7 +354,7 @@ Notes:
 | `examples/pick_and_place.rob` | Valid, with `W401` (unitless `max_speed`) |
 | `stdlib/robolang_std_v1.rob` | Valid, with `W401` |
 | `examples/handover.rob`, `examples/inspect_object.rob` | Empty files: `E210`. They are placeholders, not programs. |
-| README and `docs/index.md` example | Valid, with `W401` |
+| README and `docs/index.md` example | Valid. Since RL-DOC-README-01 both write `max_speed 0.5 m/s`, so no warning; earlier versions gave `W401` |
 | Manual ch. 3 `pick_and_place` | Valid |
 | Manual ch. 9 `handover` | Valid |
 | Library guide `pick_and_place` | Valid |
@@ -545,7 +547,7 @@ None.
 | Static rules (section 5; `E301`–`E308`) | Implemented in `src/robolang/validator.py` (RL-11C) |
 | Versioned IR ([`ir-schema-v1.0.md`](ir-schema-v1.0.md)), `validate` / `inspect` commands, task selection for inspection | Implemented in `src/robolang/ir.py` and `cli.py` (RL-11D) |
 | Installable package and `robolang` console command | Implemented in `pyproject.toml` (RL-11E); installed from a clone, not published |
-| Execution of parsed tasks | Not implemented. The repository still runs the v1 interpreter |
+| Execution of parsed tasks | Simulation only: `robolang simulate` in `src/robolang/sim/` (RL-BASIC-01, [`simulation-v1.0.md`](simulation-v1.0.md)). Physical execution is not implemented |
 
 Conformance checked by CI (`tests/test_fixtures.py`): all 76 fixtures.
 
