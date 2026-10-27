@@ -78,9 +78,9 @@ treated as untrusted input that deterministic software checks before use.
 | Task IR 1.0 and 1.1 | `src/robolang/ir.py` | Versioned, deterministic JSON form of a validated task ([1.0](spec/ir-schema-v1.0.md), [1.1](spec/ir-schema-v1.1.md)) |
 | Symbolic executor | `src/robolang/sim/` | Runs one validated task against a declared world file, fail-closed: false or unknown preconditions stop the run |
 | Run records | `src/robolang/sim/record.py` | Versioned JSON record of every state, precondition, step and the final world, with a run ID derived from the inputs |
-| Reference simulation | `src/robolang/arch02/` | Simulation-only run of the RFC-001 reference scenario: four participants exchanging Core 0.1 messages, symbolic world, scripted faults, all 13 failure variants ([spec](spec/reference-simulation-v0.1.md)). JSON run record and entry point come with ARCH-3 |
-| Core 0.1 checks | `src/robolang/core/` | Per-message checks of RoboLang Core 0.1 documents: strict JSON, schemas, RFC 8785 canonical form, simulation-only signatures, stable rejection codes ([spec](spec/core-v0.1.md)). No transport, no participants yet |
-| `robolang` command | `src/robolang/cli.py` | `validate`, `inspect`, `simulate` |
+| Reference simulation | `src/robolang/arch02/` | Simulation-only run of the RFC-001 reference scenario: four participants exchanging Core 0.1 messages, symbolic world, scripted faults, all 13 failure variants, per-recipient message sequencing; a deterministic run record with a run ID ([spec](spec/reference-simulation-v0.1.md)) |
+| Core 0.1 checks | `src/robolang/core/` | Per-message checks of RoboLang Core 0.1 documents: strict JSON, schemas, RFC 8785 canonical form, simulation-only signatures, stable rejection codes ([spec](spec/core-v0.1.md)). No transport |
+| `robolang` command | `src/robolang/cli.py` | `validate`, `inspect`, `simulate`, `arch02` |
 
 The behaviour is specified in [`robolang-v1.1.md`](spec/robolang-v1.1.md),
 [`robolang-v1.2.md`](spec/robolang-v1.2.md), [`ir-schema-v1.1.md`](spec/ir-schema-v1.1.md),
@@ -116,6 +116,10 @@ robolang inspect examples/pick_and_place.rob --json
 robolang simulate examples/pick_and_place.rob --world tests/fixtures/simulation/worlds/base.json
 ```
 
+```bash
+robolang arch02 --scenario tests/fixtures/arch02/scenario.json --cases tests/fixtures/arch02/cases.json --case happy_path
+```
+
 What you should see from `validate`:
 
 ```text
@@ -135,6 +139,14 @@ record as JSON.
   adapter, no ROS 2). The same source, world, task and `--seed` give the same run record. Exit
   status: 0 succeeded, 1 invalid source, 2 usage error, 3 invalid world file, 4 failed,
   5 cancelled.
+- `arch02` runs one case of the RFC-001 reference scenario: an AI planner stub asks a fixed
+  arm to deliver a container, the arm hands custody to a mobile robot, and every message is a
+  checked Core 0.1 document. **Simulation only**: one process, a symbolic world, no network, no
+  ROS 2, no hardware, and simulation-only signatures. It prints a summary line such as
+  `simulation only: run arch02-…: planner-1 recorded succeeded`, then the run record as JSON;
+  the same scenario, case and seed give a byte-identical record. Other cases are in the same
+  file (for example `v06_partition_before_release`) and in `sequencing_cases.json`. Exit status:
+  0 the case ran, 2 usage error, 3 invalid scenario or cases file.
 
 A simulation result is not evidence that a task is safe on hardware. Installing into a
 [virtual environment](https://docs.python.org/3/library/venv.html) is recommended. The same
@@ -239,13 +251,13 @@ implementation item needs owner authorization before it starts. Full detail in t
 |---|---|---|
 | 1 | v1.1 — language correctness | Delivered |
 | 2 | RL-BASIC-01 — simulation-only execution of RoboLang 1.1 tasks (Foundation 1) | Delivered, signed off 2026-10-27 |
-| 3 | RL-ARCH-02 — in-process simulation of the RFC-001 reference scenario: one AI agent stub, two robot stubs, failure variants | Next. Specification approved 2026-10-27 ([Core 0.1](spec/core-v0.1.md), [reference simulation](spec/reference-simulation-v0.1.md)); implementation needs separate authorization |
+| 3 | RL-ARCH-02 — in-process simulation of the RFC-001 reference scenario: one AI agent stub, two robot stubs, failure variants | Implemented ([Core 0.1](spec/core-v0.1.md), [reference simulation](spec/reference-simulation-v0.1.md)): ARCH-1, ARCH-2, ARCH-SEQ, ARCH-3. Gate 1 exit needs owner sign-off |
 
 | Track | Content | State |
 |---|---|---|
 | A — Foundation 1 | Simulation executor, run records, `robolang simulate` | Delivered |
 | B — Language extensions | Combined conditions, branching, bounded repetition, typed values, local bindings, structured data | LANG-1 (combined conditions, RoboLang 1.2) delivered; the rest not started |
-| C — Core | IR reader and re-validator; RL-ARCH-02 | RL-ARCH-02 specification approved 2026-10-27; not implemented. IR reader not started |
+| C — Core | IR reader and re-validator; RL-ARCH-02 | RL-ARCH-02 implemented (simulation only); gate 1 exit needs owner sign-off. IR reader not started |
 | D — Foundation 2 | Goal execution, Core-shaped observations, knowledge store, reasoner proposals, bounded recovery, world-model depth | Not started |
 | E — Foundation 3 | Concurrency, resources, portable skills, ROS 2 backend, two-profile portability, A2A binding | Later |
 

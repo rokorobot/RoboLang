@@ -309,7 +309,8 @@ effect until it is released (Core 8.4), and every case ends with planner-1 recor
 ## 9. Run record
 
 A run writes one JSON document, `robolang.arch02.run` version `0.1`, with the IR determinism
-rules (two-space indentation, ASCII, LF, one trailing newline):
+rules (two-space indentation, ASCII, LF, one trailing newline). Times (`*_ms`) are integer
+milliseconds after the scenario's `epoch`:
 
 | Field | Content |
 |---|---|
@@ -317,9 +318,9 @@ rules (two-space indentation, ASCII, LF, one trailing newline):
 | `mode` | Always `"simulation"` |
 | `run_id` | Section 9.1 |
 | `inputs` | `scenario_sha256`, `case`, `seed`, `core_version` (`"0.1"`) |
-| `messages` | Every message sent, in send order: `t_sent_ms`, `t_delivered_ms` (or `null` if lost), `fate` (`delivered`, `dropped`, `duplicated`, `replayed`, `injected`), the full Core document, and the receipt: `accepted`, `duplicate`, `held` or `rejected` with its Core code. A held message gets a second receipt, `accepted` or `rejected`, when it is released (0008) |
+| `messages` | Every message sent, in send order: `t_sent_ms`, `t_delivered_ms` (or `null` if lost), `fate` (`delivered`, `dropped`, `duplicated`, `replayed`, `injected`), the full Core document (`document`), and `receipts`: one entry per delivery attempt, in order, each `{ t_ms, receiver, kind, receipt, code }` with `kind` `original`, `duplicate`, `replay`, `resend` or `released` and `receipt` `accepted`, `duplicate`, `held`, `rejected` (with its Core code in `code`) or `not_handled` (a silenced receiver). A held message gets a second receipt, `accepted` or `rejected`, when it is released (0008) |
 | `events` | Every event in time order: `motion`, `effect`, `observation`, `state` (goal, commitment, custody or reservation state changes), `authorization` (decision and its basis), `lease_expired`, `escalated` |
-| `final` | Per participant: goal states, commitment states, local custody states; the planner's recorded goal status |
+| `final` | `planner_status`, the planner's recorded goal status; and `participants`: per robot, `goal_state`, `commitment_state` and `custody` (local custody state) |
 | `designated_custody` | Who is responsible for each thing under the commit rule (RFC-001 10.4 rule 3), as the harness computes it from the record |
 | `final_world` | All facts, sorted |
 | `end_t_ms` | Time of the last event |
@@ -446,5 +447,5 @@ A2A; any AI model; physical execution.
 | Core 0.1 per-message checks, schemas, canonical form, `sim-hmac-sha256` (ARCH-1) | Implemented in `src/robolang/core/`; A-T16 and A-T17 pass (`tests/test_core.py`) |
 | World, participants, delivery, faults, conversation-state checks (ARCH-2) | Implemented in `src/robolang/arch02/`; A-T1 to A-T14 pass, A-T15 in memory (`tests/test_arch02.py`) |
 | Sequencing per recipient (decision record 0008) | Implemented in `src/robolang/arch02/engine.py` (ARCH-SEQ); A-T20 passes, and A-T1 to A-T15 are unchanged (`tests/test_arch02.py`) |
-| Run record, run ID, entry point, README (ARCH-3) | Specified, not implemented |
+| Run record, run ID, entry point, README (ARCH-3) | Implemented in `src/robolang/arch02/record.py` and `robolang arch02` (`cli.py`); A-T15 at full strength and the record shape pass (`tests/test_arch02_record.py`) |
 | Scenario fixtures (section 11) | Run by `tests/test_arch02.py`; consistency also checked by `tests/test_arch02_fixtures.py` |

@@ -606,8 +606,9 @@ class Amr(Participant):
         observation = self.sim.observe(self.id, "deck_camera", self.thing, "located_in")
         evidence = [observation] if observation else []
         results = self.evaluate_all(self.goal["success_criteria"], evidence)
-        self.commitment_state = "reported"
-        if all(r.result == MET for r in results):
+        met = all(r.result == MET for r in results)
+        self.commitment_state = "fulfilled" if met else "failed"  # Core 5.8 local states
+        if met:
             verification = {
                 "verified_by": self.id, "method": "self_reported", "evaluated_at": self.sim.time(),
                 "criteria_results": [{"criterion": i, "met": True, "evidence": list(r.evidence)}
