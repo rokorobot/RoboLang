@@ -22,10 +22,11 @@ RoboLang is an open, robot-independent project for expressing, validating and co
 robotic tasks, goals and verifiable outcomes across AI systems and heterogeneous robots.
 
 - **Available today:** RoboLang 1.1 and 1.2 language tooling, deterministic validation, Task IR 1.0
-  and simulation-only task execution with reproducible run records.
-- **Specified and approved, not implemented:** versioned Core semantic contracts, AI-to-Robot
-  (A2R) and Robot-to-Robot (R2R) interoperability, observations, capabilities, authorization
-  and verified outcomes.
+  and 1.1, and simulation-only task execution with reproducible run records.
+- **Core 0.1, simulation only:** versioned semantic contracts (goals, capabilities, commitments,
+  custody, evidence and outcomes) with JSON Schemas and per-message checks, exercised by an
+  in-process simulation of AI-to-Robot (A2R) and Robot-to-Robot (R2R) exchanges.
+- **Not implemented:** network bindings, production authentication and physical execution.
 
 > ⚠️ **Physical robot execution is not implemented or authorized.** RoboLang does not replace
 > ROS 2, MoveIt 2, Nav2 or hardware safety controllers. Do not run RoboLang against real
@@ -37,6 +38,7 @@ Created and maintained by **Robert Konecny (@rokorobot)**.
 
 - [Overview](#overview)
 - [Implemented today](#implemented-today)
+- [RoboLang Core 0.1](#robolang-core-01)
 - [Quickstart](#quickstart)
 - [Architecture](#architecture)
 - [Current limitations](#current-limitations)
@@ -67,7 +69,7 @@ treated as untrusted input that deterministic software checks before use.
 | Language | RoboLang **1.1**, and **1.2** (adds `and`, `or`, `not` in conditions) |
 | Python package | **0.1.0a1** (alpha; installed from a clone, not published on PyPI) |
 | Foundation 1 (simulation-only execution) | **Delivered**, exit gate signed off 2026-10-27 ([evidence](docs/evidence/rl-basic-01-exit-gate.md)) |
-| Next milestone | **RL-ARCH-02**: specification approved 2026-10-27 ([Core 0.1](spec/core-v0.1.md), [reference simulation](spec/reference-simulation-v0.1.md)); implementation needs separate owner authorization |
+| RL-ARCH-02 (Core 0.1, simulation only) | **Implemented** ([Core 0.1](spec/core-v0.1.md), [reference simulation](spec/reference-simulation-v0.1.md)); gate 1 exit needs owner sign-off |
 
 ## Implemented today
 
@@ -87,6 +89,51 @@ The behaviour is specified in [`robolang-v1.1.md`](spec/robolang-v1.1.md),
 [`ir-schema-v1.0.md`](spec/ir-schema-v1.0.md) and [`simulation-v1.0.md`](spec/simulation-v1.0.md).
 CI runs the full test suite, lint and an install test of the wheel and source distribution on
 Ubuntu and Windows.
+
+## RoboLang Core 0.1
+
+RoboLang Core defines **what AI agents and robots exchange**, separately from the `.rob`
+language and Task IR. Core 0.1 is implemented as deterministic per-message checks and exercised
+by the `robolang arch02` reference simulation. It is not a live robot protocol, a network
+binding or a physical-execution runtime.
+
+| Document | Schema | What it describes |
+|---|---|---|
+| Core message | [`message-0.1.schema.json`](spec/core/message-0.1.schema.json) | The common A2R and R2R envelope: sender, recipient, conversation, sequence, expiry, typed payload and signature |
+| Capability descriptor | [`capability-descriptor-0.1.schema.json`](spec/core/capability-descriptor-0.1.schema.json) | A signed, time-limited declaration of what a robot can and cannot do |
+
+Both schemas use JSON Schema draft 2020-12. The full contract is [Core 0.1](spec/core-v0.1.md).
+
+What Core 0.1 defines:
+
+- **Goals:** desired world states and observable success criteria, independent of how a robot
+  reaches them.
+- **Capabilities:** `transport_payload`, `dock_at`, `grasp` and `inspect`. A capability is
+  declared, not proven, and "not listed" differs from "unsupported".
+- **Messages:** 20 defined message types and 10 reserved names, for A2R and R2R exchanges.
+- **Authority:** a valid message never grants permission to act. Each robot's local policy
+  decides what it may do.
+- **Commitments and custody:** agreements between two participants, leases, custody transfer
+  and recovery when a handover is uncertain.
+- **Evidence and outcomes:** `succeeded` requires a verification that cites observations.
+  Missing or stale evidence makes a criterion not met, and the outcome may be `unknown`.
+
+A receiver checks each message in a fixed order and stops at the first failure: form (strict
+JSON, version, schema), signature, freshness and recipient, duplicates and order, then meaning
+(authority, outcome and state rules). Each failure has a stable rejection code. Sequence numbers
+count per sender, recipient and conversation
+([decision record 0008](spec/decisions/0008-core-sequencing-per-recipient.md)). **Passing the
+schema alone establishes neither authorization, correct execution nor a verified outcome.**
+
+Examples: [A2R goal proposal](tests/fixtures/core/valid/propose_goal.json),
+[capability descriptor](tests/fixtures/core/valid/descriptor_amr_07.json),
+[evidence-backed outcome](tests/fixtures/core/valid/outcome_succeeded.json), and the
+[conformance fixtures](tests/fixtures/core/README.md).
+
+The reference simulation uses a symbolic world, scripted participants and simulation-only
+signatures. Network interoperability, independent implementations, production authentication
+and physical execution are not provided. **Core 0.1 is experimental: a valid Core document is
+never permission to operate a real robot.**
 
 ## Quickstart
 
@@ -187,8 +234,9 @@ task pick_and_place(robot r, object box, location src, location dst, region cell
 
 ## Architecture
 
-**Implemented** — the RoboLang 1.1 language front end (the Language Kernel) and the
-simulation-only executor:
+**Implemented** — the RoboLang 1.1 and 1.2 language front end (the Language Kernel), the
+simulation-only executor, and, separately, [Core 0.1](#robolang-core-01) checks with the
+in-process reference simulation:
 
 ```text
 .rob source
@@ -201,7 +249,7 @@ symbolic executor                  CREATED → VALIDATED → AUTHORIZED → RUNN
 run record 1.0                     deterministic, run ID derived from the inputs
 ```
 
-**Approved target, not implemented** — defined in
+**Approved target, partly implemented** (Core 0.1 covers the first slice, simulation only) — defined in
 [RFC-001](spec/architecture/rfc-001-ai-native-architecture.md) and the
 [charter](spec/architecture/ai-first-language-charter.md):
 
@@ -230,8 +278,9 @@ authorization and outcomes, described in
   and reported in the run record, never enforced. A unitless limit is deprecated and reported
   as not enforced.
 - **No hardware and no ROS 2 runtime.** No adapter is loaded and nothing is sent to a robot.
-- **No Core schemas yet.** Core JSON, A2R and R2R are specified in RFC-001; their schemas are
-  drafted in RL-ARCH-02.
+- **Core 0.1 is simulation only.** Its two schemas and per-message checks exist, but there is
+  no transport or network binding, signatures are simulation-only, and no independent
+  implementation has tested interoperability.
 - **Plans are sequential.** RoboLang 1.2 adds combined conditions (`and`, `or`, `not`, with
   three-valued logic) but no branching, loops, structured data or local bindings (planned as
   Track B language extensions).
@@ -269,6 +318,7 @@ implementation item needs owner authorization before it starts. Full detail in t
 - [RoboLang 1.2 language](spec/robolang-v1.2.md) (combined conditions) and [grammar](spec/grammar-v1.2.ebnf)
 - [Task IR schema 1.0](spec/ir-schema-v1.0.md) and [1.1](spec/ir-schema-v1.1.md)
 - [Simulation semantics, world file 1.0 and run record 1.0](spec/simulation-v1.0.md)
+- [RoboLang Core 0.1](spec/core-v0.1.md) and the [reference simulation](spec/reference-simulation-v0.1.md)
 
 **Architecture**
 
