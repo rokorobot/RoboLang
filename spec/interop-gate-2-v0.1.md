@@ -40,6 +40,20 @@ anything about real robots; conformance of whole products (open question 13).
 **Proposed:** gate 2 is passed only at level 1. A level 2 run may be held first as a
 rehearsal; it is reported, but it does not pass gate 2.
 
+### 2.1 Auditable isolation
+
+Level 1 must be demonstrable, not asserted. Two forms qualify, and the evidence always states
+which one was used, because they are not the same kind of independence:
+
+| Form | Isolation conditions | Recorded in the evidence |
+|---|---|---|
+| **Human or team** recruited for gate 2 | Has not worked on this repository or seen its source, records or earlier discussions; receives only the bundle | Who they are (or an anonymised identifier), a signed statement of the conditions, and the Q&A log |
+| **Clean-room AI implementation** | A new session with no earlier RoboLang conversation, no shared project memory or custom instructions that mention RoboLang, no access to this repository or its history, no tools that can reach it (no network access to GitHub), and no hints derived from the implementation; it starts in an empty working directory containing only the bundle | The model and provider, the complete initial prompt, the session's configuration showing the absence of memory and repository access, the full transcript, and the Q&A log |
+
+A pass by a clean-room AI shows that the documents suffice for an implementer without the
+authors' knowledge; it does not show what a different organisation would build. A later pass by
+a human team is stronger evidence, and the record of which form was used lets readers weigh it.
+
 ## 3. Roles (I2)
 
 | Participant | Implemented by |
@@ -70,9 +84,14 @@ repository, with a manifest of SHA-256 values:
 | `spec/decisions/0007-…`, `spec/decisions/0008-…` | Choices and their reasons |
 | `spec/interop-gate-2-v0.1.md` (this document) | The binding and the tests |
 | `tests/fixtures/core/` | Conformance fixtures (G-T0) |
-| `tests/fixtures/arch02/scenario.json`, `cases.json`, `sequencing_cases.json` | Configuration and cases |
+| An example `view` for amr-07 in the base scenario (6.4), produced in INTEROP-2 | The exact shape of what the participant receives |
 
-Nothing else: no source code, no run records, no `golden_records.json`, no test code.
+Nothing else: no source code, no run records, no `golden_records.json`, no test code, and no
+harness-private data. `scenario.json`, `cases.json` and `sequencing_cases.json` stay with the
+harness: they hold the other participants' configuration, the fault scripts and the expected
+outcomes. The cases are described in prose in the reference simulation (sections 8 and 8.1),
+which is how the author learns what amr-07 must do; the scripts and expectations are not given,
+so that behavior cannot be fitted to them.
 
 ### 4.2 Freeze
 
@@ -114,7 +133,7 @@ It is not a transport for real deployments and does not answer RFC-001 open ques
   (participant → harness). Standard error is for diagnostics only.
 - **Lock-step.** After every harness frame the participant processes it completely, writes all
   its frames, and ends with `{"frame": "idle"}`. The harness advances the clock only after
-  `idle`.
+  `idle`. The precise rules, including sensing and time limits, are in 6.5.
 - **The harness owns time.** Every harness frame carries `now_ms` (milliseconds after the
   scenario epoch). The participant has no other clock, no randomness and no I/O besides the
   binding.
@@ -128,7 +147,7 @@ It is not a transport for real deployments and does not answer RFC-001 open ques
 
 | `frame` | Fields | Meaning |
 |---|---|---|
-| `start` | `now_ms`, `participant`, `scenario` (the scenario document after the case's overrides), `case` | Begin a run; the participant reads its keys, descriptor, standing authorization and policy from `scenario` |
+| `start` | `now_ms`, `participant`, `view` (6.4) | Begin a run. The frame does not name the case |
 | `deliver` | `now_ms`, `data` (the message text exactly as delivered, which may be altered) | A message arrives; the participant applies Core 8 and its rules |
 | `timer` | `now_ms`, `timer` | A timer the participant set has fired |
 | `sensed` | `now_ms`, `request`, `value` (or `null`), `observed_at_ms` | Answer to `sense`: the sensor's reading, already lagged; `null` if the sensor is unavailable or cannot see the thing |
@@ -142,13 +161,53 @@ It is not a transport for real deployments and does not answer RFC-001 open ques
 | `send` | `message` (a Core 0.1 message object) | Send a message; the harness serializes it, applies faults and delivers it |
 | `receipt` | `message_id`, `sender`, `receipt`, `code` | The participant's receipt for a delivered message (Core 8: `accepted`, `duplicate`, `held`, `rejected` with a code, or for a released held message a second receipt) |
 | `set_timer` | `timer`, `at_ms` | Ask for a `timer` frame at `at_ms` |
-| `sense` | `request`, `sensor`, `thing`, `property` | Read one of its own sensors now; answered by `sensed` before the next frame |
+| `sense` | `request`, `sensor`, `thing`, `property` | Read one of its own sensors now; answered by one `sensed` with the same `request` (6.5) |
 | `act` | `action`, `kind` (`move`), `to` | Start an action; the harness records a motion event now and sends `action_done` after the scenario's duration |
-| `event` | `kind` (`state`, `authorization`, `escalated`, `custody_committed`), `detail` | Facts the run record and expectations need (reference simulation 9, 11): goal, commitment and custody state changes, authorization decisions and their basis, escalations, the commit point |
+| `event` | `kind` (`state`, `authorization`, `escalated`, `custody_committed`), `detail` | The participant's **claims** about its internal state: goal, commitment and custody state changes, authorization decisions and their basis, escalations, the commit point. Claims are recorded, but never accepted as evidence on their own (9.1.1) |
 | `idle` | — | Done with the current harness frame |
 
 The participant builds and signs its own observations (Core 5.6, 7) from `sensed`: it is the
 source, and its key signs them.
+
+### 6.4 The participant view
+
+`start` carries a **view**: only what amr-07 would hold as its own configuration, plus the
+public material it needs. The harness builds it from the scenario after the case's overrides
+and keeps everything else private.
+
+| In the view | Content |
+|---|---|
+| Identity | `participant` (its `rl:robot:…` ID), its key reference and that key's `sim-hmac-sha256` secret |
+| Own configuration | Its capability descriptor, its standing authorization, its policy (`accept_assistance`), its sensors (name and scope), its initial location |
+| Deployment parameters | `epoch`, `message_ttl`, `max_message_lifetime`, `clock_tolerance`, `max_hold`, `offer_lease_end`, `reservation_end`, the `conversation_id` |
+| Public deployment facts | The participant records (7.2 form) of the participants it deals with, the places and their `within` relations, the `arbiters` of shared resources, and its own authority (`authorities` for itself) |
+| Verification material | The `sim-hmac-sha256` secrets of the keys of participants whose messages it must verify: arm-02 and the authority. These are inherently shared in this scheme (Core 7) |
+
+**Never in the view:** other participants' policies, standing authorizations, sensors and
+private configuration; the planner's goal; the authority's decision table; durations (the
+harness applies them); faults, the case ID and the expected results.
+
+The shared HMAC secrets are acceptable only in this test environment: whoever holds a secret can
+produce valid signatures for that key, so a valid `sim-hmac-sha256` signature here never proves
+which participant produced a message. Gate 2 does not test participant identity.
+
+### 6.5 Lock-step rules
+
+1. After writing a harness frame, the harness reads the participant's frames in order until
+   `idle`.
+2. **Sensing.** When the harness reads a `sense` frame, it writes exactly one `sensed` frame with
+   the same `request` and the same `now_ms`, before reading anything further. A participant has
+   at most one `sense` outstanding: it waits for the `sensed` reply before writing any other
+   frame, including `idle`. `request` values are unique within a run.
+3. A participant never writes `idle` while a `sense` is outstanding, and never writes frames
+   after `idle` until the next harness frame.
+4. **Time limits.** Simulated time does not pass while the harness waits. In wall-clock time the
+   harness waits at most 10 s for each frame it expects (a reply to `start`, `deliver`, `timer`,
+   `action_done` or `sensed`, or the next frame before `idle`). Exceeding it, invalid JSON, an
+   unknown `frame`, an answer to a request that was not made, or output after `end` is a
+   **binding failure**: the run fails (G-T5) and is reported, not retried.
+5. **Order.** Frames from one `idle` cycle take effect in the order written. Messages sent in one
+   cycle are delivered in that order (reference simulation 5.1).
 
 ## 7. Prerequisite: conformance kit (G-T0, I12)
 
@@ -172,12 +231,30 @@ level 3 of section 2 and the first thing the independent author can test alone.
 
 ### 9.1 Required for each case
 
-1. Every `expect` field of the case (reference simulation 11) holds for the run.
+1. Every `expect` field of the case (reference simulation 11) holds for the run, evaluated from
+   harness-observed facts wherever 9.1.1 provides them.
 2. Every receipt the independent amr-07 reports equals the receipt the reference amr-07 gives
    for the same delivery (same `receipt` and `code`).
 3. The sequence of sent messages, by type, sender, recipient and send time, equals the
    reference run's.
-4. Lock-step and determinism hold (G-T5); the participant never times out or breaks framing.
+4. Every claim the participant makes is consistent with the harness's own observations
+   (9.1.1). An inconsistent claim fails the case even if every expectation holds.
+5. Lock-step and determinism hold (G-T5); the participant never times out or breaks framing.
+
+#### 9.1.1 Corroboration of claims
+
+The harness does not take the participant's word for anything it can observe. Facts come from
+the harness; the participant's `event` and `receipt` frames are claims, checked against them.
+
+| What | Source of truth | Claims checked against it |
+|---|---|---|
+| Motion and the world | The harness: a motion event exists only for an `act` it executed, and the world changes only by its own effects | Any claim of having moved or of a thing's location |
+| Messages | The harness's message log: what was sent, delivered, dropped or altered | Receipts must refer to a delivery that happened; a reply to a message must follow its delivery |
+| Receipts, stages 1–3 (Core 8: form, signature, freshness, recipient) | The harness recomputes them with `robolang.core` on the exact delivered bytes | The participant's `receipt` code for those stages |
+| Receipts, stages 4–5 (duplicates, order, `C306`, `C403`) | The reference run of the same case | The participant's receipts (9.1, item 2) |
+| Authorization before motion | Wire evidence: a granted `authorization_decision` delivered to amr-07 and accepted, or a standing authorization that covers the sub-goal under reference simulation 7.2, evaluated by the harness from the scenario | Every `act` must follow an authorization the harness can establish this way; an `authorization` claim the harness cannot establish is inconsistent |
+| Commit point and designated custody | Wire evidence: amr-07's `acknowledge` with `accepted: true` of a `custody_released` it received (RFC-001 10.4 rules 3–4) | The `custody_committed` claim, and any later `HOLDING` custody claim, must match it |
+| Local states (goal, commitment, custody), escalation | Claims only | Must be consistent with the wire: for example, no `SUCCEEDED` goal claim without a sent `outcome` of `succeeded`; no escalation claim unless a lease expired with custody unresolved. Expectations about these states (`custody` local states, `escalated`) are evaluated from claims only after these checks pass |
 
 ### 9.2 Measured and reported, not required
 
@@ -224,7 +301,7 @@ unchanged.
 | Slice | Content | Done when |
 |---|---|---|
 | **RL-INTEROP-01a** — this specification | Decision record 0009 | Approved |
-| **INTEROP-1** — binding self-test | The harness side of `robolang-sim-stdio` in this repository, and the reference amr-07 run *as an external process* through it | All 24 cases pass, and the records are identical to the F1 golden records. Shows the binding is lossless and the harness is correct before anyone else depends on it |
+| **INTEROP-1** — binding self-test | The harness side of `robolang-sim-stdio` in this repository, and the reference amr-07 run *as an external process* through it | All 24 cases pass with amr-07 receiving only the filtered view (6.4) and every claim corroborated (9.1.1), and the records are identical to the F1 golden records. Shows that the binding is lossless, the view is sufficient and the harness checks work before anyone else depends on them |
 | **INTEROP-2** — bundle | A completeness review of amr-07's behavior: every rule the reference code applies is traced to a section of the bundle; gaps become errata first. Then the frozen bundle, manifest and conformance kit instructions | The review finds no untraced rule; bundle published |
 | **INTEROP-3** — independent participant | Written by the chosen author (I1) in a separate repository, from the bundle | The author declares it ready |
 | **INTEROP-4** — gate 2 run and evidence | G-T0 to G-T5, findings log, Q&A log, evidence document | Section 9.4; owner sign-off |
