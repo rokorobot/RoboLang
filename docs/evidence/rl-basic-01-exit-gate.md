@@ -1,7 +1,7 @@
 # RL-BASIC-01 / Foundation 1 exit gate — evidence
 
 **Date:** 2026-10-27
-**Status:** **Awaiting owner sign-off.** Nothing here is merged.
+**Status:** **Signed off by the owner on 2026-10-27**, on the evidence at `f5b3d23`. Nothing here is merged.
 **Gate:** RL-BASIC-01 exit gate ([RL-FOUNDATION-01 section 6.6](../../spec/architecture/rl-foundation-01-language-foundation.md#66-delivery)),
 which is also the Foundation 1 exit gate (decision F3, [decision record 0003](../../spec/decisions/0003-language-foundation.md)).
 **Specification:** [`spec/simulation-v1.0.md`](../../spec/simulation-v1.0.md) (B1–B16, [decision record 0004](../../spec/decisions/0004-rl-basic-01a-simulation-semantics.md))
@@ -13,7 +13,7 @@ which is also the Foundation 1 exit gate (decision F3, [decision record 0003](..
 | T1–T19, as finalized in RL-BASIC-01a, pass in CI on every supported platform | RL-FOUNDATION-01 6.6 | Section 3; CI runs in section 2, Ubuntu and Windows, Python 3.11 and 3.13 | Yes |
 | All RoboLang 1.1 fixtures still pass | F3 | `tests/test_fixtures.py`: 77 tests (the 76 fixtures and their count check) pass; `validate` and `inspect` pass every fixture in `tests/test_cli.py` | Yes |
 | The README states that `simulate` is simulation only | RL-FOUNDATION-01 6.6 | `README.md`, Project Status row and Quickstart bullet (PR #15) | Yes |
-| Owner sign-off | F3, RL-FOUNDATION-01 6.6 | Section 7 | **Pending** |
+| Owner sign-off | F3, RL-FOUNDATION-01 6.6 | Section 7 | Yes — 2026-10-27 |
 
 ## 2. What was tested
 
@@ -131,8 +131,8 @@ observed on 2026-10-27. The installed `robolang simulate` command is checked by
 
 | Item | Decision | Date |
 |---|---|---|
-| RL-BASIC-01 exit gate met (sections 1–3) | Pending | — |
-| Foundation 1 exit gate met (F3) | Pending | — |
+| RL-BASIC-01 exit gate met (sections 1–3) | **Signed off** by the owner, on the evidence at `f5b3d23` | 2026-10-27 |
+| Foundation 1 exit gate met (F3) | **Signed off** by the owner, on the evidence at `f5b3d23` | 2026-10-27 |
 
-Signing off the gate does not authorize merging any pull request, starting RL-ARCH-02, CORE-1,
+The sign-off does not authorize merging any pull request, starting RL-ARCH-02, CORE-1,
 any LANG item or any Foundation 2 item. Each still needs its own decision.
