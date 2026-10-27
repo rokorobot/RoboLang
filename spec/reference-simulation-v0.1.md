@@ -1,8 +1,8 @@
 # RL-ARCH-02 — Reference simulation of the RFC-001 scenario, version 0.1 (draft)
 
-**Status:** RL-ARCH-02a specification, **proposed for owner review**. Every choice is a row in
+**Status:** RL-ARCH-02a specification, **approved by the owner on 2026-10-27**. Every choice is a row in
 [decision record 0007](decisions/0007-rl-arch-02-core-and-reference-simulation.md) (R1–R14),
-status PROPOSED.
+approved 2026-10-27.
 **Milestone:** RL-ARCH-02 (RFC-001 section 19; decision D8). Gate 1 of RFC-001 section 1.4.
 **Core:** [Core 0.1](core-v0.1.md)
 **Fixtures:** [`tests/fixtures/arch02/`](../tests/fixtures/arch02/README.md)

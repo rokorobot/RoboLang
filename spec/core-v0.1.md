@@ -1,8 +1,8 @@
 # RoboLang Core — version 0.1 (draft)
 
-**Status:** RL-ARCH-02a specification, **proposed for owner review**. Every choice is a row in
+**Status:** RL-ARCH-02a specification, **approved by the owner on 2026-10-27**. Every choice is a row in
 [decision record 0007](decisions/0007-rl-arch-02-core-and-reference-simulation.md) (R1–R14),
-status PROPOSED.
+approved 2026-10-27.
 **Version:** `0.1`. Experimental: until Core 1.0 any change may be breaking (RFC-001 6.2).
 **Builds on:** [RFC-001](architecture/rfc-001-ai-native-architecture.md) sections 6–13
 (decisions D1–D9), unchanged.
