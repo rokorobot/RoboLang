@@ -14,6 +14,9 @@ and section 6.4 added, by [decision record 0011](decisions/0011-interop-2a-bundl
 (N3–N12): what gate 2 needs to implement amr-07. The amended text is marked; where the reference
 does not yet follow it, the [discrepancy register](../docs/interop/spec-implementation-discrepancies.md)
 lists the difference.
+**Erratum (approved 2026-10-28):** sections 6.2 (rule 3) and 6.4 (lease expiry) are amended by
+[decision record 0012](decisions/0012-interop-2c-remaining-normative-decisions.md) (P1): an
+action in progress at lease expiry. The amended text is marked.
 **Fixtures:** [`tests/fixtures/arch02/`](../tests/fixtures/arch02/README.md)
 **Implementation:** none. RL-ARCH-02b implements it only after this specification is approved
 and the owner separately authorizes implementation (D8).
@@ -222,7 +225,9 @@ commitment `fulfilled`; motion events: amr-07 two moves, arm-02 one `handover_pl
 3. **On lease expiry**, without waiting for anyone (RFC-001 11.1): the debtor starts no new
    work and stays in its safe state; a reservation holder does not enter the region; the
    creditor treats the obligation as unfulfilled. In 0.1 a robot's safe state is "no further
-   motion"; RFC-001 open question 10 stays open. amr-07's expiry table is in 6.4 (erratum 0011).
+   motion": it starts no new motion. In the symbolic simulation this does not interrupt an
+   action already in progress, which completes as 6.4 says (decision record 0012, P1). RFC-001
+   open question 10 stays open. amr-07's expiry table is in 6.4 (erratum 0011).
 4. **Custody** follows RFC-001 10.4 rules 1–13. In particular, the receiver commits durably
    before it acknowledges; a giver without an acknowledgement after `ack_timeout` enters
    `IN_DOUBT`, takes no action involving the thing, and sends `custody_query` at once and
@@ -366,6 +371,18 @@ nothing. Otherwise the commitment becomes `lapsed`, amr-07 claims `lease_expired
 | `ACKNOWLEDGED`, `ACCEPTED` or `CONFIRMATION_SENT` | Custody `TIMED_OUT`; `escalated` (`custody_unknown`); goal `FAILED`; outcome `failed` (`lease_expired`, `custody_unknown`). This is V5, and amr-07's part of V6 |
 | `HOLDING` | Goal `UNKNOWN`; outcome `unknown` (`lease_expired`); no escalation |
 | None (before the hand-over) | Goal `FAILED`; outcome `failed` (`lease_expired`) |
+
+**An action in progress at expiry** (decision record 0012, P1). RoboLang 0.1 does not model
+interrupting an action. An action that has started completes when its duration ends; its
+effect on the symbolic world applies, and its motion and effect events stand. Expiry prevents
+new actions (6.2 rule 2). When an action of amr-07 completes after its commitment has lapsed,
+amr-07 takes none of the action's follow-up steps: it changes no local state (the commitment
+stays `lapsed`, and the goal keeps the terminal state the expiry set), senses nothing and
+sends nothing. **This is a property of the simulation only.** It is not a stopping policy and
+not a safety guarantee for physical execution: what a robot must do with an action in
+progress when its authority lapses is RFC-001 open question 10, which stays open.
+*Known reference discrepancy D3:* on arrival after the lapse, the reference sets the commitment
+`fulfilled` and sends a second outcome.
 
 amr-07 claims `lease_expired` for its commitment only, never for its reservation.
 
