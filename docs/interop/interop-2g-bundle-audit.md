@@ -14,7 +14,7 @@ receiver apply is stated in a bundled document (A1). Every operative rule of dec
 (A2). The candidate bundle holds exactly the allowlist and no private material (A3). The 47
 fixtures give their stated receipts from the bundle's own files (A4). The example view is
 exactly what 6.4 allows (A5). The bundle is reproducible and verifiable with a standard tool
-(A6). **No specification gap was found.** Four non-blocking risks are recorded (section 7).
+(A6). **No specification gap was found.** Five non-blocking risks are recorded (section 7).
 
 ## 1. Baseline preserved
 
@@ -184,6 +184,7 @@ names the source commit, so the ID belongs to that commit.
 | R-2 | Risk, low | G2 7 does not fix the check-mode output byte for byte | G-T0 is "the stated receipt for every fixture"; the code and stage are unambiguous. A strict format, if wanted for automated G-T0, is an erratum |
 | R-3 | Risk, clarity | G-T0's receiver context is `context.json` (all keys), while the live amr-07 verifies with its view's keys (Sim 5.3) | Both are stated. No fixture's receipt differs between the two contexts (checked: no fixture addressed to amr-07 is signed with a key outside its view) |
 | R-4 | Risk, low | Bundled documents name reference files (`src/…`, test files) in status sections and link to excluded documents | Informative; names, not code or behavior. Every link is classified (section 3) and guarded by a test |
+| R-5 | Risk, clarity | Before a move, the reference checks a granted authorization decision's own lease, judged in the safe direction (INTEROP-2d, D5). Sim 6.2 rule 2 says "an established authorization that is still valid", and Sim 6.4 "the authorization is still established"; a reader could take an accepted decision to stay valid without looking at its lease | Not a gap: "still valid" covers the lease. No case exercises it (the authority's lease runs to 11:00). Worth an explicit sentence in a later erratum if a question comes up (G2 4.3) |
 
 **Specification gaps:** none found. Nothing was stopped for a normative decision.
 
@@ -192,10 +193,16 @@ names the source commit, so the ID belongs to that commit.
 **Freezing can proceed** once this PR is approved and merged. Then:
 
 1. Take the squash-merge commit of this PR on `main` as the definitive source commit.
-2. `python tools/interop_bundle.py build gate2-bundle --rev <merge commit>`, in an empty directory.
-3. `python tools/interop_bundle.py verify gate2-bundle`, and `sha256sum -c MANIFEST.sha256`.
-4. Record the freeze: the source commit, the bundle ID (the SHA-256 of `MANIFEST.sha256`) and the
-   manifest, in G2 13 and the development plan, in a separately approved change.
+2. In a clean checkout **at that commit** (a fresh clone, or `git checkout <merge commit>` with no
+   local changes), so that the tool and the view builder are also those of the commit: run
+   `python tools/interop_bundle.py build gate2-bundle --rev <merge commit>` into an empty directory.
+3. `python tools/interop_bundle.py verify gate2-bundle`, and `sha256sum -c MANIFEST.sha256` inside it.
+4. Record the freeze **outside the bundle**: the source commit, the bundle ID (the SHA-256 of
+   `MANIFEST.sha256`) and the manifest, in a new `docs/interop/gate2-bundle-freeze.md` and the
+   development plan, in a separately approved change. Writing them into a bundled file (for
+   example G2 13) would change the bundle and invalidate the ID. By construction, the frozen
+   bundle's own G2 13 says "INTEROP-2g authorized; the freeze itself needs owner approval", which
+   was the state at the frozen commit.
 5. From then on, a change to any bundled file is an erratum with a new bundle (G2 4.2).
 
 The candidate built from this PR's head is **not** the frozen bundle; its ID is given in the PR
