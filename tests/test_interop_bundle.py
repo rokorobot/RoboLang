@@ -185,3 +185,30 @@ def test_verify_detects_any_change(bundle, tmp_path, change):
         target.unlink()
     with pytest.raises(SystemExit):
         bundle_tool.verify(copy)
+
+
+# -------- A6: commit-pinned builds fail closed (review finding F-1) --------
+
+def test_pinned_build_rejects_a_checkout_of_another_commit(tmp_path, monkeypatch):
+    monkeypatch.setattr(bundle_tool.Source, "_head", classmethod(lambda cls: "0" * 40))
+    with pytest.raises(SystemExit, match="check out the pinned commit"):
+        bundle_tool.build(tmp_path / "b", rev="HEAD")
+    assert not (tmp_path / "b").exists()  # nothing written
+
+
+def test_pinned_build_rejects_local_changes_to_the_building_code(tmp_path, monkeypatch):
+    monkeypatch.setattr(bundle_tool.Source, "_changed_code", classmethod(lambda cls: ["src/robolang/interop/view.py"]))
+    with pytest.raises(SystemExit, match="local changes to the building code"):
+        bundle_tool.build(tmp_path / "b", rev="HEAD")
+
+
+def test_pinned_build_from_a_clean_checkout_names_its_commit(tmp_path):
+    if bundle_tool.Source._changed_code():
+        pytest.skip("the building code has local changes; a pinned build would rightly refuse")
+    head = bundle_tool.Source._head()
+    out = tmp_path / "pinned"
+    bundle_id = bundle_tool.build(out, rev="HEAD")
+    assert bundle_tool.verify(out) == bundle_id
+    assert f"commit `{head}`" in (out / bundle_tool.README).read_text(encoding="utf-8")
+    for name in files(out) - {bundle_tool.README, bundle_tool.MANIFEST, bundle_tool.VIEW}:
+        assert (out / name).read_bytes() == bundle_tool.Source._git("show", f"{head}:{name}"), name

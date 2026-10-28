@@ -8,9 +8,11 @@ directory, and verifies a built bundle.
     python tools/interop_bundle.py verify BUNDLE_DIR
 
 With `--rev`, every file is read from that git revision, so a bundle built from the same commit
-is byte-identical on every platform. Without it, the working tree is read with line endings
-normalized to LF, as git stores them. The example view is made by the approved view builder
-(`robolang.interop.build_view`) from the base scenario of that revision.
+is byte-identical on every platform. The example view is made by the view builder
+(`robolang.interop.build_view`) of the code that runs, so a pinned build fails closed unless the
+checkout is that commit and its code (`src/`, `tools/`) has no local change. Without `--rev`, the
+working tree is read with line endings normalized to LF, as git stores them: a candidate, never a
+freeze.
 
 `verify` needs nothing from this repository: it checks that the directory holds exactly the files
 the manifest lists, with those hashes. `sha256sum -c MANIFEST.sha256` checks the hashes too.
@@ -45,15 +47,39 @@ MANIFEST = "MANIFEST.sha256"
 SCENARIO = "tests/fixtures/arch02/scenario.json"  # read to build the view; never copied
 
 
+CODE = ("src", "tools")  # what builds the bundle: it must be the pinned commit's
+
+
 class Source:
     """Files at a git revision, or in the working tree with LF line endings."""
 
     def __init__(self, rev: str | None):
         self.rev = rev and self._git("rev-parse", "--verify", f"{rev}^{{commit}}").decode().strip()
+        if self.rev:
+            self.check_pinned()
 
     @staticmethod
     def _git(*args: str) -> bytes:
         return subprocess.run(["git", *args], cwd=REPO, capture_output=True, check=True).stdout
+
+    @classmethod
+    def _head(cls) -> str:
+        return cls._git("rev-parse", "HEAD").decode().strip()
+
+    @classmethod
+    def _changed_code(cls) -> list[str]:
+        """Files of the building code that differ from HEAD, or are untracked."""
+        changed = cls._git("status", "--porcelain", "--untracked-files=all", "--", *CODE).decode()
+        return [line[3:] for line in changed.splitlines()]
+
+    def check_pinned(self) -> None:
+        """Fail closed: the code that builds a pinned bundle must be the pinned commit's (F-1)."""
+        head = self._head()
+        if head != self.rev:
+            raise SystemExit(f"checkout is {head}, not {self.rev}: check out the pinned commit first")
+        changed = self._changed_code()
+        if changed:
+            raise SystemExit(f"local changes to the building code: {', '.join(changed)}")
 
     def files(self, directory: str) -> list[str]:
         if self.rev:

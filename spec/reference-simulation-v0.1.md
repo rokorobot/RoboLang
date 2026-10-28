@@ -356,7 +356,10 @@ Before every move (6.2 rule 2), all of these must hold:
 - a granted reservation is unexpired.
 
 Each is judged in the safe direction (`now < expires_at − clock_tolerance`). Otherwise amr-07
-claims the diagnostic `motion_refused` and does not move.
+claims the diagnostic `motion_refused` and does not move. *Clarification (INTEROP-2g, audit risk
+R-5; the reference's existing behavior):* an accepted granted authorization decision permits
+motion only while its lease remains unexpired, using the safe-direction clock tolerance. Earlier
+acceptance does not extend the lease.
 
 **Forwarding (N9).**
 
