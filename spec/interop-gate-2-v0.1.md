@@ -2,8 +2,8 @@
 
 **Status:** specification, **approved by the owner on 2026-10-27**. Every choice is a row in
 [decision record 0009](decisions/0009-gate-2-independent-interoperability.md) (I1–I12),
-approved 2026-10-27. **No work under it is authorized**: each slice of section 11 needs its own
-authorization.
+approved 2026-10-27. Each slice of section 11 needs its own authorization; section 13 gives
+their status.
 **Gate:** Gate 2 — independent implementation ([RFC-001 section 1.4](architecture/rfc-001-ai-native-architecture.md#14-how-the-ambition-is-tested);
 decision D9).
 **Builds on:** [Core 0.1](core-v0.1.md), [reference simulation 0.1](reference-simulation-v0.1.md),
@@ -366,7 +366,7 @@ unchanged.
 | Slice | Content | Done when |
 |---|---|---|
 | **RL-INTEROP-01a** — this specification | Decision record 0009 | Approved |
-| **INTEROP-1** — binding self-test | The harness side of `robolang-sim-stdio` in this repository, and the reference amr-07 run *as an external process* through it | All 24 cases pass with amr-07 receiving only the filtered view (6.4) and every claim corroborated (9.1.1), and the records are identical to the F1 golden records. Shows that the binding is lossless, the view is sufficient and the harness checks work before anyone else depends on them |
+| **INTEROP-1** — binding self-test | The harness side of `robolang-sim-stdio` in this repository, and the reference amr-07 run *as an external process* through it | All cases pass (24 when INTEROP-1 was done; 25 since INTEROP-2f added `seq_silent_while_held`) with amr-07 receiving only the filtered view (6.4) and every claim corroborated (9.1.1), and the records are identical to the F1 golden records. Shows that the binding is lossless, the view is sufficient and the harness checks work before anyone else depends on them |
 | **INTEROP-2** — bundle | A completeness review of amr-07's behavior: every rule the reference code applies is traced to a section of the bundle; gaps become errata first. Then the frozen bundle, manifest and conformance kit instructions | The review finds no untraced rule; bundle published |
 | **INTEROP-3** — independent participant | Written by the chosen author (I1) in a separate repository, from the bundle | The author declares it ready |
 | **INTEROP-4** — gate 2 run and evidence | G-T0 to G-T5, findings log, Q&A log, evidence document | Section 9.4; owner sign-off |
@@ -388,4 +388,11 @@ physical execution; the language front end (`.rob`, Task IR).
 | Erratum, decision record 0011 (N1–N14) | Approved 2026-10-28; applied to this specification, Core 0.1 and the reference simulation by INTEROP-2b-SPEC |
 | INTEROP-1 | Done 2026-10-28 (PR #36) |
 | INTEROP-2a | Done 2026-10-28 (PR #38) |
-| Rest of INTEROP-2, INTEROP-3, INTEROP-4 | Not authorized |
+| INTEROP-2b-SPEC: N1–N14 applied to the specifications | Done 2026-10-28 (PR #39) |
+| INTEROP-2c: decision record 0012 (P1–P3), and its application | Approved and applied 2026-10-28 (PRs #40, #41) |
+| INTEROP-2d: reference corrections D1–D7 | Done 2026-10-28 (PR #42) |
+| INTEROP-2e: harness corrections N3, H1, H2, N13(c) | Done 2026-10-28 (PR #43) |
+| H3: decision record 0013, receiver-scoped verification keys | Approved and applied 2026-10-28 (PR #44) |
+| INTEROP-2f: precedence fixtures (47 Core fixtures) and `seq_silent_while_held` (25 cases) | Done 2026-10-28 (PR #45) |
+| INTEROP-2g: final bundle audit and freeze preparation | Authorized 2026-10-28; the freeze itself needs owner approval |
+| INTEROP-3, INTEROP-4 | Not authorized |
