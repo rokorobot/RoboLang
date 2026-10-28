@@ -3,8 +3,9 @@ The reference simulation engine (spec/reference-simulation-v0.1.md sections 3, 5
 
 One shared simulated clock, an event queue ordered by time and then by insertion, message
 delivery with a fixed latency, and the scripted faults. Every delivery gets a receipt: the
-per-message Core 0.1 checks of `robolang.core`, then duplicate and order handling, then the
-participant's own state rules (`C306`, `C403`).
+per-message Core 0.1 checks of `robolang.core` (stages 1-3), then duplicate and order handling,
+then the meaning checks (stage 5: `C401`, `C402`, `C404`, then the participant's own state rules,
+`C306` and `C403`).
 
 Order follows decision record 0008: sequence numbers count per sender, recipient and
 conversation; a message after a gap is held, with no effect, until the gap is filled or
@@ -21,7 +22,7 @@ import json
 from dataclasses import dataclass
 from typing import Any, Callable
 
-from ..core import Context, Key, check_message, sign_sim, time_ms
+from ..core import Context, Key, check_meaning, check_message, sign_sim, time_ms
 from .scenario import apply_overrides, keys_of, ms, time_text
 from .world import Fact, Sensor, World
 
@@ -122,8 +123,9 @@ class _Held:
 
 class Inbox:
     """
-    One receiver's handling of a delivered message: the Core 0.1 checks of `robolang.core`, then
-    duplicates, order and holds (decision record 0008), then the participant's own rules.
+    One receiver's handling of a delivered message: the Core 0.1 checks of `robolang.core`
+    (stages 1-3), then duplicates, order and holds (decision record 0008), then the stage-5
+    meaning checks and the participant's own rules (Core 8.1).
 
     The host supplies time, timers and the participant: the engine for its in-process
     participants, and the participant process of the `robolang-sim-stdio` binding for itself.
@@ -143,7 +145,7 @@ class Inbox:
 
     def deliver(self, data: bytes, ref, kind: str) -> None:
         host = self.host
-        receipt = check_message(data, host.context(self.receiver))
+        receipt = check_message(data, host.context(self.receiver), meaning=False)  # stage 5 after stage 4 (D7)
         if not receipt.accepted:
             return self._record(ref, kind, "rejected", receipt.code)
         # Only a message that passed form, signature, freshness and recipient reaches this point:
@@ -161,6 +163,10 @@ class Inbox:
         expected = self._next.get(sender, 1)
         if sequence < expected:
             return self._record(ref, kind, "rejected", "C306")  # Q6: stale and not a duplicate
+        if sequence in held:
+            # Core 8.4, 0012 P2 (D6): a different message with the sequence of a held one. The held
+            # message keeps its place and gets its own single release receipt.
+            return self._record(ref, kind, "rejected", "C306")
         if sequence > expected:
             # Q3: held, with no effect and no reply, until the gap is filled, `max_hold` has
             # passed (Q4) or the message expires (judged in the safe direction).
@@ -179,6 +185,9 @@ class Inbox:
         self._next[sender] = document["sequence"] + 1
         if self.host.is_silent(self.receiver):
             return self._record(ref, kind, "not_handled")
+        meaning = check_meaning(document, self.host.context(self.receiver))
+        if not meaning.accepted:
+            return self._record(ref, kind, "rejected", meaning.code)  # not remembered: 0011 N13
         try:
             self.host.hand_over(self.receiver, document)
         except Reject as rejection:

@@ -21,8 +21,9 @@ TERMINAL = {"REJECTED", "DENIED", "SUCCEEDED", "FAILED", "CANCELLED", "TIMED_OUT
 _STATUS = {"succeeded": "SUCCEEDED", "failed": "FAILED", "unknown": "UNKNOWN", "rejected": "REJECTED"}
 
 
-def _reasons(*codes: str) -> list[dict]:
-    return [{"code": code} for code in codes]
+def _reasons(*codes: str | None) -> list[dict]:
+    # A contradicted criterion has no reason code: its outcome `failed` has empty reasons (spec 6.3, D1).
+    return [{"code": code} for code in codes if code is not None]
 
 
 def _outcome(goal: str, status: str, reporter: str, now: str, reasons=(), verification=None) -> dict:
@@ -465,6 +466,8 @@ class Amr(Participant):
         self.goal = self.request = self.commitment = None
         self.commitment_state: str | None = None
         self.confirmation_id = self.release_id = None
+        self.authorization: str | int | None = None  # "standing", or the granted decision's lease end (ms)
+        self.reservation_until: int | None = None  # the granted reservation's lease end (ms)
 
     def _state(self, state: str) -> None:
         self.goal_state = state
@@ -489,8 +492,10 @@ class Amr(Participant):
             return self._decline("participant_busy")
         transport = capability(self.sim, self.id, "transport_payload")
         dock = capability(self.sim, self.id, "dock_at")
-        if not (transport and dock and Decimal(self.mass) <= Decimal(transport["max_mass"]["value"])
-                and {self.handoff, self.target} <= set(dock["places"])):
+        if not (transport and dock):  # spec 6.4 capability test, steps 1 and 2 (D4)
+            return self._decline("capability_unsupported")
+        if not (Decimal(self.mass) <= Decimal(transport["max_mass"]["value"])
+                and {self.handoff, self.target} <= set(dock["places"])):  # steps 3 and 4
             return self._decline("capability_insufficient")
         self.send("offer_assistance", "r2r", self.requester, {
             "goal": self.goal["id"], "conditions": [{"kind": "resource_held", "resource": self.handoff}],
@@ -515,9 +520,9 @@ class Amr(Participant):
 
     def _authorize(self) -> None:
         self._state("AUTHORIZING")
-        basis = standing_authorization(self.sim, self.id, "r2r", {"transport_payload", "custody_transfer"},
-                                       {self.handoff, self.target}, self.requester, self.mass)
+        basis = self._standing_authorization()
         if basis is not None:
+            self.authorization = "standing"
             self.event("authorization", decision="granted", basis=basis)
             self._state("AUTHORIZED")
             return self._reserve()
@@ -532,11 +537,16 @@ class Amr(Participant):
             raise Reject("C306")
         self.event("authorization", decision=payload["decision"], basis=document["message_id"])
         if payload["decision"] == "granted" and payload["mode"] == "simulation":
+            self.authorization = time_ms(payload["lease"]["expires_at"])
             self._state("AUTHORIZED")
             return self._reserve()
         self._state("DENIED")
         self.commitment_state = "failed"
         self._outcome("rejected", "authorization_denied")
+
+    def _standing_authorization(self) -> str | None:
+        return standing_authorization(self.sim, self.id, "r2r", {"transport_payload", "custody_transfer"},
+                                      {self.handoff, self.target}, self.requester, self.mass)
 
     def _reserve(self) -> None:
         self.send("reserve", "r2r", self.sim.scenario["arbiters"][self.handoff], {
@@ -551,14 +561,39 @@ class Amr(Participant):
             raise Reject("C306")
         if payload["decision"] != "granted":
             return self.event("state", record="reservation_denied")
+        self.reservation_until = time_ms(payload["lease"]["expires_at"])
         self._state("RUNNING")
         self._move(self.handoff, lambda: self.send(
             "coordinate", "r2r", self.requester, {"commitment": self.commitment["id"], "phase": "ready_for_handover"}))
 
+    def _may_move(self) -> bool:
+        """Spec 6.2 rule 2 and 6.4 at the moment of the move, judged in the safe direction (D5)."""
+        def unexpired(until_ms: int | None) -> bool:
+            return until_ms is not None and self.sim.now < until_ms - self.sim.tolerance_ms
+
+        if self.authorization == "standing":
+            authorized = self._standing_authorization() is not None
+        else:
+            authorized = unexpired(self.authorization)
+        return (
+            authorized
+            and self.goal_state == "RUNNING"
+            and self.commitment_state == "active"
+            and unexpired(time_ms(self.commitment["lease"]["expires_at"]))
+            and unexpired(self.reservation_until)
+        )
+
     def _move(self, to: str, done) -> None:
-        if self.goal_state != "RUNNING" or self.commitment_state != "active":
+        if not self._may_move():
             return self.event("state", record="motion_refused", to=to)
-        self.sim.move(self.id, to, done)  # the world and the durations are the simulation's
+        self.sim.move(self.id, to, lambda: self._moved(done))  # the world and the durations are the simulation's
+
+    def _moved(self, done) -> None:
+        # A move in progress at lease expiry completes in the world, but amr-07 then takes none of
+        # its follow-up steps: no state change, no sensing, no message (spec 6.4, 0012 P1; D3).
+        if self.commitment_state == "lapsed":
+            return
+        done()
 
     def on_coordinate(self, document: dict) -> None:
         phase = document["payload"]["phase"]
@@ -619,7 +654,7 @@ class Amr(Participant):
         self._outcome("unknown" if failed.result != CONTRADICTED else "failed", failed.reason)
 
     def on_custody_query(self, document: dict) -> None:
-        if document["payload"]["thing"] != self.thing:
+        if self.goal is None or document["payload"]["thing"] != self.thing:  # a sub-goal must exist (D2)
             raise Reject("C306")
         observation = self.sim.observe(self.id, "deck_camera", self.thing, "carried_by")
         self.send("custody_state", "r2r", self.requester, {
