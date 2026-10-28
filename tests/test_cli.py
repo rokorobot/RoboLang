@@ -12,6 +12,7 @@ from pathlib import Path
 
 import pytest
 
+from robolang import ir as task_ir
 from robolang.cli import EXIT_INVALID, EXIT_OK, EXIT_USAGE, main
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -252,6 +253,101 @@ def test_inspect_text_renders_combined_wait_until():
         in out
     )
     assert "    2. wait until not object_exists box timeout 500 ms\n" in out
+
+
+def _rendered(path: str) -> tuple[list[str], list[str], list[str]]:
+    """Parameters, preconditions and `wait until` steps of a one-task file, as text inspect prints them."""
+    code, out, err = cli("inspect", path)
+    assert code == EXIT_OK, err
+    sections: dict[str, list[str]] = {}
+    title = ""
+    for line in out.splitlines():
+        if line.startswith("    "):
+            sections[title].append(line.strip())
+        elif line.startswith("  "):
+            title = line.strip().split(":")[0]
+            sections[title] = []
+    waits = [re.sub(r"^\d+\. ", "", s) for s in sections["plan"] if re.match(r"\d+\. wait until ", s)]
+    return sections["parameters"], sections["preconditions"], waits
+
+
+def _conditions(document: task_ir.TaskIR) -> tuple[list, list]:
+    (task,) = document.tasks
+    return list(task.preconditions), [s.condition for s in task.steps if isinstance(s, task_ir.WaitUntil)]
+
+
+def _assert_round_trip(path: Path) -> None:
+    """Text inspect output, written back as 1.2 source, compiles to the same condition IR."""
+    parameters, pre, waits = _rendered(str(path))
+    rebuilt = "".join(
+        [
+            f"robolang 1.2;\n\ntask t({', '.join(parameters)}) {{\n    pre {{\n",
+            *(f"        {condition};\n" for condition in pre),
+            "    }\n    plan {\n",
+            *(f"        {wait};\n" for wait in waits),
+            "        wait for 1 s;\n    }\n}\n",
+        ]
+    )
+    original = task_ir.compile_source(path.read_text(encoding="utf-8"), str(path))
+    result = task_ir.compile_source(rebuilt, "rebuilt.rob")
+    assert result.ir is not None, (rebuilt, result.diagnostics)
+    assert _conditions(result.ir) == _conditions(original.ir), rebuilt
+
+
+V12_SOURCES = V12_VALID + sorted((FIXTURES / "v1.2" / "simulation" / "sources").glob("*.rob"))
+
+
+@pytest.mark.parametrize("path", V12_SOURCES, ids=lambda p: p.name)
+def test_inspect_text_round_trips_every_v12_fixture(path):
+    _assert_round_trip(path)
+
+
+ROUND_TRIP_CONDITIONS = [
+    "not not not not robot_ready r",
+    "(((robot_ready r)))",
+    "not (region_clear left and region_clear right)",
+    "not (not robot_ready r or region_clear cell)",
+    "(robot_ready r or not object_exists box) and region_clear cell",
+    'robot_ready r and (region_clear left or (region_clear right and not sensor_ok "cam"))',
+    '((robot_ready r and region_clear cell) or not (sensor_ok "cam" or region_clear left)) and object_exists box',
+    "(robot_ready r and region_clear cell) and (object_exists box and region_clear left)",
+    "region_clear left or (region_clear right or region_clear cell) or not region_clear left",
+]
+
+
+@pytest.mark.parametrize("condition", ROUND_TRIP_CONDITIONS)
+def test_inspect_text_round_trips_nested_conditions(condition, tmp_path):
+    """Nested and/or/not with parentheses, as a precondition and in `wait until`."""
+    path = tmp_path / "nested.rob"
+    path.write_text(
+        "robolang 1.2;\n\n"
+        "task t(robot r, object box, region cell, region left, region right) {\n"
+        f"    pre {{\n        {condition};\n    }}\n"
+        f"    plan {{\n        wait until {condition} timeout 2 s;\n    }}\n"
+        "}\n",
+        encoding="utf-8",
+    )
+    _assert_round_trip(path)
+
+
+def test_inspect_text_keeps_operator_words_as_names_in_v11_files():
+    """In a 1.1 file `and`, `or` and `not` are names, and render as plain atoms."""
+    _, pre, _ = _rendered("tests/fixtures/v1.2/compat/operator_words_as_names.rob")
+
+    assert pre == ["robot_ready and", "region_clear or", "object_exists not"]
+
+
+@pytest.mark.parametrize(
+    "condition",
+    [object(), task_ir.Not(object()), task_ir.And((task_ir.RobotReady("r"), object()))],
+    ids=["bare", "under_not", "under_and"],
+)
+def test_inspect_text_rejects_an_unknown_condition_kind(condition):
+    """An unknown kind is an error, never rendered as another kind (such as sensor_ok)."""
+    from robolang import cli as cli_module
+
+    with pytest.raises(TypeError, match="not a condition: object"):
+        cli_module._condition(condition)
 
 
 def test_selecting_a_task_still_validates_the_whole_file(tmp_path):
