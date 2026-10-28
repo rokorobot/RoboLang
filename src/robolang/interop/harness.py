@@ -444,7 +444,11 @@ class ExternalParticipant:
         claims, acts, self._claims, self._acts = self._claims, self._acts, [], []
         accepted, unseen, self._cycle_accepted, self._cycle_unseen = self._cycle_accepted, self._cycle_unseen, [], []
         decisions = {d["message_id"]: d["payload"] for d in self._accepted_of("authorization_decision")}
-        granted = any(p["decision"] == "granted" and p["mode"] == "simulation" for p in decisions.values())
+        # A granted decision covers an `act` only while its lease is unexpired at that moment, in the
+        # safe direction (reference simulation 6.4, clarification R-5; finding H4). The cycle is one instant.
+        granted = any(p["decision"] == "granted" and p["mode"] == "simulation"
+                      and self.sim.now < time_ms(p["lease"]["expires_at"]) - self.sim.tolerance_ms
+                      for p in decisions.values())
         for action in acts:
             if not (granted or self._standing() is not None):
                 raise InconsistentClaim(f"action {action} without an authorization the harness can establish")
