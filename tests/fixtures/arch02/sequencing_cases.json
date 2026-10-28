@@ -383,6 +383,60 @@
           "rl:robot:amr-07": "HOLDING"
         }
       }
+    },
+    {
+      "id": "seq_silent_while_held",
+      "tests": [
+        "A-T20"
+      ],
+      "seed": "0",
+      "faults": [
+        {
+          "kind": "delay",
+          "match": {
+            "type": "coordinate",
+            "sender": "rl:robot:arm-02",
+            "n": 1
+          },
+          "by": {
+            "value": "3",
+            "unit": "s"
+          }
+        },
+        {
+          "kind": "silence",
+          "participant": "rl:robot:amr-07",
+          "from": {
+            "type": "coordinate",
+            "sender": "rl:robot:arm-02",
+            "n": 1
+          }
+        }
+      ],
+      "expect": {
+        "planner_status": "failed",
+        "held": [
+          [
+            "transfer_custody",
+            "rl:robot:amr-07",
+            "10:14:30.800",
+            "10:14:35.800",
+            "not_handled"
+          ]
+        ],
+        "rejections": [],
+        "processed_by": {
+          "rl:robot:amr-07": [
+            "request_assistance",
+            "commit",
+            "reservation_decision"
+          ]
+        },
+        "custody": {
+          "designated": "rl:robot:arm-02",
+          "rl:robot:arm-02": "TIMED_OUT"
+        }
+      }
     }
   ]
 }

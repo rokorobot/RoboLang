@@ -98,6 +98,10 @@
     "sequencing_cases.json#seq_lost_ack_holds_next": {
       "run_id": "arch02-c0e5bce63ad463dcf75bfe0e8b2893aa7f2e0ecfd73bb25ac95465efe5b5c894",
       "record_sha256": "69759484322d8dee28c7e5be564cc1878161a92f1c942b64c1797ebdf75472d1"
+    },
+    "sequencing_cases.json#seq_silent_while_held": {
+      "run_id": "arch02-4bce43a978951a27ce28a0d58329a6e6b51fdab61c10ca6fccf58369046bfe9e",
+      "record_sha256": "c6bd6c0fe974040a7c8d34d171473d2e9d634ec26cea5eeb3c3eabbb627b2319"
     }
   }
 }

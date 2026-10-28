@@ -271,7 +271,7 @@ which participant produced a message. Gate 2 does not test participant identity.
 ## 7. Prerequisite: conformance kit (G-T0, I12)
 
 Before any scenario run, the independent implementation's receiver checks must give the stated
-receipt for all 30 Core fixtures (A-T16): a `check` mode reads one fixture and the context of
+receipt for all 47 Core fixtures (A-T16), 17 of them multi-fault precedence fixtures (INTEROP-2f): a `check` mode reads one fixture and the context of
 `tests/fixtures/core/context.json` and prints the code and stage, or `accepted`. This is
 level 3 of section 2 and the first thing the independent author can test alone.
 
@@ -279,10 +279,10 @@ level 3 of section 2 and the first thing the independent author can test alone.
 
 | # | Test | Cases | amr-07 role |
 |---|---|---|---|
-| G-T0 | Conformance kit | 30 Core fixtures | Receiver checks |
+| G-T0 | Conformance kit | 47 Core fixtures | Receiver checks |
 | G-T1 | Happy path | `happy_path`, `happy_path_seed_1` | The full role |
 | G-T2 | amr-07 behavior under faults | `v01_declines`, `v02_duplicate_commit`, `v03_replayed_commit`, `v05_stale_confirmation`, `v06_partition_before_release`, `v07_release_ack_lost`, `v08_arrived_without_evidence`, `v11_payload_beyond_standing_authorization`, `v12a_unsigned_commit`, `v12b_wrongly_signed_commit` | Exercised directly |
-| G-T3 | Sequencing (0008) | All 8 `seq_*` cases | Exercised directly where amr-07 sends or receives the affected stream (`seq_replay_while_fresh`, `seq_lost_ack_holds_next`); otherwise a regression check, since amr-07 numbers and receives its own streams in every case |
+| G-T3 | Sequencing (0008) | All 9 `seq_*` cases | Exercised directly where amr-07 sends or receives the affected stream (`seq_replay_while_fresh`, `seq_lost_ack_holds_next`, and `seq_silent_while_held`, where amr-07 holds a message and the harness closes the hold, 6.2); otherwise a regression check, since amr-07 numbers and receives its own streams in every case |
 | G-T4 | Regression | `v04_assistant_silent`, `v09_stale_reverification`, `v10_requester_authorizes`, `v13_no_grasp` | Must still behave correctly although the fault is elsewhere |
 | G-T5 | Determinism | Every case run twice | The independent run is repeatable: byte-identical gate 2 records |
 

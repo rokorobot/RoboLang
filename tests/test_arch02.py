@@ -84,7 +84,7 @@ def observed(r: RunResult, field: str, expect: dict):
                 continue
             release = next(x for x in r.deliveries
                            if x.kind == "released" and (x.message, x.receiver) == (d.message, d.receiver))
-            result_text = "accepted" if release.receipt == "accepted" else release.code
+            result_text = release.code or release.receipt  # accepted, not_handled (a silent receiver), or a code
             mtype = r.sent[d.message].document["type"]
             out.append([mtype, d.receiver, clock(d.t_ms), clock(release.t_ms), result_text])
         return out
@@ -205,7 +205,7 @@ def test_message_with_no_transition_is_c306():
 # -------- A-T20: sequencing (decision record 0008) --------
 
 def test_every_sequencing_case_is_run():
-    assert len(SEQ_CASES) == 8 and all(case["id"].startswith("seq_") for case in SEQ_CASES)
+    assert len(SEQ_CASES) == 9 and all(case["id"].startswith("seq_") for case in SEQ_CASES)
 
 
 def test_held_message_has_no_effect_until_released():

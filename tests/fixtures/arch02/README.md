@@ -16,10 +16,10 @@ statuses, reasons and participants are defined.
   specification sections 2 to 7.
 - `cases.json` — one case per acceptance test (specification section 12): `id`, `tests`,
   `seed`, `faults` (section 10) and `expect` (section 11).
-- `sequencing_cases.json` — the eight sequencing cases of specification section 8.1
+- `sequencing_cases.json` — the nine sequencing cases of specification section 8.1
   (acceptance test A-T20), added by
   [decision record 0008](../../../spec/decisions/0008-core-sequencing-per-recipient.md),
-  approved on 2026-10-27. `tests/test_arch02.py` runs them against `robolang.arch02`
+  approved on 2026-10-27; `seq_silent_while_held` was added by INTEROP-2f. `tests/test_arch02.py` runs them against `robolang.arch02`
   (ARCH-SEQ), including the `held` and `processed_by` expectations.
 
 A case's `expect` lists only what that case checks. Determinism (A-T15) is checked by running

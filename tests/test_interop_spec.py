@@ -46,7 +46,7 @@ def test_gate_2_groups_cover_every_case_exactly_once():
     rows = {row.split("|")[1].strip(): row.split("|")[3] for row in section("## 8. Interoperability tests").splitlines()
             if re.match(r"\| G-T[1-4] \|", row)}
     named = [c for group in ("G-T1", "G-T2", "G-T4") for c in re.findall(r"`([a-z0-9_]+)`", rows[group])]
-    assert "All 8 `seq_*` cases" in rows["G-T3"]
+    assert "All 9 `seq_*` cases" in rows["G-T3"]
     named += [c for c in cases if c.startswith("seq_")]
     assert sorted(named) == sorted(cases)
-    assert len(named) == len(set(named)) == 24
+    assert len(named) == len(set(named)) == 25

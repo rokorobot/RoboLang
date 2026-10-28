@@ -145,6 +145,145 @@
       "file": "invalid/c404_physical_mode.json",
       "expect": "C404",
       "stage": "meaning"
+    },
+    {
+      "file": "invalid/c102_before_c106.json",
+      "expect": "C102",
+      "stage": "form",
+      "competing": [
+        "C106"
+      ]
+    },
+    {
+      "file": "invalid/c102_before_c201.json",
+      "expect": "C102",
+      "stage": "form",
+      "competing": [
+        "C201"
+      ]
+    },
+    {
+      "file": "invalid/c102_before_c107.json",
+      "expect": "C102",
+      "stage": "form",
+      "competing": [
+        "C107"
+      ]
+    },
+    {
+      "file": "invalid/c102_before_c402.json",
+      "expect": "C102",
+      "stage": "form",
+      "competing": [
+        "C402"
+      ]
+    },
+    {
+      "file": "invalid/c105_before_c201.json",
+      "expect": "C105",
+      "stage": "form",
+      "competing": [
+        "C201"
+      ]
+    },
+    {
+      "file": "invalid/c106_before_c201.json",
+      "expect": "C106",
+      "stage": "form",
+      "competing": [
+        "C201"
+      ]
+    },
+    {
+      "file": "invalid/c201_before_c107.json",
+      "expect": "C201",
+      "stage": "signature",
+      "competing": [
+        "C107"
+      ]
+    },
+    {
+      "file": "invalid/c201_before_c402.json",
+      "expect": "C201",
+      "stage": "signature",
+      "competing": [
+        "C402"
+      ]
+    },
+    {
+      "file": "invalid/c103_before_c104.json",
+      "expect": "C103",
+      "stage": "form",
+      "competing": [
+        "C104"
+      ]
+    },
+    {
+      "file": "invalid/c204_before_c203_before_c202.json",
+      "expect": "C204",
+      "stage": "signature",
+      "competing": [
+        "C203",
+        "C202"
+      ]
+    },
+    {
+      "file": "invalid/c203_before_c202.json",
+      "expect": "C203",
+      "stage": "signature",
+      "competing": [
+        "C202"
+      ]
+    },
+    {
+      "file": "invalid/c202_message_before_c203_observation.json",
+      "expect": "C202",
+      "stage": "signature",
+      "competing": [
+        "C203"
+      ]
+    },
+    {
+      "file": "invalid/c203_message_before_c204_observation.json",
+      "expect": "C203",
+      "stage": "signature",
+      "competing": [
+        "C204"
+      ]
+    },
+    {
+      "file": "invalid/c302_before_c301.json",
+      "expect": "C302",
+      "stage": "freshness",
+      "competing": [
+        "C301"
+      ]
+    },
+    {
+      "file": "invalid/c302_before_c303.json",
+      "expect": "C302",
+      "stage": "freshness",
+      "competing": [
+        "C303"
+      ]
+    },
+    {
+      "file": "invalid/c301_before_c307.json",
+      "expect": "C301",
+      "stage": "freshness",
+      "receiver": "rl:agent:planner-1",
+      "competing": [
+        "C307"
+      ]
+    },
+    {
+      "file": "invalid/c303_before_c307.json",
+      "expect": "C303",
+      "stage": "freshness",
+      "receiver": "rl:agent:planner-1",
+      "competing": [
+        "C307"
+      ]
     }
   ]
 }
