@@ -27,7 +27,7 @@ correction would create the semantics instead of implementing them.
 | # | Topic | Proposed rule | Alternatives considered | Spec | Status |
 |---|---|---|---|---|---|
 | P1 | D3: lease expiry during an action | An action already in progress completes, and its simulated world effect applies. Expiry prevents new actions. When the action completes after the commitment lapsed, amr-07 takes none of its follow-up steps: it changes no local state (the commitment stays `lapsed`, the goal keeps the terminal state the expiry set), senses nothing and sends nothing. **Simulation only:** not a stopping policy and not a physical safety guarantee (section 3) | **(a)** A new world action that interrupts the motion at expiry: more realistic, but it adds world semantics 0.1 does not model (partial positions, a carried thing between places), and RFC-001 open question 10 is still open. **(b)** Keep the reference's behavior, where arrival evaluates and sends a second outcome: two outcomes for one sub-goal, and `fulfilled` over `lapsed` (D3) | Sim 6.4 | PROPOSED |
-| P2 | D6: conflicting sequence number | A message whose sequence equals that of a message currently **held** from the same sender, but whose message ID differs, is rejected with `C306`. The held message is unaffected: it keeps its place and gets exactly one release receipt. A copy with the same ID stays a duplicate (8.4) | **(a)** Reject both: an attacker or a faulty sender could then cancel a legitimate held message by sending a conflicting one. **(b)** Treat the second as a duplicate, keyed by sequence: it hides a conflicting content behind a `duplicate` receipt. **(c)** Replace the held message with the second (the reference today): the first never gets a receipt, against 0011 N3's "exactly one terminal release receipt" | Core 8.4 | PROPOSED |
+| P2 | D6: conflicting sequence number | A message whose sequence equals that of a message currently **held in the same stream** (same sender, recipient and `conversation_id`, Core 3 and 8.4), but whose message ID differs, is rejected with `C306`. The held message is unaffected: it keeps its place and gets exactly one terminal release receipt. A copy with the same ID stays a duplicate (8.4). The rule never applies across streams | **(a)** Reject both: an attacker or a faulty sender could then cancel a legitimate held message by sending a conflicting one. **(b)** Treat the second as a duplicate, keyed by sequence: it hides a conflicting content behind a `duplicate` receipt. **(c)** Replace the held message with the second (the reference today): the first never gets a receipt, against 0011 N3's "exactly one terminal release receipt" | Core 8.4 | PROPOSED |
 | P3 | S2: stage-2 precedence | For each signed object: `C204` (the algorithm is not accepted by the receiver in its mode), then `C203` (the key is unknown, revoked, or not the signer's), then `C202` (the signature does not verify). The first failure is reported. The message's own signature comes before the observations it carries (already in Core 8.1) | **(a)** `C202` first: verifying under an algorithm or key the receiver does not accept for that signer proves nothing, and would mean computing with untrusted material. **(b)** Leave the order open: the conformance kit (G-T0) compares exact codes, so a multi-fault message would give a finding with no rule to resolve it | Core 8.1 | PROPOSED |
 
 ## 3. The D3 safety boundary
@@ -60,9 +60,9 @@ authorization or commitment has expired could be unsafe. The rule therefore stat
 **P2: Core 8.4, a new item after "Stale":**
 
 > - **Conflicting sequence** (decision record 0012, P2). A message whose `sequence` equals that
->   of a message currently held from the same sender, and whose `message_id` differs, is
->   rejected with `C306`. The held message is unaffected: it keeps its place in the stream and
->   receives exactly one release receipt.
+>   of a message currently held in the same stream (same sender, recipient and
+>   `conversation_id`), but whose `message_id` differs, is rejected with `C306`. The original
+>   held message is unaffected and receives exactly one terminal release receipt.
 
 **P3: Core 8.1, replacing the sentence "Core 0.1 does not fix the order of `C204`, `C203` and
 `C202` for one signed object…":**
@@ -89,3 +89,4 @@ correction is implemented; they do not authorize changing any golden record.
 | Date | Change |
 |---|---|
 | 2026-10-28 | First draft: P1–P3 proposed (INTEROP-2c) |
+| 2026-10-28 | Revision after review of PR #40 at `37595ea`; all rows still proposed. P2 now names the full stream (sender, recipient and `conversation_id`) instead of the sender alone, so the rule cannot apply across conversations; its proposed Core 8.4 wording is replaced accordingly |
