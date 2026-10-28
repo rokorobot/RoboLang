@@ -97,11 +97,11 @@ def test_d2_custody_query_for_another_thing_is_still_c306():
 
 # -------- D3: an action in progress at lease expiry (spec 6.2 rule 3, 6.4; 0012 P1) --------
 
-@pytest.mark.parametrize("offer_end", ["10:15:30.000Z", "10:15:51.200Z"], ids=["during_move", "at_arrival"])
-def test_d3_final_move_completes_but_amr07_takes_no_follow_up_step(offer_end):
-    # The final move runs 10:14:51.200-10:15:51.200. "at_arrival": the lease ends at the arrival instant.
-    r = run(*leases(offer_end, "10:15:00.000Z"))
-    expiry = time_ms(DAY + offer_end)
+def test_d3_final_move_completes_but_amr07_takes_no_follow_up_step():
+    # The final move runs 10:14:51.200-10:15:51.200; the lease ends during it. An expiry at the
+    # arrival instant itself is not tested: 0012 P1 does not decide that tie.
+    r = run(*leases("10:15:30.000Z", "10:15:00.000Z"))
+    expiry = time_ms(DAY + "10:15:30.000Z")
     assert [e.t_ms for e in events(r, M, "lease_expired")] == [expiry]
     # The move completes in the world, and its motion and effect events stand.
     assert [(time_text(e.t_ms)[11:23], e.get("to")) for e in events(r, M, "effect")][-1] == ("10:15:51.200", S3)
@@ -262,6 +262,33 @@ def test_d6_the_rule_does_not_cross_streams():
     assert receipts(r, "m-other-stream")[0] == ("original", "held", None)
     accept = sent(r, "accept", A)[0]
     assert receipts(r, accept["message_id"]) == [("original", "held", None), ("released", "accepted", None)]
+
+
+def test_d6_streams_are_per_conversation():
+    # Same sender and recipient, another conversation: its own sequence numbers and holds.
+    # Sequence 2 there is held for its own gap, not rejected as a conflict with the held `accept`.
+    other = inject_to_planner(A, 2, "m-other-conversation")
+    other["message"]["conversation_id"] = "rl:conv:other"
+    r = run(DELAY_ASSESSMENT, other)
+    assert receipts(r, "m-other-conversation") == [("original", "held", None), ("released", "accepted", None)]
+    released = [d for d in r.deliveries if r.sent[d.message].document["message_id"] == "m-other-conversation"][-1]
+    assert time_text(released.t_ms)[11:23] == "10:14:05.800"  # its own max_hold, not the other stream's gap
+    accept = next(d for d in sent(r, "accept", A) if d["message_id"] != "m-other-conversation")
+    assert receipts(r, accept["message_id"]) == [("original", "held", None), ("released", "accepted", None)]
+    # Sequence 1 in another conversation is in order there, though arm-02's stream to planner-1
+    # in the scenario's conversation is already past 1.
+    first = inject_to_planner(A, 1, "m-other-conversation-1", at="10:14:30.000Z")
+    first["message"]["conversation_id"] = "rl:conv:other"
+    r = run(first)
+    assert receipts(r, "m-other-conversation-1") == [("original", "accepted", None)]
+
+
+def test_d6_duplicate_detection_stays_per_sender_across_conversations():
+    # A copy of a held message's ID in another conversation is still a duplicate (Core 8.4).
+    other = inject_to_planner(A, 5, "m-dup", at="10:14:00.800Z")
+    other["message"]["conversation_id"] = "rl:conv:other"
+    r = run(DELAY_ASSESSMENT, inject_to_planner(A, 4, "m-dup"), other)
+    assert [k[1] for k in receipts(r, "m-dup")][:2] == ["held", "duplicate"]
 
 
 def test_d6_conflict_after_release_is_stale():
