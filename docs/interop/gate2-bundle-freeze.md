@@ -1,9 +1,10 @@
 # Gate 2 specification bundle — freeze record
 
-**Status:** **PREPARED — awaiting the owner's freeze decision.** The bundle below has been built
-and verified; it is not frozen until the owner approves this record. Once approved, it is the
-bundle of the whole gate 2 run (`spec/interop-gate-2-v0.1.md` 4.2): any change to a bundled
-file is an erratum with a new bundle and a new record.
+**Status:** **FROZEN — approved by the owner on 2026-10-28.** The bundle below is the bundle of
+the whole gate 2 run (`spec/interop-gate-2-v0.1.md` 4.2): any change to a bundled file is an
+erratum with a new bundle and a new record. The frozen source commit is fixed at
+`28c69feece0de14b1537a4d29e0cd4b700cff920`; the commit that merges this record does not change it,
+and the bundle is never rebuilt from a later commit.
 
 This record lives outside the bundle on purpose: writing the bundle ID into a bundled file would
 change the bundle (audit report `docs/interop/interop-2g-bundle-audit.md`, section 8).
@@ -100,6 +101,9 @@ dc85157eb8d7d557d557d7eb6f1c910c40be8a988bbe0318e39b05538a1dd18d  tests/fixtures
 ## Not covered by this record
 
 - Publishing the bundle to the independent author (INTEROP-3, separately authorized, with the
-  author named).
+  author named). **Delivery requirement (owner, 2026-10-28):** before INTEROP-3 begins, the frozen
+  bundle is packed into one ZIP or TAR archive containing exactly the 61 files above; the archive
+  is preserved, its own SHA-256 is recorded separately from the bundle ID, and only that archive
+  is delivered. The independent author never clones this repository to rebuild the bundle.
 - Harness limitation H4 (discrepancy register), to be corrected before INTEROP-4. The harness is
   not part of the bundle, so its correction does not change this bundle.
