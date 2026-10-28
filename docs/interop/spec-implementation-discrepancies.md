@@ -32,7 +32,7 @@ are unchanged. The rows record what the reference did before the correction.
 
 ## 2. INTEROP-1 harness (0011, section 6; recognized follow-up work)
 
-**All four corrected by INTEROP-2e** (authorized 2026-10-28), with regression tests in
+**N3, H1, H2 and N13(c) corrected by INTEROP-2e** (authorized 2026-10-28), with regression tests in
 `tests/test_interop_harness.py`. The 24 golden records are unchanged and the INTEROP-1 self-test
 still reproduces them. The rows record what the harness did before the correction.
 
@@ -41,6 +41,7 @@ still reproduces them. The rows record what the harness did before the correctio
 | N3 | Silence: the harness takes over open holds through a hold ledger, with exactly one terminal release receipt per held message (gate 2 6.2) | The participant's hold timers were owned by the participant and skipped while it was silent; there was no ledger or takeover | **Corrected:** a `held` receipt opens a ledger entry with its stream (sender, `conversation_id`), sequence, expiry and delivery time; the harness checks it at both Core 8.4 instants and, while the participant is silent, closes it (`C301` at expiry, which wins a tie; `not_handled` at `max_hold`), then releases the entries of that stream that are now next. The recommended `seq_silent_while_held` golden case is INTEROP-2f |
 | H1 | Presented observations are compared **in meaning**, with a valid signature; formatting alone is not a failure (gate 2 9.1.1, N5) | Compared the whole document, signature value included: stricter than specified | **Corrected:** same fields, `id`, `kind`, `subject`, `property`, `value` and `source`; the same instant, duration and decimal; a `sim-hmac-sha256` signature under the participant's key that verifies over the observation as presented. The four INTEROP-1 provenance tests still fail as intended |
 | H2 | Diagnostics are optional, but each must be consistent with the same cycle; any other `record` value is a binding failure (gate 2 6.3, 9.1.1, N7) | Recorded every `state` claim without checking diagnostics or unknown `record` values | **Corrected:** each of the five diagnostics is checked against the same cycle (accepted messages, `act` frames, null readings, the commit point), with exactly its listed fields; any other `record` is a binding failure |
+| H3 (found in INTEROP-2e; **open**, not authorized) | Stages 1–3 are recomputed "with `robolang.core` on the exact delivered bytes" (gate 2 9.1.1); the participant verifies with the keys of its view (6.4: its own, arm-02's and its authority's) | Recomputes with the context of the whole scenario, which holds every participant's key | A message to amr-07 from a sender outside its view (planner-1) passes the harness's stage 2 but is `C203` for a correct participant: a false failure. Not reached by the 24 cases, where only arm-02 and the authority send to amr-07. Needs a decision: recompute with the view's keys |
 | N13(c) | Only stage 1–3 codes are compared with the harness's recomputation (gate 2 9.1.1) | Compared every code that `check_message` gave, including the stage-5 `C401`, `C402` and `C404` | **Corrected:** the harness recomputes stages 1–3 only (`check_message(..., meaning=False)`); stage-5 codes are judged against the reference run, like `C306` and `C403` |
 
 Already conforming: the duplicate-reply resend (N2); unique names per kind and one receipt per

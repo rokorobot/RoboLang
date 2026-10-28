@@ -69,6 +69,8 @@ def foreign_decision(sequence: int = 1) -> dict:
     """
     An authorization_decision to amr-07 from arm-02, which is not its authority: C401, a stage-5 code.
     It is sent in a conversation of its own, so its stream starts at 1 and the scenario is undisturbed.
+    The sender is arm-02 because amr-07's view holds only arm-02's and its authority's keys: from
+    planner-1 it would be C203 (finding H3 of the discrepancy register).
     """
     message = {"type": "authorization_decision", "profile": "a2r", "sender": A, "recipient": M,
                "conversation_id": "rl:conv:other", "sequence": sequence,
@@ -290,7 +292,8 @@ def test_n3_silent_with_a_hold_max_hold_first():
 
 
 def test_n3_silent_with_a_hold_expiry_first():
-    r = external_matches_reference(custom(held_by_amr(9, "m-held"), SILENT_FROM_COMMIT, max_hold("40000")))
+    # max_hold 29.5 s (shorter than the 30 s lifetime, Core 8.4): 10:14:29.750 is after the expiry instant.
+    r = external_matches_reference(custom(held_by_amr(9, "m-held"), SILENT_FROM_COMMIT, max_hold("29500")))
     assert of(r, "m-held")[-1] == ("10:14:29.650", "released", "rejected", "C301")
 
 
