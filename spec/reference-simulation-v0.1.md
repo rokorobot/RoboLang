@@ -17,6 +17,9 @@ lists the difference.
 **Erratum (approved 2026-10-28):** sections 6.2 (rule 3) and 6.4 (lease expiry) are amended by
 [decision record 0012](decisions/0012-interop-2c-remaining-normative-decisions.md) (P1): an
 action in progress at lease expiry. The amended text is marked.
+**Erratum (approved 2026-10-28):** section 5.3 is amended by
+[decision record 0013](decisions/0013-h3-receiver-scoped-verification-keys.md) (H3): the keys a
+receiver verifies with. The amended text is marked.
 **Fixtures:** [`tests/fixtures/arch02/`](../tests/fixtures/arch02/README.md)
 **Implementation:** none. RL-ARCH-02b implements it only after this specification is approved
 and the owner separately authorizes implementation (D8).
@@ -170,6 +173,13 @@ commitment `rl:commit:c42-transport`.
 Every message, observation and descriptor is signed with `sim-hmac-sha256` (Core 7). The
 scenario file gives each participant one key and its secret. Every receiver verifies every
 signature, so a corrupted or missing signature is caught where Core 8 says (R5).
+
+*Erratum ([decision record 0013](decisions/0013-h3-receiver-scoped-verification-keys.md), H3).*
+Each receiver verifies signatures using only the keys available in its configured trust context.
+For amr-07, that context consists of its own key and the verification keys supplied in its gate 2
+6.4 participant view. A signature requiring a key unavailable in that context is rejected with
+`C203`, even if the scenario contains that key elsewhere. Other reference participants retain their
+existing configured verification keys.
 
 ## 6. Behavior
 

@@ -298,20 +298,23 @@ def test_d6_conflict_after_release_is_stale():
 
 # -------- D7: stage 5 after duplicate and order handling (Core 8.1) --------
 
-def foreign_decision(sequence: int | None = None, at: str = "10:14:10.000Z") -> dict:
-    """An authorization_decision to amr-07 from planner-1, which is not its authority: C401 at stage 5."""
-    message = {"type": "authorization_decision", "profile": "a2r", "sender": P, "recipient": M, "payload": {
+def foreign_decision(sequence: int = 1, at: str = "10:14:10.000Z") -> dict:
+    """
+    An authorization_decision to amr-07 from arm-02, which is not its authority: C401 at stage 5. It
+    is sent in a conversation of its own, so its stream starts at 1. arm-02 is in amr-07's trust
+    context; planner-1 is not, and would be C203 at stage 2 (spec 5.3, decision record 0013).
+    """
+    message = {"type": "authorization_decision", "profile": "a2r", "sender": A, "recipient": M,
+               "conversation_id": "rl:conv:other", "sequence": sequence, "payload": {
         "goal": SCENARIO["goal"]["id"] + "-sub-1", "decision": "granted", "mode": "simulation", "constraints": [],
         "lease": {"granted_at": DAY + at, "expires_at": DAY + "11:00:00.000Z", "renewal": 0}}}
-    if sequence is not None:
-        message["sequence"] = sequence
     return {"kind": "inject", "at": DAY + at, "message": message}
 
 
 def test_d7_stage_5_rejection_after_a_sequence_gap():
     # Sequence 2 with 1 missing: held first (stage 4), and rejected C401 only when it is released.
     r = run(foreign_decision(sequence=2))
-    decision = sent(r, "authorization_decision", P)[0]
+    decision = sent(r, "authorization_decision", A)[0]
     assert receipts(r, decision["message_id"]) == [("original", "held", None), ("released", "rejected", "C401")]
     released = next(d for d in r.deliveries if d.kind == "released" and d.code == "C401")
     assert time_text(released.t_ms)[11:23] == "10:14:15.100"  # max_hold (5 s) after delivery
@@ -321,16 +324,16 @@ def test_d7_stage_5_rejection_after_a_sequence_gap():
 def test_d7_copy_of_a_stage_5_rejected_message_is_judged_again():
     # Rejected at stage 5, the message is not remembered: its copy is not a duplicate, and its
     # stream has passed it, so it is stale (Core 8.4, 0011 N13).
-    r = run(foreign_decision(), {"kind": "duplicate", "match": {"type": "authorization_decision", "sender": P, "n": 1},
+    r = run(foreign_decision(), {"kind": "duplicate", "match": {"type": "authorization_decision", "sender": A, "n": 1},
                                  "after": {"value": "1", "unit": "s"}})
-    decision = sent(r, "authorization_decision", P)[0]
+    decision = sent(r, "authorization_decision", A)[0]
     assert receipts(r, decision["message_id"]) == [("original", "rejected", "C401"), ("duplicate", "rejected", "C306")]
 
 
 def test_d7_stateless_check_still_gives_the_stage_5_code():
     # A conformance check of a single message, with no conversation state, gives the same code (Core 8.1).
     r = run(foreign_decision())
-    document = sent(r, "authorization_decision", P)[0]
+    document = sent(r, "authorization_decision", A)[0]
     context = Context(M, time_ms(DAY + "10:14:10.100Z"), 500, 60_000, keys_of(SCENARIO), SCENARIO["authorities"])
     data = json.dumps(document).encode("utf-8")
     assert check_message(data, context).code == "C401"

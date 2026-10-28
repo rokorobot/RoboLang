@@ -32,6 +32,8 @@ def _outcome(goal: str, status: str, reporter: str, now: str, reasons=(), verifi
 
 
 class Participant:
+    scoped_trust = False  # verifies with every scenario key (spec 5.3: existing configuration)
+
     def __init__(self, sim: Simulation, pid: str):
         self.sim = sim
         self.id = pid
@@ -459,6 +461,8 @@ class Arm(Participant):
 # -------- amr-07: takes on the sub-goal, receives custody --------
 
 class Amr(Participant):
+    scoped_trust = True  # verifies with its trust context only (spec 5.3, decision record 0013)
+
     def __init__(self, sim: Simulation, pid: str):
         super().__init__(sim, pid)
         self.goal_state: str | None = None

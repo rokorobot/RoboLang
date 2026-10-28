@@ -70,6 +70,21 @@ def apply_overrides(scenario: dict, faults: list[dict]) -> dict:
     return result
 
 
+def counterparts(scenario: dict, participant: str) -> list[str]:
+    """The participants it deals with: its peers (the robots it assists) and its own authority."""
+    peers = sorted(robot for robot, assistants in scenario["peers"].items() if participant in assistants)
+    return peers + [scenario["authorities"][participant]]
+
+
+def trusted_key_refs(scenario: dict, participant: str) -> list[str]:
+    """
+    The keys of an assistant's trust context (spec 5.3, decision record 0013): its own key, then the
+    keys of its counterparts. The gate 2 view (6.4) supplies exactly these; the engine verifies with them.
+    """
+    records = {entry["id"]: entry for entry in scenario["participants"]}
+    return [f"{participant}#k1"] + [ref for pid in counterparts(scenario, participant) for ref in records[pid]["keys"]]
+
+
 def keys_of(scenario: dict) -> dict[str, Key]:
     return {
         ref: Key(entry["participant"], entry["alg"], bytes.fromhex(entry["secret"]))
