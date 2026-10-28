@@ -207,10 +207,18 @@ commitment `fulfilled`; motion events: amr-07 two moves, arm-02 one `handover_pl
 ### 6.2 Rules every participant follows
 
 1. **Every receipt is checked as Core 8 says**, and the result is recorded (section 9).
-2. **Before every action**, a robot checks that its goal or sub-goal is `AUTHORIZED`, that the
-   commitment it depends on is active and its lease unexpired, and, for motion involving the
-   handover region, that it holds a granted, unexpired reservation or arbitrates the region.
-   For amr-07 the exact checks are in 6.4 (erratum 0011).
+2. **Before every action**, a robot checks all of these:
+   - its goal or sub-goal has an **established authorization that is still valid** (7.2: a
+     covering standing authorization, or a granted decision from its authority);
+   - the goal is in the state its role requires for that action;
+   - the commitment it depends on is active and its lease unexpired;
+   - for motion involving the handover region, it holds a granted, unexpired reservation or
+     arbitrates the region.
+
+   *Erratum (0011, N8; consistency correction).* "Authorized" here means the authorization has
+   been established, not the goal state `AUTHORIZED`. A goal moves on from `AUTHORIZED` to
+   `RUNNING` when work starts (RFC-001 9.2), and amr-07 starts both of its moves in `RUNNING`.
+   The exact checks for amr-07 are in 6.4.
 3. **On lease expiry**, without waiting for anyone (RFC-001 11.1): the debtor starts no new
    work and stays in its safe state; a reservation holder does not enter the region; the
    creditor treats the obligation as unfulfilled. In 0.1 a robot's safe state is "no further
