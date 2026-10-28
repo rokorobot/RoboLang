@@ -461,8 +461,8 @@ never test amr-07's standing authorization. The variant therefore raises arm-02'
 in `tests/fixtures/arch02/sequencing_cases.json`. Sequence numbers are per stream (Core 3), so
 arm-02's stream to planner-1 is `assessment` 1, `accept` 2, `outcome` 3, and amr-07's stream
 to arm-02 runs from `offer_assistance` 1 to `outcome` 8. In every case a held message has no
-effect until it is released (Core 8.4), and every case ends with planner-1 recording
-`succeeded`.
+effect until it is released (Core 8.4), and every case except `seq_silent_while_held` (added by
+INTEROP-2f) ends with planner-1 recording `succeeded`.
 
 | Case | Faults | Expected |
 |---|---|---|
@@ -474,6 +474,7 @@ effect until it is released (Core 8.4), and every case ends with planner-1 recor
 | `seq_stale_nonduplicate` | Inject at 10:14:05.000 another `assessment` from arm-02 to planner-1 with sequence 1 and a different message ID | Stale and not a duplicate: `C306` |
 | `seq_unsigned_not_held` | Remove the signature of `accept`; delay the `assessment` by 1 s | `accept` is rejected at once with `C201`: never held, not counted. The `outcome` (3) is held from 10:15:51.400 and processed at 10:15:56.400; planner-1's re-verification finds the evidence 5.2 s old, within its 10 s limit |
 | `seq_lost_ack_holds_next` | Drop amr-07's second `acknowledge` (as V7) | amr-07's `custody_state` (7) is held at arm-02 from 10:14:56.300 and processed at 10:15:01.300, when arm-02 resolves to `RELEASED` |
+| `seq_silent_while_held` | Delay arm-02's first `coordinate` (`ready_for_handover`) by 3 s; amr-07 is silent from its delivery | amr-07 holds `transfer_custody` (5) from 10:14:30.800. The `coordinate` (4) arrives at 10:14:33.800, when amr-07 goes silent: `not_handled`. At 10:14:35.800, after `max_hold`, the held message is released once, `not_handled` (Core 8.4; for an external amr-07, by the harness, gate 2 6.2). At lease expiry arm-02's custody is `TIMED_OUT`, and planner-1 records `failed` |
 
 ## 9. Run record
 
@@ -566,7 +567,7 @@ rules.
 | `reasons` | Reason codes of the outcome or reject that planner-1 receives last |
 | `escalated` | Participants that recorded `escalated` |
 | `final_world` | A subset of the final facts |
-| `held` | `(type, receiver, held at, released at, result)` for every held message, in order; result `accepted` or a code (0008) |
+| `held` | `(type, receiver, held at, released at, result)` for every held message, in order; result `accepted`, `not_handled` (a silenced receiver) or a code (0008) |
 | `processed_by` | Per participant, the types of the messages it processed (accepted receipts), in processing order (0008) |
 
 ## 12. Acceptance tests

@@ -369,13 +369,19 @@ fails:
 | 8 | A time value that does not parse (2.4) | `C104` | — |
 | 9 | A lease whose `expires_at` is not after its `granted_at` (5.7) | `C104` | — |
 
-Ranks 3 to 6 apply to messages only. The fixtures establish only that ranks 2 to 6 come before
-rank 7, and that rank 1 comes first. Three other orderings are fixed by decision record 0011
-(N13) but have **no fixture yet**:
+Ranks 3 to 6 apply to messages only. The single-fault fixtures establish that ranks 2 to 6 come
+before rank 7, and that rank 1 comes first. The other orderings fixed by decision record 0011
+(N13) are pinned by the multi-fault precedence fixtures (INTEROP-2f), each of which also has
+the later faults it lists:
 
-- rank 2 before ranks 3 to 6;
-- the order among ranks 3 to 6;
-- `C103` before `C104` when a document has both an unknown field and another schema error.
+- rank 2 before ranks 3 to 6: `c102_before_c106`, `c102_before_c201`, `c102_before_c107`,
+  `c102_before_c402`;
+- the order among ranks 3 to 6, where two of them can apply together: `c105_before_c201`,
+  `c106_before_c201`, `c201_before_c107`, `c201_before_c402`. Ranks 5 and 6 are defined only for
+  a defined type, so neither combines with rank 3; and they cannot both apply in 0.1, because
+  `outcome`, the only type rank 6 concerns, allows both profiles;
+- `C103` before `C104` when a document has both an unknown field and another schema error:
+  `c103_before_c104`.
 
 Ranks 7 to 9 give the same code, so their order changes only the JSON Pointer of the receipt,
 not the code.
@@ -387,6 +393,9 @@ them rejects the message. For each signed object, the checks apply in this order
 failure is reported (decision record 0012, P3): `C204`, the algorithm is not accepted by this receiver in its mode;
 `C203`, the key is unknown, revoked, or not the signer's; `C202`, the signature does not
 verify.
+The fixtures `c204_before_c203_before_c202` and `c203_before_c202` pin this order, and
+`c202_message_before_c203_observation` and `c203_message_before_c204_observation` pin the
+message's own signature before those of its observations (INTEROP-2f).
 
 **Stage 3, precedence.** In this order:
 
@@ -400,7 +409,10 @@ The comparisons are exact:
 - a message is expired when `now ≥ expires_at − clock_tolerance`;
 - it is in the future when `sent_at > now + clock_tolerance`.
 
-Each stage-3 fixture has one fault only, so this order rests on decision record 0011 alone.
+The fixtures `c302_before_c301`, `c302_before_c303`, `c301_before_c307` and `c303_before_c307`
+pin this order (INTEROP-2f). `C301` and `C303` cannot both apply to a message that passes
+`C302`: an expired message has `expires_at ≤ now + clock_tolerance`, a message sent in the future
+has `sent_at > now + clock_tolerance`, and `sent_at` is before `expires_at`.
 
 **Stage 5.** The meaning codes (`C306`, `C401`, `C402` for a verification with an unmet criterion,
 `C403`, `C404`) are applied **after** duplicate and order handling (stage 4). A conformance check

@@ -124,6 +124,11 @@ def test_core_case_is_consistent(case):
     code = case["expect"]
     assert path.name.startswith(code.lower() + "_")
     assert CODES[code] == case["stage"], f"{code} is a {CODES[code]} code"
+    if "competing" in case:
+        # A precedence fixture (INTEROP-2f) also has the later faults it lists, so the single-fault
+        # checks below do not apply; tests/test_core_precedence.py shows each listed fault is present.
+        assert case["competing"] and all(c in CODES for c in case["competing"]) and code not in case["competing"]
+        return
     if code == "C101":
         with pytest.raises((ValueError, AssertionError)):
             data = path.read_bytes()
@@ -224,7 +229,7 @@ CLOCK = re.compile(r"[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{3}")
 def test_sequencing_cases_match_the_specification_table():
     listed = [row[0].strip("`") for row in table_column(SIM_SPEC, "### 8.1 Sequencing cases")]
     assert [case["id"] for case in SEQ_CASES] == listed
-    assert len(listed) == 8 and all(case["tests"] == ["A-T20"] for case in SEQ_CASES)
+    assert len(listed) == 9 and all(case["tests"] == ["A-T20"] for case in SEQ_CASES)
     assert SCENARIO["parameters"]["max_hold"] == {"value": "5", "unit": "s"}
 
 
@@ -243,7 +248,7 @@ def test_sequencing_case_is_consistent(case):
     for mtype, receiver, held_at, released_at, result in expect.get("held", []):
         assert mtype in DEFINED_TYPES and receiver in participants
         assert CLOCK.fullmatch(held_at) and CLOCK.fullmatch(released_at) and held_at < released_at
-        assert result == "accepted" or result in CODES
+        assert result in ("accepted", "not_handled") or result in CODES
     for mtype, receiver, code in expect.get("rejections", []):
         assert mtype in DEFINED_TYPES and receiver in participants and code in CODES
     for receiver, types in expect.get("processed_by", {}).items():

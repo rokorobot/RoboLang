@@ -57,7 +57,7 @@ PINNED = json.loads(GOLDEN.read_text(encoding="utf-8"))["records"]
 
 def test_every_case_is_pinned():
     assert sorted(PINNED) == sorted(f"{name}#{case['id']}" for name, case in CASES)
-    assert len(PINNED) == 24
+    assert len(PINNED) == 25
 
 
 @pytest.mark.parametrize(("name", "case"), CASES, ids=[f"{n}#{c['id']}" for n, c in CASES])

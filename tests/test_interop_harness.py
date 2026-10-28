@@ -326,3 +326,19 @@ def test_n3_no_duplicate_terminal_receipt():
     for case in (custom(held_by_amr(9, "m-held"), SILENT_FROM_COMMIT),
                  custom(held_by_amr(9, "m-held-9"), held_by_amr(10, "m-held-10", "10:14:00.160Z"), SILENT_FROM_COMMIT)):
         assert all(len(v) == 1 for v in released(run_case_external(PARSED, case)).values())
+
+
+def test_n3_golden_case_seq_silent_while_held():
+    # INTEROP-2f, F1: the case of sequencing_cases.json, external amr-07; its record is also pinned
+    # in golden_records.json (and reproduced by test_interop.py's self-test).
+    import json
+    case = next(c for c in json.loads((ROOT / "tests" / "fixtures" / "arch02" / "sequencing_cases.json")
+                                      .read_text(encoding="utf-8"))["cases"] if c["id"] == "seq_silent_while_held")
+    r = external_matches_reference(dict(case))
+    held = [d for d in r.deliveries if d.receipt == "held"]
+    assert [(r.sent[d.message].document["type"], time_text(d.t_ms)[11:23]) for d in held] == [
+        ("transfer_custody", "10:14:30.800")]
+    mine = [(time_text(d.t_ms)[11:23], d.kind, d.receipt) for d in r.deliveries if d.message == held[0].message]
+    silence = next(d for d in r.deliveries if d.receipt == "not_handled" and d.kind == "original")
+    assert time_text(silence.t_ms)[11:23] == "10:14:33.800"  # silence starts before the release is due
+    assert mine == [("10:14:30.800", "original", "held"), ("10:14:35.800", "released", "not_handled")]  # once

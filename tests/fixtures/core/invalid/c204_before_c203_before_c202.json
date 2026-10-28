@@ -1,0 +1,28 @@
+{
+  "schema": "robolang.core.message",
+  "schema_version": "0.1",
+  "message_id": "m-ad5167b49b4f58f754cbc0fef5a1b40c",
+  "conversation_id": "rl:conv:c42-delivery",
+  "sequence": 1,
+  "in_reply_to": null,
+  "profile": "a2r",
+  "type": "assessment",
+  "sender": "rl:robot:arm-02",
+  "recipient": "rl:agent:planner-1",
+  "sent_at": "2026-10-19T10:14:00.400Z",
+  "expires_at": "2026-10-19T10:14:30.400Z",
+  "payload": {
+    "goal": "rl:goal:c42-to-s3",
+    "result": "feasible_with_assistance",
+    "reasons": [
+      {
+        "code": "assistance_required"
+      }
+    ]
+  },
+  "signature": {
+    "alg": "ed25519",
+    "key": "rl:agent:planner-1#k1",
+    "value": "0000000000000000000000000000000000000000000000000000000000000000"
+  }
+}
