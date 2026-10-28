@@ -342,3 +342,33 @@ def test_n3_golden_case_seq_silent_while_held():
     silence = next(d for d in r.deliveries if d.receipt == "not_handled" and d.kind == "original")
     assert time_text(silence.t_ms)[11:23] == "10:14:33.800"  # silence starts before the release is due
     assert mine == [("10:14:30.800", "original", "held"), ("10:14:35.800", "released", "not_handled")]  # once
+
+
+# -------- H4: a granted decision covers motion only while its lease is unexpired --------
+
+def decided_motion(lease_end: str) -> dict:
+    """v11 (no covering standing authorization), plus a granted decision from amr-07's authority at
+    10:14:05.000 with lease end `lease_end`. amr-07 accepts it and starts its first move at 10:14:05.300."""
+    v11 = {"kind": "override", "path": "/things/0/mass/value", "value": "35"}
+    grant = {"kind": "inject", "at": DAY + "10:14:05.000Z", "message": {
+        "type": "authorization_decision", "profile": "a2r", "sender": "rl:human:shift-lead-3", "recipient": M,
+        "payload": {"goal": SUB_GOAL, "decision": "granted", "mode": "simulation", "constraints": [],
+                    "lease": {"granted_at": DAY + "10:14:05.000Z", "expires_at": DAY + lease_end, "renewal": 0}}}}
+    return custom(v11, override(f"/descriptors/{A}/capabilities/0/max_mass/value", "40"), grant)
+
+
+MOVE_ANYWAY = "Amr._may_move = lambda self: True  # bypass amr-07's own pre-move checks (D5)"
+
+
+def test_h4_motion_within_the_decision_lease_is_corroborated():
+    # 10:14:05.300 < 10:14:05.801 - 0.5 s: valid. The final move (10:14:55.900) is refused by amr-07 itself.
+    r = external_matches_reference(decided_motion("10:14:05.801Z"))
+    assert [(time_text(e.t_ms)[11:23], e.get("to")) for e in r.events if e.participant == M and e.kind == "motion"] \
+        == [("10:14:05.300", "rl:place:handoff-h1")]
+
+
+@pytest.mark.parametrize("lease_end", ["10:14:05.800Z", "10:14:05.200Z"], ids=["tolerance_boundary", "expired"])
+def test_h4_motion_after_the_decision_lease_is_inconsistent(lease_end):
+    # At the boundary, now = expires_at - tolerance: expired in the safe direction.
+    with pytest.raises(InconsistentClaim, match="without an authorization the harness can establish"):
+        run_case_external(PARSED, decided_motion(lease_end), command=patched(MOVE_ANYWAY))
