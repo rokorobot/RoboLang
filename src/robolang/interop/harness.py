@@ -20,7 +20,7 @@ import threading
 from pathlib import Path
 from typing import Any
 
-from ..arch02.engine import RunResult, Simulation
+from ..arch02.engine import RunResult, Simulation, build_observation
 from ..arch02.participants import standing_authorization, thing_mass
 from ..arch02.record import to_record
 from ..arch02.scenario import load_scenario
@@ -69,6 +69,7 @@ class ExternalParticipant:
         self._delivered: set[str] = set()  # message IDs delivered to the participant
         self._accepted: list[dict] = []  # documents the participant accepted
         self._sent: list[dict] = []  # documents the participant sent
+        self._observations: dict[str, dict] = {}  # observation ID -> the observation as the harness made it
         self._claims: list[tuple[str, dict]] = []
         self._acts: list[str] = []
 
@@ -181,6 +182,10 @@ class ExternalParticipant:
         reply_to = document.get("in_reply_to")
         if reply_to is not None and reply_to not in self._delivered:
             raise InconsistentClaim(f"reply to {reply_to}, which was never delivered to {self.id}")
+        payload = document.get("payload") if isinstance(document.get("payload"), dict) else {}
+        for observation in [*payload.get("observations", []), *payload.get("evidence", [])]:
+            if not self._observed(observation):
+                raise InconsistentClaim(f"observation not as the harness made it: {observation!r:.160}")
         self._sent.append(document)
         self.sim.send_document(document)
 
@@ -225,8 +230,16 @@ class ExternalParticipant:
         sensor = frame.get("sensor")
         if (self.id, sensor) not in self.sim.sensors:
             raise BindingFailure(f"{self.id} has no sensor {sensor!r}")
-        reading = self.sim.sense(self.id, sensor, frame.get("thing"), frame.get("property"))
+        thing, prop = frame.get("thing"), frame.get("property")
+        reading = self.sim.sense(self.id, sensor, thing, prop)
         value, observed_at_ms = (None, None) if reading is None else reading[:2]
+        if reading is not None:
+            # The complete observation the participant can build from this reading, signature included:
+            # any observation it later presents must equal it (provenance, 9.1.1).
+            s = self.sim.sensors[(self.id, sensor)]
+            expected = build_observation(self.id, reading[2], thing, prop, value, observed_at_ms, sensor, s.valid_for,
+                                         s.confidence, s.method, self.sim.keys[f"{self.id}#k1"])
+            self._observations[expected["id"]] = expected
         self._write({"frame": "sensed", "now_ms": self._now_ms(), "request": request, "value": value,
                      "observed_at_ms": None if observed_at_ms is None else observed_at_ms - self.sim.epoch_ms})
 
@@ -280,11 +293,12 @@ class ExternalParticipant:
     def _lease_expired(self, commitment: dict) -> bool:
         return self.sim.now >= time_ms(commitment["lease"]["expires_at"])
 
-    def _observed(self, observation: dict) -> bool:
-        """An observation in the participant's evidence that the harness itself made (sense)."""
-        return any(e.kind == "observation" and e.participant == self.id and dict(e.detail) == {
-            "id": observation.get("id"), "subject": observation.get("subject"),
-            "property": observation.get("property"), "value": observation.get("value")} for e in self.sim._events)
+    def _observed(self, observation: Any) -> bool:
+        """
+        An observation identical, in every field and its signature, to one built from a reading the
+        harness gave (`sensed`): value, time, sensor characteristics and source cannot be altered.
+        """
+        return isinstance(observation, dict) and self._observations.get(observation.get("id")) == observation
 
     def _commitment_claim(self, state: Any) -> None:
         """0010, B2: a supported transition, backed by an accepted commitment and the wire."""

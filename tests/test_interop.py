@@ -224,6 +224,22 @@ def test_inconsistent_claims_fail_the_run(case_id, patch, message):
         run_case_external(PARSED, case(case_id), command=patched(patch))
 
 
+# Observation provenance: an observation the participant presents must equal, field for field and
+# signature included, the one built from the harness's reading. Each patch re-signs or alters one
+# protected field of a genuinely sensed observation (same ID and value).
+@pytest.mark.parametrize("patch", [
+    "real = p.build_observation\np.build_observation = lambda *a: real(*a[:5], a[5] - 1000, *a[6:])",
+    "real = p.build_observation\np.build_observation = lambda *a: real(*a[:8], '0.99', *a[9:])",
+    "real = p.build_observation\np.build_observation = lambda *a: real(*a[:9], 'lidar', *a[10:])",
+    "real = p.build_observation\n"
+    "def forged(*a):\n    o = real(*a); return dict(o, signature=dict(o['signature'], value='0' * 64))\n"
+    "p.build_observation = forged",
+], ids=["observed_at", "confidence", "method", "signature"])
+def test_altered_observations_fail_the_run(patch):
+    with pytest.raises(InconsistentClaim, match="observation not as the harness made it"):
+        run_case_external(PARSED, case("happy_path"), command=patched(patch))
+
+
 # -------- isolation --------
 
 FORBIDDEN_LOADED = ("socket", "ssl", "http", "urllib.request", "rclpy", "robolang_adapter", "robolang_runtime")
