@@ -87,13 +87,129 @@ def _message_id(sender: str, recipient: str, conversation: str, sequence: int) -
     return "m-" + hashlib.sha256(text.encode("utf-8")).hexdigest()[:32]
 
 
+def build_message(sender: str, recipient: str, conversation: str, sequence: int, mtype: str, profile: str,
+                  payload: dict, in_reply_to: str | None, now_ms: int, ttl_ms: int, key: Key,
+                  message_id: str | None = None) -> dict:
+    """One signed Core 0.1 message as the reference participants build it (spec 5.2)."""
+    return sign_sim({
+        "schema": "robolang.core.message", "schema_version": "0.1",
+        "message_id": message_id or _message_id(sender, recipient, conversation, sequence),
+        "conversation_id": conversation, "sequence": sequence, "in_reply_to": in_reply_to,
+        "profile": profile, "type": mtype, "sender": sender, "recipient": recipient,
+        "sent_at": time_text(now_ms), "expires_at": time_text(now_ms + ttl_ms), "payload": payload,
+    }, f"{sender}#k1", key)
+
+
+def build_observation(participant: str, number: int, thing: str, prop: str, value: Any, observed_at_ms: int,
+                      sensor_name: str, valid_for: dict, confidence: str, method: str, key: Key) -> dict:
+    """One signed observation (Core 5.6) made by `participant`, its `number`-th."""
+    return sign_sim({
+        "kind": "observation", "id": f"rl:obs:{participant.split(':')[-1]}:{number}", "subject": thing,
+        "property": prop, "value": value, "observed_at": time_text(observed_at_ms),
+        "valid_for": valid_for, "confidence": confidence,
+        "source": {"participant": participant, "sensor": sensor_name, "method": method},
+    }, f"{participant}#k1", key)
+
+
 @dataclass
 class _Held:
     """A message waiting for a gap in its stream (Core 8.4); it has had no effect yet."""
 
     document: dict
-    index: int
+    ref: Any  # how the host identifies the delivered message (the engine: its index)
     held_at_ms: int
+
+
+class Inbox:
+    """
+    One receiver's handling of a delivered message: the Core 0.1 checks of `robolang.core`, then
+    duplicates, order and holds (decision record 0008), then the participant's own rules.
+
+    The host supplies time, timers and the participant: the engine for its in-process
+    participants, and the participant process of the `robolang-sim-stdio` binding for itself.
+    It provides `now`, `tolerance_ms`, `max_hold_ms`, `at`, `context`, `receipt`, `resend`,
+    `is_silent` and `hand_over`.
+    """
+
+    def __init__(self, host, receiver: str):
+        self.host = host
+        self.receiver = receiver
+        self._processed: dict[tuple[str, str], int] = {}  # (sender, message_id) -> remembered until
+        self._next: dict[str, int] = {}  # sender -> next expected sequence
+        self._held: dict[str, dict[int, _Held]] = {}  # sender -> sequence -> held
+
+    def _record(self, ref, kind: str, receipt: str, code: str | None = None) -> None:
+        self.host.receipt(ref, self.receiver, kind, receipt, code)
+
+    def deliver(self, data: bytes, ref, kind: str) -> None:
+        host = self.host
+        receipt = check_message(data, host.context(self.receiver))
+        if not receipt.accepted:
+            return self._record(ref, kind, "rejected", receipt.code)
+        # Only a message that passed form, signature, freshness and recipient reaches this point:
+        # a rejected one is never held and does not count in its stream (0008, Q2).
+        document = json.loads(data)
+        sender, message_id = document["sender"], document["message_id"]
+        held = self._held.setdefault(sender, {})
+        if ((sender, message_id) in self._processed and host.now <= self._processed[(sender, message_id)]) or any(
+            h.document["message_id"] == message_id for h in held.values()
+        ):
+            self._record(ref, kind, "duplicate")  # Q5: processed or held already; no second effect
+            host.resend(message_id)  # the original reply is sent again
+            return
+        sequence = document["sequence"]
+        expected = self._next.get(sender, 1)
+        if sequence < expected:
+            return self._record(ref, kind, "rejected", "C306")  # Q6: stale and not a duplicate
+        if sequence > expected:
+            # Q3: held, with no effect and no reply, until the gap is filled, `max_hold` has
+            # passed (Q4) or the message expires (judged in the safe direction).
+            held[sequence] = _Held(document, ref, host.now)
+            self._record(ref, kind, "held")
+            expires_safe_ms = time_ms(document["expires_at"]) - host.tolerance_ms
+            host.at(expires_safe_ms, None, self._check_held, sender, sequence)
+            host.at(host.now + host.max_hold_ms, None, self._check_held, sender, sequence)
+            return
+        self._process(document, ref, kind)
+        self._drain(sender)
+
+    def _process(self, document: dict, ref, kind: str) -> None:
+        """Hand a message that is next in its stream to the participant; the stream advances."""
+        sender = document["sender"]
+        self._next[sender] = document["sequence"] + 1
+        if self.host.is_silent(self.receiver):
+            return self._record(ref, kind, "not_handled")
+        try:
+            self.host.hand_over(self.receiver, document)
+        except Reject as rejection:
+            return self._record(ref, kind, "rejected", rejection.code)
+        expiry = time_ms(document["expires_at"]) + self.host.tolerance_ms
+        self._processed[(sender, document["message_id"])] = expiry
+        self._record(ref, kind, "accepted")
+
+    def _drain(self, sender: str) -> None:
+        """Process the held messages that the stream has now reached, in sequence order."""
+        held = self._held.get(sender, {})
+        while self._next.get(sender, 1) in held:
+            entry = held.pop(self._next[sender])
+            self._process(entry.document, entry.ref, "released")
+
+    def _check_held(self, sender: str, sequence: int) -> None:
+        """End a hold that expired (`C301`) or reached `max_hold` (the gap is skipped)."""
+        entry = self._held.get(sender, {}).get(sequence)
+        if entry is None:
+            return  # already released
+        now = self.host.now
+        if now >= time_ms(entry.document["expires_at"]) - self.host.tolerance_ms:
+            del self._held[sender][sequence]
+            self._record(entry.ref, "released", "rejected", "C301")
+            self._next[sender] = max(self._next.get(sender, 1), sequence + 1)
+        elif now >= entry.held_at_ms + self.host.max_hold_ms:
+            del self._held[sender][sequence]
+            self._process(entry.document, entry.ref, "released")
+        else:
+            return
+        self._drain(sender)
 
 
 def _matches(rule: dict, document: dict, count: int) -> bool:
@@ -108,7 +224,13 @@ class _Partition:
 
 
 class Simulation:
-    def __init__(self, scenario: dict, case: dict):
+    """
+    `external` maps a participant ID to a factory `(simulation, participant) -> proxy` that
+    replaces the in-process participant: the proxy is that participant (`start`, final states)
+    and its inbox (`deliver`). INTEROP-1 uses it for the `robolang-sim-stdio` binding.
+    """
+
+    def __init__(self, scenario: dict, case: dict, external: dict[str, Callable] | None = None):
         self.case = case
         self.scenario = apply_overrides(scenario, case["faults"])
         p = self.scenario["parameters"]
@@ -140,15 +262,15 @@ class Simulation:
         self._sent: list[SentMessage] = []
         self._deliveries: list[Delivery] = []
         self._events: list[Event] = []
-        self._processed: dict[str, dict[tuple[str, str], int]] = {}
-        self._next: dict[tuple[str, str], int] = {}  # (receiver, sender) -> next expected sequence
-        self._held: dict[tuple[str, str], dict[int, _Held]] = {}  # (receiver, sender) -> sequence -> held
         self._replies: dict[str, list[int]] = {}
         self._silent: set[str] = set()
         self._partitions: list[_Partition] = []
         self._apply_sensor_faults()
         from .participants import build  # participants need the engine; built last
         self.participants = build(self)
+        self.inboxes = {pid: Inbox(self, pid) for pid in self.participants}
+        for pid, factory in (external or {}).items():
+            self.participants[pid] = self.inboxes[pid] = factory(self, pid)
 
     # -------- faults that act on sensors --------
 
@@ -189,13 +311,23 @@ class Simulation:
         if sequence is None:
             sequence = self._sequence.get((sender, recipient), 0) + 1
             self._sequence[(sender, recipient)] = sequence
-        document = sign_sim({
-            "schema": "robolang.core.message", "schema_version": "0.1",
-            "message_id": message_id or _message_id(sender, recipient, self.conversation, sequence),
-            "conversation_id": self.conversation, "sequence": sequence, "in_reply_to": in_reply_to,
-            "profile": profile, "type": mtype, "sender": sender, "recipient": recipient,
-            "sent_at": self.time(), "expires_at": time_text(self.now + self.ttl_ms), "payload": payload,
-        }, f"{sender}#k1", self.keys[f"{sender}#k1"])
+        document = build_message(sender, recipient, self.conversation, sequence, mtype, profile, payload,
+                                 in_reply_to, self.now, self.ttl_ms, self.keys[f"{sender}#k1"], message_id)
+        self._dispatch(document, injected)
+        return document
+
+    def send_document(self, document: dict) -> None:
+        """Send a message an external participant built and signed itself (binding frame `send`)."""
+        sender, recipient = document["sender"], document["recipient"]
+        if sender in self._silent:
+            return
+        self._sequence[(sender, recipient)] = max(self._sequence.get((sender, recipient), 0), document["sequence"])
+        self._dispatch(document, False)
+
+    def _dispatch(self, document: dict, injected: bool) -> None:
+        """Record one sent message, apply the faults that match it and schedule its deliveries."""
+        sender, recipient, mtype = document["sender"], document["recipient"], document["type"]
+        in_reply_to = document["in_reply_to"]
         count = self._type_counts.get((sender, mtype), 0) + 1
         self._type_counts[(sender, mtype)] = count
         index = len(self._sent)
@@ -230,7 +362,6 @@ class Simulation:
                     self.at(delivery_ms + ms(fault["after"]), None, self._deliver, data, index, "duplicate")
                 elif fault["kind"] == "replay":
                     self.at(time_ms(fault["at"]), None, self._deliver, data, index, "replay")
-        return document
 
     def _partitioned(self, a: str, b: str) -> bool:
         return any(
@@ -257,88 +388,29 @@ class Simulation:
     def _deliver(self, data: bytes, index: int, kind: str) -> None:
         sent = self._sent[index].document
         receiver = sent["recipient"]
-
-        def record(receipt: str, code: str | None = None) -> None:
-            self._deliveries.append(Delivery(self.now, index, receiver, kind, receipt, code))
-
         if kind == "original":
             self._start_rules(sent)
         if receiver in self._silent:
-            return record("not_handled")
-        context = Context(receiver, self.now, self.tolerance_ms, self.max_lifetime_ms, self.keys,
-                          self.scenario["authorities"], "simulation")
-        receipt = check_message(data, context)
-        if not receipt.accepted:
-            return record("rejected", receipt.code)
-        # Only a message that passed form, signature, freshness and recipient reaches this point:
-        # a rejected one is never held and does not count in its stream (0008, Q2).
-        document = json.loads(data)
-        sender, message_id = document["sender"], document["message_id"]
-        stream = (receiver, sender)
-        processed = self._processed.setdefault(receiver, {})
-        held = self._held.setdefault(stream, {})
-        if ((sender, message_id) in processed and self.now <= processed[(sender, message_id)]) or any(
-            h.document["message_id"] == message_id for h in held.values()
-        ):
-            record("duplicate")  # Q5: processed or held already; no second effect
-            for reply in self._replies.get(message_id, []):  # the original reply is sent again
-                reply_doc = self._sent[reply].document
-                self.after(self.latency_ms, None, self._deliver, json.dumps(reply_doc).encode("utf-8"), reply, "resend")
-            return
-        sequence = document["sequence"]
-        expected = self._next.get(stream, 1)
-        if sequence < expected:
-            return record("rejected", "C306")  # Q6: stale and not a duplicate
-        if sequence > expected:
-            # Q3: held, with no effect and no reply, until the gap is filled, `max_hold` has
-            # passed (Q4) or the message expires (judged in the safe direction).
-            held[sequence] = _Held(document, index, self.now)
-            record("held")
-            expires_safe_ms = time_ms(document["expires_at"]) - self.tolerance_ms
-            self.at(expires_safe_ms, None, self._check_held, stream, sequence)
-            self.at(self.now + self.max_hold_ms, None, self._check_held, stream, sequence)
-            return
-        self._process(document, index, receiver, kind)
-        self._drain(stream)
+            return self.receipt(index, receiver, kind, "not_handled", None)
+        self.inboxes[receiver].deliver(data, index, kind)
 
-    def _process(self, document: dict, index: int, receiver: str, kind: str) -> None:
-        """Hand a message that is next in its stream to the participant; the stream advances."""
-        stream = (receiver, document["sender"])
-        self._next[stream] = document["sequence"] + 1
-        if receiver in self._silent:
-            self._deliveries.append(Delivery(self.now, index, receiver, kind, "not_handled", None))
-            return
-        try:
-            self.participants[receiver].handle(document)
-        except Reject as rejection:
-            self._deliveries.append(Delivery(self.now, index, receiver, kind, "rejected", rejection.code))
-            return
-        expiry = time_ms(document["expires_at"]) + self.tolerance_ms
-        self._processed.setdefault(receiver, {})[(document["sender"], document["message_id"])] = expiry
-        self._deliveries.append(Delivery(self.now, index, receiver, kind, "accepted", None))
+    # -------- the inbox host (Inbox) --------
 
-    def _drain(self, stream: tuple[str, str]) -> None:
-        """Process the held messages that the stream has now reached, in sequence order."""
-        held = self._held.get(stream, {})
-        while self._next.get(stream, 1) in held:
-            entry = held.pop(self._next[stream])
-            self._process(entry.document, entry.index, stream[0], "released")
+    def context(self, receiver: str) -> Context:
+        return Context(receiver, self.now, self.tolerance_ms, self.max_lifetime_ms, self.keys,
+                       self.scenario["authorities"], "simulation")
 
-    def _check_held(self, stream: tuple[str, str], sequence: int) -> None:
-        """End a hold that expired (`C301`) or reached `max_hold` (the gap is skipped)."""
-        entry = self._held.get(stream, {}).get(sequence)
-        if entry is None:
-            return  # already released
-        if self.now >= time_ms(entry.document["expires_at"]) - self.tolerance_ms:
-            del self._held[stream][sequence]
-            self._deliveries.append(Delivery(self.now, entry.index, stream[0], "released", "rejected", "C301"))
-            self._next[stream] = max(self._next.get(stream, 1), sequence + 1)
-        elif self.now >= entry.held_at_ms + self.max_hold_ms:
-            del self._held[stream][sequence]
-            self._process(entry.document, entry.index, stream[0], "released")
-        else:
-            return
-        self._drain(stream)
+    def receipt(self, index: int, receiver: str, kind: str, receipt: str, code: str | None) -> None:
+        self._deliveries.append(Delivery(self.now, index, receiver, kind, receipt, code))
+
+    def resend(self, message_id: str) -> None:
+        """A duplicate was received: the replies already sent to it are sent again (0008, Q5)."""
+        for reply in self._replies.get(message_id, []):
+            reply_doc = self._sent[reply].document
+            self.after(self.latency_ms, None, self._deliver, json.dumps(reply_doc).encode("utf-8"), reply, "resend")
+
+    def hand_over(self, receiver: str, document: dict) -> None:
+        self.participants[receiver].handle(document)
 
     # -------- world --------
 
@@ -357,8 +429,18 @@ class Simulation:
         self.after(duration_ms, participant, finish)
         return True
 
-    def observe(self, participant: str, sensor_name: str, thing: str, prop: str) -> dict | None:
-        """A signed observation of `thing` by one sensor, or None if the sensor cannot make one."""
+    def move(self, participant: str, to: str, done: Callable[[], None]) -> bool:
+        """Move `participant` to `to`, taking the scenario's duration (spec section 3)."""
+        from .participants import duration
+        here = self.world.get(participant, "located_in")
+        return self.start_action(participant, "move", duration(self, "move", here, to),
+                                 lambda: self.world.set(participant, "located_in", to), done, to=to)
+
+    def sense(self, participant: str, sensor_name: str, thing: str, prop: str) -> tuple[Any, int, int] | None:
+        """
+        What one sensor reads now, as (value, observed_at in ms, the participant's observation
+        number), recorded as an observation event; None if the sensor cannot make one.
+        """
         sensor = self.sensors[(participant, sensor_name)]
         if not sensor.available(self.now) or not sensor.sees(self.world, thing):
             return None
@@ -367,14 +449,20 @@ class Simulation:
             return None
         number = self._observation_counts.get(participant, 0) + 1
         self._observation_counts[participant] = number
-        observation = sign_sim({
-            "kind": "observation", "id": f"rl:obs:{participant.split(':')[-1]}:{number}", "subject": thing,
-            "property": prop, "value": value, "observed_at": time_text(self.now - sensor.lag_ms),
-            "valid_for": sensor.valid_for, "confidence": sensor.confidence,
-            "source": {"participant": participant, "sensor": sensor_name, "method": sensor.method},
-        }, f"{participant}#k1", self.keys[f"{participant}#k1"])
-        self.event("observation", participant, id=observation["id"], subject=thing, property=prop, value=value)
-        return observation
+        self.event("observation", participant, id=f"rl:obs:{participant.split(':')[-1]}:{number}",
+                   subject=thing, property=prop, value=value)
+        return value, self.now - sensor.lag_ms, number
+
+    def observe(self, participant: str, sensor_name: str, thing: str, prop: str) -> dict | None:
+        """A signed observation of `thing` by one sensor, or None if the sensor cannot make one."""
+        reading = self.sense(participant, sensor_name, thing, prop)
+        if reading is None:
+            return None
+        value, observed_at_ms, number = reading
+        sensor = self.sensors[(participant, sensor_name)]
+        return build_observation(participant, number, thing, prop, value, observed_at_ms, sensor_name,
+                                 sensor.valid_for, sensor.confidence, sensor.method,
+                                 self.keys[f"{participant}#k1"])
 
     # -------- run --------
 

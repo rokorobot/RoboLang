@@ -163,11 +163,17 @@ It is not a transport for real deployments and does not answer RFC-001 open ques
 | `set_timer` | `timer`, `at_ms` | Ask for a `timer` frame at `at_ms` |
 | `sense` | `request`, `sensor`, `thing`, `property` | Read one of its own sensors now; answered by one `sensed` with the same `request` (6.5) |
 | `act` | `action`, `kind` (`move`), `to` | Start an action; the harness records a motion event now and sends `action_done` after the scenario's duration |
-| `event` | `kind` (`state`, `authorization`, `escalated`, `custody_committed`), `detail` | The participant's **claims** about its internal state: goal, commitment and custody state changes, authorization decisions and their basis, escalations, the commit point. Claims are recorded, but never accepted as evidence on their own (9.1.1) |
+| `event` | `kind` (`state`, `authorization`, `escalated`, `custody_committed`, `lease_expired`†), `detail` | The participant's **claims** about its internal state: goal, commitment and custody state changes, authorization decisions and their basis, escalations, the commit point. Claims are recorded, but never accepted as evidence on their own (9.1.1) |
 | `idle` | — | Done with the current harness frame |
 
 The participant builds and signs its own observations (Core 5.6, 7) from `sensed`: it is the
 source, and its key signs them.
+
+**Erratum ([decision record 0010](decisions/0010-binding-errata-lease-expired-commitment-state.md)).**
+† `lease_expired` (detail `lease: "commitment"`, `commitment`) claims that the participant's
+commitment lease expired; it is recorded as a run-record event (B1). A `state` claim with
+`record: "commitment"` and a Core 5.8 local `state` sets the participant's final commitment
+state and is not a run-record event (B2). Both are corroborated as 9.1.1 states.
 
 ### 6.4 The participant view
 
@@ -254,6 +260,7 @@ the harness; the participant's `event` and `receipt` frames are claims, checked 
 | Receipts, stages 4–5 (duplicates, order, `C306`, `C403`) | The reference run of the same case | The participant's receipts (9.1, item 2) |
 | Authorization before motion | Wire evidence: a granted `authorization_decision` delivered to amr-07 and accepted, or a standing authorization that covers the sub-goal under reference simulation 7.2, evaluated by the harness from the scenario | Every `act` must follow an authorization the harness can establish this way; an `authorization` claim the harness cannot establish is inconsistent |
 | Commit point and designated custody | Wire evidence: amr-07's `acknowledge` with `accepted: true` of a `custody_released` it received (RFC-001 10.4 rules 3–4) | The `custody_committed` claim, and any later `HOLDING` custody claim, must match it |
+| Commitment lease and commitment state (erratum 0010) | Wire evidence: the `commit` the participant accepted, its lease, and the participant's sent `outcome` with the harness's own observations as evidence | A `lease_expired` claim needs an accepted commitment of that ID whose lease has expired. Commitment state claims go `active`, then one of `fulfilled` (a sent `outcome` of `succeeded` whose evidence the harness observed), `failed` (a sent `outcome` other than `succeeded`) or `lapsed` (lease expired), and each needs an accepted `commit` whose debtor is the participant |
 | Local states (goal, commitment, custody), escalation | Claims only | Must be consistent with the wire: for example, no `SUCCEEDED` goal claim without a sent `outcome` of `succeeded`; no escalation claim unless a lease expired with custody unresolved. Expectations about these states (`custody` local states, `escalated`) are evaluated from claims only after these checks pass |
 
 ### 9.2 Measured and reported, not required
@@ -319,4 +326,6 @@ physical execution; the language front end (`.rob`, Task IR).
 | Part | Status |
 |---|---|
 | This specification, decision record 0009 | Approved 2026-10-27 (on the text at `508f5f9`) |
-| INTEROP-1 to INTEROP-4 | Not started; not authorized |
+| Erratum, decision record 0010 (B1, B2) | Approved 2026-10-27 |
+| INTEROP-1 | Authorized 2026-10-27; in review (PR #36) |
+| INTEROP-2 to INTEROP-4 | Not started; not authorized |
