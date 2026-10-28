@@ -10,6 +10,10 @@ sequence numbers per sender and recipient, and holding on gaps. The amended text
 **Erratum (approved 2026-10-28):** sections 8.1 and 8.4 are clarified by
 [decision record 0011](decisions/0011-interop-2a-bundle-errata.md) (N2, N13): precedence within
 stages, exact time comparisons, ties, and the repeated reply. The amended text is marked.
+**Erratum (approved 2026-10-28):** sections 8.1, 8.2 and 8.4 are amended by
+[decision record 0012](decisions/0012-interop-2c-remaining-normative-decisions.md) (P2, P3): the
+stage-2 order for one signed object, and a sequence that conflicts with a held message. The
+amended text is marked.
 **Builds on:** [RFC-001](architecture/rfc-001-ai-native-architecture.md) sections 6–13
 (decisions D1–D9), unchanged.
 **Schemas:** [`core/message-0.1.schema.json`](core/message-0.1.schema.json),
@@ -379,8 +383,10 @@ not the code.
 **Stage 2.** The message's own signature is checked first, then the signature of each
 observation it carries in `payload.observations` and then `payload.evidence`, in array order.
 Each observation's key must belong to its `source.participant` (`C203`), and a failure of any of
-them rejects the message. Core 0.1 does not fix the order of `C204`, `C203` and `C202` for one
-signed object, and no fixture has more than one of these faults.
+them rejects the message. For each signed object, the checks apply in this order and the first
+failure is reported (decision record 0012, P3): `C204`, the algorithm is not accepted by this receiver in its mode;
+`C203`, the key is unknown, revoked, or not the signer's; `C202`, the signature does not
+verify.
 
 **Stage 3, precedence.** In this order:
 
@@ -420,7 +426,7 @@ stage 4 ([register](../docs/interop/spec-implementation-discrepancies.md)).
 | `C301` | freshness | Expired: `expires_at` is past |
 | `C302` | freshness | `expires_at` is not after `sent_at`, or is beyond the maximum lifetime |
 | `C303` | freshness | `sent_at` is in the future beyond the clock tolerance |
-| `C306` | meaning | The message would cause an impossible state transition, or it is stale: at or below the last processed or skipped sequence of its stream, and not a duplicate (8.4) |
+| `C306` | meaning | The message would cause an impossible state transition; or it is stale: at or below the last processed or skipped sequence of its stream, and not a duplicate (8.4); or its sequence conflicts with a message currently held in its stream (8.4) |
 | `C307` | freshness | `recipient` is not this participant |
 | `C401` | meaning | Authority: a decision not from the recipient's authority, or a requester authorizing its own goal |
 | `C402` | meaning | `succeeded` without a verification in which every criterion is met |
@@ -457,6 +463,10 @@ one recipient in one conversation (section 3).
   past it.
 - **Stale.** A message at or below the last processed or skipped sequence of its stream that
   is not a duplicate is rejected with `C306`.
+- **Conflicting sequence** (decision record 0012, P2). A message whose `sequence` equals that
+  of a message currently held in the same stream (same sender, recipient and
+  `conversation_id`), but whose `message_id` differs, is rejected with `C306`. The original
+  held message is unaffected and receives exactly one terminal release receipt.
 
 `max_hold` is a deployment parameter shorter than the message lifetime. It bounds how long
 one lost message can delay the messages after it.
