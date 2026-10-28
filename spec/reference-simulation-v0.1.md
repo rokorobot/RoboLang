@@ -266,8 +266,7 @@ The outcome follows from the results:
 - every criterion met: `succeeded`;
 - the first criterion not met is `missing`: `unknown` (`evidence_missing`);
 - it is `stale`: `unknown` (`evidence_stale`);
-- it is `contradicted`: `failed`, with empty `reasons`. *Known reference discrepancy D1:* the
-  reference sends `reasons: [{"code": null}]`.
+- it is `contradicted`: `failed`, with empty `reasons`.
 
 ### 6.4 amr-07 in detail
 
@@ -320,8 +319,7 @@ are reported under gate 2 section 9.2, not failures.
   4. both places are in `dock_at.places`.
 
   If 1 or 2 fails, the request is declined `capability_unsupported`; if 3 or 4 fails,
-  `capability_insufficient` (Core 5.11). *Known reference discrepancy D4:* the reference uses
-  `capability_insufficient` in every case.
+  `capability_insufficient` (Core 5.11).
 - **Standing authorization:** checked as in 7.2, with
   `granted_at ≤ now < expires_at − clock_tolerance`.
 
@@ -338,7 +336,7 @@ the message is rejected with the code shown. amr-07 never replies to a message i
 | `coordinate` `placed` | Custody `ACCEPTED` | `C306` | Sense `carried_by`. With a reading: `custody_confirmed`, then `CONFIRMATION_SENT`. With `null`: the diagnostic `no_confirmation_evidence` only |
 | `transfer_custody` | Goal `RUNNING`; the payload names the commitment and the thing; custody not yet set | `C306` | `ACKNOWLEDGED`, then `acknowledge` (`accepted: true`), then `ACCEPTED` |
 | `custody_released` | It names amr-07's `custody_confirmed` and the thing (else `C403`, tested first); custody `CONFIRMATION_SENT` | `C306` | `HOLDING`, then the `custody_committed` claim, then `acknowledge`. Sense `carried_by` (rule 9). With a reading: move to the target. With `null`: the diagnostic `physical_custody_unknown`, and no motion |
-| `custody_query` | A sub-goal exists; the payload names the thing | `C306` | Sense `carried_by`. `custody_state`: the accepted release if `HOLDING`, else `null`; the observation if any. *Known reference discrepancy D2:* before any `request_assistance`, the reference fails instead of rejecting with `C306` |
+| `custody_query` | A sub-goal exists; the payload names the thing | `C306` | Sense `carried_by`. `custody_state`: the accepted release if `HOLDING`, else `null`; the observation if any |
 | Any other type | — | `C306` | — |
 
 Before every move (6.2 rule 2), all of these must hold:
@@ -349,8 +347,7 @@ Before every move (6.2 rule 2), all of these must hold:
 - a granted reservation is unexpired.
 
 Each is judged in the safe direction (`now < expires_at − clock_tolerance`). Otherwise amr-07
-claims the diagnostic `motion_refused` and does not move. *Known reference discrepancy D5:* the
-reference checks only the goal and the commitment state.
+claims the diagnostic `motion_refused` and does not move.
 
 **Forwarding (N9).**
 
@@ -381,8 +378,6 @@ stays `lapsed`, and the goal keeps the terminal state the expiry set), senses no
 sends nothing. **This is a property of the simulation only.** It is not a stopping policy and
 not a safety guarantee for physical execution: what a robot must do with an action in
 progress when its authority lapses is RFC-001 open question 10, which stays open.
-*Known reference discrepancy D3:* on arrival after the lapse, the reference sets the commitment
-`fulfilled` and sends a second outcome.
 
 amr-07 claims `lease_expired` for its commitment only, never for its reservation.
 

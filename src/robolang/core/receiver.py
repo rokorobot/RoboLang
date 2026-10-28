@@ -214,10 +214,12 @@ def _meaning(document, context: Context) -> Receipt | None:
     return None
 
 
-def check_message(data: bytes, context: Context) -> Receipt:
+def check_message(data: bytes, context: Context, meaning: bool = True) -> Receipt:
     """
     The receipt for one message under `context`, applying Core 0.1 section 8 in order.
-    Duplicate and order handling (8.4) and state-dependent rules are not applied here.
+    Duplicate and order handling (8.4) and state-dependent rules are not applied here: a
+    receiver with conversation state passes `meaning=False`, handles duplicates and order
+    (stage 4), and only then applies `check_meaning` (stage 5).
     """
     try:
         document = read_document(data)
@@ -227,9 +229,14 @@ def check_message(data: bytes, context: Context) -> Receipt:
         _form(document, MESSAGE, MESSAGE_SCHEMA)
         or _signature(document, "sender", context)
         or _freshness(document, context)
-        or _meaning(document, context)
+        or (_meaning(document, context) if meaning else None)
         or ACCEPTED
     )
+
+
+def check_meaning(document: dict, context: Context) -> Receipt:
+    """The stateless stage-5 codes (C401, C402 for an unmet criterion, C404) of a message past stage 4."""
+    return _meaning(document, context) or ACCEPTED
 
 
 def check_descriptor(data: bytes, context: Context) -> Receipt:

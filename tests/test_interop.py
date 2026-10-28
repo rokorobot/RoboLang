@@ -134,9 +134,11 @@ def test_binding_failures(command, message):
      "real = p.Runtime.receipt\n"
      "p.Runtime.receipt = lambda self, ref, r, k, receipt, code: real(self, ref, r, k, 'accepted', None)",
      "where Core 8 gives"),
-    # Motion with no authorization on the wire and none standing (the payload is beyond it).
+    # Motion with no authorization on the wire and none standing (the payload is beyond it). The
+    # patch bypasses amr-07's own pre-move checks (D5) to act directly.
     ("v11_payload_beyond_standing_authorization",
-     "def go(self):\n    self._state('RUNNING'); self._move(self.handoff, lambda: None)\nAmr._authorize = go",
+     "def go(self):\n    self._state('RUNNING'); self.sim.move(self.id, self.handoff, lambda: None)\n"
+     "Amr._authorize = go",
      "without an authorization"),
     # An authorization claim the harness cannot establish.
     ("happy_path",

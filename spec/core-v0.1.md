@@ -404,9 +404,7 @@ Each stage-3 fixture has one fault only, so this order rests on decision record 
 
 **Stage 5.** The meaning codes (`C306`, `C401`, `C402` for a verification with an unmet criterion,
 `C403`, `C404`) are applied **after** duplicate and order handling (stage 4). A conformance check
-of a single message, with no conversation state, gives the same code. *Known reference
-discrepancy D7:* the reference receiver currently applies `C401`, `C402` and `C404` before
-stage 4 ([register](../docs/interop/spec-implementation-discrepancies.md)).
+of a single message, with no conversation state, gives the same code.
 
 ### 8.2 Rejection codes
 
