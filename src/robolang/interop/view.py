@@ -8,14 +8,10 @@ decision table, durations, faults, the case ID or the expected results.
 
 from __future__ import annotations
 
+from ..arch02.scenario import counterparts, trusted_key_refs
+
 PARAMETERS = ("epoch", "message_ttl", "max_message_lifetime", "clock_tolerance", "max_hold",
               "offer_lease_end", "reservation_end")
-
-
-def counterparts(scenario: dict, participant: str) -> list[str]:
-    """The participants it deals with: its peers (the robots it assists) and its own authority."""
-    peers = sorted(robot for robot, assistants in scenario["peers"].items() if participant in assistants)
-    return peers + [scenario["authorities"][participant]]
 
 
 def build_view(scenario: dict, participant: str) -> dict:
@@ -41,5 +37,6 @@ def build_view(scenario: dict, participant: str) -> dict:
         "places": scenario["places"],
         "arbiters": scenario["arbiters"],
         "authority": scenario["authorities"][participant],
-        "verification_keys": {ref: scenario["keys"][ref] for pid in others for ref in records[pid]["keys"]},
+        # Its trust context besides its own key (reference simulation 5.3, decision record 0013).
+        "verification_keys": {ref: scenario["keys"][ref] for ref in trusted_key_refs(scenario, participant)[1:]},
     }

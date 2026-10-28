@@ -23,7 +23,7 @@ from dataclasses import dataclass
 from typing import Any, Callable
 
 from ..core import Context, Key, check_meaning, check_message, sign_sim, time_ms
-from .scenario import apply_overrides, keys_of, ms, time_text
+from .scenario import apply_overrides, keys_of, ms, time_text, trusted_key_refs
 from .world import Fact, Sensor, World
 
 
@@ -281,6 +281,11 @@ class Simulation:
         self._apply_sensor_faults()
         from .participants import build  # participants need the engine; built last
         self.participants = build(self)
+        # Receiver-scoped verification keys (spec 5.3, decision record 0013): amr-07's trust context.
+        self._trusted: dict[str, dict[str, Key]] = {
+            pid: {ref: self.keys[ref] for ref in trusted_key_refs(self.scenario, pid)}
+            for pid, participant in self.participants.items() if participant.scoped_trust
+        }
         self.inboxes = {pid: Inbox(self, pid) for pid in self.participants}
         for pid, factory in (external or {}).items():
             self.participants[pid] = self.inboxes[pid] = factory(self, pid)
@@ -411,8 +416,9 @@ class Simulation:
     # -------- the inbox host (Inbox) --------
 
     def context(self, receiver: str) -> Context:
-        return Context(receiver, self.now, self.tolerance_ms, self.max_lifetime_ms, self.keys,
-                       self.scenario["authorities"], "simulation")
+        """The receiver's Core 8 context, with the keys of its trust context (spec 5.3)."""
+        return Context(receiver, self.now, self.tolerance_ms, self.max_lifetime_ms,
+                       self._trusted.get(receiver, self.keys), self.scenario["authorities"], "simulation")
 
     def receipt(self, index: int, receiver: str, kind: str, receipt: str, code: str | None) -> None:
         self._deliveries.append(Delivery(self.now, index, receiver, kind, receipt, code))
