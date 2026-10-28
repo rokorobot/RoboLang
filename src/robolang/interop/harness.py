@@ -17,6 +17,8 @@ import queue
 import subprocess
 import sys
 import threading
+from dataclasses import dataclass
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any
 
@@ -24,7 +26,7 @@ from ..arch02.engine import RunResult, Simulation, build_observation
 from ..arch02.participants import standing_authorization, thing_mass
 from ..arch02.record import to_record
 from ..arch02.scenario import load_scenario
-from ..core import check_message, time_ms
+from ..core import SIM_HMAC, check_message, time_ms, verify_sim
 from .view import build_view
 
 AMR = "rl:robot:amr-07"
@@ -33,7 +35,13 @@ EVENT_KINDS_0009 = ("state", "authorization", "escalated", "custody_committed") 
 EVENT_KINDS = EVENT_KINDS_0009 + ("lease_expired",)  # with erratum 0010, B1 (finding E1)
 COMMITMENT_STATES = {None: ("active",), "active": ("fulfilled", "failed", "lapsed")}  # Core 5.8; 0010, B2
 RECEIPTS = ("accepted", "duplicate", "held", "rejected")
-PARTICIPANT_CODES = ("C306", "C403")  # stages 4-5: a participant may reject with these after core accepts
+# Stage 5 (Core 8.1): after duplicate and order handling, so not recomputed by the harness but judged
+# against the reference run (9.1.1, erratum 0011 N13(c)).
+PARTICIPANT_CODES = ("C306", "C401", "C402", "C403", "C404")
+STATE_RECORDS = ("goal", "custody", "commitment")  # 6.3, N7: the required state claims
+DIAGNOSTICS = ("peer_ready", "reservation_denied", "motion_refused", "no_confirmation_evidence",
+               "physical_custody_unknown")  # 6.3, N7: optional, corroborated when written
+_DURATION_MS = {"ms": 1, "s": 1000, "min": 60000}  # Core 2: duration units
 
 
 class BindingFailure(Exception):
@@ -42,6 +50,38 @@ class BindingFailure(Exception):
 
 class InconsistentClaim(Exception):
     """A claim the harness's own observations do not support (9.1.1)."""
+
+
+@dataclass(frozen=True)
+class _Hold:
+    """An open entry of the hold ledger (6.2, erratum 0011 N3): a message the participant holds."""
+
+    index: int  # the delivered message
+    stream: tuple[str, str]  # (sender, conversation_id); the recipient is the participant
+    sequence: int
+    expires_safe_ms: int  # expires_at - clock_tolerance
+    held_at_ms: int  # its delivery
+
+
+def _duration_ms(quantity: Any) -> Decimal | None:
+    try:
+        return Decimal(quantity["value"]) * _DURATION_MS[quantity["unit"]]
+    except (TypeError, KeyError, InvalidOperation):
+        return None
+
+
+def _decimal(text: Any) -> Decimal | None:
+    try:
+        return Decimal(text) if isinstance(text, str) else None
+    except InvalidOperation:
+        return None
+
+
+def _instant(text: Any) -> int | None:
+    try:
+        return time_ms(text) if isinstance(text, str) else None
+    except ValueError:
+        return None
 
 
 def participant_command() -> list[str]:
@@ -64,7 +104,7 @@ class ExternalParticipant:
         self._process: subprocess.Popen | None = None
         self._lines: queue.Queue = queue.Queue()
         self._pending: tuple[int, str, Any] | None = None  # the delivery awaiting its receipt
-        self._held: dict[tuple[str, str], int] = {}  # (sender, message_id) -> index, held by the participant
+        self._held: dict[tuple[str, str], _Hold] = {}  # the hold ledger: (sender, message_id) -> open entry
         self._names: dict[str, set[str]] = {}  # per kind (timer, sense request, action): no reuse in a run
         self._delivered: set[str] = set()  # message IDs delivered to the participant
         self._accepted: list[dict] = []  # documents the participant accepted
@@ -72,6 +112,8 @@ class ExternalParticipant:
         self._observations: dict[str, dict] = {}  # observation ID -> the observation as the harness made it
         self._claims: list[tuple[str, dict]] = []
         self._acts: list[str] = []
+        self._cycle_accepted: list[dict] = []  # documents accepted in this cycle (diagnostics, 6.3)
+        self._cycle_unseen: list[int] = []  # `sensed` with `value: null` in this cycle, by the sends before it
 
     # -------- process and framing --------
 
@@ -146,7 +188,8 @@ class ExternalParticipant:
 
     def deliver(self, data: bytes, index: int, kind: str) -> None:
         self._delivered.add(self.sim._sent[index].document["message_id"])
-        self._pending = (index, kind, check_message(data, self.sim.context(self.id)))
+        # Stages 1-3 only (9.1.1, erratum 0011 N13(c)): stage 5 comes after duplicates and order.
+        self._pending = (index, kind, check_message(data, self.sim.context(self.id), meaning=False))
         self._cycle({"frame": "deliver", "now_ms": self._now_ms(), "data": data.decode("utf-8")})
 
     def _timer(self, timer: str) -> None:
@@ -206,15 +249,16 @@ class ExternalParticipant:
                 if receipt == "rejected" and code not in PARTICIPANT_CODES:
                     raise InconsistentClaim(f"rejected with {code}, but the message passes Core 8 stages 1-3")
         else:  # a message the participant held leaves the hold
-            index = self._held.pop((sender, message_id), None)
-            if index is None or receipt in ("held", "duplicate"):
+            entry = self._held.pop((sender, message_id), None)
+            if entry is None or receipt in ("held", "duplicate"):
                 raise InconsistentClaim(f"receipt {receipt} for {message_id}, which is not held")
-            kind = "released"
+            index, kind = entry.index, "released"
         if receipt == "held":
-            self._held[(sender, message_id)] = index
+            self._open_hold(index)
         self.sim.receipt(index, self.id, kind, receipt, code)
         if receipt == "accepted":
             self._accepted.append(self.sim._sent[index].document)
+            self._cycle_accepted.append(self.sim._sent[index].document)
         elif receipt == "duplicate":
             self.sim.resend(message_id)  # finding E3: the binding does not say who sends it again
 
@@ -233,6 +277,8 @@ class ExternalParticipant:
         thing, prop = frame.get("thing"), frame.get("property")
         reading = self.sim.sense(self.id, sensor, thing, prop)
         value, observed_at_ms = (None, None) if reading is None else reading[:2]
+        if reading is None:
+            self._cycle_unseen.append(len(self._sent))
         if reading is not None:
             # The complete observation the participant can build from this reading, signature included:
             # any observation it later presents must equal it (provenance, 9.1.1).
@@ -254,6 +300,8 @@ class ExternalParticipant:
         kind, detail = frame.get("kind"), frame.get("detail")
         if kind not in self.event_kinds or not isinstance(detail, dict):
             raise BindingFailure(f"unknown event: {frame!r:.120}")
+        if kind == "state" and detail.get("record") not in STATE_RECORDS + DIAGNOSTICS:
+            raise BindingFailure(f"unknown state record: {frame!r:.120}")  # 6.3, N7
         self._claims.append((kind, detail))
         if kind == "state" and detail.get("record") == "commitment":
             return  # 0010, B2: the final state only, set once corroborated; the reference records no event
@@ -262,6 +310,40 @@ class ExternalParticipant:
             self.goal_state = detail.get("state")
         elif kind == "state" and detail.get("record") == "custody":
             self.custody = detail.get("state")
+
+    # -------- the hold ledger (6.2, erratum 0011 N3) --------
+
+    def _open_hold(self, index: int) -> None:
+        """A `held` receipt opens an entry; the harness checks it at both Core 8.4 instants."""
+        document = self.sim._sent[index].document
+        entry = _Hold(index, (document["sender"], document["conversation_id"]), document["sequence"],
+                      time_ms(document["expires_at"]) - self.sim.tolerance_ms, self.sim.now)
+        key = (document["sender"], document["message_id"])
+        self._held[key] = entry
+        for t_ms in (entry.expires_safe_ms, entry.held_at_ms + self.sim.max_hold_ms):
+            self.sim.at(t_ms, None, self._take_over, key)  # no owner: it fires while the participant is silent
+
+    def _take_over(self, key: tuple[str, str]) -> None:
+        """While the participant is silent, close a due entry as Core 8.4 would; expiry wins a tie."""
+        entry = self._held.get(key)
+        if entry is None or not self.sim.is_silent(self.id):
+            return  # closed already, or the participant still owns its holds
+        if self.sim.now >= entry.expires_safe_ms:
+            self._close_hold(key, "rejected", "C301")
+        elif self.sim.now >= entry.held_at_ms + self.sim.max_hold_ms:
+            self._close_hold(key, "not_handled", None)  # the missing numbers are skipped
+        else:
+            return
+        sequence = entry.sequence + 1  # the stream is past this message: release what is now next
+        while (nxt := next((k for k, e in self._held.items()
+                            if e.stream == entry.stream and e.sequence == sequence), None)) is not None:
+            self._close_hold(nxt, "not_handled", None)
+            sequence += 1
+
+    def _close_hold(self, key: tuple[str, str], receipt: str, code: str | None) -> None:
+        """The one terminal release receipt of a held message; the entry is removed."""
+        entry = self._held.pop(key)
+        self.sim.receipt(entry.index, self.id, "released", receipt, code)
 
     # -------- corroboration (9.1.1) --------
 
@@ -295,10 +377,27 @@ class ExternalParticipant:
 
     def _observed(self, observation: Any) -> bool:
         """
-        An observation identical, in every field and its signature, to one built from a reading the
-        harness gave (`sensed`): value, time, sensor characteristics and source cannot be altered.
+        An observation equal in meaning to one built from a reading the harness gave (`sensed`), with a
+        valid signature under the participant's key (9.1.1, erratum 0011 N5). Same fields, `id`, `kind`,
+        `subject`, `property`, `value` and `source`; the same instant for `observed_at`, duration for
+        `valid_for` and decimal for `confidence`. Formatting alone is not a failure.
         """
-        return isinstance(observation, dict) and self._observations.get(observation.get("id")) == observation
+        if not isinstance(observation, dict):
+            return False
+        expected = self._observations.get(observation.get("id"))
+        if expected is None or set(observation) != set(expected):
+            return False
+        same = all(observation[f] == expected[f] for f in ("kind", "subject", "property", "value", "source"))
+        observed_at = _instant(observation["observed_at"])
+        valid_for, confidence = _duration_ms(observation["valid_for"]), _decimal(observation["confidence"])
+        if not (same and observed_at is not None and observed_at == _instant(expected["observed_at"])
+                and valid_for is not None and valid_for == _duration_ms(expected["valid_for"])
+                and confidence is not None and confidence == _decimal(expected["confidence"])):
+            return False
+        key_ref = f"{self.id}#k1"
+        signature = observation["signature"]
+        return (isinstance(signature, dict) and signature.get("alg") == SIM_HMAC and signature.get("key") == key_ref
+                and isinstance(signature.get("value"), str) and verify_sim(observation, self.sim.keys[key_ref]))
 
     def _commitment_claim(self, state: Any) -> None:
         """0010, B2: a supported transition, backed by an accepted commitment and the wire."""
@@ -319,9 +418,31 @@ class ExternalParticipant:
             raise InconsistentClaim(f"commitment state {state} not supported by the wire")
         self.commitment_state = state
 
+    def _diagnostic(self, detail: dict, acts: list[str], accepted: list[dict], unseen: list[int]) -> bool:
+        """An optional diagnostic, consistent with what the harness saw in the same cycle (6.3, N7)."""
+        record = detail["record"]
+        if set(detail) != ({"record", "to"} if record == "motion_refused" else {"record"}):
+            return False
+        if record == "peer_ready":
+            return any(d["type"] == "coordinate" and d["payload"].get("phase") == "ready_for_handover"
+                       for d in accepted)
+        if record == "reservation_denied":
+            return any(d["type"] == "reservation_decision" and d["payload"].get("decision") == "denied"
+                       for d in accepted)
+        if record == "motion_refused":
+            return not acts and isinstance(detail["to"], str)
+        if record == "no_confirmation_evidence":
+            return bool(unseen)
+        # physical_custody_unknown: a null reading after the commit point (the acknowledge of a release)
+        committed = self._committed()
+        acknowledged = [i for i, d in enumerate(self._sent) if d["type"] == "acknowledge"
+                        and d["payload"].get("acknowledged") in committed]
+        return any(i < sends for i in acknowledged for sends in unseen)
+
     def _corroborate(self) -> None:
         """Check this cycle's claims and actions against the wire and the world, at the end of the cycle."""
         claims, acts, self._claims, self._acts = self._claims, self._acts, [], []
+        accepted, unseen, self._cycle_accepted, self._cycle_unseen = self._cycle_accepted, self._cycle_unseen, [], []
         decisions = {d["message_id"]: d["payload"] for d in self._accepted_of("authorization_decision")}
         granted = any(p["decision"] == "granted" and p["mode"] == "simulation" for p in decisions.values())
         for action in acts:
@@ -350,6 +471,9 @@ class ExternalParticipant:
                     raise InconsistentClaim(f"lease_expired claim not established: {detail}")
             elif kind == "state" and detail.get("record") == "commitment":
                 self._commitment_claim(detail.get("state"))
+            elif kind == "state" and detail.get("record") in DIAGNOSTICS:
+                if not self._diagnostic(detail, acts, accepted, unseen):
+                    raise InconsistentClaim(f"diagnostic not consistent with this cycle: {detail}")
             elif kind == "escalated":
                 expired = any(self._lease_expired(c) for c in self._commitments().values())
                 if not expired or self._committed():
