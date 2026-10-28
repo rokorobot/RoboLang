@@ -182,7 +182,10 @@ def _condition(condition: task_ir.Condition) -> str:
         return f"region_clear {condition.region}"
     if isinstance(condition, task_ir.ObjectExists):
         return f"object_exists {condition.obj}"
-    return f"sensor_ok {_quoted(condition.sensor)}"
+    if isinstance(condition, task_ir.SensorOk):
+        return f"sensor_ok {_quoted(condition.sensor)}"
+    # A new condition kind must be rendered here explicitly, never shown as another kind.
+    raise TypeError(f"not a condition: {type(condition).__name__}")
 
 
 def _step(step: task_ir.Step) -> str:
