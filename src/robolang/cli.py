@@ -163,7 +163,19 @@ def _quantity(quantity: task_ir.Quantity) -> str:
     return f"{value} {quantity.unit}" if quantity.unit else value
 
 
+def _operand(condition: task_ir.Condition) -> str:
+    # 1.2 grammar: `not` takes one operand, and `and`/`or` never mix without parentheses.
+    text = _condition(condition)
+    return f"({text})" if isinstance(condition, (task_ir.And, task_ir.Or)) else text
+
+
 def _condition(condition: task_ir.Condition) -> str:
+    if isinstance(condition, task_ir.And):
+        return " and ".join(_operand(c) for c in condition.conditions)
+    if isinstance(condition, task_ir.Or):
+        return " or ".join(_operand(c) for c in condition.conditions)
+    if isinstance(condition, task_ir.Not):
+        return f"not {_operand(condition.condition)}"
     if isinstance(condition, task_ir.RobotReady):
         return f"robot_ready {condition.robot}"
     if isinstance(condition, task_ir.RegionClear):
