@@ -21,8 +21,7 @@ action in progress at lease expiry. The amended text is marked.
 [decision record 0013](decisions/0013-h3-receiver-scoped-verification-keys.md) (H3): the keys a
 receiver verifies with. The amended text is marked.
 **Fixtures:** [`tests/fixtures/arch02/`](../tests/fixtures/arch02/README.md)
-**Implementation:** none. RL-ARCH-02b implements it only after this specification is approved
-and the owner separately authorizes implementation (D8).
+**Implementation:** `robolang.arch02` (ARCH-2, ARCH-SEQ, ARCH-3; status in section 15).
 
 > **Simulation only.** Everything here runs in one Python process against a symbolic world.
 > No ROS 2, no network, no AI model, no hardware. A run that ends `succeeded` says that the
@@ -357,7 +356,10 @@ Before every move (6.2 rule 2), all of these must hold:
 - a granted reservation is unexpired.
 
 Each is judged in the safe direction (`now < expires_at − clock_tolerance`). Otherwise amr-07
-claims the diagnostic `motion_refused` and does not move.
+claims the diagnostic `motion_refused` and does not move. *Clarification (INTEROP-2g, audit risk
+R-5; the reference's existing behavior):* an accepted granted authorization decision permits
+motion only while its lease remains unexpired, using the safe-direction clock tolerance. Earlier
+acceptance does not extend the lease.
 
 **Forwarding (N9).**
 
@@ -592,7 +594,7 @@ the README states that the reference simulation is simulation only; owner approv
 |---|---|---|
 | **RL-ARCH-02a** — this specification | Core 0.1, the two schemas, this document, decision record 0007, fixtures and a consistency test that executes nothing | Fixture consistency |
 | **ARCH-1** | `robolang.core`: strict JSON reading, Core 0.1 schema and rule checks, JCS canonical form, `sim-hmac-sha256`, receipt codes | A-T16, A-T17 |
-| **ARCH-2** | `robolang.arch02`: symbolic world, sensors, scheduler and delivery, faults, participants and policy | A-T1, A-T2 to A-T14 in progress |
+| **ARCH-2** | `robolang.arch02`: symbolic world, sensors, scheduler and delivery, faults, participants and policy | A-T1 to A-T14 |
 | **ARCH-SEQ** | Decision record 0008 implemented in `robolang.arch02` (approved and authorized 2026-10-27) | A-T20, and A-T1 to A-T15 unchanged |
 | **ARCH-3** | Run record and run ID, a `robolang arch02` command or test entry point, README; isolation | A-T1 to A-T20 |
 
@@ -619,3 +621,4 @@ A2A; any AI model; physical execution.
 | Sequencing per recipient (decision record 0008) | Implemented in `src/robolang/arch02/engine.py` (ARCH-SEQ); A-T20 passes, and A-T1 to A-T15 are unchanged (`tests/test_arch02.py`) |
 | Run record, run ID, entry point, README (ARCH-3) | Implemented in `src/robolang/arch02/record.py` and `robolang arch02` (`cli.py`); A-T15 at full strength and the record shape pass (`tests/test_arch02_record.py`) |
 | Scenario fixtures (section 11) | Run by `tests/test_arch02.py`; consistency also checked by `tests/test_arch02_fixtures.py` |
+| Errata 0011, 0012 and 0013 in the reference (INTEROP-2d, H3) | Implemented in `src/robolang/arch02/` (reference corrections D1–D7; receiver-scoped verification keys) |
