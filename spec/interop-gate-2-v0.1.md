@@ -10,6 +10,10 @@ decision D9).
 decision records [0007](decisions/0007-rl-arch-02-core-and-reference-simulation.md) and
 [0008](decisions/0008-core-sequencing-per-recipient.md); gate 1 passed 2026-10-27
 ([evidence](../docs/evidence/rl-arch-02-exit-gate.md)).
+**Errata:** [decision record 0010](decisions/0010-binding-errata-lease-expired-commitment-state.md)
+(B1, B2, approved 2026-10-27) and [decision record 0011](decisions/0011-interop-2a-bundle-errata.md) (N1–N14, approved 2026-10-28) amend sections 3, 6.2–6.5,
+9.1.1 and 9.2. The amended text is marked. Where the reference or the INTEROP-1 harness does
+not yet follow it, the [discrepancy register](../docs/interop/spec-implementation-discrepancies.md) lists the difference.
 
 ## 1. What gate 2 proves, and what it does not
 
@@ -66,7 +70,10 @@ amr-07 exercises the most Core surface: R2R requests, offers and commitments, re
 local authorization under a standing authorization and by explicit request, the custody
 transfer and its commit rule, sequencing (0008), signatures, observations and outcomes with
 evidence. **amr-07's required behavior is the reference simulation's**, sections 6 to 8 and
-the 6.1 timeline, with Core 0.1 for everything on the wire. This specification does not restate
+the 6.1 timeline, with Core 0.1 for everything on the wire. *Erratum (0011, N5–N12):* that
+includes reference simulation 4.3 (observations) and 6.4 (amr-07 in detail). Of section 5,
+only the delivery rules (5.1) bind amr-07: the message-ID formula of 5.2 is reference
+serialization (9.2). This specification does not restate
 it; a gap or ambiguity found there is handled as a finding (section 9.3).
 
 ## 4. The specification bundle (I3)
@@ -137,6 +144,20 @@ It is not a transport for real deployments and does not answer RFC-001 open ques
 - **The harness owns time.** Every harness frame carries `now_ms` (milliseconds after the
   scenario epoch). The participant has no other clock, no randomness and no I/O besides the
   binding.
+- *Erratum (0011, N3).* **Silence and holds.** While the participant is live, it owns its holds
+  (6.3, `set_timer`). The harness keeps a hold ledger from the participant's receipts: a `held`
+  receipt opens an entry, and the first terminal release receipt for that message (`accepted`,
+  `rejected` or `not_handled`) closes it. When silence starts (reference simulation 10), the
+  participant gets no further frame and none of its timers fires. At the Core 8.4 instants the
+  harness closes each open entry itself:
+  - `released`, `rejected C301` at `expires_at − clock_tolerance`;
+  - `released`, `not_handled` at delivery + `max_hold`, skipping the missing numbers;
+  - then open entries of the same stream that are now next, `released`, `not_handled`, in
+    sequence order, at the same instant.
+
+  A closed entry is removed, so each held message gets **exactly one** terminal release
+  receipt. A participant release receipt for a message with no open entry is an inconsistent
+  claim (9.1.1). Expiry wins a tie. Silence has no end in 0.1, so holds are never handed back.
 - **Faults are harness-side.** Drops, delays, duplicates, replays, altered signatures,
   partitions and silence (reference simulation 10) are applied by the harness; the participant
   is not told about them.
@@ -159,8 +180,8 @@ It is not a transport for real deployments and does not answer RFC-001 open ques
 | `frame` | Fields | Meaning |
 |---|---|---|
 | `send` | `message` (a Core 0.1 message object) | Send a message; the harness serializes it, applies faults and delivers it |
-| `receipt` | `message_id`, `sender`, `receipt`, `code` | The participant's receipt for a delivered message (Core 8: `accepted`, `duplicate`, `held`, `rejected` with a code, or for a released held message a second receipt) |
-| `set_timer` | `timer`, `at_ms` | Ask for a `timer` frame at `at_ms` |
+| `receipt` | `message_id`, `sender`, `receipt`, `code` | The participant's receipt for a delivered message (Core 8: `accepted`, `duplicate`, `held`, `rejected` with a code, or for a released held message a second receipt). *Erratum (0011, N14):* exactly one per `deliver`, and the first `receipt` of that cycle; receipts for released messages follow it. `code` is `null` unless `rejected`. For data that cannot be decoded, `message_id` and `sender` are `null`. *(N2):* on `duplicate` the participant sends nothing: **the harness repeats the original reply**, meaning every message the participant sent with `in_reply_to` equal to the duplicate's ID, byte-identical, one `latency` later, delivered as kind `resend`, with no fault applied again. It keeps its ID and sequence, so it causes no second effect and no gap |
+| `set_timer` | `timer`, `at_ms` | Ask for a `timer` frame at `at_ms`. *Erratum (0011, N3):* for each held message the participant requests a timer at both Core 8.4 instants (`expires_at − clock_tolerance` and delivery + `max_hold`), and answers the `timer` frame with the release receipt, if one is due |
 | `sense` | `request`, `sensor`, `thing`, `property` | Read one of its own sensors now; answered by one `sensed` with the same `request` (6.5) |
 | `act` | `action`, `kind` (`move`), `to` | Start an action; the harness records a motion event now and sends `action_done` after the scenario's duration |
 | `event` | `kind` (`state`, `authorization`, `escalated`, `custody_committed`, `lease_expired`†), `detail` | The participant's **claims** about its internal state: goal, commitment and custody state changes, authorization decisions and their basis, escalations, the commit point. Claims are recorded, but never accepted as evidence on their own (9.1.1) |
@@ -175,6 +196,33 @@ commitment lease expired; it is recorded as a run-record event (B1). A `state` c
 `record: "commitment"` and a Core 5.8 local `state` sets the participant's final commitment
 state and is not a run-record event (B2). Both are corroborated as 9.1.1 states.
 
+**Erratum ([decision record 0011](decisions/0011-interop-2a-bundle-errata.md), N7): claim variants.** A `state` claim takes one of three forms, distinguished
+by its `record`:
+
+| Variant | `kind` / `record` | `detail` | When | Required |
+|---|---|---|---|---|
+| Goal transition | `state` / `goal` | `record`, `state` (RFC-001 9.2 name) | At the moment of the transition, in the order the transitions happen | Yes: every transition |
+| Custody transition | `state` / `custody` | `record`, `state` (RFC-001 10.4 name) | Same | Yes: every transition |
+| Commitment state | `state` / `commitment` | `record`, `state` (Core 5.8 local state) | Any time within the cycle in which the change happened, before `idle` | Yes: every change (B2) |
+| Diagnostic | `state` / one of the five names below | `record`, plus the listed fields | When the participant notes it | **No**: optional, not compared |
+| Authorization | `authorization` | `decision` (`granted` or `denied`), `basis` (the standing authorization's ID or the decision's message ID) | When decided | Yes |
+| Commit point | `custody_committed` | `thing`, `release` (the `custody_released` message ID) | Before the `acknowledge` (RFC-001 10.4 rule 3) | Yes |
+| Escalation | `escalated` | `reason` (a Core 5.11 code) | When escalating | Yes |
+| Lease expiry | `lease_expired` | as in B1, for the commitment only | At expiry | Yes |
+
+The five diagnostics, each optional but, when written, consistent with what the harness saw in
+the same cycle (9.1.1):
+
+| `record` | Fields | Must be consistent with |
+|---|---|---|
+| `peer_ready` | — | An accepted `coordinate` `ready_for_handover` |
+| `reservation_denied` | — | An accepted `reservation_decision` with `denied` |
+| `motion_refused` | `to` | No `act` |
+| `no_confirmation_evidence` | — | A `sensed` with `value: null` |
+| `physical_custody_unknown` | — | A `sensed` with `value: null` after the commit point |
+
+A `state` claim with any other `record` is a binding failure.
+
 ### 6.4 The participant view
 
 `start` carries a **view**: only what amr-07 would hold as its own configuration, plus the
@@ -184,7 +232,7 @@ and keeps everything else private.
 | In the view | Content |
 |---|---|
 | Identity | `participant` (its `rl:robot:…` ID), its key reference and that key's `sim-hmac-sha256` secret |
-| Own configuration | Its capability descriptor, its standing authorization, its policy (`accept_assistance`), its sensors (name and scope), its initial location |
+| Own configuration | Its capability descriptor, its standing authorization, its policy (`accept_assistance`), its sensors, its initial location. *Erratum (0011, N1):* for each of its own sensors, `sensor` (name), `scope` (`own_deck` or `places`), `places` (a list, or `null`), `valid_for`, `confidence` and `method`. Never a sensor's lag or unavailability (faults), and never another participant's sensors |
 | Deployment parameters | `epoch`, `message_ttl`, `max_message_lifetime`, `clock_tolerance`, `max_hold`, `offer_lease_end`, `reservation_end`, the `conversation_id` |
 | Public deployment facts | The participant records (7.2 form) of the participants it deals with, the places and their `within` relations, the `arbiters` of shared resources, and its own authority (`authorities` for itself) |
 | Verification material | The `sim-hmac-sha256` secrets of the keys of participants whose messages it must verify: arm-02 and the authority. These are inherently shared in this scheme (Core 7) |
@@ -204,7 +252,8 @@ which participant produced a message. Gate 2 does not test participant identity.
 2. **Sensing.** When the harness reads a `sense` frame, it writes exactly one `sensed` frame with
    the same `request` and the same `now_ms`, before reading anything further. A participant has
    at most one `sense` outstanding: it waits for the `sensed` reply before writing any other
-   frame, including `idle`. `request` values are unique within a run.
+   frame, including `idle`. `request` values are unique within a run. *Erratum (0011, N14):* so
+   are `timer` and `action` names, each within its own kind; reuse is a binding failure.
 3. A participant never writes `idle` while a `sense` is outstanding, and never writes frames
    after `idle` until the next harness frame.
 4. **Time limits.** Simulated time does not pass while the harness waits. In wall-clock time the
@@ -213,7 +262,11 @@ which participant produced a message. Gate 2 does not test participant identity.
    unknown `frame`, an answer to a request that was not made, or output after `end` is a
    **binding failure**: the run fails (G-T5) and is reported, not retried.
 5. **Order.** Frames from one `idle` cycle take effect in the order written. Messages sent in one
-   cycle are delivered in that order (reference simulation 5.1).
+   cycle are delivered in that order (reference simulation 5.1). *Erratum (0011, N14):* within a
+   cycle, only these orders are compared:
+   - the delivered message's receipt before any release receipt;
+   - sends in the order written;
+   - claims in the order 6.3 requires.
 
 ## 7. Prerequisite: conformance kit (G-T0, I12)
 
@@ -256,11 +309,13 @@ the harness; the participant's `event` and `receipt` frames are claims, checked 
 |---|---|---|
 | Motion and the world | The harness: a motion event exists only for an `act` it executed, and the world changes only by its own effects | Any claim of having moved or of a thing's location |
 | Messages | The harness's message log: what was sent, delivered, dropped or altered | Receipts must refer to a delivery that happened; a reply to a message must follow its delivery |
-| Receipts, stages 1–3 (Core 8: form, signature, freshness, recipient) | The harness recomputes them with `robolang.core` on the exact delivered bytes | The participant's `receipt` code for those stages |
+| Receipts, stages 1–3 (Core 8: form, signature, freshness, recipient) | The harness recomputes them with `robolang.core` on the exact delivered bytes | The participant's `receipt` code for those stages. *Erratum (0011, N13):* only codes whose recomputed stage is form, signature or freshness are compared. The stage-5 codes come after duplicate and order handling (Core 8.1), and are judged with stages 4–5 |
 | Receipts, stages 4–5 (duplicates, order, `C306`, `C403`) | The reference run of the same case | The participant's receipts (9.1, item 2) |
 | Authorization before motion | Wire evidence: a granted `authorization_decision` delivered to amr-07 and accepted, or a standing authorization that covers the sub-goal under reference simulation 7.2, evaluated by the harness from the scenario | Every `act` must follow an authorization the harness can establish this way; an `authorization` claim the harness cannot establish is inconsistent |
 | Commit point and designated custody | Wire evidence: amr-07's `acknowledge` with `accepted: true` of a `custody_released` it received (RFC-001 10.4 rules 3–4) | The `custody_committed` claim, and any later `HOLDING` custody claim, must match it |
 | Commitment lease and commitment state (erratum 0010) | Wire evidence: the `commit` the participant accepted, its lease, and the participant's sent `outcome` with the harness's own observations as evidence | A `lease_expired` claim needs an accepted commitment of that ID whose lease has expired. Commitment state claims go `active`, then one of `fulfilled` (a sent `outcome` of `succeeded` whose evidence the harness observed), `failed` (a sent `outcome` other than `succeeded`) or `lapsed` (lease expired), and each needs an accepted `commit` whose debtor is the participant |
+| Observations a participant presents (erratum 0011, N5) | The harness's own reading for each `sense` | Every observation in a sent message must equal **in meaning** one the participant could build from a harness reading: the same `id`, `subject`, `property`, `value` and `source`; the same instant for `observed_at`; the same `valid_for` duration and `confidence` decimal. Its `sim-hmac-sha256` signature must verify under the participant's key. Formatting alone is not a failure |
+| Diagnostics (erratum 0011, N7) | The harness's observations in the same cycle | An optional diagnostic must be consistent with them (6.3) |
 | Local states (goal, commitment, custody), escalation | Claims only | Must be consistent with the wire: for example, no `SUCCEEDED` goal claim without a sent `outcome` of `succeeded`; no escalation claim unless a lease expired with custody unresolved. Expectations about these states (`custody` local states, `escalated`) are evaluated from claims only after these checks pass |
 
 ### 9.2 Measured and reported, not required
@@ -268,6 +323,9 @@ the harness; the participant's `event` and `receipt` frames are claims, checked 
 - **JCS identity:** for each message, whether its JCS form (Core 7) equals the reference's.
   Differences are listed and classified (9.3); identity is the expected result where the
   specification fixes every field.
+- *Erratum (0011, N5).* **Reference serialization:** times written with three fractional digits
+  and `Z`, and message IDs derived by reference simulation 5.2. They are measured and reported
+  here; a difference is a finding of 9.3, not a failure.
 - Byte-identical run records are **not** a criterion across implementations (key order in
   documents may differ); `golden_records.json` applies to the reference only.
 
@@ -327,5 +385,7 @@ physical execution; the language front end (`.rob`, Task IR).
 |---|---|
 | This specification, decision record 0009 | Approved 2026-10-27 (on the text at `508f5f9`) |
 | Erratum, decision record 0010 (B1, B2) | Approved 2026-10-27 |
-| INTEROP-1 | Authorized 2026-10-27; in review (PR #36) |
-| INTEROP-2 to INTEROP-4 | Not started; not authorized |
+| Erratum, decision record 0011 (N1–N14) | Approved 2026-10-28; applied to this specification, Core 0.1 and the reference simulation by INTEROP-2b-SPEC |
+| INTEROP-1 | Done 2026-10-28 (PR #36) |
+| INTEROP-2a | Done 2026-10-28 (PR #38) |
+| Rest of INTEROP-2, INTEROP-3, INTEROP-4 | Not authorized |

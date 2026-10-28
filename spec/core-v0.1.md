@@ -7,6 +7,9 @@ approved 2026-10-27.
 **Erratum (approved 2026-10-27):** sections 3 and 8 are amended by
 [decision record 0008](decisions/0008-core-sequencing-per-recipient.md) (Q1–Q9, approved 2026-10-27):
 sequence numbers per sender and recipient, and holding on gaps. The amended text is marked.
+**Erratum (approved 2026-10-28):** sections 8.1 and 8.4 are clarified by
+[decision record 0011](decisions/0011-interop-2a-bundle-errata.md) (N2, N13): precedence within
+stages, exact time comparisons, ties, and the repeated reply. The amended text is marked.
 **Builds on:** [RFC-001](architecture/rfc-001-ai-native-architecture.md) sections 6–13
 (decisions D1–D9), unchanged.
 **Schemas:** [`core/message-0.1.schema.json`](core/message-0.1.schema.json),
@@ -342,6 +345,63 @@ general `C104`, as in RoboLang 1.1 (`robolang-v1.1.md` section 6): a message wit
 Clock comparisons apply the deployment's clock tolerance in the safe direction (RFC-001
 11.4): a message is treated as expiring earlier, as sent later and an observation as older.
 
+*Erratum ([decision record 0011](decisions/0011-interop-2a-bundle-errata.md), N13).* The order of
+the five stages above is normative and unchanged. The rules below fix what Core 0.1 left open
+inside a stage.
+
+**Stage 1, precedence.** A receiver applies these checks in this order and reports the first that
+fails:
+
+| Rank | Check | Code | Fixture evidence |
+|---|---|---|---|
+| 1 | The bytes are not a JSON document under 2.3 | `C101` | `c101_*` (nothing else can be checked) |
+| 2 | `schema` and `schema_version` | `C102` | `c102_unsupported_version` also fails the schema (rank 7) |
+| 3 | `type` is reserved (4.2) | `C106` | `c106_reserved_type` also fails rank 7 |
+| 3 | `type` is neither defined nor reserved | `C105` | `c105_unknown_type` also fails rank 7. `C105` and `C106` cannot both apply |
+| 4 | No `signature` field | `C201` | `c201_unsigned` also fails rank 7 |
+| 5 | `profile` not allowed for `type` (4.1) | `C107` | `c107_profile_mismatch` also fails rank 7 |
+| 6 | An `outcome` `succeeded` with `verification: null` | `C402` | `c402_succeeded_without_verification` also fails rank 7 |
+| 7 | The schema: `C103` if any field is unknown, otherwise `C104` | `C103` / `C104` | `c103_unknown_field`, `c104_*` |
+| 8 | A time value that does not parse (2.4) | `C104` | — |
+| 9 | A lease whose `expires_at` is not after its `granted_at` (5.7) | `C104` | — |
+
+Ranks 3 to 6 apply to messages only. The fixtures establish only that ranks 2 to 6 come before
+rank 7, and that rank 1 comes first. Three other orderings are fixed by decision record 0011
+(N13) but have **no fixture yet**:
+
+- rank 2 before ranks 3 to 6;
+- the order among ranks 3 to 6;
+- `C103` before `C104` when a document has both an unknown field and another schema error.
+
+Ranks 7 to 9 give the same code, so their order changes only the JSON Pointer of the receipt,
+not the code.
+
+**Stage 2.** The message's own signature is checked first, then the signature of each
+observation it carries in `payload.observations` and then `payload.evidence`, in array order.
+Each observation's key must belong to its `source.participant` (`C203`), and a failure of any of
+them rejects the message. Core 0.1 does not fix the order of `C204`, `C203` and `C202` for one
+signed object, and no fixture has more than one of these faults.
+
+**Stage 3, precedence.** In this order:
+
+1. `C302`: `expires_at` is not after `sent_at`, or it is beyond the maximum lifetime.
+2. `C301`: expired.
+3. `C303`: `sent_at` is in the future.
+4. `C307`: the wrong recipient.
+
+The comparisons are exact:
+
+- a message is expired when `now ≥ expires_at − clock_tolerance`;
+- it is in the future when `sent_at > now + clock_tolerance`.
+
+Each stage-3 fixture has one fault only, so this order rests on decision record 0011 alone.
+
+**Stage 5.** The meaning codes (`C306`, `C401`, `C402` for a verification with an unmet criterion,
+`C403`, `C404`) are applied **after** duplicate and order handling (stage 4). A conformance check
+of a single message, with no conversation state, gives the same code. *Known reference
+discrepancy D7:* the reference receiver currently applies `C401`, `C402` and `C404` before
+stage 4 ([register](../docs/interop/spec-implementation-discrepancies.md)).
+
 ### 8.2 Rejection codes
 
 | Code | Stage | Meaning |
@@ -400,6 +460,20 @@ one recipient in one conversation (section 3).
 
 `max_hold` is a deployment parameter shorter than the message lifetime. It bounds how long
 one lost message can delay the messages after it.
+
+*Erratum ([decision record 0011](decisions/0011-interop-2a-bundle-errata.md), N13, N2).*
+
+- **Processed** means handed to the participant and accepted. A message rejected at stage 5 is
+  not remembered: a later copy of it is judged again (and is stale, `C306`, if its stream has
+  passed it), not treated as a duplicate.
+- **Ties.** When a held message's expiry and its `max_hold` fall at the same instant, expiry
+  wins (`C301`).
+- **Conversation.** In 0.1 a receiver does not compare `conversation_id` with its own.
+- **The repeated reply.** In the reference simulation and the gate 2 binding, the reply to a
+  duplicate is repeated by the transport, not by the participant: the stored reply, unchanged,
+  with its original ID and sequence
+  ([`interop-gate-2-v0.1.md`](interop-gate-2-v0.1.md) 6.3). Its receiver therefore sees a
+  duplicate, or the first copy if the original was lost, and never a new sequence number.
 
 ## 9. Conformance of documents
 

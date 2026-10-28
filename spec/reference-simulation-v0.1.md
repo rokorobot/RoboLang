@@ -9,6 +9,11 @@ approved 2026-10-27.
 [decision record 0008](decisions/0008-core-sequencing-per-recipient.md) (Q1–Q9, approved 2026-10-27):
 per-recipient sequencing, holding on gaps, and the sequencing cases (A-T20). The amended text
 is marked.
+**Erratum (approved 2026-10-28):** sections 4.3, 5.2, 6.2, 6.3, 8 (V6) and 10 are amended,
+and section 6.4 added, by [decision record 0011](decisions/0011-interop-2a-bundle-errata.md)
+(N3–N12): what gate 2 needs to implement amr-07. The amended text is marked; where the reference
+does not yet follow it, the [discrepancy register](../docs/interop/spec-implementation-discrepancies.md)
+lists the difference.
 **Fixtures:** [`tests/fixtures/arch02/`](../tests/fixtures/arch02/README.md)
 **Implementation:** none. RL-ARCH-02b implements it only after this specification is approved
 and the owner separately authorizes implementation (D8).
@@ -123,6 +128,12 @@ time (minus any scripted sensor lag, 10), `valid_for` 30 s, `confidence` `0.95`,
 `vision`, signed by the observing robot. A sensor that is scripted unavailable makes no
 observation. Observation IDs are `rl:obs:<robot>:<n>`, numbered from 1 per robot.
 
+*Erratum (0011, N6).* `<robot>` is the last `:`-separated part of the robot's ID (`amr-07`).
+Numbers count only readings that returned a value, in order, whether or not the observation
+is ever sent: a reading of `null` does not use up a number. amr-07 senses `carried_by` with
+`deck_camera` on `coordinate` `placed`, after acknowledging a release (rule 9) and on every
+`custody_query`, and `located_in` on arrival at the target; nowhere else.
+
 ## 5. Messages
 
 ### 5.1 Delivery
@@ -145,7 +156,9 @@ message_id = "m-" + first 32 hex digits of SHA-256( "robolang-arch02-msg/0.1-seq
 ```
 
 This is a property of the reference simulation, not a Core rule: Core 0.1 requires only that
-message IDs are unique per sender. The conversation is `rl:conv:c42-delivery`. Other
+message IDs are unique per sender. *Erratum (0011, N5):* for gate 2 the formula is reference
+serialization: an independent participant may number differently, and the difference is
+reported, not failed ([`interop-gate-2-v0.1.md`](interop-gate-2-v0.1.md) 9.2). The conversation is `rl:conv:c42-delivery`. Other
 identifiers are fixed: goal `rl:goal:c42-to-s3`, sub-goal `rl:goal:c42-to-s3-sub-1`,
 commitment `rl:commit:c42-transport`.
 
@@ -194,13 +207,22 @@ commitment `fulfilled`; motion events: amr-07 two moves, arm-02 one `handover_pl
 ### 6.2 Rules every participant follows
 
 1. **Every receipt is checked as Core 8 says**, and the result is recorded (section 9).
-2. **Before every action**, a robot checks that its goal or sub-goal is `AUTHORIZED`, that the
-   commitment it depends on is active and its lease unexpired, and, for motion involving the
-   handover region, that it holds a granted, unexpired reservation or arbitrates the region.
+2. **Before every action**, a robot checks all of these:
+   - its goal or sub-goal has an **established authorization that is still valid** (7.2: a
+     covering standing authorization, or a granted decision from its authority);
+   - the goal is in the state its role requires for that action;
+   - the commitment it depends on is active and its lease unexpired;
+   - for motion involving the handover region, it holds a granted, unexpired reservation or
+     arbitrates the region.
+
+   *Erratum (0011, N8; consistency correction).* "Authorized" here means the authorization has
+   been established, not the goal state `AUTHORIZED`. A goal moves on from `AUTHORIZED` to
+   `RUNNING` when work starts (RFC-001 9.2), and amr-07 starts both of its moves in `RUNNING`.
+   The exact checks for amr-07 are in 6.4.
 3. **On lease expiry**, without waiting for anyone (RFC-001 11.1): the debtor starts no new
    work and stays in its safe state; a reservation holder does not enter the region; the
    creditor treats the obligation as unfulfilled. In 0.1 a robot's safe state is "no further
-   motion"; RFC-001 open question 10 stays open.
+   motion"; RFC-001 open question 10 stays open. amr-07's expiry table is in 6.4 (erratum 0011).
 4. **Custody** follows RFC-001 10.4 rules 1–13. In particular, the receiver commits durably
    before it acknowledges; a giver without an acknowledgement after `ack_timeout` enters
    `IN_DOUBT`, takes no action involving the thing, and sends `custody_query` at once and
@@ -221,6 +243,131 @@ commitment `fulfilled`; motion events: amr-07 two moves, arm-02 one `handover_pl
   bears on a criterion; `failed` if observations show it is not met.
 - planner-1's policy re-verifies every outcome it receives, at receipt (RFC-001 11.3). If
   re-verification fails, it records the goal as `unknown`.
+
+*Erratum ([decision record 0011](decisions/0011-interop-2a-bundle-errata.md), N11).* The evaluation
+of one criterion, in this order:
+
+1. **Relevant observations:** those from an accepted source, with the criterion's subject and
+   property. If there are none, the result is `missing`.
+2. **Fresh enough:** age = `now − observed_at + clock_tolerance`, which must be ≤ both
+   `max_age` and the observation's `valid_for`. If no relevant observation is fresh enough, the
+   result is `stale`.
+3. **Met:** a fresh-enough observation with the criterion's value and a `confidence` of at least
+   `min_confidence`. Otherwise the result is `contradicted`: a right value at too low a
+   confidence counts as contradicted.
+
+The outcome follows from the results:
+
+- every criterion met: `succeeded`;
+- the first criterion not met is `missing`: `unknown` (`evidence_missing`);
+- it is `stale`: `unknown` (`evidence_stale`);
+- it is `contradicted`: `failed`, with empty `reasons`. *Known reference discrepancy D1:* the
+  reference sends `reasons: [{"code": null}]`.
+
+### 6.4 amr-07 in detail
+
+*Erratum ([decision record 0011](decisions/0011-interop-2a-bundle-errata.md), N4–N12).* Sections
+6.1–6.3 describe the scenario. This section fixes what they leave open for amr-07, the participant
+that gate 2 asks an independent author to implement ([`interop-gate-2-v0.1.md`](interop-gate-2-v0.1.md)
+section 3). Where the reference does not yet do what this section says, the difference is listed
+in the [discrepancy register](../docs/interop/spec-implementation-discrepancies.md) and marked
+*known reference discrepancy* below.
+
+**Values (N5).** These are normative:
+
+- the `outcome` profile is `r2r`;
+- every lease amr-07 proposes (`offer_assistance`, `reserve`) has `granted_at` equal to the send
+  time;
+- `evaluated_at` and `reported_at` are the send time;
+- a `succeeded` outcome has empty `reasons`;
+- any other outcome has `verification: null` and `evidence: []`;
+- times are compared as instants.
+
+Two things are **reference serialization**, not required: writing every time with three
+fractional digits and `Z`, and deriving `message_id` by the formula of 5.2. Differences in them
+are reported under gate 2 section 9.2, not failures.
+
+**Replies (N4).**
+
+| amr-07 sends | `in_reply_to` |
+|---|---|
+| `offer_assistance`, `decline` | The `request_assistance` |
+| `acknowledge` | The message it acknowledges (`transfer_custody` or `custody_released`) |
+| `custody_state` | The `custody_query` |
+| `authorization_request`, `reserve`, `coordinate`, `custody_confirmed`, `outcome` | `null` |
+
+**Derived values (N10).**
+
+- **Sub-goal:** the thing and the target are the subject and value of the first triple of the
+  sub-goal's `desired_state`.
+- **Requester:** the sender of `request_assistance`; it is also the counterpart (7.2).
+- **Hand-off place:** the key of `arbiters` whose value is the requester.
+- **Mass:** the stated `mass.value` of the thing in the request's `things` (`uncertainty` is not
+  added). Every limit is inclusive (`≤`).
+- **Places involved (7.2):** the hand-off place and the target. Each is in scope if it, or its
+  direct `within`, is listed.
+- **`any_participant_in_domain`** (Core 5.3): the participants whose `authority_domain` is the
+  evaluator's.
+- **Capability test**, in this order:
+  1. the descriptor is current and validly signed;
+  2. `transport_payload` and `dock_at` are present and not listed unsupported;
+  3. mass ≤ `transport_payload.max_mass`;
+  4. both places are in `dock_at.places`.
+
+  If 1 or 2 fails, the request is declined `capability_unsupported`; if 3 or 4 fails,
+  `capability_insufficient` (Core 5.11). *Known reference discrepancy D4:* the reference uses
+  `capability_insufficient` in every case.
+- **Standing authorization:** checked as in 7.2, with
+  `granted_at ≤ now < expires_at − clock_tolerance`.
+
+**Inputs (N8).** For each input, amr-07 checks the required local state. If it does not hold,
+the message is rejected with the code shown. amr-07 never replies to a message it rejects.
+
+| Input | Required local state | Otherwise | Reaction |
+|---|---|---|---|
+| `request_assistance` | No sub-goal yet | `C306` | `ASSESSING`. Policy, then the capability test. `offer_assistance` (condition `resource_held` on the hand-off place, lease to `offer_lease_end`) or `decline` |
+| `commit` | Goal `ASSESSING`; the debtor is amr-07; the obligation names the sub-goal | `C306` | Commitment `active`; goal `ACCEPTED`, then `AUTHORIZING`; lease timer (below). Then the standing authorization, or an `authorization_request` (the sub-goal and things as received, mode `simulation`, reason `outside_standing_authorization`) |
+| `authorization_decision` | Goal `AUTHORIZING`; the payload names the sub-goal | `C306` (`C401` from anyone but its authority, Core 8.2) | `granted`: `AUTHORIZED`, then `reserve`. `denied`: `DENIED`, commitment `failed`, outcome `rejected` (`authorization_denied`) |
+| `reservation_decision` | Goal `AUTHORIZED`; the resource is the hand-off place | `C306` | `granted`: `RUNNING`, then move to the hand-off place. `denied`: the diagnostic `reservation_denied` only. Nothing is sent; the lease expiry decides |
+| `coordinate` `ready_for_handover` | Any | — | The diagnostic `peer_ready` only. Nothing is sent |
+| `coordinate` `placed` | Custody `ACCEPTED` | `C306` | Sense `carried_by`. With a reading: `custody_confirmed`, then `CONFIRMATION_SENT`. With `null`: the diagnostic `no_confirmation_evidence` only |
+| `transfer_custody` | Goal `RUNNING`; the payload names the commitment and the thing; custody not yet set | `C306` | `ACKNOWLEDGED`, then `acknowledge` (`accepted: true`), then `ACCEPTED` |
+| `custody_released` | It names amr-07's `custody_confirmed` and the thing (else `C403`, tested first); custody `CONFIRMATION_SENT` | `C306` | `HOLDING`, then the `custody_committed` claim, then `acknowledge`. Sense `carried_by` (rule 9). With a reading: move to the target. With `null`: the diagnostic `physical_custody_unknown`, and no motion |
+| `custody_query` | A sub-goal exists; the payload names the thing | `C306` | Sense `carried_by`. `custody_state`: the accepted release if `HOLDING`, else `null`; the observation if any. *Known reference discrepancy D2:* before any `request_assistance`, the reference fails instead of rejecting with `C306` |
+| Any other type | — | `C306` | — |
+
+Before every move (6.2 rule 2), all of these must hold:
+
+- the authorization is still established;
+- the goal is `RUNNING`;
+- the commitment is `active` and its lease unexpired;
+- a granted reservation is unexpired.
+
+Each is judged in the safe direction (`now < expires_at − clock_tolerance`). Otherwise amr-07
+claims the diagnostic `motion_refused` and does not move. *Known reference discrepancy D5:* the
+reference checks only the goal and the commitment state.
+
+**Forwarding (N9).**
+
+> **Simulation-specific forwarding (reference simulation and gate 2 only).** amr-07 forwards its
+> sensor reading in `custody_confirmed` without checking its freshness or the transfer's
+> `criteria` itself; the giver verifies it as RFC-001 10.4 specifies (V5 tests this). After
+> accepting a release, amr-07 proceeds on any reading its sensor returns for rule 9. This rule
+> does not define evidence freshness, does not amend RFC-001 10.4 rules 1 and 9, and is not a
+> pattern for physical deployments, where those rules apply as written.
+
+**Lease expiry (N12).** amr-07 sets one timer, when it accepts `commit`. The timer fires at exactly
+the commitment's `lease.expires_at`: the clock tolerance applies to judging others' times (Core 8.1),
+not to its own timer. If the commitment has already ended (`fulfilled` or `failed`), the timer does
+nothing. Otherwise the commitment becomes `lapsed`, amr-07 claims `lease_expired`, and then:
+
+| Custody at expiry | Result |
+|---|---|
+| `ACKNOWLEDGED`, `ACCEPTED` or `CONFIRMATION_SENT` | Custody `TIMED_OUT`; `escalated` (`custody_unknown`); goal `FAILED`; outcome `failed` (`lease_expired`, `custody_unknown`). This is V5, and amr-07's part of V6 |
+| `HOLDING` | Goal `UNKNOWN`; outcome `unknown` (`lease_expired`); no escalation |
+| None (before the hand-over) | Goal `FAILED`; outcome `failed` (`lease_expired`) |
+
+amr-07 claims `lease_expired` for its commitment only, never for its reservation.
 
 ## 7. Policy
 
@@ -271,7 +418,7 @@ results are those of RFC-001 section 18, made exact; where RFC-001 allows "`fail
 | V3 | Step 5 replayed after its expiry | Replay `commit` at 10:16:00 | amr-07 rejects it with `C301`; one commitment. Ends as the happy path |
 | V4 | amr-07 goes silent after step 6 | amr-07 is silent from the delivery of `reservation_decision` | amr-07 sends nothing and does not move. At 10:25:00 the commitment lapses; arm-02 never placed C42, sees it at `cell-a2`, and reports `failed` (`lease_expired`). planner-1 records `failed`. No motion by either robot |
 | V5 | `custody_confirmed` with a 40 s old observation | amr-07's `deck_camera` lags 40 s | arm-02 finds the evidence stale and sends no `custody_released`; designated custody stays with arm-02. amr-07 does not move after the placement (10.4 rule 10). At 10:25:00 the lease expires: amr-07, which never accepted a release, stays in its safe state, reports `failed` (`lease_expired`, `custody_unknown`) and escalates (rule 11). arm-02 is not in doubt, because it sent no release; it reports `failed` (`evidence_stale`, `lease_expired`): it sees C42 on amr-07's deck at H1, not at S3. planner-1 records `failed` |
-| V6 | Connection lost between steps 11 and 12 | arm-02 and amr-07 cannot reach each other from the delivery of `custody_confirmed` until 10:26:00 | arm-02's `custody_released` is lost: amr-07 never reaches the commit point and does not move C42. arm-02 enters `IN_DOUBT` at 10:14:56.100; its `custody_query` messages are lost. At 10:25:00 rule 11: both escalate. arm-02 reports `unknown` (`custody_unknown`, `lease_expired`). planner-1 records `unknown`. Designated custody: arm-02 |
+| V6 | Connection lost between steps 11 and 12 | arm-02 and amr-07 cannot reach each other from the delivery of `custody_confirmed` until 10:26:00 | arm-02's `custody_released` is lost: amr-07 never reaches the commit point and does not move C42. arm-02 enters `IN_DOUBT` at 10:14:56.100; its `custody_query` messages are lost. At 10:25:00 rule 11: both escalate. arm-02 reports `unknown` (`custody_unknown`, `lease_expired`). *Erratum (0011, N12):* amr-07, never past the commit point, reports `failed` (`lease_expired`, `custody_unknown`), as in V5. planner-1 records `unknown`. Designated custody: arm-02 |
 | V7 | Acknowledgement of step 12 lost | Drop amr-07's second `acknowledge` | amr-07 proceeds to S3 as in the happy path. arm-02 enters `IN_DOUBT` at 10:14:56.100 and sends one `custody_query`; amr-07 answers `custody_state` naming the accepted release, with a fresh observation; arm-02 resolves to `RELEASED`. planner-1 records `succeeded` |
 | V8 | amr-07 reports "arrived" without an observation | amr-07's `deck_camera` unavailable from 10:15:00 | amr-07 reaches S3 (the world has C42 there) but has no evidence: sub-goal `unknown` (`evidence_missing`). arm-02 reports `unknown`. planner-1 records `unknown` |
 | V9 | planner-1 re-verifies with too old evidence | Delay arm-02's `outcome` to planner-1 by 15 s | arm-02's goal is `SUCCEEDED`. planner-1 re-verifies at 10:16:06.400; the evidence is 15.2 s old against a 10 s maximum: planner-1 records `unknown` (`evidence_stale`) |
@@ -354,7 +501,7 @@ A case applies a list of these to the base scenario. Messages are selected by
 | `strip_signature` | `match` | The `signature` field is removed in transit |
 | `corrupt_signature` | `match` | The signature value is altered in transit |
 | `inject` | `at`, `message` | A message built from the given fields is signed by its sender and sent at `at`. `message` may set `sequence` and `message_id` explicitly, to test stale and equivocating messages (0008, Q9); otherwise they follow 5.2 |
-| `silence` | `participant`, `from` (a message delivery) | From that delivery on, including it, the participant handles no message, sends nothing and starts no action |
+| `silence` | `participant`, `from` (a message delivery) | From that delivery on, including it, the participant handles no message, sends nothing and starts no action. *Erratum (0011, N3):* hold expiry is protocol timing and continues. A message the participant holds is still released on the Core 8.4 schedule: `rejected C301` at expiry, or `not_handled` at `max_hold`, followed by later held messages of its stream that are now next. Each held message gets exactly one release receipt (gate 2 6.3) |
 | `partition` | `between` (two participants), `from` (a message delivery), `until` (time) | Starting just after that delivery and until `until`, every message between the two is dropped |
 | `sensor_lag` | `participant`, `sensor`, `lag` | Observations are dated `lag` earlier than the moment they are made |
 | `sensor_unavailable` | `participant`, `sensor`, `from` (time) | No observations from then on |
