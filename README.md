@@ -60,8 +60,11 @@ robolang simulate examples/handover.rob --world examples/world.json \
 | `inspect FILE [--json] [--task NAME]` | Validates, then shows the tasks as text or as Task IR JSON | as `validate` |
 | `simulate FILE --world W [--task NAME] [--bind P=ID …]` | Runs one task against a world file in a symbolic simulation; the same inputs give a byte-identical run record | 0 succeeded, 1 invalid source, 2 usage, 3 invalid world, 4 failed, 5 cancelled |
 | `export-goal FILE --world W --from AGENT [--to ROBOT] [--bind P=ID …]` | Turns a 1.3 task's goal into a signed Core 0.1 `propose_goal` message (simulation-only signature) | 0 printed, 1 invalid source, 2 usage, 3 invalid world, 6 goal has no Core form |
-| `delegate FILE --world W --from AGENT --to ROBOT [--plans PATH …]` | End to end: the planner sends the task's goal; the robot matches it to a plan in its own `.rob` library, runs it, and returns a Core outcome; the planner checks the evidence itself | 0 verified success, 4 failed or unknown, 7 rejected; others as `export-goal` |
+| `delegate FILE --world W --from AGENT --to ROBOT [--plans PATH …] [--lease D]` | End to end: the planner sends the task's goal; the robot matches it (in any order) to a plan in its own `.rob` library, runs it, and returns a Core outcome; the planner checks the evidence itself. A plan with a second robot brings it in as a peer: commitment with a lease, then custody transfer before the peer's steps ([spec](spec/delegate-v0.2.md)) | 0 verified success, 4 failed or unknown, 7 rejected; others as `export-goal` |
 | `arch02 --scenario S --cases C --case NAME` | Runs one case of the Core 0.1 reference scenario (AI planner, arm and mobile robot exchanging signed messages) | 0 ran, 2 usage, 3 invalid input |
+
+Every command that reads a `.rob` file also reads Task IR JSON instead: `--ir FILE.json`. The IR is
+re-validated from scratch; its version claims are never trusted ([spec](spec/ir-reader-v0.1.md)).
 
 Validation and simulation say nothing about whether a task is safe on a real robot.
 
@@ -131,6 +134,8 @@ Specifications: [1.1](spec/robolang-v1.1.md) ([grammar](spec/grammar.ebnf)),
 | Symbolic executor and run records | `src/robolang/sim/` |
 | Core 0.1 message checks (schemas, canonical JSON, simulation-only signatures) | `src/robolang/core/` |
 | Core 0.1 reference simulation | `src/robolang/arch02/` |
+| Task IR reader and re-validator (CORE-1) | `src/robolang/ir_reader.py` |
+| `.rob` → Core bridge, `export-goal`, `delegate` | `src/robolang/bridge.py`, `export_goal.py`, `delegate.py`, `delegate_peer.py` |
 | Interoperability test harness (gate 2) | `src/robolang/interop/` |
 | CLI | `src/robolang/cli.py` |
 
@@ -176,8 +181,9 @@ See
 | Language 1.1, 1.2 and 1.3 (goals, typed sensors), validator, Task IR | Delivered |
 | Simulation-only execution (`simulate`) | Delivered, signed off 2026-10-27 ([evidence](docs/evidence/rl-basic-01-exit-gate.md)) |
 | Core 0.1 reference simulation (`arch02`) | Implemented, gate 1 signed off 2026-10-27 ([evidence](docs/evidence/rl-arch-02-exit-gate.md)) |
-| Gate 2 independent interoperability | Bundle frozen 2026-10-28; INTEROP-3 deferred ([0017](spec/decisions/0017-reprioritise-goals-before-interop-3.md)) |
-| `.rob` → Core bridge | Delivered in simulation: Core-shaped outcomes, `export-goal`, `delegate` ([plan](docs/plans/goals-and-core-bridge.md)). Next: CORE-1 (IR reader), then reconsider INTEROP-3 |
+| Gate 2 independent interoperability | Bundle frozen 2026-10-28. Resuming INTEROP-3 on that bundle is proposed, pending owner approval ([0023](spec/decisions/0023-resume-interop-3.md)) |
+| `.rob` → Core bridge | Delivered in simulation: Core-shaped outcomes, `export-goal`, `delegate` with a peer robot, commitment, lease and custody ([plan](docs/plans/goals-and-core-bridge.md)) |
+| CORE-1, Task IR reader | Delivered: `--ir` on every command ([0021](spec/decisions/0021-core-1-ir-reader.md)) |
 
 Every implementation item needs owner approval. The full plan and history are in the
 [development plan](docs/DEVELOPMENT_PLAN.md); decisions are in [`spec/decisions/`](spec/decisions/).
