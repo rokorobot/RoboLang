@@ -8,7 +8,9 @@ and `robolang simulate`), so the scores do not depend on anything but the saved 
 
     valid_first         the first answer validates, the task exists, and the bindings are accepted
     valid_after_repair  that holds for the first answer or for the answer after one repair round
-    goal_correct        the goal, exported under the bindings, equals the task's expected set of Core triples
+    goal_correct        the goal means what an expected reading means: it holds in exactly the same states as one of
+                        the task's expected sets of Core triples, or as "any of" them (`and`, `or`, `not` and order
+                        do not matter). goal_exact, the measure before N6, asks for equal exported triples instead
     plan_succeeds       the simulation under the bindings ends SUCCEEDED
     checks_ok           the task's optional checks pass (safety limits, messages, duration, probe worlds)
 
@@ -92,6 +94,7 @@ def evaluate_record(task_def: dict, record: dict) -> dict:
         "outcome": kind, "repaired": len(calls) > 1,
         "valid_first": valid_first, "valid_after_repair": valid_after,
         "goal_correct": bool(judgement and judgement.goal_correct),
+        "goal_exact": bool(judgement and judgement.goal_exact),
         "plan_succeeds": bool(judgement and judgement.plan_succeeds),
         "checks_ok": (bool(judgement) and all(checks.values())) if has_checks else None,
         "state": judgement.state if judgement else None, "failure_code": judgement.failure_code if judgement else None,
@@ -146,6 +149,8 @@ def _rates_table(rows: list[dict]) -> list[str]:
     for name in MEASURES:
         k = sum(r[name] for r in rows)
         lines.append(f"| {name} | {k}/{len(rows)} | {_share(k, len(rows))} |")
+    k = sum(r.get("goal_exact", False) for r in rows)
+    lines.append(f"| goal_exact (triples equal, before N6) | {k}/{len(rows)} | {_share(k, len(rows))} |")
     checked = [r for r in rows if r["checks_ok"] is not None]
     k = sum(r["checks_ok"] for r in checked)
     lines.append(f"| checks_ok (tasks with optional checks) | {k}/{len(checked)} | {_share(k, len(checked))} |")
