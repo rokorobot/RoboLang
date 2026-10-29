@@ -129,7 +129,14 @@ No new codes are defined; `E508` cannot occur for `--bind`, because an unknown n
 error. The checks of exit 2 happen before the world file is read. The choices are recorded in
 [decision record 0016](decisions/0016-cli-bindings.md).
 
-## 3. World file, schema 1.0
+## 3. World file, schemas 1.0 and 1.1
+
+World file schema **1.1** is schema 1.0 plus two optional object fields (3.3), so that an object
+can become a Core `thing` (`export-goal`, [`export-goal-v0.1.md`](export-goal-v0.1.md)). Everything
+else, including how a run reads the file, is the same: `simulate` ignores `class` and `mass`. A file
+declares one version, and a 1.0 file behaves exactly as before, including rejecting `class` and
+`mass` as unknown fields (`E503`). The run record's `inputs.world_schema_version` is the file's
+version.
 
 ### 3.1 Document
 
@@ -163,7 +170,7 @@ A world file is a UTF-8 JSON document (RFC 8259) with one object at the top leve
 | Field | Required | Content |
 |---|---|---|
 | `world_schema` | yes | Exactly `"robolang.sim.world"` |
-| `world_schema_version` | yes | Exactly `"1.0"` |
+| `world_schema_version` | yes | Exactly `"1.0"` or `"1.1"` |
 | `locations` | yes | Array of location IDs |
 | `regions` | no | Object: region ID → region (3.3) |
 | `robots` | no | Object: robot ID → robot (3.3) |
@@ -214,6 +221,8 @@ true (section 4.4).
 | `present` | no | `true` or `false`; omitted means unknown |
 | `location` | no | ID of a declared location |
 | `held_by` | no | ID of a declared robot |
+| `class` | no | **1.1 only.** A lowercase word: `a`–`z` and `_`, starting with a letter, at most 64 characters (a Core thing class, `core-v0.1.md` 5.5). Not 1.0 (`E503`); malformed `E504` |
+| `mass` | no | **1.1 only.** `{ "value": "<decimal>", "unit": "kg", "uncertainty": "<decimal>" }`. `value` is greater than zero, `uncertainty` is zero or more, both exact decimal strings as in 3.7; the unit is `kg`. Another field is `E503`, a malformed one `E504` |
 
 An object that is `present: true` has exactly one of `location` and `held_by`. An object that
 is not present, or whose presence is unknown, has neither. A robot named in `held_by` has a
@@ -617,7 +626,7 @@ deferred by decision record 0003 section 3 are rows B1–B5 there.
 
 This section adds to sections 3 to 5 for sources written in RoboLang 1.3
 ([`robolang-v1.3.md`](robolang-v1.3.md)). Sources in 1.1 and 1.2 are unchanged by it: same
-IR, same run records, same run IDs. The world file stays at schema 1.0.
+IR, same run records, same run IDs. A 1.3 source may use world file schema 1.0 or 1.1 (section 3).
 
 ### 10.1 Sensor parameters and the world file
 
@@ -676,7 +685,46 @@ embedded and `inputs.ir_schema_version` `"1.2"`, `inputs.language_version` `"1.3
 - `goal`: an array placed immediately after `preconditions`, one entry per goal condition, in the
   shape of `preconditions`: `index` (from 1), `condition` (IR form) and `result`: `true`, `false`,
   `unknown` or `not_evaluated`;
-- the failure `phase` may be `goal` (5.2).
+- the failure `phase` may be `goal` (5.2);
+- `core_outcome`: the **last** top-level key, after `final_world` (section 10.5).
 
 Runs of 1.1 and 1.2 sources write record 1.0 and 1.1 with no `goal` key, byte-identical to today.
 The run-ID derivation (section 6) is unchanged.
+
+### 10.5 Core-shaped outcome (`core_outcome`)
+
+For a 1.3 source the record ends with `core_outcome`: `{ "outcome": …, "evidence": […] }`, the same
+shape as the payload of a RoboLang Core 0.1 `outcome` message ([`core-v0.1.md`](core-v0.1.md) 5.9 and
+5.6). It is `null` when a goal condition has no Core form (`or`, `not`, `and`, `robot_ready`, …;
+`bridge.goal_triples` raises `NotExportable`). Goal condition *i* (from 0) is Core success criterion *i*.
+Mapping and identifiers: `src/robolang/bridge.py`. Decision record
+[0018](decisions/0018-core-shaped-outcomes.md). Records of 1.1 and 1.2 sources have no such key.
+
+`SIM` is `rl:sim:world`: the simulator is both the verifier and the reporter, and its evidence is
+simulator ground truth, never a robot's own observation.
+
+| `outcome` field | Value |
+|---|---|
+| `kind` | `"outcome"` |
+| `goal` | `"rl:goal:" + <task name>` |
+| `status` | `SUCCEEDED` → `succeeded`; `FAILED` with `S302` → `unknown`; any other `FAILED` → `failed`; `CANCELLED` → `cancelled` |
+| `verification` | `null` if the goal was not evaluated (the run ended before the goal, section 10.3). Otherwise `verified_by` `SIM`, `method` `criteria_evaluated`, `evaluated_at` the Core time of `end_t_ms`, and one `criteria_results` entry per goal condition: `criterion` *i*, `met` (the condition's result is `true`) and `evidence` (observation IDs) |
+| `reasons` | `[{"code": "evidence_missing"}]` for `S302`, else `[]` |
+| `reported_by`, `reported_at` | `SIM`; the Core time of `end_t_ms` |
+
+**Evidence.** If the goal was evaluated, for each criterion whose subject has a known state in the
+final world the simulator emits one `observation` of what is **actually** true of that subject: a
+thing that is present and held → `carried_by` its holder; present and not held → `located_in` its
+place; a robot → `located_in` its location. So `met` is true exactly when the observed triple equals
+the criterion triple. A subject whose state is unknown or absent gets no observation and its
+criterion has `evidence: []`. A run whose goal was not evaluated has `evidence: []`.
+
+Observation fields: `id` `rl:obs:` + characters 4 to 19 of the run ID (the first 16 hex digits)
++ `-` + *i*; `observed_at` the end time; `valid_for` 10 s; `confidence` `"1"`; `source`
+`{participant: SIM, sensor: "world", method: "simulation_ground_truth"}`; `signature`
+`sim-hmac-sha256` by key `rl:sim:world#sim-1`. The secret is the fixed, published,
+simulation-only ASCII string in `src/robolang/sim/outcome.py` (`SIM_KEY`): anyone can compute it, so
+a signature shows only that the documented procedure produced the record.
+
+**C402.** `succeeded` is written only when every criterion is met (`SUCCEEDED` needs every goal
+condition `true`). The run ID (section 6) does not depend on the outcome and is unchanged.

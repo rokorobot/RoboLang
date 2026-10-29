@@ -5,6 +5,10 @@ Developer commands for RoboLang v1.1, v1.2 and v1.3.
     inspect  FILE          show what a validated file describes (text or JSON IR)
     simulate FILE --world WORLD
                            run a validated task in a symbolic simulation
+    export-goal FILE --world WORLD --from AGENT_ID
+                           print the task's goal as a signed Core 0.1 propose_goal message
+    delegate FILE --world WORLD --from AGENT_ID --to ROBOT_ID
+                           send the task's goal to a robot that runs its own plan; print the delegate record
     arch02 --scenario SCENARIO --cases CASES --case ID
                            run one case of the RFC-001 reference scenario in simulation
 
@@ -20,9 +24,11 @@ Exit status:
     1  the file is not valid RoboLang; diagnostics are on stderr
     2  the command could not be carried out: bad arguments or seed, unreadable file,
        unknown task name, several tasks and no --task
-    3  simulate: the world file is not valid; arch02: the scenario or cases file is not valid
+    3  simulate and export-goal: the world file is not valid; arch02: the scenario or cases file is not valid
     4  simulate: the run ended FAILED
     5  simulate: the run ended CANCELLED
+    6  export-goal and delegate: the goal has no Core 0.1 form, or an object lacks a class or mass
+    7  delegate: the robot rejected the goal, or the planner rejected a message
 """
 
 from __future__ import annotations
@@ -30,15 +36,19 @@ import argparse
 import json
 import re
 import sys
+from dataclasses import dataclass
 from importlib import metadata
 from pathlib import Path
 
+from . import bridge
 from . import ir as task_ir
 from .arch02 import ScenarioError, simulate_case
 from .arch02 import to_json as arch02_json
 from .core import ReadError
 from .diagnostics import MAX_ERRORS, RoboLangError
-from .sim import DEFAULT_SEED, SEED, WorldError, load_world, run_id, sha256_normalized, to_json, to_record
+from .delegate import Plan, delegate
+from .export_goal import ExportError, default_recipient, export_goal, valid_participant
+from .sim import DEFAULT_SEED, SEED, World, WorldError, load_world, run_id, sha256_normalized, to_json, to_record
 from .sim import run as simulate_task
 
 EXIT_OK = 0
@@ -47,6 +57,8 @@ EXIT_USAGE = 2
 EXIT_WORLD_INVALID = 3
 EXIT_FAILED = 4
 EXIT_CANCELLED = 5
+EXIT_NOT_EXPORTABLE = 6
+EXIT_REJECTED = 7
 
 NOT_A_SAFETY_CHECK = (
     "Validation covers the text of the program only. "
@@ -73,6 +85,8 @@ exit status:
   3  simulate only: the world file is not valid
   4  simulate only: the run ended FAILED
   5  simulate only: the run ended CANCELLED
+  6  export-goal and delegate only: the goal has no Core 0.1 form, or an object lacks a class or mass
+  7  delegate only: the robot rejected the goal, or the planner rejected a message
 """
 
 _SIMULATE_EPILOG = """\
@@ -85,6 +99,31 @@ exit status:
      parameter unbound; diagnostics are printed to stderr
   4  the run ended FAILED; the run record is on stdout
   5  the run ended CANCELLED; the run record is on stdout
+"""
+
+_EXPORT_EPILOG = """\
+exit status:
+  0  the message is on stdout
+  1  the source file is not valid RoboLang; nothing is exported
+  2  bad arguments, malformed or repeated --bind, unreadable file, unknown task name, several tasks
+     and no --task, an invalid --from, --to or --at, or several robots and no --to
+  3  the world file is not valid, or a --bind names a missing or wrong-kind entity or leaves a
+     parameter unbound; diagnostics are printed to stderr
+  6  the goal has no Core 0.1 form (X601), or a bound object has no class or mass (X602)
+"""
+
+_DELEGATE_EPILOG = """\
+exit status:
+  0  the planner recorded a verified `succeeded`; the delegate record is on stdout
+  1  the source file or a plan file is not valid RoboLang; nothing is run
+  2  bad arguments, malformed or repeated --bind, unreadable file, unknown task name, several tasks
+     and no --task, an invalid --from or --to, or no .rob file under --plans
+  3  a world file is not valid, or a --bind names a missing or wrong-kind entity or leaves a
+     parameter unbound; diagnostics are printed to stderr
+  4  the planner recorded failed, unknown or cancelled; the delegate record is on stdout
+  6  the goal has no Core 0.1 form (X601), or a bound object has no class or mass (X602)
+  7  the robot rejected the goal (no plan matches), or the planner rejected a message;
+     the delegate record is on stdout
 """
 
 _ARCH02_EPILOG = """\
@@ -249,6 +288,15 @@ def _safety(limit: task_ir.SafetyLimit) -> str:
     return f"{text}  (declared only; not enforced by this tool)"
 
 
+def _verify_lines(verify: task_ir.Verify) -> list[str]:
+    lines = []
+    if verify.min_confidence is not None:
+        lines.append(f"min_confidence {task_ir.decimal_text(verify.min_confidence)}")
+    if verify.max_age is not None:
+        lines.append(f"max_age {_quantity(verify.max_age)}")
+    return lines
+
+
 def _section(title: str, lines: list[str]) -> list[str]:
     if not lines:
         return [f"  {title}: (none)"]
@@ -259,6 +307,8 @@ def _describe(task: task_ir.Task) -> list[str]:
     lines = [f"task {task.name}"]
     lines += _section("parameters", [f"{p.type} {p.name}" for p in task.parameters])
     lines += _section("safety", [_safety(s) for s in task.safety])
+    if task.verify is not None:
+        lines += _section("verify", _verify_lines(task.verify))
     typed = task.typed_sensors
     lines += _section("preconditions", [_condition(c, typed) for c in task.preconditions])
     if task.goal is not None:
@@ -321,10 +371,21 @@ def _parse_bindings(groups) -> dict[str, str] | None:
     return bindings
 
 
-def _simulate(args, out, err) -> int:
-    seed = args.seed
-    if not SEED.fullmatch(seed):
-        raise _CommandError("invalid --seed: use 1 to 64 characters from A-Z a-z 0-9 . _ -")
+@dataclass(frozen=True)
+class _RunInputs:
+    source_bytes: bytes
+    world_bytes: bytes
+    result: task_ir.CompileResult
+    task: task_ir.Task
+    world: World
+    cli_bindings: dict[str, str] | None
+
+
+def _run_inputs(args, err) -> _RunInputs:
+    """
+    What `simulate` and `export-goal` share: validate FILE, select the task, apply `--bind`, load the
+    world. Raises RoboLangError (exit 1), _CommandError (2) or WorldError (3).
+    """
     cli_bindings = _parse_bindings(args.bind)
     source_bytes = _read_bytes(args.file)  # read once: the run ID describes exactly what was run
     result = _compile(args.file, err, source_bytes)
@@ -347,11 +408,18 @@ def _simulate(args, out, err) -> int:
                 listed = ", ".join(names) or "(none)"
                 raise _CommandError(f"--bind: '{name}' is not a parameter of task '{task.name}'; parameters: {listed}")
     world_bytes = _read_bytes(args.world)
-    try:
-        world = load_world(world_bytes, args.world, task, cli_bindings)
-    except WorldError as error:
-        print(error.format(), file=err)
-        return EXIT_WORLD_INVALID
+    world = load_world(world_bytes, args.world, task, cli_bindings)
+    return _RunInputs(source_bytes, world_bytes, result, task, world, cli_bindings)
+
+
+def _simulate(args, out, err) -> int:
+    seed = args.seed
+    if not SEED.fullmatch(seed):
+        raise _CommandError("invalid --seed: use 1 to 64 characters from A-Z a-z 0-9 . _ -")
+    inputs = _run_inputs(args, err)
+    source_bytes, world_bytes, result, task, world = (
+        inputs.source_bytes, inputs.world_bytes, inputs.result, inputs.task, inputs.world)
+    cli_bindings = inputs.cli_bindings
     run_result = simulate_task(task, world)
     identifier = run_id(source_bytes, world_bytes, task.name, seed, cli_bindings)
     record = to_record(
@@ -363,6 +431,7 @@ def _simulate(args, out, err) -> int:
         seed=seed,
         language_version=result.ir.language_version,
         bindings_source="world" if cli_bindings is None else "cli",
+        world_schema_version=world.schema_version,
     )
     out.write(to_json(record))
     summary = f"simulation only: run {identifier}: {run_result.state}"
@@ -370,6 +439,119 @@ def _simulate(args, out, err) -> int:
         summary += f" ({run_result.failure.code})"
     print(summary, file=err)
     return _SIMULATE_EXIT[run_result.state]
+
+
+# -------- export-goal --------
+
+def _export_failure(path: str, task: task_ir.Task, error: Exception, err) -> int:
+    """Report a goal that cannot be exported (X601, X602) and give the exit status."""
+    if isinstance(error, ExportError):
+        print(f"{path}: error[{error.code}]: task '{task.name}': {error.message}", file=err)
+        return EXIT_NOT_EXPORTABLE
+    shown = f" ({_condition(task.goal[error.index - 1], True)})" if error.index else ""
+    print(f"{path}: error[X601]: task '{task.name}': {error}{shown}; "
+          "only object_at, robot_at and holding can be exported", file=err)
+    return EXIT_NOT_EXPORTABLE
+
+
+def _export_goal(args, out, err) -> int:
+    for flag, value in (("--from", args.sender), ("--to", args.recipient)):
+        if value is not None and not valid_participant(value):
+            raise _CommandError(
+                f"invalid {flag} '{value}': use a Core identifier without '#', for example rl:agent:planner-1"
+            )
+    if args.at is not None:
+        try:
+            bridge.core_time_after(args.at, 0)
+        except ValueError:
+            example = "2026-10-19T10:14:00.400Z"
+            raise _CommandError(f"invalid --at '{args.at}': use a Core time, for example {example}") from None
+    inputs = _run_inputs(args, err)
+    task, world = inputs.task, inputs.world
+    recipient = args.recipient or default_recipient(task, dict(world.task.bindings))
+    if recipient is None:
+        robots = [p.name for p in task.parameters if p.type == "robot"]
+        raise _CommandError(
+            f"task '{task.name}' has {_plural(len(robots), 'robot parameter')} ({', '.join(robots) or 'none'}): "
+            "choose the recipient with --to"
+        )
+    try:
+        exported = export_goal(task, world, sender=args.sender, recipient=recipient, sent_at=args.at)
+    except (bridge.NotExportable, ExportError) as error:
+        return _export_failure(args.file, task, error, err)
+    for warning in exported.warnings:
+        print(f"{args.file}: warning: {warning}", file=err)
+    out.write(json.dumps(exported.message, indent=2, ensure_ascii=True) + "\n")
+    goal_id, message_id = exported.message["payload"]["goal"]["id"], exported.message["message_id"]
+    print(f"simulation only: exported {goal_id} as {message_id}", file=err)
+    return EXIT_OK
+
+
+# -------- delegate --------
+
+class _PlanInvalid(Exception):
+    """A plan file is not valid RoboLang; its diagnostics are already printed."""
+
+
+def _plan_files(paths: list[str]) -> list[str]:
+    """The `.rob` files named by --plans: a file as given, a directory's `*.rob` files in name order."""
+    files = []
+    for path in paths:
+        if Path(path).is_dir():
+            files += [str(p) for p in sorted(Path(path).glob("*.rob"))]
+        else:
+            files.append(path)
+    if not files:
+        raise _CommandError(f"no .rob file under --plans: {', '.join(paths)}")
+    return files
+
+
+def _record_path(path) -> str:
+    """A plan path as written in the delegate record: '/' separators on every OS, so records match across platforms."""
+    return Path(path).as_posix()
+
+
+def _load_plans(paths: list[str], err) -> list[Plan]:
+    """Validate every plan file; a file that is not valid RoboLang raises RoboLangError (exit 1)."""
+    plans = []
+    for path in _plan_files(paths):
+        data = _read_bytes(path)
+        try:
+            result = _compile(path, err, data)
+        except RoboLangError as error:
+            _print_errors(error, path, err, summary=False)
+            raise _PlanInvalid from None
+        plans.append(Plan(_record_path(path), data, result.ir.tasks, result.ir.language_version))
+    return plans
+
+
+def _delegate(args, out, err) -> int:
+    for flag, value in (("--from", args.sender), ("--to", args.recipient)):
+        if not valid_participant(value):
+            raise _CommandError(
+                f"invalid {flag} '{value}': use a Core identifier without '#', for example rl:agent:planner-1"
+            )
+    inputs = _run_inputs(args, err)
+    task = inputs.task
+    own = Plan(_record_path(args.file), inputs.source_bytes, inputs.result.ir.tasks, inputs.result.ir.language_version)
+    plans = _load_plans(args.plans, err) if args.plans else [own]
+    robot_world_path = args.robot_world or args.world
+    robot_world = inputs.world_bytes if robot_world_path == args.world else _read_bytes(robot_world_path)
+    try:
+        delegation = delegate(task, inputs.world, sender=args.sender, recipient=args.recipient, library=plans,
+                              robot_world=robot_world, robot_world_name=robot_world_path)
+    except (bridge.NotExportable, ExportError) as error:
+        return _export_failure(args.file, task, error, err)
+    out.write(json.dumps(delegation.record, indent=2, ensure_ascii=True) + "\n")
+    note = "verified" if delegation.verified else "not verified"
+    if delegation.rejected:
+        reasons = delegation.record["planner_verdict"]["reasons"]
+        note = ", ".join(r["code"] for r in reasons)
+    print(f"simulation only: delegate {delegation.goal} \u2192 {delegation.robot}: {delegation.status} ({note})",
+          file=err)
+    if delegation.rejected:
+        return EXIT_REJECTED
+    return EXIT_OK if delegation.status == "succeeded" and delegation.verified else EXIT_FAILED
 
 
 # -------- arch02 --------
@@ -485,6 +667,64 @@ def _parser(prog: str) -> argparse.ArgumentParser:
     )
     simulate.set_defaults(run=_simulate)
 
+    export = commands.add_parser(
+        "export-goal",
+        help="print a task's goal as a signed Core 0.1 propose_goal message (simulation only)",
+        description=(
+            "Validate FILE, then print the goal of one task as a signed Core 0.1 propose_goal message\n"
+            "(JSON) on stdout (spec/export-goal-v0.1.md). Bindings come from the world file or --bind.\n"
+            "Simulation only: nothing is sent, and the signature is sim-hmac-sha256 under a published\n"
+            "key, so it is not an identity proof. The message is not permission to act: the robot decides.\n\n"
+            + NOT_A_SAFETY_CHECK
+        ),
+        epilog=_EXPORT_EPILOG,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    export.add_argument("file", metavar="FILE", help="path to a .rob file (RoboLang 1.3)")
+    export.add_argument("--world", metavar="WORLD", required=True, help="path to a world file (schema 1.1)")
+    export.add_argument("--task", metavar="NAME", help="the task to export (required when FILE has several tasks)")
+    export.add_argument("--bind", metavar="NAME=ID", nargs="+", action="append",
+                        help="bind a task parameter to a world entity, as for simulate")
+    export.add_argument("--from", dest="sender", metavar="AGENT_ID", required=True,
+                        help="the sending agent, a Core identifier such as rl:agent:planner-1")
+    export.add_argument("--to", dest="recipient", metavar="ROBOT_ID",
+                        help="the receiving robot (default: the robot bound to the task's only robot parameter)")
+    export.add_argument("--at", metavar="TIME",
+                        help="sent_at, a Core time (default 2000-01-01T00:00:00.000Z, the simulation epoch)")
+    export.set_defaults(run=_export_goal)
+
+    delegation = commands.add_parser(
+        "delegate",
+        help="send a task's goal to a robot that runs its own plan and reports a verified outcome (simulation only)",
+        description=(
+            "Validate FILE, export its goal as a signed Core 0.1 propose_goal (as export-goal does), and\n"
+            "let the robot named by --to match it to a task in its own plan library, run that task in\n"
+            "its own world, and report the outcome. The planner verifies the outcome. The delegate record\n"
+            "(JSON) is on stdout (spec/delegate-v0.1.md). The plan never travels: only the goal does.\n"
+            "Simulation only: one process, no network, no ROS 2, no hardware; the signatures are\n"
+            "sim-hmac-sha256 under published keys and the verifier is the simulator (ground truth).\n\n"
+            + NOT_A_SAFETY_CHECK
+        ),
+        epilog=_DELEGATE_EPILOG,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    delegation.add_argument("file", metavar="FILE", help="path to the AI's .rob file (RoboLang 1.3)")
+    delegation.add_argument("--world", metavar="WORLD", required=True,
+                            help="path to the world file for the AI's task (schema 1.1)")
+    delegation.add_argument("--task", metavar="NAME", help="the AI's task (required when FILE has several tasks)")
+    delegation.add_argument("--bind", metavar="NAME=ID", nargs="+", action="append",
+                            help="bind a parameter of the AI's task to a world entity, as for simulate")
+    delegation.add_argument("--from", dest="sender", metavar="AGENT_ID", required=True,
+                            help="the planning agent, a Core identifier such as rl:agent:planner-1")
+    delegation.add_argument("--to", dest="recipient", metavar="ROBOT_ID", required=True,
+                            help="the robot, a Core identifier such as rl:robot:arm1")
+    delegation.add_argument("--plans", metavar="PATH", nargs="+",
+                            help="the robot's plan library: .rob files or directories of them (default: FILE)")
+    delegation.add_argument("--robot-world", metavar="WORLD",
+                            help="the robot's world file, whose tasks.<name>.bindings bind the library "
+                                 "(default: --world)")
+    delegation.set_defaults(run=_delegate)
+
     arch02 = commands.add_parser(
         "arch02",
         help="run one case of the RFC-001 reference scenario in simulation (no network, no robot)",
@@ -516,6 +756,11 @@ def main(argv: list[str] | None = None, out=None, err=None, prog: str = "robolan
         return args.run(args, out, err)
     except RoboLangError as error:
         _print_errors(error, args.file, err, summary=args.command == "validate")
+        return EXIT_INVALID
+    except WorldError as error:
+        print(error.format(), file=err)
+        return EXIT_WORLD_INVALID
+    except _PlanInvalid:
         return EXIT_INVALID
     except _CommandError as error:
         print(f"{prog}: error: {error}", file=err)

@@ -58,6 +58,14 @@ class SafetyLimit:
     limit: Quantity
 
 
+@dataclass(frozen=True)
+class Verify:
+    """RoboLang 1.3 `@verify`: only the keys the source declares. Parameters of how the goal is checked."""
+
+    min_confidence: Decimal | None = field(metadata={"omit_none": True})
+    max_age: Quantity | None = field(metadata={"omit_none": True})
+
+
 # -------- conditions --------
 
 @dataclass(frozen=True)
@@ -207,6 +215,7 @@ class Task:
     safety: tuple[SafetyLimit, ...]
     preconditions: tuple[Condition, ...]
     goal: tuple[Condition, ...] | None = field(metadata={"omit_none": True})  # schema 1.2; None before
+    verify: Verify | None = field(default=None, kw_only=True, metadata={"omit_none": True})  # schema 1.2, if declared
     steps: tuple[Step, ...]
 
     @property
@@ -291,6 +300,14 @@ def _step(node: ast.Statement) -> Step:
     return Communicate(node.robot.text, node.channel.value, node.message.value)
 
 
+def _verify(node: ast.Task) -> Verify | None:
+    declared = {a.key.text: a.value for a in node.verify}
+    if not declared:
+        return None
+    max_age = declared.get("max_age")
+    return Verify(declared.get("min_confidence"), _quantity(max_age) if max_age else None)
+
+
 def _task(node: ast.Task) -> Task:
     return Task(
         name=node.name.text,
@@ -299,6 +316,7 @@ def _task(node: ast.Task) -> Task:
         preconditions=tuple(_condition(c) for c in node.pre.conditions) if node.pre else (),
         goal=tuple(_condition(c) for c in node.goal.conditions) if node.goal else None,
         steps=tuple(_step(s) for s in node.plan.statements),
+        verify=_verify(node),
     )
 
 

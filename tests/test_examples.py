@@ -10,12 +10,13 @@ import pytest
 from robolang.cli import main
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-EXAMPLES = sorted((REPO_ROOT / "examples").glob("*.rob"))
+EXAMPLES = sorted((REPO_ROOT / "examples").glob("*.rob")) + sorted((REPO_ROOT / "examples" / "plans").glob("*.rob"))
 WORLD = REPO_ROOT / "examples" / "world.json"
 
 
 def test_examples_exist():
-    assert {p.name for p in EXAMPLES} >= {"pick_and_place.rob", "inspect_object.rob", "handover.rob"}
+    assert {p.name for p in EXAMPLES} >= {
+        "pick_and_place.rob", "inspect_object.rob", "handover.rob", "relocate_box.rob", "park_robot.rob"}
 
 
 @pytest.mark.parametrize("path", EXAMPLES, ids=lambda p: p.name)

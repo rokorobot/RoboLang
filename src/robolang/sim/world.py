@@ -1,5 +1,5 @@
 """
-World file, schema 1.0 (spec/simulation-v1.0.md section 3).
+World file, schemas 1.0 and 1.1 (spec/simulation-v1.0.md section 3).
 
 `load_world` reads the bytes of a world file and returns a validated, immutable `World`,
 or raises `WorldError` for the first error found (codes E501 to E511, section 3.9).
@@ -19,9 +19,11 @@ from .values import DURATION_UNITS, SPEED_UNITS, Speed, duration_ms, parse_decim
 
 WORLD_SCHEMA = "robolang.sim.world"
 WORLD_SCHEMA_VERSION = "1.0"
+WORLD_SCHEMA_VERSIONS = ("1.0", "1.1")  # 1.1 adds `class` and `mass` to objects (section 3.3)
 CLI_BINDINGS_SOURCE = "--bind"
 
 _ID = re.compile(r"[A-Za-z][A-Za-z0-9_]*")
+_CLASS = re.compile(r"[a-z][a-z_]{0,63}")  # a Core 0.1 thing class (core-v0.1.md section 5.5)
 _FACT_KIND = {"robot_ready": "robot", "region_clear": "region", "sensor_available": "sensor"}
 _BOM = b"\xef\xbb\xbf"
 
@@ -57,11 +59,22 @@ class Robot:
 
 
 @dataclass(frozen=True)
+class Mass:
+    """World file 1.1: a mass in kg with its uncertainty, in the same unit."""
+
+    value: Decimal
+    uncertainty: Decimal
+    unit: str = "kg"
+
+
+@dataclass(frozen=True)
 class WorldObject:
     id: str
     present: bool | None
     location: str | None
     held_by: str | None
+    object_class: str | None = None  # world file 1.1
+    mass: Mass | None = None  # world file 1.1
 
 
 @dataclass(frozen=True)
@@ -98,6 +111,7 @@ class World:
     sensors: Mapping[str, Sensor]
     events: tuple[Event, ...]  # stably sorted by at_ms: equal times keep file order
     task: TaskScript
+    schema_version: str = WORLD_SCHEMA_VERSION
 
     def kind_of(self, entity_id: str) -> str | None:
         if entity_id in self.locations:
@@ -151,6 +165,7 @@ class _Loader:
         self.filename = filename
         self.task = task
         self.cli_bindings = cli_bindings
+        self.version = WORLD_SCHEMA_VERSION
 
     def fail(self, code: str, pointer: str, message: str, filename: str | None = None):
         raise WorldError(code, pointer, message, self.filename if filename is None else filename)
@@ -248,11 +263,13 @@ class _Loader:
         doc = self.read(data)
         if not isinstance(doc, dict):
             self.fail("E504", "", "the world file must be a JSON object")
-        for name, expected in (("world_schema", WORLD_SCHEMA), ("world_schema_version", WORLD_SCHEMA_VERSION)):
+        for name, accepted in (("world_schema", (WORLD_SCHEMA,)), ("world_schema_version", WORLD_SCHEMA_VERSIONS)):
             if name not in doc:
                 self.fail("E502", "", f"missing '{name}'")
-            if not isinstance(doc[name], str) or doc[name] != expected:
-                self.fail("E502", _pointer(name), f"unsupported {name}: expected {expected!r}")
+            if not isinstance(doc[name], str) or doc[name] not in accepted:
+                expected = " or ".join(repr(a) for a in accepted)
+                self.fail("E502", _pointer(name), f"unsupported {name}: expected {expected}")
+        self.version = doc["world_schema_version"]
         top = (
             "world_schema", "world_schema_version", "locations", "regions", "robots",
             "objects", "sensors", "events", "tasks",
@@ -304,6 +321,7 @@ class _Loader:
             MappingProxyType(sensors),
             ordered,
             script,
+            self.version,
         )
 
     # -- sections: form --
@@ -340,14 +358,35 @@ class _Loader:
 
     def object(self, name, value):
         p = _pointer("objects", name)
-        self.obj(value, p, ("present", "location", "held_by"), "an object")
+        allowed = ("present", "location", "held_by") + (("class", "mass") if self.version != "1.0" else ())
+        self.obj(value, p, allowed, "an object")
         present = self.optional_bool(value, p, "present")
         refs = []
         for field in ("location", "held_by"):
             if field in value:
                 self.entity_id(value[field], p + _pointer(field))
             refs.append(value.get(field))
-        return WorldObject(name, present, refs[0], refs[1])
+        return WorldObject(name, present, refs[0], refs[1], self.object_class(value, p), self.mass(value, p))
+
+    def object_class(self, value, p):
+        if "class" not in value:
+            return None
+        cp = p + _pointer("class")
+        if not isinstance(value["class"], str) or _CLASS.fullmatch(value["class"]) is None:
+            self.fail("E504", cp, "a class is a lowercase word (a-z and _, at most 64 characters)")
+        return value["class"]
+
+    def mass(self, value, p):
+        if "mass" not in value:
+            return None
+        mp = p + _pointer("mass")
+        m = self.obj(value["mass"], mp, ("value", "unit", "uncertainty"), "a mass")
+        number, _ = self.quantity({k: m[k] for k in ("value", "unit") if k in m}, mp, ("kg",), "a mass")
+        try:
+            uncertainty = parse_decimal(self.need(m, mp, "uncertainty"))
+        except ValueError:
+            self.fail("E504", mp + _pointer("uncertainty"), "must be a decimal string such as \"0.5\" (zero allowed)")
+        return Mass(number, uncertainty)
 
     def sensor(self, name, value):
         p = _pointer("sensors", name)

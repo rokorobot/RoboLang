@@ -30,10 +30,10 @@ from .tokens import (
     DURATION_UNITS,
     PARAM_TYPES,
     PARAM_TYPES_V1_3,
-    RESERVED_BY_VERSION,
     SAFETY_KEYS,
     SPEED_UNITS,
     STATEMENTS,
+    VERIFY_KEYS,
     Token,
     TokenKind,
 )
@@ -116,7 +116,8 @@ class _Parser:
         an item, so the item after it is still parsed. Raises _LostTask at `task` or end of file.
         """
         self._record(error.diagnostic)
-        starts = self._at(TokenKind.RBRACE) or self._at(TokenKind.AT_SAFETY) or self._at(TokenKind.LPAREN)
+        starts = self._at(TokenKind.RBRACE) or self._at(TokenKind.LPAREN)
+        starts = starts or self._at(TokenKind.AT_SAFETY) or self._at(TokenKind.AT_VERIFY)
         starts = starts or self._at_keyword(*STATEMENTS, *CONDITIONS, "not", "pre", "plan")
         skip = not (error.code == "E202" and starts)
         while skip and not self._at_boundary():
@@ -237,8 +238,7 @@ class _Parser:
             )
         number = self._expect(TokenKind.NUMBER, f"a version number after 'robolang' (for example {DEFAULT_VERSION})")
         self._language = number.text
-        if self._language in RESERVED_BY_VERSION:
-            self._lexer.reserved = RESERVED_BY_VERSION[self._language]  # the token after ';' is not lexed yet
+        self._lexer.set_language(self._language)  # the token after ';' is not lexed yet
         end = self._semicolon("the version marker")
         return ast.VersionDecl(number.text, start.span.to(end.span))
 
@@ -275,17 +275,21 @@ class _Parser:
         self._expect(TokenKind.LBRACE, "'{' to open the task body")
 
         annotations = []
-        while self._at(TokenKind.AT_SAFETY):
+        verify = []
+        while self._at(TokenKind.AT_SAFETY) or self._at(TokenKind.AT_VERIFY):
             try:
-                annotations.append(self._annotation())
+                if self._at(TokenKind.AT_VERIFY):
+                    verify.append(self._verify())
+                else:
+                    annotations.append(self._annotation())
             except RoboLangError as error:
                 self._resync(error)
         pre = self._pre() if self._at_keyword("pre") else None
         goal = self._goal() if self._language == "1.3" and self._at_keyword("goal") else None
 
         if not self._at_keyword("plan"):
-            if self._at(TokenKind.AT_SAFETY):
-                self._error("E208", "@safety annotations must come before the pre block")
+            if self._at(TokenKind.AT_SAFETY) or self._at(TokenKind.AT_VERIFY):
+                self._error("E208", f"{self._tok.text} annotations must come before the pre block")
             if self._at_keyword("pre"):
                 if goal is not None:
                     self._error("E208", "the pre block must come before the goal block")
@@ -298,14 +302,16 @@ class _Parser:
         plan = self._plan()
 
         blocks = ("pre", "goal", "plan") if self._language == "1.3" else ("pre", "plan")
-        if self._at(TokenKind.AT_SAFETY) or self._at_keyword(*blocks):
+        if self._at(TokenKind.AT_SAFETY) or self._at(TokenKind.AT_VERIFY) or self._at_keyword(*blocks):
             order = "pre, goal, then one plan" if self._language == "1.3" else "pre, then one plan"
+            annotations_text = "@safety and @verify annotations" if self._language == "1.3" else "@safety annotations"
             self._error(
                 "E208",
-                f"{self._found()} cannot follow the plan block; a task is: @safety annotations, {order}",
+                f"{self._found()} cannot follow the plan block; a task is: {annotations_text}, {order}",
             )
         end = self._expect(TokenKind.RBRACE, "'}' to close the task")
-        return ast.Task(name, tuple(params), tuple(annotations), pre, plan, start.span.to(end.span), goal)
+        span = start.span.to(end.span)
+        return ast.Task(name, tuple(params), tuple(annotations), pre, plan, span, goal, tuple(verify))
 
     def _param(self) -> ast.Param:
         token = self._tok
@@ -347,6 +353,24 @@ class _Parser:
             )
         end = self._semicolon("the @safety annotation")
         return ast.SafetyAnnotation(ast.Name(key.text, key.span), speed, start.span.to(end.span))
+
+    def _verify(self) -> ast.VerifyAnnotation:
+        """`@verify min_confidence <decimal>;` or `@verify max_age <duration>;` (RoboLang 1.3)."""
+        start = self._advance()
+        key = self._tok
+        if not self._at(TokenKind.IDENT):
+            self._error("E201", f"expected a @verify key ({_listed(VERIFY_KEYS)}), found {self._found()}")
+        if key.text not in VERIFY_KEYS:
+            self._error("E207", f"unknown @verify key '{key.text}'; expected one of {_listed(VERIFY_KEYS)}")
+        self._advance()
+        if key.text == "max_age":
+            duration = self._duration("after 'max_age'")
+            value, value_span = duration, duration.span
+        else:
+            number = self._expect(TokenKind.NUMBER, "a decimal number after 'min_confidence'")
+            value, value_span = Decimal(number.text), number.span
+        end = self._semicolon("the @verify annotation")
+        return ast.VerifyAnnotation(ast.Name(key.text, key.span), value, value_span, start.span.to(end.span))
 
     def _pre(self) -> ast.PreBlock:
         start = self._advance()
