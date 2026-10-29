@@ -1,0 +1,11 @@
+{
+  "task": "spin",
+  "bindings": {
+    "r": "arm1",
+    "v2": "vial2",
+    "v1": "vial1",
+    "fridge": "fridge",
+    "bench": "bench",
+    "dst": "centrifuge"
+  }
+}

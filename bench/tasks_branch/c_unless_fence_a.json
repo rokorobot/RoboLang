@@ -1,0 +1,38 @@
+{
+  "id": "c_unless_fence_a",
+  "prompt": "Unless fence_a is blocked at the start, have arm_a move p1 from conveyor_in to station1.",
+  "world": "bench/worlds/assembly.json",
+  "group": "control",
+  "expect": {
+    "decision": "program",
+    "category": "none"
+  },
+  "expected_goal": [
+    [
+      "rl:thing:p1",
+      "located_in",
+      "rl:place:station1"
+    ]
+  ],
+  "expect_1_4": {
+    "decision": "program"
+  },
+  "tags": [
+    "conditional_wording",
+    "pre",
+    "region"
+  ],
+  "probes": [
+    {
+      "name": "fence_blocked",
+      "world_patch": {
+        "regions": {
+          "fence_a": {
+            "clear": false
+          }
+        }
+      },
+      "expect": "not_succeeded"
+    }
+  ]
+}

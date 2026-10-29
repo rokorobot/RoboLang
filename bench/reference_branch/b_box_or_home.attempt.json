@@ -1,0 +1,10 @@
+{
+  "task": "tidy",
+  "bindings": {
+    "r": "arm1",
+    "box": "box1",
+    "src": "shelf",
+    "dst": "table",
+    "home": "home"
+  }
+}

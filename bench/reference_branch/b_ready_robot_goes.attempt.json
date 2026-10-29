@@ -1,0 +1,8 @@
+{
+  "task": "visit",
+  "bindings": {
+    "a": "rover1",
+    "b": "arm1",
+    "dst": "scanner"
+  }
+}

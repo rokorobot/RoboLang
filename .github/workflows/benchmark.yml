@@ -6,6 +6,8 @@ name: Benchmark
 #   bench/gate.json fails the job (decision rule 2).
 # - Weekly (Monday 06:00 UTC) and on demand: sets 1 and 2 with 3 repeats, plus set 2 with the
 #   grammar-only prompt for information (~$4-6). Results are kept as an artifact for 90 days.
+# - On demand with `set3: true`: only set 3 (branching, decision 0027), full and grammar-only prompts,
+#   3 repeats each, for information and not gated (~$3-4). Used for the pre-registered 1.3 baseline.
 # Needs the repository secret ANTHROPIC_API_KEY; without it (and on pull requests from forks) the
 # job is skipped and nothing is spent.
 
@@ -33,6 +35,11 @@ on:
   schedule:
     - cron: "0 6 * * 1"
   workflow_dispatch:
+    inputs:
+      set3:
+        description: "Run only set 3 (branching), full and minimal prompts, 3 repeats; not gated"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -70,8 +77,13 @@ jobs:
         run: |
           python bench/run.py --yes --run-id set1
           python bench/run.py --yes --set hard --run-id set2
+      - name: Run (set 3, on demand)
+        if: steps.key.outputs.present == 'true' && inputs.set3
+        run: |
+          python bench/run.py --yes --set branch --repeats 3 --run-id set3
+          python bench/run.py --yes --set branch --prompt minimal --repeats 3 --run-id set3-minimal
       - name: Run (weekly or on demand)
-        if: steps.key.outputs.present == 'true' && github.event_name != 'pull_request'
+        if: steps.key.outputs.present == 'true' && github.event_name != 'pull_request' && !inputs.set3
         run: |
           python bench/run.py --yes --repeats 3 --run-id set1
           python bench/run.py --yes --set hard --repeats 3 --run-id set2
@@ -81,10 +93,23 @@ jobs:
         if: steps.key.outputs.present == 'true'
         run: |
           for dir in bench/results/*/; do python bench/score.py "$dir"; done
-          set +e
-          python bench/gate.py bench/results/set1 bench/results/set2 --summary summary.md
-          echo "code=$?" >> "$GITHUB_OUTPUT"
-          set -e
+          if [ -d bench/results/set1 ]; then
+            set +e
+            python bench/gate.py bench/results/set1 bench/results/set2 --summary summary.md
+            echo "code=$?" >> "$GITHUB_OUTPUT"
+            set -e
+          else
+            echo "code=0" >> "$GITHUB_OUTPUT"
+            : > summary.md
+          fi
+          for extra in set3 set3-minimal; do
+            if [ -d "bench/results/$extra" ]; then
+              echo "" >> summary.md
+              echo "_For information, not gated: $extra._" >> summary.md
+              python bench/gate.py "bench/results/$extra" --summary extra.md || true
+              sed -n "/^\\*\\*$extra/,\$p" extra.md >> summary.md
+            fi
+          done
           if [ -d bench/results/set2-minimal ]; then
             echo "" >> summary.md
             echo "_For information, not gated: the grammar-only prompt._" >> summary.md

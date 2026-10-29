@@ -1,0 +1,10 @@
+{
+  "task": "haul",
+  "bindings": {
+    "r1": "amr2",
+    "r2": "amr1",
+    "c": "crate1",
+    "src": "dock",
+    "dst": "handoff"
+  }
+}

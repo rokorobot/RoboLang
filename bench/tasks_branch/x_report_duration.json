@@ -1,0 +1,20 @@
+{
+  "id": "x_report_duration",
+  "prompt": "Move box1 from the shelf to the table with arm1, then send channel \"ops\" how many seconds that took, as measured by the program.",
+  "world": "examples/world.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_4": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "tags": [
+    "clock",
+    "variables"
+  ],
+  "why": "There is no clock reading and no arithmetic; a message is a fixed string.",
+  "attempt_fails_with": "E203"
+}

@@ -30,6 +30,8 @@ TASKS_DIR = BENCH / "tasks"
 REFERENCE_DIR = BENCH / "reference"
 HARD_TASKS_DIR = BENCH / "tasks_hard"
 HARD_REFERENCE_DIR = BENCH / "reference_hard"
+BRANCH_TASKS_DIR = BENCH / "tasks_branch"  # set 3: pre-registered against RoboLang 1.3
+BRANCH_REFERENCE_DIR = BENCH / "reference_branch"
 ASK_TASKS_DIR = BENCH / "tasks_ask"
 ASK_REFERENCE_DIR = BENCH / "reference_ask"
 PROMPT_FILE = BENCH / "prompt.md"
@@ -41,7 +43,8 @@ REFERENCE_MARK = "{{LANGUAGE_REFERENCE}}"  # in prompt.md: replaced by the shipp
 
 # The task sets: name -> (tasks directory, reference directory). Set 1 is the default and stays as it was.
 SETS = {"1": (TASKS_DIR, REFERENCE_DIR), "hard": (HARD_TASKS_DIR, HARD_REFERENCE_DIR),
-        "ask": (ASK_TASKS_DIR, ASK_REFERENCE_DIR)}  # set "ask": decision record 0025
+        "ask": (ASK_TASKS_DIR, ASK_REFERENCE_DIR),
+        "branch": (BRANCH_TASKS_DIR, BRANCH_REFERENCE_DIR)}
 PROMPTS = ("full", "minimal")
 
 # $ per million tokens: (input, output, cache read). A cache write (5 minutes) costs 1.25 x input.

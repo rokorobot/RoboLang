@@ -1,0 +1,10 @@
+{
+  "task": "bring",
+  "bindings": {
+    "r1": "arm_b",
+    "r2": "amr1",
+    "p": "p4",
+    "src": "station3",
+    "dst": "handoff12"
+  }
+}

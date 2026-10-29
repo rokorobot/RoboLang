@@ -1,0 +1,19 @@
+// bench/reference_branch/b_camera_or_manual.attempt.rob: the program with `if`; RoboLang 1.3 rejects it. Under `robolang 1.4;` it is the 1.4 reference (decision 0027)
+robolang 1.3;
+
+task check(robot r, object box, location src, location ok, location manual, sensor cam) {
+    plan {
+        move r to src;
+        grasp r box;
+        if sensor_ok cam {
+            goal { object_at box ok; }
+            inspect r box using cam;
+            move r to ok;
+            place r box at ok;
+        } else {
+            goal { object_at box manual; }
+            move r to manual;
+            place r box at manual;
+        }
+    }
+}

@@ -1,0 +1,43 @@
+{
+  "id": "b_crate_or_charge",
+  "prompt": "If crate1 is still at the dock when the job starts, have amr1 bring it to the handoff. If it is not, send amr1 to charging instead.",
+  "world": "bench/worlds/warehouse.json",
+  "group": "branching",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_4": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "object_at crate1 dock",
+        "goal": [
+          [
+            "rl:thing:crate1",
+            "located_in",
+            "rl:place:handoff"
+          ]
+        ]
+      },
+      {
+        "when": "not object_at crate1 dock",
+        "goal": [
+          [
+            "rl:robot:amr1",
+            "located_in",
+            "rl:place:charging"
+          ]
+        ]
+      }
+    ]
+  },
+  "tags": [
+    "branching",
+    "route",
+    "object",
+    "robot_at"
+  ],
+  "why": "The request needs a choice made at run time from the state of the world. RoboLang 1.3 has no if/else: `pre` only stops a run, and a goal states one fixed end state. RoboLang 1.4 (decision 0027) expresses it with `if`.",
+  "attempt_fails_with": "E203"
+}

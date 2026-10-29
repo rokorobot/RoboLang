@@ -1,0 +1,34 @@
+{
+  "id": "c_fence_b_wait",
+  "prompt": "As soon as fence_b is clear (within 30 seconds), have arm_b move p4 from station3 to handoff12.",
+  "world": "bench/worlds/assembly.json",
+  "group": "control",
+  "expect": {
+    "decision": "program",
+    "category": "none"
+  },
+  "expected_goal": [
+    [
+      "rl:thing:p4",
+      "located_in",
+      "rl:place:handoff12"
+    ]
+  ],
+  "expect_1_4": {
+    "decision": "program"
+  },
+  "tags": [
+    "conditional_wording",
+    "wait_until",
+    "region"
+  ],
+  "probes": [
+    {
+      "name": "fence_never_clears",
+      "world_patch": {
+        "events": []
+      },
+      "expect": "not_succeeded"
+    }
+  ]
+}

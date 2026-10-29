@@ -1,0 +1,18 @@
+// bench/reference_branch/b_scanner_or_fridge.attempt.rob: the program with `if`; RoboLang 1.3 rejects it. Under `robolang 1.4;` it is the 1.4 reference (decision 0027)
+robolang 1.3;
+
+task scan(robot r, object v, location src, location a, location b, sensor s) {
+    plan {
+        move r to src;
+        grasp r v;
+        if sensor_ok s {
+            goal { object_at v a; }
+            move r to a;
+            place r v at a;
+        } else {
+            goal { object_at v b; }
+            move r to b;
+            place r v at b;
+        }
+    }
+}

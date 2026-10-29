@@ -151,3 +151,21 @@ actions, rather than merely listing an unused binding. `speed_below` accepts any
 below the recorded bound. These feed `checks_ok` and `request_satisfied`; individual results appear in `scores.json`.
 For missing entities (`failure_kind: missing_entity`), a decline must have an empty `entities` list. The answer category
 remains `infeasible`. Sufficient timeouts based on guaranteed scheduled events are implementation choices.
+
+## Set 3: branching (`--set branch`)
+
+Pre-registered for RoboLang 1.4 (decision record [0027](../spec/decisions/0027-bounded-branching.md), section 3),
+before any 1.4 code. The tasks are in `tasks_branch/` and the programs in `reference_branch/`. There are 36 tasks:
+
+| group | tasks | expected today (1.3) | expected with 1.4 (`expect_1_4`) |
+|---|---:|---|---|
+| `branching` | 20 | decline, inexpressible | a program with `if`; the goal of every path, or `fail "reason"` with its messages |
+| `inexpressible` | 8 | decline, inexpressible | still a decline: retry, failover, loops, counts, clocks, message waits, distances |
+| `control` | 8 | a program with `pre` or `wait until` | the same program; no `if` is needed |
+
+For a `branching` task, `<id>.attempt.rob` is the 1.4 program under the 1.3 marker. 1.3 rejects it (E203), and with
+`robolang 1.4;` it becomes the reference. The baseline question for 1.3 is the F3 danger: on a branching request,
+does a model decline, or write a valid half-program (`false_program`, "of which valid and SUCCEEDED")?
+
+Run it on demand from GitHub Actions: `Benchmark`, `set3: true`. That runs full and grammar-only prompts with 3
+repeats, for information only and not gated (~$3-4). Locally: `python bench/run.py --set branch --repeats 3`.

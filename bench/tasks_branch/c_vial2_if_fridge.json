@@ -1,0 +1,38 @@
+{
+  "id": "c_vial2_if_fridge",
+  "prompt": "Bring vial2 from the fridge to the bench with arm1, provided it is in the fridge when the job starts.",
+  "world": "bench/worlds/lab.json",
+  "group": "control",
+  "expect": {
+    "decision": "program",
+    "category": "none"
+  },
+  "expected_goal": [
+    [
+      "rl:thing:vial2",
+      "located_in",
+      "rl:place:bench"
+    ]
+  ],
+  "expect_1_4": {
+    "decision": "program"
+  },
+  "tags": [
+    "conditional_wording",
+    "pre",
+    "object_at"
+  ],
+  "probes": [
+    {
+      "name": "vial2_elsewhere",
+      "world_patch": {
+        "objects": {
+          "vial2": {
+            "location": "storage"
+          }
+        }
+      },
+      "expect": "not_succeeded"
+    }
+  ]
+}

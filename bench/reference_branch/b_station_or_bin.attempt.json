@@ -1,0 +1,11 @@
+{
+  "task": "sort",
+  "bindings": {
+    "r": "arm_a",
+    "p": "p1",
+    "src": "conveyor_in",
+    "a": "station1",
+    "b": "bin",
+    "fence": "fence_a"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "task": "route",
+  "bindings": {
+    "r": "amr1",
+    "p": "p2",
+    "src": "conveyor_in",
+    "a": "station2",
+    "b": "handoff12",
+    "fence": "fence_b"
+  }
+}

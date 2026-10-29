@@ -1,0 +1,11 @@
+{
+  "task": "feed",
+  "bindings": {
+    "r": "arm_a",
+    "a": "p1",
+    "b": "p2",
+    "c": "p3",
+    "src": "conveyor_in",
+    "dst": "station1"
+  }
+}

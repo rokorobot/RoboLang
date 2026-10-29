@@ -1,0 +1,43 @@
+{
+  "id": "b_handover_or_carry",
+  "prompt": "arm1 takes box1 from the shelf. If the handoff zone is clear when arm1 has it, arm1 hands box1 to amr1 at the handoff, so amr1 ends up holding it. If the zone is not clear, arm1 carries box1 to the table itself.",
+  "world": "examples/world.json",
+  "group": "branching",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_4": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "region_clear handoff_zone",
+        "goal": [
+          [
+            "rl:thing:box1",
+            "carried_by",
+            "rl:robot:amr1"
+          ]
+        ]
+      },
+      {
+        "when": "not region_clear handoff_zone",
+        "goal": [
+          [
+            "rl:thing:box1",
+            "located_in",
+            "rl:place:table"
+          ]
+        ]
+      }
+    ]
+  },
+  "tags": [
+    "branching",
+    "route",
+    "handover",
+    "holding"
+  ],
+  "why": "The request needs a choice made at run time from the state of the world. RoboLang 1.3 has no if/else: `pre` only stops a run, and a goal states one fixed end state. RoboLang 1.4 (decision 0027) expresses it with `if`.",
+  "attempt_fails_with": "E203"
+}

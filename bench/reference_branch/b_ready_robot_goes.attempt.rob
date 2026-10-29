@@ -1,0 +1,14 @@
+// bench/reference_branch/b_ready_robot_goes.attempt.rob: the program with `if`; RoboLang 1.3 rejects it. Under `robolang 1.4;` it is the 1.4 reference (decision 0027)
+robolang 1.3;
+
+task visit(robot a, robot b, location dst) {
+    plan {
+        if robot_ready a {
+            goal { robot_at a dst; }
+            move a to dst;
+        } else {
+            goal { robot_at b dst; }
+            move b to dst;
+        }
+    }
+}
