@@ -23,7 +23,7 @@ main input for ordering work. Each step cites the finding it answers. Listing a 
 
 | # | Step | Evidence | Size |
 |---|---|---|---|
-| N1 | **A conjunction in a goal exports to Core.** `goal { a and b; }` flattens to the same triples as `goal { a; b; }` | F1: 4 correct answers rejected | small, fix |
+| N1 | **A conjunction in a goal exports to Core.** `goal { a and b; }` flattens to the same triples as `goal { a; b; }` | F1: 4 correct answers rejected | **Done:** bridge, outcome and delegate regression tests |
 | N2 | **`validate --world W [--bind …]`: world checks while authoring.** Speed limit vs robot profile and unit (S001/S002), gripper (S211), sensor mount (S231), unknown entities (E505). They are reported as diagnostics in the repair loop, before any simulation | F4, F5: errors found only by `simulate` | medium |
 | N3 | **Ship the language reference as a product artifact.** Promote `bench/prompt.md` to `docs/language-reference.md`, tested against the grammar and examples so it cannot drift, and printed by `robolang reference` | F4: false programs about double without it | small |
 | N4 | **Branching on world state (LANG-2, RoboLang 1.4).** A bounded `if … else` over conditions in the plan, with each branch's goal stated. Unbounded loops and schedules stay out of the language (a decline is the right answer; they belong to the orchestrator) | F3: a silent half-program; 4/10 inexpressible tasks need a run-time choice | large: spec, then code |

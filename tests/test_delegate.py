@@ -402,6 +402,16 @@ def test_goal_conditions_match_in_any_order(tmp_path):
     assert [observed[r["evidence"][0]] for r in results] == proposed
 
 
+def test_and_goal_matches_separate_robot_goal_and_returns_one_result_per_atom(tmp_path):
+    ai = plan_file(tmp_path, "ai", "object_at box dst and robot_at r dst;", CARRY)
+    mine = plan_file(tmp_path, "mine", "robot_at r dst; object_at box dst;", CARRY)
+    world = robot_world(tmp_path, {"ai": {"bindings": BINDINGS}, "mine": {"bindings": BINDINGS}})
+    record, code = record_of(ai, "--world", world, "--from", PLANNER, "--to", ARM, "--plans", mine)
+    assert code == 0 and record["planner_verdict"]["status"] == "succeeded"
+    results = record["messages"][3]["document"]["payload"]["outcome"]["verification"]["criteria_results"]
+    assert [(result["criterion"], result["met"]) for result in results] == [(0, True), (1, True)]
+
+
 def test_a_subset_or_superset_of_the_goal_does_not_match(tmp_path):
     for goal in ("object_at box dst;", "object_at box dst; robot_at r dst; holding r box;"):
         record, code = two_condition_case(tmp_path, goal)

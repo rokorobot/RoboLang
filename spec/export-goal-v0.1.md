@@ -36,8 +36,8 @@ On stderr: warnings and one line `simulation only: exported <goal id> as <messag
 |---|---|
 | `payload.goal.id` | `rl:goal:<task name>` |
 | `goal.requested_by` | `--from` |
-| `goal.desired_state` | `bridge.goal_triples`: `object_at` and `robot_at` → `located_in`, `holding` → `carried_by`, in goal order |
-| `goal.success_criteria` | One `observed` criterion per triple, same order (criterion *i* is goal condition *i*) |
+| `goal.desired_state` | `bridge.goal_triples`: `object_at` and `robot_at` → `located_in`, `holding` → `carried_by`, in semantic goal order; explicit `and` operands are flattened |
+| `goal.success_criteria` | One `observed` criterion per flattened outcome atom, in the same order |
 | criterion `min_confidence` | `@verify min_confidence`, else **`"0.9"`** |
 | criterion `max_age` | `@verify max_age`, else **`{ "value": "10", "unit": "s" }`** |
 | criterion `accepted_sources` | `["any_participant_in_domain"]` |
@@ -48,8 +48,9 @@ On stderr: warnings and one line `simulation only: exported <goal id> as <messag
 Entity IDs become Core identifiers by prefix (`bridge.core_id`): `box1` → `rl:thing:box1`,
 `table` → `rl:place:table`, `arm1` → `rl:robot:arm1`.
 
-**Exportable goals.** A goal is exportable when every condition is `object_at`, `robot_at` or
-`holding`. Any other condition (`or`, `not`, `and`, `robot_ready`, `region_clear`, `object_exists`,
+**Exportable goals.** A goal is exportable when it is a conjunction of `object_at`, `robot_at` and
+`holding` atoms. Separate goal entries and explicit `and` operands have identical meaning and are
+flattened in source order. Any other condition (`or`, `not`, `robot_ready`, `region_clear`, `object_exists`,
 `sensor_ok`) is valid locally but has no Core 0.1 form (plan decision Q3).
 
 ## 3. Envelope

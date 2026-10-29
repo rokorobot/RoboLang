@@ -27,6 +27,10 @@ message an agent sends (Core 4.1 `propose_goal`). The plan stays local (Core R3)
 | X9 | Signature | `sim-hmac-sha256` with a public key derived from `<from>#k1` (spec section 4). Simulation only; a physical-mode receiver rejects it (`C204`) | A key file: more setup for no extra safety in simulation |
 | X10 | Exit 6, codes | New exit status 6 and diagnostics `X601`, `X602`. Exit 2 stays for usage, 3 for world and bindings | Reuse 3 for a missing mass: it is the world's content, but the file is valid |
 
+**2026-10-29 amendment (N1).** X5's "plain conjunction" includes both separate goal entries and
+explicit `and` operands. The bridge flattens either spelling to the same ordered Core criteria.
+`or`, `not` and non-outcome atoms remain unexportable.
+
 ## 3. Consequences
 
 - Existing 1.1/1.2 sources, IR, run records and run IDs are unchanged. `examples/world.json` is now

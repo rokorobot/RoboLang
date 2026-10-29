@@ -6,10 +6,11 @@ same identifiers and the same triples for one goal.
 
 - A world entity ID becomes a Core identifier by prefix: object `box1` -> `rl:thing:box1`,
   location `table` -> `rl:place:table`, robot `arm1` -> `rl:robot:arm1` (plan decision Q5).
-- A goal is exportable when every one of its conditions is an outcome atom: `object_at` and
-  `robot_at` -> `located_in`, `holding` -> `carried_by` (Core 0.1 section 5.2). Any other
-  condition (`or`, `not`, `and`, `robot_ready`, ...) is valid locally but has no Core form
-  (plan decision Q3). Goal condition i is Core success criterion i.
+- A goal is exportable when it is a conjunction of outcome atoms: `object_at` and `robot_at`
+  -> `located_in`, `holding` -> `carried_by` (Core 0.1 section 5.2). Top-level goal entries
+  and explicit `and` operands have the same meaning and are flattened in source order. Any
+  other condition (`or`, `not`, `robot_ready`, ...) is valid locally but has no Core form
+  (plan decision Q3). Flattened outcome atom i is Core success criterion i.
 - Simulated time t (ms from the start of the run) becomes a Core time counted from SIM_EPOCH.
 """
 
@@ -77,14 +78,30 @@ def triple_of(condition: ir.Condition, bindings: dict[str, str]) -> Triple | Non
     return None
 
 
-def goal_triples(task: ir.Task, bindings: dict[str, str]) -> tuple[Triple, ...]:
-    """One triple per goal condition, in order. Raises NotExportable for a task without a Core form."""
+def goal_atoms(task: ir.Task) -> tuple[ir.Condition, ...]:
+    """The goal's outcome atoms in semantic order, flattening conjunctions; reject every other form."""
     if task.goal is None:
         raise NotExportable(0, "no goal")
-    triples = []
-    for index, condition in enumerate(task.goal, start=1):
-        triple = triple_of(condition, bindings)
-        if triple is None:
+
+    def flatten(condition: ir.Condition):
+        if isinstance(condition, ir.And):
+            for child in condition.conditions:
+                yield from flatten(child)
+        else:
+            yield condition
+
+    atoms = tuple(atom for condition in task.goal for atom in flatten(condition))
+    for index, condition in enumerate(atoms, start=1):
+        if not isinstance(condition, (ir.ObjectAt, ir.RobotAt, ir.Holding)):
             raise NotExportable(index, condition.KIND)
+    return atoms
+
+
+def goal_triples(task: ir.Task, bindings: dict[str, str]) -> tuple[Triple, ...]:
+    """One triple per flattened goal atom, in order. Raise NotExportable without a Core form."""
+    triples = []
+    for condition in goal_atoms(task):
+        triple = triple_of(condition, bindings)
+        assert triple is not None  # goal_atoms admits only the three mapped outcome atom types
         triples.append(triple)
     return tuple(triples)

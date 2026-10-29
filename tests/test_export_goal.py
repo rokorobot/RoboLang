@@ -226,6 +226,15 @@ def test_goal_without_a_core_form_exits_6(tmp_path, goal, text):
     assert "X601" in err and text in err
 
 
+def test_and_goal_exports_the_same_criteria_as_separate_entries(tmp_path):
+    separate = task_file(tmp_path, goal="object_at box dst; robot_at r dst;")
+    joined = task_file(tmp_path, goal="object_at box dst and robot_at r dst;")
+    first = json.loads(export([separate], *BINDINGS)[1])["payload"]["goal"]
+    second = json.loads(export([joined], *BINDINGS)[1])["payload"]["goal"]
+    assert second["desired_state"] == first["desired_state"]
+    assert second["success_criteria"] == first["success_criteria"]
+
+
 def test_missing_mass_exits_6(tmp_path):
     world = json.loads((REPO_ROOT / WORLD).read_text(encoding="utf-8"))
     del world["objects"]["box1"]["mass"]
