@@ -41,7 +41,7 @@ planning, kinematics, collisions and speed (section 4.8).
 ### 2.1 Command
 
 ```text
-robolang simulate FILE.rob --world WORLD.json [--task NAME] [--seed SEED]
+robolang simulate FILE.rob --world WORLD.json [--task NAME] [--seed SEED] [--bind NAME=ID ...]
 ```
 
 - `--task NAME` selects the task. A file with exactly one task may omit it. A file with
@@ -50,6 +50,8 @@ robolang simulate FILE.rob --world WORLD.json [--task NAME] [--seed SEED]
 - `--seed SEED` is a string of 1 to 64 characters from `A–Z a–z 0–9 . _ -`. The default is
   `0`. The seed only distinguishes runs of identical inputs (section 6); the simulation has
   no random behavior.
+
+- `--bind NAME=ID` binds a task parameter on the command line (section 2.5).
 
 `simulate` is a separate command. `validate` and `inspect` are unchanged and still never
 execute anything.
@@ -61,7 +63,7 @@ execute anything.
    parsing and static validation of the whole file. Warnings are printed and do not stop.
 3. Select the task.
 4. Read `WORLD.json` and validate it against section 3, including the bindings for the
-   selected task.
+   selected task (the `--bind` bindings if there are any, section 2.5).
 5. Create the run, execute it (section 4) and write the run record (section 5).
 
 Each step runs only if the previous ones succeeded. In particular, nothing is executed for a
@@ -73,8 +75,8 @@ source file with any error, anywhere in the file (`robolang-v1.1.md` section 1).
 |---|---|---|
 | 0 | The run ended `SUCCEEDED` | Written |
 | 1 | The source file is not valid RoboLang 1.1 | None |
-| 2 | Usage error: bad arguments or seed, unreadable file, unknown task name, several tasks and no `--task` | None |
-| 3 | The world file is not valid (section 3.9) | None |
+| 2 | Usage error: bad arguments or seed, unreadable file, unknown task name, several tasks and no `--task`, a malformed or repeated `--bind`, a `--bind` name that is not a parameter (section 2.5) | None |
+| 3 | The world file is not valid (section 3.9), or a `--bind` binding is incomplete or names a missing entity or one of the wrong kind (section 2.5) | None |
 | 4 | The run ended `FAILED` | Written |
 | 5 | The run ended `CANCELLED` | Written |
 
@@ -95,6 +97,35 @@ World-file diagnostics have the form
 
 where the location is a JSON Pointer (RFC 6901) into the world document. A validator may stop
 at the first error. Each invalid world fixture contains exactly one error.
+
+### 2.5 Bindings on the command line
+
+`--bind NAME=ID` binds the task parameter `NAME` to the entity `ID` of the world. It may be
+repeated, and one flag may carry several pairs: `--bind r=arm1 box=box1` is the same as
+`--bind r=arm1 --bind box=box1`. Give `FILE` before `--bind`, because the flag takes every
+following word that is not another flag.
+
+- If any `--bind` is given, these bindings are the bindings of the run. The `bindings` of the
+  world file's entry for the task are ignored entirely: there is no merging, so a parameter
+  that `--bind` leaves out is unbound (`E506`), even if the world file binds it. The entry's
+  `faults` and `cancel` still apply. The entry may be missing, or may leave out `bindings`
+  (section 3.5). Entries for other tasks are checked for form as always.
+- If no `--bind` is given, nothing changes: the world file's bindings are used (section 3.5).
+- The bindings follow the rules of section 3.5: every parameter is bound exactly once, to an
+  entity of its type, and no other names appear.
+
+Errors:
+
+| Error | Exit | Diagnostic |
+|---|---|---|
+| An item that is not `NAME=ID` (no `=`, empty side, `NAME` not an identifier, `ID` not an entity ID) | 2 | `invalid --bind '<item>': use NAME=ID` |
+| The same `NAME` twice, whatever the IDs | 2 | `invalid --bind: parameter '<name>' is bound more than once` |
+| A `NAME` that is not a parameter of the selected task | 2 | `--bind: '<name>' is not a parameter of task '<task>'` |
+| A parameter left unbound (`E506`), an undeclared `ID` (`E505`), an `ID` of the wrong kind (`E507`) | 3 | World-file diagnostic (section 2.4), with `--bind` in place of the file name and the pointer `/bindings` or `/bindings/<name>` |
+
+No new codes are defined; `E508` cannot occur for `--bind`, because an unknown name is a usage
+error. The checks of exit 2 happen before the world file is read. The choices are recorded in
+[decision record 0016](decisions/0016-cli-bindings.md).
 
 ## 3. World file, schema 1.0
 
@@ -202,7 +233,8 @@ its `max_speed` maxima. There is no reach, workspace, payload or travel model: e
 ### 3.5 Task entries
 
 `tasks` maps a task name to an entry for that task. Only the entry for the selected task is
-used; it must exist. Entries for other names are validated for form only, so one world file
+used; it must exist, unless `--bind` is given (section 2.5), in which case it may be missing and
+its `bindings` may be left out and are ignored. Entries for other names are validated for form only, so one world file
 can serve several tasks.
 
 | Field | Required | Content |
@@ -409,9 +441,9 @@ and speed enforcement remain RL-12B and RL-12C work.
 | `run_record_schema`, `run_record_schema_version` | `"robolang.sim.run"`, `"1.0"` |
 | `mode` | Always `"simulation"` |
 | `run_id` | Section 6 |
-| `inputs` | `source_sha256`, `world_sha256`, `task`, `seed`, `language_version`, `ir_schema_version`, `world_schema_version` |
+| `inputs` | `source_sha256`, `world_sha256`, `task`, `seed`, `language_version`, `ir_schema_version`, `world_schema_version`, and `bindings_source` when the bindings came from `--bind` |
 | `task` | The selected task in its IR form (`ir-schema-v1.0.md` section 3.1) |
-| `bindings` | Parameter name → entity ID, in parameter order |
+| `bindings` | Parameter name → entity ID, in parameter order: the bindings actually used |
 | `states` | Every state the run entered, in order |
 | `state` | The final state |
 | `failure` | `null`, or the object of 5.2 |
@@ -475,6 +507,10 @@ Unknown facts and absent positions are `null`.
 - The record holds codes and structured values only, no free-text messages, so it does not
   change when diagnostic wording changes.
 
+`inputs.bindings_source` is the string `"cli"` and is present only when the bindings came from
+`--bind`. A record without it has world-file bindings. It is written only for `--bind` so that
+records of runs without `--bind` stay byte-identical to those of earlier implementations.
+
 The same inputs therefore always produce a byte-identical run record.
 
 ## 6. Run ID
@@ -489,11 +525,15 @@ preimage          = "robolang-sim-run/1.0\n" + source_sha256 + "\n" + world_sha2
 run_id            = "sim-" + lowercase hex SHA-256 of preimage
 ```
 
+- With `--bind`, the preimage ends with one more line for each binding, sorted by parameter
+  name: `bind ` + name + `=` + ID + `\n`. The order of the flags does not matter. Without
+  `--bind` the preimage is exactly as above, so IDs of such runs do not change. The world
+  file's own bindings, which are ignored under `--bind`, still count through `world_sha256`.
 - The normalization makes the ID the same on every platform, whatever line endings a
   checkout uses. It does not change any other byte: a change to a comment or to the world
   file's formatting gives a different ID.
-- The same source, world, task and seed always give the same ID; a different seed gives a
-  different ID.
+- The same source, world, task, seed and `--bind` bindings always give the same ID; a different
+  seed or a different binding gives a different ID.
 - The ID identifies an **input-equivalent simulation run**, not an occurrence. Running the
   same inputs twice with the same seed intentionally produces the same ID and the same
   record. It is not an invocation identifier; a future operational executor may need a
