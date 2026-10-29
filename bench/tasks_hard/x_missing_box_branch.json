@@ -37,14 +37,15 @@
         "messages": [
           [
             "alerts",
-            "box1 missing"
+            null
           ]
         ],
         "world_patch": {
           "events": [],
           "objects": {
             "box1": {
-              "location": "table"
+              "present": false,
+              "location": null
             }
           }
         }

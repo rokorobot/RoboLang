@@ -330,9 +330,12 @@ class Judgement:
 
 
 def _merge(base: dict, patch: dict) -> dict:
-    """`base` with `patch` laid over it: objects merge key by key, anything else is replaced."""
+    """`base` with `patch` laid over it: objects merge key by key, null removes a key, anything else is replaced."""
     merged = dict(base)
     for key, value in patch.items():
+        if value is None:
+            merged.pop(key, None)
+            continue
         merged[key] = _merge(base[key], value) if isinstance(value, dict) and isinstance(base.get(key), dict) else value
     return merged
 
@@ -384,7 +387,9 @@ def judge_paths(task_def: dict, checked: Checked, bindings: dict[str, str]) -> l
             continue
         entry["state"], entry["failure_code"] = result.state, result.failure.code if result.failure else None
         sent = {(s.message.channel, s.message.message) for s in result.steps if s.message and s.status == "succeeded"}
-        messages_ok = {tuple(m) for m in path.get("messages", [])} <= sent
+        # [channel, text]; a null text accepts any message on that channel (the request did not fix the wording)
+        messages_ok = all(any(c == channel and text in (None, m) for c, m in sent)
+                          for channel, text in path.get("messages", []))
         if "fail" in path:
             entry["goal_ok"] = entry["failure_code"] == "S262"
             entry["plan_ok"] = entry["goal_ok"] and messages_ok
@@ -534,7 +539,11 @@ def judge(task_def: dict, checked: Checked, bindings: dict[str, str]) -> Judgeme
     if "probes" in task_def:
         checks["probes"] = all(_check_probe(task_def, checked, p, bindings) for p in task_def["probes"])
     goal_exact = exported is not None and exported in expected_goals(task_def)
-    meaning = goal_means(checked.task, bindings, expected_goals(task_def))
+    judged = checked.task
+    if checked.task.branching:  # 1.4: the goal of the path this run took, and only if the run reached its goal check
+        reached = bool(result.goal) and all(g.result is not None for g in result.goal)
+        judged = replace(checked.task, goal=tuple(g.condition for g in result.goal) if reached else ())
+    meaning = goal_means(judged, bindings, expected_goals(task_def))
     judgement = Judgement(goal_exact if meaning is None else meaning, result.state == "SUCCEEDED",
                           result.state, result.failure.code if result.failure else None, checks, goal_exact)
     if task_paths(task_def):  # a task with paths: right only if every path is (the state above is the unpatched run)

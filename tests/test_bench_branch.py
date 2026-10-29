@@ -202,3 +202,38 @@ def test_the_old_branching_attempts_are_gone_and_the_1_3_label_is_kept():
     assert not list(REF.glob("b_*.attempt.*"))
     for task in BRANCHING.values():
         assert task["attempt_fails_with"] == "E203"  # what the 1.3 attempt hit, kept for history
+
+
+def test_a_branching_answer_to_a_task_without_paths_is_judged_on_the_path_it_took():
+    """Set 1 "if part7 is on the table … otherwise do nothing": a 1.4 answer with branch goals is right (PR #73 run)."""
+    task = lib.load_set("1")["w_part_precheck"]
+    answer = {"decision": "program", "category": "none", "reason": "", "task": "t",
+              "bindings": {"r": "arm2", "part": "part7", "src": "table", "dst": "conveyor"},
+              "rob": "robolang 1.4;\n\ntask t(robot r, object part, location src, location dst) {\n    plan {\n"
+                     "        if object_at part src {\n            goal { object_at part dst; }\n"
+                     "            move r to src;\n            grasp r part;\n            move r to dst;\n"
+                     "            place r part at dst;\n        } else {\n            fail \"not on the table\";\n"
+                     "        }\n    }\n}\n"}
+    checked = lib.check_answer(task, answer)
+    assert checked.valid, checked.report
+    judgement = lib.judge(task, checked, answer["bindings"])
+    assert judgement.goal_correct and judgement.plan_succeeds
+
+
+def test_a_missing_object_path_accepts_either_reading_and_any_alert_text():
+    """x_missing_box_branch: `object_exists box` is as right as `object_at box src`; the alert text was not given."""
+    task = lib.load_set("hard")["x_missing_box_branch"]
+    base = (lib.HARD_REFERENCE_DIR / "x_missing_box_branch.rob").read_text(encoding="utf-8")
+    bindings = json.loads((lib.HARD_REFERENCE_DIR / "x_missing_box_branch.json").read_text(encoding="utf-8"))
+    for condition in ("object_at box src", "object_exists box"):
+        rob = re.sub(r"if [^{]+\{", f"if {condition} {{", base, count=1)
+        rob = re.sub(r'with "[^"]*";', 'with "box1 is missing";', rob)
+        answer = {"decision": "program", "category": "none", "reason": "", "rob": rob, **bindings}
+        checked = lib.check_answer(task, answer)
+        assert checked.valid, checked.report
+        judgement = lib.judge(task, checked, answer["bindings"])
+        assert judgement.goal_correct and judgement.plan_succeeds and not judgement.half_program, judgement.paths
+
+
+def test_a_null_in_a_world_patch_removes_the_key():
+    assert lib._merge({"a": {"b": 1, "c": 2}}, {"a": {"c": None}}) == {"a": {"b": 1}}

@@ -44,7 +44,8 @@
           "events": [],
           "objects": {
             "box1": {
-              "location": "table"
+              "present": false,
+              "location": null
             }
           }
         }

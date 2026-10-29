@@ -170,8 +170,10 @@ keep their `<id>.attempt.rob`, which still fails.
 
 **Paths.** Each entry of `expect_1_4.paths` has `when` (a condition, for reading), `goal` (Core triples) or `fail`
 (the reason) with optional `messages`, and a `world_patch`: the probe-patch format of `probes` (merged over the world
-file, objects key by key), with `"events": []` so that nothing changes between the start and the `if`. The scorer runs
-the answer once per path in its patched world:
+file, objects key by key; `null` removes a key, e.g. an absent object's location), with `"events": []` so that nothing
+changes between the start and the `if`. A message `[channel, null]` accepts any text on that channel, for requests that
+do not fix the wording. A 1.4 answer to a task without paths (set 1) is judged on the goal of the path it took. The
+scorer runs the answer once per path in its patched world:
 
 - `goal_correct`: on every path the run got through its plan to the goal check, and the effective goal of the path
   it took (`goal_means`) means the path's goal; for a `fail` path, the run ended in `fail` (`S262`);
