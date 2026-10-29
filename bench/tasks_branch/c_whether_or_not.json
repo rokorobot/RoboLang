@@ -1,6 +1,6 @@
 {
   "id": "c_whether_or_not",
-  "prompt": "Whether or not the aisle is clear, have arm1 move box1 from shelf_a to the table; arm1 never enters the aisle.",
+  "prompt": "Have arm1 move box1 from shelf_a to the table. The aisle being clear or not does not matter for this job.",
   "world": "bench/worlds/warehouse.json",
   "group": "control",
   "expect": {
@@ -20,5 +20,6 @@
   "tags": [
     "conditional_wording",
     "no_branch_needed"
-  ]
+  ],
+  "note": "Reworded after the 1.3 baseline (docs/evidence/bench-set3-baseline.md): the first wording, \"arm1 never enters the aisle\", read as a no-go constraint that RoboLang cannot state, and models rightly declined."
 }
