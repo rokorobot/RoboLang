@@ -23,6 +23,7 @@ class Failure:
     precondition: int | None
     safety_limit: int | None
     robot: str | None
+    reason: str | None = None  # S262: the reason of the `fail` statement
 
 
 @dataclass(frozen=True)
@@ -36,6 +37,7 @@ class PreconditionResult:
     index: int
     condition: ir.Condition
     result: Truth | None  # None: not evaluated
+    source: str | None = None  # goal only, RoboLang 1.4: "task" or the label of the branch, e.g. "3.then"
 
 
 @dataclass(frozen=True)
@@ -64,6 +66,18 @@ class StepResult:
     observation: Observation | None
     message: Message | None
     condition_result: Truth | None
+    path: str = ""  # the label of the step (ir.walk), e.g. "3.then.1"
+
+
+@dataclass(frozen=True)
+class Decision:
+    """One `if` that was reached (RoboLang 1.4). `branch` is "then", "else" or "none" (the condition was unknown)."""
+
+    step: str  # path label of the `if`
+    index: int
+    condition_result: Truth
+    branch: str
+    t_ms: Decimal
 
 
 @dataclass(frozen=True)
@@ -124,6 +138,7 @@ class RunResult:
     events_applied: tuple[AppliedEvent, ...]
     end_t_ms: Decimal
     final_world: FinalWorld
+    decisions: tuple[Decision, ...] = ()
 
 
 class SimulationInputError(ValueError):
@@ -131,9 +146,10 @@ class SimulationInputError(ValueError):
 
 
 class _StepFailed(Exception):
-    def __init__(self, code: str, condition_result: Truth | None = None):
+    def __init__(self, code: str, condition_result: Truth | None = None, reason: str | None = None):
         super().__init__(code)
         self.code = code
+        self.reason = reason
         self.condition_result = condition_result  # a `wait until` that timed out records its last value
 
 
@@ -321,29 +337,26 @@ def _execute(task: ir.Task, state: _State, bound: dict[str, str], step: ir.Step)
     return None, None, None
 
 
-def _not_run(task: ir.Task, first: int = 1) -> list[StepResult]:
-    return [
-        StepResult(i, s, "not_run", None, None, None, None, None)
-        for i, s in enumerate(task.steps, start=1)
-        if i >= first
-    ]
-
-
 def _names(node, typed_sensors: bool) -> list[str]:
     """The parameter names a condition or step refers to (a sensor is a parameter name only in 1.3)."""
     if isinstance(node, (ir.And, ir.Or)):
         return [name for condition in node.conditions for name in _names(condition, typed_sensors)]
+    if isinstance(node, ir.If):
+        conditions = (node.condition, *(node.goal_then or ()), *(node.goal_else or ()))
+        return [name for condition in conditions for name in _names(condition, typed_sensors)]
+    if isinstance(node, ir.Fail):
+        return []
     if isinstance(node, (ir.WaitUntil, ir.Not)):
         return _names(node.condition, typed_sensors)
     fields = ("robot", "region", "obj", "target", "location") + (("sensor",) if typed_sensors else ())
     return [getattr(node, f) for f in fields if hasattr(node, f)]
 
 
-def _goal_not_evaluated(task: ir.Task) -> tuple[PreconditionResult, ...] | None:
+def _goal_not_evaluated(goal: list[tuple[str, ir.Condition]] | None) -> tuple[PreconditionResult, ...] | None:
     """The goal of a run that ended before the last step succeeded: recorded, never evaluated."""
-    if task.goal is None:
+    if goal is None:
         return None
-    return tuple(PreconditionResult(i, c, None) for i, c in enumerate(task.goal, start=1))
+    return tuple(PreconditionResult(i, c, None, source) for i, (source, c) in enumerate(goal, start=1))
 
 
 def _goal_failure(goal: tuple[PreconditionResult, ...]) -> Failure | None:
@@ -360,8 +373,6 @@ def _check_inputs(task: ir.Task, world: World) -> None:
     """The trust boundary of `run`: the world must have been validated for this very task."""
     if not isinstance(task, ir.Task) or not isinstance(world, World):
         raise SimulationInputError("run() needs an ir.Task and a World from load_world")
-    if task.branching:  # RoboLang 1.4 `if` / `fail`: simulated from N4 PR 2 (decision 0027)
-        raise SimulationInputError(f"task '{task.name}' branches; simulation of RoboLang 1.4 is not implemented yet")
     if world.task.name != task.name:
         raise SimulationInputError(f"the world was validated for task '{world.task.name}', not '{task.name}'")
     bound = dict(world.task.bindings)
@@ -370,13 +381,14 @@ def _check_inputs(task: ir.Task, world: World) -> None:
     for parameter in task.parameters:
         if not world.binds(parameter.type, bound[parameter.name]):
             raise SimulationInputError(f"parameter '{parameter.name}' is not bound to a {parameter.type}")
-    for node in (*task.preconditions, *(task.goal or ()), *task.steps):
+    steps = [step for _, step in ir.walk(task.steps)]
+    for node in (*task.preconditions, *(task.goal or ()), *steps):
         for name in _names(node, task.typed_sensors):
             if name not in bound:
                 raise SimulationInputError(f"task '{task.name}' refers to '{name}', which is not a parameter")
     script = world.task
     for index in (*script.faults, *(() if script.cancel_before_step is None else (script.cancel_before_step,))):
-        if not 1 <= index <= len(task.steps):
+        if not 1 <= index <= len(steps):
             raise SimulationInputError(f"the world scripts step {index}, outside the plan of task '{task.name}'")
 
 
@@ -394,11 +406,21 @@ def run(task: ir.Task, world: World) -> RunResult:
     bound = dict(bindings)
     limits, authorization = _authorize(task, world, bindings)
     state = _State(world)
+    flat = list(ir.walk(task.steps))
+
+    def not_run(done: dict[int, StepResult]) -> tuple[StepResult, ...]:
+        """Every step in order: the ones that ran, and `not_run` for the rest (also those of a branch not taken)."""
+        return tuple(
+            done.get(i) or StepResult(i, step, "not_run", None, None, None, None, None, label)
+            for i, (label, step) in enumerate(flat, start=1)
+        )
+
+    effective = None if task.goal is None else [("task", c) for c in task.goal]  # (source, condition) (section 12)
     if authorization is not None:
         return RunResult(
             task.name, bindings, ("CREATED", "VALIDATED", "FAILED"), "FAILED", authorization, None, limits,
             tuple(PreconditionResult(i, c, None) for i, c in enumerate(task.preconditions, start=1)),
-            _goal_not_evaluated(task), tuple(_not_run(task)), (), state.clock, state.freeze(),
+            _goal_not_evaluated(effective), not_run({}), (), state.clock, state.freeze(),
         )
 
     states = ["CREATED", "VALIDATED", "AUTHORIZED", "RUNNING"]
@@ -413,36 +435,66 @@ def run(task: ir.Task, world: World) -> RunResult:
             failure = Failure("S101" if p.result is Truth.FALSE else "S102", "precondition", None, p.index, None, None)
             break
 
-    results: list[StepResult] = []
-    if failure is not None:
-        results = _not_run(task)
-    else:
-        for i, step in enumerate(task.steps, start=1):
+    done: dict[int, StepResult] = {}
+    decisions: list[Decision] = []
+
+    def execute(steps: tuple[ir.Step, ...], first: int, prefix: str) -> bool:
+        """Run a list of steps whose first has index `first`. True when the run is over (failed or cancelled)."""
+        nonlocal failure, cancelled
+        i = first
+        for position, step in enumerate(steps, start=1):
+            label = f"{prefix}{position}"
             if world.task.cancel_before_step == i:
                 cancelled = i
-                results.extend(_not_run(task, i))
-                break
+                return True
             start = state.clock
             try:
                 if i in world.task.faults:
                     raise _StepFailed("S251")
+                if isinstance(step, ir.Fail):
+                    raise _StepFailed("S262", reason=step.reason)
+                if isinstance(step, ir.If):
+                    value = _evaluate(task, state, bound, step.condition)
+                    if value is Truth.UNKNOWN:  # decision 0027 B3: no branch is taken on missing evidence
+                        decisions.append(Decision(label, i, value, "none", state.clock))
+                        raise _StepFailed("S261", value)
+                    side = "then" if value is Truth.TRUE else "else"
+                    decisions.append(Decision(label, i, value, side, state.clock))
+                    done[i] = StepResult(i, step, "succeeded", start, state.clock, None, None, value, label)
+                    body, branch_goal = (step.then, step.goal_then) if side == "then" else (step.orelse, step.goal_else)
+                    if branch_goal and effective is not None:
+                        effective.extend((f"{label}.{side}", c) for c in branch_goal)
+                    size_then = sum(1 for _ in ir.walk(step.then))
+                    first_branch = i + 1 if side == "then" else i + 1 + size_then
+                    if execute(body, first_branch, f"{label}.{side}."):
+                        return True
+                    i += 1 + size_then + sum(1 for _ in ir.walk(step.orelse))
+                    continue
                 observation, message, condition_result = _execute(task, state, bound, step)
             except _StepFailed as exc:
-                failure = Failure(exc.code, "step", i, None, None, None)
-                results.append(StepResult(i, step, "failed", start, state.clock, None, None, exc.condition_result))
-                results.extend(_not_run(task, i + 1))
-                break
-            results.append(
-                StepResult(i, step, "succeeded", start, state.clock, observation, message, condition_result)
+                failure = Failure(exc.code, "step", i, None, None, None, exc.reason)
+                done[i] = StepResult(i, step, "failed", start, state.clock, None, None, exc.condition_result, label)
+                return True
+            done[i] = StepResult(
+                i, step, "succeeded", start, state.clock, observation, message, condition_result, label
             )
+            i += 1
+        return False
 
-    goal = _goal_not_evaluated(task)
-    if failure is None and cancelled is None and task.goal is not None:
-        goal = tuple(PreconditionResult(i, c, _evaluate(task, state, bound, c)) for i, c in enumerate(task.goal, 1))
+    if failure is None:
+        execute(task.steps, 1, "")
+    results = not_run(done)
+
+    goal = _goal_not_evaluated(effective)
+    if failure is None and cancelled is None and effective is not None:
+        goal = tuple(
+            PreconditionResult(i, c, _evaluate(task, state, bound, c), source)
+            for i, (source, c) in enumerate(effective, 1)
+        )
         failure = _goal_failure(goal)
 
     states.append("FAILED" if failure is not None else "CANCELLED" if cancelled is not None else "SUCCEEDED")
     return RunResult(
-        task.name, bindings, tuple(states), states[-1], failure, cancelled, limits, pre, goal, tuple(results),
-        tuple(state.applied), state.clock, state.freeze(),
+        task.name, bindings, tuple(states), states[-1], failure, cancelled, limits, pre, goal, results,
+        tuple(state.applied), state.clock, state.freeze(), tuple(decisions),
     )

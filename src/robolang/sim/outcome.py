@@ -11,7 +11,7 @@ that the record was produced by the documented procedure and nothing about who p
 
 from __future__ import annotations
 from .. import ir
-from ..bridge import NotExportable, Triple, core_id, core_time, goal_atoms, goal_triples
+from ..bridge import NotExportable, Triple, core_id, core_time, flatten_atoms, triple_of
 from ..core.signatures import SIM_HMAC, Key, sign_sim
 from .executor import FinalWorld, RunResult
 
@@ -79,12 +79,13 @@ evidence are listed in criterion order. The verifier stays SIM.
     """
     bound = dict(result.bindings)
     try:
-        atoms = goal_atoms(task)
-        criteria = goal_triples(task, bound)
+        # The goal of the path actually taken (decision 0027 B7); for a task without `if`, the task's goal.
+        atoms = flatten_atoms(tuple(g.condition for g in result.goal))
+        criteria = tuple(triple_of(atom, bound) for atom in atoms)
     except NotExportable:
         return None
     end = core_time(t0_ms + result.end_t_ms)
-    evaluated = all(g.result is not None for g in result.goal)
+    evaluated = bool(result.goal) and all(g.result is not None for g in result.goal)
     order = criterion_of or tuple(range(len(criteria)))
     evidence, results = [], []
     for condition, criterion, i in sorted(zip(atoms, criteria, order), key=lambda entry: entry[2]):

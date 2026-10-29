@@ -123,6 +123,8 @@ def _consider(plan: Plan, task: ir.Task, robot_world: bytes, world_name: str, ro
     robots = {bindings[p.name] for p in task.parameters if p.type == "robot"}
     if robot_entity not in robots:
         return "robot_not_bound", None
+    if task.branching and len(robots) > 1:
+        return "robots_unsupported", None  # a peer's custody point is found on a straight plan only
     if len(robots) > 2:
         return "robots_unsupported", None  # at most one peer takes part (spec/delegate-v0.2.md)
     peer = next(iter(robots - {robot_entity}), None)

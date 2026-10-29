@@ -78,10 +78,8 @@ def triple_of(condition: ir.Condition, bindings: dict[str, str]) -> Triple | Non
     return None
 
 
-def goal_atoms(task: ir.Task) -> tuple[ir.Condition, ...]:
-    """The goal's outcome atoms in semantic order, flattening conjunctions; reject every other form."""
-    if task.goal is None:
-        raise NotExportable(0, "no goal")
+def flatten_atoms(conditions: tuple[ir.Condition, ...]) -> tuple[ir.Condition, ...]:
+    """The outcome atoms of goal conditions in semantic order, flattening conjunctions; reject every other form."""
 
     def flatten(condition: ir.Condition):
         if isinstance(condition, ir.And):
@@ -90,11 +88,67 @@ def goal_atoms(task: ir.Task) -> tuple[ir.Condition, ...]:
         else:
             yield condition
 
-    atoms = tuple(atom for condition in task.goal for atom in flatten(condition))
+    atoms = tuple(atom for condition in conditions for atom in flatten(condition))
     for index, condition in enumerate(atoms, start=1):
         if not isinstance(condition, (ir.ObjectAt, ir.RobotAt, ir.Holding)):
             raise NotExportable(index, condition.KIND)
     return atoms
+
+
+def path_goals(task: ir.Task) -> list[tuple[str, tuple[ir.Condition, ...] | None]]:
+    """
+    The effective goal of every path of the plan (decision 0027 B2): (label, conditions), or None as the
+    conditions of a path that ends in `fail`. The label is "then", "else/then", ... and "" for no `if` at all.
+    """
+    out: list[tuple[str, tuple[ir.Condition, ...] | None]] = []
+
+    def walk(steps, goal, label):
+        for i, step in enumerate(steps):
+            if isinstance(step, ir.Fail):
+                out.append((label, None))
+                return
+            if isinstance(step, ir.If):
+                sides = (("then", step.then, step.goal_then), ("else", step.orelse, step.goal_else))
+                for side, body, branch_goal in sides:
+                    walk((*body, *steps[i + 1:]), goal + (branch_goal or ()), f"{label}/{side}" if label else side)
+                return
+        out.append((label, goal))
+
+    walk(task.steps, task.goal or (), "")
+    return out
+
+
+class PathsDiffer(NotExportable):
+    """A branching task whose paths do not all have one goal: Core 0.1 cannot state "any of" (decision 0027 B7)."""
+
+    def __init__(self, detail: str):
+        ValueError.__init__(
+            self,
+            f"the paths of the plan do not all have the same goal ({detail}); Core 0.1 cannot state \"any of\" "
+            "goals (decision 0027 B7, waiting for Core 0.2)",
+        )
+        self.index = 0
+        self.kind = "paths"
+
+
+def goal_atoms(task: ir.Task) -> tuple[ir.Condition, ...]:
+    """
+    The goal's outcome atoms in semantic order. A branching task has one only if every path has that same goal
+    (B7); otherwise PathsDiffer. Raises NotExportable for a condition without a Core form.
+    """
+    if task.goal is None:
+        raise NotExportable(0, "no goal")
+    if not task.branching:
+        return flatten_atoms(task.goal)
+    goals = {label: None if goal is None else flatten_atoms(goal) for label, goal in path_goals(task)}
+    failing = [f"path {label} ends in fail" for label, goal in goals.items() if goal is None]
+    if failing:
+        raise PathsDiffer(failing[0])
+    first_label, first = next(iter(goals.items()))
+    for label, goal in goals.items():
+        if goal != first:
+            raise PathsDiffer(f"path {first_label} and path {label} differ")
+    return first
 
 
 def goal_triples(task: ir.Task, bindings: dict[str, str]) -> tuple[Triple, ...]:

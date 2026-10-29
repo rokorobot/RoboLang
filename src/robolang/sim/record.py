@@ -20,7 +20,7 @@ from .world import WORLD_SCHEMA_VERSION
 RUN_RECORD_SCHEMA = "robolang.sim.run"
 RUN_RECORD_SCHEMA_VERSION = "1.0"
 # Language version -> run record schema version (robolang-v1.2.md section 8.3; v1.3 section 8.3).
-RUN_RECORD_SCHEMA_VERSIONS = {"1.1": "1.0", "1.2": "1.1", "1.3": "1.2"}
+RUN_RECORD_SCHEMA_VERSIONS = {"1.1": "1.0", "1.2": "1.1", "1.3": "1.2", "1.4": "1.3"}
 SEED = re.compile(r"[A-Za-z0-9._-]{1,64}")
 DEFAULT_SEED = "0"
 
@@ -50,7 +50,7 @@ def _time(value) -> str | None:
     return None if value is None else ms_text(value)
 
 
-def _failure(failure) -> dict | None:
+def _failure(failure, branching: bool) -> dict | None:
     if failure is None:
         return None
     return {
@@ -60,6 +60,7 @@ def _failure(failure) -> dict | None:
         "precondition": failure.precondition,
         "safety_limit": failure.safety_limit,
         "robot": failure.robot,
+        **({"reason": failure.reason} if branching else {}),
     }
 
 
@@ -85,10 +86,14 @@ def _message(message) -> dict | None:
     }
 
 
-def _step(step) -> dict:
+def _step(step, branching: bool) -> dict:
+    # An `if` is written without its branches: they are steps of their own, in the same array.
+    shown = {"kind": "if", "condition": ir.to_dict(step.step.condition)} if isinstance(step.step, ir.If) \
+        else ir.to_dict(step.step)
     return {
         "index": step.index,
-        "step": ir.to_dict(step.step),
+        **({"path": step.path} if branching else {}),
+        "step": shown,
         "status": step.status,
         "t_start_ms": _time(step.t_start_ms),
         "t_end_ms": _time(step.t_end_ms),
@@ -98,16 +103,26 @@ def _step(step) -> dict:
     }
 
 
-def _results(results) -> list[dict]:
-    """Per-condition results of the `pre` or `goal` block."""
+def _results(results, branching: bool = False) -> list[dict]:
+    """Per-condition results of the `pre` or `goal` block; a 1.4 goal says where each condition came from."""
     return [
         {
             "index": p.index,
+            **({"from": p.source} if branching else {}),
             "condition": ir.to_dict(p.condition),
             "result": "not_evaluated" if p.result is None else p.result.value,
         }
         for p in results
     ]
+
+
+def _decision(decision) -> dict:
+    return {
+        "step": decision.step,
+        "condition_result": decision.condition_result.value,
+        "branch": decision.branch,
+        "t_ms": ms_text(decision.t_ms),
+    }
 
 
 def _final_world(world) -> dict:
@@ -139,7 +154,8 @@ def to_record(
     """
     The run record (section 5) as a dict with the key order of the specification: schema 1.0
     for a RoboLang 1.1 source, 1.1 for a 1.2 source (same shape, embedding Task IR 1.1), 1.2 for a
-    1.3 source (adds `goal`, after `preconditions`, and `core_outcome`, last).
+    1.3 source (adds `goal`, after `preconditions`, and `core_outcome`, last), 1.3 for a 1.4 source (adds
+    `decisions` after `goal`, a `path` on every step, a `from` on every goal entry, a `reason` on `failure`).
     """
     inputs = {
         "source_sha256": source_sha256,
@@ -153,6 +169,7 @@ def to_record(
     }
     if bindings_source != "world":  # a record without the key has world-file bindings (section 5.1)
         inputs["bindings_source"] = bindings_source
+    branching = language_version == "1.4"
     return {
         "run_record_schema": RUN_RECORD_SCHEMA,
         "run_record_schema_version": RUN_RECORD_SCHEMA_VERSIONS[language_version],
@@ -163,12 +180,13 @@ def to_record(
         "bindings": dict(result.bindings),
         "states": list(result.states),
         "state": result.state,
-        "failure": _failure(result.failure),
+        "failure": _failure(result.failure, branching),
         "cancelled_before_step": result.cancelled_before_step,
         "safety_limits": [{"limit": ir.to_dict(r.limit), "status": r.status} for r in result.safety_limits],
         "preconditions": _results(result.preconditions),
-        **({} if result.goal is None else {"goal": _results(result.goal)}),
-        "steps": [_step(s) for s in result.steps],
+        **({} if result.goal is None else {"goal": _results(result.goal, branching)}),
+        **({"decisions": [_decision(d) for d in result.decisions]} if branching else {}),
+        "steps": [_step(s, branching) for s in result.steps],
         "events_applied": [
             {"t_ms": ms_text(e.t_ms), "fact": e.fact, "target": e.target, "value": e.value}
             for e in result.events_applied

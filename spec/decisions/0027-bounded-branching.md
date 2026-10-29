@@ -74,3 +74,10 @@ as parameters and one common goal. `x_missing_box_branch` needs B4.
 - The simulator stays deterministic: the taken branch depends only on the state when the `if` is reached.
 - Size: grammar, parser, validator, IR, simulator, record, reference, set 3. Two to three PRs: (1) language and
   IR, (2) simulation and record, (3) `validate --world` paths and set 3.
+
+## 5. Implemented in
+
+Simulation, run record 1.3 and the Core and export rules (B2, B3, B4, B7, B8): N4 PR 2, see
+[simulation-v1.0.md section 12](../simulation-v1.0.md). Reading of B4: Core 0.1 has no reason code `declared`, so the
+Core outcome of a `fail` has `reasons: []` and the reason is in the run record. Not yet: B6 path checks and set 3
+scoring (PR 3).

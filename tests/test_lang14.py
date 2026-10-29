@@ -314,36 +314,12 @@ def test_inspect_shows_branches_and_fail(tmp_path):
     assert json.loads(out)["tasks"][0]["steps"][0]["kind"] == "if"
 
 
-# -------- commands that need a simulation are refused (until PR 2) --------
+# -------- validate --world on a branching task (path checks come with PR 3) --------
 
 WORLD = "bench/worlds/warehouse.json"
 BRANCHING = (REFERENCE / "b_aisle_or_report.attempt.rob").read_text(encoding="utf-8")
 BRANCHING = BRANCHING.replace("robolang 1.3;", "robolang 1.4;")
 BIND = ["--bind", "r=amr1", "c=crate1", "src=dock", "dst=handoff", "aisle=aisle"]
-
-
-@pytest.mark.parametrize("command", [
-    ["simulate"],
-    ["export-goal", "--from", "rl:agent:planner-1"],
-    ["delegate", "--from", "rl:agent:planner-1", "--to", "rl:robot:amr1"],
-])
-def test_simulation_commands_refuse_a_branching_task_cleanly(tmp_path, command):
-    path = tmp_path / "b.rob"
-    path.write_text(BRANCHING, encoding="utf-8")
-    code, out, err = cli(command[0], str(path), "--world", WORLD, *BIND, *command[1:])
-    assert code == 2 and out == ""
-    assert "branching" in err and "Traceback" not in err and "not implemented" in err
-
-
-def test_delegate_refuses_a_branching_plan_library(tmp_path):
-    plans = tmp_path / "plans.rob"
-    plans.write_text(BRANCHING, encoding="utf-8")
-    straight = tmp_path / "goal.rob"
-    straight.write_text("robolang 1.3;\ntask t(robot r, location dst) "
-                        "{ goal { robot_at r dst; } plan { move r to dst; } }\n", encoding="utf-8")
-    code, _, err = cli("delegate", str(straight), "--world", WORLD, "--bind", "r=amr1", "dst=handoff",
-                       "--plans", str(plans), "--from", "rl:agent:planner-1", "--to", "rl:robot:amr1")
-    assert code == 2 and "branching" in err
 
 
 def test_validate_world_skips_the_step_checks_of_a_branching_task_and_says_so(tmp_path):
@@ -363,10 +339,10 @@ def test_validate_world_still_checks_a_straight_1_4_task(tmp_path):
     assert code == 0 and "no certain failure found" in out
 
 
-def test_a_branching_answer_is_reported_not_crashed_until_simulation_exists():
+def test_a_branching_answer_is_reported_b005_until_pr3_scores_paths():
     """The benchmark judges with the simulator directly: a 1.4 `if` answer must be invalid (B005), not a crash."""
     from bench import lib
-    from robolang.sim import SimulationInputError, load_world
+    from robolang.sim import load_world
     from robolang.sim import run as simulate_task
 
     ref = lib.BRANCH_REFERENCE_DIR
@@ -379,5 +355,4 @@ def test_a_branching_answer_is_reported_not_crashed_until_simulation_exists():
     assert not checked.valid and checked.codes == (lib.BRANCHING_CODE,)
     task = compile_source(answer["rob"], "a.rob").ir.tasks[0]
     world = load_world(lib.world_bytes(task_def), "w.json", task, answer["bindings"])
-    with pytest.raises(SimulationInputError, match="branches"):
-        simulate_task(task, world)
+    assert simulate_task(task, world).state in ("SUCCEEDED", "FAILED")  # the simulator itself runs it (PR 2)

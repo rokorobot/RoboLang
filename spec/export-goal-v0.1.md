@@ -92,6 +92,7 @@ Exit 6 prints one diagnostic, `FILE: error[CODE]: task 'T': …`:
 | Code | Meaning |
 |---|---|
 | `X601` | A goal condition has no Core form. Names the condition's index and kind, and its text: `goal condition 2 ('or') has no RoboLang Core 0.1 form (a or b)`. A source without a goal (1.1, 1.2) reports `no goal` |
+| `X603` | RoboLang 1.4: the paths of a branching task do not all have the same goal, or one ends in `fail` (decision 0027 B7; [simulation 12.4](simulation-v1.0.md)) |
 | `X602` | A bound object has no `class` or no `mass` in the world file (needs `world_schema_version` 1.1) |
 
 Warnings (skipped limits) never change the exit status.
