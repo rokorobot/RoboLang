@@ -16,6 +16,25 @@
 
 ---
 
+## 0. Next steps from benchmark evidence (2026-10-29; proposed, owner approval pending)
+
+The authoring benchmark (decision 0024; [set 2 analysis](evidence/bench-set2-analysis.md)) is now the
+main input for ordering work. Each step cites the finding it answers. Listing a step authorizes nothing.
+
+| # | Step | Evidence | Size |
+|---|---|---|---|
+| N1 | **A conjunction in a goal exports to Core.** `goal { a and b; }` flattens to the same triples as `goal { a; b; }` | F1: 4 correct answers rejected | small, fix |
+| N2 | **`validate --world W [--bind …]`: world checks while authoring.** Speed limit vs robot profile and unit (S001/S002), gripper (S211), sensor mount (S231), unknown entities (E505). They are reported as diagnostics in the repair loop, before any simulation | F4, F5: errors found only by `simulate` | medium |
+| N3 | **Ship the language reference as a product artifact.** Promote `bench/prompt.md` to `docs/language-reference.md`, tested against the grammar and examples so it cannot drift, and printed by `robolang reference` | F4: false programs about double without it | small |
+| N4 | **Branching on world state (LANG-2, RoboLang 1.4).** A bounded `if … else` over conditions in the plan, with each branch's goal stated. Unbounded loops and schedules stay out of the language (a decline is the right answer; they belong to the orchestrator) | F3: a silent half-program; 4/10 inexpressible tasks need a run-time choice | large: spec, then code |
+| N5 | **Core 0.2 backlog: disjunctive goals** ("any of" desired states), with the 0.1 gaps already known (absent thing, re-indexing). Collected, not built, until N4 shows how branches report outcomes | F2 | spec only |
+| N6 | **Benchmark upkeep.** Compare goals by meaning (evaluate on probe worlds), not by triple equality. Fix the debatable `n_speed_over_max` label. Run 3 repeats for variance. Start set 3 around N2 and N4 | F2, F7 | small |
+
+Deprioritized by the same evidence: more Core message types, INTEROP-3 ([0023](../spec/decisions/0023-keep-interop-3-deferred.md)),
+and loops and schedules in `.rob`.
+
+---
+
 ## 1. Executive decision and release strategy
 
 Build four **sequential, evidence-gated milestones**. Do not begin the next milestone until its exit criteria pass and the product owner approves it. Keep the currently working console demonstration usable throughout migration. Every change goes through a small PR with CI, review evidence, and explicit approval to merge. Never automatically connect generated tasks to physical hardware.
