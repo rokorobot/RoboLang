@@ -1,0 +1,11 @@
+// bench/reference/l_spectro_wait.rob: hand-written reference solution
+robolang 1.3;
+
+task scan_vial(robot r, object vial, location spot, sensor spec) {
+    goal { robot_at r spot; }
+    plan {
+        move r to spot;
+        wait until sensor_ok spec timeout 10s;
+        inspect r vial using spec;
+    }
+}

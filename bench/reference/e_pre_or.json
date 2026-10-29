@@ -1,0 +1,11 @@
+{
+  "task": "guarded_move",
+  "bindings": {
+    "r": "arm1",
+    "box": "box1",
+    "src": "shelf",
+    "dst": "table",
+    "cell": "cell",
+    "zone": "handoff_zone"
+  }
+}

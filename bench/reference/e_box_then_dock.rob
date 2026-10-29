@@ -1,0 +1,16 @@
+// bench/reference/e_box_then_dock.rob: hand-written reference solution
+robolang 1.3;
+
+task place_and_dock(robot r, object box, location src, location dst, location dock) {
+    goal {
+        object_at box dst;
+        robot_at r dock;
+    }
+    plan {
+        move r to src;
+        grasp r box;
+        move r to dst;
+        place r box at dst;
+        move r to dock;
+    }
+}

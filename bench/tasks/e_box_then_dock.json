@@ -1,0 +1,10 @@
+{
+  "id": "e_box_then_dock",
+  "prompt": "With arm1, put the box on the table, and when that is done send arm1 to the dock.",
+  "world": "examples/world.json",
+  "expected_goal": [
+    ["rl:thing:box1", "located_in", "rl:place:table"],
+    ["rl:robot:arm1", "located_in", "rl:place:dock"]
+  ],
+  "tags": ["multi_condition", "pick_place", "robot_at"]
+}

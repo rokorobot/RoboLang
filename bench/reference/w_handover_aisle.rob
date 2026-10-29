@@ -1,0 +1,17 @@
+// bench/reference/w_handover_aisle.rob: hand-written reference solution
+robolang 1.3;
+
+task handover_via_aisle(robot arm, robot mobile, object box, location src, location handoff, location dst, region aisle) {
+    goal { object_at box dst; }
+    plan {
+        move arm to src;
+        grasp arm box;
+        move arm to handoff;
+        place arm box at handoff;
+        wait until region_clear aisle timeout 30s;
+        move mobile to handoff;
+        grasp mobile box;
+        move mobile to dst;
+        place mobile box at dst;
+    }
+}

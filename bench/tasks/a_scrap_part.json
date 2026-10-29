@@ -1,0 +1,9 @@
+{
+  "id": "a_scrap_part",
+  "prompt": "p4 failed inspection. Scrap it: throw it in the bin using arm_b.",
+  "world": "bench/worlds/assembly.json",
+  "expected_goal": [
+    ["rl:thing:p4", "located_in", "rl:place:bin"]
+  ],
+  "tags": ["pick_place", "single_robot", "tricky_synonym", "implied_step"]
+}

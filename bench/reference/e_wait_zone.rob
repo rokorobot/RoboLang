@@ -1,0 +1,10 @@
+// bench/reference/e_wait_zone.rob: hand-written reference solution
+robolang 1.3;
+
+task go_when_clear(robot r, region zone, location spot) {
+    goal { robot_at r spot; }
+    plan {
+        wait until region_clear zone timeout 30s;
+        move r to spot;
+    }
+}

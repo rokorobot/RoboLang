@@ -1,0 +1,8 @@
+{
+  "task": "go_when_clear",
+  "bindings": {
+    "r": "amr1",
+    "zone": "handoff_zone",
+    "spot": "handoff"
+  }
+}

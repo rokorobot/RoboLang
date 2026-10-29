@@ -1,0 +1,21 @@
+{
+  "id": "w_two_limits",
+  "prompt": "Move box2 from shelf_b to the conveyor with arm1. Keep linear speed under 80 centimetres per second and rotation speed under one radian per second.",
+  "world": "bench/worlds/warehouse.json",
+  "expected_goal": [
+    ["rl:thing:box2", "located_in", "rl:place:conveyor"]
+  ],
+  "tags": ["safety", "units_in_words", "pick_place", "tricky"],
+  "expected_safety": [
+    {
+      "kind": "max_speed",
+      "value": "0.8",
+      "unit": "m/s"
+    },
+    {
+      "kind": "max_speed",
+      "value": "1",
+      "unit": "rad/s"
+    }
+  ]
+}

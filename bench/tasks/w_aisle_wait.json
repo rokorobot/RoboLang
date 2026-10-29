@@ -1,0 +1,18 @@
+{
+  "id": "w_aisle_wait",
+  "prompt": "Wait up to a minute for the aisle to clear, then drive amr1 to shelf_b.",
+  "world": "bench/worlds/warehouse.json",
+  "expected_goal": [
+    ["rl:robot:amr1", "located_in", "rl:place:shelf_b"]
+  ],
+  "tags": ["wait_until", "timeout", "region", "units_in_words", "robot_at"],
+  "probes": [
+    {
+      "name": "event_never_happens",
+      "world_patch": {
+        "events": []
+      },
+      "expect": "not_succeeded"
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "world_schema": "robolang.sim.world",
+  "world_schema_version": "1.1",
+  "locations": ["bin", "conveyor_in", "handoff12", "station1", "station2", "station3"],
+  "regions": {
+    "fence_a": { "clear": true },
+    "fence_b": { "clear": false }
+  },
+  "robots": {
+    "arm_a": { "ready": true, "location": "station1", "gripper": true, "max_speed": [{ "value": "1", "unit": "m/s" }] },
+    "arm_b": { "ready": true, "location": "station3", "gripper": true, "max_speed": [{ "value": "1", "unit": "m/s" }] },
+    "amr1": { "ready": true, "location": "station2", "gripper": true, "max_speed": [{ "value": "1.5", "unit": "m/s" }] }
+  },
+  "objects": {
+    "p1": { "present": true, "location": "conveyor_in", "class": "part", "mass": { "value": "0.3", "unit": "kg", "uncertainty": "0.02" } },
+    "p2": { "present": true, "location": "conveyor_in", "class": "part", "mass": { "value": "0.3", "unit": "kg", "uncertainty": "0.02" } },
+    "p3": { "present": true, "location": "conveyor_in", "class": "part", "mass": { "value": "0.3", "unit": "kg", "uncertainty": "0.02" } },
+    "p4": { "present": true, "location": "station3", "class": "part", "mass": { "value": "0.3", "unit": "kg", "uncertainty": "0.02" } }
+  },
+  "sensors": {
+    "cam_s1": { "robot": "arm_a", "available": true },
+    "cam_s3": { "robot": "arm_b", "available": true }
+  },
+  "events": [
+    { "at": { "value": "20", "unit": "s" }, "fact": "region_clear", "target": "fence_b", "value": true }
+  ],
+  "tasks": {}
+}

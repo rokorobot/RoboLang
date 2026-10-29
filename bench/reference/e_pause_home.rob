@@ -1,0 +1,11 @@
+// bench/reference/e_pause_home.rob: hand-written reference solution
+robolang 1.3;
+
+task visit_table(robot r, location spot, location home) {
+    goal { robot_at r home; }
+    plan {
+        move r to spot;
+        wait for 500 ms;
+        move r to home;
+    }
+}

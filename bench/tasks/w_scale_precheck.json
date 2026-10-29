@@ -1,0 +1,22 @@
+{
+  "id": "w_scale_precheck",
+  "prompt": "Have arm2 weigh part7 with scale1, but only if the scale is reporting OK, and then park arm2 at the conveyor.",
+  "world": "bench/worlds/warehouse.json",
+  "expected_goal": [
+    ["rl:robot:arm2", "located_in", "rl:place:conveyor"]
+  ],
+  "tags": ["inspect", "sensor_param", "precondition", "sensor_ok", "robot_at"],
+  "probes": [
+    {
+      "name": "scale_broken",
+      "world_patch": {
+        "sensors": {
+          "scale1": {
+            "available": false
+          }
+        }
+      },
+      "expect": "not_succeeded"
+    }
+  ]
+}

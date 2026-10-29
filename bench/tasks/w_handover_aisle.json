@@ -1,0 +1,18 @@
+{
+  "id": "w_handover_aisle",
+  "prompt": "arm1 moves box1 from shelf_a to the handoff point. amr1 then carries it from the handoff point to the conveyor, but amr1 must not start moving until the aisle is clear (wait up to 30 seconds for that).",
+  "world": "bench/worlds/warehouse.json",
+  "expected_goal": [
+    ["rl:thing:box1", "located_in", "rl:place:conveyor"]
+  ],
+  "tags": ["handover", "two_robot", "wait_until", "region"],
+  "probes": [
+    {
+      "name": "event_never_happens",
+      "world_patch": {
+        "events": []
+      },
+      "expect": "not_succeeded"
+    }
+  ]
+}

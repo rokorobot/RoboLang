@@ -1,0 +1,9 @@
+{
+  "id": "l_two_sensors",
+  "prompt": "Take arm1 to the bench and check vial1 with the thermometer and then the microscope.",
+  "world": "bench/worlds/lab.json",
+  "expected_goal": [
+    ["rl:robot:arm1", "located_in", "rl:place:bench"]
+  ],
+  "tags": ["inspect", "sensor_param", "robot_at", "multiple_sensors"]
+}

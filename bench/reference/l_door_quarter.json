@@ -1,0 +1,8 @@
+{
+  "task": "wait_for_door",
+  "bindings": {
+    "r": "rover1",
+    "zone": "door_zone",
+    "dst": "scanner"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "task": "check_vial",
+  "bindings": {
+    "r": "arm1",
+    "vial": "vial1",
+    "bench": "bench",
+    "t": "thermo",
+    "m": "microscope"
+  }
+}

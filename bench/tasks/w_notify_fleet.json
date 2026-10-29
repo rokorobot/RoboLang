@@ -1,0 +1,15 @@
+{
+  "id": "w_notify_fleet",
+  "prompt": "Move part7 to the conveyor with arm2, then tell the fleet channel PART_MOVED.",
+  "world": "bench/worlds/warehouse.json",
+  "expected_goal": [
+    ["rl:thing:part7", "located_in", "rl:place:conveyor"]
+  ],
+  "tags": ["communicate", "pick_place", "single_robot"],
+  "expected_messages": [
+    [
+      "fleet",
+      "PART_MOVED"
+    ]
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "id": "l_rad_limit",
+  "prompt": "Move vial1 from the bench to storage with arm1, rotating no faster than half a radian per second.",
+  "world": "bench/worlds/lab.json",
+  "expected_goal": [
+    ["rl:thing:vial1", "located_in", "rl:place:storage"]
+  ],
+  "tags": ["safety", "units_in_words", "pick_place", "tricky"],
+  "expected_safety": [
+    {
+      "kind": "max_speed",
+      "value": "0.5",
+      "unit": "rad/s"
+    }
+  ]
+}

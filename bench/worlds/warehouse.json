@@ -1,0 +1,30 @@
+{
+  "world_schema": "robolang.sim.world",
+  "world_schema_version": "1.1",
+  "locations": ["charging", "conveyor", "dock", "handoff", "inspection_bay", "shelf_a", "shelf_b", "table"],
+  "regions": {
+    "aisle": { "clear": false },
+    "cell": { "clear": true }
+  },
+  "robots": {
+    "arm1": { "ready": true, "location": "shelf_a", "gripper": true, "max_speed": [{ "value": "1", "unit": "m/s" }, { "value": "2", "unit": "rad/s" }] },
+    "arm2": { "ready": true, "location": "table", "gripper": true, "max_speed": [{ "value": "0.8", "unit": "m/s" }] },
+    "amr1": { "ready": true, "location": "dock", "gripper": true, "max_speed": [{ "value": "1.5", "unit": "m/s" }] },
+    "amr2": { "ready": false, "location": "charging", "gripper": true, "max_speed": [{ "value": "1.5", "unit": "m/s" }] }
+  },
+  "objects": {
+    "box1": { "present": true, "location": "shelf_a", "class": "box", "mass": { "value": "2", "unit": "kg", "uncertainty": "0.1" } },
+    "box2": { "present": true, "location": "shelf_b", "class": "box", "mass": { "value": "3", "unit": "kg", "uncertainty": "0.1" } },
+    "crate1": { "present": true, "location": "dock", "class": "crate", "mass": { "value": "10", "unit": "kg", "uncertainty": "0.5" } },
+    "part7": { "present": true, "location": "table", "class": "part", "mass": { "value": "0.5", "unit": "kg", "uncertainty": "0.05" } }
+  },
+  "sensors": {
+    "camera_dock": { "robot": "amr1", "available": true },
+    "camera_top": { "robot": "arm1", "available": true },
+    "scale1": { "robot": "arm2", "available": true }
+  },
+  "events": [
+    { "at": { "value": "8", "unit": "s" }, "fact": "region_clear", "target": "aisle", "value": true }
+  ],
+  "tasks": {}
+}

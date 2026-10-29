@@ -1,0 +1,9 @@
+{
+  "task": "move_and_notify",
+  "bindings": {
+    "r": "arm2",
+    "item": "part7",
+    "src": "table",
+    "dst": "conveyor"
+  }
+}

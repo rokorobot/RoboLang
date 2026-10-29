@@ -1,0 +1,9 @@
+{
+  "id": "w_pick_from_table",
+  "prompt": "Pick up part7 from the table with arm1 and put it on shelf_b.",
+  "world": "bench/worlds/warehouse.json",
+  "expected_goal": [
+    ["rl:thing:part7", "located_in", "rl:place:shelf_b"]
+  ],
+  "tags": ["pick_place", "single_robot", "implied_step", "tricky"]
+}

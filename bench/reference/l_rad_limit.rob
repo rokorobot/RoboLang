@@ -1,0 +1,13 @@
+// bench/reference/l_rad_limit.rob: hand-written reference solution
+robolang 1.3;
+
+task slow_turn(robot r, object vial, location src, location dst) {
+    @safety max_speed 0.5 rad/s;
+    goal { object_at vial dst; }
+    plan {
+        move r to src;
+        grasp r vial;
+        move r to dst;
+        place r vial at dst;
+    }
+}

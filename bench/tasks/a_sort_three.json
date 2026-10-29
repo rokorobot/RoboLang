@@ -1,0 +1,11 @@
+{
+  "id": "a_sort_three",
+  "prompt": "Using arm_a: p1 goes to station1, p2 to station2, and p3 into the bin.",
+  "world": "bench/worlds/assembly.json",
+  "expected_goal": [
+    ["rl:thing:p1", "located_in", "rl:place:station1"],
+    ["rl:thing:p2", "located_in", "rl:place:station2"],
+    ["rl:thing:p3", "located_in", "rl:place:bin"]
+  ],
+  "tags": ["multiple_objects", "multi_condition", "pick_place", "long_plan"]
+}

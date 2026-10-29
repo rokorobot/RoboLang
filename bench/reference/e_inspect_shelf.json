@@ -1,0 +1,9 @@
+{
+  "task": "look_at_box",
+  "bindings": {
+    "r": "arm1",
+    "box": "box1",
+    "spot": "shelf",
+    "cam": "camera_top"
+  }
+}

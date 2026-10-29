@@ -1,0 +1,9 @@
+{
+  "id": "a_amr_ferry",
+  "prompt": "amr1 carries p2 from the conveyor to station2, where arm_b picks it up and puts it in the bin.",
+  "world": "bench/worlds/assembly.json",
+  "expected_goal": [
+    ["rl:thing:p2", "located_in", "rl:place:bin"]
+  ],
+  "tags": ["handover", "two_robot", "pick_place"]
+}

@@ -1,0 +1,9 @@
+{
+  "task": "carry_crate",
+  "bindings": {
+    "r": "amr1",
+    "crate": "crate1",
+    "dock": "dock",
+    "dst": "conveyor"
+  }
+}

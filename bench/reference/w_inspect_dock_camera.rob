@@ -1,0 +1,10 @@
+// bench/reference/w_inspect_dock_camera.rob: hand-written reference solution
+robolang 1.3;
+
+task inspect_crate(robot r, object crate, location bay, sensor cam) {
+    goal { robot_at r bay; }
+    plan {
+        move r to bay;
+        inspect r crate using cam;
+    }
+}

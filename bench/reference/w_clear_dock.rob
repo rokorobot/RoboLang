@@ -1,0 +1,12 @@
+// bench/reference/w_clear_dock.rob: hand-written reference solution
+robolang 1.3;
+
+task clear_dock(robot r, object crate, location dock, location dst) {
+    goal { object_at crate dst; }
+    plan {
+        move r to dock;
+        grasp r crate;
+        move r to dst;
+        place r crate at dst;
+    }
+}

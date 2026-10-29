@@ -1,0 +1,9 @@
+{
+  "task": "slow_turn",
+  "bindings": {
+    "r": "arm1",
+    "vial": "vial1",
+    "src": "bench",
+    "dst": "storage"
+  }
+}

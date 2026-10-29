@@ -1,0 +1,10 @@
+{
+  "id": "w_two_boxes",
+  "prompt": "Bring box1 and box2 to the table with arm1.",
+  "world": "bench/worlds/warehouse.json",
+  "expected_goal": [
+    ["rl:thing:box1", "located_in", "rl:place:table"],
+    ["rl:thing:box2", "located_in", "rl:place:table"]
+  ],
+  "tags": ["multiple_objects", "pick_place", "single_robot"]
+}

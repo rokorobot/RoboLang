@@ -1,0 +1,17 @@
+// bench/reference/a_pre_conjunction.rob: hand-written reference solution
+robolang 1.3;
+
+task guarded_feed(robot r, object part, location feed, location dst, region fence) {
+    pre {
+        object_at part feed;
+        robot_ready r;
+        region_clear fence;
+    }
+    goal { object_at part dst; }
+    plan {
+        move r to feed;
+        grasp r part;
+        move r to dst;
+        place r part at dst;
+    }
+}

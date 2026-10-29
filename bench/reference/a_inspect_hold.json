@@ -1,0 +1,10 @@
+{
+  "task": "inspect_in_hand",
+  "bindings": {
+    "r": "arm_a",
+    "part": "p2",
+    "feed": "conveyor_in",
+    "st": "station1",
+    "cam": "cam_s1"
+  }
+}

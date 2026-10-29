@@ -1,0 +1,8 @@
+{
+  "task": "visit_table",
+  "bindings": {
+    "r": "arm1",
+    "spot": "table",
+    "home": "home"
+  }
+}

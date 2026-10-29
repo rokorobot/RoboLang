@@ -1,0 +1,11 @@
+{
+  "task": "centrifuge_then_carry",
+  "bindings": {
+    "r": "arm1",
+    "a": "vial1",
+    "b": "vial2",
+    "bench": "bench",
+    "spin": "centrifuge",
+    "fridge": "fridge"
+  }
+}

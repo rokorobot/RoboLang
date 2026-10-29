@@ -1,0 +1,11 @@
+{
+  "task": "ferry_and_bin",
+  "bindings": {
+    "amr": "amr1",
+    "arm": "arm_b",
+    "part": "p2",
+    "feed": "conveyor_in",
+    "st": "station2",
+    "bin": "bin"
+  }
+}

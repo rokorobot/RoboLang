@@ -1,0 +1,16 @@
+{
+  "id": "e_speed_half",
+  "prompt": "Use arm1 to take the box from the shelf to the table. Keep the arm below half a meter per second.",
+  "world": "examples/world.json",
+  "expected_goal": [
+    ["rl:thing:box1", "located_in", "rl:place:table"]
+  ],
+  "tags": ["single_robot", "pick_place", "safety", "units_in_words", "tricky"],
+  "expected_safety": [
+    {
+      "kind": "max_speed",
+      "value": "0.5",
+      "unit": "m/s"
+    }
+  ]
+}

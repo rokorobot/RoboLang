@@ -1,0 +1,12 @@
+{
+  "task": "handover",
+  "bindings": {
+    "arm": "arm1",
+    "mobile": "amr1",
+    "box": "box1",
+    "src": "shelf",
+    "handoff": "handoff",
+    "dst": "table",
+    "zone": "handoff_zone"
+  }
+}
