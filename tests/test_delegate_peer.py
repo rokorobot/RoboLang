@@ -448,3 +448,28 @@ def test_spec_documents_the_exchange_and_the_failures():
                  "lease_expired", "custody_unknown", "assistance_unavailable", "participant_busy", "--lease", "C403",
                  "0.2", "robots_unsupported"):
         assert text in SPEC
+
+
+# -------- the lease holds for every act of the peer, not only the custody exchange --------
+
+def wait_after_custody(tmp_path, seconds: int) -> str:
+    """The handover plan with a wait after the peer takes the box, before the peer's next step (step 10)."""
+    text = HANDOVER.replace("        move mobile to dst;", f"        wait for {seconds}s;\n        move mobile to dst;")
+    return write(tmp_path, "late.rob", text)
+
+
+def test_a_peer_step_after_the_lease_is_not_run(tmp_path):
+    code, out, _ = run(*BASE, "--plans", wait_after_custody(tmp_path, 70))
+    record = json.loads(out)
+    assert code == 4
+    assert types(record) == FULL  # the custody exchange itself was inside the lease
+    assert record["robot_run"]["cancelled_before_step"] == 10  # `move mobile to dst` would start too late
+    assert record["commitment"]["state"] == "lapsed"
+    outcome = record["messages"][-1]["document"]["payload"]["outcome"]
+    assert outcome["status"] == "failed" and outcome["reasons"] == [{"code": "lease_expired"}]
+    assert record["planner_verdict"]["status"] == "failed"
+
+
+def test_a_lease_that_covers_the_peers_last_step_succeeds(tmp_path):
+    record, code = record_of(*BASE, "--plans", wait_after_custody(tmp_path, 70), "--lease", "2min")
+    assert code == 0 and record["commitment"]["state"] == "fulfilled"

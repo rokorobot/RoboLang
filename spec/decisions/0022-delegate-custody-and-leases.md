@@ -31,3 +31,10 @@ commitment, no lease, no custody. `delegate` now runs the Core r2r exchange `arc
 - The peer's `ready` is read from the robot world; a `participant_busy` decline is only that.
 - Not shown (spec 7): reservation of the handoff place, `coordinate`, a peer `outcome`, real sensing, `custody_query`
   recovery, lease checks after the exchange, more than one peer.
+
+## Amendment — 2026-10-29
+
+The lease is checked at **every act of the peer**, not only at the custody exchange, as the arch02
+harness does since H4 (PR #49). A peer step that would start when the lease no longer holds is not
+run: the run is cancelled before it, the commitment is `lapsed`, and the outcome is `failed` with
+`lease_expired` (spec/delegate-v0.2.md section 3).

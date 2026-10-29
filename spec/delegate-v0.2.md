@@ -56,10 +56,17 @@ offers (150 ms), `expires_at` is `granted_at` + the lease duration, `renewal` 0.
 `--lease DURATION` sets it (`60s`, `500ms`, `2min`, `0.5s`: a number and `ms`, `s` or `min`, whole
 milliseconds, from 1 ms to 24 h; otherwise exit 2). `--lease` has no effect without a peer.
 
-**Lease rule.** The lease is checked once, at the custody point `T`: the robot starts the exchange only
-if it ends inside the lease, judged in the safe direction, that is `T` + 200 ms < `expires_at` − 500 ms
-(the clock tolerance). Otherwise the commitment is `lapsed` (section 5). Nothing after the exchange
-re-checks the lease: the peer's later plan steps are not timed against it.
+**Lease rule.** The lease must hold for every act of the peer, judged in the safe direction (the clock
+tolerance is 500 ms):
+
+- at the custody point `T`, the robot starts the exchange only if it ends inside the lease, that is
+  `T` + 200 ms < `expires_at` − 500 ms;
+- every plan step of the peer must start before `expires_at` − 500 ms (a step's start includes the
+  time the exchange took, if it comes after the custody point).
+
+Otherwise the commitment is `lapsed` and the run is cancelled before the first step that fails the
+rule (section 5). Amended 2026-10-29: before, only the exchange was checked, and the peer's later
+steps were not timed against the lease.
 
 ## 4. The custody point and how the plan runs
 
@@ -86,6 +93,7 @@ commitment is `fulfilled` when the run succeeds, `failed` otherwise.
 | Case | What happens | Reasons | Outcome / verdict | Commitment | Exit |
 |---|---|---|---|---|---|
 | Peer not ready in the robot world (`robots.<peer>.ready` not `true`) | P → R `decline` (`participant_busy`); R → N `assessment` `infeasible` and `reject` | `assistance_unavailable` | no outcome; planner `rejected` | none (`commitment` null) | 7 |
+| Lease ends before a later step of the peer (after a successful custody exchange) | run cancelled before that step; R reports `failed` at the lease end | `lease_expired` | `failed`; planner `failed` | `lapsed` | 4 |
 | Lease ends before the custody exchange can finish | no `transfer_custody`; run cancelled before the peer's step; R reports `failed` at the later of `T` and the lease end | `lease_expired` | `failed`, verification null; planner `failed` | `lapsed` (`lease_expired` event at the lease end) | 4 |
 | The confirmation does not meet the criteria (thing observed elsewhere, too old, not confident, not P's own, missing) | no `custody_released`; R's custody returns to `HOLDING`; run cancelled before the peer's step; `confirmation_not_accepted` event with the criterion reason | `custody_unknown` | `failed`; planner `failed` | `failed` | 4 |
 | The run fails or is cancelled before the custody point, or fails after it | as a v0.1 failed or cancelled run | as v0.1 | as v0.1 | `failed` | 4 |
