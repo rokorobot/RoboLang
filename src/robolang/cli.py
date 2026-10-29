@@ -28,6 +28,7 @@ Exit status:
 from __future__ import annotations
 import argparse
 import json
+import re
 import sys
 from importlib import metadata
 from pathlib import Path
@@ -36,7 +37,7 @@ from . import ir as task_ir
 from .arch02 import ScenarioError, simulate_case
 from .arch02 import to_json as arch02_json
 from .core import ReadError
-from .diagnostics import RoboLangError
+from .diagnostics import MAX_ERRORS, RoboLangError
 from .sim import DEFAULT_SEED, SEED, WorldError, load_world, run_id, sha256_normalized, to_json, to_record
 from .sim import run as simulate_task
 
@@ -78,8 +79,10 @@ _SIMULATE_EPILOG = """\
 exit status:
   0  the run ended SUCCEEDED; the run record is on stdout
   1  the source file is not valid RoboLang; nothing is run
-  2  bad arguments or seed, unreadable file, unknown task name, or several tasks and no --task
-  3  the world file is not valid; diagnostics are printed to stderr
+  2  bad arguments or seed, malformed or repeated --bind, --bind of a name that is not a parameter,
+     unreadable file, unknown task name, or several tasks and no --task
+  3  the world file is not valid, or a --bind names a missing or wrong-kind entity or leaves a
+     parameter unbound; diagnostics are printed to stderr
   4  the run ended FAILED; the run record is on stdout
   5  the run ended CANCELLED; the run record is on stdout
 """
@@ -131,7 +134,7 @@ def _read_bytes(path: str) -> bytes:
 
 def _compile(path: str, err, data: bytes | None = None) -> task_ir.CompileResult:
     """
-    Validate the whole file and lower it. Prints warnings; raises on any error.
+    Validate the whole file and lower it. Prints warnings; raises RoboLangError listing every error.
     `data` is the file's content when the caller has already read it.
     """
     try:
@@ -142,6 +145,23 @@ def _compile(path: str, err, data: bytes | None = None) -> task_ir.CompileResult
     for warning in result.warnings:
         print(warning.format(), file=err)
     return result
+
+
+def _print_errors(error: RoboLangError, path: str, err, summary: bool):
+    """
+    Print every diagnostic, in source order. A file with more than one diagnostic then gets a
+    summary line (validate only), so a file with a single error prints exactly that error.
+    """
+    diagnostics = [*error.warnings, *error.diagnostics]
+    for diagnostic in sorted(diagnostics, key=lambda d: (d.line, d.column)):
+        print(diagnostic.format(), file=err)
+    if error.truncated:
+        print(f"{path}: too many errors: stopped after {MAX_ERRORS}", file=err)
+    if summary and (len(diagnostics) > 1 or error.truncated):
+        count = f"{MAX_ERRORS}+ errors" if error.truncated else _plural(len(error.diagnostics), "error")
+        if error.warnings:
+            count += f", {_plural(len(error.warnings), 'warning')}"
+        print(f"{path}: not valid ({count})", file=err)
 
 
 # -------- validate --------
@@ -261,10 +281,30 @@ def _inspect(args, out, err) -> int:
 _SIMULATE_EXIT = {"SUCCEEDED": EXIT_OK, "FAILED": EXIT_FAILED, "CANCELLED": EXIT_CANCELLED}
 
 
+_BIND_NAME = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
+_BIND_ID = re.compile(r"[A-Za-z][A-Za-z0-9_]*")
+
+
+def _parse_bindings(groups) -> dict[str, str] | None:
+    """`--bind` values (one list per flag) -> parameter name -> entity ID; None when --bind was not given."""
+    if not groups:
+        return None
+    bindings: dict[str, str] = {}
+    for item in (item for group in groups for item in group):
+        name, equals, target = item.partition("=")
+        if not equals or not _BIND_NAME.fullmatch(name) or not _BIND_ID.fullmatch(target):
+            raise _CommandError(f"invalid --bind '{item}': use NAME=ID, for example r=arm1")
+        if name in bindings:
+            raise _CommandError(f"invalid --bind: parameter '{name}' is bound more than once")
+        bindings[name] = target
+    return bindings
+
+
 def _simulate(args, out, err) -> int:
     seed = args.seed
     if not SEED.fullmatch(seed):
         raise _CommandError("invalid --seed: use 1 to 64 characters from A-Z a-z 0-9 . _ -")
+    cli_bindings = _parse_bindings(args.bind)
     source_bytes = _read_bytes(args.file)  # read once: the run ID describes exactly what was run
     result = _compile(args.file, err, source_bytes)
     tasks = result.ir.tasks
@@ -279,14 +319,20 @@ def _simulate(args, out, err) -> int:
         except KeyError:
             names = ", ".join(t.name for t in tasks)
             raise _CommandError(f"no task named '{args.task}' in '{args.file}'; tasks in this file: {names}") from None
+    if cli_bindings is not None:
+        names = [p.name for p in task.parameters]
+        for name in cli_bindings:
+            if name not in names:
+                listed = ", ".join(names) or "(none)"
+                raise _CommandError(f"--bind: '{name}' is not a parameter of task '{task.name}'; parameters: {listed}")
     world_bytes = _read_bytes(args.world)
     try:
-        world = load_world(world_bytes, args.world, task)
+        world = load_world(world_bytes, args.world, task, cli_bindings)
     except WorldError as error:
         print(error.format(), file=err)
         return EXIT_WORLD_INVALID
     run_result = simulate_task(task, world)
-    identifier = run_id(source_bytes, world_bytes, task.name, seed)
+    identifier = run_id(source_bytes, world_bytes, task.name, seed, cli_bindings)
     record = to_record(
         run_result,
         task=task,
@@ -295,6 +341,7 @@ def _simulate(args, out, err) -> int:
         world_sha256=sha256_normalized(world_bytes),
         seed=seed,
         language_version=result.ir.language_version,
+        bindings_source="world" if cli_bindings is None else "cli",
     )
     out.write(to_json(record))
     summary = f"simulation only: run {identifier}: {run_result.state}"
@@ -402,6 +449,19 @@ def _parser(prog: str) -> argparse.ArgumentParser:
         default=DEFAULT_SEED,
         help=f"1 to 64 characters from A-Z a-z 0-9 . _ - (default {DEFAULT_SEED}); only distinguishes runs",
     )
+    simulate.add_argument(
+        "--bind",
+        metavar="NAME=ID",
+        nargs="+",
+        action="append",
+        help=(
+            "bind a task parameter to a world entity, for example --bind r=arm1 box=box1 "
+            "(repeat the flag or give several pairs; put FILE before --bind). "
+            "Every parameter must be bound once. The bindings replace the world file's bindings for "
+            "this task (no merging); its faults and cancellation still apply, and the task's entry "
+            "may be missing"
+        ),
+    )
     simulate.set_defaults(run=_simulate)
 
     arch02 = commands.add_parser(
@@ -434,7 +494,7 @@ def main(argv: list[str] | None = None, out=None, err=None, prog: str = "robolan
     try:
         return args.run(args, out, err)
     except RoboLangError as error:
-        print(error.diagnostic.format(), file=err)
+        _print_errors(error, args.file, err, summary=args.command == "validate")
         return EXIT_INVALID
     except _CommandError as error:
         print(f"{prog}: error: {error}", file=err)

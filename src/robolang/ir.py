@@ -268,7 +268,7 @@ def compile_program(program: ast.Program, filename: str = "<string>") -> TaskIR:
 
 
 def compile_source(source: str, filename: str = "<string>") -> CompileResult:
-    """Lex, parse, validate and lower `source`. Raises RoboLangError on the first error."""
+    """Lex, parse, validate and lower `source`. Raises RoboLangError listing every error."""
     result = check(source, filename)
     return CompileResult(_lower(result.program), result.program, result.warnings)
 
