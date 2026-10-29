@@ -14,6 +14,7 @@ class TokenKind(Enum):
     STRING = "string"
     SPEED_UNIT = "speed unit"
     AT_SAFETY = "@safety"
+    AT_VERIFY = "@verify"  # RoboLang 1.3 files only
     LPAREN = "("
     RPAREN = ")"
     LBRACE = "{"
@@ -62,6 +63,7 @@ RESERVED_BY_VERSION = {"1.2": RESERVED_V1_2, "1.3": RESERVED_V1_3}
 
 # Recognized only in their grammatical position; not reserved.
 SAFETY_KEYS = ("max_speed",)
+VERIFY_KEYS = ("min_confidence", "max_age")  # RoboLang 1.3
 SPEED_UNITS = ("m/s", "rad/s")
 DURATION_UNITS = ("ms", "s", "min")
 

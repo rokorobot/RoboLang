@@ -10,9 +10,11 @@ in [decision record 0014](decisions/0014-lang-2-goals-and-typed-sensors.md).
 **Simulation:** [simulation specification](simulation-v1.0.md) section 10
 **Fixtures:** [`tests/fixtures/v1.3/`](../tests/fixtures/v1.3/README.md)
 
-RoboLang 1.3 is RoboLang 1.2 plus three things: a required `goal` block that says what must be
+RoboLang 1.3 is RoboLang 1.2 plus four things: a required `goal` block that says what must be
 true when the task is done, three atoms that talk about outcomes (`object_at`, `robot_at`,
-`holding`), and a `sensor` parameter type so that sensors are bound like every other entity.
+`holding`), a `sensor` parameter type so that sensors are bound like every other entity, and an
+optional `@verify` annotation that says how the goal is checked when it is exported
+([`export-goal-v0.1.md`](export-goal-v0.1.md)).
 This document states only what differs from 1.2. Everything it does not mention is exactly as in
 `robolang-v1.2.md` and `robolang-v1.1.md`, including the core invariant (1.1 section 1).
 
@@ -71,6 +73,9 @@ The normative grammar is [`grammar-v1.3.ebnf`](grammar-v1.3.ebnf). The changes t
 
 ```text
 task        = "task" IDENT "(" [ param { "," param } ] ")" "{" { annotation } [ pre ] goal plan "}"
+annotation  = "@safety" "max_speed" NUMBER [ SPEED_UNIT ] ";"
+            | "@verify" "min_confidence" NUMBER ";"
+            | "@verify" "max_age" duration ";"
 goal        = "goal" "{" condition ";" { condition ";" } "}"
 type        = "robot" | "object" | "location" | "region" | "sensor"
 atom        = ... | "object_at" IDENT IDENT | "robot_at" IDENT IDENT | "holding" IDENT IDENT
@@ -139,6 +144,27 @@ task look(robot r, object box, sensor cam, location dst) {
   (not a syntax error), so the message can name the fix.
 - A world file binds a `sensor` parameter to a **declared sensor ID** (simulation 10.1).
 
+### 3.5 The `@verify` annotation
+
+```rob
+task handover(...) {
+    @safety max_speed 0.5 m/s;
+    @verify min_confidence 0.95;
+    @verify max_age 5s;
+    ...
+}
+```
+
+- `@verify` is an annotation like `@safety`: before `pre`, in any order with `@safety`
+  annotations (after `pre` is `E208`). It exists **only in 1.3 files**; in a 1.1 or 1.2 file `@`
+  followed by `verify` is `E101`, exactly as before.
+- Two keys: `min_confidence` takes a decimal number (no unit); `max_age` takes a duration
+  (`ms`, `s`, `min`). Another key is `E207`; a missing or wrong-unit value is `E201`/`E206`.
+- They state how an *observation* must support each goal condition when the goal is exported as
+  Core success criteria: at least this confident (0 to 1) and at most this old. They do not change
+  `simulate`: a simulated run still checks the goal against the simulator's final state.
+- Without `@verify`, the exporter uses documented defaults (`min_confidence` 0.9, `max_age` 10 s).
+
 ## 4. Static rules
 
 1. Goal conditions are checked like `pre` conditions: rules 3 and 4 of 1.1 section 5 apply to every
@@ -148,6 +174,9 @@ task look(robot r, object box, sensor cam, location dst) {
 3. A 1.3 task has a goal (`E309`).
 4. A string where a sensor parameter belongs is `E310`. This takes precedence over `E307`: the
    empty string `""` is also `E310`.
+
+5. Each `@verify` key is declared at most once per task (`E311`); the first declaration stands.
+6. `min_confidence` is from 0 to 1 inclusive (`E312`); `max_age` is greater than zero (`E305`).
 
 Contradictory or duplicated goal conditions are not errors.
 
@@ -159,6 +188,8 @@ Contradictory or duplicated goal conditions are not errors.
 |---|---|---|
 | `E309` | static | A 1.3 task has no `goal` block |
 | `E310` | static | A quoted string where a sensor parameter is required |
+| `E311` | static | A `@verify` key declared more than once in a task |
+| `E312` | static | `@verify min_confidence` above 1 |
 
 And these clarifications, all with existing codes:
 
@@ -179,18 +210,20 @@ ObjectAt(obj: Name, location: Name, span)
 RobotAt(robot: Name, location: Name, span)
 Holding(robot: Name, obj: Name, span)
 GoalBlock(conditions: tuple[Condition, ...], span)
+VerifyAnnotation(key: Name, value: Decimal | Duration, value_span, span)
 ```
 
 - `ParamType.SENSOR` is added. `Task.goal` is a `GoalBlock`, or `None` before 1.3 (and for the
   `E309` case, which the validator reports).
 - `SensorOk.sensor` and `Inspect.sensor` are a `StringLit` in 1.1 and 1.2 and a `Name` in 1.3.
   A 1.3 `StringLit` is kept in the tree so that `E310` can point at it.
+- `Task.verify` is a tuple of `VerifyAnnotation`, empty before 1.3 and when none is written.
 - `VersionDecl.version` may be `"1.3"`.
 
 ## 7. Task IR
 
 A 1.3 source compiles to **Task IR schema 1.2**: see [`ir-schema-v1.2.md`](ir-schema-v1.2.md). It adds
-the task field `goal` and the condition kinds `object_at`, `robot_at` and `holding`. In schema 1.2
+the task fields `goal` and (when written) `verify`, and the condition kinds `object_at`, `robot_at` and `holding`. In schema 1.2
 the `sensor` of `sensor_ok` and `inspect` is the **name of a `sensor` parameter**. 1.1 and 1.2
 sources still compile to IR 1.0 and 1.1, byte-identical to today.
 
@@ -216,9 +249,11 @@ In short:
 
 - No goal checking before the run (a goal that no plan could reach is not detected statically).
 - No goal-driven planning, retries or recovery: the plan is still the plan.
-- No change to `@safety`, the world file schema, run-ID derivation or any 1.1/1.2 behavior.
+- No change to `@safety`, run-ID derivation or any 1.1/1.2 behavior. The world file gains schema 1.1
+  (simulation 3), which `simulate` reads like 1.0.
 - No comparisons, branching or repetition.
-- No Core schema: a goal is Plan data until it is mapped onto Core success criteria.
+- No Core schema: a goal becomes Core data only through `export-goal`, and only if it is a plain
+  conjunction of outcome atoms.
 
 ## 10. Fixtures and acceptance
 
@@ -256,8 +291,9 @@ an unsupported version.
 | Part | Status |
 |---|---|
 | Version marker, reserved words (section 2) | `lexer.py`, `tokens.py`, `parser.py` |
-| Syntax, `E208`, AST (sections 3, 5, 6) | `parser.py`, `nodes.py` |
-| Static rules, `E309`, `E310` (section 4) | `validator.py` |
+| Syntax, `@verify`, `E208`, AST (sections 3, 5, 6) | `parser.py`, `nodes.py` |
+| Static rules, `E309` to `E312` (section 4) | `validator.py` |
+| `export-goal` (`@verify` becomes criteria) | `export_goal.py`, `cli.py`, `bridge.py` |
 | Task IR 1.2 (section 7) | `ir.py` |
 | Goal evaluation, `S301`, `S302`, run record 1.2, sensor binding (section 8) | `sim/executor.py`, `sim/record.py`, `sim/world.py` |
 | Acceptance tests G-T1 to G-T13 (section 10) | Pass in CI |

@@ -126,6 +126,7 @@ def to_record(
     seed: str,
     language_version: str = ir.LANGUAGE_VERSION,
     bindings_source: str = "world",
+    world_schema_version: str = WORLD_SCHEMA_VERSION,
 ) -> dict:
     """
     The run record (section 5) as a dict with the key order of the specification: schema 1.0
@@ -139,7 +140,7 @@ def to_record(
         "seed": seed,
         "language_version": language_version,
         "ir_schema_version": ir.IR_SCHEMA_VERSIONS[language_version],
-        "world_schema_version": WORLD_SCHEMA_VERSION,
+        "world_schema_version": world_schema_version,
     }
     if bindings_source != "world":  # a record without the key has world-file bindings (section 5.1)
         inputs["bindings_source"] = bindings_source

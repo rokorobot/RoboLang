@@ -3,8 +3,8 @@ Static validation for RoboLang v1.1 to v1.3 (spec/robolang-v1.1.md, section 5; s
 
 Checks a parsed program for errors that the grammar cannot express: duplicate
 and undeclared names, names used with the wrong type, out-of-range values,
-conflicting speed limits and empty strings (E301-E308), and in 1.3 a missing goal and a string
-where a sensor parameter belongs (E309, E310).
+conflicting speed limits and empty strings (E301-E308), and in 1.3 a missing goal, a string
+where a sensor parameter belongs, and a repeated or out-of-range @verify (E309-E312).
 
 `check` and `check_file` are the complete front end: lex, parse, then validate.
 They only read source text and never touch an adapter.
@@ -96,6 +96,7 @@ class _Validator:
             self._params[param.name.text] = param.type
 
         self._annotations(task.annotations)
+        self._verify(task.verify)
         if task.pre is not None:
             for condition in task.pre.conditions:
                 self._condition(condition)
@@ -144,6 +145,29 @@ class _Validator:
             )
             return
         self._positive(annotation.value.value, key, annotation.value.span)
+
+    # -------- @verify (RoboLang 1.3) --------
+
+    def _verify(self, annotations: tuple[ast.VerifyAnnotation, ...]):
+        earlier: dict[str, ast.VerifyAnnotation] = {}
+        for annotation in annotations:
+            self._checked(self._verify_annotation, annotation, earlier)
+            earlier.setdefault(annotation.key.text, annotation)  # the first declaration stands
+
+    def _verify_annotation(self, annotation: ast.VerifyAnnotation, earlier: dict[str, ast.VerifyAnnotation]):
+        key = annotation.key.text
+        if key in earlier:
+            self._error(
+                "E311",
+                f"duplicate @verify {key} (first declared on line {earlier[key].span.line}); "
+                "a task may declare each @verify key at most once",
+                annotation.span,
+            )
+        if key == "min_confidence":
+            if annotation.value > 1:
+                self._error("E312", "min_confidence must be between 0 and 1", annotation.value_span)
+        else:
+            self._positive(annotation.value.value, key, annotation.value_span)
 
     # -------- conditions and statements --------
 

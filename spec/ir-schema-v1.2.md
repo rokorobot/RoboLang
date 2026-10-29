@@ -6,7 +6,7 @@
 **Builds on:** [Task IR schema 1.1](ir-schema-v1.1.md) and [1.0](ir-schema-v1.0.md), unchanged.
 Implemented in `src/robolang/ir.py`.
 
-Schema 1.2 is schema 1.1 plus a task `goal`, three condition kinds and a change in what a sensor
+Schema 1.2 is schema 1.1 plus a task `goal`, an optional task `verify`, three condition kinds and a change in what a sensor
 name refers to. Everything not stated here, including the trust boundary (1.0 section 2),
 quantities, strings and the determinism rules, is exactly as in schemas 1.0 and 1.1.
 
@@ -26,7 +26,19 @@ A task gains the field `goal`, between `preconditions` and `steps`:
 |---|---|
 | `goal` | Array of one or more condition objects: the conditions that must hold at the end of the run. Present in every schema 1.2 task, absent from schemas 1.0 and 1.1 |
 
-Key order: `name`, `parameters`, `safety`, `preconditions`, `goal`, `steps`.
+A task may also have the field `verify`, between `goal` and `steps`, **only when the source declares
+at least one `@verify`** (RoboLang 1.3 section 3.5). A task without `@verify` has no `verify` key, so
+its document is the same as before `@verify` existed:
+
+| Field | Content |
+|---|---|
+| `verify` | Object with the keys the source declares, in this order: `min_confidence`: a decimal string from `"0"` to `"1"`; `max_age`: a duration quantity (1.0 section 3.5) |
+
+```json
+"verify": { "min_confidence": "0.95", "max_age": { "value": "5", "unit": "s" } }
+```
+
+Key order: `name`, `parameters`, `safety`, `preconditions`, `goal`, `verify` (if present), `steps`.
 
 ## 3. Condition kinds
 
@@ -63,6 +75,7 @@ which is always present.
 ## 6. Consumer duties
 
 The five duties of 1.0 section 2 and the additions of 1.1 section 4 apply. For duty 1, a schema 1.2
-consumer also rejects a task without a non-empty `goal`, a `goal` entry that is not a valid condition,
+consumer also rejects a task without a non-empty `goal`, a `verify` with an unknown key, a
+`min_confidence` outside 0 to 1 or a `max_age` that is not a positive duration, a `goal` entry that is not a valid condition,
 a `sensor_ok` or `inspect` whose `sensor` is not a `sensor` parameter of the task, and a `sensor`
 parameter used as anything but a sensor reference.
