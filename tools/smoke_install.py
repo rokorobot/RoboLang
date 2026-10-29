@@ -133,7 +133,8 @@ def check_install(artifact: Path, work: Path):
     expect(version == expected, f"--version: {version}")
 
     reference = run([robolang, "reference"], cwd=outside, env=env).stdout
-    expect(reference == (REPO / "docs" / "language-reference.md").read_bytes(),
+    expected_reference = (REPO / "docs" / "language-reference.md").read_text(encoding="utf-8").encode("utf-8")
+    expect(reference == expected_reference,
            "reference prints the tested documentation from the installed wheel")
 
     valid = run([robolang, "validate", EXAMPLE], cwd=outside, env=env)
