@@ -60,6 +60,7 @@ robolang simulate examples/handover.rob --world examples/world.json \
 | `inspect FILE [--json] [--task NAME]` | Validates, then shows the tasks as text or as Task IR JSON | as `validate` |
 | `simulate FILE --world W [--task NAME] [--bind P=ID …]` | Runs one task against a world file in a symbolic simulation; the same inputs give a byte-identical run record | 0 succeeded, 1 invalid source, 2 usage, 3 invalid world, 4 failed, 5 cancelled |
 | `export-goal FILE --world W --from AGENT [--to ROBOT] [--bind P=ID …]` | Turns a 1.3 task's goal into a signed Core 0.1 `propose_goal` message (simulation-only signature) | 0 printed, 1 invalid source, 2 usage, 3 invalid world, 6 goal has no Core form |
+| `delegate FILE --world W --from AGENT --to ROBOT [--plans PATH …]` | End to end: the planner sends the task's goal; the robot matches it to a plan in its own `.rob` library, runs it, and returns a Core outcome; the planner checks the evidence itself | 0 verified success, 4 failed or unknown, 7 rejected; others as `export-goal` |
 | `arch02 --scenario S --cases C --case NAME` | Runs one case of the Core 0.1 reference scenario (AI planner, arm and mobile robot exchanging signed messages) | 0 ran, 2 usage, 3 invalid input |
 
 Validation and simulation say nothing about whether a task is safe on a real robot.
@@ -137,11 +138,21 @@ Specifications: [1.1](spec/robolang-v1.1.md) ([grammar](spec/grammar.ebnf)),
 descriptor for AI-to-robot and robot-to-robot exchanges, with authority, custody and
 evidence-backed outcomes. It runs only inside the `arch02` reference simulation.
 
-The bridge from `.rob` to Core ([plan](docs/plans/goals-and-core-bridge.md)) is partly built.
+The bridge from `.rob` to Core ([plan](docs/plans/goals-and-core-bridge.md)) is built, in simulation.
 Goal conditions `object_at`, `robot_at` and `holding` map to Core `located_in` and `carried_by`
 facts (`src/robolang/bridge.py`). `export-goal` sends a task's goal as a Core `propose_goal`,
 and every 1.3 run record ends with `core_outcome`: a Core outcome with signed observations as
-evidence. Robots running `.rob` plans inside the reference simulation come next. See
+evidence. `delegate` closes the loop: the goal crosses as a Core message, the robot runs its
+own `.rob` plan (plans never travel, Core decision R3), and the planner accepts `succeeded`
+only after re-checking the signed evidence ([spec](spec/delegate-v0.1.md)):
+
+```bash
+robolang delegate examples/handover.rob --world examples/world.json \
+    --from rl:agent:planner-1 --to rl:robot:arm1 --plans examples/plans
+# simulation only: delegate rl:goal:handover → rl:robot:arm1: succeeded (verified)
+```
+
+See
 [Core 0.1](spec/core-v0.1.md), the
 [reference simulation](spec/reference-simulation-v0.1.md) and
 [RFC-001](spec/architecture/rfc-001-ai-native-architecture.md).
@@ -166,7 +177,7 @@ evidence. Robots running `.rob` plans inside the reference simulation come next.
 | Simulation-only execution (`simulate`) | Delivered, signed off 2026-10-27 ([evidence](docs/evidence/rl-basic-01-exit-gate.md)) |
 | Core 0.1 reference simulation (`arch02`) | Implemented, gate 1 signed off 2026-10-27 ([evidence](docs/evidence/rl-arch-02-exit-gate.md)) |
 | Gate 2 independent interoperability | Bundle frozen 2026-10-28; INTEROP-3 deferred ([0017](spec/decisions/0017-reprioritise-goals-before-interop-3.md)) |
-| `.rob` → Core bridge | Core-shaped outcomes and `export-goal` delivered; next, robots running `.rob` plans in the reference simulation ([plan](docs/plans/goals-and-core-bridge.md)) |
+| `.rob` → Core bridge | Delivered in simulation: Core-shaped outcomes, `export-goal`, `delegate` ([plan](docs/plans/goals-and-core-bridge.md)). Next: CORE-1 (IR reader), then reconsider INTEROP-3 |
 
 Every implementation item needs owner approval. The full plan and history are in the
 [development plan](docs/DEVELOPMENT_PLAN.md); decisions are in [`spec/decisions/`](spec/decisions/).
