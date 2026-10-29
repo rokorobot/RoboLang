@@ -61,7 +61,7 @@ def test_only_the_read_only_package_is_installed():
 
 def test_legacy_sources_are_still_in_the_repository():
     for module in LEGACY_MODULES:
-        assert (REPO_ROOT / "src" / f"{module}.py").is_file(), module
+        assert (REPO_ROOT / "legacy" / f"{module}.py").is_file(), module
 
 
 def test_read_only_package_does_not_depend_on_the_legacy_modules():

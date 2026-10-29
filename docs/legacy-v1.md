@@ -13,11 +13,11 @@ The files are kept in the repository unchanged, as the starting point of the pro
 
 | File | What it is |
 |---|---|
-| `src/robolang_runtime.py` | Line-based interpreter that scans the `plan { ... }` block of a `.rob` file and calls the adapter |
-| `src/robolang_adapter.py` | Simulated adapter that prints each action; no ROS 2 required |
-| `src/robolang_adapter_ros2.py` | Experimental adapter mapping actions to ROS 2 (`FollowJointTrajectory`, `GripperCommand`, topics) |
-| `src/robolang_ros2_main.py` | ROS 2 entry point for the interpreter |
-| `stdlib/robolang_std_v1.rob` | The v1 standard library; one task, `pick_and_place` |
+| `legacy/robolang_runtime.py` | Line-based interpreter that scans the `plan { ... }` block of a `.rob` file and calls the adapter |
+| `legacy/robolang_adapter.py` | Simulated adapter that prints each action; no ROS 2 required |
+| `legacy/robolang_adapter_ros2.py` | Experimental adapter mapping actions to ROS 2 (`FollowJointTrajectory`, `GripperCommand`, topics) |
+| `legacy/robolang_ros2_main.py` | ROS 2 entry point for the interpreter |
+| `legacy/robolang_std_v1.rob` | The v1 standard library; one task, `pick_and_place` |
 
 ## Known limitations of the v1 interpreter
 
@@ -39,7 +39,7 @@ only; the RoboLang 1.1 validator and `robolang simulate` behave differently (see
 From a clone of the repository (Python 3.11 or newer, no ROS 2, nothing installed):
 
 ```bash
-python src/robolang_runtime.py examples/pick_and_place.rob
+python legacy/robolang_runtime.py examples/pick_and_place.rob
 ```
 
 Expected output:
@@ -80,10 +80,10 @@ passing through the validator. This was a deliberate compatibility change.
 
 | Layer | Purpose | Runs on | Files |
 |-------|---------|---------|-------|
-| Language / runtime | Parses `.rob` task files, runs logic flow | Any OS | `src/robolang_runtime.py`, `examples/` |
-| Simulated adapter | Prints actions for quick testing | Any OS | `src/robolang_adapter.py` |
-| ROS 2 adapter | Sends ROS 2 actions and topics | ROS 2 host (Linux) | `src/robolang_adapter_ros2.py` |
-| ROS 2 entry point | Runs the interpreter inside a ROS 2 node | ROS 2 host (Linux) | `src/robolang_ros2_main.py` |
+| Language / runtime | Parses `.rob` task files, runs logic flow | Any OS | `legacy/robolang_runtime.py`, `examples/` |
+| Simulated adapter | Prints actions for quick testing | Any OS | `legacy/robolang_adapter.py` |
+| ROS 2 adapter | Sends ROS 2 actions and topics | ROS 2 host (Linux) | `legacy/robolang_adapter_ros2.py` |
+| ROS 2 entry point | Runs the interpreter inside a ROS 2 node | ROS 2 host (Linux) | `legacy/robolang_ros2_main.py` |
 
 The intended setup, on Ubuntu 22.04 with ROS 2 Humble or Iron:
 

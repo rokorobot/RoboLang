@@ -1,0 +1,17 @@
+// examples/inspect_object.rob
+// Move to a camera position and inspect an object with the robot's camera.
+
+task inspect_object(robot r, object obj, location cam_pos) {
+    @safety max_speed 0.3 m/s;
+
+    pre {
+        robot_ready r;
+        object_exists obj;
+    }
+
+    plan {
+        move r to cam_pos;
+        inspect r obj using "camera_top";
+        wait for 2s;
+    }
+}

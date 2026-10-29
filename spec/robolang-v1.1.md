@@ -352,8 +352,8 @@ Notes:
 | Source | v1.1 result |
 |---|---|
 | `examples/pick_and_place.rob` | Valid, with `W401` (unitless `max_speed`) |
-| `stdlib/robolang_std_v1.rob` | Valid, with `W401` |
-| `examples/handover.rob`, `examples/inspect_object.rob` | Empty files: `E210`. They are placeholders, not programs. |
+| `legacy/robolang_std_v1.rob` | Valid, with `W401` |
+| `examples/handover.rob`, `examples/inspect_object.rob` | Valid, no warnings |
 | README and `docs/index.md` example | Valid. Since RL-DOC-README-01 both write `max_speed 0.5 m/s`, so no warning; earlier versions gave `W401` |
 | Manual ch. 3 `pick_and_place` | Valid |
 | Manual ch. 9 `handover` | Valid |

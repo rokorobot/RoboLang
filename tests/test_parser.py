@@ -301,17 +301,15 @@ def test_truncated_input_is_a_clean_error(source):
 
 # -------- sources in the repository --------
 
-@pytest.mark.parametrize("relative", ["examples/pick_and_place.rob", "stdlib/robolang_std_v1.rob"])
+@pytest.mark.parametrize("relative", ["examples/pick_and_place.rob", "legacy/robolang_std_v1.rob"])
 def test_existing_sources_parse_with_only_the_unit_warning(relative):
     result = parse_file(REPO_ROOT / relative)
     assert [w.code for w in result.warnings] == ["W401"]
 
 
 @pytest.mark.parametrize("relative", ["examples/handover.rob", "examples/inspect_object.rob"])
-def test_empty_placeholder_examples_are_not_programs(relative):
-    with pytest.raises(RoboLangError) as raised:
-        parse_file(REPO_ROOT / relative)
-    assert raised.value.code == "E210"
+def test_other_examples_parse_without_warnings(relative):
+    assert parse_file(REPO_ROOT / relative).warnings == ()
 
 
 def test_task_examples_in_the_specification_parse():

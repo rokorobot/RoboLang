@@ -1,4 +1,4 @@
-"""Smoke tests for the simulated adapter (src/robolang_adapter.py)."""
+"""Smoke tests for the simulated adapter (legacy/robolang_adapter.py)."""
 
 from __future__ import annotations
 

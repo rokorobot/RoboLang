@@ -1,0 +1,32 @@
+{
+  "world_schema": "robolang.sim.world",
+  "world_schema_version": "1.0",
+  "locations": ["dock", "handoff", "home", "shelf", "table"],
+  "regions": {
+    "cell": { "clear": true },
+    "handoff_zone": { "clear": false }
+  },
+  "robots": {
+    "arm1": { "ready": true, "location": "home", "gripper": true, "max_speed": [{ "value": "1", "unit": "m/s" }] },
+    "amr1": { "ready": true, "location": "dock", "gripper": true, "max_speed": [{ "value": "1.5", "unit": "m/s" }] }
+  },
+  "objects": {
+    "box1": { "present": true, "location": "shelf" }
+  },
+  "sensors": {
+    "camera_top": { "robot": "arm1", "available": true }
+  },
+  "events": [
+    { "at": { "value": "5", "unit": "s" }, "fact": "region_clear", "target": "handoff_zone", "value": true }
+  ],
+  "tasks": {
+    "demo_pick_and_place": { "bindings": { "r": "arm1", "box": "box1", "src": "shelf", "dst": "table", "cell": "cell" } },
+    "inspect_object": { "bindings": { "r": "arm1", "obj": "box1", "cam_pos": "shelf" } },
+    "handover": {
+      "bindings": {
+        "arm": "arm1", "mobile": "amr1", "box": "box1", "src": "shelf",
+        "handoff": "handoff", "dst": "table", "zone": "handoff_zone"
+      }
+    }
+  }
+}
