@@ -21,6 +21,7 @@ def reference() -> str:
 
 def test_docs_package_cli_and_benchmark_use_the_same_reference():
     text = reference()
+    assert text.isascii()  # the CLI promises deterministic bytes even on narrow Windows consoles
     assert PACKAGED.read_text(encoding="utf-8") == text
     out, err = io.StringIO(), io.StringIO()
     assert main(["reference"], out=out, err=err) == 0

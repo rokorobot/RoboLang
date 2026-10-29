@@ -81,8 +81,8 @@ levels deep. A fact the world does not state is unknown, and unknown is never tr
 ## Preconditions, goals, and annotations
 
 - `pre` conditions are checked once before the first step. If any is not true, the run stops and
-  nothing moves. Use `pre` for “only if”, “provided that”, and “refuse to start unless”. Use
-  `wait until` for “wait for”, “once it clears”, and “when it is free”.
+  nothing moves. Use `pre` for "only if", "provided that", and "refuse to start unless". Use
+  `wait until` for "wait for", "once it clears", and "when it is free".
 - `goal` is the requested final state, checked after the plan. Every top-level goal condition must
   hold. State every requested end condition (`object_at`, `robot_at`, or `holding`) and nothing the
   request did not ask for. A held object is not `object_at` anywhere. A goal describes the outcome,
