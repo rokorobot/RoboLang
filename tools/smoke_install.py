@@ -80,6 +80,7 @@ def build(dist: Path) -> tuple[Path, Path]:
     expect(f"Version: {VERSION}" in headers, f"wheel version is {VERSION}")
     expect("Requires-Python: >=3.11" in headers, "wheel requires Python 3.11 or newer")
     expect("robolang/cli.py" in names and "robolang/ir.py" in names, "wheel contains the robolang package")
+    expect("robolang/reference/language-reference.md" in names, "wheel contains the RoboLang 1.3 reference")
     expect(not any(f"{m}.py" in names for m in LEGACY), "wheel contains none of the four legacy modules")
     code = sorted(n for n in names if ".dist-info/" not in n)
     expect(all(n.startswith("robolang/") for n in code), f"wheel code is only the robolang package ({len(code)} files)")
@@ -121,7 +122,8 @@ def check_install(artifact: Path, work: Path):
     expect(commands == ["robolang"], f"robolang is the only RoboLang command installed ({commands})")
     expect(not list(bin_dir.glob("ros2_runtime*")), "no ros2_runtime command is installed")
     help_text = run([robolang, "--help"], cwd=outside, env=env).stdout.decode()
-    expect("validate" in help_text and "inspect" in help_text, "the command offers validate and inspect")
+    expect(all(name in help_text for name in ("reference", "validate", "inspect")),
+           "the command offers reference, validate and inspect")
     for word in ("run", "execute", "ros2_runtime"):
         attempt = run([robolang, word, EXAMPLE], cwd=outside, env=env, check=False)
         expect(attempt.returncode == 2, f"'robolang {word}' is not a command (exit 2)")
@@ -129,6 +131,11 @@ def check_install(artifact: Path, work: Path):
     version = run([robolang, "--version"], cwd=outside, env=env).stdout.decode().strip()
     expected = f"robolang {VERSION} (language 1.1, 1.2 and 1.3, IR schema 1.0, 1.1 and 1.2)"
     expect(version == expected, f"--version: {version}")
+
+    reference = run([robolang, "reference"], cwd=outside, env=env).stdout
+    expected_reference = (REPO / "docs" / "language-reference.md").read_text(encoding="utf-8").encode("utf-8")
+    expect(reference == expected_reference,
+           "reference prints the tested documentation from the installed wheel")
 
     valid = run([robolang, "validate", EXAMPLE], cwd=outside, env=env)
     expect(b"valid RoboLang 1.1 (1 task, 1 warning)" in valid.stdout, "validate accepts the example")
