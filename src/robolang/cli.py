@@ -267,7 +267,7 @@ def _world_diagnostic(args, inputs: _RunInputs, finding: Finding):
 
 
 def _validate(args, out, err) -> int:
-    inputs = _run_inputs(args, err) if args.world is not None else None
+    inputs = _run_inputs(args, err, refuse=False) if args.world is not None else None
     loaded = _load(args, err) if inputs is None else inputs.loaded
     document = loaded.document
     if inputs is not None:
@@ -291,8 +291,12 @@ def _validate(args, out, err) -> int:
         print(NOT_A_SAFETY_CHECK, file=out)
     if inputs is not None:
         source = "world bindings" if inputs.cli_bindings is None else "--bind"
-        print(f"{args.file}: task '{inputs.task.name}' checked against {args.world} ({source}): "
-              f"no certain failure found. Run `simulate` for the rest", file=out)
+        if inputs.task.branching:
+            print(f"{args.file}: task '{inputs.task.name}' branches: its steps were not checked against "
+                  f"{args.world} (only its safety limits were); path checks are not implemented yet", file=out)
+        else:
+            print(f"{args.file}: task '{inputs.task.name}' checked against {args.world} ({source}): "
+                  f"no certain failure found. Run `simulate` for the rest", file=out)
     return EXIT_OK
 
 
@@ -353,7 +357,30 @@ def _step(step: task_ir.Step, typed: bool = False) -> str:
         return f"wait for {_quantity(step.duration)}"
     if isinstance(step, task_ir.WaitUntil):
         return f"wait until {_condition(step.condition, typed)} timeout {_quantity(step.timeout)}"
+    if isinstance(step, task_ir.If):
+        return f"if {_condition(step.condition, typed)}"
+    if isinstance(step, task_ir.Fail):
+        return f"fail {_quoted(step.reason)}"
     return f"communicate {step.robot} to {_quoted(step.channel)} with {_quoted(step.message)}"
+
+
+def _plan_lines(steps, typed: bool, number: str = "") -> list[str]:
+    """The steps numbered 1., 2., ...; an `if` is followed by its indented branches, numbered 2.1., 2.2., ..."""
+    lines = []
+    for i, step in enumerate(steps, 1):
+        label = f"{number}{i}."
+        lines.append(f"{label} {_step(step, typed)}")
+        if isinstance(step, task_ir.If):
+            for word, goal, body in (("then", step.goal_then, step.then), ("else", step.goal_else, step.orelse)):
+                if not body:
+                    continue
+                lines.append(f"  {word}:")
+                if goal:
+                    lines.append(f"    goal: {'; '.join(_condition(c, typed) for c in goal)}")
+                lines += [f"    {line}" for line in _plan_lines(body, typed, f"{label[:-1]}.")]
+            if not step.orelse:
+                lines.append("  else: (nothing; the task goal alone applies)")
+    return lines
 
 
 def _safety(limit: task_ir.SafetyLimit) -> str:
@@ -388,7 +415,7 @@ def _describe(task: task_ir.Task) -> list[str]:
     lines += _section("preconditions", [_condition(c, typed) for c in task.preconditions])
     if task.goal is not None:
         lines += _section("goal", [_condition(c, typed) for c in task.goal])
-    lines += _section("plan", [f"{i}. {_step(s, typed)}" for i, s in enumerate(task.steps, 1)])
+    lines += _section("plan", _plan_lines(task.steps, typed))
     return lines
 
 
@@ -457,11 +484,21 @@ class _RunInputs:
     loaded: _Loaded | None = None
 
 
-def _run_inputs(args, err) -> _RunInputs:
+def _refuse_branching(command: str, task: task_ir.Task):
+    """A RoboLang 1.4 task with `if` or `fail` has no simulation yet (decision 0027, PR 2): refuse, exit 2."""
+    if task.branching:
+        raise _CommandError(
+            f"task '{task.name}' branches (it has an 'if' or a 'fail'), and {command} does not support a "
+            "branching task yet: simulation of RoboLang 1.4 is not implemented in this version. "
+            "validate and inspect work on it"
+        )
+
+
+def _run_inputs(args, err, refuse: bool = True) -> _RunInputs:
     """
     What `simulate`, `export-goal` and `delegate` share: validate FILE (or the --ir file), select the task,
     apply `--bind`, load the world. Raises RoboLangError or IRError (exit 1), _CommandError (2) or
-    WorldError (3).
+    WorldError (3). A branching task is refused (exit 2) unless `refuse` is false (validate --world).
     """
     cli_bindings = _parse_bindings(args.bind)
     loaded = _load(args, err)  # read once: the run ID describes exactly what was run
@@ -478,6 +515,8 @@ def _run_inputs(args, err) -> _RunInputs:
         except KeyError:
             names = ", ".join(t.name for t in tasks)
             raise _CommandError(f"no task named '{args.task}' in '{args.file}'; tasks in this file: {names}") from None
+    if refuse:
+        _refuse_branching(args.command, task)
     if cli_bindings is not None:
         names = [p.name for p in task.parameters]
         for name in cli_bindings:
@@ -598,6 +637,10 @@ def _load_plans(paths: list[str], err) -> list[Plan]:
         except RoboLangError as error:
             _print_errors(error, path, err, summary=False)
             raise _PlanInvalid from None
+        for task in result.ir.tasks:
+            if task.branching:
+                raise _CommandError(f"{path}: task '{task.name}' branches, and delegate does not support a "
+                                    "branching plan yet: simulation of RoboLang 1.4 is not implemented in this version")
         plans.append(Plan(_record_path(path), data, result.ir.tasks, result.ir.language_version))
     return plans
 

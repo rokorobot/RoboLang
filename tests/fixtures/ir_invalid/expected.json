@@ -67,6 +67,10 @@
     "I122",
     "/tasks/0/preconditions/0/conditions/0"
   ],
+  "I123_if_too_deep.json": [
+    "I123",
+    "/tasks/0/steps/0/then/0/then/0/then/0/then/0"
+  ],
   "I201_duplicate_task.json": [
     "I201",
     "/tasks/1/name"
@@ -114,5 +118,9 @@
   "I213_empty_verify.json": [
     "I213",
     "/tasks/0/verify"
+  ],
+  "I214_fail_not_last.json": [
+    "I214",
+    "/tasks/0/steps/0/else/0"
   ]
 }

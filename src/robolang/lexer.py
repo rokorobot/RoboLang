@@ -1,9 +1,9 @@
 """
-Lexer for RoboLang v1.1 to v1.3 (spec/robolang-v1.1.md, sections 2 and 3).
+Lexer for RoboLang v1.1 to v1.4 (spec/robolang-v1.1.md, sections 2 and 3).
 
 Tokens are produced on demand. The parser uses this to reject an unsupported
 language version (E213) without interpreting the rest of the file; after the
-version marker it lexes the remainder in one go. A `robolang 1.2;` or `robolang 1.3;` marker
+version marker it lexes the remainder in one go. A `robolang 1.2;`, `1.3;` or `1.4;` marker
 switches the reserved words to that version's set before any later word is lexed.
 """
 
@@ -36,14 +36,14 @@ class Lexer:
         self._pos = 0
         self._line = 1
         self._col = 1
-        self.reserved = RESERVED  # RESERVED_BY_VERSION[...] after a `robolang 1.2;` or `1.3;` marker
-        self.verify = False  # `@verify` is an annotation after a `robolang 1.3;` marker only
+        self.reserved = RESERVED  # RESERVED_BY_VERSION[...] after a `robolang 1.2;`, `1.3;` or `1.4;` marker
+        self.verify = False  # `@verify` is an annotation after a `robolang 1.3;` or `1.4;` marker only
 
     def set_language(self, version: str):
         """Switch to the words and annotations of language `version` (a `robolang` marker was read)."""
         if version in RESERVED_BY_VERSION:
             self.reserved = RESERVED_BY_VERSION[version]
-        self.verify = version == "1.3"
+        self.verify = version in ("1.3", "1.4")
 
     # -------- helpers --------
 

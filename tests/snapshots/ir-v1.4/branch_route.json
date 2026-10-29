@@ -1,0 +1,130 @@
+{
+  "ir_schema": "robolang.task-ir",
+  "ir_schema_version": "1.3",
+  "language_version": "1.4",
+  "tasks": [
+    {
+      "name": "route",
+      "parameters": [
+        {
+          "name": "r",
+          "type": "robot"
+        },
+        {
+          "name": "box",
+          "type": "object"
+        },
+        {
+          "name": "src",
+          "type": "location"
+        },
+        {
+          "name": "a",
+          "type": "location"
+        },
+        {
+          "name": "b",
+          "type": "location"
+        },
+        {
+          "name": "cell",
+          "type": "region"
+        }
+      ],
+      "safety": [],
+      "preconditions": [],
+      "goal": [
+        {
+          "kind": "not",
+          "condition": {
+            "kind": "holding",
+            "robot": "r",
+            "object": "box"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "kind": "move",
+          "robot": "r",
+          "target": "src"
+        },
+        {
+          "kind": "grasp",
+          "robot": "r",
+          "object": "box"
+        },
+        {
+          "kind": "if",
+          "condition": {
+            "kind": "region_clear",
+            "region": "cell"
+          },
+          "then": [
+            {
+              "kind": "move",
+              "robot": "r",
+              "target": "a"
+            },
+            {
+              "kind": "place",
+              "robot": "r",
+              "object": "box",
+              "target": "a"
+            }
+          ],
+          "else": [
+            {
+              "kind": "if",
+              "condition": {
+                "kind": "robot_ready",
+                "robot": "r"
+              },
+              "then": [
+                {
+                  "kind": "move",
+                  "robot": "r",
+                  "target": "b"
+                },
+                {
+                  "kind": "place",
+                  "robot": "r",
+                  "object": "box",
+                  "target": "b"
+                }
+              ],
+              "else": [
+                {
+                  "kind": "communicate",
+                  "robot": "r",
+                  "channel": "ops",
+                  "message": "no route"
+                },
+                {
+                  "kind": "fail",
+                  "reason": "no route"
+                }
+              ],
+              "goal_then": [
+                {
+                  "kind": "object_at",
+                  "object": "box",
+                  "location": "b"
+                }
+              ],
+              "goal_else": null
+            }
+          ],
+          "goal_then": [
+            {
+              "kind": "object_at",
+              "object": "box",
+              "location": "a"
+            }
+          ],
+          "goal_else": null
+        }
+      ]
+    }
+  ]
+}

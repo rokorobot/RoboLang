@@ -1,0 +1,108 @@
+{
+  "ir_schema": "robolang.task-ir",
+  "ir_schema_version": "1.3",
+  "language_version": "1.4",
+  "tasks": [
+    {
+      "name": "haul",
+      "parameters": [
+        {
+          "name": "r",
+          "type": "robot"
+        },
+        {
+          "name": "c",
+          "type": "object"
+        },
+        {
+          "name": "src",
+          "type": "location"
+        },
+        {
+          "name": "dst",
+          "type": "location"
+        },
+        {
+          "name": "aisle",
+          "type": "region"
+        }
+      ],
+      "safety": [],
+      "preconditions": [],
+      "goal": [
+        {
+          "kind": "robot_at",
+          "robot": "r",
+          "location": "dst"
+        }
+      ],
+      "steps": [
+        {
+          "kind": "if",
+          "condition": {
+            "kind": "region_clear",
+            "region": "aisle"
+          },
+          "then": [
+            {
+              "kind": "if",
+              "condition": {
+                "kind": "region_clear",
+                "region": "aisle"
+              },
+              "then": [
+                {
+                  "kind": "if",
+                  "condition": {
+                    "kind": "region_clear",
+                    "region": "aisle"
+                  },
+                  "then": [
+                    {
+                      "kind": "if",
+                      "condition": {
+                        "kind": "region_clear",
+                        "region": "aisle"
+                      },
+                      "then": [
+                        {
+                          "kind": "if",
+                          "condition": {
+                            "kind": "region_clear",
+                            "region": "aisle"
+                          },
+                          "then": [
+                            {
+                              "kind": "move",
+                              "robot": "r",
+                              "target": "dst"
+                            }
+                          ],
+                          "else": [],
+                          "goal_then": null,
+                          "goal_else": null
+                        }
+                      ],
+                      "else": [],
+                      "goal_then": null,
+                      "goal_else": null
+                    }
+                  ],
+                  "else": [],
+                  "goal_then": null,
+                  "goal_else": null
+                }
+              ],
+              "else": [],
+              "goal_then": null,
+              "goal_else": null
+            }
+          ],
+          "else": [],
+          "goal_then": null,
+          "goal_else": null
+        }
+      ]
+    }
+  ]
+}

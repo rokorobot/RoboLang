@@ -1,8 +1,8 @@
 // RoboLang v1.2 fixture: invalid
 // expect: error E213 (syntax) line 5
-// why: only 1.1, 1.2 and 1.3 are supported
+// why: only 1.1, 1.2, 1.3 and 1.4 are supported
 
-robolang 1.4;
+robolang 1.5;
 
 task t(robot r, object box, location dst, region cell, region left, region right) {
     pre {

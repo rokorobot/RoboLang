@@ -1,0 +1,20 @@
+// RoboLang v1.4 fixture: valid
+// expect: ok
+// why: the task has no goal block; the goal branch has its own goal and the other branch ends in fail
+
+robolang 1.4;
+
+task haul(robot r, object c, location src, location dst, region aisle) {
+    plan {
+        if region_clear aisle {
+            goal { object_at c dst; }
+            move r to src;
+            grasp r c;
+            move r to dst;
+            place r c at dst;
+        } else {
+            communicate r to "ops" with "aisle blocked";
+            fail "aisle blocked";
+        }
+    }
+}

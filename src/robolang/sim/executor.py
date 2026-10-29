@@ -360,6 +360,8 @@ def _check_inputs(task: ir.Task, world: World) -> None:
     """The trust boundary of `run`: the world must have been validated for this very task."""
     if not isinstance(task, ir.Task) or not isinstance(world, World):
         raise SimulationInputError("run() needs an ir.Task and a World from load_world")
+    if task.branching:  # RoboLang 1.4 `if` / `fail`: simulated from N4 PR 2 (decision 0027)
+        raise SimulationInputError(f"task '{task.name}' branches; simulation of RoboLang 1.4 is not implemented yet")
     if world.task.name != task.name:
         raise SimulationInputError(f"the world was validated for task '{world.task.name}', not '{task.name}'")
     bound = dict(world.task.bindings)

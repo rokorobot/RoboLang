@@ -1,0 +1,104 @@
+{
+  "ir_schema": "robolang.task-ir",
+  "ir_schema_version": "1.3",
+  "language_version": "1.4",
+  "tasks": [
+    {
+      "name": "t",
+      "parameters": [
+        {
+          "name": "r",
+          "type": "robot"
+        },
+        {
+          "name": "box",
+          "type": "object"
+        },
+        {
+          "name": "dst",
+          "type": "location"
+        },
+        {
+          "name": "cam",
+          "type": "sensor"
+        },
+        {
+          "name": "cell",
+          "type": "region"
+        }
+      ],
+      "safety": [],
+      "preconditions": [],
+      "goal": [
+        {
+          "kind": "object_at",
+          "object": "box",
+          "location": "dst"
+        }
+      ],
+      "steps": [
+        {
+          "kind": "if",
+          "condition": {
+            "kind": "sensor_ok",
+            "sensor": "cam"
+          },
+          "then": [
+            {
+              "kind": "inspect",
+              "robot": "r",
+              "object": "box",
+              "sensor": "cam"
+            }
+          ],
+          "else": [],
+          "goal_then": null,
+          "goal_else": null
+        },
+        {
+          "kind": "move",
+          "robot": "r",
+          "target": "dst"
+        },
+        {
+          "kind": "if",
+          "condition": {
+            "kind": "and",
+            "conditions": [
+              {
+                "kind": "not",
+                "condition": {
+                  "kind": "region_clear",
+                  "region": "cell"
+                }
+              },
+              {
+                "kind": "robot_ready",
+                "robot": "r"
+              }
+            ]
+          },
+          "then": [
+            {
+              "kind": "wait_for",
+              "duration": {
+                "value": "1",
+                "unit": "s"
+              }
+            }
+          ],
+          "else": [
+            {
+              "kind": "place",
+              "robot": "r",
+              "object": "box",
+              "target": "dst"
+            }
+          ],
+          "goal_then": null,
+          "goal_else": null
+        }
+      ]
+    }
+  ]
+}

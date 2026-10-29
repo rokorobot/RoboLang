@@ -24,8 +24,8 @@ document the compiler produces; the golden snapshots under `tests/snapshots/` ar
 1. **Bytes.** UTF-8, no byte order mark, valid JSON, no duplicate object key, no number with a
    fraction or exponent, no `NaN` or `Infinity`, not nested too deeply for the JSON parser
    (`robolang.core.read_document`, the strict reading of Core 0.1 section 2.3).
-2. **Header.** `ir_schema` is `robolang.task-ir`; `ir_schema_version` is `1.0`, `1.1` or `1.2`;
-   `language_version` is the language that version is produced from (`1.1`, `1.2`, `1.3`). The version
+2. **Header.** `ir_schema` is `robolang.task-ir`; `ir_schema_version` is `1.0`, `1.1`, `1.2` or `1.3`;
+   `language_version` is the language that version is produced from (`1.1`, `1.2`, `1.3`, `1.4`). The version
    fields are claims: they only select the vocabulary below, and everything after them is checked
    against that vocabulary, so a document cannot claim 1.0 and use `and`. An unknown schema version
    stops the reading: nothing else can be interpreted.
@@ -70,6 +70,7 @@ the whole document; a missing field is reported at the object that lacks it). Th
 | `I120` | Empty `tasks` or `steps`; `and`/`or` with fewer than two operands |
 | `I121` | Condition nested deeper than 8 levels |
 | `I122` | `and` directly inside `and`, or `or` inside `or` (grouping not flattened) |
+| `I123` | `if` step nested deeper than 4 levels (E216) |
 | `I201` | Duplicate task name (E301) |
 | `I202` | Duplicate parameter name (E302) |
 | `I203` | Undeclared name (E303) |
@@ -78,10 +79,11 @@ the whole document; a missing field is reported at the object that lacks it). Th
 | `I206` | Two `max_speed` limits with the same unit (E306) |
 | `I207` | Empty sensor name (before 1.2), channel or message (E307) |
 | `I208` | A unitless `max_speed` combined with another one (E308) |
-| `I209` | Schema 1.2 task without a goal, or with an empty one (E309) |
+| `I209` | Schema 1.2 task without a goal, or with an empty one; schema 1.3 task without a `goal` key, or whose empty goal leaves a path with no branch goal and no `fail` (E309) |
 | `I210` | Schema 1.2 sensor reference that is not a parameter of the task: a world sensor ID where a name belongs (E310) |
 | `I212` | `min_confidence` above 1 (E312) |
 | `I213` | An empty `verify` object (the compiler never writes one) |
+| `I214` | A `fail` step that is not the last step of an `if` or `else` branch (E313) |
 
 `I211` is not used: a repeated `@verify` key (E311) cannot be written in a JSON object, where it is `I103`.
 

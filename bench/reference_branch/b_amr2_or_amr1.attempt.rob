@@ -2,6 +2,7 @@
 robolang 1.3;
 
 task haul(robot r1, robot r2, object c, location src, location dst) {
+    goal { object_at c dst; }
     plan {
         if robot_ready r1 {
             move r1 to src;

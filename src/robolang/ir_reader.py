@@ -19,10 +19,11 @@ from decimal import Decimal
 from . import ir
 from .core import ReadError, read_document
 from .diagnostics import MAX_ERRORS
-from .parser import MAX_CONDITION_DEPTH
+from .parser import MAX_CONDITION_DEPTH, MAX_IF_DEPTH
+from .paths import goalless_path
 from .tokens import DURATION_UNITS, RESERVED, RESERVED_BY_VERSION, SPEED_UNITS, VERIFY_KEYS
 
-SCHEMA_VERSIONS = tuple(ir.IR_SCHEMA_VERSIONS.values())  # "1.0", "1.1", "1.2": the index is the schema's rank
+SCHEMA_VERSIONS = tuple(ir.IR_SCHEMA_VERSIONS.values())  # "1.0" to "1.3": the index is the schema's rank
 LANGUAGE_OF = {schema: language for language, schema in ir.IR_SCHEMA_VERSIONS.items()}
 SAFETY_KINDS = ("max_speed",)
 MAX_DECIMAL_CHARS = 64
@@ -66,6 +67,7 @@ _USES = {
     "communicate": (("robot", "robot"),),
 }
 _PARAM_TYPES = {"robot": 0, "object": 0, "location": 0, "region": 0, "sensor": 2}
+_BRANCH_STEPS = {"if": 3, "fail": 3}  # kind -> first schema rank that has it
 
 
 @dataclass(frozen=True)
@@ -287,10 +289,53 @@ class _Reader:
             ok = self.condition(node, _pointer(ptr, i)) and ok
         return ok
 
-    def step(self, node, ptr: str) -> bool:
+    def steps(self, value, ptr: str, ifs: int, branch: bool = False) -> bool:
+        """A non-empty array of steps. `ifs`: the `if` steps around it. A branch of an `if` may be empty."""
+        if not self.array(value, ptr):
+            return False
+        ok = True
+        if not value and not branch:
+            what = "a task" if ifs == 0 else "a branch"
+            self.error("I120", f"{what} needs at least one step", ptr)
+            ok = False
+        for i, step in enumerate(value):
+            ok = self.step(step, _pointer(ptr, i), ifs) and ok
+        return ok
+
+    def branch(self, node: dict, ptr: str, side: str, ifs: int) -> bool:
+        """The `then` or `else` steps and the `goal_then` or `goal_else` of an `if`. Only `else` may be empty."""
+        ok = True
+        goal, body = node.get(f"goal_{side}"), node.get("then" if side == "then" else "else")
+        if f"goal_{side}" in node and goal is not None:
+            at = _pointer(ptr, f"goal_{side}")
+            ok = self.conditions(goal, at)
+            if isinstance(goal, list) and not goal:
+                self.error("I120", "a branch goal needs at least one condition (use null for none)", at)
+                ok = False
+        key = "then" if side == "then" else "else"
+        if key in node:
+            ok = self.steps(body, _pointer(ptr, key), ifs + 1, branch=side == "else") and ok
+            if side == "else" and body == [] and goal is not None:
+                self.error("I120", "'goal_else' needs a non-empty 'else'", _pointer(ptr, "goal_else"))
+                ok = False
+        return ok
+
+    def step(self, node, ptr: str, ifs: int = 0) -> bool:
         kind = self.kind(node, ptr)
         if kind is None:
             return False
+        if kind in _BRANCH_STEPS and not self._needs(f"step kind '{kind}'", _BRANCH_STEPS[kind], _pointer(ptr, "kind")):
+            return False
+        if kind == "fail":
+            return self.strings(node, ptr, ("kind", "reason"), ("reason",))
+        if kind == "if":
+            if ifs >= MAX_IF_DEPTH:
+                self.error("I123", f"'if' nested deeper than {MAX_IF_DEPTH} levels", ptr)
+                return False
+            ok = self.shape(node, ptr, ("kind", "condition", "then", "else", "goal_then", "goal_else"))
+            if "condition" in node:
+                ok = self.condition(node["condition"], _pointer(ptr, "condition")) and ok
+            return self.branch(node, ptr, "then", ifs) and self.branch(node, ptr, "else", ifs) and ok
         if kind in _STEPS:
             keys = _STEPS[kind]
             return self.strings(node, ptr, ("kind", *keys), keys)
@@ -328,22 +373,21 @@ class _Reader:
             ok = self.goal(task, ptr) and ok
             if "verify" in task:
                 ok = self.verify(task["verify"], _pointer(ptr, "verify")) and ok
-        if "steps" in task and self.array(task["steps"], _pointer(ptr, "steps")):
-            at = _pointer(ptr, "steps")
-            if not task["steps"]:
-                self.error("I120", "a task needs at least one step", at)
-                ok = False
-            for i, step in enumerate(task["steps"]):
-                ok = self.step(step, _pointer(at, i)) and ok
-        elif "steps" in task:
-            ok = False
+        if "steps" in task:
+            ok = self.steps(task["steps"], _pointer(ptr, "steps"), 0) and ok
         return ok
 
     def goal(self, task: dict, ptr: str) -> bool:
-        """Schema 1.2 requires a non-empty goal. A missing or empty goal is I209 (E309) and does not stop the rest."""
+        """
+        Schema 1.2 requires a non-empty goal; schema 1.3 requires the key but may leave it empty (the branches then
+        give every path its goal: checked in `task_meaning`). A missing or empty goal is I209 (E309) and does not
+        stop the rest.
+        """
         at = _pointer(ptr, "goal")
-        if "goal" not in task or task["goal"] == []:
-            self.error("I209", "this task has no goal: IR schema 1.2 requires 'goal' with at least one condition",
+        if "goal" not in task or (task["goal"] == [] and self._rank < 3):
+            self.error("I209", f"this task has no goal: IR schema {self._schema} requires 'goal' with at least one "
+                               "condition" if self._rank < 3 else "this task has no 'goal' key: IR schema 1.3 "
+                               "requires it, as an empty array when only the branches give goals",
                        at if "goal" in task else ptr)
             return True
         return self.conditions(task["goal"], at)
@@ -414,8 +458,21 @@ class _Reader:
         self.condition_list(task["preconditions"], _pointer(ptr, "preconditions"))
         if self._rank >= 2:
             self.condition_list(task.get("goal", []), _pointer(ptr, "goal"))
-        for i, step in enumerate(task["steps"]):
-            self.step_meaning(step, _pointer(_pointer(ptr, "steps"), i))
+        self.steps_meaning(task["steps"], _pointer(ptr, "steps"), branch=False)
+        if self._rank >= 3 and not task["goal"]:
+            label = goalless_path(task["steps"], False, _parts)
+            if label is not None:
+                where = f"path {label}" if label else "the plan"
+                self.error("I209", f"no goal on {where}: the task 'goal' is empty and a path that does not end in "
+                                   "'fail' has no branch goal", _pointer(ptr, "goal"))
+
+    def steps_meaning(self, steps: list, ptr: str, branch: bool):
+        """`branch`: the steps are an `if` or `else` body, where a `fail` may be the last step (I214)."""
+        for i, step in enumerate(steps):
+            at = _pointer(ptr, i)
+            if step["kind"] == "fail" and not (branch and i == len(steps) - 1):
+                self.error("I214", "'fail' is allowed only as the last step of an if or else branch", at)
+            self.step_meaning(step, at)
 
     def limits(self, limits: list, ptr: str):
         earlier: dict[str | None, int] = {}
@@ -458,7 +515,15 @@ class _Reader:
 
     def step_meaning(self, node: dict, ptr: str):
         kind = node["kind"]
-        if kind == "wait_for":
+        if kind == "if":
+            self.condition_meaning(node["condition"], _pointer(ptr, "condition"))
+            for side, key in (("then", "then"), ("else", "else")):
+                if node[f"goal_{side}"] is not None:
+                    self.condition_list(node[f"goal_{side}"], _pointer(ptr, f"goal_{side}"))
+                self.steps_meaning(node[key], _pointer(ptr, key), branch=True)
+        elif kind == "fail":
+            self.not_empty(node["reason"], "reason", _pointer(ptr, "reason"))
+        elif kind == "wait_for":
             self.positive(node["duration"]["value"], "duration", _pointer(_pointer(ptr, "duration"), "value"))
         elif kind == "wait_until":
             self.condition_meaning(node["condition"], _pointer(ptr, "condition"))
@@ -547,8 +612,26 @@ _CONDITIONS = (ir.RobotReady, ir.RegionClear, ir.ObjectExists, ir.SensorOk, ir.O
 _STEP_TYPES = {cls.KIND: cls for cls in (ir.Move, ir.Grasp, ir.Place, ir.Inspect, ir.Communicate)}
 
 
+def _goal(node: list | None) -> tuple[ir.Condition, ...] | None:
+    return None if node is None else tuple(_condition(c) for c in node)
+
+
+def _parts(step: dict):
+    """The shape `paths.goalless_path` reads, from a step object."""
+    if step["kind"] == "fail":
+        return "fail"
+    if step["kind"] != "if":
+        return None
+    return step["then"], step["goal_then"] is not None, step["else"], step["goal_else"] is not None
+
+
 def _step(node: dict) -> ir.Step:
     kind = node["kind"]
+    if kind == "if":
+        return ir.If(_condition(node["condition"]), tuple(_step(s) for s in node["then"]),
+                     tuple(_step(s) for s in node["else"]), _goal(node["goal_then"]), _goal(node["goal_else"]))
+    if kind == "fail":
+        return ir.Fail(node["reason"])
     if kind == "wait_for":
         return ir.WaitFor(_quantity(node["duration"]))
     if kind == "wait_until":

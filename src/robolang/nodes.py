@@ -221,7 +221,37 @@ class Communicate:
     span: Span
 
 
-Statement = Union[Move, Grasp, Place, Inspect, WaitFor, WaitUntil, Communicate]
+@dataclass(frozen=True)
+class Fail:
+    """RoboLang 1.4: end the run as FAILED with `reason`. Only the last statement of a branch (E313)."""
+
+    reason: StringLit
+    span: Span
+
+
+@dataclass(frozen=True)
+class Branch:
+    """RoboLang 1.4: one side of an `if`. `goal` holds the conditions this path adds to the task goal."""
+
+    goal: GoalBlock | None
+    statements: tuple[Statement, ...]
+    span: Span
+
+
+@dataclass(frozen=True)
+class If:
+    """
+    RoboLang 1.4. `orelse` is None when there is no `else`. `else if` is an `orelse` branch with
+    no goal whose only statement is the nested `If`.
+    """
+
+    condition: Condition
+    then: Branch
+    orelse: Branch | None
+    span: Span
+
+
+Statement = Union[Move, Grasp, Place, Inspect, WaitFor, WaitUntil, Communicate, If, Fail]
 
 
 # -------- structure --------

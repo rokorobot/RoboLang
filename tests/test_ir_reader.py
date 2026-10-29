@@ -17,7 +17,7 @@ from robolang.sim import sha256_normalized
 
 TESTS = Path(__file__).parent
 REPO_ROOT = TESTS.parent
-SNAPSHOT_SETS = [("ir", "valid"), ("ir-v1.2", "v1.2/valid"), ("ir-v1.3", "v1.3/valid")]
+SNAPSHOT_SETS = [("ir", "valid"), ("ir-v1.2", "v1.2/valid"), ("ir-v1.3", "v1.3/valid"), ("ir-v1.4", "v1.4/valid")]
 SNAPSHOTS = [
     pytest.param(snapshot, TESTS / "fixtures" / fixtures / f"{snapshot.stem}.rob", id=f"{folder}/{snapshot.stem}")
     for folder, fixtures in SNAPSHOT_SETS
@@ -56,7 +56,7 @@ def test_every_compiler_snapshot_reads_back_to_the_compilers_ir(snapshot, source
 
 
 def test_snapshot_sets_are_complete():
-    assert len(SNAPSHOTS) == 37
+    assert len(SNAPSHOTS) == 40
 
 
 def test_reading_is_independent_of_layout_key_order_and_decimal_zeros():
@@ -156,7 +156,7 @@ def test_language_version_must_match_the_schema_version(schema, language):
 
 def test_wrong_schema_identifier_and_unknown_version_stop_before_the_tasks_are_read():
     document = valid()
-    document.update(ir_schema="other", ir_schema_version="1.3")
+    document.update(ir_schema="other", ir_schema_version="1.4")
     document["tasks"] = "not even tasks"
 
     assert problems(document) == [("I113", "/ir_schema"), ("I113", "/ir_schema_version")]

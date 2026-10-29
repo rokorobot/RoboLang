@@ -103,9 +103,9 @@ def test_versions():
 
 
 def test_unsupported_versions_list_all_supported_ones():
-    raised = error("robolang 1.4;\n" + task(version=None))
+    raised = error("robolang 1.5;\n" + task(version=None))
     assert (raised.code, raised.line, raised.column) == ("E213", 1, 10)
-    assert "1.1, 1.2 and 1.3" in str(raised)
+    assert "1.1, 1.2, 1.3 and 1.4" in str(raised)
 
 
 # -------- syntax and AST (spec 3, 6) --------
@@ -775,7 +775,7 @@ def test_inspect_json_of_a_1_3_file_has_the_goal():
 def test_version_lists_all_languages_and_schemas():
     from robolang import cli as cli_module
 
-    assert cli_module.version_text().endswith("(language 1.1, 1.2 and 1.3, IR schema 1.0, 1.1 and 1.2)")
+    assert cli_module.version_text().endswith("(language 1.1, 1.2, 1.3 and 1.4, IR schema 1.0, 1.1, 1.2 and 1.3)")
     assert cli_module._joined(["1.1"]) == "1.1" and cli_module._joined(["1.1", "1.2"]) == "1.1 and 1.2"
 
 

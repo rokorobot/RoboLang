@@ -1,4 +1,4 @@
-"""Token definitions and word sets for RoboLang v1.1 to v1.3 (robolang-v1.1.md section 3, v1.2 2.2, v1.3 2.2)."""
+"""Token definitions and word sets for RoboLang v1.1 to v1.4 (robolang-v1.1.md section 3, v1.2 2.2, v1.3 2.2)."""
 
 from __future__ import annotations
 from dataclasses import dataclass
@@ -58,8 +58,11 @@ PARAM_TYPES_V1_3 = PARAM_TYPES + ("sensor",)
 CONDITIONS_V1_3 = CONDITIONS + ("object_at", "robot_at", "holding")
 RESERVED_V1_3 = RESERVED_V1_2 | frozenset(("goal", "sensor", "object_at", "robot_at", "holding"))
 
+# RoboLang 1.4 adds bounded branching (spec/robolang-v1.4.md, decision 0027 B9).
+RESERVED_V1_4 = RESERVED_V1_3 | frozenset(("if", "else", "fail"))
+
 # Language version -> its reserved words. Versions not listed read as 1.1.
-RESERVED_BY_VERSION = {"1.2": RESERVED_V1_2, "1.3": RESERVED_V1_3}
+RESERVED_BY_VERSION = {"1.2": RESERVED_V1_2, "1.3": RESERVED_V1_3, "1.4": RESERVED_V1_4}
 
 # Recognized only in their grammatical position; not reserved.
 SAFETY_KEYS = ("max_speed",)

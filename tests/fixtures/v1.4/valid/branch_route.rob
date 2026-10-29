@@ -1,0 +1,25 @@
+// RoboLang v1.4 fixture: valid
+// expect: ok
+// why: an if with branch goals, an else if, and a common task goal
+
+robolang 1.4;
+
+task route(robot r, object box, location src, location a, location b, region cell) {
+    goal { not holding r box; }
+    plan {
+        move r to src;
+        grasp r box;
+        if region_clear cell {
+            goal { object_at box a; }
+            move r to a;
+            place r box at a;
+        } else if robot_ready r {
+            goal { object_at box b; }
+            move r to b;
+            place r box at b;
+        } else {
+            communicate r to "ops" with "no route";
+            fail "no route";
+        }
+    }
+}

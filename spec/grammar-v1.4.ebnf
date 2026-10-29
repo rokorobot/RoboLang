@@ -1,0 +1,26 @@
+(* RoboLang v1.4 grammar, implemented in src/robolang/parser.py.
+   RoboLang 1.3 plus bounded branching. Differences from grammar-v1.3.ebnf are marked [1.4].
+   Everything not shown here is as in grammar-v1.3.ebnf.
+   Normative text, diagnostics and static rules: spec/robolang-v1.4.md *)
+
+version_decl  = "robolang" , NUMBER , ";" ;                (* [1.4] NUMBER written exactly 1.4 *)
+
+task          = "task" , IDENT , "(" , [ param , { "," , param } ] , ")" ,
+                "{" , { annotation } , [ pre ] , [ goal ] , plan , "}" ;   (* [1.4] goal optional: E309 by path *)
+
+statement     = ( move | grasp | place | inspect | wait | communicate | fail ) , ";"      (* [1.4] fail *)
+              | if ;                                                                       (* [1.4] *)
+
+if            = "if" , condition , branch ,
+                [ "else" , ( branch | if ) ] ;                                              (* [1.4] *)
+branch        = "{" , [ goal ] , statement , { statement } , "}" ;                         (* [1.4] *)
+fail          = "fail" , STRING ;                                                          (* [1.4] *)
+
+(* [1.4] Static rules the grammar does not express:
+   - "if" nested (counting "else if") at most 4 deep: E216 (reported by the parser).
+   - "fail" only as the last statement of a branch: E313.
+   - every path has a goal condition (task goal or branch goal) or ends in "fail": E309.
+   - a branch goal block is only the first item of a branch: E208. *)
+
+(* Reserved words in a 1.4 file: those of grammar-v1.3.ebnf and
+     if else fail                                                                            [1.4] *)
