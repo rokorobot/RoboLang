@@ -31,7 +31,7 @@ in one dict, `PRICES` in `lib.py`.
 
 ## What happens to one task
 
-1. The model gets `prompt.md` (cached) and a message with the world (entity IDs and state) and the request, and answers
+1. The model gets `prompt.md` with the shipped `docs/language-reference.md` inserted (cached), plus a message with the world (entity IDs and state) and the request, and answers
    `{"decision", "category", "reason", "rob", "task", "bindings"}` (structured output, `output_config.effort`);
    `decision` is `program` or `cannot`. Set 1 answers saved before this have only the last three keys and are read as programs.
 2. The answer is checked like `robolang validate` + `robolang simulate` would: source, task name, bindings.
@@ -73,7 +73,7 @@ Do not read much into a few points of difference: 40 tasks is a small sample. Us
 | `tasks/<id>.json` | `id`, `prompt`, `world`, `expected_goal` (set of Core triples), `tags`; optional `expected_safety`, `expected_messages`, `expected_end_ms`, `probes` |
 | `worlds/*.json`, `../examples/world.json` | the worlds (world file 1.1) |
 | `reference/<id>.rob`, `<id>.json` | a hand-written solution and its task name and bindings; CI runs all 40 |
-| `prompt.md`, `prompt_minimal.md` | the system prompts (keep them stable; the hash is stored with each run); the minimal one has the grammar pasted in |
+| `prompt.md`, `prompt_minimal.md` | stable prompt wrappers (the hash of the assembled prompt is stored with each run); the full prompt inserts `docs/language-reference.md`, while the minimal prompt inserts the grammar |
 | `tasks_hard/`, `reference_hard/`, `worlds/*.notes.json` | set 2: tasks, references and attempts, entity descriptions |
 | `lib.py`, `run.py`, `score.py` | shared checks and prices; the runner; the scorer |
 

@@ -30,9 +30,11 @@ REFERENCE_DIR = BENCH / "reference"
 HARD_TASKS_DIR = BENCH / "tasks_hard"
 HARD_REFERENCE_DIR = BENCH / "reference_hard"
 PROMPT_FILE = BENCH / "prompt.md"
+REFERENCE_FILE = ROOT / "docs" / "language-reference.md"
 MINIMAL_PROMPT_FILE = BENCH / "prompt_minimal.md"
 GRAMMAR_FILE = ROOT / "spec" / "grammar-v1.3.ebnf"
 GRAMMAR_MARK = "{{GRAMMAR}}"  # in prompt_minimal.md: replaced by the text of the grammar file
+REFERENCE_MARK = "{{LANGUAGE_REFERENCE}}"  # in prompt.md: replaced by the shipped, tested reference
 
 # The task sets: name -> (tasks directory, reference directory). Set 1 is the default and stays as it was.
 SETS = {"1": (TASKS_DIR, REFERENCE_DIR), "hard": (HARD_TASKS_DIR, HARD_REFERENCE_DIR)}
@@ -110,11 +112,12 @@ def load_set(name: str) -> dict[str, dict]:
 
 
 def load_prompt(name: str = "full") -> str:
-    """The system prompt: `prompt.md`, or the minimal variant with the grammar file pasted in."""
+    """A prompt assembled from its stable wrapper and the canonical grammar or language reference."""
     if name == "minimal":
         text = MINIMAL_PROMPT_FILE.read_text(encoding="utf-8")
         return text.replace(GRAMMAR_MARK, GRAMMAR_FILE.read_text(encoding="utf-8").rstrip("\n"))
-    return PROMPT_FILE.read_text(encoding="utf-8")
+    text = PROMPT_FILE.read_text(encoding="utf-8")
+    return text.replace(REFERENCE_MARK, REFERENCE_FILE.read_text(encoding="utf-8").rstrip("\n"))
 
 
 def expectation(task_def: dict) -> tuple[str, str]:

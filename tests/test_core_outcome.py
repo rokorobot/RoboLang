@@ -33,6 +33,10 @@ task multi(robot r, object box, location src, location dst) {
     plan { move r to src; grasp r box; move r to dst; }
 }
 """
+AND_GOAL = MULTI.replace(
+    "holding r box; robot_at r dst; object_at box dst;",
+    "holding r box and robot_at r dst;",
+)
 V12 = """robolang 1.2;
 task plain(robot r, location dst) { plan { move r to dst; } }
 """
@@ -155,6 +159,16 @@ def test_goal_false_object_held_and_met_means_observed_triple_equals_criterion(t
         assert result["met"] == (observed[obs_id] == criterion)
     # The unmet criterion cites what is true: the box is carried, not at the table.
     assert observed[results[2]["evidence"][0]] == criteria[0]
+
+
+def test_and_goal_has_one_core_result_per_outcome_atom(tmp_path):
+    source = tmp_path / "and_goal.rob"
+    source.write_text(AND_GOAL, encoding="utf-8")
+    core = check_core(simulate(str(source), BASE_WORLD, *BIND))
+    assert core["outcome"]["status"] == "succeeded"
+    results = core["outcome"]["verification"]["criteria_results"]
+    assert [(result["criterion"], result["met"]) for result in results] == [(0, True), (1, True)]
+    assert len(core["evidence"]) == 2
 
 
 def test_goal_unknown_is_status_unknown_with_no_observation():
