@@ -229,7 +229,10 @@ Static validation runs after a successful parse and before anything executes.
 For rules 6 and 7 the diagnostic is reported at the later of the conflicting annotations.
 
 Static errors are reported in source order, by the position at which each is reported. A
-front end that stops at the first error therefore reports the earliest one in the file.
+front end reports every static error (section 6), at most one for each statement, parameter,
+`@safety` annotation and condition atom: once one rule fails for an item, its other rules are
+not checked, so one mistake is not reported twice. A name that is undeclared (`E303`) is never
+also reported as having the wrong type (`E304`).
 
 An unused parameter is not an error.
 
@@ -243,7 +246,17 @@ Format:
 ```
 
 Every diagnostic carries a stable code, the position of the offending token and a reason.
-Where a fixed set was expected, the message lists it. A front end may stop at the first error.
+Where a fixed set was expected, the message lists it.
+
+A front end reports every error it finds, in source order, not only the first
+([decision 0015](decisions/0015-report-all-diagnostics.md)). To do so after a syntax error it
+resumes after the next `;`, at the next `}`, or at the next `task` (a missing `;` skips nothing
+when the next token already starts a statement or condition). A task with a syntax error is not
+statically validated, so its syntax error is not followed by errors it caused; every other task
+is. A lexical error, and an error in the version marker, stop the front end: they are reported
+alone. At most 50 errors are reported, followed by a note that there are more. The first error
+reported is the one a front end that stops at the first error would report, except that a static
+error in an earlier task now comes before a syntax error in a later one.
 
 Stages run in order: lexical, then syntax, then static. A lexical error anywhere in the file
 is reported before any syntax error, even one that appears earlier in the text. The one

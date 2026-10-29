@@ -166,7 +166,7 @@ make sense is the author's concern.
 
 ## 5. Diagnostics
 
-1.1 section 6 applies unchanged, with these additions:
+1.1 section 6 applies unchanged, including the reporting of every error (decision 0015), with these additions:
 
 | Code | Stage | Meaning |
 |---|---|---|

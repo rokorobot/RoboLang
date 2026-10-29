@@ -35,12 +35,34 @@ class Diagnostic:
         return self.format()
 
 
-class RoboLangError(Exception):
-    """Raised for the first lexical or syntax error in a source file."""
+MAX_ERRORS = 50  # a front end reports at most this many errors, then says there are more
 
-    def __init__(self, diagnostic: Diagnostic):
-        super().__init__(diagnostic.format())
-        self.diagnostic = diagnostic
+
+class RoboLangError(Exception):
+    """
+    Raised when a source file has at least one error.
+
+    `diagnostic` is the first error (what a front end that stops at the first error reports);
+    `diagnostics` is every error found, in source order, at most `MAX_ERRORS`. `truncated` is
+    true when more errors were found than are listed. `warnings` are the warnings found before
+    the file was rejected.
+    """
+
+    def __init__(
+        self,
+        diagnostic: Diagnostic | list[Diagnostic] | tuple[Diagnostic, ...],
+        *,
+        truncated: bool = False,
+        warnings: tuple[Diagnostic, ...] = (),
+    ):
+        diagnostics = (diagnostic,) if isinstance(diagnostic, Diagnostic) else tuple(diagnostic)
+        if len(diagnostics) > MAX_ERRORS:
+            diagnostics, truncated = diagnostics[:MAX_ERRORS], True
+        super().__init__(diagnostics[0].format())
+        self.diagnostic = diagnostics[0]
+        self.diagnostics = diagnostics
+        self.truncated = truncated
+        self.warnings = warnings
 
     @property
     def code(self) -> str:
