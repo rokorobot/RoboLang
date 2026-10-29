@@ -5,7 +5,7 @@
 > label validation, freeze, paid validation and merging PR #69. Final coverage: 23 program / 19 infeasible /
 > 20 inexpressible / 18 clarify. Score thresholds remain unchanged. See [review response](../evidence/bench2-label-review-response.md).
 
-**Status:** reviewed replacements approved and inputs frozen; paid validation attempted, blocked by API credit. Decision record: [0025](../../spec/decisions/0025-bench-2.md).
+**Status:** reviewed replacements approved and inputs frozen; funded 240-answer validation completed. See [validation results](../evidence/bench2-frozen-validation.md). Decision record: [0025](../../spec/decisions/0025-bench-2.md).
 Phase 1 (build, `bench/v2/`) and the phase 3 pilot are done (2026-10-29,
 [report](../evidence/bench2-pilot-report.md)). The label review and freeze are now done; the full two-prompt reliability study is not. No full run,
 language change, Core change or merge without separate authorization.
