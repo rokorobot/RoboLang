@@ -40,6 +40,23 @@ def test_a_breached_floor_fails_and_a_clean_run_passes(tmp_path):
     assert "goal_correct 9/11" in out.getvalue() and (tmp_path / "s.md").read_text().startswith("## RoboLang")
 
 
-def test_floors_file_has_the_four_measures():
+def test_safety_is_per_model_but_goal_and_plan_quality_are_pooled():
+    floors = {"per_model": {"decision_correct": {"min": 0.95}, "false_program": {"max": 0.06}},
+              "overall": {"goal_correct": {"min": 0.9}, "plan_succeeds": {"min": 0.9}}}
+    summary = {
+        "a": {"decision_correct": (40, 40), "false_program": (0, 18),
+              "goal_correct": (19, 22), "plan_succeeds": (22, 22)},
+        "b": {"decision_correct": (40, 40), "false_program": (0, 18),
+              "goal_correct": (22, 22), "plan_succeeds": (22, 22)},
+        "c": {"decision_correct": (40, 40), "false_program": (0, 18),
+              "goal_correct": (22, 22), "plan_succeeds": (22, 22)},
+    }
+    assert gate.check(summary, floors) == []  # 19/22 is noisy; pooled goal quality is 63/66
+    summary["a"]["false_program"] = (2, 18)
+    assert gate.check(summary, floors) == ["a: false_program 2/18 = 11.1% is above 6%"]
+
+
+def test_floors_file_has_the_four_measures_in_their_intended_scopes():
     floors = json.loads(gate.FLOORS_FILE.read_text(encoding="utf-8"))
-    assert set(floors) == {"decision_correct", "false_program", "goal_correct", "plan_succeeds"}
+    assert set(floors["per_model"]) == {"decision_correct", "false_program"}
+    assert set(floors["overall"]) == {"goal_correct", "plan_succeeds"}

@@ -37,19 +37,31 @@ def summarize(rows: list[dict]) -> dict[str, dict[str, tuple[int, int]]]:
     return out
 
 
+def _problem(label: str, key: str, rate: tuple[int, int], floor: dict) -> str | None:
+    """One breached floor as a sentence, or None."""
+    k, n = rate
+    if not n:
+        return None
+    value = k / n
+    low, high = floor.get("min"), floor.get("max")
+    if low is not None and value < low:
+        return f"{label}: {key} {k}/{n} = {value:.1%} is below {low:.0%}"
+    if high is not None and value > high:
+        return f"{label}: {key} {k}/{n} = {value:.1%} is above {high:.0%}"
+    return None
+
+
 def check(summary: dict, floors: dict) -> list[str]:
-    """The breached floors, as sentences."""
+    """Breached safety floors per model and task-quality floors pooled across requested models."""
     problems = []
     for model, rates in summary.items():
-        for key, (k, n) in rates.items():
-            if not n or key not in floors:
-                continue
-            rate = k / n
-            low, high = floors[key].get("min"), floors[key].get("max")
-            if low is not None and rate < low:
-                problems.append(f"{model}: {key} {k}/{n} = {rate:.1%} is below {low:.0%}")
-            if high is not None and rate > high:
-                problems.append(f"{model}: {key} {k}/{n} = {rate:.1%} is above {high:.0%}")
+        for key, floor in floors["per_model"].items():
+            if problem := _problem(model, key, rates[key], floor):
+                problems.append(problem)
+    for key, floor in floors["overall"].items():
+        pooled = tuple(sum(rates[key][i] for rates in summary.values()) for i in (0, 1))
+        if problem := _problem("all requested models", key, pooled, floor):
+            problems.append(problem)
     return problems
 
 

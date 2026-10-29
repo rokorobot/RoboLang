@@ -63,6 +63,12 @@ Development moves in days, so measurement does too.
 | Monthly (first Monday) | Strategy review: pillars, horizon progress, kill or continue, dates | This page, with a dated note in section 6 | – |
 | On demand | Before a release, and when a new model comes out (`workflow_dispatch`) | As weekly | ~$1–5 |
 
+The per-PR gate checks the two safety decisions—decision accuracy and false programs—for every
+requested model separately. Goal correctness and plan success are pooled across the requested models:
+with only 22 feasible hard tasks in a one-repeat PR run, one model's single extra ambiguous reading
+moves its rate by 4.5 points and is not evidence of a product regression. The weekly three-repeat run
+is where per-model drift is interpreted.
+
 The API key lives in one place: the repository secret `ANTHROPIC_API_KEY`. Without it the benchmark job
 is skipped and nothing is spent.
 

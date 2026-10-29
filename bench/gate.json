@@ -1,6 +1,10 @@
 {
-  "decision_correct": {"min": 0.95},
-  "false_program": {"max": 0.06},
-  "goal_correct": {"min": 0.9},
-  "plan_succeeds": {"min": 0.9}
+  "per_model": {
+    "decision_correct": {"min": 0.95},
+    "false_program": {"max": 0.06}
+  },
+  "overall": {
+    "goal_correct": {"min": 0.9},
+    "plan_succeeds": {"min": 0.9}
+  }
 }
