@@ -1,7 +1,8 @@
 # Decision record 0027: RoboLang 1.4, bounded branching (N4)
 
 **Date:** 2026-10-29
-**Status:** **PROPOSED.** Design only, for owner decision. No grammar, parser, IR or simulator change yet.
+**Status:** **APPROVED by the owner, 2026-10-29**, with the recommended option for B1–B9. Design only: no grammar, parser,
+IR or simulator change yet. Next is benchmark set 3, pre-registered and run against 1.3 (section 3), then code.
 **Applies to (when decided):** a new `robolang-v1.4.md` and `grammar-v1.4.ebnf`, IR schema 1.3, run record 1.3,
 `simulation-v1.0.md`, the language reference, `validate --world` ([0026](0026-validate-world.md))
 **Evidence:** [set 2 analysis](../../docs/evidence/bench-set2-analysis.md) F3. A model silently dropped half of
@@ -40,7 +41,7 @@ task route(robot r, object box, location src, location a, location b, region cel
 `x_whichever_free` becomes `if robot_ready arm1 { … with r1 … } else { … with r2 … }`, with both robots bound
 as parameters and one common goal. `x_missing_box_branch` needs B4.
 
-## 2. Decisions proposed (recommendation first; owner picks)
+## 2. Decisions (the recommended column was approved)
 
 | # | Question | Recommended | Alternatives |
 |---|---|---|---|
