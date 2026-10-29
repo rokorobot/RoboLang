@@ -9,6 +9,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+from collections.abc import Mapping
 
 from .. import ir
 from .executor import RunResult
@@ -30,9 +31,11 @@ def sha256_normalized(data: bytes) -> str:
     return hashlib.sha256(data.replace(b"\r\n", b"\n")).hexdigest()
 
 
-def run_id(source: bytes, world: bytes, task: str, seed: str) -> str:
-    """The ID of an input-equivalent simulation run (section 6)."""
+def run_id(source: bytes, world: bytes, task: str, seed: str, cli_bindings: Mapping[str, str] | None = None) -> str:
+    """The ID of an input-equivalent simulation run (section 6). `--bind` bindings extend the preimage."""
     preimage = f"robolang-sim-run/1.0\n{sha256_normalized(source)}\n{sha256_normalized(world)}\n{task}\n{seed}\n"
+    if cli_bindings is not None:
+        preimage += "".join(f"bind {name}={target}\n" for name, target in sorted(cli_bindings.items()))
     return "sim-" + hashlib.sha256(preimage.encode("ascii")).hexdigest()
 
 
@@ -110,25 +113,29 @@ def to_record(
     world_sha256: str,
     seed: str,
     language_version: str = ir.LANGUAGE_VERSION,
+    bindings_source: str = "world",
 ) -> dict:
     """
     The run record (section 5) as a dict with the key order of the specification: schema 1.0
     for a RoboLang 1.1 source, 1.1 for a 1.2 source (same shape, embedding Task IR 1.1).
     """
+    inputs = {
+        "source_sha256": source_sha256,
+        "world_sha256": world_sha256,
+        "task": result.task_name,
+        "seed": seed,
+        "language_version": language_version,
+        "ir_schema_version": ir.IR_SCHEMA_VERSIONS[language_version],
+        "world_schema_version": WORLD_SCHEMA_VERSION,
+    }
+    if bindings_source != "world":  # a record without the key has world-file bindings (section 5.1)
+        inputs["bindings_source"] = bindings_source
     return {
         "run_record_schema": RUN_RECORD_SCHEMA,
         "run_record_schema_version": RUN_RECORD_SCHEMA_VERSIONS[language_version],
         "mode": "simulation",
         "run_id": run_id,
-        "inputs": {
-            "source_sha256": source_sha256,
-            "world_sha256": world_sha256,
-            "task": result.task_name,
-            "seed": seed,
-            "language_version": language_version,
-            "ir_schema_version": ir.IR_SCHEMA_VERSIONS[language_version],
-            "world_schema_version": WORLD_SCHEMA_VERSION,
-        },
+        "inputs": inputs,
         "task": ir.to_dict(task),
         "bindings": dict(result.bindings),
         "states": list(result.states),

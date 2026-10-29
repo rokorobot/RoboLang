@@ -19,6 +19,7 @@ from .values import DURATION_UNITS, SPEED_UNITS, Speed, duration_ms, parse_decim
 
 WORLD_SCHEMA = "robolang.sim.world"
 WORLD_SCHEMA_VERSION = "1.0"
+CLI_BINDINGS_SOURCE = "--bind"
 
 _ID = re.compile(r"[A-Za-z][A-Za-z0-9_]*")
 _FACT_KIND = {"robot_ready": "robot", "region_clear": "region", "sensor_available": "sensor"}
@@ -138,12 +139,13 @@ def _pointer(*parts) -> str:
 
 
 class _Loader:
-    def __init__(self, filename: str, task: ir.Task):
+    def __init__(self, filename: str, task: ir.Task, cli_bindings: Mapping[str, str] | None = None):
         self.filename = filename
         self.task = task
+        self.cli_bindings = cli_bindings
 
-    def fail(self, code: str, pointer: str, message: str):
-        raise WorldError(code, pointer, message, self.filename)
+    def fail(self, code: str, pointer: str, message: str, filename: str | None = None):
+        raise WorldError(code, pointer, message, self.filename if filename is None else filename)
 
     # -- document --
 
@@ -366,8 +368,11 @@ class _Loader:
     def task_entry(self, name, value):
         p = _pointer("tasks", name)
         self.obj(value, p, ("bindings", "faults", "cancel"), "a task entry")
-        raw = self.need(value, p, "bindings")
         bp = p + _pointer("bindings")
+        if "bindings" not in value and self.cli_bindings is not None and name == self.task.name:
+            raw = {}  # --bind replaces the bindings, so the selected task's entry may leave them out
+        else:
+            raw = self.need(value, p, "bindings")
         if not isinstance(raw, dict):
             self.fail("E504", bp, "'bindings' must be an object")
         for key, target in raw.items():
@@ -441,43 +446,66 @@ class _Loader:
 
     def check_task(self, world, entries):
         name = self.task.name
-        if name not in entries:
-            self.fail("E506", "/tasks", f"no entry for task '{name}'")
-        raw, faults, cancel = entries[name]
         p = _pointer("tasks", name)
-        bp = p + _pointer("bindings")
-        bound = []
-        for parameter in self.task.parameters:
-            if parameter.name not in raw:
-                self.fail("E506", bp, f"parameter '{parameter.name}' is not bound")
-            target = raw[parameter.name]
-            kind = world.kind_of(target)
-            if kind is None:
-                self.fail("E505", bp + _pointer(parameter.name), f"'{target}' is not declared")
-            if kind != parameter.type:
-                self.fail(
-                    "E507", bp + _pointer(parameter.name),
-                    f"parameter '{parameter.name}' is a {parameter.type}, '{target}' is a {kind}",
-                )
-            bound.append((parameter.name, target))
-        names = {parameter.name for parameter in self.task.parameters}
-        for key in raw:
-            if key not in names:
-                self.fail("E508", bp + _pointer(key), f"'{key}' is not a parameter of task '{name}'")
+        if self.cli_bindings is not None:
+            # --bind replaces the entry's bindings entirely; its faults and cancel still apply.
+            raw, faults, cancel = entries.get(name, ({}, [], None))
+            bound = self.check_bindings(world, self.cli_bindings, _pointer("bindings"), CLI_BINDINGS_SOURCE)
+        else:
+            if name not in entries:
+                self.fail("E506", "/tasks", f"no entry for task '{name}'")
+                return None
+            raw, faults, cancel = entries[name]
+            bound = self.check_bindings(world, raw, p + _pointer("bindings"), self.filename)
         count = len(self.task.steps)
         seen = set()
         for i, step in faults:
             fp = p + _pointer("faults", i, "step")
             if step > count:
                 self.fail("E511", fp, f"step {step} is outside the plan (1 to {count})")
+                return None
             if step in seen:
                 self.fail("E511", fp, f"step {step} is faulted twice")
+                return None
             seen.add(step)
         if cancel is not None and cancel > count:
             self.fail("E511", p + _pointer("cancel", "before_step"), f"step {cancel} is outside 1 to {count}")
+            return None
         return TaskScript(name, tuple(bound), tuple(sorted(seen)), cancel)
 
+    def check_bindings(self, world, raw, bp, source):
+        """Every parameter bound once to an entity of its type; no other names. `source` is named in diagnostics."""
+        bound = []
+        for parameter in self.task.parameters:
+            if parameter.name not in raw:
+                self.fail("E506", bp, f"parameter '{parameter.name}' is not bound", source)
+                return bound
+            target = raw[parameter.name]
+            kind = world.kind_of(target)
+            if kind is None:
+                self.fail("E505", bp + _pointer(parameter.name), f"'{target}' is not declared", source)
+                return bound
+            if kind != parameter.type:
+                self.fail(
+                    "E507", bp + _pointer(parameter.name),
+                    f"parameter '{parameter.name}' is a {parameter.type}, '{target}' is a {kind}",
+                    source,
+                )
+                return bound
+            bound.append((parameter.name, target))
+        names = {parameter.name for parameter in self.task.parameters}
+        for key in raw:
+            if key not in names:
+                self.fail("E508", bp + _pointer(key), f"'{key}' is not a parameter of task '{self.task.name}'", source)
+                return bound
+        return bound
 
-def load_world(data: bytes, filename: str, task: ir.Task) -> World:
-    """Validate a world file for the selected `task`. Raises WorldError on the first error."""
-    return _Loader(filename, task).load(data)
+
+def load_world(data: bytes, filename: str, task: ir.Task, bindings: Mapping[str, str] | None = None) -> World:
+    """
+    Validate a world file for the selected `task`. Raises WorldError on the first error.
+
+    `bindings` (parameter name -> entity ID, from `--bind`) replaces the task entry's bindings
+    entirely; the entry may then be absent. Its errors name `CLI_BINDINGS_SOURCE` as the file.
+    """
+    return _Loader(filename, task, bindings).load(data)
