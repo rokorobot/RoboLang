@@ -1,0 +1,20 @@
+{
+  "id": "f07_thermo_then_dispatch",
+  "class": "feasible",
+  "prompt": "As soon as picker1's thermometer is available (give it up to 10 seconds), check the insulin with it, then send picker1 to dispatch.",
+  "world": "bench/v2/worlds/pharmacy.json",
+  "tags": [
+    "wait_until",
+    "sensor_ok",
+    "inspect",
+    "robot_at"
+  ],
+  "expected_goal": [
+    [
+      "rl:robot:picker1",
+      "located_in",
+      "rl:place:dispatch"
+    ]
+  ],
+  "expected_end_ms": "5000"
+}

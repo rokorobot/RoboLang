@@ -1,0 +1,14 @@
+{
+  "id": "a12_which_shelf",
+  "class": "ambiguous",
+  "prompt": "Have picker1 put tray 1 on the shelf.",
+  "world": "bench/v2/worlds/pharmacy.json",
+  "tags": [
+    "location"
+  ],
+  "slot": "location",
+  "candidates": [
+    "shelf_a",
+    "shelf_b"
+  ]
+}

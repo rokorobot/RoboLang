@@ -1,0 +1,28 @@
+{
+  "id": "i15_two_bowls_one_gripper",
+  "class": "infeasible",
+  "prompt": "Have the helper arm pick up both bowls and hold them both at once.",
+  "world": "bench/v2/worlds/kitchen.json",
+  "tags": [
+    "capacity"
+  ],
+  "faithful_goal": [
+    [
+      "rl:thing:bowl_1",
+      "carried_by",
+      "rl:robot:helper_arm"
+    ],
+    [
+      "rl:thing:bowl_2",
+      "carried_by",
+      "rl:robot:helper_arm"
+    ]
+  ],
+  "required_entities": [
+    "helper_arm"
+  ],
+  "blockers": [
+    "helper_arm"
+  ],
+  "no_fix": "A robot's gripper holds one object at a time (grasp needs an empty gripper), so no plan can hold both."
+}

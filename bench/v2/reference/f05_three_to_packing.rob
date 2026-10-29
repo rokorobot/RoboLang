@@ -1,0 +1,27 @@
+// bench/v2/reference/f05_three_to_packing.rob: hand-written reference
+robolang 1.3;
+
+task three(robot r, object a, object b, object c, location sa, location sc, location dst, sensor s) {
+    goal {
+        object_at a dst;
+        object_at b dst;
+        object_at c dst;
+    }
+    plan {
+        move r to sa;
+        inspect r a using s;
+        grasp r a;
+        move r to dst;
+        place r a at dst;
+        move r to sa;
+        inspect r b using s;
+        grasp r b;
+        move r to dst;
+        place r b at dst;
+        move r to sc;
+        inspect r c using s;
+        grasp r c;
+        move r to dst;
+        place r c at dst;
+    }
+}

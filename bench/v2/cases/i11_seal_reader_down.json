@@ -1,0 +1,29 @@
+{
+  "id": "i11_seal_reader_down",
+  "class": "infeasible",
+  "prompt": "Read container 203's seal with the seal reader on straddle 1, then have straddle 1 take it to the out gate.",
+  "world": "bench/v2/worlds/yard.json",
+  "tags": [
+    "sensor_unavailable"
+  ],
+  "faithful_goal": [
+    [
+      "rl:thing:cont_203",
+      "located_in",
+      "rl:place:gate_out"
+    ]
+  ],
+  "required_entities": [
+    "seal_reader"
+  ],
+  "blockers": [
+    "seal_reader"
+  ],
+  "fix_patch": {
+    "sensors": {
+      "seal_reader": {
+        "available": true
+      }
+    }
+  }
+}

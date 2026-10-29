@@ -1,0 +1,7 @@
+// bench/v2/reference/a08_which_cart.1.rob: hand-written reference
+robolang 1.3;
+
+task go(robot r, location dst) {
+    goal { robot_at r dst; }
+    plan { move r to dst; }
+}

@@ -1,0 +1,11 @@
+{
+  "id": "u13_simultaneous_lift",
+  "class": "unsupported",
+  "prompt": "Have crane 1 and crane 2 lift container 101 and container 102 at exactly the same time.",
+  "world": "bench/v2/worlds/yard.json",
+  "tags": [
+    "concurrency"
+  ],
+  "construct": "concurrency",
+  "argument": "Robots do their steps one after another; nothing runs at the same time."
+}

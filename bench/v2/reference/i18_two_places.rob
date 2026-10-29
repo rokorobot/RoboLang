@@ -1,0 +1,15 @@
+// bench/v2/reference/i18_two_places.rob: hand-written reference
+robolang 1.3;
+
+task both(robot r, object o, location src, location d1, location d2) {
+    goal {
+        object_at o d1;
+        object_at o d2;
+    }
+    plan {
+        move r to src;
+        grasp r o;
+        move r to d1;
+        place r o at d1;
+    }
+}

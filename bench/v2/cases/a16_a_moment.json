@@ -1,0 +1,11 @@
+{
+  "id": "a16_a_moment",
+  "class": "ambiguous",
+  "prompt": "Have the helper arm go to the oven, wait a moment there, then come back to prep 2.",
+  "world": "bench/v2/worlds/kitchen.json",
+  "tags": [
+    "duration"
+  ],
+  "slot": "duration",
+  "candidates": []
+}

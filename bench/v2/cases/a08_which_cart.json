@@ -1,0 +1,14 @@
+{
+  "id": "a08_which_cart",
+  "class": "ambiguous",
+  "prompt": "Have the cart drive to the waste area.",
+  "world": "bench/v2/worlds/pharmacy.json",
+  "tags": [
+    "robot"
+  ],
+  "slot": "robot",
+  "candidates": [
+    "cart1",
+    "cart2"
+  ]
+}

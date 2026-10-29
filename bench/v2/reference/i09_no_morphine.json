@@ -1,0 +1,9 @@
+{
+  "task": "deliver",
+  "bindings": {
+    "r": "picker1",
+    "o": "morphine_1",
+    "src": "shelf_b",
+    "dst": "dispatch"
+  }
+}

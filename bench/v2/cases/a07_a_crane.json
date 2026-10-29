@@ -1,0 +1,14 @@
+{
+  "id": "a07_a_crane",
+  "class": "ambiguous",
+  "prompt": "Have the crane take container 203 to the wash.",
+  "world": "bench/v2/worlds/yard.json",
+  "tags": [
+    "robot"
+  ],
+  "slot": "robot",
+  "candidates": [
+    "crane1",
+    "crane2"
+  ]
+}

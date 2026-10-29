@@ -1,0 +1,14 @@
+{
+  "id": "a02_which_container",
+  "class": "ambiguous",
+  "prompt": "Have straddle1 move the container at stack B to the out gate.",
+  "world": "bench/v2/worlds/yard.json",
+  "tags": [
+    "object"
+  ],
+  "slot": "object",
+  "candidates": [
+    "cont_203",
+    "cont_204"
+  ]
+}

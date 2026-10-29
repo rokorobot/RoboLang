@@ -1,0 +1,13 @@
+// bench/v2/reference/i13_borrowed_drone_camera.rob: hand-written reference
+robolang 1.3;
+
+task deliver(robot r, object o, location src, location dst, sensor s) {
+    goal { object_at o dst; }
+    plan {
+        move r to src;
+        inspect r o using s;
+        grasp r o;
+        move r to dst;
+        place r o at dst;
+    }
+}

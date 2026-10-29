@@ -1,0 +1,11 @@
+{
+  "id": "u16_charge_drone",
+  "class": "unsupported",
+  "prompt": "Charge the drone at the workshop, then fly it to berth 1.",
+  "world": "bench/v2/worlds/yard.json",
+  "tags": [
+    "unknown_action"
+  ],
+  "construct": "unknown_action",
+  "argument": "The plan has six statements: move, grasp, place, inspect, wait, communicate."
+}

@@ -1,0 +1,11 @@
+{
+  "id": "u07_grip_5n",
+  "class": "unsupported",
+  "prompt": "Have the helper arm move bowl 2 from the fridge to prep 2, never squeezing with more than 5 newtons of grip force.",
+  "world": "bench/v2/worlds/kitchen.json",
+  "tags": [
+    "force_limit"
+  ],
+  "construct": "force_limit",
+  "argument": "@safety has max_speed only; there is no force or load limit."
+}

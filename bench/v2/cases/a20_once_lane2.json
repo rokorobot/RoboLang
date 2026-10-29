@@ -1,0 +1,11 @@
+{
+  "id": "a20_once_lane2",
+  "class": "ambiguous",
+  "prompt": "Once lane 2 clears, have straddle1 take container 204 to stack C.",
+  "world": "bench/v2/worlds/yard.json",
+  "tags": [
+    "timeout"
+  ],
+  "slot": "timeout",
+  "candidates": []
+}

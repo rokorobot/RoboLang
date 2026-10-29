@@ -1,0 +1,17 @@
+{
+  "id": "i18_two_places",
+  "class": "infeasible",
+  "prompt": "Put vial A1 in fridge 1 with picker1, and have it also end up on the packing table.",
+  "world": "bench/v2/worlds/pharmacy.json",
+  "tags": [
+    "contradiction"
+  ],
+  "faithful_goal": null,
+  "required_entities": [
+    "picker1"
+  ],
+  "blockers": [
+    "vial_a1"
+  ],
+  "no_fix": "An object is at one location at a time, so it cannot end in fridge 1 and at packing."
+}

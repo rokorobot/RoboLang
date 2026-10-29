@@ -1,0 +1,28 @@
+{
+  "id": "i16_two_containers_one_crane",
+  "class": "infeasible",
+  "prompt": "Have crane 1 hold container 101 and container 102 at the same time.",
+  "world": "bench/v2/worlds/yard.json",
+  "tags": [
+    "capacity"
+  ],
+  "faithful_goal": [
+    [
+      "rl:thing:cont_101",
+      "carried_by",
+      "rl:robot:crane1"
+    ],
+    [
+      "rl:thing:cont_102",
+      "carried_by",
+      "rl:robot:crane1"
+    ]
+  ],
+  "required_entities": [
+    "crane1"
+  ],
+  "blockers": [
+    "crane1"
+  ],
+  "no_fix": "A robot's gripper holds one object at a time, so no plan can hold both containers."
+}

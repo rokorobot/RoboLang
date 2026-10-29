@@ -1,0 +1,14 @@
+{
+  "id": "a11_which_prep",
+  "class": "ambiguous",
+  "prompt": "Have the helper arm put bowl 2 on the prep station.",
+  "world": "bench/v2/worlds/kitchen.json",
+  "tags": [
+    "location"
+  ],
+  "slot": "location",
+  "candidates": [
+    "prep_1",
+    "prep_2"
+  ]
+}

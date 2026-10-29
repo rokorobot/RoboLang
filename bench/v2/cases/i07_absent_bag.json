@@ -1,0 +1,30 @@
+{
+  "id": "i07_absent_bag",
+  "class": "infeasible",
+  "prompt": "Bring the intake bag to packing with picker1.",
+  "world": "bench/v2/worlds/pharmacy.json",
+  "tags": [
+    "absent_object"
+  ],
+  "faithful_goal": [
+    [
+      "rl:thing:bag_1",
+      "located_in",
+      "rl:place:packing"
+    ]
+  ],
+  "required_entities": [
+    "bag_1"
+  ],
+  "blockers": [
+    "bag_1"
+  ],
+  "fix_patch": {
+    "objects": {
+      "bag_1": {
+        "present": true,
+        "location": "intake"
+      }
+    }
+  }
+}

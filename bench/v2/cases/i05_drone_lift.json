@@ -1,0 +1,29 @@
+{
+  "id": "i05_drone_lift",
+  "class": "infeasible",
+  "prompt": "Have the drone lift chassis 1 at the in gate and put it on berth 2.",
+  "world": "bench/v2/worlds/yard.json",
+  "tags": [
+    "no_gripper"
+  ],
+  "faithful_goal": [
+    [
+      "rl:thing:chassis_1",
+      "located_in",
+      "rl:place:berth_2"
+    ]
+  ],
+  "required_entities": [
+    "drone1"
+  ],
+  "blockers": [
+    "drone1"
+  ],
+  "fix_patch": {
+    "robots": {
+      "drone1": {
+        "gripper": true
+      }
+    }
+  }
+}

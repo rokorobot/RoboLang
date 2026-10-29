@@ -1,8 +1,9 @@
 # BENCH-2 — knowing when not to write a program
 
-**Status:** design, for the owner's review. Decision record: [0025](../../spec/decisions/0025-bench-2.md).
-Nothing here is built or run yet. No paid model run, language change, Core change or merge without
-separate authorization.
+**Status:** for the owner's review. Decision record: [0025](../../spec/decisions/0025-bench-2.md).
+Phase 1 (build, `bench/v2/`) and the phase 3 pilot are done (2026-10-29,
+[report](../evidence/bench2-pilot-report.md)). The label review (phase 2) and the full run are not. No full run,
+language change, Core change or merge without separate authorization.
 
 BENCH-1 ([0024](../../spec/decisions/0024-authoring-benchmark.md), `bench/`) showed that current models
 write valid RoboLang 1.3 for 40 solvable requests. It cannot show whether a model **refuses** a request

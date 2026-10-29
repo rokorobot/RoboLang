@@ -1,0 +1,9 @@
+{
+  "task": "hand_over",
+  "bindings": {
+    "a": "chef_arm",
+    "b": "helper_arm",
+    "o": "knife_1",
+    "meet": "prep_2"
+  }
+}

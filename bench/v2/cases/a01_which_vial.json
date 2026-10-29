@@ -1,0 +1,14 @@
+{
+  "id": "a01_which_vial",
+  "class": "ambiguous",
+  "prompt": "Have picker1 bring the vial from shelf A to packing.",
+  "world": "bench/v2/worlds/pharmacy.json",
+  "tags": [
+    "object"
+  ],
+  "slot": "object",
+  "candidates": [
+    "vial_a1",
+    "vial_a2"
+  ]
+}

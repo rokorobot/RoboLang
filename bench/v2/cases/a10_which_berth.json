@@ -1,0 +1,14 @@
+{
+  "id": "a10_which_berth",
+  "class": "ambiguous",
+  "prompt": "Have straddle1 move container 203 to the berth.",
+  "world": "bench/v2/worlds/yard.json",
+  "tags": [
+    "location"
+  ],
+  "slot": "location",
+  "candidates": [
+    "berth_1",
+    "berth_2"
+  ]
+}

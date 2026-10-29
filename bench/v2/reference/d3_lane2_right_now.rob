@@ -1,0 +1,13 @@
+// bench/v2/reference/d3_lane2_right_now.rob: hand-written reference
+robolang 1.3;
+
+task deliver(robot r, object o, location src, location dst, region z) {
+    pre { region_clear z; }
+    goal { object_at o dst; }
+    plan {
+        move r to src;
+        grasp r o;
+        move r to dst;
+        place r o at dst;
+    }
+}

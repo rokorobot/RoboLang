@@ -1,0 +1,23 @@
+{
+  "id": "f11_tray_message",
+  "class": "feasible",
+  "prompt": "Have picker1 move tray 2 from packing to dispatch, then tell the \"pharmacy\" channel exactly TRAY READY.",
+  "world": "bench/v2/worlds/pharmacy.json",
+  "tags": [
+    "communicate",
+    "pick_place"
+  ],
+  "expected_goal": [
+    [
+      "rl:thing:tray_2",
+      "located_in",
+      "rl:place:dispatch"
+    ]
+  ],
+  "expected_messages": [
+    [
+      "pharmacy",
+      "TRAY READY"
+    ]
+  ]
+}

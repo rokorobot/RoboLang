@@ -1,0 +1,20 @@
+{
+  "id": "d3_lane2_right_now",
+  "class": "feasible",
+  "prompt": "Only if lane 2 is clear right now, have straddle1 move container 204 to stack A; otherwise do nothing.",
+  "world": "bench/v2/worlds/yard.json",
+  "tags": [
+    "decoy",
+    "looks_infeasible",
+    "precondition"
+  ],
+  "expected_goal": [
+    [
+      "rl:thing:cont_204",
+      "located_in",
+      "rl:place:stack_a"
+    ]
+  ],
+  "expected_state": "FAILED",
+  "expected_failure": "S101"
+}

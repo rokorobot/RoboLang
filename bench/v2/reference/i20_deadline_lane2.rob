@@ -1,0 +1,13 @@
+// bench/v2/reference/i20_deadline_lane2.rob: hand-written reference
+robolang 1.3;
+
+task deliver(robot r, object o, location src, location dst, region z) {
+    goal { object_at o dst; }
+    plan {
+        wait until region_clear z timeout 20 s;
+        move r to src;
+        grasp r o;
+        move r to dst;
+        place r o at dst;
+    }
+}

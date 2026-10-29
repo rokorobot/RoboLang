@@ -1,0 +1,23 @@
+{
+  "id": "d5_two_inspections",
+  "class": "feasible",
+  "prompt": "Check pan 1 with both the chef arm's camera and its temperature probe, then have the helper arm put pan 1 in the sink.",
+  "world": "bench/v2/worlds/kitchen.json",
+  "tags": [
+    "decoy",
+    "looks_unsupported",
+    "inspect",
+    "two_robot"
+  ],
+  "expected_goal": [
+    [
+      "rl:thing:pan_1",
+      "located_in",
+      "rl:place:sink"
+    ]
+  ],
+  "required_entities": [
+    "cam_chef",
+    "probe_temp"
+  ]
+}

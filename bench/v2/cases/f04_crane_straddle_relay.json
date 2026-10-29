@@ -1,0 +1,21 @@
+{
+  "id": "f04_crane_straddle_relay",
+  "class": "feasible",
+  "prompt": "Crane 1 lifts container 101 off berth 1 and sets it down at stack A; straddle 1 then takes it from stack A to stack C.",
+  "world": "bench/v2/worlds/yard.json",
+  "tags": [
+    "handover",
+    "two_robot"
+  ],
+  "expected_goal": [
+    [
+      "rl:thing:cont_101",
+      "located_in",
+      "rl:place:stack_c"
+    ]
+  ],
+  "required_entities": [
+    "crane1",
+    "straddle1"
+  ]
+}

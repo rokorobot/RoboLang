@@ -1,0 +1,10 @@
+{
+  "task": "deliver",
+  "bindings": {
+    "r": "helper_arm",
+    "o": "tray_b",
+    "src": "prep_2",
+    "dst": "pass",
+    "z": "pass_area"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "id": "u08_lift_20kn",
+  "class": "unsupported",
+  "prompt": "Have crane 1 move container 101 to stack A without exceeding 20 kilonewtons of lifting force.",
+  "world": "bench/v2/worlds/yard.json",
+  "tags": [
+    "force_limit"
+  ],
+  "construct": "force_limit",
+  "argument": "@safety has max_speed only; there is no force or load limit."
+}

@@ -1,0 +1,14 @@
+{
+  "id": "a05_which_berth_container",
+  "class": "ambiguous",
+  "prompt": "Have crane 1 put the container from berth 1 on stack C.",
+  "world": "bench/v2/worlds/yard.json",
+  "tags": [
+    "object"
+  ],
+  "slot": "object",
+  "candidates": [
+    "cont_101",
+    "cont_102"
+  ]
+}

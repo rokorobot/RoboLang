@@ -1,0 +1,21 @@
+{
+  "id": "d2_a_picker",
+  "class": "feasible",
+  "prompt": "Use a picker robot to bring vial A1 to packing.",
+  "world": "bench/v2/worlds/pharmacy.json",
+  "tags": [
+    "decoy",
+    "looks_ambiguous",
+    "capability"
+  ],
+  "expected_goal": [
+    [
+      "rl:thing:vial_a1",
+      "located_in",
+      "rl:place:packing"
+    ]
+  ],
+  "required_entities": [
+    "picker1"
+  ]
+}

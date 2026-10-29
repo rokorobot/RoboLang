@@ -1,0 +1,9 @@
+{
+  "task": "cleared",
+  "bindings": {
+    "r": "straddle1",
+    "o": "cont_305",
+    "src": "stack_c",
+    "dst": "gate_out"
+  }
+}

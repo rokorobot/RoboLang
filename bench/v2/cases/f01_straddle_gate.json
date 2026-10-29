@@ -1,0 +1,27 @@
+{
+  "id": "f01_straddle_gate",
+  "class": "feasible",
+  "prompt": "Have straddle1 take container 203 from stack B to the out gate, staying under 1.5 metres per second.",
+  "world": "bench/v2/worlds/yard.json",
+  "tags": [
+    "pick_place",
+    "safety"
+  ],
+  "expected_goal": [
+    [
+      "rl:thing:cont_203",
+      "located_in",
+      "rl:place:gate_out"
+    ]
+  ],
+  "required_entities": [
+    "straddle1"
+  ],
+  "expected_safety": [
+    {
+      "kind": "max_speed",
+      "value": "1.5",
+      "unit": "m/s"
+    }
+  ]
+}

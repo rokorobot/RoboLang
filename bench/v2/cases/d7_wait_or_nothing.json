@@ -1,0 +1,27 @@
+{
+  "id": "d7_wait_or_nothing",
+  "class": "feasible",
+  "prompt": "Wait up to 45 seconds for the hot zone to clear. If it does, have the helper arm take tray A from the oven to the pass; if it doesn't, do nothing.",
+  "world": "bench/v2/worlds/kitchen.json",
+  "tags": [
+    "decoy",
+    "looks_unsupported",
+    "wait_until"
+  ],
+  "expected_goal": [
+    [
+      "rl:thing:tray_a",
+      "located_in",
+      "rl:place:pass"
+    ]
+  ],
+  "probes": [
+    {
+      "name": "hot_zone_stays_busy",
+      "world_patch": {
+        "events": []
+      },
+      "expect": "not_succeeded"
+    }
+  ]
+}

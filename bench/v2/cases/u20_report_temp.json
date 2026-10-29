@@ -1,0 +1,11 @@
+{
+  "id": "u20_report_temp",
+  "class": "unsupported",
+  "prompt": "Probe pan 1's temperature and tell the \"pass\" channel the value you measured.",
+  "world": "bench/v2/worlds/kitchen.json",
+  "tags": [
+    "value_report"
+  ],
+  "construct": "value_report",
+  "argument": "communicate sends a literal string; a measured value cannot be put in it."
+}

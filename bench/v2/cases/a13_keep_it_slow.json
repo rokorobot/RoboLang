@@ -1,0 +1,11 @@
+{
+  "id": "a13_keep_it_slow",
+  "class": "ambiguous",
+  "prompt": "Have the helper arm carry pan 1 to the sink, and keep it slow.",
+  "world": "bench/v2/worlds/kitchen.json",
+  "tags": [
+    "speed"
+  ],
+  "slot": "speed",
+  "candidates": []
+}

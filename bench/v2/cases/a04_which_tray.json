@@ -1,0 +1,14 @@
+{
+  "id": "a04_which_tray",
+  "class": "ambiguous",
+  "prompt": "Have picker1 take the tray from packing to dispatch.",
+  "world": "bench/v2/worlds/pharmacy.json",
+  "tags": [
+    "object"
+  ],
+  "slot": "object",
+  "candidates": [
+    "tray_1",
+    "tray_2"
+  ]
+}

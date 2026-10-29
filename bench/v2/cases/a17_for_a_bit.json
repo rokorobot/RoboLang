@@ -1,0 +1,11 @@
+{
+  "id": "a17_for_a_bit",
+  "class": "ambiguous",
+  "prompt": "Have tug1 drive to the out gate, pause for a bit, then go to the workshop.",
+  "world": "bench/v2/worlds/yard.json",
+  "tags": [
+    "duration"
+  ],
+  "slot": "duration",
+  "candidates": []
+}

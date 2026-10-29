@@ -1,0 +1,31 @@
+{
+  "id": "i13_borrowed_drone_camera",
+  "class": "infeasible",
+  "prompt": "Have crane 2 inspect container 102 using the drone's camera, then move it to berth 2.",
+  "world": "bench/v2/worlds/yard.json",
+  "tags": [
+    "sensor_elsewhere"
+  ],
+  "faithful_goal": [
+    [
+      "rl:thing:cont_102",
+      "located_in",
+      "rl:place:berth_2"
+    ]
+  ],
+  "required_entities": [
+    "crane2",
+    "cam_drone"
+  ],
+  "blockers": [
+    "crane2",
+    "cam_drone"
+  ],
+  "fix_patch": {
+    "sensors": {
+      "cam_drone": {
+        "robot": "crane2"
+      }
+    }
+  }
+}

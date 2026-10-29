@@ -1,0 +1,29 @@
+{
+  "id": "i02_straddle2_not_ready",
+  "class": "infeasible",
+  "prompt": "Have straddle2 take container 204 from stack B to the in gate.",
+  "world": "bench/v2/worlds/yard.json",
+  "tags": [
+    "not_ready"
+  ],
+  "faithful_goal": [
+    [
+      "rl:thing:cont_204",
+      "located_in",
+      "rl:place:gate_in"
+    ]
+  ],
+  "required_entities": [
+    "straddle2"
+  ],
+  "blockers": [
+    "straddle2"
+  ],
+  "fix_patch": {
+    "robots": {
+      "straddle2": {
+        "ready": true
+      }
+    }
+  }
+}

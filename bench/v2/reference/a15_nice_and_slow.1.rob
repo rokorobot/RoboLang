@@ -1,0 +1,13 @@
+// bench/v2/reference/a15_nice_and_slow.1.rob: hand-written reference
+robolang 1.3;
+
+task deliver(robot r, object o, location src, location dst) {
+    @safety max_speed 0.2 m/s;
+    goal { object_at o dst; }
+    plan {
+        move r to src;
+        grasp r o;
+        move r to dst;
+        place r o at dst;
+    }
+}

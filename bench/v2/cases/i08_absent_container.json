@@ -1,0 +1,30 @@
+{
+  "id": "i08_absent_container",
+  "class": "infeasible",
+  "prompt": "Have crane 1 move container 999 to the out gate.",
+  "world": "bench/v2/worlds/yard.json",
+  "tags": [
+    "absent_object"
+  ],
+  "faithful_goal": [
+    [
+      "rl:thing:cont_999",
+      "located_in",
+      "rl:place:gate_out"
+    ]
+  ],
+  "required_entities": [
+    "cont_999"
+  ],
+  "blockers": [
+    "cont_999"
+  ],
+  "fix_patch": {
+    "objects": {
+      "cont_999": {
+        "present": true,
+        "location": "berth_1"
+      }
+    }
+  }
+}

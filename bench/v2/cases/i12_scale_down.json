@@ -1,0 +1,29 @@
+{
+  "id": "i12_scale_down",
+  "class": "infeasible",
+  "prompt": "Weigh tray B with the helper arm's scale, then have the helper arm put it on the pass.",
+  "world": "bench/v2/worlds/kitchen.json",
+  "tags": [
+    "sensor_unavailable"
+  ],
+  "faithful_goal": [
+    [
+      "rl:thing:tray_b",
+      "located_in",
+      "rl:place:pass"
+    ]
+  ],
+  "required_entities": [
+    "scale_1"
+  ],
+  "blockers": [
+    "scale_1"
+  ],
+  "fix_patch": {
+    "sensors": {
+      "scale_1": {
+        "available": true
+      }
+    }
+  }
+}

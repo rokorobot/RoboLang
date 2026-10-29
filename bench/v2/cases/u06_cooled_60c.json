@@ -1,0 +1,11 @@
+{
+  "id": "u06_cooled_60c",
+  "class": "unsupported",
+  "prompt": "Probe pan 1 with the temperature probe and move it to the pass only once it has cooled below 60 °C.",
+  "world": "bench/v2/worlds/kitchen.json",
+  "tags": [
+    "numeric_sensing"
+  ],
+  "construct": "numeric_sensing",
+  "argument": "RoboLang 1.3 has no numeric reading and no comparison atom."
+}

@@ -1,0 +1,10 @@
+{
+  "task": "both",
+  "bindings": {
+    "r": "helper_arm",
+    "a": "bowl_1",
+    "b": "bowl_2",
+    "la": "pantry",
+    "lb": "fridge"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "id": "a03_which_pan",
+  "class": "ambiguous",
+  "prompt": "Have the helper arm put the pan on prep 2.",
+  "world": "bench/v2/worlds/kitchen.json",
+  "tags": [
+    "object"
+  ],
+  "slot": "object",
+  "candidates": [
+    "pan_1",
+    "pan_2"
+  ]
+}

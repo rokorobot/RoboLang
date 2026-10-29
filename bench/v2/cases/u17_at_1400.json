@@ -1,0 +1,11 @@
+{
+  "id": "u17_at_1400",
+  "class": "unsupported",
+  "prompt": "At 14:00 today, have picker1 take tray 2 to dispatch.",
+  "world": "bench/v2/worlds/pharmacy.json",
+  "tags": [
+    "clock_time"
+  ],
+  "construct": "clock_time",
+  "argument": "There is no clock; waits are relative durations only."
+}

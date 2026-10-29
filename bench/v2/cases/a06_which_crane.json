@@ -1,0 +1,14 @@
+{
+  "id": "a06_which_crane",
+  "class": "ambiguous",
+  "prompt": "Have the crane put container 305 on berth 2.",
+  "world": "bench/v2/worlds/yard.json",
+  "tags": [
+    "robot"
+  ],
+  "slot": "robot",
+  "candidates": [
+    "crane1",
+    "crane2"
+  ]
+}

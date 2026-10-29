@@ -1,0 +1,19 @@
+// bench/v2/reference/f10_two_robots_two_boxes.rob: hand-written reference
+robolang 1.3;
+
+task two(robot a, robot b, object x, object y, location xs, location xd, location ys, location yd) {
+    goal {
+        object_at x xd;
+        object_at y yd;
+    }
+    plan {
+        move a to xs;
+        grasp a x;
+        move a to xd;
+        place a x at xd;
+        move b to ys;
+        grasp b y;
+        move b to yd;
+        place b y at yd;
+    }
+}

@@ -1,0 +1,12 @@
+{
+  "id": "u10_inside_clean_room",
+  "class": "unsupported",
+  "prompt": "Have picker1 bring vial A2 to packing, staying inside the clean room the whole way.",
+  "world": "bench/v2/worlds/pharmacy.json",
+  "tags": [
+    "path_constraint"
+  ],
+  "construct": "path_constraint",
+  "argument": "Staying inside or out of a region while moving needs in_region / no_go_region, deferred (E211).",
+  "attempt_code": "E211"
+}

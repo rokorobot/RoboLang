@@ -1,0 +1,11 @@
+{
+  "id": "u05_below_8c",
+  "class": "unsupported",
+  "prompt": "Only if the insulin reads below 8 °C on picker1's thermometer, move it to packing.",
+  "world": "bench/v2/worlds/pharmacy.json",
+  "tags": [
+    "numeric_sensing"
+  ],
+  "construct": "numeric_sensing",
+  "argument": "RoboLang 1.3 has no numeric reading and no comparison atom."
+}

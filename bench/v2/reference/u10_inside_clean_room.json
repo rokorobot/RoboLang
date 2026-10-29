@@ -1,0 +1,10 @@
+{
+  "task": "inside",
+  "bindings": {
+    "r": "picker1",
+    "o": "vial_a2",
+    "src": "shelf_a",
+    "dst": "packing",
+    "z": "clean_room"
+  }
+}

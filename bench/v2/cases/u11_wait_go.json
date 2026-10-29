@@ -1,0 +1,12 @@
+{
+  "id": "u11_wait_go",
+  "class": "unsupported",
+  "prompt": "Wait for the pharmacist to send \"GO\" on the pharmacy channel, then have picker1 bring tray 1 to dispatch.",
+  "world": "bench/v2/worlds/pharmacy.json",
+  "tags": [
+    "message_wait"
+  ],
+  "construct": "message_wait",
+  "argument": "Waiting for an incoming message needs message_received, deferred (E211).",
+  "attempt_code": "E211"
+}

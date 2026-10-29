@@ -1,0 +1,28 @@
+{
+  "id": "f05_three_to_packing",
+  "class": "feasible",
+  "prompt": "With picker1, bring vial A1, vial A2 and the insulin to packing, scanning each one with scan_p1 just before picking it up.",
+  "world": "bench/v2/worlds/pharmacy.json",
+  "tags": [
+    "long_plan",
+    "multiple_objects",
+    "inspect"
+  ],
+  "expected_goal": [
+    [
+      "rl:thing:vial_a1",
+      "located_in",
+      "rl:place:packing"
+    ],
+    [
+      "rl:thing:vial_a2",
+      "located_in",
+      "rl:place:packing"
+    ],
+    [
+      "rl:thing:insulin_1",
+      "located_in",
+      "rl:place:packing"
+    ]
+  ]
+}

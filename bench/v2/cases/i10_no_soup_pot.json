@@ -1,0 +1,23 @@
+{
+  "id": "i10_no_soup_pot",
+  "class": "infeasible",
+  "prompt": "Have the helper arm put the soup pot on the stove.",
+  "world": "bench/v2/worlds/kitchen.json",
+  "tags": [
+    "unknown_entity"
+  ],
+  "faithful_goal": null,
+  "required_entities": [
+    "pot_1"
+  ],
+  "blockers": [],
+  "fix_patch": {
+    "objects": {
+      "pot_1": {
+        "present": true,
+        "location": "prep_2",
+        "class": "pot"
+      }
+    }
+  }
+}

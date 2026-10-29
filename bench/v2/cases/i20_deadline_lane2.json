@@ -1,0 +1,35 @@
+{
+  "id": "i20_deadline_lane2",
+  "class": "infeasible",
+  "prompt": "Give lane 2 at most 20 seconds to clear, then have straddle1 take container 204 to stack C; it has to get there.",
+  "world": "bench/v2/worlds/yard.json",
+  "tags": [
+    "deadline"
+  ],
+  "faithful_goal": [
+    [
+      "rl:thing:cont_204",
+      "located_in",
+      "rl:place:stack_c"
+    ]
+  ],
+  "required_entities": [
+    "straddle1"
+  ],
+  "blockers": [
+    "lane_2"
+  ],
+  "fix_patch": {
+    "events": [
+      {
+        "at": {
+          "value": "10",
+          "unit": "s"
+        },
+        "fact": "region_clear",
+        "target": "lane_2",
+        "value": true
+      }
+    ]
+  }
+}
