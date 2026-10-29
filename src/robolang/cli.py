@@ -1,5 +1,5 @@
 """
-Developer commands for RoboLang v1.1 and v1.2.
+Developer commands for RoboLang v1.1, v1.2 and v1.3.
 
     validate FILE          check a .rob file against the language contract
     inspect  FILE          show what a validated file describes (text or JSON IR)
@@ -55,7 +55,7 @@ NOT_A_SAFETY_CHECK = (
 NOTHING_EXECUTED = "This is a description only. Nothing was executed."
 
 _DESCRIPTION = f"""\
-Tools for RoboLang v1.1 and v1.2 task files.
+Tools for RoboLang v1.1, v1.2 and v1.3 task files.
 
 validate and inspect check and describe .rob files; they never execute anything.
 simulate runs a validated task in a symbolic, deterministic simulation only: it never loads a
@@ -103,13 +103,19 @@ def distribution_version() -> str | None:
         return None
 
 
+def _joined(versions) -> str:
+    """"1.1", "1.1 and 1.2", "1.1, 1.2 and 1.3"."""
+    versions = list(versions)
+    return " and ".join([", ".join(versions[:-1]), versions[-1]] if len(versions) > 2 else versions)
+
+
 def version_text() -> str:
     """The three independent versions: distribution, language and IR schema."""
     distribution = distribution_version() or "unknown (not installed, running from source)"
     return (
         f"robolang {distribution} "
-        f"(language {' and '.join(task_ir.IR_SCHEMA_VERSIONS)}, "
-        f"IR schema {' and '.join(task_ir.IR_SCHEMA_VERSIONS.values())})"
+        f"(language {_joined(task_ir.IR_SCHEMA_VERSIONS)}, "
+        f"IR schema {_joined(task_ir.IR_SCHEMA_VERSIONS.values())})"
     )
 
 
@@ -183,19 +189,25 @@ def _quantity(quantity: task_ir.Quantity) -> str:
     return f"{value} {quantity.unit}" if quantity.unit else value
 
 
-def _operand(condition: task_ir.Condition) -> str:
+def _operand(condition: task_ir.Condition, typed: bool) -> str:
     # 1.2 grammar: `not` takes one operand, and `and`/`or` never mix without parentheses.
-    text = _condition(condition)
+    text = _condition(condition, typed)
     return f"({text})" if isinstance(condition, (task_ir.And, task_ir.Or)) else text
 
 
-def _condition(condition: task_ir.Condition) -> str:
+def _sensor(name: str, typed: bool) -> str:
+    """A sensor parameter name in 1.3 (IR schema 1.2), a quoted world sensor ID before."""
+    return name if typed else _quoted(name)
+
+
+def _condition(condition: task_ir.Condition, typed: bool = False) -> str:
+    """`typed`: the condition belongs to a RoboLang 1.3 task, where a sensor is a parameter."""
     if isinstance(condition, task_ir.And):
-        return " and ".join(_operand(c) for c in condition.conditions)
+        return " and ".join(_operand(c, typed) for c in condition.conditions)
     if isinstance(condition, task_ir.Or):
-        return " or ".join(_operand(c) for c in condition.conditions)
+        return " or ".join(_operand(c, typed) for c in condition.conditions)
     if isinstance(condition, task_ir.Not):
-        return f"not {_operand(condition.condition)}"
+        return f"not {_operand(condition.condition, typed)}"
     if isinstance(condition, task_ir.RobotReady):
         return f"robot_ready {condition.robot}"
     if isinstance(condition, task_ir.RegionClear):
@@ -203,12 +215,18 @@ def _condition(condition: task_ir.Condition) -> str:
     if isinstance(condition, task_ir.ObjectExists):
         return f"object_exists {condition.obj}"
     if isinstance(condition, task_ir.SensorOk):
-        return f"sensor_ok {_quoted(condition.sensor)}"
+        return f"sensor_ok {_sensor(condition.sensor, typed)}"
+    if isinstance(condition, task_ir.ObjectAt):
+        return f"object_at {condition.obj} {condition.location}"
+    if isinstance(condition, task_ir.RobotAt):
+        return f"robot_at {condition.robot} {condition.location}"
+    if isinstance(condition, task_ir.Holding):
+        return f"holding {condition.robot} {condition.obj}"
     # A new condition kind must be rendered here explicitly, never shown as another kind.
     raise TypeError(f"not a condition: {type(condition).__name__}")
 
 
-def _step(step: task_ir.Step) -> str:
+def _step(step: task_ir.Step, typed: bool = False) -> str:
     if isinstance(step, task_ir.Move):
         return f"move {step.robot} to {step.target}"
     if isinstance(step, task_ir.Grasp):
@@ -216,11 +234,11 @@ def _step(step: task_ir.Step) -> str:
     if isinstance(step, task_ir.Place):
         return f"place {step.robot} {step.obj} at {step.target}"
     if isinstance(step, task_ir.Inspect):
-        return f"inspect {step.robot} {step.obj} using {_quoted(step.sensor)}"
+        return f"inspect {step.robot} {step.obj} using {_sensor(step.sensor, typed)}"
     if isinstance(step, task_ir.WaitFor):
         return f"wait for {_quantity(step.duration)}"
     if isinstance(step, task_ir.WaitUntil):
-        return f"wait until {_condition(step.condition)} timeout {_quantity(step.timeout)}"
+        return f"wait until {_condition(step.condition, typed)} timeout {_quantity(step.timeout)}"
     return f"communicate {step.robot} to {_quoted(step.channel)} with {_quoted(step.message)}"
 
 
@@ -241,8 +259,11 @@ def _describe(task: task_ir.Task) -> list[str]:
     lines = [f"task {task.name}"]
     lines += _section("parameters", [f"{p.type} {p.name}" for p in task.parameters])
     lines += _section("safety", [_safety(s) for s in task.safety])
-    lines += _section("preconditions", [_condition(c) for c in task.preconditions])
-    lines += _section("plan", [f"{i}. {_step(s)}" for i, s in enumerate(task.steps, 1)])
+    typed = task.typed_sensors
+    lines += _section("preconditions", [_condition(c, typed) for c in task.preconditions])
+    if task.goal is not None:
+        lines += _section("goal", [_condition(c, typed) for c in task.goal])
+    lines += _section("plan", [f"{i}. {_step(s, typed)}" for i, s in enumerate(task.steps, 1)])
     return lines
 
 

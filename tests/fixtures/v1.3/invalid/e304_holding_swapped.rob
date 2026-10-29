@@ -1,0 +1,10 @@
+// RoboLang v1.3 fixture: invalid
+// expect: error E304 (static) line 8
+// why: holding takes a robot then an object
+
+robolang 1.3;
+
+task t(robot r, object box, location dst) {
+    goal { holding box r; }
+    plan { move r to dst; }
+}

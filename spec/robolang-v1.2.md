@@ -184,6 +184,8 @@ And these clarifications, all with existing codes:
 | `and`, `or` or `not` used as a name in a 1.2 file | `E212` |
 | `robolang 1.3;` and every other unsupported version | `E213`; the message lists `1.1` and `1.2` |
 
+(1.3 note: since [RoboLang 1.3](robolang-v1.3.md), `robolang 1.3;` is supported and the message lists `1.1, 1.2 and 1.3`; `1.2` files are unaffected.)
+
 When several codes could apply, the 1.1 order holds, and `E214` and `E215` take precedence
 over `E201`.
 

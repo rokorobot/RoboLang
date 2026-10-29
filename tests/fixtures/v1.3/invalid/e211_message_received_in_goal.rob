@@ -1,0 +1,10 @@
+// RoboLang v1.3 fixture: invalid
+// expect: error E211 (syntax) line 8
+// why: message_received is still not part of the language
+
+robolang 1.3;
+
+task t(robot r, location dst) {
+    goal { message_received "x"; }
+    plan { move r to dst; }
+}

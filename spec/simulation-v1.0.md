@@ -10,6 +10,8 @@ in it is recorded in [decision record 0004](decisions/0004-rl-basic-01a-simulati
 separately authorizes implementation.
 **Language:** RoboLang 1.1 ([`robolang-v1.1.md`](robolang-v1.1.md)), unchanged.
 **IR:** Task IR 1.0 ([`ir-schema-v1.0.md`](ir-schema-v1.0.md)), unchanged.
+**Later languages:** RoboLang 1.2 sources are covered by [`robolang-v1.2.md`](robolang-v1.2.md) section 8;
+RoboLang 1.3 sources (goals, typed sensors, run record 1.2) by section 10 of this document.
 **Fixtures:** [`tests/fixtures/simulation/`](../tests/fixtures/simulation/README.md)
 
 > **Simulation only.** This document defines what a RoboLang 1.1 task does in a symbolic,
@@ -571,6 +573,8 @@ Section 3.9 (`E501`–`E511`). They stop processing with exit status 3; no run i
 | `S233` | step | `inspect`: the sensor's availability is unknown |
 | `S241` | step | `wait until`: the timeout expired before the condition was true |
 | `S251` | step | A scripted fault |
+| `S301` | goal | RoboLang 1.3: a `goal` condition is false after the last step (section 10) |
+| `S302` | goal | RoboLang 1.3: no `goal` condition is false, but at least one is unknown (section 10) |
 
 ## 8. Acceptance tests and fixtures
 
@@ -608,3 +612,71 @@ are consistent with this specification and with the existing front end; it execu
 Every choice above was approved on 2026-10-26 and is recorded in
 [decision record 0004](decisions/0004-rl-basic-01a-simulation-semantics.md). The five choices
 deferred by decision record 0003 section 3 are rows B1–B5 there.
+
+## 10. RoboLang 1.3: goals and typed sensors
+
+This section adds to sections 3 to 5 for sources written in RoboLang 1.3
+([`robolang-v1.3.md`](robolang-v1.3.md)). Sources in 1.1 and 1.2 are unchanged by it: same
+IR, same run records, same run IDs. The world file stays at schema 1.0.
+
+### 10.1 Sensor parameters and the world file
+
+A `sensor` parameter is bound to a sensor, named by its key in the world file's `sensors` object.
+In section 3.5, "to an entity of its type" reads: for a `sensor` parameter, to a **declared
+sensor ID**. `World.kind_of` recognises a sensor ID as `sensor` after all entity kinds, so an ID
+shared with an entity reads as the entity.
+
+| Binding | Result |
+|---|---|
+| `sensor` parameter → a declared sensor | accepted |
+| `sensor` parameter → an entity, or an undeclared name | `E507` for an entity, `E505` for an undeclared name |
+| a `robot`, `object`, `location` or `region` parameter → a sensor, in a 1.3 task | `E507` |
+
+(Before 1.3 a sensor name could not be bound, and binding one stays `E505`, as today.)
+
+During a run, `sensor_ok S` and `inspect R O using S` use the sensor bound to parameter `S`. The
+conditions and failures of 4.4 and 4.5 are unchanged (`S231`–`S233`, `S241`).
+
+### 10.2 New conditions
+
+Added to 4.4. `r`, `o` and `l` stand for the robot, object and location bound to the parameters.
+
+| Condition | Value |
+|---|---|
+| `object_at o l` | `unknown` if the object's presence is unknown; `false` if it is not present, if a robot holds it, or if it is at another location; otherwise `true` |
+| `robot_at r l` | `true` if the robot's current location is `l`, otherwise `false`. Never `unknown` |
+| `holding r o` | `unknown` if the object's presence is unknown; `false` if it is not present or the robot does not hold it; otherwise `true` |
+
+They are combined with `and`, `or` and `not` as in `robolang-v1.2.md` section 8.1, and are used in
+`pre`, `goal` and `wait until` with the same algorithms as any other condition (4.4, 4.5).
+
+### 10.3 Goal evaluation (4.9)
+
+A 1.3 task has a goal. After the **last step succeeds**, with the clock where the last step left
+it and every event up to that time applied, each goal condition is evaluated, in order, against the
+final state, and every result is recorded. Evaluating a goal has no effect on the world or the clock.
+
+| Goal results | Run ends |
+|---|---|
+| all `true` | `SUCCEEDED` |
+| any `false` | `FAILED`, `S301`, phase `goal` |
+| none `false`, any `unknown` | `FAILED`, `S302`, phase `goal` |
+
+`SUCCEEDED` therefore means that every precondition was true, every step succeeded **and the
+declared outcome was verified**. If the run ended before that (`S001`, `S002`, `S101`, `S102`, a
+step failure, or a cancellation), no goal condition is evaluated and each is recorded as
+`not_evaluated`. A `goal` failure has `step`, `precondition`, `safety_limit` and `robot` set to
+`null`; the failing condition is found in the `goal` array.
+
+### 10.4 Run record 1.2
+
+A run of a 1.3 source writes **run record schema 1.2**: schema 1.1 (section 5, with Task IR 1.2
+embedded and `inputs.ir_schema_version` `"1.2"`, `inputs.language_version` `"1.3"`) plus:
+
+- `goal`: an array placed immediately after `preconditions`, one entry per goal condition, in the
+  shape of `preconditions`: `index` (from 1), `condition` (IR form) and `result`: `true`, `false`,
+  `unknown` or `not_evaluated`;
+- the failure `phase` may be `goal` (5.2).
+
+Runs of 1.1 and 1.2 sources write record 1.0 and 1.1 with no `goal` key, byte-identical to today.
+The run-ID derivation (section 6) is unchanged.

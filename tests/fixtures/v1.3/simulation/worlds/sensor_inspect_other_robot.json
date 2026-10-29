@@ -1,0 +1,225 @@
+{
+  "world_schema": "robolang.sim.world",
+  "world_schema_version": "1.0",
+  "locations": [
+    "home",
+    "shelf",
+    "table"
+  ],
+  "regions": {
+    "cell": {
+      "clear": true
+    }
+  },
+  "robots": {
+    "arm1": {
+      "ready": true,
+      "location": "home",
+      "gripper": true,
+      "max_speed": [
+        {
+          "value": "1",
+          "unit": "m/s"
+        }
+      ]
+    },
+    "arm2": {
+      "ready": true,
+      "location": "home",
+      "gripper": false
+    }
+  },
+  "objects": {
+    "box1": {
+      "present": true,
+      "location": "shelf"
+    },
+    "ghost": {}
+  },
+  "sensors": {
+    "camera_top": {
+      "robot": "arm1",
+      "available": true
+    },
+    "camera_aux": {
+      "robot": "arm1",
+      "available": true
+    },
+    "camera_arm2": {
+      "robot": "arm2",
+      "available": true
+    },
+    "camera_dead": {
+      "robot": "arm1",
+      "available": false
+    },
+    "camera_unknown": {
+      "robot": "arm1"
+    }
+  },
+  "events": [],
+  "tasks": {
+    "demo_pick_and_place_v13": {
+      "bindings": {
+        "r": "arm1",
+        "box": "box1",
+        "src": "shelf",
+        "dst": "table",
+        "cell": "cell"
+      }
+    },
+    "pick_place": {
+      "bindings": {
+        "r": "arm1",
+        "box": "box1",
+        "src": "shelf",
+        "dst": "table"
+      }
+    },
+    "goal_held": {
+      "bindings": {
+        "r": "arm1",
+        "box": "box1",
+        "src": "shelf",
+        "dst": "table"
+      }
+    },
+    "goal_never_moved": {
+      "bindings": {
+        "r": "arm1",
+        "box": "box1",
+        "src": "shelf",
+        "dst": "table"
+      }
+    },
+    "goal_unknown": {
+      "bindings": {
+        "r": "arm1",
+        "spare": "ghost",
+        "dst": "table"
+      }
+    },
+    "goal_false_and_unknown": {
+      "bindings": {
+        "r": "arm1",
+        "spare": "ghost",
+        "src": "shelf",
+        "dst": "table"
+      }
+    },
+    "goal_unknown_and_true": {
+      "bindings": {
+        "r": "arm1",
+        "spare": "ghost",
+        "dst": "table"
+      }
+    },
+    "goal_holding": {
+      "bindings": {
+        "r": "arm1",
+        "box": "box1",
+        "src": "shelf"
+      }
+    },
+    "holding_unknown": {
+      "bindings": {
+        "r": "arm1",
+        "spare": "ghost",
+        "dst": "table"
+      }
+    },
+    "goal_combined": {
+      "bindings": {
+        "r": "arm1",
+        "box": "box1",
+        "src": "shelf",
+        "dst": "table"
+      }
+    },
+    "goal_after_events": {
+      "bindings": {
+        "r": "arm1",
+        "cell": "cell",
+        "dst": "table"
+      }
+    },
+    "pre_new_atoms": {
+      "bindings": {
+        "r": "arm1",
+        "box": "box1",
+        "src": "shelf",
+        "dst": "table"
+      }
+    },
+    "pre_object_unknown": {
+      "bindings": {
+        "r": "arm1",
+        "spare": "ghost",
+        "dst": "table"
+      }
+    },
+    "pre_holding": {
+      "bindings": {
+        "r": "arm1",
+        "box": "box1",
+        "dst": "home"
+      }
+    },
+    "wait_object_at": {
+      "bindings": {
+        "r": "arm1",
+        "box": "box1",
+        "src": "shelf",
+        "dst": "table"
+      }
+    },
+    "sensor_pre": {
+      "bindings": {
+        "r": "arm1",
+        "dst": "table",
+        "cam": "camera_top"
+      }
+    },
+    "sensor_inspect": {
+      "bindings": {
+        "r": "arm1",
+        "box": "box1",
+        "dst": "table",
+        "cam": "camera_arm2"
+      }
+    },
+    "sensor_wait": {
+      "bindings": {
+        "r": "arm1",
+        "dst": "table",
+        "cam": "camera_top"
+      }
+    },
+    "sensor_two": {
+      "bindings": {
+        "r": "arm1",
+        "box": "box1",
+        "top": "camera_top",
+        "aux": "camera_aux"
+      }
+    },
+    "limit_with_goal": {
+      "bindings": {
+        "r": "arm1",
+        "dst": "table"
+      }
+    },
+    "first": {
+      "bindings": {
+        "r": "arm1",
+        "dst": "shelf"
+      }
+    },
+    "second": {
+      "bindings": {
+        "r": "arm1",
+        "dst": "table"
+      }
+    }
+  }
+}

@@ -1,0 +1,10 @@
+// RoboLang v1.3 fixture: invalid
+// expect: error E201 (syntax) line 8
+// why: holding needs a robot and an object
+
+robolang 1.3;
+
+task t(robot r, object box, location dst) {
+    goal { holding r; }
+    plan { move r to dst; }
+}

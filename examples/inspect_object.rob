@@ -1,17 +1,23 @@
 // examples/inspect_object.rob
 // Move to a camera position and inspect an object with the robot's camera.
+robolang 1.3;
 
-task inspect_object(robot r, object obj, location cam_pos) {
+task inspect_object(robot r, object obj, location cam_pos, sensor cam) {
     @safety max_speed 0.3 m/s;
 
     pre {
         robot_ready r;
         object_exists obj;
+        sensor_ok cam;
+    }
+
+    goal {
+        robot_at r cam_pos;
     }
 
     plan {
         move r to cam_pos;
-        inspect r obj using "camera_top";
+        inspect r obj using cam;
         wait for 2s;
     }
 }

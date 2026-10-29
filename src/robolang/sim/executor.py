@@ -18,7 +18,7 @@ from .world import World
 @dataclass(frozen=True)
 class Failure:
     code: str
-    phase: str  # "authorization", "precondition" or "step"
+    phase: str  # "authorization", "precondition", "step" or "goal"
     step: int | None
     precondition: int | None
     safety_limit: int | None
@@ -119,6 +119,7 @@ class RunResult:
     cancelled_before_step: int | None
     safety_limits: tuple[LimitResult, ...]
     preconditions: tuple[PreconditionResult, ...]
+    goal: tuple[PreconditionResult, ...] | None  # None for a task without a goal (RoboLang 1.1, 1.2)
     steps: tuple[StepResult, ...]
     events_applied: tuple[AppliedEvent, ...]
     end_t_ms: Decimal
@@ -186,21 +187,48 @@ def _require_ready(ready: bool | None) -> None:
         raise _StepFailed("S202" if ready is None else "S201")
 
 
-def _evaluate(state: _State, bound: dict[str, str], condition: ir.Condition) -> Truth:
+def _object_at(state: _State, obj: str, location: str) -> Truth:
+    """Present, not held, and at `location`. An absent object is not there; an unknown one may be."""
+    present = state.present[obj]
+    if present is not True:
+        return Truth.of(present)
+    return Truth.of(state.held_by[obj] is None and state.at[obj] == location)
+
+
+def _holding(state: _State, robot: str, obj: str) -> Truth:
+    present = state.present[obj]
+    if present is not True:
+        return Truth.of(present)
+    return Truth.of(state.holding[robot] == obj)
+
+
+def _sensor_id(task: ir.Task, bound: dict[str, str], name: str) -> str:
+    """The world sensor a task's `sensor_ok` or `inspect` names: a bound parameter in 1.3, else the ID itself."""
+    return bound[name] if task.typed_sensors else name
+
+
+def _evaluate(task: ir.Task, state: _State, bound: dict[str, str], condition: ir.Condition) -> Truth:
     if isinstance(condition, ir.Not):
-        return _evaluate(state, bound, condition.condition).negate()
+        return _evaluate(task, state, bound, condition.condition).negate()
     if isinstance(condition, ir.And):
-        return Truth.all_of(_evaluate(state, bound, c) for c in condition.conditions)
+        return Truth.all_of(_evaluate(task, state, bound, c) for c in condition.conditions)
     if isinstance(condition, ir.Or):
-        return Truth.any_of(_evaluate(state, bound, c) for c in condition.conditions)
+        return Truth.any_of(_evaluate(task, state, bound, c) for c in condition.conditions)
     if isinstance(condition, ir.RobotReady):
         return Truth.of(state.ready[bound[condition.robot]])
     if isinstance(condition, ir.RegionClear):
         return Truth.of(state.clear[bound[condition.region]])
     if isinstance(condition, ir.ObjectExists):
         return Truth.of(state.present[bound[condition.obj]])
-    if condition.sensor in state.available:
-        return Truth.of(state.available[condition.sensor])
+    if isinstance(condition, ir.ObjectAt):
+        return _object_at(state, bound[condition.obj], bound[condition.location])
+    if isinstance(condition, ir.RobotAt):
+        return Truth.of(state.location[bound[condition.robot]] == bound[condition.location])
+    if isinstance(condition, ir.Holding):
+        return _holding(state, bound[condition.robot], bound[condition.obj])
+    sensor = _sensor_id(task, bound, condition.sensor)
+    if sensor in state.available:
+        return Truth.of(state.available[sensor])
     return Truth.UNKNOWN  # no sensor of that name is declared
 
 
@@ -234,7 +262,7 @@ def _authorize(task: ir.Task, world: World, bindings: tuple[tuple[str, str], ...
     return tuple(LimitResult(lim, status) for lim, status in zip(task.safety, statuses)), failure
 
 
-def _execute(state: _State, bound: dict[str, str], step: ir.Step):
+def _execute(task: ir.Task, state: _State, bound: dict[str, str], step: ir.Step):
     """Perform one step. Returns (observation, message, condition_result). Raises _StepFailed."""
     if isinstance(step, ir.Move):
         robot = bound[step.robot]
@@ -266,10 +294,11 @@ def _execute(state: _State, bound: dict[str, str], step: ir.Step):
         state.holding[robot] = None
     elif isinstance(step, ir.Inspect):
         robot, obj = bound[step.robot], bound[step.obj]
-        sensor = state.world.sensors.get(step.sensor)
+        sensor_id = _sensor_id(task, bound, step.sensor)
+        sensor = state.world.sensors.get(sensor_id)
         if sensor is None or sensor.robot != robot:
             raise _StepFailed("S231")
-        available = state.available[step.sensor]
+        available = state.available[sensor_id]
         if available is not True:
             raise _StepFailed("S233" if available is None else "S232")
         return Observation(obj, state.present[obj], state.at[obj], state.held_by[obj]), None, None
@@ -278,14 +307,14 @@ def _execute(state: _State, bound: dict[str, str], step: ir.Step):
     elif isinstance(step, ir.WaitUntil):
         t0 = state.clock
         deadline = t0 + duration_ms_of(step.timeout)
-        value = _evaluate(state, bound, step.condition)
+        value = _evaluate(task, state, bound, step.condition)
         while value is not Truth.TRUE:
             pending = [e.at_ms for e in state.world.events[state.next_event:] if t0 < e.at_ms <= deadline]
             if not pending:
                 state.advance(deadline)
                 raise _StepFailed("S241", value)
             state.advance(pending[0])
-            value = _evaluate(state, bound, step.condition)
+            value = _evaluate(task, state, bound, step.condition)
         return None, None, value
     else:
         return None, Message(bound[step.robot], step.channel, step.message), None
@@ -300,13 +329,31 @@ def _not_run(task: ir.Task, first: int = 1) -> list[StepResult]:
     ]
 
 
-def _names(node) -> list[str]:
-    """The parameter names a condition or step refers to."""
+def _names(node, typed_sensors: bool) -> list[str]:
+    """The parameter names a condition or step refers to (a sensor is a parameter name only in 1.3)."""
     if isinstance(node, (ir.And, ir.Or)):
-        return [name for condition in node.conditions for name in _names(condition)]
+        return [name for condition in node.conditions for name in _names(condition, typed_sensors)]
     if isinstance(node, (ir.WaitUntil, ir.Not)):
-        return _names(node.condition)
-    return [getattr(node, f) for f in ("robot", "region", "obj", "target") if hasattr(node, f)]
+        return _names(node.condition, typed_sensors)
+    fields = ("robot", "region", "obj", "target", "location") + (("sensor",) if typed_sensors else ())
+    return [getattr(node, f) for f in fields if hasattr(node, f)]
+
+
+def _goal_not_evaluated(task: ir.Task) -> tuple[PreconditionResult, ...] | None:
+    """The goal of a run that ended before the last step succeeded: recorded, never evaluated."""
+    if task.goal is None:
+        return None
+    return tuple(PreconditionResult(i, c, None) for i, c in enumerate(task.goal, start=1))
+
+
+def _goal_failure(goal: tuple[PreconditionResult, ...]) -> Failure | None:
+    """Section 4.8: any false condition is S301, else any unknown one is S302, else the goal is met."""
+    results = [g.result for g in goal]
+    if Truth.FALSE in results:
+        return Failure("S301", "goal", None, None, None, None)
+    if Truth.UNKNOWN in results:
+        return Failure("S302", "goal", None, None, None, None)
+    return None
 
 
 def _check_inputs(task: ir.Task, world: World) -> None:
@@ -319,10 +366,10 @@ def _check_inputs(task: ir.Task, world: World) -> None:
     if [name for name, _ in world.task.bindings] != [p.name for p in task.parameters]:
         raise SimulationInputError(f"the world's bindings do not match the parameters of task '{task.name}'")
     for parameter in task.parameters:
-        if world.kind_of(bound[parameter.name]) != parameter.type:
+        if not world.binds(parameter.type, bound[parameter.name]):
             raise SimulationInputError(f"parameter '{parameter.name}' is not bound to a {parameter.type}")
-    for node in (*task.preconditions, *task.steps):
-        for name in _names(node):
+    for node in (*task.preconditions, *(task.goal or ()), *task.steps):
+        for name in _names(node, task.typed_sensors):
             if name not in bound:
                 raise SimulationInputError(f"task '{task.name}' refers to '{name}', which is not a parameter")
     script = world.task
@@ -350,7 +397,7 @@ def run(task: ir.Task, world: World) -> RunResult:
         return RunResult(
             task.name, bindings, ("CREATED", "VALIDATED", "FAILED"), "FAILED", authorization, None, limits,
             tuple(PreconditionResult(i, c, None) for i, c in enumerate(task.preconditions, start=1)),
-            tuple(_not_run(task)), (), state.clock, state.freeze(),
+            _goal_not_evaluated(task), tuple(_not_run(task)), (), state.clock, state.freeze(),
         )
 
     states = ["CREATED", "VALIDATED", "AUTHORIZED", "RUNNING"]
@@ -358,7 +405,7 @@ def run(task: ir.Task, world: World) -> RunResult:
     cancelled = None
 
     pre = tuple(
-        PreconditionResult(i, c, _evaluate(state, bound, c)) for i, c in enumerate(task.preconditions, start=1)
+        PreconditionResult(i, c, _evaluate(task, state, bound, c)) for i, c in enumerate(task.preconditions, start=1)
     )
     for p in pre:
         if p.result is not Truth.TRUE:
@@ -378,7 +425,7 @@ def run(task: ir.Task, world: World) -> RunResult:
             try:
                 if i in world.task.faults:
                     raise _StepFailed("S251")
-                observation, message, condition_result = _execute(state, bound, step)
+                observation, message, condition_result = _execute(task, state, bound, step)
             except _StepFailed as exc:
                 failure = Failure(exc.code, "step", i, None, None, None)
                 results.append(StepResult(i, step, "failed", start, state.clock, None, None, exc.condition_result))
@@ -388,8 +435,13 @@ def run(task: ir.Task, world: World) -> RunResult:
                 StepResult(i, step, "succeeded", start, state.clock, observation, message, condition_result)
             )
 
+    goal = _goal_not_evaluated(task)
+    if failure is None and cancelled is None and task.goal is not None:
+        goal = tuple(PreconditionResult(i, c, _evaluate(task, state, bound, c)) for i, c in enumerate(task.goal, 1))
+        failure = _goal_failure(goal)
+
     states.append("FAILED" if failure is not None else "CANCELLED" if cancelled is not None else "SUCCEEDED")
     return RunResult(
-        task.name, bindings, tuple(states), states[-1], failure, cancelled, limits, pre, tuple(results),
+        task.name, bindings, tuple(states), states[-1], failure, cancelled, limits, pre, goal, tuple(results),
         tuple(state.applied), state.clock, state.freeze(),
     )

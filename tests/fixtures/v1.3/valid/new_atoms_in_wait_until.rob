@@ -1,0 +1,15 @@
+// RoboLang v1.3 fixture: valid
+// expect: ok
+// why: the outcome atoms in wait until, combined
+
+robolang 1.3;
+
+task t(robot r, object box, location src, location dst, region cell, sensor cam) {
+    goal {
+        object_at box dst;
+    }
+    plan {
+        wait until object_at box dst or holding r box timeout 5s;
+        wait until robot_at r dst timeout 500ms;
+    }
+}

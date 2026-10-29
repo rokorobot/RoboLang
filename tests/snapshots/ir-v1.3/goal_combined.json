@@ -1,0 +1,94 @@
+{
+  "ir_schema": "robolang.task-ir",
+  "ir_schema_version": "1.2",
+  "language_version": "1.3",
+  "tasks": [
+    {
+      "name": "t",
+      "parameters": [
+        {
+          "name": "r",
+          "type": "robot"
+        },
+        {
+          "name": "box",
+          "type": "object"
+        },
+        {
+          "name": "src",
+          "type": "location"
+        },
+        {
+          "name": "dst",
+          "type": "location"
+        },
+        {
+          "name": "cell",
+          "type": "region"
+        },
+        {
+          "name": "cam",
+          "type": "sensor"
+        }
+      ],
+      "safety": [],
+      "preconditions": [],
+      "goal": [
+        {
+          "kind": "and",
+          "conditions": [
+            {
+              "kind": "object_at",
+              "object": "box",
+              "location": "dst"
+            },
+            {
+              "kind": "robot_at",
+              "robot": "r",
+              "location": "dst"
+            }
+          ]
+        },
+        {
+          "kind": "not",
+          "condition": {
+            "kind": "holding",
+            "robot": "r",
+            "object": "box"
+          }
+        },
+        {
+          "kind": "and",
+          "conditions": [
+            {
+              "kind": "or",
+              "conditions": [
+                {
+                  "kind": "object_at",
+                  "object": "box",
+                  "location": "src"
+                },
+                {
+                  "kind": "object_at",
+                  "object": "box",
+                  "location": "dst"
+                }
+              ]
+            },
+            {
+              "kind": "sensor_ok",
+              "sensor": "cam"
+            }
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "kind": "move",
+          "robot": "r",
+          "target": "dst"
+        }
+      ]
+    }
+  ]
+}

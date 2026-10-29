@@ -19,9 +19,10 @@
 # RoboLang
 
 RoboLang is a task language for robots, written mainly by AI systems and reviewed by people.
-A task declares what must be true before it starts, the steps to take, and safety limits.
-RoboLang checks the task statically and runs it in a deterministic, symbolic simulation that
-records every state, step and outcome.
+A task declares what must be true before it starts, the **goal** it must achieve, the steps to
+take, and safety limits. RoboLang checks the task statically and runs it in a deterministic,
+symbolic simulation. A run **succeeds only when the goal is verified** in the final world, not
+merely because the steps ran.
 
 > ⚠️ **Simulation only.** Physical robot execution is not implemented or authorized. RoboLang
 > does not replace ROS 2, MoveIt 2, Nav2 or hardware safety controllers. Do not run it against
@@ -46,11 +47,18 @@ robolang simulate examples/handover.rob --world examples/world.json
 `simulate` prints `simulation only: run sim-…: SUCCEEDED`, then the run record as JSON. The
 same commands work from a clone without installing: `python src/robolang validate FILE.rob`.
 
+Bind task parameters on the command line instead of in the world file (`FILE` comes first):
+
+```bash
+robolang simulate examples/handover.rob --world examples/world.json \
+    --bind arm=arm1 mobile=amr1 box=box1 src=shelf handoff=handoff dst=table zone=handoff_zone
+```
+
 | Command | What it does | Exit status |
 |---|---|---|
-| `validate FILE` | Checks the file; prints diagnostics as `file:line:column: error[CODE]: …` | 0 valid, 1 invalid, 2 usage error |
+| `validate FILE` | Checks the file and prints **every** diagnostic (up to 50) as `file:line:column: error[CODE]: …` | 0 valid, 1 invalid, 2 usage error |
 | `inspect FILE [--json] [--task NAME]` | Validates, then shows the tasks as text or as Task IR JSON | as `validate` |
-| `simulate FILE --world W [--task NAME]` | Runs one task against a world file in a symbolic simulation; the same inputs give a byte-identical run record | 0 succeeded, 1 invalid source, 2 usage, 3 invalid world, 4 failed, 5 cancelled |
+| `simulate FILE --world W [--task NAME] [--bind P=ID …]` | Runs one task against a world file in a symbolic simulation; the same inputs give a byte-identical run record | 0 succeeded, 1 invalid source, 2 usage, 3 invalid world, 4 failed, 5 cancelled |
 | `arch02 --scenario S --cases C --case NAME` | Runs one case of the Core 0.1 reference scenario (AI planner, arm and mobile robot exchanging signed messages) | 0 ran, 2 usage, 3 invalid input |
 
 Validation and simulation say nothing about whether a task is safe on a real robot.
@@ -58,6 +66,8 @@ Validation and simulation say nothing about whether a task is safe on a real rob
 ## The language
 
 ```rob
+robolang 1.3;
+
 task handover(robot arm, robot mobile, object box, location src, location handoff, location dst, region zone) {
     @safety max_speed 0.5 m/s;
 
@@ -65,6 +75,10 @@ task handover(robot arm, robot mobile, object box, location src, location handof
         robot_ready arm;
         robot_ready mobile;
         object_exists box;
+    }
+
+    goal {
+        object_at box dst;
     }
 
     plan {
@@ -82,19 +96,24 @@ task handover(robot arm, robot mobile, object box, location src, location handof
 }
 ```
 
-- **Parameters are typed** (`robot`, `object`, `location`, `region`) and bound to world IDs at
-  run time, so one task runs in many worlds.
+- **Parameters are typed** (`robot`, `object`, `location`, `region`, `sensor`) and bound to
+  world IDs at run time, so one task runs in many worlds.
+- **Goals decide success.** After the plan, every `goal` condition is checked against the final
+  world: all true → `SUCCEEDED`; any false → `FAILED` (`S301`); otherwise unknown → `FAILED`
+  (`S302`). Goal conditions: `object_at`, `robot_at`, `holding`, plus every precondition form.
 - **Preconditions fail closed.** Logic is three-valued: a `false` or `unknown` condition stops
   the run.
 - **Steps:** `move`, `grasp`, `place`, `inspect … using`, `wait for`, `wait until … timeout`,
   `communicate`. Plans are sequential.
-- **RoboLang 1.2** (`robolang 1.2;` at the top) adds `and`, `or` and `not` in conditions.
-  Unmarked files are 1.1.
+- **Versions:** unmarked files are 1.1. `robolang 1.2;` adds `and`, `or`, `not`.
+  `robolang 1.3;` adds the required `goal` block, the outcome conditions and `sensor`
+  parameters.
 - **`@safety max_speed`** is checked against the robot's profile and recorded, never enforced.
 
 Specifications: [1.1](spec/robolang-v1.1.md) ([grammar](spec/grammar.ebnf)),
 [1.2](spec/robolang-v1.2.md) ([grammar](spec/grammar-v1.2.ebnf)),
-[Task IR](spec/ir-schema-v1.1.md), [simulation, world file and run record](spec/simulation-v1.0.md).
+[1.3](spec/robolang-v1.3.md) ([grammar](spec/grammar-v1.3.ebnf)),
+[Task IR](spec/ir-schema-v1.2.md), [simulation, world file and run record](spec/simulation-v1.0.md).
 
 ## How it fits together
 
@@ -116,7 +135,7 @@ Specifications: [1.1](spec/robolang-v1.1.md) ([grammar](spec/grammar.ebnf)),
 **RoboLang Core 0.1** is a separate, draft layer: a JSON message envelope and capability
 descriptor for AI-to-robot and robot-to-robot exchanges, with authority, custody and
 evidence-backed outcomes. It runs only inside the `arch02` reference simulation. `.rob` does
-not compile to Core yet. See [Core 0.1](spec/core-v0.1.md), the
+not compile to Core yet; the [bridge plan](docs/plans/goals-and-core-bridge.md) covers it. See [Core 0.1](spec/core-v0.1.md), the
 [reference simulation](spec/reference-simulation-v0.1.md) and
 [RFC-001](spec/architecture/rfc-001-ai-native-architecture.md).
 
@@ -136,18 +155,18 @@ not compile to Core yet. See [Core 0.1](spec/core-v0.1.md), the
 
 | Area | State |
 |---|---|
-| Language 1.1 and 1.2, validator, Task IR | Delivered |
+| Language 1.1, 1.2 and 1.3 (goals, typed sensors), validator, Task IR | Delivered |
 | Simulation-only execution (`simulate`) | Delivered, signed off 2026-10-27 ([evidence](docs/evidence/rl-basic-01-exit-gate.md)) |
 | Core 0.1 reference simulation (`arch02`) | Implemented, gate 1 signed off 2026-10-27 ([evidence](docs/evidence/rl-arch-02-exit-gate.md)) |
 | Gate 2 independent interoperability | Bundle frozen 2026-10-28; INTEROP-3 deferred ([0017](spec/decisions/0017-reprioritise-goals-before-interop-3.md)) |
-| Next | Declared goals that decide success, all diagnostics at once, bindings on the command line, typed sensors |
+| Next | Bridge `.rob` to Core: Core-shaped outcomes, `export-goal`, robots running `.rob` locally ([plan](docs/plans/goals-and-core-bridge.md)) |
 
 Every implementation item needs owner approval. The full plan and history are in the
 [development plan](docs/DEVELOPMENT_PLAN.md); decisions are in [`spec/decisions/`](spec/decisions/).
 
 `robolang --version` prints three independent versions: the Python package (`0.1.0a1`, alpha),
-the language (`1.1`, `1.2`) and the Task IR schema (`1.0` for 1.1 sources, `1.1` for 1.2
-sources).
+the language (`1.1`, `1.2`, `1.3`) and the Task IR schema (`1.0`, `1.1`, `1.2` for 1.1, 1.2
+and 1.3 sources).
 
 ## Contributing
 
