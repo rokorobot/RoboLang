@@ -1,0 +1,36 @@
+{
+  "id": "i08_absent_container",
+  "prompt": "Have crane 1 move container 999 to the out gate.",
+  "world": "bench/worlds/yard.json",
+  "group": "infeasible",
+  "expect": {
+    "decision": "cannot",
+    "category": "infeasible"
+  },
+  "tags": [
+    "absent_object"
+  ],
+  "why": "cont_999 is not present in the world, so it cannot be grasped (S213).",
+  "blockers": [
+    "cont_999"
+  ],
+  "required_entities": [
+    "cont_999"
+  ],
+  "faithful_goal": [
+    [
+      "rl:thing:cont_999",
+      "located_in",
+      "rl:place:gate_out"
+    ]
+  ],
+  "fix_patch": {
+    "objects": {
+      "cont_999": {
+        "present": true,
+        "location": "berth_1"
+      }
+    }
+  },
+  "attempt_fails_with": "S213"
+}

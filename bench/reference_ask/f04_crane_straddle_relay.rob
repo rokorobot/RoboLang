@@ -1,0 +1,16 @@
+// bench/reference_ask/f04_crane_straddle_relay.rob: hand-written
+robolang 1.3;
+
+task relay(robot a, robot b, object o, location src, location mid, location dst) {
+    goal { object_at o dst; }
+    plan {
+        move a to src;
+        grasp a o;
+        move a to mid;
+        place a o at mid;
+        move b to mid;
+        grasp b o;
+        move b to dst;
+        place b o at dst;
+    }
+}

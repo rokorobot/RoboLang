@@ -1,0 +1,9 @@
+{
+  "task": "both",
+  "bindings": {
+    "r": "crane1",
+    "a": "cont_101",
+    "b": "cont_102",
+    "l": "berth_1"
+  }
+}

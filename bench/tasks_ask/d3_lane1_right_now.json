@@ -1,0 +1,51 @@
+{
+  "id": "d3_lane1_right_now",
+  "prompt": "Only if lane 1 is clear right now, have straddle1 move container 204 to stack A; otherwise do nothing.",
+  "world": "bench/worlds/yard.json",
+  "group": "decoy",
+  "expect": {
+    "decision": "program",
+    "category": "none"
+  },
+  "expected_goal": [
+    [
+      "rl:thing:cont_204",
+      "located_in",
+      "rl:place:stack_a"
+    ]
+  ],
+  "probes": [
+    {
+      "name": "lane_1_closed",
+      "world_patch": {
+        "regions": {
+          "lane_1": {
+            "clear": false
+          }
+        }
+      },
+      "expect": "not_succeeded"
+    }
+  ],
+  "tags": [
+    "looks_infeasible",
+    "precondition"
+  ],
+  "expected_action_sequences": [
+    {
+      "steps": [
+        {
+          "kind": "grasp",
+          "robot": "straddle1",
+          "obj": "cont_204"
+        },
+        {
+          "kind": "place",
+          "robot": "straddle1",
+          "obj": "cont_204",
+          "target": "stack_a"
+        }
+      ]
+    }
+  ]
+}

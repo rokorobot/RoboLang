@@ -1,0 +1,12 @@
+// bench/reference_ask/a10_which_berth.reading1.rob: hand-written
+robolang 1.3;
+
+task deliver(robot r, object o, location src, location dst) {
+    goal { object_at o dst; }
+    plan {
+        move r to src;
+        grasp r o;
+        move r to dst;
+        place r o at dst;
+    }
+}

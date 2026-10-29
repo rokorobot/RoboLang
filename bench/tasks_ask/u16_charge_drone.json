@@ -1,0 +1,14 @@
+{
+  "id": "u16_charge_drone",
+  "prompt": "Charge the drone at the workshop, then fly it to berth 1.",
+  "world": "bench/worlds/yard.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "tags": [
+    "unknown_action"
+  ],
+  "why": "The plan has six statements: move, grasp, place, inspect, wait, communicate."
+}

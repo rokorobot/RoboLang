@@ -1,0 +1,29 @@
+{
+  "id": "i10_no_soup_pot",
+  "prompt": "Have the helper arm put the soup pot on the stove.",
+  "world": "bench/worlds/kitchen.json",
+  "group": "infeasible",
+  "expect": {
+    "decision": "cannot",
+    "category": "infeasible"
+  },
+  "tags": [
+    "unknown_entity"
+  ],
+  "why": "The world has no such object, so nothing can be bound to it.",
+  "blockers": [],
+  "required_entities": [
+    "pot_1"
+  ],
+  "fix_patch": {
+    "objects": {
+      "pot_1": {
+        "present": true,
+        "location": "prep_2",
+        "class": "pot"
+      }
+    }
+  },
+  "attempt_fails_with": "E505",
+  "failure_kind": "missing_entity"
+}

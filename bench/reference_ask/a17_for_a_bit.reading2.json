@@ -1,0 +1,8 @@
+{
+  "task": "visit",
+  "bindings": {
+    "r": "tug1",
+    "there": "gate_out",
+    "home": "workshop"
+  }
+}

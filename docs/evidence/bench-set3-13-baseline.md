@@ -2,7 +2,7 @@
 
 Set 3 was pre-registered in commit `01fd0772d82e21d7d0b650c90330f477fe5e4771` before any RoboLang 1.4 implementation. This baseline used its 36 unchanged tasks: 20 branching requests that 1.3 cannot express, eight still-inexpressible controls, and eight feasible controls. Each of Opus, Sonnet, and Haiku 5.5 answered every task three times with each of the full-reference and grammar-only prompts (648 answers). Effort was medium. No judge model was used.
 
-The 113 input/reference/scorer files in `bench/tasks_branch/`, `bench/reference_branch/`, `bench/worlds/`, the two prompt wrappers, `bench/lib.py`, `bench/score.py`, `docs/language-reference.md`, and `spec/grammar-v1.3.ebnf` have a canonical path-to-SHA-256 manifest digest of `4ef9eb159ba7263c2dbd1eb8dfb8b274c4d5f9611009b2bc9a70164677a79038` (sorted compact JSON plus newline). Only `bench/run.py` was changed to add a usage-based spending guard; no case, label, prompt, reference, or scorer was changed during or after the run.
+The 113 input/reference/scorer files in `bench/tasks_branch/`, `bench/reference_branch/`, `bench/worlds/`, the two prompt wrappers, `bench/lib.py`, `bench/score.py`, `docs/language-reference.md`, and `spec/grammar-v1.3.ebnf` have a canonical path-to-SHA-256 manifest digest of `4ef9eb159ba7263c2dbd1eb8dfb8b274c4d5f9611009b2bc9a70164677a79038` (sorted compact JSON plus newline). Only `bench/run.py` was changed to add a usage-based spending guard for these runs; no case, label, prompt, reference, or scorer was changed during or after the run. The digest identifies the pre-merge run snapshot. The later merge of BENCH-2 into this PR changes shared benchmark files, so it must not be recomputed against the merge head.
 
 ## First-decision results
 

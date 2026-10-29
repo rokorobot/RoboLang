@@ -1,0 +1,10 @@
+{
+  "task": "deliver",
+  "bindings": {
+    "r": "picker1",
+    "o": "tray_2",
+    "src": "packing",
+    "dst": "dispatch",
+    "z": "corridor"
+  }
+}

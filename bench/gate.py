@@ -27,10 +27,11 @@ def summarize(rows: list[dict]) -> dict[str, dict[str, tuple[int, int]]]:
     out = {}
     for model in sorted({r["model"] for r in rows if r.get("group") == "requested"}):
         mine = [r for r in rows if r["model"] == model and r.get("group") == "requested"]
-        feasible = lambda r: r.get("expect", "program") == "program"  # noqa: E731  ("program" or "cannot")
+        feasible = lambda r: r.get("expect", "program") == "program"  # noqa: E731  ("program", "cannot", "clarify")
         out[model] = {
             "decision_correct": _rate(mine, "decision_correct"),
-            "false_program": _rate(mine, "false_program", lambda r: not feasible(r)),
+            "false_program": _rate(mine, "false_program", lambda r: r.get("expect") == "cannot"),
+            "silent_guess": _rate(mine, "silent_guess", lambda r: r.get("expect") == "clarify"),
             "goal_correct": _rate(mine, "goal_correct", feasible),
             "plan_succeeds": _rate(mine, "plan_succeeds", feasible),
         }

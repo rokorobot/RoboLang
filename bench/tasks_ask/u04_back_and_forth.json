@@ -1,0 +1,14 @@
+{
+  "id": "u04_back_and_forth",
+  "prompt": "Have the runner keep driving back and forth between the pass and the sink for as long as service lasts.",
+  "world": "bench/worlds/kitchen.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "tags": [
+    "repetition"
+  ],
+  "why": "RoboLang 1.3 has no loop; the number of repetitions is unbounded, so it cannot be unrolled."
+}

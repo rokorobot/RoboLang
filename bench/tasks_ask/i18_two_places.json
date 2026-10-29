@@ -1,0 +1,21 @@
+{
+  "id": "i18_two_places",
+  "prompt": "With picker1, make vial A1 end the task at both fridge 1 and the packing table at the same time.",
+  "world": "bench/worlds/pharmacy.json",
+  "group": "infeasible",
+  "expect": {
+    "decision": "cannot",
+    "category": "infeasible"
+  },
+  "tags": [
+    "contradiction"
+  ],
+  "why": "An object is at one location at a time, so it cannot end in fridge 1 and at packing.",
+  "blockers": [
+    "vial_a1"
+  ],
+  "required_entities": [
+    "picker1"
+  ],
+  "attempt_fails_with": "S301"
+}

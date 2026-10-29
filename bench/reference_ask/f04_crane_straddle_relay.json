@@ -1,0 +1,11 @@
+{
+  "task": "relay",
+  "bindings": {
+    "a": "crane1",
+    "b": "straddle1",
+    "o": "cont_101",
+    "src": "berth_1",
+    "mid": "stack_a",
+    "dst": "stack_c"
+  }
+}

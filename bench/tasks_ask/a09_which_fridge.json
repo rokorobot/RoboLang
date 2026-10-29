@@ -1,0 +1,18 @@
+{
+  "id": "a09_which_fridge",
+  "prompt": "Have picker1 put vial A1 in the fridge.",
+  "world": "bench/worlds/pharmacy.json",
+  "group": "clarify",
+  "expect": {
+    "decision": "clarify",
+    "category": "none"
+  },
+  "tags": [
+    "location"
+  ],
+  "slot": "location",
+  "candidates": [
+    "fridge_1",
+    "fridge_2"
+  ]
+}

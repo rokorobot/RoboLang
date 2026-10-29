@@ -1,0 +1,9 @@
+{
+  "task": "deliver",
+  "bindings": {
+    "r": "picker1",
+    "o": "tray_1",
+    "src": "packing",
+    "dst": "shelf_b"
+  }
+}

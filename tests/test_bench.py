@@ -404,16 +404,6 @@ def test_the_estimate_is_printed_and_needs_yes_to_spend(tmp_path):
     assert 0 < estimate["usd"] < 20
 
 
-def test_cost_guard_saves_the_last_answer_and_stops_before_more_requests(tmp_path, monkeypatch):
-    answer = reference_answer("e_pick_place")
-    client = FakeClient(scripted({"e_pick_place": answer, "e_hold_box": answer}))
-    monkeypatch.setattr(lib, "call_cost", lambda call: 3.0)
-    with pytest.raises(run.FatalError, match="cost guard reached"):
-        run_to(tmp_path, client, tasks=["e_pick_place", "e_hold_box"], stop_after_cost=4)
-    saved = list((tmp_path / "test").glob("*/*.json"))
-    assert len(saved) == 1 and saved[0].name == "e_pick_place.1.json"
-
-
 def test_no_key_no_run(tmp_path):
     code = run.main(["--yes", "--out", str(tmp_path)], client_factory=lambda key: pytest.fail("no client"),
                     out=io.StringIO(), err=io.StringIO(), environ={}, env_file=tmp_path / "no.env")

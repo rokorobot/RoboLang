@@ -1,0 +1,9 @@
+{
+  "task": "deliver",
+  "bindings": {
+    "r": "helper_arm",
+    "o": "bowl_2",
+    "src": "fridge",
+    "dst": "prep_2"
+  }
+}

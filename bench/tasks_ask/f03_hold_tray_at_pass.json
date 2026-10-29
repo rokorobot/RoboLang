@@ -1,0 +1,37 @@
+{
+  "id": "f03_hold_tray_at_pass",
+  "prompt": "Have the helper arm pick up tray B and then wait at the pass holding it.",
+  "world": "bench/worlds/kitchen.json",
+  "group": "feasible",
+  "expect": {
+    "decision": "program",
+    "category": "none"
+  },
+  "expected_goal": [
+    [
+      "rl:thing:tray_b",
+      "carried_by",
+      "rl:robot:helper_arm"
+    ],
+    [
+      "rl:robot:helper_arm",
+      "located_in",
+      "rl:place:pass"
+    ]
+  ],
+  "tags": [
+    "holding",
+    "robot_at"
+  ],
+  "expected_action_sequences": [
+    {
+      "steps": [
+        {
+          "kind": "grasp",
+          "robot": "helper_arm",
+          "obj": "tray_b"
+        }
+      ]
+    }
+  ]
+}

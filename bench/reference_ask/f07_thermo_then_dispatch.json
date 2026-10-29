@@ -1,0 +1,9 @@
+{
+  "task": "check",
+  "bindings": {
+    "r": "picker1",
+    "o": "insulin_1",
+    "s": "thermo_p1",
+    "dst": "dispatch"
+  }
+}

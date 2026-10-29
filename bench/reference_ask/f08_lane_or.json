@@ -1,0 +1,11 @@
+{
+  "task": "deliver",
+  "bindings": {
+    "r": "straddle1",
+    "o": "cont_204",
+    "src": "stack_b",
+    "dst": "stack_a",
+    "l1": "lane_1",
+    "l2": "lane_2"
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "id": "i06_runner_bowl",
+  "prompt": "Have the runner pick up bowl 1 from the pantry and put it on the pass.",
+  "world": "bench/worlds/kitchen.json",
+  "group": "infeasible",
+  "expect": {
+    "decision": "cannot",
+    "category": "infeasible"
+  },
+  "tags": [
+    "no_gripper"
+  ],
+  "why": "runner has no gripper, so it cannot grasp (S211), and the request names it.",
+  "blockers": [
+    "runner"
+  ],
+  "required_entities": [
+    "runner"
+  ],
+  "faithful_goal": [
+    [
+      "rl:thing:bowl_1",
+      "located_in",
+      "rl:place:pass"
+    ]
+  ],
+  "fix_patch": {
+    "robots": {
+      "runner": {
+        "gripper": true
+      }
+    }
+  },
+  "attempt_fails_with": "S211"
+}

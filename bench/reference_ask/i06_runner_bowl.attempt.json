@@ -1,0 +1,9 @@
+{
+  "task": "deliver",
+  "bindings": {
+    "r": "runner",
+    "o": "bowl_1",
+    "src": "pantry",
+    "dst": "pass"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "task": "deliver",
+  "bindings": {
+    "r": "drone1",
+    "o": "chassis_1",
+    "src": "gate_in",
+    "dst": "berth_2"
+  }
+}

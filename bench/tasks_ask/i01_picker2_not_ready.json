@@ -1,0 +1,35 @@
+{
+  "id": "i01_picker2_not_ready",
+  "prompt": "Have picker2 move tray 1 from packing to dispatch.",
+  "world": "bench/worlds/pharmacy.json",
+  "group": "infeasible",
+  "expect": {
+    "decision": "cannot",
+    "category": "infeasible"
+  },
+  "tags": [
+    "not_ready"
+  ],
+  "why": "picker2 is not ready, so it cannot move (S201), and the request names it.",
+  "blockers": [
+    "picker2"
+  ],
+  "required_entities": [
+    "picker2"
+  ],
+  "faithful_goal": [
+    [
+      "rl:thing:tray_1",
+      "located_in",
+      "rl:place:dispatch"
+    ]
+  ],
+  "fix_patch": {
+    "robots": {
+      "picker2": {
+        "ready": true
+      }
+    }
+  },
+  "attempt_fails_with": "S201"
+}

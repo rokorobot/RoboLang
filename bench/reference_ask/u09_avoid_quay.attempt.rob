@@ -1,0 +1,13 @@
+// bench/reference_ask/u09_avoid_quay.attempt.rob: hand-written
+robolang 1.3;
+
+task avoid(robot r, object o, location src, location dst, region z) {
+    @safety no_go_region z;
+    goal { object_at o dst; }
+    plan {
+        move r to src;
+        grasp r o;
+        move r to dst;
+        place r o at dst;
+    }
+}

@@ -1,0 +1,12 @@
+// bench/reference_ask/d8_knife_handover.rob: hand-written
+robolang 1.3;
+
+task hand_over(robot a, robot b, object o, location meet) {
+    goal { holding b o; }
+    plan {
+        move a to meet;
+        place a o at meet;
+        move b to meet;
+        grasp b o;
+    }
+}

@@ -1,0 +1,35 @@
+{
+  "id": "i03_straddle2_wash",
+  "prompt": "Use straddle2 to carry container 203 to the wash.",
+  "world": "bench/worlds/yard.json",
+  "group": "infeasible",
+  "expect": {
+    "decision": "cannot",
+    "category": "infeasible"
+  },
+  "tags": [
+    "not_ready"
+  ],
+  "why": "straddle2 is not ready, so it cannot move (S201), and the request names it.",
+  "blockers": [
+    "straddle2"
+  ],
+  "required_entities": [
+    "straddle2"
+  ],
+  "faithful_goal": [
+    [
+      "rl:thing:cont_203",
+      "located_in",
+      "rl:place:wash"
+    ]
+  ],
+  "fix_patch": {
+    "robots": {
+      "straddle2": {
+        "ready": true
+      }
+    }
+  },
+  "attempt_fails_with": "S201"
+}

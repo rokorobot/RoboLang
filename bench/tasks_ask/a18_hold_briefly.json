@@ -1,0 +1,15 @@
+{
+  "id": "a18_hold_briefly",
+  "prompt": "Have cart2 move to dispatch, hold there briefly, then go to the charger.",
+  "world": "bench/worlds/pharmacy.json",
+  "group": "clarify",
+  "expect": {
+    "decision": "clarify",
+    "category": "none"
+  },
+  "tags": [
+    "duration"
+  ],
+  "slot": "duration",
+  "candidates": []
+}
