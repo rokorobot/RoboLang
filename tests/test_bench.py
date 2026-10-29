@@ -100,7 +100,8 @@ def test_every_world_entity_is_shown_to_the_model():
 def test_the_prompts_example_is_valid_and_runs():
     text = lib.PROMPT_FILE.read_text(encoding="utf-8")
     example = text.split("# Example")[1].split('    {"rob"', 1)[1]
-    answer = json.loads('{"rob"' + example)
+    answer, problem = lib.parse_answer('{"rob"' + example)  # read exactly as a model's reply is read
+    assert problem is None, problem
     world = {"world_schema": "robolang.sim.world", "world_schema_version": "1.1",
              "locations": ["dock", "shelf", "table"], "regions": {"cell": {"clear": False}},
              "robots": {"arm1": {"ready": True, "location": "dock", "gripper": True,
@@ -474,3 +475,23 @@ def test_the_installed_package_does_not_import_bench():
     for path in (REPO / "src").rglob("*.py"):
         source = path.read_text(encoding="utf-8")
         assert "import bench" not in source and "from bench" not in source
+
+
+def test_bindings_are_read_from_the_list_form_and_checked():
+    answer, problem = lib.parse_answer(json.dumps(
+        {"rob": "x", "task": "t", "bindings": [{"param": "r", "id": "arm1"}, {"param": "box", "id": "box1"}]}))
+    assert problem is None and answer["bindings"] == {"r": "arm1", "box": "box1"}
+    for bad in ([{"param": "r", "id": "a"}, {"param": "r", "id": "b"}], [{"param": "r"}], ["r=arm1"]):
+        assert lib.parse_answer(json.dumps({"rob": "x", "task": "t", "bindings": bad}))[0] is None
+
+
+def test_the_answer_schema_meets_structured_output_rules():
+    """Every object in the schema closes its properties: the API rejects `additionalProperties` that is not false."""
+    def objects(node):
+        if isinstance(node, dict):
+            if node.get("type") == "object":
+                yield node
+            for value in node.values():
+                yield from objects(value)
+    assert all(o.get("additionalProperties") is False for o in objects(lib.ANSWER_SCHEMA))
+

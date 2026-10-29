@@ -50,10 +50,15 @@ ANSWER_SCHEMA = {
     "properties": {
         "rob": {"type": "string", "description": "The complete RoboLang 1.3 source."},
         "task": {"type": "string", "description": "The name of the task in the source to run."},
-        "bindings": {
-            "type": "object",
-            "description": "Task parameter name -> world entity ID.",
-            "additionalProperties": {"type": "string"},
+        "bindings": {  # a list of pairs: structured outputs require additionalProperties false on objects
+            "type": "array",
+            "description": "One entry per task parameter: the parameter name and the world entity ID bound to it.",
+            "items": {
+                "type": "object",
+                "properties": {"param": {"type": "string"}, "id": {"type": "string"}},
+                "required": ["param", "id"],
+                "additionalProperties": False,
+            },
         },
     },
     "required": ["rob", "task", "bindings"],
@@ -143,9 +148,16 @@ def parse_answer(text: str) -> tuple[dict | None, str | None]:
     if not isinstance(answer, dict) or set(answer) != {"rob", "task", "bindings"}:
         return None, 'the reply must be one JSON object with exactly the keys "rob", "task" and "bindings"'
     bindings = answer["bindings"]
+    if isinstance(bindings, list):  # the wire form: [{"param", "id"}, ...]; read back as a mapping
+        pairs = [(b.get("param"), b.get("id")) if isinstance(b, dict) and set(b) == {"param", "id"} else (None, None)
+                 for b in bindings]
+        names = [name for name, _ in pairs]
+        if (None, None) in pairs or len(set(names)) != len(names):
+            return None, '"bindings" must list each parameter once, as {"param": ..., "id": ...}'
+        bindings = answer["bindings"] = dict(pairs)
     if (not isinstance(answer["rob"], str) or not isinstance(answer["task"], str) or not isinstance(bindings, dict)
             or not all(isinstance(k, str) and isinstance(v, str) for k, v in bindings.items())):
-        return None, '"rob" and "task" must be strings and "bindings" an object of strings'
+        return None, '"rob" and "task" must be strings and every binding a parameter name and an entity ID'
     return answer, None
 
 

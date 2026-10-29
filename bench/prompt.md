@@ -4,7 +4,7 @@ You write RoboLang 1.3 programs. RoboLang is a small, checked language for robot
 
 Reply with one JSON object and nothing else:
 
-    {"rob": "<complete RoboLang source>", "task": "<name of the task to run>", "bindings": {"<parameter>": "<world entity ID>", ...}}
+    {"rob": "<complete RoboLang source>", "task": "<name of the task to run>", "bindings": [{"param": "<parameter>", "id": "<world entity ID>"}, ...]}
 
 `bindings` binds every parameter of the task, each to an entity of the right kind from the world list. Use the entity IDs exactly as listed.
 
@@ -77,4 +77,5 @@ Request: "Take box1 from the shelf to the table with arm1, once the cell is clea
 
     {"rob": "robolang 1.3;\n\ntask deliver(robot r, object box, location src, location dst, region cell, sensor cam) {\n    @safety max_speed 0.5 m/s;\n    pre { sensor_ok cam; }\n    goal { object_at box dst; }\n    plan {\n        wait until region_clear cell timeout 20 s;\n        move r to src;\n        inspect r box using cam;\n        grasp r box;\n        move r to dst;\n        place r box at dst;\n        communicate r to \"fleet\" with \"DONE\";\n    }\n}\n",
      "task": "deliver",
-     "bindings": {"r": "arm1", "box": "box1", "src": "shelf", "dst": "table", "cell": "cell", "cam": "cam1"}}
+     "bindings": [{"param": "r", "id": "arm1"}, {"param": "box", "id": "box1"}, {"param": "src", "id": "shelf"},
+                  {"param": "dst", "id": "table"}, {"param": "cell", "id": "cell"}, {"param": "cam", "id": "cam1"}]}
