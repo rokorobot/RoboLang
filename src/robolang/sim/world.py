@@ -156,6 +156,11 @@ def _reject_constant(name):
     raise _ReadError(f"{name} is not allowed")
 
 
+def _article(word: str) -> str:
+    """'a robot', 'an object'."""
+    return f"an {word}" if word[0] in "aeiou" else f"a {word}"
+
+
 def _pointer(*parts) -> str:
     return "".join("/" + str(p).replace("~", "~0").replace("/", "~1") for p in parts)
 
@@ -537,7 +542,7 @@ class _Loader:
             if not world.binds(parameter.type, target):
                 self.fail(
                     "E507", bp + _pointer(parameter.name),
-                    f"parameter '{parameter.name}' is a {parameter.type}, '{target}' is a {kind}",
+                    f"parameter '{parameter.name}' is {_article(parameter.type)}, '{target}' is {_article(kind)}",
                     source,
                 )
                 return bound
