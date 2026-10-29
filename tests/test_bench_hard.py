@@ -166,9 +166,11 @@ def test_infeasible_requests_fail_in_the_world():
         task = HARD[task_id]
         answer = attempt_answer(task_id)
         checked = lib.check_answer(task, answer)
-        if not checked.valid:  # a missing place or object: no binding exists in the world (world-check E505)
-            assert checked.codes == (task["attempt_fails_with"],) == ("E505",), task_id
+        if not checked.valid:  # caught by `validate --world` before any simulation (N2)
+            assert checked.codes == (task["attempt_fails_with"],), task_id
+            assert checked.codes[0] in {"E505", "S001", "S002", "S211", "S231"}, task_id
             continue
+        assert task["attempt_fails_with"] not in {"E505", "S001", "S002", "S211", "S231"}, task_id
         judgement = lib.judge(task, checked, answer["bindings"])
         assert not judgement.plan_succeeds and judgement.state == "FAILED", task_id
         assert judgement.failure_code == task["attempt_fails_with"], (task_id, judgement.failure_code)
@@ -326,8 +328,9 @@ def test_scorer_headline_metrics_on_canned_answers(tmp_path):
     undetected = by["x_retry_grasp"]  # valid, ends SUCCEEDED: nothing in the tools would have caught it
     assert undetected["false_program"] and undetected["false_program_final"] and undetected["false_program_undetected"]
 
-    caught = by["n_no_gripper_pick"]  # a program for an infeasible request: the simulation FAILED it
-    assert caught["false_program"] and not caught["false_program_undetected"] and caught["failure_code"] == "S211"
+    caught = by["n_no_gripper_pick"]  # a program for an infeasible request: `validate --world` rejected it (N2)
+    assert caught["false_program"] and not caught["false_program_undetected"] and not caught["valid_first"]
+    assert "S211" in caught["codes"]
 
     assert by["n_missing_place"]["decision_correct"] and by["n_missing_place"]["category_correct"] is True
 

@@ -736,3 +736,32 @@ a signature shows only that the documented procedure produced the record.
 
 **C402.** `succeeded` is written only when every criterion is met (`SUCCEEDED` needs every goal
 condition `true`). The run ID (section 6) does not depend on the outcome and is unchanged.
+
+## 11. Checking a task against a world while authoring (`validate --world`)
+
+`robolang validate FILE --world WORLD [--task NAME] [--bind NAME=ID …]` (or `--ir IR` for `FILE`)
+validates the file as without `--world`. It then reads the world for one task, exactly as `simulate`
+does (sections 2.2 and 2.5: task selection, `--bind`, `E5xx` with exit 3). Finally it reports every
+failure a run of that task **would certainly hit**, without running it. Decision record
+[0026](decisions/0026-validate-world.md); the implementation is `src/robolang/sim/check.py`.
+
+A failure is certain when it depends only on the task, the robot profiles, the sensors and the
+bindings, and never on state that events or steps change. A 1.3 plan has no branches, so every
+step runs unless an earlier one fails. A plan with any of these failures cannot end `SUCCEEDED`.
+
+| Code | Check (same rule as the run) |
+|---|---|
+| `S001`, `S002` | Section 4.3, for **every** `max_speed` limit with a unit and every bound robot. The run stops at the first one; this check lists all of them |
+| `S211` | A `grasp` whose robot has no gripper (4.5) |
+| `S231` | An `inspect` whose sensor is not declared, or not mounted on its robot (4.5) |
+
+Each finding is one diagnostic in source order: limits first, then steps. Its position is
+`FILE:LINE:COLUMN` of the annotation or statement, or for `--ir` the JSON Pointer
+`/tasks/<i>/safety/<j>` or `/tasks/<i>/steps/<j>`. More than one finding adds the summary line
+`FILE: task 'NAME' cannot succeed in WORLD (N errors)`. Any finding gives exit 1. Without a
+finding, stdout adds one line saying the task was checked and naming the bindings' source.
+`--task` and `--bind` without `--world` are a usage error (exit 2).
+
+Not checked: whatever depends on state during the run, such as readiness (`S201`), presence
+(`S213`), positions, preconditions and the goal. `simulate` still decides those. A clean
+`validate --world` is not evidence that a task is safe on a robot.

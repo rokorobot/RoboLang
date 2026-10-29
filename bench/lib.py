@@ -252,18 +252,29 @@ def _codes(text: str) -> tuple[str, ...]:
     return tuple(_CODE.findall(text))
 
 
-def _validate_source(rob: str) -> tuple[str, str]:
-    """(exit status as text, stderr) of `robolang validate answer.rob` on `rob`."""
+def _validate_source(rob: str, world: bytes | None = None, task: str = "", bindings: dict | None = None):
+    """(exit status as text, stderr) of `robolang validate answer.rob`, with `--world` when `world` is given."""
     with tempfile.TemporaryDirectory() as directory:
-        path = Path(directory) / "answer.rob"
+        path, world_path = Path(directory) / "answer.rob", Path(directory) / "world.json"
         path.write_text(rob, encoding="utf-8")
+        argv = ["validate", str(path)]
+        if world is not None:
+            world_path.write_bytes(world)
+            argv += ["--world", str(world_path), "--task", task]
+            argv += ["--bind", *(f"{k}={v}" for k, v in bindings.items())] if bindings else []
         err = io.StringIO()
-        status = robolang_cli(["validate", str(path)], io.StringIO(), err)
-    return str(status), err.getvalue().replace(str(path), "answer.rob")
+        status = robolang_cli(argv, io.StringIO(), err)
+    return str(status), err.getvalue().replace(str(path), "answer.rob").replace(str(world_path), "world.json")
+
+
+def _world_command(answer: dict) -> str:
+    return "robolang validate answer.rob --world world.json --task " + answer["task"] + " --bind " \
+        + " ".join(f"{k}={v}" for k, v in answer["bindings"].items())
 
 
 def check_answer(task_def: dict, answer: dict, world_data: bytes | None = None) -> Checked:
-    """Source valid, task present, bindings accepted by the world: what `simulate` needs to start."""
+    """Source valid, task present, and `validate --world` passes under the bindings: what `simulate` needs to start,
+    without a failure the run would certainly hit (speed limit vs profile, gripper, sensor mount: N2)."""
     status, stderr = _validate_source(answer["rob"])
     if status != "0":
         return Checked(False, f"robolang validate answer.rob\n{stderr}".rstrip(), _codes(stderr))
@@ -273,12 +284,15 @@ def check_answer(task_def: dict, answer: dict, world_data: bytes | None = None) 
         names = ", ".join(t.name for t in result.ir.tasks)
         report = f"error[{NO_TASK_CODE}]: no task named '{answer['task']}' in answer.rob; tasks in this file: {names}"
         return Checked(False, report, (NO_TASK_CODE,))
+    data = world_data or world_bytes(task_def)
     try:
-        world = load_world(world_data or world_bytes(task_def), "world.json", task, answer["bindings"])
+        world = load_world(data, "world.json", task, answer["bindings"])
     except WorldError as error:
-        report = "robolang simulate answer.rob --world world.json --bind " \
-                 + " ".join(f"{k}={v}" for k, v in answer["bindings"].items()) + f"\n{error.format()}"
+        report = _world_command(answer) + f"\n{error.format()}"
         return Checked(False, report, (error.code,))
+    world_status, world_stderr = _validate_source(answer["rob"], data, answer["task"], answer["bindings"])
+    if world_status != "0":
+        return Checked(False, f"{_world_command(answer)}\n{world_stderr}".rstrip(), _codes(world_stderr))
     return Checked(True, "", _codes(stderr), task, world, result.ir.language_version)
 
 
