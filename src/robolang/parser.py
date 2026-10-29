@@ -1,10 +1,12 @@
 """
 Recursive-descent parser for RoboLang v1.1 (spec/grammar.ebnf) and v1.2 (spec/grammar-v1.2.ebnf).
 
-Produces the AST of `nodes.py` or raises RoboLangError for the first error.
-Stages run in order: a lexical error anywhere in the file is reported before
-any syntax error. It performs no name binding, type checking or range checking
-(RL-11C) and never touches an adapter: parsing a file executes nothing.
+Produces the AST of `nodes.py` or raises RoboLangError carrying every syntax error found.
+After a syntax error the parser resynchronises (see `_resync`) and carries on, so independent
+errors in different statements or tasks are all reported. Stages run in order: a lexical error
+anywhere in the file is fatal and is reported before any syntax error. It performs no name
+binding, type checking or range checking (RL-11C) and never touches an adapter: parsing a file
+executes nothing.
 
 A program accepted here is syntactically valid. That says nothing about
 whether it is safe to run on a robot.
@@ -18,7 +20,7 @@ from pathlib import Path
 from typing import NoReturn
 
 from . import nodes as ast
-from .diagnostics import Diagnostic, RoboLangError, Severity
+from .diagnostics import MAX_ERRORS, Diagnostic, RoboLangError, Severity
 from .lexer import Lexer
 from .nodes import Span
 from .tokens import (
@@ -51,11 +53,32 @@ class ParseResult:
     warnings: tuple[Diagnostic, ...]
 
 
+@dataclass(frozen=True)
+class Parsed:
+    """
+    What the parser found, with recovery. `program` holds only the tasks that parsed without
+    error; a task with a syntax error is left out so that it is not validated (no cascades).
+    """
+
+    program: ast.Program
+    warnings: tuple[Diagnostic, ...]
+    errors: tuple[Diagnostic, ...]
+
+
+class _Stop(Exception):
+    """Too many errors: stop parsing."""
+
+
+class _LostTask(Exception):
+    """The rest of the current task cannot be parsed; skip to the next one."""
+
+
 class _Parser:
     def __init__(self, lexer: Lexer, filename: str):
         self._lexer = lexer
         self._filename = filename
         self._warnings: list[Diagnostic] = []
+        self._errors: list[Diagnostic] = []
         self._prev: Token | None = None
         self._buffer: deque[Token] = deque()
         self._language = DEFAULT_VERSION
@@ -65,6 +88,40 @@ class _Parser:
 
     def _error(self, code: str, message: str, span: Span | None = None) -> NoReturn:
         raise RoboLangError(Diagnostic(code, message, span or self._tok.span, filename=self._filename))
+
+    def _record(self, diagnostic: Diagnostic):
+        self._errors.append(diagnostic)
+        if len(self._errors) > MAX_ERRORS:  # one more than is listed, so "too many" is known
+            raise _Stop
+
+    def _resync(self, error: RoboLangError):
+        """
+        Record a syntax error and skip to a point where parsing can go on: past the next `;`, or
+        up to the next `}`. A missing `;` (E202) skips nothing when the next token already starts
+        an item, so the item after it is still parsed. Raises _LostTask at `task` or end of file.
+        """
+        self._record(error.diagnostic)
+        starts = self._at(TokenKind.RBRACE) or self._at(TokenKind.AT_SAFETY) or self._at(TokenKind.LPAREN)
+        starts = starts or self._at_keyword(*STATEMENTS, *CONDITIONS, "not", "pre", "plan")
+        skip = not (error.code == "E202" and starts)
+        while skip and not self._at_boundary():
+            self._advance()
+        if skip and self._at(TokenKind.SEMICOLON):
+            self._advance()
+        if self._at(TokenKind.EOF) or self._at_keyword("task"):
+            raise _LostTask
+
+    def _at_boundary(self) -> bool:
+        return (
+            self._at(TokenKind.SEMICOLON)
+            or self._at(TokenKind.RBRACE)
+            or self._at(TokenKind.EOF)
+            or self._at_keyword("task")
+        )
+
+    def _skip_to_task(self):
+        while not (self._at(TokenKind.EOF) or self._at_keyword("task")):
+            self._advance()
 
     def _warn(self, code: str, message: str, span: Span):
         self._warnings.append(Diagnostic(code, message, span, Severity.WARNING, self._filename))
@@ -129,17 +186,30 @@ class _Parser:
         version = self._version() if self._at_keyword("robolang") else None
         self._lex_remaining()
         tasks = []
-        while not self._at(TokenKind.EOF):
-            if self._at_keyword("robolang"):
-                self._error("E201", "the version marker may appear only once, before the first task")
-            if not self._at_keyword("task"):
-                self._error("E201", f"expected 'task', found {self._found()}")
-            tasks.append(self._task())
-        if not tasks:
-            self._error("E210", "no task in file: a program must define at least one task")
-        return ParseResult(
-            ast.Program(version, tuple(tasks), start.to(self._prev.span)),
+        try:
+            while not self._at(TokenKind.EOF):
+                if self._at_keyword("task"):
+                    task = self._task()
+                    if task is not None:
+                        tasks.append(task)
+                    continue
+                if self._at_keyword("robolang"):
+                    message = "the version marker may appear only once, before the first task"
+                else:
+                    message = f"expected 'task', found {self._found()}"
+                self._record(Diagnostic("E201", message, self._tok.span, filename=self._filename))
+                self._skip_to_task()
+            if not tasks and not self._errors:
+                self._record(
+                    Diagnostic("E210", "no task in file: a program must define at least one task",
+                               self._tok.span, filename=self._filename)
+                )
+        except _Stop:
+            pass
+        return Parsed(
+            ast.Program(version, tuple(tasks), start.to(self._prev.span if self._prev else start)),
             tuple(self._warnings),
+            tuple(self._errors),
         )
 
     def _version(self) -> ast.VersionDecl:
@@ -159,7 +229,24 @@ class _Parser:
 
     # -------- task --------
 
-    def _task(self) -> ast.Task:
+    def _task(self) -> ast.Task | None:
+        """The task, or None when it has a syntax error (every error is recorded, none raised)."""
+        before = len(self._errors)
+        try:
+            task = self._task_body()
+        except RoboLangError as error:
+            # A structural error after errors already found in this task is most likely a
+            # consequence of them: record only the first error of a task's structure.
+            if len(self._errors) == before:
+                self._record(error.diagnostic)
+            self._skip_to_task()
+            return None
+        except _LostTask:
+            self._skip_to_task()
+            return None
+        return task if len(self._errors) == before else None
+
+    def _task_body(self) -> ast.Task:
         start = self._advance()
         name = self._name("a task name")
         self._expect(TokenKind.LPAREN, "'(' after the task name")
@@ -174,7 +261,10 @@ class _Parser:
 
         annotations = []
         while self._at(TokenKind.AT_SAFETY):
-            annotations.append(self._annotation())
+            try:
+                annotations.append(self._annotation())
+            except RoboLangError as error:
+                self._resync(error)
         pre = self._pre() if self._at_keyword("pre") else None
 
         if not self._at_keyword("plan"):
@@ -240,8 +330,11 @@ class _Parser:
         self._expect(TokenKind.LBRACE, "'{' after 'pre'")
         conditions = []
         while not self._at(TokenKind.RBRACE):
-            conditions.append(self._condition("a condition or '}'"))
-            self._semicolon("the condition")
+            try:
+                conditions.append(self._condition("a condition or '}'"))
+                self._semicolon("the condition")
+            except RoboLangError as error:
+                self._resync(error)
         end = self._advance()
         return ast.PreBlock(tuple(conditions), start.span.to(end.span))
 
@@ -249,9 +342,13 @@ class _Parser:
         start = self._advance()
         self._expect(TokenKind.LBRACE, "'{' after 'plan'")
         statements = []
+        before = len(self._errors)
         while not self._at(TokenKind.RBRACE):
-            statements.append(self._statement())
-        if not statements:
+            try:
+                statements.append(self._statement())
+            except RoboLangError as error:
+                self._resync(error)
+        if not statements and len(self._errors) == before:
             self._error("E208", "empty plan: a plan must contain at least one statement")
         end = self._advance()
         return ast.PlanBlock(tuple(statements), start.span.to(end.span))
@@ -424,9 +521,21 @@ class _Parser:
         )
 
 
-def parse(source: str, filename: str = "<string>") -> ParseResult:
-    """Parse RoboLang v1.1 or v1.2 source. Raises RoboLangError on the first lexical or syntax error."""
+def parse_recovering(source: str, filename: str = "<string>") -> Parsed:
+    """
+    Parse with error recovery: every syntax error is returned in `errors`, in source order, and
+    the tasks that parsed cleanly are in `program`. A lexical error, or an error in the version
+    marker, is fatal and raises RoboLangError.
+    """
     return _Parser(Lexer(source, filename), filename).parse_program()
+
+
+def parse(source: str, filename: str = "<string>") -> ParseResult:
+    """Parse RoboLang v1.1 or v1.2 source. Raises RoboLangError with every lexical or syntax error found."""
+    parsed = parse_recovering(source, filename)
+    if parsed.errors:
+        raise RoboLangError(parsed.errors, warnings=parsed.warnings)
+    return ParseResult(parsed.program, parsed.warnings)
 
 
 def parse_file(path: str | Path) -> ParseResult:

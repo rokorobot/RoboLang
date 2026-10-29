@@ -36,7 +36,7 @@ from . import ir as task_ir
 from .arch02 import ScenarioError, simulate_case
 from .arch02 import to_json as arch02_json
 from .core import ReadError
-from .diagnostics import RoboLangError
+from .diagnostics import MAX_ERRORS, RoboLangError
 from .sim import DEFAULT_SEED, SEED, WorldError, load_world, run_id, sha256_normalized, to_json, to_record
 from .sim import run as simulate_task
 
@@ -131,7 +131,7 @@ def _read_bytes(path: str) -> bytes:
 
 def _compile(path: str, err, data: bytes | None = None) -> task_ir.CompileResult:
     """
-    Validate the whole file and lower it. Prints warnings; raises on any error.
+    Validate the whole file and lower it. Prints warnings; raises RoboLangError listing every error.
     `data` is the file's content when the caller has already read it.
     """
     try:
@@ -142,6 +142,23 @@ def _compile(path: str, err, data: bytes | None = None) -> task_ir.CompileResult
     for warning in result.warnings:
         print(warning.format(), file=err)
     return result
+
+
+def _print_errors(error: RoboLangError, path: str, err, summary: bool):
+    """
+    Print every diagnostic, in source order. A file with more than one diagnostic then gets a
+    summary line (validate only), so a file with a single error prints exactly that error.
+    """
+    diagnostics = [*error.warnings, *error.diagnostics]
+    for diagnostic in sorted(diagnostics, key=lambda d: (d.line, d.column)):
+        print(diagnostic.format(), file=err)
+    if error.truncated:
+        print(f"{path}: too many errors: stopped after {MAX_ERRORS}", file=err)
+    if summary and (len(diagnostics) > 1 or error.truncated):
+        count = f"{MAX_ERRORS}+ errors" if error.truncated else _plural(len(error.diagnostics), "error")
+        if error.warnings:
+            count += f", {_plural(len(error.warnings), 'warning')}"
+        print(f"{path}: not valid ({count})", file=err)
 
 
 # -------- validate --------
@@ -434,7 +451,7 @@ def main(argv: list[str] | None = None, out=None, err=None, prog: str = "robolan
     try:
         return args.run(args, out, err)
     except RoboLangError as error:
-        print(error.diagnostic.format(), file=err)
+        _print_errors(error, args.file, err, summary=args.command == "validate")
         return EXIT_INVALID
     except _CommandError as error:
         print(f"{prog}: error: {error}", file=err)
