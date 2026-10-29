@@ -468,7 +468,7 @@ task deliver(robot r, object box, object other, location src, location dst) {
     ("object_at box dst;", True, True),
     ("object_at box dst or object_at other dst;", True, False),        # "any of" the two readings
     ("object_at other dst or object_at box dst;", True, False),
-    ("object_at box dst and object_at box dst;", True, False),
+    ("object_at box dst and object_at box dst;", True, True),          # `and` exports flat since N1
     ("not (not object_at box dst);", True, False),
     ("object_at box dst; object_at box dst;", True, True),
     ("object_at box dst and not holding r box;", True, False),        # implied: a placed vial is not held
