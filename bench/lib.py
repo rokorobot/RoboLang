@@ -106,6 +106,7 @@ FORMAT_CODE = "B001"      # the reply was not an answer in the required format
 NO_TASK_CODE = "B002"     # the named task is not in the source
 REFUSED_CODE = "B003"     # the model refused (stop_reason "refusal"): no answer
 API_ERROR_CODE = "B004"   # the request failed: no answer
+BRANCHING_CODE = "B005"   # a RoboLang 1.4 branching task: valid, but not simulated until N4 PR 2
 
 _CODE = re.compile(r"(?:error|warning)\[([A-Z]\d{3})\]")
 
@@ -301,6 +302,10 @@ def check_answer(task_def: dict, answer: dict, world_data: bytes | None = None) 
         names = ", ".join(t.name for t in result.ir.tasks)
         report = f"error[{NO_TASK_CODE}]: no task named '{answer['task']}' in answer.rob; tasks in this file: {names}"
         return Checked(False, report, (NO_TASK_CODE,))
+    if task.branching:  # RoboLang 1.4: no simulation yet (decision 0027, PR 2), so it cannot be judged
+        report = (f"error[{BRANCHING_CODE}]: task '{answer['task']}' uses `if` or `fail` (RoboLang 1.4), which this "
+                  "version cannot simulate; write RoboLang 1.3")
+        return Checked(False, report, (BRANCHING_CODE,))
     data = world_data or world_bytes(task_def)
     try:
         world = load_world(data, "world.json", task, answer["bindings"])

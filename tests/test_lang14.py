@@ -17,8 +17,6 @@ from robolang.ir_reader import IRError, read_ir
 ROOT = Path(__file__).resolve().parent.parent
 REFERENCE = ROOT / "bench" / "reference_branch"
 ATTEMPTS = sorted(REFERENCE.glob("b_*.attempt.rob"))
-# These attempts have no goal anywhere: under 1.4 they are E309 until a goal is written (bench set 3, PR 3).
-NO_GOAL = {"b_amr2_or_amr1", "b_amr_at_dock", "b_arm_b_or_amr", "b_whichever_ready"}
 PARAMS = "robot r, object box, location src, location dst, region cell, sensor cam"
 
 
@@ -72,11 +70,7 @@ def test_the_marker_selects_1_4():
 @pytest.mark.parametrize("path", ATTEMPTS, ids=lambda p: p.name)
 def test_every_bench_reference_program_validates_under_the_1_4_marker(path):
     source = path.read_text(encoding="utf-8").replace("robolang 1.3;", "robolang 1.4;", 1)
-    if path.name.removesuffix(".attempt.rob") in NO_GOAL:
-        assert codes(source) == ["E309"]
-        assert "path then" in message(source)
-    else:
-        assert check(source).program.version.version == "1.4"
+    assert check(source).program.version.version == "1.4"
 
 
 def test_there_are_twenty_bench_programs():
@@ -367,3 +361,23 @@ def test_validate_world_still_checks_a_straight_1_4_task(tmp_path):
                     encoding="utf-8")
     code, out, _ = cli("validate", str(path), "--world", WORLD, "--bind", "r=amr1", "dst=handoff")
     assert code == 0 and "no certain failure found" in out
+
+
+def test_a_branching_answer_is_reported_not_crashed_until_simulation_exists():
+    """The benchmark judges with the simulator directly: a 1.4 `if` answer must be invalid (B005), not a crash."""
+    from bench import lib
+    from robolang.sim import SimulationInputError, load_world
+    from robolang.sim import run as simulate_task
+
+    ref = lib.BRANCH_REFERENCE_DIR
+    answer = {"decision": "program", "category": "none", "reason": "",
+              "rob": (ref / "b_route_by_cell.attempt.rob").read_text(encoding="utf-8").replace("robolang 1.3;",
+                                                                                              "robolang 1.4;"),
+              **json.loads((ref / "b_route_by_cell.attempt.json").read_text(encoding="utf-8"))}
+    task_def = lib.load_set("branch")["b_route_by_cell"]
+    checked = lib.check_answer(task_def, answer)
+    assert not checked.valid and checked.codes == (lib.BRANCHING_CODE,)
+    task = compile_source(answer["rob"], "a.rob").ir.tasks[0]
+    world = load_world(lib.world_bytes(task_def), "w.json", task, answer["bindings"])
+    with pytest.raises(SimulationInputError, match="branches"):
+        simulate_task(task, world)

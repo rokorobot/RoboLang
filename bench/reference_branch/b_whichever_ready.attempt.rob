@@ -2,6 +2,7 @@
 robolang 1.3;
 
 task deliver(robot r1, robot r2, object box, location src, location dst) {
+    goal { object_at box dst; }
     plan {
         if robot_ready r1 {
             move r1 to src;
