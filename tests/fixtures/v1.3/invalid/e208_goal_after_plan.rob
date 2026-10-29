@@ -1,0 +1,10 @@
+// RoboLang v1.3 fixture: invalid
+// expect: error E208 (syntax) line 9
+// why: goal comes before plan
+
+robolang 1.3;
+
+task t(robot r, location dst) {
+    plan { move r to dst; }
+    goal { robot_at r dst; }
+}

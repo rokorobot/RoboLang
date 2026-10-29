@@ -1,0 +1,8 @@
+// LANG-2 simulation fixture (spec/robolang-v1.3.md section 8)
+robolang 1.3;
+
+task limit_with_goal(robot r, location dst) {
+    @safety max_speed 5 m/s;
+    goal { robot_at r dst; }
+    plan { move r to dst; }
+}

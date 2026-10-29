@@ -1,0 +1,10 @@
+// RoboLang v1.3 fixture: invalid
+// expect: error E204 (syntax) line 8
+// why: an unknown word in a goal is an unknown condition
+
+robolang 1.3;
+
+task t(robot r, location dst) {
+    goal { robot_near r dst; }
+    plan { move r to dst; }
+}

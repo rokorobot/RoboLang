@@ -195,3 +195,8 @@ def test_inspect_and_simulate_print_every_error(command, tmp_path):
     assert out.getvalue() == ""
     assert err.getvalue().count("error[") == 3
     assert "not valid" not in err.getvalue()
+
+
+def test_a_missing_goal_does_not_stop_the_plan_from_being_checked():
+    source = "robolang 1.3;\ntask t(robot r, location l) {\n    plan {\n        move r to x;\n    }\n}\n"
+    assert errors(source) == [("E309", 2), ("E303", 4)]

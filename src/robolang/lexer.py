@@ -1,17 +1,17 @@
 """
-Lexer for RoboLang v1.1 and v1.2 (spec/robolang-v1.1.md, sections 2 and 3).
+Lexer for RoboLang v1.1 to v1.3 (spec/robolang-v1.1.md, sections 2 and 3).
 
 Tokens are produced on demand. The parser uses this to reject an unsupported
 language version (E213) without interpreting the rest of the file; after the
-version marker it lexes the remainder in one go. A `robolang 1.2;` marker switches
-the reserved words to the 1.2 set before any later word is lexed.
+version marker it lexes the remainder in one go. A `robolang 1.2;` or `robolang 1.3;` marker
+switches the reserved words to that version's set before any later word is lexed.
 """
 
 from __future__ import annotations
 
 from .diagnostics import Diagnostic, RoboLangError
 from .nodes import Span
-from .tokens import ESCAPES, RESERVED, RESERVED_V1_2, SPEED_UNITS, Token, TokenKind
+from .tokens import ESCAPES, RESERVED, RESERVED_BY_VERSION, SPEED_UNITS, Token, TokenKind
 
 _LETTERS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 _DIGITS = "0123456789"
@@ -35,7 +35,7 @@ class Lexer:
         self._pos = 0
         self._line = 1
         self._col = 1
-        self.reserved = RESERVED  # RESERVED_V1_2 after a `robolang 1.2;` marker
+        self.reserved = RESERVED  # RESERVED_BY_VERSION[...] after a `robolang 1.2;` or `1.3;` marker
 
     # -------- helpers --------
 
@@ -160,8 +160,8 @@ def tokenize(source: str, filename: str = "<string>") -> list[Token]:
     """
     All tokens of `source`, ending with an EOF token.
 
-    Reserved words follow the version marker, as in the parser: the 1.2 set after a leading
-    `robolang 1.2`, otherwise the 1.1 set, where `and`, `or` and `not` are names.
+    Reserved words follow the version marker, as in the parser: the 1.2 or 1.3 set after a leading
+    `robolang 1.2` or `robolang 1.3`, otherwise the 1.1 set, where `and`, `or` and `not` are names.
     """
     lexer = Lexer(source, filename)
     tokens = []
@@ -170,5 +170,5 @@ def tokenize(source: str, filename: str = "<string>") -> list[Token]:
         tokens.append(token)
         if token.kind is TokenKind.EOF:
             return tokens
-        if len(tokens) == 2 and tokens[0].text == "robolang" and token.text == "1.2":
-            lexer.reserved = RESERVED_V1_2
+        if len(tokens) == 2 and tokens[0].text == "robolang" and token.text in RESERVED_BY_VERSION:
+            lexer.reserved = RESERVED_BY_VERSION[token.text]

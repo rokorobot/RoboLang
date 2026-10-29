@@ -1,0 +1,15 @@
+// RoboLang v1.3 fixture: valid
+// expect: ok
+// why: holding in a goal
+
+robolang 1.3;
+
+task t(robot r, object box, location src, location dst, region cell, sensor cam) {
+    goal {
+        holding r box;
+    }
+    plan {
+        move r to src;
+        grasp r box;
+    }
+}

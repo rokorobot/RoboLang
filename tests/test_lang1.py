@@ -53,10 +53,10 @@ def test_combined_conditions_need_the_v1_2_marker():
         assert error(task("region_clear a and region_clear b;", version=version)).code == "E202"
 
 
-def test_unsupported_versions_name_both_supported_ones():
-    raised = error("robolang 1.3;\n" + task(version=None))
+def test_unsupported_versions_name_every_supported_one():
+    raised = error("robolang 1.4;\n" + task(version=None))
     assert (raised.code, raised.line, raised.column) == ("E213", 1, 10)
-    assert "1.1 and 1.2" in str(raised)
+    assert "1.1, 1.2 and 1.3" in str(raised)
 
 
 def test_ir_and_language_versions_follow_the_marker():

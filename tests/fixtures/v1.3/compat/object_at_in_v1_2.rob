@@ -1,0 +1,10 @@
+// RoboLang v1.2 fixture: compat
+// expect: error E204 (syntax) line 8
+// why: object_at is an unknown condition in 1.2
+
+robolang 1.2;
+
+task t(robot r, object box, location dst) {
+    pre { object_at box dst; }
+    plan { move r to dst; }
+}

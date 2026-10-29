@@ -1,5 +1,5 @@
 """
-Abstract syntax tree for RoboLang v1.1 and v1.2 (robolang-v1.1.md section 7, robolang-v1.2.md 6).
+Abstract syntax tree for RoboLang v1.1 to v1.3 (robolang-v1.1.md section 7, v1.2 section 6, v1.3 section 6).
 
 Nodes are immutable and record the source faithfully: names are unresolved,
 units are kept as written and nothing is normalized. Binding and type checks
@@ -32,6 +32,7 @@ class ParamType(Enum):
     OBJECT = "object"
     LOCATION = "location"
     REGION = "region"
+    SENSOR = "sensor"  # RoboLang 1.3
 
 
 class SpeedUnit(Enum):
@@ -107,7 +108,36 @@ class ObjectExists:
 
 @dataclass(frozen=True)
 class SensorOk:
-    sensor: StringLit
+    """`sensor` is a StringLit in 1.1 and 1.2, a Name (a sensor parameter) in 1.3; a 1.3 StringLit is E310."""
+
+    sensor: StringLit | Name
+    span: Span
+
+
+@dataclass(frozen=True)
+class ObjectAt:
+    """RoboLang 1.3. The object is present, not held, and at the location."""
+
+    obj: Name
+    location: Name
+    span: Span
+
+
+@dataclass(frozen=True)
+class RobotAt:
+    """RoboLang 1.3."""
+
+    robot: Name
+    location: Name
+    span: Span
+
+
+@dataclass(frozen=True)
+class Holding:
+    """RoboLang 1.3."""
+
+    robot: Name
+    obj: Name
     span: Span
 
 
@@ -135,7 +165,7 @@ class Not:
     span: Span
 
 
-Condition = Union[RobotReady, RegionClear, ObjectExists, SensorOk, And, Or, Not]
+Condition = Union[RobotReady, RegionClear, ObjectExists, SensorOk, ObjectAt, RobotAt, Holding, And, Or, Not]
 
 
 # -------- statements --------
@@ -166,7 +196,7 @@ class Place:
 class Inspect:
     robot: Name
     obj: Name
-    sensor: StringLit
+    sensor: StringLit | Name  # a Name in 1.3, as in SensorOk
     span: Span
 
 
@@ -219,6 +249,14 @@ class PreBlock:
 
 
 @dataclass(frozen=True)
+class GoalBlock:
+    """RoboLang 1.3: the conditions that must hold at the end for the task to have succeeded."""
+
+    conditions: tuple[Condition, ...]
+    span: Span
+
+
+@dataclass(frozen=True)
 class PlanBlock:
     statements: tuple[Statement, ...]
     span: Span
@@ -232,6 +270,7 @@ class Task:
     pre: PreBlock | None
     plan: PlanBlock
     span: Span
+    goal: GoalBlock | None = None  # required in 1.3 (E309), absent before
 
 
 @dataclass(frozen=True)

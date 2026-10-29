@@ -1,7 +1,7 @@
 # Plan: verified outcomes in the language, and a bridge from `.rob` to Core
 
 **Date:** 2026-10-29
-**Status:** Proposed. Phase 1 is in progress (RoboLang 1.3, [0014](../../spec/decisions/0014-lang-2-goals-and-typed-sensors.md)).
+**Status:** Proposed. Phase 1 done 2026-10-29 (RoboLang 1.3, [0014](../../spec/decisions/0014-lang-2-goals-and-typed-sensors.md)).
 **Fixes:** two gaps found in review.
 
 1. **Outcome gap.** The charter makes success a verified outcome, but `.rob` could not declare
@@ -40,7 +40,7 @@ evidence. That is the same meaning on both sides, as RFC-001 intends.
 Each phase is one PR, with its own tests, and ends green. Phases 1–3 do not touch `arch02`, the
 gate 1 evidence or the frozen gate 2 bundle.
 
-### Phase 1 — Goals decide success (RoboLang 1.3) · in progress
+### Phase 1 — Goals decide success (RoboLang 1.3) · done
 
 - A required `goal { … }` block, with the outcome atoms `object_at`, `robot_at` and `holding`,
   and typed `sensor` parameters.
@@ -128,7 +128,7 @@ where the plan leaves the box elsewhere ends `failed`, with criteria not met.
 
 | Phase | Depends on | Rough size |
 |---|---|---|
-| 1 | — | in progress |
+| 1 | — | done |
 | 2 | 1 | small: record fields, observation synthesis, tests |
 | 3 | 1, 2 (outcome shape); Q2, Q5 | medium: exporter, 1.4 `@verify`, world 1.1 |
 | 4 | 2, 3; Q4 | large: plan-executing participants, new scenario cases |

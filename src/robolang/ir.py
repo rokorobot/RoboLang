@@ -1,5 +1,6 @@
 """
-Versioned task IR for RoboLang (spec/ir-schema-v1.0.md; schema 1.1 for RoboLang 1.2: ir-schema-v1.1.md).
+Versioned task IR for RoboLang (spec/ir-schema-v1.0.md; schema 1.1 for RoboLang 1.2: ir-schema-v1.1.md;
+schema 1.2 for RoboLang 1.3: ir-schema-v1.2.md).
 
 The IR is a description of validated tasks with source details removed:
 no spans, comments or formatting. Two sources that differ only in layout
@@ -27,7 +28,7 @@ IR_SCHEMA = "robolang.task-ir"
 IR_SCHEMA_VERSION = "1.0"
 LANGUAGE_VERSION = DEFAULT_VERSION
 # Language version -> the IR schema version it compiles to (ir-schema-v1.1.md section 1).
-IR_SCHEMA_VERSIONS = {"1.1": "1.0", "1.2": "1.1"}
+IR_SCHEMA_VERSIONS = {"1.1": "1.0", "1.2": "1.1", "1.3": "1.2"}
 
 
 def _key(name: str):
@@ -79,8 +80,37 @@ class ObjectExists:
 
 @dataclass(frozen=True)
 class SensorOk:
+    """`sensor` is a world sensor ID in schemas 1.0 and 1.1, the name of a sensor parameter in 1.2."""
+
     KIND: ClassVar[str] = "sensor_ok"
     sensor: str
+
+
+@dataclass(frozen=True)
+class ObjectAt:
+    """Schema 1.2."""
+
+    KIND: ClassVar[str] = "object_at"
+    obj: str = _key("object")
+    location: str = _key("location")
+
+
+@dataclass(frozen=True)
+class RobotAt:
+    """Schema 1.2."""
+
+    KIND: ClassVar[str] = "robot_at"
+    robot: str
+    location: str
+
+
+@dataclass(frozen=True)
+class Holding:
+    """Schema 1.2."""
+
+    KIND: ClassVar[str] = "holding"
+    robot: str
+    obj: str = _key("object")
 
 
 @dataclass(frozen=True)
@@ -107,7 +137,7 @@ class Not:
     condition: Condition
 
 
-Condition = Union[RobotReady, RegionClear, ObjectExists, SensorOk, And, Or, Not]
+Condition = Union[RobotReady, RegionClear, ObjectExists, SensorOk, ObjectAt, RobotAt, Holding, And, Or, Not]
 
 
 # -------- steps --------
@@ -136,6 +166,8 @@ class Place:
 
 @dataclass(frozen=True)
 class Inspect:
+    """`sensor` is a world sensor ID in schemas 1.0 and 1.1, the name of a sensor parameter in 1.2."""
+
     KIND: ClassVar[str] = "inspect"
     robot: str
     obj: str = _key("object")
@@ -174,7 +206,13 @@ class Task:
     parameters: tuple[Parameter, ...]
     safety: tuple[SafetyLimit, ...]
     preconditions: tuple[Condition, ...]
+    goal: tuple[Condition, ...] | None = field(metadata={"omit_none": True})  # schema 1.2; None before
     steps: tuple[Step, ...]
+
+    @property
+    def typed_sensors(self) -> bool:
+        """True for a schema 1.2 task (RoboLang 1.3), which always has a goal: its sensors are parameters."""
+        return self.goal is not None
 
 
 @dataclass(frozen=True)
@@ -224,7 +262,17 @@ def _condition(node: ast.Condition) -> Condition:
         return RegionClear(node.region.text)
     if isinstance(node, ast.ObjectExists):
         return ObjectExists(node.obj.text)
-    return SensorOk(node.sensor.value)
+    if isinstance(node, ast.ObjectAt):
+        return ObjectAt(node.obj.text, node.location.text)
+    if isinstance(node, ast.RobotAt):
+        return RobotAt(node.robot.text, node.location.text)
+    if isinstance(node, ast.Holding):
+        return Holding(node.robot.text, node.obj.text)
+    return SensorOk(_sensor(node.sensor))
+
+
+def _sensor(node: ast.StringLit | ast.Name) -> str:
+    return node.text if isinstance(node, ast.Name) else node.value
 
 
 def _step(node: ast.Statement) -> Step:
@@ -235,7 +283,7 @@ def _step(node: ast.Statement) -> Step:
     if isinstance(node, ast.Place):
         return Place(node.robot.text, node.obj.text, node.target.text)
     if isinstance(node, ast.Inspect):
-        return Inspect(node.robot.text, node.obj.text, node.sensor.value)
+        return Inspect(node.robot.text, node.obj.text, _sensor(node.sensor))
     if isinstance(node, ast.WaitFor):
         return WaitFor(_quantity(node.duration))
     if isinstance(node, ast.WaitUntil):
@@ -249,6 +297,7 @@ def _task(node: ast.Task) -> Task:
         parameters=tuple(Parameter(p.name.text, p.type.value) for p in node.params),
         safety=tuple(SafetyLimit(a.key.text, _quantity(a.value)) for a in node.annotations),
         preconditions=tuple(_condition(c) for c in node.pre.conditions) if node.pre else (),
+        goal=tuple(_condition(c) for c in node.goal.conditions) if node.goal else None,
         steps=tuple(_step(s) for s in node.plan.statements),
     )
 
@@ -299,6 +348,8 @@ def to_dict(node):
     if dataclasses.is_dataclass(node):
         out = {"kind": node.KIND} if hasattr(node, "KIND") else {}
         for f in dataclasses.fields(node):
+            if f.metadata.get("omit_none") and getattr(node, f.name) is None:
+                continue
             out[f.metadata.get("key", f.name)] = to_dict(getattr(node, f.name))
         return out
     return node

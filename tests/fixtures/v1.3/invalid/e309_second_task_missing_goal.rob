@@ -1,0 +1,14 @@
+// RoboLang v1.3 fixture: invalid
+// expect: error E309 (static) line 12
+// why: every task needs a goal, not only the first
+
+robolang 1.3;
+
+task t(robot r, location dst) {
+    goal { robot_at r dst; }
+    plan { move r to dst; }
+}
+
+task u(robot r, location dst) {
+    plan { move r to dst; }
+}

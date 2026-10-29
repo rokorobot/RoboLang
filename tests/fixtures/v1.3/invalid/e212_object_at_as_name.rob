@@ -1,0 +1,10 @@
+// RoboLang v1.3 fixture: invalid
+// expect: error E212 (syntax) line 7
+// why: object_at is reserved in 1.3
+
+robolang 1.3;
+
+task t(robot r, location object_at) {
+    goal { robot_at r object_at; }
+    plan { move r to object_at; }
+}

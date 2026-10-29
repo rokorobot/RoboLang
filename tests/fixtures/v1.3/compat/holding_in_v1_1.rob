@@ -1,0 +1,10 @@
+// RoboLang v1.1 fixture: compat
+// expect: error E204 (syntax) line 8
+// why: holding is an unknown condition in 1.1
+
+robolang 1.1;
+
+task t(robot r, object box, location dst) {
+    pre { holding r box; }
+    plan { move r to dst; }
+}

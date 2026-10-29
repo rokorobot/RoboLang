@@ -18,8 +18,8 @@ from .world import WORLD_SCHEMA_VERSION
 
 RUN_RECORD_SCHEMA = "robolang.sim.run"
 RUN_RECORD_SCHEMA_VERSION = "1.0"
-# Language version -> run record schema version (robolang-v1.2.md section 8.3).
-RUN_RECORD_SCHEMA_VERSIONS = {"1.1": "1.0", "1.2": "1.1"}
+# Language version -> run record schema version (robolang-v1.2.md section 8.3; v1.3 section 8.3).
+RUN_RECORD_SCHEMA_VERSIONS = {"1.1": "1.0", "1.2": "1.1", "1.3": "1.2"}
 SEED = re.compile(r"[A-Za-z0-9._-]{1,64}")
 DEFAULT_SEED = "0"
 
@@ -91,6 +91,18 @@ def _step(step) -> dict:
     }
 
 
+def _results(results) -> list[dict]:
+    """Per-condition results of the `pre` or `goal` block."""
+    return [
+        {
+            "index": p.index,
+            "condition": ir.to_dict(p.condition),
+            "result": "not_evaluated" if p.result is None else p.result.value,
+        }
+        for p in results
+    ]
+
+
 def _final_world(world) -> dict:
     return {
         "robots": {
@@ -117,7 +129,8 @@ def to_record(
 ) -> dict:
     """
     The run record (section 5) as a dict with the key order of the specification: schema 1.0
-    for a RoboLang 1.1 source, 1.1 for a 1.2 source (same shape, embedding Task IR 1.1).
+    for a RoboLang 1.1 source, 1.1 for a 1.2 source (same shape, embedding Task IR 1.1), 1.2 for a
+    1.3 source (adds `goal`, after `preconditions`).
     """
     inputs = {
         "source_sha256": source_sha256,
@@ -143,14 +156,8 @@ def to_record(
         "failure": _failure(result.failure),
         "cancelled_before_step": result.cancelled_before_step,
         "safety_limits": [{"limit": ir.to_dict(r.limit), "status": r.status} for r in result.safety_limits],
-        "preconditions": [
-            {
-                "index": p.index,
-                "condition": ir.to_dict(p.condition),
-                "result": "not_evaluated" if p.result is None else p.result.value,
-            }
-            for p in result.preconditions
-        ],
+        "preconditions": _results(result.preconditions),
+        **({} if result.goal is None else {"goal": _results(result.goal)}),
         "steps": [_step(s) for s in result.steps],
         "events_applied": [
             {"t_ms": ms_text(e.t_ms), "fact": e.fact, "target": e.target, "value": e.value}

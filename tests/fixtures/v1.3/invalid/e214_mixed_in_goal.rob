@@ -1,0 +1,10 @@
+// RoboLang v1.3 fixture: invalid
+// expect: error E214 (syntax) line 8
+// why: and and or are not mixed in a goal either
+
+robolang 1.3;
+
+task t(robot r, location dst) {
+    goal { robot_ready r and robot_at r dst or robot_at r dst; }
+    plan { move r to dst; }
+}

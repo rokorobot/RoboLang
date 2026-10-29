@@ -1,5 +1,6 @@
 // examples/handover.rob
 // An arm places a box at a handoff point; a mobile robot picks it up once the zone is clear.
+robolang 1.3;
 
 task handover(robot arm, robot mobile, object box, location src, location handoff, location dst, region zone) {
     @safety max_speed 0.5 m/s;
@@ -8,6 +9,10 @@ task handover(robot arm, robot mobile, object box, location src, location handof
         robot_ready arm;
         robot_ready mobile;
         object_exists box;
+    }
+
+    goal {
+        object_at box dst;
     }
 
     plan {

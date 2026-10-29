@@ -1,0 +1,10 @@
+// RoboLang v1.3 fixture: invalid
+// expect: error E310 (static) line 9
+// why: a quoted sensor in inspect
+
+robolang 1.3;
+
+task t(robot r, object box, location dst) {
+    goal { robot_at r dst; }
+    plan { inspect r box using "camera_top"; }
+}

@@ -1,0 +1,14 @@
+// RoboLang v1.2 fixture: compat
+// expect: ok
+// why: goal, sensor and the outcome words are ordinary names before 1.3
+
+robolang 1.2;
+
+task t(robot goal, location sensor, object holding, location object_at, location robot_at) {
+    plan {
+        move goal to sensor;
+        move goal to object_at;
+        move goal to robot_at;
+        grasp goal holding;
+    }
+}

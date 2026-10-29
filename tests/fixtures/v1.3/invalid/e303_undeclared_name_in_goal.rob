@@ -1,0 +1,10 @@
+// RoboLang v1.3 fixture: invalid
+// expect: error E303 (static) line 8
+// why: goal names are checked like pre names
+
+robolang 1.3;
+
+task t(robot r, location dst) {
+    goal { robot_at r nowhere; }
+    plan { move r to dst; }
+}

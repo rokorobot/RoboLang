@@ -1,0 +1,26 @@
+// examples/pick_and_place_v13.rob
+// The pick-and-place example in RoboLang 1.3: the task declares its goal, so a simulated run
+// succeeds only when the box is at the destination, not merely when the steps ran.
+robolang 1.3;
+
+task demo_pick_and_place_v13(robot r, object box, location src, location dst, region cell) {
+    @safety max_speed 0.5 m/s;
+
+    pre {
+        robot_ready r;
+        region_clear cell;
+        object_at box src;
+    }
+
+    goal {
+        object_at box dst;
+    }
+
+    plan {
+        move r to src;
+        grasp r box;
+        move r to dst;
+        place r box at dst;
+        communicate r to "fleet" with "TASK_COMPLETE";
+    }
+}
