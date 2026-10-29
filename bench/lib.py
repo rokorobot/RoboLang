@@ -29,8 +29,8 @@ TASKS_DIR = BENCH / "tasks"
 REFERENCE_DIR = BENCH / "reference"
 HARD_TASKS_DIR = BENCH / "tasks_hard"
 HARD_REFERENCE_DIR = BENCH / "reference_hard"
-SET3_TASKS_DIR = BENCH / "tasks_set3"
-SET3_REFERENCE_DIR = BENCH / "reference_set3"
+ASK_TASKS_DIR = BENCH / "tasks_ask"
+ASK_REFERENCE_DIR = BENCH / "reference_ask"
 PROMPT_FILE = BENCH / "prompt.md"
 REFERENCE_FILE = ROOT / "docs" / "language-reference.md"
 MINIMAL_PROMPT_FILE = BENCH / "prompt_minimal.md"
@@ -40,7 +40,7 @@ REFERENCE_MARK = "{{LANGUAGE_REFERENCE}}"  # in prompt.md: replaced by the shipp
 
 # The task sets: name -> (tasks directory, reference directory). Set 1 is the default and stays as it was.
 SETS = {"1": (TASKS_DIR, REFERENCE_DIR), "hard": (HARD_TASKS_DIR, HARD_REFERENCE_DIR),
-        "3": (SET3_TASKS_DIR, SET3_REFERENCE_DIR)}  # set 3: decision record 0025
+        "ask": (ASK_TASKS_DIR, ASK_REFERENCE_DIR)}  # set "ask": decision record 0025
 PROMPTS = ("full", "minimal")
 
 # $ per million tokens: (input, output, cache read). A cache write (5 minutes) costs 1.25 x input.

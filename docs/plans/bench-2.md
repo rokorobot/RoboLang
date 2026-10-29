@@ -5,10 +5,10 @@ Phase 1 (build, `bench/v2/`) and the phase 3 pilot are done (2026-10-29,
 [report](../evidence/bench2-pilot-report.md)). The label review (phase 2) and the full run are not. No full run,
 language change, Core change or merge without separate authorization.
 
-> **Now set 3 of `bench/`.** The owner merged BENCH-2 into the shared benchmark on 2026-10-29: `--set 3`,
-> `bench/tasks_set3/`; the changes to this design are listed in [0025](../../spec/decisions/0025-bench-2.md#consolidation-into-bench--2026-10-29-owners-decision)
+> **Now set "ask" of `bench/`.** The owner merged BENCH-2 into the shared benchmark on 2026-10-29: `--set ask`,
+> `bench/tasks_ask/`; the changes to this design are listed in [0025](../../spec/decisions/0025-bench-2.md#consolidation-into-bench--2026-10-29-owners-decision)
 > (one more answer kind and an `entities` list on set 2's format; `construct` and `slot` dropped). Paths below that say
-> `bench/v2/` are now `bench/tasks_set3/` and `bench/reference_set3/`.
+> `bench/v2/` are now `bench/tasks_ask/` and `bench/reference_ask/`.
 
 BENCH-1 ([0024](../../spec/decisions/0024-authoring-benchmark.md), `bench/`) showed that current models
 write valid RoboLang 1.3 for 40 solvable requests. It cannot show whether a model **refuses** a request

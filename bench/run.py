@@ -1,6 +1,6 @@
 """
 Ask Claude models to write RoboLang for the benchmark tasks (set 1: 40 syntax tasks; `--set hard`: 40 robustness
-tasks; `--set 3`: 80 tasks that add asking, decision record 0025), check each answer, allow one repair round for
+tasks; `--set ask`: 80 tasks that add asking, decision record 0025), check each answer, allow one repair round for
 an invalid program, and save every request and response under bench/results/<run-id>/ (decision record 0024).
 
     python bench/run.py                       # prints the estimated cost and stops

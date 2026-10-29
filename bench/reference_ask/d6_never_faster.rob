@@ -1,0 +1,13 @@
+// bench/reference_ask/d6_never_faster.rob: hand-written
+robolang 1.3;
+
+task deliver(robot r, object o, location src, location dst) {
+    @safety max_speed 0.4 m/s;
+    goal { object_at o dst; }
+    plan {
+        move r to src;
+        grasp r o;
+        move r to dst;
+        place r o at dst;
+    }
+}

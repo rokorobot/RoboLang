@@ -108,11 +108,11 @@ and a table per kind of task. To add a set 2 task, write `tasks_hard/<id>.json` 
 `<id>.json` (feasible) or `<id>.attempt.rob` (+ `<id>.attempt.json` when the attempt parses) with `attempt_fails_with`,
 then run `pytest tests/test_bench_hard.py` (it counts 40 tasks and the five kinds; change the counts on purpose).
 
-## Set 3: asking as well as declining (`--set 3`)
+## Set "ask": asking as well as declining (`--set ask`)
 
 ```bash
-python bench/run.py --set 3                                 # estimate only
-python bench/run.py --set 3 --yes --max-usd 10              # with a hard cap on what the run may spend
+python bench/run.py --set ask                                 # estimate only
+python bench/run.py --set ask --yes --max-usd 10              # with a hard cap on what the run may spend
 ```
 
 80 tasks in three new worlds (`pharmacy`, `yard`, `kitchen`), decision record [0025](../spec/decisions/0025-bench-2.md),
@@ -129,9 +129,9 @@ Every answer has an `entities` list: the blockers of a decline, the candidates o
 | `silent_guess` | a program for a task that expects a question: it picked one reading (as serious as `false_program`) |
 | `entities_correct` | of the right declines and questions, `entities` names a blocker / exactly the candidates |
 
-Files: `tasks_set3/<id>.json`; in `reference_set3/`, `<id>.rob` + `.json` (feasible), `<id>.attempt.rob` + `.json`
+Files: `tasks_ask/<id>.json`; in `reference_ask/`, `<id>.rob` + `.json` (feasible), `<id>.attempt.rob` + `.json`
 (the faithful attempt of an infeasible task, and the rejected attempt of some inexpressible ones) and
 `<id>.reading<n>.rob` + `.json` (one succeeding program per reading of a clarify task). An infeasible task also has
 `blockers`, and a `fix_patch` under which its attempt succeeds (or a `why` saying no world can fix it).
-`tests/test_bench_set3.py` checks all of it. Set 3 is not in the CI benchmark workflow: its runs need the owner's
+`tests/test_bench_ask.py` checks all of it. Set "ask" is not in the CI benchmark workflow: its runs need the owner's
 authorization (0025 B8).

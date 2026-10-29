@@ -1,4 +1,4 @@
-> Ran on the pre-consolidation code (`bench/v2/`, commit `737ce8d`, 9-key answer format). The cases are now set 3 of
+> Ran on the pre-consolidation code (`bench/v2/`, commit `737ce8d`, 9-key answer format). The cases are now set "ask" of
 > `bench/` ([0025](../../spec/decisions/0025-bench-2.md)); `d3_lane2_right_now` became `d3_lane1_right_now`.
 
 # BENCH-2: v2-pilot

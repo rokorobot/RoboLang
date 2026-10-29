@@ -1,4 +1,4 @@
-# Benchmark set 3 label review — for GPT 6
+# Benchmark set "ask" label review — for GPT 6
 
 A benchmark tests whether AI models answer robot requests correctly. They can write a RoboLang 1.3 program, decline (`cannot`), or ask (`clarify`). A Claude model wrote these 80 cases, and Claude models are tested, so a reviewer outside that family checks the expected answers before they are frozen (decision record 0025).
 

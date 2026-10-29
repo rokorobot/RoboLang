@@ -1,0 +1,14 @@
+// bench/reference_ask/i16_two_containers_one_crane.attempt.rob: hand-written
+robolang 1.3;
+
+task both(robot r, object a, object b, location l) {
+    goal {
+        holding r a;
+        holding r b;
+    }
+    plan {
+        move r to l;
+        grasp r a;
+        grasp r b;
+    }
+}

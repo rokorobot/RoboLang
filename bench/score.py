@@ -26,7 +26,7 @@ infeasible). The four rates above are over the tasks that expect a program; on t
     false_refusal       "cannot" for a task that expects a program
     category_correct    of the correct "cannot" decisions, the category is the expected one
 
-Set 3 (`--set 3`, decision record 0025) adds tasks that expect "clarify": the request could mean several entities,
+Set "ask" (`--set ask`, decision record 0025) adds tasks that expect "clarify": the request could mean several entities,
 or omits a value, and the world does not decide. On those:
 
     silent_guess        a program that picks one reading instead of asking (as serious as false_program)
@@ -221,7 +221,7 @@ def _asks(rows: list[dict]) -> bool:
 
 def _robustness_row(rows: list[dict], asks: bool = False) -> list[str]:
     """Cells: decision_correct, false_program (and after repair, undetected), false_refusal, category_correct;
-    with `asks` (set 3), also silent_guess and entities_correct."""
+    with `asks` (set "ask"), also silent_guess and entities_correct."""
     cannot = [r for r in rows if r["expect"] == "cannot"]
     declined = [r for r in cannot if r["decision"] == "cannot"]
     undetected = sum(r["false_program_undetected"] for r in cannot)
