@@ -181,7 +181,7 @@ See
 | Language 1.1, 1.2 and 1.3 (goals, typed sensors), validator, Task IR | Delivered |
 | Simulation-only execution (`simulate`) | Delivered, signed off 2026-10-27 ([evidence](docs/evidence/rl-basic-01-exit-gate.md)) |
 | Core 0.1 reference simulation (`arch02`) | Implemented, gate 1 signed off 2026-10-27 ([evidence](docs/evidence/rl-arch-02-exit-gate.md)) |
-| Gate 2 independent interoperability | Bundle frozen 2026-10-28. Resuming INTEROP-3 on that bundle is proposed, pending owner approval ([0023](spec/decisions/0023-resume-interop-3.md)) |
+| Gate 2 independent interoperability | Bundle frozen 2026-10-28. INTEROP-3 deferred until Core 0.2 or a real second implementer ([0023](spec/decisions/0023-keep-interop-3-deferred.md)) |
 | `.rob` → Core bridge | Delivered in simulation: Core-shaped outcomes, `export-goal`, `delegate` with a peer robot, commitment, lease and custody ([plan](docs/plans/goals-and-core-bridge.md)) |
 | CORE-1, Task IR reader | Delivered: `--ir` on every command ([0021](spec/decisions/0021-core-1-ir-reader.md)) |
 
