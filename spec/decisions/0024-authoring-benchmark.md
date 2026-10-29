@@ -1,7 +1,7 @@
 # Decision record 0024 — A benchmark of model-written RoboLang (`bench/`)
 
 **Date:** 2026-10-29
-**Status:** PROPOSED — for the owner's review
+**Status:** APPROVED by the owner as a **baseline** — 2026-10-29 (see [Owner review](#owner-review--2026-10-29))
 **Follows:** [0023](0023-keep-interop-3-deferred.md) reason 3 (the central claim, that AI systems write RoboLang well, is untested)
 
 ## What is measured
@@ -52,3 +52,25 @@ correct goals for every task in this set; even the smallest model does, at about
 tasks. The set is **saturated**: it no longer separates models. A harder second set is needed
 (requests the language cannot express, infeasible requests, larger worlds, less guidance).
 
+
+## Owner review — 2026-10-29
+
+Approved as the **baseline** benchmark, not as evidence that models author RoboLang robustly. The
+40/40 results hold for this set only. Further limits, in addition to those above:
+
+- **Coverage is narrow.** 21 of 40 tasks are tagged `pick_place`; `or`, `not`, `communicate` and
+  `long_plan` have one task each.
+- **Guidance is generous.** The prompt carries a full language reference and a worked example that
+  is close to many tasks.
+- **Every request is solvable.** No task is infeasible, inexpressible in RoboLang 1.3 or
+  ambiguous, so the benchmark cannot see a model that should have refused or asked.
+- **One run per task.** Repeatability is unknown.
+- **The world description omits object presence.** `describe_world` in `bench/lib.py` does not print
+  `present`, so an absent object cannot be shown to the model.
+- **Same family.** The tasks and references were written with a Claude model; only Claude models
+  were run.
+- **The cost estimate is about 12× too high.** `run.py` estimated about $5.5 for run3. The actual
+  cost was $0.46.
+
+`bench/` v1 (tasks, worlds, references, `prompt.md`, scorer) is **frozen** for comparison. Its
+successor is designed in [0025](0025-bench-2.md).
