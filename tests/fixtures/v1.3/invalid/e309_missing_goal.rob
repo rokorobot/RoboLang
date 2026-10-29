@@ -1,0 +1,10 @@
+// RoboLang v1.3 fixture: invalid
+// expect: error E309 (static) line 7
+// why: a 1.3 task must declare its goal
+
+robolang 1.3;
+
+task t(robot r, location dst) {
+    pre { robot_ready r; }
+    plan { move r to dst; }
+}

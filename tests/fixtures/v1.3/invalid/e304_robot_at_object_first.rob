@@ -1,0 +1,10 @@
+// RoboLang v1.3 fixture: invalid
+// expect: error E304 (static) line 8
+// why: robot_at takes a robot first
+
+robolang 1.3;
+
+task t(robot r, object box, location dst) {
+    goal { robot_at box dst; }
+    plan { move r to dst; }
+}

@@ -1,0 +1,1406 @@
+{
+  "fixture_set": "robolang.lang2.sim",
+  "spec": "spec/robolang-v1.3.md",
+  "cases": [
+    {
+      "id": "g1_goal_met",
+      "tests": [
+        "G-T4"
+      ],
+      "source": "tests/fixtures/v1.3/simulation/sources/pick_place.rob",
+      "task": null,
+      "world": "tests/fixtures/v1.3/simulation/worlds/base.json",
+      "seed": "0",
+      "expect": {
+        "exit": 0,
+        "states": [
+          "CREATED",
+          "VALIDATED",
+          "AUTHORIZED",
+          "RUNNING",
+          "SUCCEEDED"
+        ],
+        "state": "SUCCEEDED",
+        "failure": null,
+        "goal": [
+          "true"
+        ],
+        "steps": [
+          "succeeded",
+          "succeeded",
+          "succeeded",
+          "succeeded"
+        ],
+        "preconditions": [
+          "true"
+        ],
+        "end_t_ms": "0",
+        "final_world": {
+          "objects": {
+            "box1": {
+              "present": true,
+              "location": "table",
+              "held_by": null
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "g1_example",
+      "tests": [
+        "G-T4"
+      ],
+      "source": "examples/pick_and_place_v13.rob",
+      "task": null,
+      "world": "tests/fixtures/v1.3/simulation/worlds/base.json",
+      "seed": "0",
+      "expect": {
+        "exit": 0,
+        "states": [
+          "CREATED",
+          "VALIDATED",
+          "AUTHORIZED",
+          "RUNNING",
+          "SUCCEEDED"
+        ],
+        "state": "SUCCEEDED",
+        "failure": null,
+        "goal": [
+          "true"
+        ],
+        "steps": [
+          "succeeded",
+          "succeeded",
+          "succeeded",
+          "succeeded",
+          "succeeded"
+        ]
+      }
+    },
+    {
+      "id": "g2_goal_false_object_held",
+      "tests": [
+        "G-T5"
+      ],
+      "source": "tests/fixtures/v1.3/simulation/sources/goal_held.rob",
+      "task": null,
+      "world": "tests/fixtures/v1.3/simulation/worlds/base.json",
+      "seed": "0",
+      "expect": {
+        "exit": 4,
+        "states": [
+          "CREATED",
+          "VALIDATED",
+          "AUTHORIZED",
+          "RUNNING",
+          "FAILED"
+        ],
+        "state": "FAILED",
+        "failure": {
+          "code": "S301",
+          "phase": "goal",
+          "step": null,
+          "precondition": null,
+          "safety_limit": null,
+          "robot": null
+        },
+        "goal": [
+          "false"
+        ],
+        "steps": [
+          "succeeded",
+          "succeeded",
+          "succeeded"
+        ],
+        "final_world": {
+          "objects": {
+            "box1": {
+              "present": true,
+              "location": null,
+              "held_by": "arm1"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "g2_goal_false_never_moved",
+      "tests": [
+        "G-T5"
+      ],
+      "source": "tests/fixtures/v1.3/simulation/sources/goal_never_moved.rob",
+      "task": null,
+      "world": "tests/fixtures/v1.3/simulation/worlds/base.json",
+      "seed": "0",
+      "expect": {
+        "exit": 4,
+        "states": [
+          "CREATED",
+          "VALIDATED",
+          "AUTHORIZED",
+          "RUNNING",
+          "FAILED"
+        ],
+        "state": "FAILED",
+        "failure": {
+          "code": "S301",
+          "phase": "goal",
+          "step": null,
+          "precondition": null,
+          "safety_limit": null,
+          "robot": null
+        },
+        "goal": [
+          "false"
+        ],
+        "steps": [
+          "succeeded"
+        ]
+      }
+    },
+    {
+      "id": "g3_goal_unknown",
+      "tests": [
+        "G-T6"
+      ],
+      "source": "tests/fixtures/v1.3/simulation/sources/goal_unknown.rob",
+      "task": null,
+      "world": "tests/fixtures/v1.3/simulation/worlds/base.json",
+      "seed": "0",
+      "expect": {
+        "exit": 4,
+        "states": [
+          "CREATED",
+          "VALIDATED",
+          "AUTHORIZED",
+          "RUNNING",
+          "FAILED"
+        ],
+        "state": "FAILED",
+        "failure": {
+          "code": "S302",
+          "phase": "goal",
+          "step": null,
+          "precondition": null,
+          "safety_limit": null,
+          "robot": null
+        },
+        "goal": [
+          "unknown"
+        ],
+        "steps": [
+          "succeeded"
+        ]
+      }
+    },
+    {
+      "id": "g3_goal_false_beats_unknown",
+      "tests": [
+        "G-T6"
+      ],
+      "source": "tests/fixtures/v1.3/simulation/sources/goal_false_and_unknown.rob",
+      "task": null,
+      "world": "tests/fixtures/v1.3/simulation/worlds/base.json",
+      "seed": "0",
+      "expect": {
+        "exit": 4,
+        "states": [
+          "CREATED",
+          "VALIDATED",
+          "AUTHORIZED",
+          "RUNNING",
+          "FAILED"
+        ],
+        "state": "FAILED",
+        "failure": {
+          "code": "S301",
+          "phase": "goal",
+          "step": null,
+          "precondition": null,
+          "safety_limit": null,
+          "robot": null
+        },
+        "goal": [
+          "unknown",
+          "false"
+        ],
+        "steps": [
+          "succeeded"
+        ]
+      }
+    },
+    {
+      "id": "g3_goal_true_and_unknown",
+      "tests": [
+        "G-T6"
+      ],
+      "source": "tests/fixtures/v1.3/simulation/sources/goal_unknown_and_true.rob",
+      "task": null,
+      "world": "tests/fixtures/v1.3/simulation/worlds/base.json",
+      "seed": "0",
+      "expect": {
+        "exit": 4,
+        "states": [
+          "CREATED",
+          "VALIDATED",
+          "AUTHORIZED",
+          "RUNNING",
+          "FAILED"
+        ],
+        "state": "FAILED",
+        "failure": {
+          "code": "S302",
+          "phase": "goal",
+          "step": null,
+          "precondition": null,
+          "safety_limit": null,
+          "robot": null
+        },
+        "goal": [
+          "true",
+          "unknown"
+        ],
+        "steps": [
+          "succeeded"
+        ]
+      }
+    },
+    {
+      "id": "g3_goal_object_absent",
+      "tests": [
+        "G-T6"
+      ],
+      "source": "tests/fixtures/v1.3/simulation/sources/goal_never_moved.rob",
+      "task": null,
+      "world": "tests/fixtures/v1.3/simulation/worlds/box_absent.json",
+      "seed": "0",
+      "expect": {
+        "exit": 4,
+        "states": [
+          "CREATED",
+          "VALIDATED",
+          "AUTHORIZED",
+          "RUNNING",
+          "FAILED"
+        ],
+        "state": "FAILED",
+        "failure": {
+          "code": "S301",
+          "phase": "goal",
+          "step": null,
+          "precondition": null,
+          "safety_limit": null,
+          "robot": null
+        },
+        "goal": [
+          "false"
+        ],
+        "steps": [
+          "succeeded"
+        ]
+      }
+    },
+    {
+      "id": "g3_goal_object_unknown_presence",
+      "tests": [
+        "G-T6"
+      ],
+      "source": "tests/fixtures/v1.3/simulation/sources/goal_never_moved.rob",
+      "task": null,
+      "world": "tests/fixtures/v1.3/simulation/worlds/box_unknown.json",
+      "seed": "0",
+      "expect": {
+        "exit": 4,
+        "states": [
+          "CREATED",
+          "VALIDATED",
+          "AUTHORIZED",
+          "RUNNING",
+          "FAILED"
+        ],
+        "state": "FAILED",
+        "failure": {
+          "code": "S302",
+          "phase": "goal",
+          "step": null,
+          "precondition": null,
+          "safety_limit": null,
+          "robot": null
+        },
+        "goal": [
+          "unknown"
+        ],
+        "steps": [
+          "succeeded"
+        ]
+      }
+    },
+    {
+      "id": "g4_goal_holding",
+      "tests": [
+        "G-T7"
+      ],
+      "source": "tests/fixtures/v1.3/simulation/sources/goal_holding.rob",
+      "task": null,
+      "world": "tests/fixtures/v1.3/simulation/worlds/base.json",
+      "seed": "0",
+      "expect": {
+        "exit": 0,
+        "states": [
+          "CREATED",
+          "VALIDATED",
+          "AUTHORIZED",
+          "RUNNING",
+          "SUCCEEDED"
+        ],
+        "state": "SUCCEEDED",
+        "failure": null,
+        "goal": [
+          "true",
+          "true"
+        ],
+        "steps": [
+          "succeeded",
+          "succeeded"
+        ]
+      }
+    },
+    {
+      "id": "g4_holding_unknown_presence",
+      "tests": [
+        "G-T7"
+      ],
+      "source": "tests/fixtures/v1.3/simulation/sources/holding_unknown.rob",
+      "task": null,
+      "world": "tests/fixtures/v1.3/simulation/worlds/base.json",
+      "seed": "0",
+      "expect": {
+        "exit": 4,
+        "states": [
+          "CREATED",
+          "VALIDATED",
+          "AUTHORIZED",
+          "RUNNING",
+          "FAILED"
+        ],
+        "state": "FAILED",
+        "failure": {
+          "code": "S302",
+          "phase": "goal",
+          "step": null,
+          "precondition": null,
+          "safety_limit": null,
+          "robot": null
+        },
+        "goal": [
+          "unknown"
+        ],
+        "steps": [
+          "succeeded"
+        ]
+      }
+    },
+    {
+      "id": "g4_goal_combined",
+      "tests": [
+        "G-T7"
+      ],
+      "source": "tests/fixtures/v1.3/simulation/sources/goal_combined.rob",
+      "task": null,
+      "world": "tests/fixtures/v1.3/simulation/worlds/base.json",
+      "seed": "0",
+      "expect": {
+        "exit": 0,
+        "states": [
+          "CREATED",
+          "VALIDATED",
+          "AUTHORIZED",
+          "RUNNING",
+          "SUCCEEDED"
+        ],
+        "state": "SUCCEEDED",
+        "failure": null,
+        "goal": [
+          "true",
+          "true",
+          "true"
+        ],
+        "steps": [
+          "succeeded",
+          "succeeded",
+          "succeeded",
+          "succeeded"
+        ]
+      }
+    },
+    {
+      "id": "g5_goal_after_events_met",
+      "tests": [
+        "G-T8"
+      ],
+      "source": "tests/fixtures/v1.3/simulation/sources/goal_after_events.rob",
+      "task": null,
+      "world": "tests/fixtures/v1.3/simulation/worlds/cell_blocked_then_clear.json",
+      "seed": "0",
+      "expect": {
+        "exit": 0,
+        "states": [
+          "CREATED",
+          "VALIDATED",
+          "AUTHORIZED",
+          "RUNNING",
+          "SUCCEEDED"
+        ],
+        "state": "SUCCEEDED",
+        "failure": null,
+        "goal": [
+          "true"
+        ],
+        "steps": [
+          "succeeded"
+        ],
+        "end_t_ms": "3000"
+      }
+    },
+    {
+      "id": "g5_goal_after_events_late",
+      "tests": [
+        "G-T8"
+      ],
+      "source": "tests/fixtures/v1.3/simulation/sources/goal_after_events.rob",
+      "task": null,
+      "world": "tests/fixtures/v1.3/simulation/worlds/cell_blocked_then_clear_late.json",
+      "seed": "0",
+      "expect": {
+        "exit": 4,
+        "states": [
+          "CREATED",
+          "VALIDATED",
+          "AUTHORIZED",
+          "RUNNING",
+          "FAILED"
+        ],
+        "state": "FAILED",
+        "failure": {
+          "code": "S301",
+          "phase": "goal",
+          "step": null,
+          "precondition": null,
+          "safety_limit": null,
+          "robot": null
+        },
+        "goal": [
+          "false"
+        ],
+        "steps": [
+          "succeeded"
+        ],
+        "end_t_ms": "3000"
+      }
+    },
+    {
+      "id": "g5_goal_blocked_by_event",
+      "tests": [
+        "G-T8"
+      ],
+      "source": "tests/fixtures/v1.3/simulation/sources/goal_after_events.rob",
+      "task": null,
+      "world": "tests/fixtures/v1.3/simulation/worlds/cell_clear_then_blocked.json",
+      "seed": "0",
+      "expect": {
+        "exit": 4,
+        "states": [
+          "CREATED",
+          "VALIDATED",
+          "AUTHORIZED",
+          "RUNNING",
+          "FAILED"
+        ],
+        "state": "FAILED",
+        "failure": {
+          "code": "S301",
+          "phase": "goal",
+          "step": null,
+          "precondition": null,
+          "safety_limit": null,
+          "robot": null
+        },
+        "goal": [
+          "false"
+        ],
+        "steps": [
+          "succeeded"
+        ],
+        "end_t_ms": "3000"
+      }
+    },
+    {
+      "id": "g6_precondition_fails_goal_not_evaluated",
+      "tests": [
+        "G-T9"
+      ],
+      "source": "tests/fixtures/v1.3/simulation/sources/pre_new_atoms.rob",
+      "task": null,
+      "world": "tests/fixtures/v1.3/simulation/worlds/base.json",
+      "seed": "0",
+      "expect": {
+        "exit": 4,
+        "states": [
+          "CREATED",
+          "VALIDATED",
+          "AUTHORIZED",
+          "RUNNING",
+          "FAILED"
+        ],
+        "state": "FAILED",
+        "failure": {
+          "code": "S101",
+          "phase": "precondition",
+          "step": null,
+          "precondition": 1,
+          "safety_limit": null,
+          "robot": null
+        },
+        "goal": [
+          "not_evaluated"
+        ],
+        "steps": [
+          "not_run"
+        ]
+      }
+    },
+    {
+      "id": "g6_precondition_unknown",
+      "tests": [
+        "G-T9"
+      ],
+      "source": "tests/fixtures/v1.3/simulation/sources/pre_object_unknown.rob",
+      "task": null,
+      "world": "tests/fixtures/v1.3/simulation/worlds/base.json",
+      "seed": "0",
+      "expect": {
+        "exit": 4,
+        "states": [
+          "CREATED",
+          "VALIDATED",
+          "AUTHORIZED",
+          "RUNNING",
+          "FAILED"
+        ],
+        "state": "FAILED",
+        "failure": {
+          "code": "S102",
+          "phase": "precondition",
+          "step": null,
+          "precondition": 1,
+          "safety_limit": null,
+          "robot": null
+        },
+        "goal": [
+          "not_evaluated"
+        ],
+        "steps": [
+          "not_run"
+        ]
+      }
+    },
+    {
+      "id": "g6_step_fails_goal_not_evaluated",
+      "tests": [
+        "G-T9"
+      ],
+      "source": "tests/fixtures/v1.3/simulation/sources/pick_place.rob",
+      "task": null,
+      "world": "tests/fixtures/v1.3/simulation/worlds/fault_step_2.json",
+      "seed": "0",
+      "expect": {
+        "exit": 4,
+        "states": [
+          "CREATED",
+          "VALIDATED",
+          "AUTHORIZED",
+          "RUNNING",
+          "FAILED"
+        ],
+        "state": "FAILED",
+        "failure": {
+          "code": "S251",
+          "phase": "step",
+          "step": 2,
+          "precondition": null,
+          "safety_limit": null,
+          "robot": null
+        },
+        "goal": [
+          "not_evaluated"
+        ],
+        "steps": [
+          "succeeded",
+          "failed",
+          "not_run",
+          "not_run"
+        ]
+      }
+    },
+    {
+      "id": "g6_robot_not_ready_goal_not_evaluated",
+      "tests": [
+        "G-T9"
+      ],
+      "source": "tests/fixtures/v1.3/simulation/sources/goal_held.rob",
+      "task": null,
+      "world": "tests/fixtures/v1.3/simulation/worlds/robot_not_ready.json",
+      "seed": "0",
+      "expect": {
+        "exit": 4,
+        "states": [
+          "CREATED",
+          "VALIDATED",
+          "AUTHORIZED",
+          "RUNNING",
+          "FAILED"
+        ],
+        "state": "FAILED",
+        "failure": {
+          "code": "S201",
+          "phase": "step",
+          "step": 1,
+          "precondition": null,
+          "safety_limit": null,
+          "robot": null
+        },
+        "goal": [
+          "not_evaluated"
+        ],
+        "steps": [
+          "failed",
+          "not_run",
+          "not_run"
+        ]
+      }
+    },
+    {
+      "id": "g6_cancelled_goal_not_evaluated",
+      "tests": [
+        "G-T9"
+      ],
+      "source": "tests/fixtures/v1.3/simulation/sources/pick_place.rob",
+      "task": null,
+      "world": "tests/fixtures/v1.3/simulation/worlds/cancel_step_4.json",
+      "seed": "0",
+      "expect": {
+        "exit": 5,
+        "state": "CANCELLED",
+        "failure": null,
+        "cancelled_before_step": 4,
+        "goal": [
+          "not_evaluated"
+        ],
+        "steps": [
+          "succeeded",
+          "succeeded",
+          "succeeded",
+          "not_run"
+        ]
+      }
+    },
+    {
+      "id": "g6_authorization_fails_goal_not_evaluated",
+      "tests": [
+        "G-T9"
+      ],
+      "source": "tests/fixtures/v1.3/simulation/sources/limit_with_goal.rob",
+      "task": null,
+      "world": "tests/fixtures/v1.3/simulation/worlds/base.json",
+      "seed": "0",
+      "expect": {
+        "exit": 4,
+        "states": [
+          "CREATED",
+          "VALIDATED",
+          "FAILED"
+        ],
+        "state": "FAILED",
+        "failure": {
+          "code": "S001",
+          "phase": "authorization",
+          "step": null,
+          "precondition": null,
+          "safety_limit": 1,
+          "robot": "arm1"
+        },
+        "goal": [
+          "not_evaluated"
+        ],
+        "steps": [
+          "not_run"
+        ]
+      }
+    },
+    {
+      "id": "g7_pre_robot_at_true",
+      "tests": [
+        "G-T10"
+      ],
+      "source": "tests/fixtures/v1.3/simulation/sources/pre_new_atoms.rob",
+      "task": null,
+      "world": "tests/fixtures/v1.3/simulation/worlds/robot_at_shelf.json",
+      "seed": "0",
+      "expect": {
+        "exit": 0,
+        "states": [
+          "CREATED",
+          "VALIDATED",
+          "AUTHORIZED",
+          "RUNNING",
+          "SUCCEEDED"
+        ],
+        "state": "SUCCEEDED",
+        "failure": null,
+        "goal": [
+          "true"
+        ],
+        "steps": [
+          "succeeded"
+        ],
+        "preconditions": [
+          "true"
+        ]
+      }
+    },
+    {
+      "id": "g7_pre_holding_negated_true",
+      "tests": [
+        "G-T10"
+      ],
+      "source": "tests/fixtures/v1.3/simulation/sources/pre_holding.rob",
+      "task": null,
+      "world": "tests/fixtures/v1.3/simulation/worlds/base.json",
+      "seed": "0",
+      "expect": {
+        "exit": 0,
+        "states": [
+          "CREATED",
+          "VALIDATED",
+          "AUTHORIZED",
+          "RUNNING",
+          "SUCCEEDED"
+        ],
+        "state": "SUCCEEDED",
+        "failure": null,
+        "goal": [
+          "true"
+        ],
+        "steps": [
+          "succeeded"
+        ],
+        "preconditions": [
+          "true",
+          "true"
+        ]
+      }
+    },
+    {
+      "id": "g7_pre_holding_negated_false",
+      "tests": [
+        "G-T10"
+      ],
+      "source": "tests/fixtures/v1.3/simulation/sources/pre_holding.rob",
+      "task": null,
+      "world": "tests/fixtures/v1.3/simulation/worlds/box_held_at_start.json",
+      "seed": "0",
+      "expect": {
+        "exit": 4,
+        "states": [
+          "CREATED",
+          "VALIDATED",
+          "AUTHORIZED",
+          "RUNNING",
+          "FAILED"
+        ],
+        "state": "FAILED",
+        "failure": {
+          "code": "S101",
+          "phase": "precondition",
+          "step": null,
+          "precondition": 1,
+          "safety_limit": null,
+          "robot": null
+        },
+        "goal": [
+          "not_evaluated"
+        ],
+        "steps": [
+          "not_run"
+        ],
+        "preconditions": [
+          "false",
+          "false"
+        ]
+      }
+    },
+    {
+      "id": "g7_wait_until_object_at_true",
+      "tests": [
+        "G-T10"
+      ],
+      "source": "tests/fixtures/v1.3/simulation/sources/wait_object_at.rob",
+      "task": null,
+      "world": "tests/fixtures/v1.3/simulation/worlds/base.json",
+      "seed": "0",
+      "expect": {
+        "exit": 0,
+        "states": [
+          "CREATED",
+          "VALIDATED",
+          "AUTHORIZED",
+          "RUNNING",
+          "SUCCEEDED"
+        ],
+        "state": "SUCCEEDED",
+        "failure": null,
+        "goal": [
+          "true"
+        ],
+        "steps": [
+          "succeeded",
+          "succeeded"
+        ],
+        "end_t_ms": "0"
+      }
+    },
+    {
+      "id": "g7_wait_until_object_at_times_out",
+      "tests": [
+        "G-T10"
+      ],
+      "source": "tests/fixtures/v1.3/simulation/sources/wait_object_at.rob",
+      "task": null,
+      "world": "tests/fixtures/v1.3/simulation/worlds/box_at_table.json",
+      "seed": "0",
+      "expect": {
+        "exit": 4,
+        "states": [
+          "CREATED",
+          "VALIDATED",
+          "AUTHORIZED",
+          "RUNNING",
+          "FAILED"
+        ],
+        "state": "FAILED",
+        "failure": {
+          "code": "S241",
+          "phase": "step",
+          "step": 1,
+          "precondition": null,
+          "safety_limit": null,
+          "robot": null
+        },
+        "goal": [
+          "not_evaluated"
+        ],
+        "steps": [
+          "failed",
+          "not_run"
+        ],
+        "end_t_ms": "5000"
+      }
+    },
+    {
+      "id": "s1_sensor_pre_ok",
+      "tests": [
+        "G-T11"
+      ],
+      "source": "tests/fixtures/v1.3/simulation/sources/sensor_pre.rob",
+      "task": null,
+      "world": "tests/fixtures/v1.3/simulation/worlds/base.json",
+      "seed": "0",
+      "expect": {
+        "exit": 0,
+        "states": [
+          "CREATED",
+          "VALIDATED",
+          "AUTHORIZED",
+          "RUNNING",
+          "SUCCEEDED"
+        ],
+        "state": "SUCCEEDED",
+        "failure": null,
+        "goal": [
+          "true"
+        ],
+        "steps": [
+          "succeeded"
+        ],
+        "preconditions": [
+          "true"
+        ]
+      }
+    },
+    {
+      "id": "s1_sensor_pre_dead",
+      "tests": [
+        "G-T11"
+      ],
+      "source": "tests/fixtures/v1.3/simulation/sources/sensor_pre.rob",
+      "task": null,
+      "world": "tests/fixtures/v1.3/simulation/worlds/sensor_pre_dead.json",
+      "seed": "0",
+      "expect": {
+        "exit": 4,
+        "states": [
+          "CREATED",
+          "VALIDATED",
+          "AUTHORIZED",
+          "RUNNING",
+          "FAILED"
+        ],
+        "state": "FAILED",
+        "failure": {
+          "code": "S101",
+          "phase": "precondition",
+          "step": null,
+          "precondition": 1,
+          "safety_limit": null,
+          "robot": null
+        },
+        "goal": [
+          "not_evaluated"
+        ],
+        "steps": [
+          "not_run"
+        ]
+      }
+    },
+    {
+      "id": "s1_sensor_pre_unknown",
+      "tests": [
+        "G-T11"
+      ],
+      "source": "tests/fixtures/v1.3/simulation/sources/sensor_pre.rob",
+      "task": null,
+      "world": "tests/fixtures/v1.3/simulation/worlds/sensor_pre_unknown.json",
+      "seed": "0",
+      "expect": {
+        "exit": 4,
+        "states": [
+          "CREATED",
+          "VALIDATED",
+          "AUTHORIZED",
+          "RUNNING",
+          "FAILED"
+        ],
+        "state": "FAILED",
+        "failure": {
+          "code": "S102",
+          "phase": "precondition",
+          "step": null,
+          "precondition": 1,
+          "safety_limit": null,
+          "robot": null
+        },
+        "goal": [
+          "not_evaluated"
+        ],
+        "steps": [
+          "not_run"
+        ]
+      }
+    },
+    {
+      "id": "s2_sensor_inspect_ok",
+      "tests": [
+        "G-T11"
+      ],
+      "source": "tests/fixtures/v1.3/simulation/sources/sensor_inspect.rob",
+      "task": null,
+      "world": "tests/fixtures/v1.3/simulation/worlds/base.json",
+      "seed": "0",
+      "expect": {
+        "exit": 0,
+        "states": [
+          "CREATED",
+          "VALIDATED",
+          "AUTHORIZED",
+          "RUNNING",
+          "SUCCEEDED"
+        ],
+        "state": "SUCCEEDED",
+        "failure": null,
+        "goal": [
+          "true"
+        ],
+        "steps": [
+          "succeeded"
+        ],
+        "observations": [
+          {
+            "object": "box1",
+            "present": true,
+            "location": "shelf",
+            "held_by": null
+          }
+        ]
+      }
+    },
+    {
+      "id": "s2_sensor_inspect_other_sensor",
+      "tests": [
+        "G-T11"
+      ],
+      "source": "tests/fixtures/v1.3/simulation/sources/sensor_inspect.rob",
+      "task": null,
+      "world": "tests/fixtures/v1.3/simulation/worlds/sensor_inspect_aux.json",
+      "seed": "0",
+      "expect": {
+        "exit": 0,
+        "states": [
+          "CREATED",
+          "VALIDATED",
+          "AUTHORIZED",
+          "RUNNING",
+          "SUCCEEDED"
+        ],
+        "state": "SUCCEEDED",
+        "failure": null,
+        "goal": [
+          "true"
+        ],
+        "steps": [
+          "succeeded"
+        ]
+      }
+    },
+    {
+      "id": "s2_sensor_inspect_dead",
+      "tests": [
+        "G-T11"
+      ],
+      "source": "tests/fixtures/v1.3/simulation/sources/sensor_inspect.rob",
+      "task": null,
+      "world": "tests/fixtures/v1.3/simulation/worlds/sensor_inspect_dead.json",
+      "seed": "0",
+      "expect": {
+        "exit": 4,
+        "states": [
+          "CREATED",
+          "VALIDATED",
+          "AUTHORIZED",
+          "RUNNING",
+          "FAILED"
+        ],
+        "state": "FAILED",
+        "failure": {
+          "code": "S232",
+          "phase": "step",
+          "step": 1,
+          "precondition": null,
+          "safety_limit": null,
+          "robot": null
+        },
+        "goal": [
+          "not_evaluated"
+        ],
+        "steps": [
+          "failed"
+        ]
+      }
+    },
+    {
+      "id": "s2_sensor_inspect_unknown",
+      "tests": [
+        "G-T11"
+      ],
+      "source": "tests/fixtures/v1.3/simulation/sources/sensor_inspect.rob",
+      "task": null,
+      "world": "tests/fixtures/v1.3/simulation/worlds/sensor_inspect_unknown.json",
+      "seed": "0",
+      "expect": {
+        "exit": 4,
+        "states": [
+          "CREATED",
+          "VALIDATED",
+          "AUTHORIZED",
+          "RUNNING",
+          "FAILED"
+        ],
+        "state": "FAILED",
+        "failure": {
+          "code": "S233",
+          "phase": "step",
+          "step": 1,
+          "precondition": null,
+          "safety_limit": null,
+          "robot": null
+        },
+        "goal": [
+          "not_evaluated"
+        ],
+        "steps": [
+          "failed"
+        ]
+      }
+    },
+    {
+      "id": "s2_sensor_inspect_other_robot",
+      "tests": [
+        "G-T11"
+      ],
+      "source": "tests/fixtures/v1.3/simulation/sources/sensor_inspect.rob",
+      "task": null,
+      "world": "tests/fixtures/v1.3/simulation/worlds/sensor_inspect_other_robot.json",
+      "seed": "0",
+      "expect": {
+        "exit": 4,
+        "states": [
+          "CREATED",
+          "VALIDATED",
+          "AUTHORIZED",
+          "RUNNING",
+          "FAILED"
+        ],
+        "state": "FAILED",
+        "failure": {
+          "code": "S231",
+          "phase": "step",
+          "step": 1,
+          "precondition": null,
+          "safety_limit": null,
+          "robot": null
+        },
+        "goal": [
+          "not_evaluated"
+        ],
+        "steps": [
+          "failed"
+        ]
+      }
+    },
+    {
+      "id": "s3_sensor_wait_event",
+      "tests": [
+        "G-T11"
+      ],
+      "source": "tests/fixtures/v1.3/simulation/sources/sensor_wait.rob",
+      "task": null,
+      "world": "tests/fixtures/v1.3/simulation/worlds/sensor_wait_dead_then_ok.json",
+      "seed": "0",
+      "expect": {
+        "exit": 0,
+        "states": [
+          "CREATED",
+          "VALIDATED",
+          "AUTHORIZED",
+          "RUNNING",
+          "SUCCEEDED"
+        ],
+        "state": "SUCCEEDED",
+        "failure": null,
+        "goal": [
+          "true"
+        ],
+        "steps": [
+          "succeeded"
+        ],
+        "end_t_ms": "2000"
+      }
+    },
+    {
+      "id": "s4_two_sensors_ok",
+      "tests": [
+        "G-T11"
+      ],
+      "source": "tests/fixtures/v1.3/simulation/sources/sensor_two.rob",
+      "task": null,
+      "world": "tests/fixtures/v1.3/simulation/worlds/base.json",
+      "seed": "0",
+      "expect": {
+        "exit": 0,
+        "states": [
+          "CREATED",
+          "VALIDATED",
+          "AUTHORIZED",
+          "RUNNING",
+          "SUCCEEDED"
+        ],
+        "state": "SUCCEEDED",
+        "failure": null,
+        "goal": [
+          "true"
+        ],
+        "steps": [
+          "succeeded"
+        ],
+        "preconditions": [
+          "true"
+        ]
+      }
+    },
+    {
+      "id": "s4_two_sensors_second_dead",
+      "tests": [
+        "G-T11"
+      ],
+      "source": "tests/fixtures/v1.3/simulation/sources/sensor_two.rob",
+      "task": null,
+      "world": "tests/fixtures/v1.3/simulation/worlds/sensor_two_swapped.json",
+      "seed": "0",
+      "expect": {
+        "exit": 4,
+        "states": [
+          "CREATED",
+          "VALIDATED",
+          "AUTHORIZED",
+          "RUNNING",
+          "FAILED"
+        ],
+        "state": "FAILED",
+        "failure": {
+          "code": "S101",
+          "phase": "precondition",
+          "step": null,
+          "precondition": 1,
+          "safety_limit": null,
+          "robot": null
+        },
+        "goal": [
+          "not_evaluated"
+        ],
+        "steps": [
+          "not_run"
+        ]
+      }
+    },
+    {
+      "id": "s5_sensor_id_equal_to_robot_id",
+      "tests": [
+        "G-T11"
+      ],
+      "source": "tests/fixtures/v1.3/simulation/sources/sensor_pre.rob",
+      "task": null,
+      "world": "tests/fixtures/v1.3/simulation/worlds/sensor_name_is_robot_name.json",
+      "seed": "0",
+      "expect": {
+        "exit": 0,
+        "states": [
+          "CREATED",
+          "VALIDATED",
+          "AUTHORIZED",
+          "RUNNING",
+          "SUCCEEDED"
+        ],
+        "state": "SUCCEEDED",
+        "failure": null,
+        "goal": [
+          "true"
+        ],
+        "steps": [
+          "succeeded"
+        ],
+        "preconditions": [
+          "true"
+        ]
+      }
+    },
+    {
+      "id": "g8_second_task_selected",
+      "tests": [
+        "G-T4"
+      ],
+      "source": "tests/fixtures/v1.3/simulation/sources/two_tasks.rob",
+      "task": "second",
+      "world": "tests/fixtures/v1.3/simulation/worlds/base.json",
+      "seed": "0",
+      "expect": {
+        "exit": 0,
+        "states": [
+          "CREATED",
+          "VALIDATED",
+          "AUTHORIZED",
+          "RUNNING",
+          "SUCCEEDED"
+        ],
+        "state": "SUCCEEDED",
+        "failure": null,
+        "goal": [
+          "true"
+        ],
+        "steps": [
+          "succeeded"
+        ],
+        "end_t_ms": "0"
+      }
+    },
+    {
+      "id": "w1_sensor_bound_to_robot",
+      "tests": [
+        "G-T12"
+      ],
+      "source": "tests/fixtures/v1.3/simulation/sources/sensor_inspect.rob",
+      "task": null,
+      "world": "tests/fixtures/v1.3/simulation/worlds/binding_sensor_to_robot.json",
+      "seed": "0",
+      "expect": {
+        "exit": 3,
+        "diagnostic": "E507"
+      }
+    },
+    {
+      "id": "w1_sensor_bound_to_location",
+      "tests": [
+        "G-T12"
+      ],
+      "source": "tests/fixtures/v1.3/simulation/sources/sensor_inspect.rob",
+      "task": null,
+      "world": "tests/fixtures/v1.3/simulation/worlds/binding_sensor_to_location.json",
+      "seed": "0",
+      "expect": {
+        "exit": 3,
+        "diagnostic": "E507"
+      }
+    },
+    {
+      "id": "w1_sensor_bound_to_undeclared",
+      "tests": [
+        "G-T12"
+      ],
+      "source": "tests/fixtures/v1.3/simulation/sources/sensor_inspect.rob",
+      "task": null,
+      "world": "tests/fixtures/v1.3/simulation/worlds/binding_sensor_undeclared.json",
+      "seed": "0",
+      "expect": {
+        "exit": 3,
+        "diagnostic": "E505"
+      }
+    },
+    {
+      "id": "w1_robot_bound_to_sensor",
+      "tests": [
+        "G-T12"
+      ],
+      "source": "tests/fixtures/v1.3/simulation/sources/sensor_inspect.rob",
+      "task": null,
+      "world": "tests/fixtures/v1.3/simulation/worlds/binding_robot_to_sensor.json",
+      "seed": "0",
+      "expect": {
+        "exit": 3,
+        "diagnostic": "E507"
+      }
+    },
+    {
+      "id": "w1_location_bound_to_sensor",
+      "tests": [
+        "G-T12"
+      ],
+      "source": "tests/fixtures/v1.3/simulation/sources/goal_held.rob",
+      "task": null,
+      "world": "tests/fixtures/v1.3/simulation/worlds/binding_location_to_sensor.json",
+      "seed": "0",
+      "expect": {
+        "exit": 3,
+        "diagnostic": "E507"
+      }
+    }
+  ]
+}

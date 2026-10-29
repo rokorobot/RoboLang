@@ -1,6 +1,7 @@
 """
-RoboLang front end for languages 1.1 and 1.2: lexer, parser, AST (RL-11B), static
-validation (RL-11C), the versioned task IR (RL-11D; schema 1.1 for 1.2 sources, LANG-1b),
+RoboLang front end for languages 1.1, 1.2 and 1.3: lexer, parser, AST (RL-11B), static
+validation (RL-11C), the versioned task IR (RL-11D; schema 1.1 for 1.2 sources, LANG-1b;
+schema 1.2 for 1.3 sources),
 and `robolang.sim`, the symbolic, simulation-only executor (RL-BASIC-01).
 
 `check` / `check_file` run the complete front end and never execute anything. The package

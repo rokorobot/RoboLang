@@ -1,0 +1,10 @@
+// RoboLang v1.3 fixture: invalid
+// expect: error E215 (syntax) line 8
+// why: the nesting bound applies to goal conditions
+
+robolang 1.3;
+
+task t(robot r, location dst) {
+    goal { not not not not not not not not robot_at r dst and robot_ready r; }
+    plan { move r to dst; }
+}

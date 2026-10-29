@@ -1,0 +1,11 @@
+// RoboLang v1.3 fixture: invalid
+// expect: error E304 (static) line 8
+// why: the outcome atoms are type-checked in pre too
+
+robolang 1.3;
+
+task t(robot r, object box, location dst) {
+    pre { holding r dst; }
+    goal { robot_at r dst; }
+    plan { move r to dst; }
+}

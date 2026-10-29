@@ -1,0 +1,7 @@
+// RoboLang v1.1 fixture: compat
+// expect: ok
+// why: the same names in an unmarked file
+
+task t(robot goal, location sensor, location holding) {
+    plan { move goal to sensor; move goal to holding; }
+}

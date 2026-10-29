@@ -107,7 +107,15 @@ class World:
             return "robot"
         if entity_id in self.objects:
             return "object"
+        if entity_id in self.sensors:
+            return "sensor"  # last: a sensor sharing an ID with an entity is read as the entity
         return None
+
+    def binds(self, param_type: str, entity_id: str) -> bool:
+        """True if a parameter of `param_type` may be bound to `entity_id` (a sensor parameter: any sensor)."""
+        if param_type == "sensor":
+            return entity_id in self.sensors
+        return self.kind_of(entity_id) == param_type
 
 
 # -------- reading the JSON --------
@@ -452,9 +460,11 @@ class _Loader:
                 self.fail("E506", bp, f"parameter '{parameter.name}' is not bound")
             target = raw[parameter.name]
             kind = world.kind_of(target)
+            if kind == "sensor" and not self.task.typed_sensors:
+                kind = None  # before RoboLang 1.3 a sensor cannot be bound: it stays undeclared
             if kind is None:
                 self.fail("E505", bp + _pointer(parameter.name), f"'{target}' is not declared")
-            if kind != parameter.type:
+            if not world.binds(parameter.type, target):
                 self.fail(
                     "E507", bp + _pointer(parameter.name),
                     f"parameter '{parameter.name}' is a {parameter.type}, '{target}' is a {kind}",

@@ -1,0 +1,10 @@
+// RoboLang v1.3 fixture: invalid
+// expect: error E208 (syntax) line 8
+// why: a goal block needs at least one condition
+
+robolang 1.3;
+
+task t(robot r, location dst) {
+    goal { }
+    plan { move r to dst; }
+}

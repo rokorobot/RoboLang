@@ -1,0 +1,10 @@
+// RoboLang v1.3 fixture: invalid
+// expect: error E304 (static) line 9
+// why: a sensor parameter is not a robot
+
+robolang 1.3;
+
+task t(robot r, location dst, sensor cam) {
+    goal { robot_at r dst; }
+    plan { move cam to dst; }
+}

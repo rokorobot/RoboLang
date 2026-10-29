@@ -1,0 +1,8 @@
+// LANG-2 simulation fixture (spec/robolang-v1.3.md section 8)
+robolang 1.3;
+
+task pre_holding(robot r, object box, location dst) {
+    pre { not holding r box; robot_at r dst; }
+    goal { robot_at r dst; }
+    plan { wait for 1 s; }
+}

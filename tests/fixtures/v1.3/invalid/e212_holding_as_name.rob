@@ -1,0 +1,10 @@
+// RoboLang v1.3 fixture: invalid
+// expect: error E212 (syntax) line 7
+// why: holding is reserved in 1.3
+
+robolang 1.3;
+
+task t(robot r, location holding) {
+    goal { robot_at r holding; }
+    plan { move r to holding; }
+}

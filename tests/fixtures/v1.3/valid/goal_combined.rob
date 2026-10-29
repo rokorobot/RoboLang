@@ -1,0 +1,16 @@
+// RoboLang v1.3 fixture: valid
+// expect: ok
+// why: goal conditions may be combined with and, or and not
+
+robolang 1.3;
+
+task t(robot r, object box, location src, location dst, region cell, sensor cam) {
+    goal {
+        object_at box dst and robot_at r dst;
+        not holding r box;
+        (object_at box src or object_at box dst) and sensor_ok cam;
+    }
+    plan {
+        move r to dst;
+    }
+}

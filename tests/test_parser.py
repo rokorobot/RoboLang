@@ -214,7 +214,7 @@ def test_unmarked_file_has_no_version():
     assert parse(task()).program.version is None
 
 
-@pytest.mark.parametrize("version", ["1.0", "1", "1.3", "2.0", "1.10", "01.1", "01.2"])
+@pytest.mark.parametrize("version", ["1.0", "1", "2.0", "1.10", "01.1", "01.2"])
 def test_other_versions_are_rejected(version):
     raised = error(f"robolang {version};\n" + task())
     assert (raised.code, raised.line, raised.column) == ("E213", 1, 10)

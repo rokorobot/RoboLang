@@ -1,0 +1,10 @@
+// RoboLang v1.2 fixture: compat
+// expect: error E201 (syntax) line 8
+// why: a goal block is not part of 1.2
+
+robolang 1.2;
+
+task t(robot r, location dst) {
+    goal { robot_ready r; }
+    plan { move r to dst; }
+}

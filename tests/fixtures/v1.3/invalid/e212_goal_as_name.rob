@@ -1,0 +1,10 @@
+// RoboLang v1.3 fixture: invalid
+// expect: error E212 (syntax) line 7
+// why: goal is reserved in 1.3
+
+robolang 1.3;
+
+task t(robot goal, location dst) {
+    goal { robot_at goal dst; }
+    plan { move goal to dst; }
+}

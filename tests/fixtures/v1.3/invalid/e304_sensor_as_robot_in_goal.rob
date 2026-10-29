@@ -1,0 +1,10 @@
+// RoboLang v1.3 fixture: invalid
+// expect: error E304 (static) line 8
+// why: robot_ready of a sensor
+
+robolang 1.3;
+
+task t(robot r, location dst, sensor cam) {
+    goal { robot_ready cam; }
+    plan { move r to dst; }
+}

@@ -1,0 +1,18 @@
+// RoboLang v1.3 fixture: valid
+// expect: ok
+// why: sensor_ok takes a sensor parameter, in pre and in wait until
+
+robolang 1.3;
+
+task t(robot r, object box, location src, location dst, region cell, sensor cam) {
+    pre {
+        sensor_ok cam;
+    }
+    goal {
+        object_at box dst;
+    }
+    plan {
+        wait until sensor_ok cam timeout 2s;
+        move r to dst;
+    }
+}

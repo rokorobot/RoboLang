@@ -1,0 +1,10 @@
+// RoboLang v1.3 fixture: invalid
+// expect: error E202 (syntax) line 8
+// why: every goal condition ends with a semicolon
+
+robolang 1.3;
+
+task t(robot r, location dst) {
+    goal { robot_at r dst }
+    plan { move r to dst; }
+}

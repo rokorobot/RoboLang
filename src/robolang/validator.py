@@ -1,9 +1,10 @@
 """
-Static validation for RoboLang v1.1 (spec/robolang-v1.1.md, section 5).
+Static validation for RoboLang v1.1 to v1.3 (spec/robolang-v1.1.md, section 5; spec/robolang-v1.3.md, section 4).
 
 Checks a parsed program for errors that the grammar cannot express: duplicate
 and undeclared names, names used with the wrong type, out-of-range values,
-conflicting speed limits and empty strings (E301-E308).
+conflicting speed limits and empty strings (E301-E308), and in 1.3 a missing goal and a string
+where a sensor parameter belongs (E309, E310).
 
 `check` and `check_file` are the complete front end: lex, parse, then validate.
 They only read source text and never touch an adapter.
@@ -31,6 +32,7 @@ class _Validator:
     def __init__(self, filename: str):
         self._filename = filename
         self._params: dict[str, ParamType] = {}
+        self._typed_sensors = False  # RoboLang 1.3: sensors are parameters
 
     def _error(self, code: str, message: str, span: Span) -> NoReturn:
         raise RoboLangError(Diagnostic(code, message, span, filename=self._filename))
@@ -39,6 +41,7 @@ class _Validator:
 
     def program(self, program: ast.Program):
         """Errors are reported in source order; the first one is raised."""
+        self._typed_sensors = program.version is not None and program.version.version == "1.3"
         seen: dict[str, ast.Name] = {}
         for task in program.tasks:
             first = seen.setdefault(task.name.text, task.name)
@@ -65,8 +68,21 @@ class _Validator:
         if task.pre is not None:
             for condition in task.pre.conditions:
                 self._condition(condition)
+        self._goal(task)
         for statement in task.plan.statements:
             self._statement(statement)
+
+    def _goal(self, task: ast.Task):
+        if task.goal is not None:
+            for condition in task.goal.conditions:
+                self._condition(condition)
+        elif self._typed_sensors:
+            self._error(
+                "E309",
+                f"task '{task.name.text}' has no goal block: RoboLang 1.3 requires "
+                "'goal { <condition>; ... }' with at least one condition, between pre and plan",
+                task.name.span,
+            )
 
     # -------- @safety --------
 
@@ -107,8 +123,17 @@ class _Validator:
             self._use(condition.region, ParamType.REGION, "region_clear")
         elif isinstance(condition, ast.ObjectExists):
             self._use(condition.obj, ParamType.OBJECT, "object_exists")
+        elif isinstance(condition, ast.ObjectAt):
+            self._use(condition.obj, ParamType.OBJECT, "object_at")
+            self._use(condition.location, ParamType.LOCATION, "object_at")
+        elif isinstance(condition, ast.RobotAt):
+            self._use(condition.robot, ParamType.ROBOT, "robot_at")
+            self._use(condition.location, ParamType.LOCATION, "robot_at")
+        elif isinstance(condition, ast.Holding):
+            self._use(condition.robot, ParamType.ROBOT, "holding")
+            self._use(condition.obj, ParamType.OBJECT, "holding")
         else:
-            self._not_empty(condition.sensor, "sensor name")
+            self._sensor(condition.sensor, "sensor_ok")
 
     def _statement(self, statement: ast.Statement):
         if isinstance(statement, ast.Move):
@@ -124,7 +149,7 @@ class _Validator:
         elif isinstance(statement, ast.Inspect):
             self._use(statement.robot, ParamType.ROBOT, "inspect")
             self._use(statement.obj, ParamType.OBJECT, "inspect")
-            self._not_empty(statement.sensor, "sensor name")
+            self._sensor(statement.sensor, "inspect ... using")
         elif isinstance(statement, ast.WaitFor):
             self._positive(statement.duration.value, "duration", statement.duration.span)
         elif isinstance(statement, ast.WaitUntil):
@@ -136,6 +161,19 @@ class _Validator:
             self._not_empty(statement.message, "message")
 
     # -------- individual rules --------
+
+    def _sensor(self, sensor: ast.StringLit | ast.Name, context: str):
+        if isinstance(sensor, ast.Name):
+            self._use(sensor, ParamType.SENSOR, context)
+        elif self._typed_sensors:
+            self._error(
+                "E310",
+                f"a sensor is a parameter in RoboLang 1.3, not a string: declare a 'sensor' parameter "
+                f"(for example 'sensor cam') and write it without quotes after '{context}'",
+                sensor.span,
+            )
+        else:
+            self._not_empty(sensor, "sensor name")
 
     def _use(self, name: ast.Name, expected: ParamType, context: str):
         declared = self._params.get(name.text)
