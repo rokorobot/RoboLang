@@ -1,7 +1,7 @@
 # RoboLang strategy
 
 **Status:** PROPOSED, 2026-10-29. Owner approval pending.
-**Reviewed:** every quarter (section 5). The [development plan](DEVELOPMENT_PLAN.md) holds the detail;
+**Reviewed:** every month (section 5). The [development plan](DEVELOPMENT_PLAN.md) holds the detail;
 this page holds the direction.
 
 ## 1. Where we are going
@@ -52,15 +52,19 @@ A horizon ends when its exit criteria hold, not on a date. Dates are targets.
 
 ## 5. Cadence
 
-| When | What | Output |
-|---|---|---|
-| Every PR | CI (tests, lint, Windows, packaging) | Green or blocked |
-| Every PR that changes the language, Core, prompt or reference | Benchmark sets 1+2, full prompt, 1 repeat (~$1) | Rates in the PR description; rule 2 applies |
-| Monthly (first Monday) | Full benchmark: both prompts, 3 repeats, current models (~$4–6). Add 10 new tasks from that month's work | Row added to [benchmark history](evidence/benchmark-history.md) |
-| Quarterly | Strategy review: pillars, horizon progress, kill or continue, dates | This page updated, with a dated note in section 6 |
+Development moves in days, so measurement does too.
 
-The monthly run can be a scheduled Cloudroom Loop once the owner approves its cost and the API key is
-available to it.
+| When | What | Output | Cost |
+|---|---|---|---|
+| Every PR | CI (tests, lint, Windows, packaging) | Green or blocked | – |
+| Every PR that changes the language, Core, the bridge, the reference or the benchmark | GitHub Actions `Benchmark`: sets 1+2, full prompt, 1 repeat. The scores are posted on the PR; a floor in `bench/gate.json` fails the job (rule 2) | PR comment | ~$1 |
+| Weekly (Monday 06:00 UTC) | GitHub Actions `Benchmark`: sets 1+2, 3 repeats, plus set 2 with the grammar-only prompt for information | Artifact for 90 days | ~$4–6 |
+| Weekly (Monday, after the run) | A Cloudroom Loop reads the weekly results and the failed answers, adds a row to the [benchmark history](evidence/benchmark-history.md) and opens a PR with a short note. It stays open for the owner only when something regressed or a new failure pattern appears | PR, or nothing | – |
+| Monthly (first Monday) | Strategy review: pillars, horizon progress, kill or continue, dates | This page, with a dated note in section 6 | – |
+| On demand | Before a release, and when a new model comes out (`workflow_dispatch`) | As weekly | ~$1–5 |
+
+The API key lives in one place: the repository secret `ANTHROPIC_API_KEY`. Without it the benchmark job
+is skipped and nothing is spent.
 
 ## 6. Review log
 
