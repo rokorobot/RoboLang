@@ -205,7 +205,8 @@ In short:
 3. All `true` → `SUCCEEDED`. Any `false` → `FAILED` with **`S301`**, phase `goal`. Otherwise
    (some `unknown`, none `false`) → `FAILED` with **`S302`**, phase `goal`.
 4. A run that failed or was cancelled earlier records its goal conditions as `not_evaluated`.
-5. The run record is **schema 1.2**: schema 1.1 plus a `goal` array after `preconditions`.
+5. The run record is **schema 1.2**: schema 1.1 plus a `goal` array after `preconditions` and a final
+   `core_outcome` ([`simulation-v1.0.md`](simulation-v1.0.md) section 10.5).
 
 | Code | Phase | Meaning |
 |---|---|---|

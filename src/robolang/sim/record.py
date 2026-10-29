@@ -13,6 +13,7 @@ from collections.abc import Mapping
 
 from .. import ir
 from .executor import RunResult
+from .outcome import core_outcome
 from .values import ms_text
 from .world import WORLD_SCHEMA_VERSION
 
@@ -130,7 +131,7 @@ def to_record(
     """
     The run record (section 5) as a dict with the key order of the specification: schema 1.0
     for a RoboLang 1.1 source, 1.1 for a 1.2 source (same shape, embedding Task IR 1.1), 1.2 for a
-    1.3 source (adds `goal`, after `preconditions`).
+    1.3 source (adds `goal`, after `preconditions`, and `core_outcome`, last).
     """
     inputs = {
         "source_sha256": source_sha256,
@@ -165,6 +166,7 @@ def to_record(
         ],
         "end_t_ms": ms_text(result.end_t_ms),
         "final_world": _final_world(result.final_world),
+        **({} if result.goal is None else {"core_outcome": core_outcome(result, task, run_id)}),
     }
 
 

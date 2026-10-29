@@ -676,7 +676,46 @@ embedded and `inputs.ir_schema_version` `"1.2"`, `inputs.language_version` `"1.3
 - `goal`: an array placed immediately after `preconditions`, one entry per goal condition, in the
   shape of `preconditions`: `index` (from 1), `condition` (IR form) and `result`: `true`, `false`,
   `unknown` or `not_evaluated`;
-- the failure `phase` may be `goal` (5.2).
+- the failure `phase` may be `goal` (5.2);
+- `core_outcome`: the **last** top-level key, after `final_world` (section 10.5).
 
 Runs of 1.1 and 1.2 sources write record 1.0 and 1.1 with no `goal` key, byte-identical to today.
 The run-ID derivation (section 6) is unchanged.
+
+### 10.5 Core-shaped outcome (`core_outcome`)
+
+For a 1.3 source the record ends with `core_outcome`: `{ "outcome": …, "evidence": […] }`, the same
+shape as the payload of a RoboLang Core 0.1 `outcome` message ([`core-v0.1.md`](core-v0.1.md) 5.9 and
+5.6). It is `null` when a goal condition has no Core form (`or`, `not`, `and`, `robot_ready`, …;
+`bridge.goal_triples` raises `NotExportable`). Goal condition *i* (from 0) is Core success criterion *i*.
+Mapping and identifiers: `src/robolang/bridge.py`. Decision record
+[0018](decisions/0018-core-shaped-outcomes.md). Records of 1.1 and 1.2 sources have no such key.
+
+`SIM` is `rl:sim:world`: the simulator is both the verifier and the reporter, and its evidence is
+simulator ground truth, never a robot's own observation.
+
+| `outcome` field | Value |
+|---|---|
+| `kind` | `"outcome"` |
+| `goal` | `"rl:goal:" + <task name>` |
+| `status` | `SUCCEEDED` → `succeeded`; `FAILED` with `S302` → `unknown`; any other `FAILED` → `failed`; `CANCELLED` → `cancelled` |
+| `verification` | `null` if the goal was not evaluated (the run ended before the goal, section 10.3). Otherwise `verified_by` `SIM`, `method` `criteria_evaluated`, `evaluated_at` the Core time of `end_t_ms`, and one `criteria_results` entry per goal condition: `criterion` *i*, `met` (the condition's result is `true`) and `evidence` (observation IDs) |
+| `reasons` | `[{"code": "evidence_missing"}]` for `S302`, else `[]` |
+| `reported_by`, `reported_at` | `SIM`; the Core time of `end_t_ms` |
+
+**Evidence.** If the goal was evaluated, for each criterion whose subject has a known state in the
+final world the simulator emits one `observation` of what is **actually** true of that subject: a
+thing that is present and held → `carried_by` its holder; present and not held → `located_in` its
+place; a robot → `located_in` its location. So `met` is true exactly when the observed triple equals
+the criterion triple. A subject whose state is unknown or absent gets no observation and its
+criterion has `evidence: []`. A run whose goal was not evaluated has `evidence: []`.
+
+Observation fields: `id` `rl:obs:` + characters 4 to 19 of the run ID (the first 16 hex digits)
++ `-` + *i*; `observed_at` the end time; `valid_for` 10 s; `confidence` `"1"`; `source`
+`{participant: SIM, sensor: "world", method: "simulation_ground_truth"}`; `signature`
+`sim-hmac-sha256` by key `rl:sim:world#sim-1`. The secret is the fixed, published,
+simulation-only ASCII string in `src/robolang/sim/outcome.py` (`SIM_KEY`): anyone can compute it, so
+a signature shows only that the documented procedure produced the record.
+
+**C402.** `succeeded` is written only when every criterion is met (`SUCCEEDED` needs every goal
+condition `true`). The run ID (section 6) does not depend on the outcome and is unchanged.

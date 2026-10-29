@@ -51,7 +51,7 @@ gate 1 evidence or the frozen gate 2 bundle.
 **Exit:** `examples/pick_and_place_v13.rob` succeeds only when the box really ends at `dst`. A
 plan that "runs" but leaves the box elsewhere fails with `S301`.
 
-### Phase 2 — Core-shaped outcomes in run records
+### Phase 2 — Core-shaped outcomes in run records · done ([0018](../../spec/decisions/0018-core-shaped-outcomes.md))
 
 - `simulate` adds an `outcome` object to the run record of 1.3 sources, in the form of a Core
   0.1 `outcome` (5.9): `status` (`succeeded`, `failed`, `cancelled`, `unknown`), a
