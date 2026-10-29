@@ -116,7 +116,7 @@ where the plan leaves the box elsewhere ends `failed`, with criteria not met.
 
 ## Owner decisions (approved 2026-10-29: the recommendations)
 
-| # | Question | Recommendation |
+| # | Question | Decision |
 |---|---|---|
 | Q1 | Who verifies in simulation: simulator ground truth (phase 2), or only the robot's own observations (`inspect`)? | Ground truth now, clearly labelled `rl:sim:world`. Robot-observation-only verification is Foundation 2 (Core-shaped observations) |
 | Q2 | Verification parameters: language syntax (`@verify`, 1.4) or CLI defaults only? | `@verify` in the language. How success is checked is part of the goal's meaning, so it belongs in the source |
