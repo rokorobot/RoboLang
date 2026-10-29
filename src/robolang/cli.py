@@ -31,7 +31,7 @@ Exit status:
     4  simulate: the run ended FAILED
     5  simulate: the run ended CANCELLED
     6  export-goal and delegate: the goal has no Core 0.1 form, or an object lacks a class or mass
-    7  delegate: the robot rejected the goal, or the planner rejected a message
+    7  delegate: the robot rejected the goal (or its peer declined), or a participant rejected a message
 """
 
 from __future__ import annotations
@@ -50,6 +50,7 @@ from .arch02 import to_json as arch02_json
 from .core import ReadError
 from .diagnostics import MAX_ERRORS, RoboLangError
 from .delegate import Plan, delegate
+from .delegate_peer import DEFAULT_LEASE_MS, lease_ms
 from .export_goal import ExportError, default_recipient, export_goal, valid_participant
 from .ir_reader import IRError, read_ir
 from .sim import DEFAULT_SEED, SEED, World, WorldError, load_world, run_id, sha256_normalized, to_json, to_record
@@ -94,7 +95,7 @@ exit status:
   4  simulate only: the run ended FAILED
   5  simulate only: the run ended CANCELLED
   6  export-goal and delegate only: the goal has no Core 0.1 form, or an object lacks a class or mass
-  7  delegate only: the robot rejected the goal, or the planner rejected a message
+  7  delegate only: the robot rejected the goal (or its peer declined), or a participant rejected a message
 """
 
 _SIMULATE_EPILOG = """\
@@ -126,14 +127,14 @@ exit status:
   0  the planner recorded a verified `succeeded`; the delegate record is on stdout
   1  the source file, the --ir file or a plan file is not valid; nothing is run
   2  bad arguments, both or neither of FILE and --ir, --ir without --plans, malformed or repeated --bind,
-     unreadable file, unknown task name, several tasks and no --task, an invalid --from or --to, or no
-     .rob file under --plans
+     unreadable file, unknown task name, several tasks and no --task, an invalid --from or --to or --lease,
+     or no .rob file under --plans
   3  a world file is not valid, or a --bind names a missing or wrong-kind entity or leaves a
      parameter unbound; diagnostics are printed to stderr
   4  the planner recorded failed, unknown or cancelled; the delegate record is on stdout
   6  the goal has no Core 0.1 form (X601), or a bound object has no class or mass (X602)
-  7  the robot rejected the goal (no plan matches), or the planner rejected a message;
-     the delegate record is on stdout
+  7  the robot rejected the goal (no plan matches, or its peer declined), or a participant
+     rejected a message; the delegate record is on stdout
 """
 
 _ARCH02_EPILOG = """\
@@ -578,6 +579,10 @@ def _delegate(args, out, err) -> int:
             )
     if args.ir is not None and not args.plans:
         raise _CommandError("--ir needs --plans: the robot's own plan library is made of .rob files")
+    try:
+        lease = DEFAULT_LEASE_MS if args.lease is None else lease_ms(args.lease)
+    except ValueError as error:
+        raise _CommandError(str(error)) from None
     inputs = _run_inputs(args, err)
     task = inputs.task
     if args.plans:
@@ -589,7 +594,7 @@ def _delegate(args, out, err) -> int:
     robot_world = inputs.world_bytes if robot_world_path == args.world else _read_bytes(robot_world_path)
     try:
         delegation = delegate(task, inputs.world, sender=args.sender, recipient=args.recipient, library=plans,
-                              robot_world=robot_world, robot_world_name=robot_world_path)
+                              robot_world=robot_world, robot_world_name=robot_world_path, lease_ms=lease)
     except (bridge.NotExportable, ExportError) as error:
         return _export_failure(args.file, task, error, err)
     out.write(json.dumps(delegation.record, indent=2, ensure_ascii=True) + "\n")
@@ -786,6 +791,9 @@ def _parser(prog: str) -> argparse.ArgumentParser:
     delegation.add_argument("--robot-world", metavar="WORLD",
                             help="the robot's world file, whose tasks.<name>.bindings bind the library "
                                  "(default: --world)")
+    delegation.add_argument("--lease", metavar="DURATION",
+                            help="the lease a peer robot offers the commitment, such as 60s, 500ms or 2min "
+                                 "(default: 60s; used only when the matched plan binds a second robot)")
     delegation.set_defaults(run=_delegate)
 
     arch02 = commands.add_parser(

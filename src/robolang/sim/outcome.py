@@ -22,20 +22,24 @@ SIM_KEY = Key(SIM, SIM_HMAC, b"robolang-simulation-only-key-not-a-secret")
 OBSERVATION_VALID_FOR = {"value": "10", "unit": "s"}
 
 
-def _actual(condition: ir.Condition, bound: dict[str, str], world: FinalWorld) -> Triple | None:
-    """What is actually true of the subject of an outcome atom in the final world; None if unknown or no Core form."""
-    if isinstance(condition, ir.RobotAt):
-        robot = bound[condition.robot]
-        return Triple(core_id("robot", robot), "located_in", core_id("location", dict(world.robots)[robot].location))
-    obj = bound[condition.obj]
+def object_triple(obj: str, world: FinalWorld) -> Triple | None:
+    """What is actually true of an object in the final world; None if unknown or absent (Core has no "nowhere")."""
     state = dict(world.objects)[obj]
-    if state.present is not True:  # unknown, or absent: Core 0.1 has no property for "nowhere"
+    if state.present is not True:
         return None
     if state.held_by is not None:
         return Triple(core_id("object", obj), "carried_by", core_id("robot", state.held_by))
     if state.location is not None:
         return Triple(core_id("object", obj), "located_in", core_id("location", state.location))
     return None
+
+
+def _actual(condition: ir.Condition, bound: dict[str, str], world: FinalWorld) -> Triple | None:
+    """What is actually true of the subject of an outcome atom in the final world; None if unknown or no Core form."""
+    if isinstance(condition, ir.RobotAt):
+        robot = bound[condition.robot]
+        return Triple(core_id("robot", robot), "located_in", core_id("location", dict(world.robots)[robot].location))
+    return object_triple(bound[condition.obj], world)
 
 
 def _observation(obs_id: str, triple: Triple, observed_at: str) -> dict:

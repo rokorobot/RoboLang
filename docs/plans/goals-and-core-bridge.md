@@ -113,7 +113,26 @@ As built (Q4: a new mode beside `arch02`, which is untouched; phases 4 and 5 tog
 
 Done differently from the first sketch: no `arch02 --plans` mode and no plan-executing stubs, because the
 frozen gate 2 bundle and the gate 1 evidence must not change; the exchange has two participants, not four
-(no custody, leases or authority messages: those stay in `arch02`).
+(no authority messages: those stay in `arch02`). A third participant, the peer robot, is added in v0.2
+(below).
+
+### Delegate with a peer robot: commitment, lease, custody · done ([0022](../../spec/decisions/0022-delegate-custody-and-leases.md))
+
+When the matched plan binds one other robot (`handover.rob`: arm and mobile), that robot is the peer and takes
+part (spec [`delegate-v0.2.md`](../../spec/delegate-v0.2.md)): `request_assistance`, `offer_assistance` (with a
+lease, 60 s by default, `--lease`), `commit`, then at the custody point `transfer_custody`,
+`custody_confirmed`, `custody_released`, `acknowledge`, and the commitment ends `fulfilled`, `lapsed` or
+`failed`. Failures: peer declines (`assistance_unavailable`, exit 7), lease ends first (`lease_expired`, exit 4),
+confirmation does not match (`custody_unknown`, exit 4), tampered message (signature, exit 7). Records of a
+delegation with a peer are version 0.2; single-robot records are byte-identical to before.
+
+**Known limits of the peer exchange** (all also in the spec, section 7): no reservation of the handoff
+place and no `coordinate` messages (arch02 has both); no peer `outcome`, the robot reports for both; the
+peer's observation is simulator ground truth signed with its key, not a sensor, and the robot does not
+cross-check it; no `custody_query` recovery (no transport, so no lost acknowledgement); the lease is checked
+only at the custody point, not on the peer's later steps; one peer at most (a task that binds two other robots is
+`robots_unsupported`); the custody point is found by reading the plan (the first step where the peer grasps what
+the robot placed), so a plan where the robot hands over by other means has a commitment but no custody exchange.
 
 **Remaining from phase 5:**
 

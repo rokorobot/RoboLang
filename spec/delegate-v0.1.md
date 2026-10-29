@@ -1,6 +1,9 @@
 # `robolang delegate` v0.1 — a goal crosses the wire, a robot runs its own plan, a verified outcome comes back
 
 **Status:** implemented in `src/robolang/delegate.py`; decision [0020](decisions/0020-delegate.md).
+A task that binds a second robot also has a peer, with commitment, lease and custody:
+[delegate v0.2](delegate-v0.2.md), decision [0022](decisions/0022-delegate-custody-and-leases.md). This document
+describes the delegation of a task with one robot, whose records stay version 0.1.
 **Plan:** [`docs/plans/goals-and-core-bridge.md`](../docs/plans/goals-and-core-bridge.md), phases 4 and 5.
 **Builds on:** [export-goal](export-goal-v0.1.md), [simulation](simulation-v1.0.md) sections 3 and 10,
 [Core 0.1](core-v0.1.md) sections 3, 4, 5.9, 5.10 and 8, decisions R3 (plans never travel) and
@@ -14,7 +17,7 @@
 
 ```text
 robolang delegate FILE --world WORLD [--task NAME] [--bind NAME=ID ...]
-                  --from AGENT_ID --to ROBOT_ID [--plans PATH ...] [--robot-world WORLD2]
+                  --from AGENT_ID --to ROBOT_ID [--plans PATH ...] [--robot-world WORLD2] [--lease DURATION]
 ```
 
 | Option | Meaning |
@@ -23,6 +26,7 @@ robolang delegate FILE --world WORLD [--task NAME] [--bind NAME=ID ...]
 | `--from`, `--to` | Planner and robot, Core identifiers without `#`. Both are required |
 | `--plans` | The robot's plan library: `.rob` files, or directories whose `*.rob` files are read in name order. Default: `FILE` |
 | `--robot-world` | The robot's world. Its `tasks.<name>.bindings` bind the library tasks (the robot binds its own plans to its own world). Default: `--world` |
+| `--lease` | The lease a peer robot offers (default 60 s). Only a task that binds a second robot uses it: [v0.2](delegate-v0.2.md) |
 
 Output: one line on stderr, `simulation only: delegate <goal> → <robot>: <status> (<note>)` where the
 note is `verified`, `not verified`, or the reason codes of a rejection; then the delegate record
@@ -70,7 +74,8 @@ first task for which all of these hold:
 4. `--to`'s entity (`rl:robot:arm1` → `arm1`) is bound to one of the task's robot parameters.
 
 The record lists every task considered with one result: `matched`, `no_goal`, `world_E5xx`,
-`no_core_form`, `goal_differs` or `robot_not_bound`. Nothing else is compared: safety limits and
+`no_core_form`, `goal_differs`, `robot_not_bound` or `robots_unsupported` (v0.2: the task binds two or more other
+robots). Nothing else is compared: safety limits and
 preconditions are the plan's own business, and a failing precondition is an outcome, not a rejection.
 
 ## 4. The delegate record
@@ -131,11 +136,11 @@ holds. Per-criterion `reason`: `evidence_missing`, `signature_invalid`, `criteri
 |---|---|
 | `0` | The planner recorded a verified `succeeded` |
 | `1` | FILE or a plan file is not valid RoboLang |
-| `2` | Usage: bad arguments or `--bind`, unreadable file, unknown task, several tasks and no `--task`, invalid `--from` or `--to`, no `.rob` file under `--plans` |
+| `2` | Usage: bad arguments, `--bind` or `--lease`, unreadable file, unknown task, several tasks and no `--task`, invalid `--from` or `--to`, no `.rob` file under `--plans` |
 | `3` | A world file is not valid, or a `--bind` is wrong |
 | `4` | The planner recorded `failed`, `unknown` or `cancelled` |
 | `6` | The goal has no Core form (`X601`) or an object lacks class or mass (`X602`) |
-| `7` | The robot rejected the goal, or the planner rejected a message (record on stdout) |
+| `7` | The robot rejected the goal (no plan matches, or its peer declined), or a participant rejected a message (record on stdout) |
 
 ## 8. What is not shown
 
@@ -147,5 +152,6 @@ holds. Per-criterion `reason`: `evidence_missing`, `signature_invalid`, `criteri
   decision Q1, `rl:sim:world`), not an independent sensor. The robot's world is also the world it
   runs in, so the evidence cannot disagree with the run.
 - **The plan's safety limits are not matched to the goal's constraints**, and nothing is enforced.
-- **No assistance, custody, leases, descriptors or authority messages.** Those are in `arch02`.
+- **No descriptors or authority messages.** Those are in `arch02`. Assistance, commitment, lease and custody
+  are in [v0.2](delegate-v0.2.md), for a task that binds a second robot; a task with one robot has none of them.
 - Ordered goal matching only; goals with `or` or `not` have no Core form and are not delegated.
