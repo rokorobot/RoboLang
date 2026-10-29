@@ -702,8 +702,9 @@ The run-ID derivation (section 6) is unchanged.
 
 For a 1.3 source the record ends with `core_outcome`: `{ "outcome": …, "evidence": […] }`, the same
 shape as the payload of a RoboLang Core 0.1 `outcome` message ([`core-v0.1.md`](core-v0.1.md) 5.9 and
-5.6). It is `null` when a goal condition has no Core form (`or`, `not`, `and`, `robot_ready`, …;
-`bridge.goal_triples` raises `NotExportable`). Goal condition *i* (from 0) is Core success criterion *i*.
+5.6). Explicit `and` operands are flattened in source order. It is `null` when a goal condition has
+no Core form (`or`, `not`, `robot_ready`, …; `bridge.goal_triples` raises `NotExportable`). Flattened
+outcome atom *i* (from 0) is Core success criterion *i*.
 Mapping and identifiers: `src/robolang/bridge.py`. Decision record
 [0018](decisions/0018-core-shaped-outcomes.md). Records of 1.1 and 1.2 sources have no such key.
 
@@ -715,7 +716,7 @@ simulator ground truth, never a robot's own observation.
 | `kind` | `"outcome"` |
 | `goal` | `"rl:goal:" + <task name>` |
 | `status` | `SUCCEEDED` → `succeeded`; `FAILED` with `S302` → `unknown`; any other `FAILED` → `failed`; `CANCELLED` → `cancelled` |
-| `verification` | `null` if the goal was not evaluated (the run ended before the goal, section 10.3). Otherwise `verified_by` `SIM`, `method` `criteria_evaluated`, `evaluated_at` the Core time of `end_t_ms`, and one `criteria_results` entry per goal condition: `criterion` *i*, `met` (the condition's result is `true`) and `evidence` (observation IDs) |
+| `verification` | `null` if the goal was not evaluated (the run ended before the goal, section 10.3). Otherwise `verified_by` `SIM`, `method` `criteria_evaluated`, `evaluated_at` the Core time of `end_t_ms`, and one `criteria_results` entry per flattened outcome atom: `criterion` *i*, `met` (the atom is true in the final world) and `evidence` (observation IDs) |
 | `reasons` | `[{"code": "evidence_missing"}]` for `S302`, else `[]` |
 | `reported_by`, `reported_at` | `SIM`; the Core time of `end_t_ms` |
 

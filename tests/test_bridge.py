@@ -5,7 +5,7 @@ from decimal import Decimal
 
 import pytest
 
-from robolang.bridge import NotExportable, Triple, core_id, core_time, goal_triples
+from robolang.bridge import NotExportable, Triple, core_id, core_time, goal_atoms, goal_triples
 from robolang.ir import compile_source
 
 TASK = """robolang 1.3;
@@ -40,11 +40,20 @@ def test_outcome_atoms_map_to_triples_in_goal_order():
     )
 
 
+def test_explicit_and_is_the_same_conjunction_as_separate_goal_entries():
+    separate = task_of(TASK)
+    joined = task_of(TASK.replace(
+        "object_at box dst; robot_at r dst; holding r box;",
+        "object_at box dst and robot_at r dst and holding r box;",
+    ))
+    assert goal_atoms(joined) == goal_atoms(separate)
+    assert goal_triples(joined, BINDINGS) == goal_triples(separate, BINDINGS)
+
+
 @pytest.mark.parametrize("condition, kind", [
     ("robot_ready r", "robot_ready"),
     ("not object_at box dst", "not"),
     ("object_at box dst or robot_at r dst", "or"),
-    ("(object_at box dst and robot_at r dst)", "and"),
 ])
 def test_other_goal_conditions_are_not_exportable(condition, kind):
     source = TASK.replace("holding r box;", f"{condition};")

@@ -11,10 +11,9 @@ that the record was produced by the documented procedure and nothing about who p
 
 from __future__ import annotations
 from .. import ir
-from ..bridge import NotExportable, Triple, core_id, core_time, goal_triples
+from ..bridge import NotExportable, Triple, core_id, core_time, goal_atoms, goal_triples
 from ..core.signatures import SIM_HMAC, Key, sign_sim
 from .executor import FinalWorld, RunResult
-from .values import Truth
 
 SIM = "rl:sim:world"
 SIM_KEY_REF = SIM + "#sim-1"
@@ -80,6 +79,7 @@ evidence are listed in criterion order. The verifier stays SIM.
     """
     bound = dict(result.bindings)
     try:
+        atoms = goal_atoms(task)
         criteria = goal_triples(task, bound)
     except NotExportable:
         return None
@@ -87,13 +87,13 @@ evidence are listed in criterion order. The verifier stays SIM.
     evaluated = all(g.result is not None for g in result.goal)
     order = criterion_of or tuple(range(len(criteria)))
     evidence, results = [], []
-    for condition, goal, i in sorted(zip(task.goal, result.goal, order), key=lambda entry: entry[2]):
+    for condition, criterion, i in sorted(zip(atoms, criteria, order), key=lambda entry: entry[2]):
         actual = _actual(condition, bound, result.final_world) if evaluated else None
         cited = []
         if actual is not None:
             evidence.append(_observation(f"rl:obs:{run_id[4:20]}-{i}", actual, end))
             cited = [evidence[-1]["id"]]
-        results.append({"criterion": i, "met": goal.result is Truth.TRUE, "evidence": cited})
+        results.append({"criterion": i, "met": actual == criterion, "evidence": cited})
     verification = {
         "verified_by": SIM, "method": "criteria_evaluated", "evaluated_at": end, "criteria_results": results,
     } if evaluated else None
