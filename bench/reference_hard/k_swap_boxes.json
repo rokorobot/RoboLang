@@ -1,0 +1,11 @@
+{
+  "task": "swap",
+  "bindings": {
+    "r": "arm1",
+    "a": "box1",
+    "b": "box2",
+    "sa": "shelf_a",
+    "sb": "shelf_b",
+    "tmp": "table"
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "id": "m_park_night",
+  "prompt": "Park amr1 for the night.",
+  "world": "bench/worlds/warehouse.json",
+  "group": "ambiguous",
+  "expect": {
+    "decision": "program",
+    "category": "none"
+  },
+  "expected_goals": [
+    [
+      [
+        "rl:robot:amr1",
+        "located_in",
+        "rl:place:dock"
+      ]
+    ],
+    [
+      [
+        "rl:robot:amr1",
+        "located_in",
+        "rl:place:charging"
+      ]
+    ]
+  ],
+  "tags": [
+    "ambiguous",
+    "robot_at",
+    "location_choice"
+  ]
+}

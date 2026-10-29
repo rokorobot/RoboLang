@@ -1,0 +1,10 @@
+// bench/reference_hard/n_speed_unit.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 1.3;
+
+task go(robot r, location spot) {
+    @safety max_speed 0.5 rad/s;
+    goal { robot_at r spot; }
+    plan {
+        move r to spot;
+    }
+}

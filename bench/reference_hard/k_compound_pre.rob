@@ -1,0 +1,13 @@
+// bench/reference_hard/k_compound_pre.rob: hand-written reference solution
+robolang 1.3;
+
+task deliver(robot r, object box, location src, location dst, region cell, region aisle) {
+    pre { (region_clear cell and robot_ready r) or region_clear aisle; }
+    goal { object_at box dst; }
+    plan {
+        move r to src;
+        grasp r box;
+        move r to dst;
+        place r box at dst;
+    }
+}

@@ -1,0 +1,30 @@
+{
+  "id": "k_round_trip_twice",
+  "prompt": "With arm1, carry box1 from shelf_a to the table and back to shelf_a, then do that whole round trip a second time. After each trip, once box1 is back on shelf_a, tell the fleet on channel \"ops\" with the message \"TRIP\".",
+  "world": "bench/worlds/warehouse.json",
+  "group": "control",
+  "expect": {
+    "decision": "program",
+    "category": "none"
+  },
+  "expected_goal": [
+    [
+      "rl:thing:box1",
+      "located_in",
+      "rl:place:shelf_a"
+    ]
+  ],
+  "tags": [
+    "control",
+    "unrolled_repetition",
+    "communicate",
+    "pick_place"
+  ],
+  "expected_message_counts": [
+    [
+      "ops",
+      "TRIP",
+      2
+    ]
+  ]
+}

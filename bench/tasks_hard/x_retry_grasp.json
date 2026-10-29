@@ -1,0 +1,16 @@
+{
+  "id": "x_retry_grasp",
+  "prompt": "With arm1, try to grasp box1 on the shelf; if the grasp fails, try again, as many times as it takes, and then put box1 on the table.",
+  "world": "examples/world.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "tags": [
+    "retry",
+    "error_handling"
+  ],
+  "why": "Reacting to a failed step needs error handling and a loop. A failing step ends the run; there is no retry, catch or loop construct.",
+  "attempt_fails_with": "E203"
+}

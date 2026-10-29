@@ -1,0 +1,12 @@
+{
+  "task": "relay",
+  "bindings": {
+    "a": "arm_a",
+    "b": "arm_b",
+    "part": "p1",
+    "feed": "conveyor_in",
+    "mid": "handoff12",
+    "dst": "station3",
+    "fence": "fence_b"
+  }
+}

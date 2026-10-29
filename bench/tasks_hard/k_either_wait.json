@@ -1,0 +1,35 @@
+{
+  "id": "k_either_wait",
+  "prompt": "Wait up to 15 seconds until either the door zone is clear or the spectrometer is available, then take arm1 to the scanner.",
+  "world": "bench/worlds/lab.json",
+  "group": "control",
+  "expect": {
+    "decision": "program",
+    "category": "none"
+  },
+  "expected_goal": [
+    [
+      "rl:robot:arm1",
+      "located_in",
+      "rl:place:scanner"
+    ]
+  ],
+  "tags": [
+    "control",
+    "wait_until",
+    "timeout",
+    "or",
+    "region",
+    "sensor_ok",
+    "robot_at"
+  ],
+  "probes": [
+    {
+      "name": "nothing_changes",
+      "world_patch": {
+        "events": []
+      },
+      "expect": "not_succeeded"
+    }
+  ]
+}

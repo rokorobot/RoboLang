@@ -14,6 +14,18 @@ and `robolang simulate`), so the scores do not depend on anything but the saved 
 
 goal_correct, plan_succeeds and checks_ok are judged on the final answer, and are false when it is not valid.
 Answers served by a fallback model are scored in their own tables, never in the requested model's.
+
+Set 2 (`--set hard`) adds the decision. A task expects a program, or "cannot" with a category (inexpressible,
+infeasible). The four rates above are over the tasks that expect a program; on top of them, per model:
+
+    decision_correct    the first answer's decision is the expected one
+    false_program       a program for a task that expects "cannot" (the dangerous error), and how many of those
+                        were valid and ended SUCCEEDED after repair, i.e. not caught by the tools
+    false_refusal       "cannot" for a task that expects a program
+    category_correct    of the correct "cannot" decisions, the category is the expected one
+
+The decision is judged on the first answer, before any tool output; a repair round (only for invalid programs)
+may change it, which is reported as false_program_final. An answer without a `decision` (set 1) is a program.
 Writes report.md and scores.json next to the answers.
 """
 
@@ -39,6 +51,8 @@ def _final(task_def: dict, call: dict, codes: list[str]):
     if kind != "answer":
         codes.append(NO_ANSWER_CODE[kind])
         return None, None, kind
+    if answer["decision"] == "cannot":  # a decline has no program to check
+        return answer, None, kind
     checked = lib.check_answer(task_def, answer)
     codes.extend(checked.codes)
     return answer, checked, kind
@@ -49,11 +63,12 @@ def evaluate_record(task_def: dict, record: dict) -> dict:
     calls = record["calls"]
     codes: list[str] = []
     answer, checked, kind = _final(task_def, calls[0], codes)
+    first = answer if kind == "answer" else None
     valid_first = bool(checked and checked.valid)
     final = (answer, checked)
     if not valid_first and len(calls) > 1:
-        repaired, repaired_checked, _ = _final(task_def, calls[1], codes)
-        if repaired_checked:
+        repaired, repaired_checked, repaired_kind = _final(task_def, calls[1], codes)
+        if repaired_kind == "answer":
             final = (repaired, repaired_checked)
     valid_after = bool(final[1] and final[1].valid)
     judgement = lib.judge(task_def, final[1], final[0]["bindings"]) if valid_after else None
@@ -64,7 +79,12 @@ def evaluate_record(task_def: dict, record: dict) -> dict:
             tokens[name] += count
         costs.append(lib.call_cost(call))
     checks = judgement.checks if judgement else {}
-    has_checks = any(k in task_def for k in ("expected_safety", "expected_messages", "expected_end_ms", "probes"))
+    has_checks = any(k in task_def for k in ("expected_safety", "expected_messages", "expected_message_counts",
+                                              "expected_end_ms", "probes"))
+    expect, expect_category = lib.expectation(task_def)
+    decision = first["decision"] if first else None
+    decision_final = final[0]["decision"] if final[0] else None
+    category_final = final[0]["category"] if final[0] else None
     return {
         "task_id": task_def["id"], "model": record["model"], "repeat": record["repeat"], "tags": task_def["tags"],
         "group": "fallback" if any(lib.served_by(c)["fallback"] for c in calls) else "requested",
@@ -76,12 +96,27 @@ def evaluate_record(task_def: dict, record: dict) -> dict:
         "checks_ok": (bool(judgement) and all(checks.values())) if has_checks else None,
         "state": judgement.state if judgement else None, "failure_code": judgement.failure_code if judgement else None,
         "codes": codes, "tokens": tokens, "usd": None if None in costs else sum(costs),
+        # the decision (set 2; set 1 answers are programs and its tasks expect programs)
+        "kind": task_def.get("group", "-"), "expect": expect, "expect_category": expect_category,
+        "decision": decision, "category": first["category"] if first else None,
+        "reason": first["reason"] if first else "",
+        "decision_final": decision_final,
+        "decision_correct": decision == expect,
+        "category_correct": ((first["category"] == expect_category) if expect == "cannot" and decision == "cannot"
+                             else None),
+        "false_program": expect == "cannot" and decision == "program",
+        "false_program_final": expect == "cannot" and decision_final == "program",
+        "false_program_undetected": bool(expect == "cannot" and decision_final == "program" and judgement
+                                         and judgement.plan_succeeds),
+        "false_refusal": expect == "program" and decision == "cannot",
+        "false_refusal_final": expect == "program" and decision_final == "cannot",
+        "category_final": category_final,
     }
 
 
 def load_rows(results_dir: Path) -> tuple[dict, list[dict]]:
     meta = json.loads((results_dir / "run.json").read_text(encoding="utf-8"))
-    tasks = lib.load_tasks()
+    tasks = lib.load_set(meta.get("set", "1"))  # runs saved before set 2 have no "set": they are set 1
     rows = []
     for path in sorted(results_dir.glob("*/*.json")):
         record = json.loads(path.read_text(encoding="utf-8"))
@@ -100,7 +135,13 @@ def _usd(value: float | None) -> str:
     return "n/a" if value is None else f"${value:.4f}"
 
 
+def _programs(rows: list[dict]) -> list[dict]:
+    """The rows of tasks that expect a program: the four rates and the tag table are over these."""
+    return [r for r in rows if r["expect"] == "program"]
+
+
 def _rates_table(rows: list[dict]) -> list[str]:
+    rows = _programs(rows)
     lines = ["| measure | answers | rate |", "|---|---:|---:|"]
     for name in MEASURES:
         k = sum(r[name] for r in rows)
@@ -112,7 +153,8 @@ def _rates_table(rows: list[dict]) -> list[str]:
 
 
 def _shares(rows: list[dict]) -> str:
-    """The four rates of `rows` as table cells."""
+    """The four rates of the program-expecting `rows` as table cells."""
+    rows = _programs(rows)
     return " | ".join(_share(sum(r[m] for r in rows), len(rows)) for m in MEASURES)
 
 
@@ -135,6 +177,7 @@ def _codes_table(rows: list[dict]) -> list[str]:
 
 
 def _tags_table(rows: list[dict]) -> list[str]:
+    rows = _programs(rows)
     tags = sorted({t for r in rows for t in r["tags"]})
     lines = ["| tag | answers | " + " | ".join(MEASURES) + " |", "|---|---:|" + "---:|" * len(MEASURES)]
     for tag in tags:
@@ -143,14 +186,61 @@ def _tags_table(rows: list[dict]) -> list[str]:
     return lines
 
 
+def _count(rows: list[dict], field: str) -> str:
+    return _share(sum(bool(r[field]) for r in rows), len(rows))
+
+
+def _robustness_row(rows: list[dict]) -> list[str]:
+    """Cells: decision_correct, false_program (and after repair, undetected), false_refusal, category_correct."""
+    cannot = [r for r in rows if r["expect"] == "cannot"]
+    declined = [r for r in cannot if r["decision"] == "cannot"]
+    undetected = sum(r["false_program_undetected"] for r in cannot)
+    return [_count(rows, "decision_correct"), _count(cannot, "false_program") if cannot else "-",
+            f"{sum(r['false_program_final'] for r in cannot)}/{len(cannot)}" if cannot else "-",
+            f"{undetected}/{len(cannot)}" if cannot else "-",
+            _count(_programs(rows), "false_refusal") if _programs(rows) else "-",
+            _share(sum(r["category_correct"] for r in declined), len(declined)) if declined else "-"]
+
+
+ROBUSTNESS_HEAD = ["decision_correct", "false_program", "false_program after repair",
+                   "of which valid and SUCCEEDED", "false_refusal", "category_correct (of declines)"]
+
+
+def _robustness_table(rows: list[dict]) -> list[str]:
+    lines = ["| " + " | ".join(ROBUSTNESS_HEAD) + " |", "|" + "---:|" * len(ROBUSTNESS_HEAD),
+             "| " + " | ".join(_robustness_row(rows)) + " |"]
+    return lines
+
+
+def _kinds_table(rows: list[dict]) -> list[str]:
+    """One row per task kind (inexpressible, infeasible, decoy, ambiguous, control)."""
+    lines = ["| kind | answers | " + " | ".join(ROBUSTNESS_HEAD) + " | goal_correct | plan_succeeds |",
+             "|---|---:|" + "---:|" * (len(ROBUSTNESS_HEAD) + 2)]
+    for kind in sorted({r["kind"] for r in rows}):
+        sel = [r for r in rows if r["kind"] == kind]
+        feasible = _programs(sel)
+        goal = _count(feasible, "goal_correct") if feasible else "-"
+        succeeds = _count(feasible, "plan_succeeds") if feasible else "-"
+        lines.append(f"| {kind} | {len(sel)} | " + " | ".join(_robustness_row(sel)) + f" | {goal} | {succeeds} |")
+    return lines
+
+
+def _hard(rows: list[dict]) -> bool:
+    return any(r["expect"] == "cannot" for r in rows)
+
+
 def _group(rows: list[dict]) -> list[str]:
     noans = Counter(r["outcome"] for r in rows if r["outcome"] != "answer")
     lines = _rates_table(rows) + [""]
+    if _hard(rows):
+        lines += ["Robustness (decision judged on the first answer; the four rates above are over the tasks that "
+                  "expect a program):", ""] + _robustness_table(rows) + ["", "By kind of task:", ""] \
+                 + _kinds_table(rows) + [""]
     if noans:
         lines += ["No usable first answer: " + ", ".join(f"{k} {v}" for k, v in sorted(noans.items())) + ".", ""]
     lines += ["Tokens and cost of all requests for these answers:", ""] + _tokens_table(rows)
     lines += ["", "Most common diagnostic codes (all rounds):", ""] + _codes_table(rows)
-    lines += ["", "By tag:", ""] + _tags_table(rows)
+    lines += ["", "By tag (tasks that expect a program):" if _hard(rows) else "By tag:", ""] + _tags_table(rows)
     return lines
 
 
@@ -160,6 +250,8 @@ def report(meta: dict, rows: list[dict]) -> str:
              f"Effort {meta['effort']}, {meta['repeats']} repeat(s), {len(meta['tasks'])} task(s), "
              f"prompt sha256 {meta['prompt_sha256'][:12]}, refusal fallbacks "
              f"{'enabled' if meta['fallbacks'] else 'disabled'} (Claude Haiku 5.5 has none).",
+             *([f"Task set {meta.get('set', '1')}, prompt {meta.get('prompt', 'full')}."]
+               if (meta.get("set", "1"), meta.get("prompt", "full")) != ("1", "full") else []),
              "Scored offline by bench/score.py from the saved answers; no judge model. Rates are k/n answers.", "",
              "## Summary (answers served by the requested model)", "",
              "| model | answers | " + " | ".join(MEASURES) + " | cost |",
@@ -168,6 +260,14 @@ def report(meta: dict, rows: list[dict]) -> str:
         own = [r for r in rows if r["model"] == model and r["group"] == "requested"]
         costs = [r["usd"] for r in own]
         lines.append(f"| {model} | {len(own)} | {_shares(own)} | {_usd(None if None in costs else sum(costs))} |")
+    if _hard(rows):
+        lines += ["", f"The four rates are over the {len(_programs([r for r in rows if r['model'] == models[0]]))} "
+                  "task(s) that expect a program (the others expect a decline). Robustness, per model:", "",
+                  "| model | answers | " + " | ".join(ROBUSTNESS_HEAD) + " |",
+                  "|---|---:|" + "---:|" * len(ROBUSTNESS_HEAD)]
+        for model in models:
+            own = [r for r in rows if r["model"] == model and r["group"] == "requested"]
+            lines.append(f"| {model} | {len(own)} | " + " | ".join(_robustness_row(own)) + " |")
     for model in models:
         own = [r for r in rows if r["model"] == model and r["group"] == "requested"]
         lines += ["", f"## {model}", "", f"{len(own)} answer(s) served by {model}.", ""] + (_group(own) if own else [])

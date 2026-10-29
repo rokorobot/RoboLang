@@ -1,0 +1,16 @@
+{
+  "id": "x_elapsed_time",
+  "prompt": "Move box1 to the table with arm1, then send channel \"ops\" a message saying how many seconds the job took, as measured by the program itself.",
+  "world": "examples/world.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "tags": [
+    "arithmetic",
+    "communicate"
+  ],
+  "why": "There is no clock reading and no arithmetic; message text is a fixed string, so a measured duration cannot be reported.",
+  "attempt_fails_with": "E201"
+}

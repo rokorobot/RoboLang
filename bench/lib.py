@@ -10,6 +10,7 @@ import io
 import json
 import re
 import tempfile
+from collections import Counter
 from dataclasses import dataclass
 from decimal import Decimal
 from pathlib import Path
@@ -24,7 +25,16 @@ ROOT = Path(__file__).resolve().parent.parent
 BENCH = ROOT / "bench"
 TASKS_DIR = BENCH / "tasks"
 REFERENCE_DIR = BENCH / "reference"
+HARD_TASKS_DIR = BENCH / "tasks_hard"
+HARD_REFERENCE_DIR = BENCH / "reference_hard"
 PROMPT_FILE = BENCH / "prompt.md"
+MINIMAL_PROMPT_FILE = BENCH / "prompt_minimal.md"
+GRAMMAR_FILE = ROOT / "spec" / "grammar-v1.3.ebnf"
+GRAMMAR_MARK = "{{GRAMMAR}}"  # in prompt_minimal.md: replaced by the text of the grammar file
+
+# The task sets: name -> (tasks directory, reference directory). Set 1 is the default and stays as it was.
+SETS = {"1": (TASKS_DIR, REFERENCE_DIR), "hard": (HARD_TASKS_DIR, HARD_REFERENCE_DIR)}
+PROMPTS = ("full", "minimal")
 
 # $ per million tokens: (input, output, cache read). A cache write (5 minutes) costs 1.25 x input.
 # From the claude-api skill's model table (cached 2026-10-06). The one place prices live.
@@ -45,14 +55,23 @@ PRICES = {
 CACHE_WRITE_FACTOR = 1.25
 
 # The answer: structured output (`output_config.format`), then read back by `parse_answer`.
+DECISIONS = ("program", "cannot")
+CATEGORIES = ("inexpressible", "infeasible", "none")
 ANSWER_SCHEMA = {
     "type": "object",
     "properties": {
-        "rob": {"type": "string", "description": "The complete RoboLang 1.3 source."},
-        "task": {"type": "string", "description": "The name of the task in the source to run."},
+        "decision": {"type": "string", "enum": list(DECISIONS),
+                     "description": "\"program\" to answer with RoboLang source, \"cannot\" to decline the request."},
+        "category": {"type": "string", "enum": list(CATEGORIES),
+                     "description": "Why it cannot be done: \"inexpressible\" (RoboLang 1.3 cannot say it) or "
+                                    "\"infeasible\" (this world or robot cannot do it). \"none\" for a program."},
+        "reason": {"type": "string", "description": "One sentence: what the program does, or why it cannot be done."},
+        "rob": {"type": "string", "description": "The complete RoboLang 1.3 source. Empty when decision is cannot."},
+        "task": {"type": "string", "description": "The name of the task in the source to run. Empty when cannot."},
         "bindings": {  # a list of pairs: structured outputs require additionalProperties false on objects
             "type": "array",
-            "description": "One entry per task parameter: the parameter name and the world entity ID bound to it.",
+            "description": "One entry per task parameter: the parameter name and the world entity ID bound to it. "
+                           "Empty when decision is cannot.",
             "items": {
                 "type": "object",
                 "properties": {"param": {"type": "string"}, "id": {"type": "string"}},
@@ -61,9 +80,10 @@ ANSWER_SCHEMA = {
             },
         },
     },
-    "required": ["rob", "task", "bindings"],
+    "required": ["decision", "category", "reason", "rob", "task", "bindings"],
     "additionalProperties": False,
 }
+OLD_ANSWER_KEYS = {"rob", "task", "bindings"}  # saved answers of benchmark set 1: read as decision "program"
 
 # Pseudo codes for what is not a `robolang` diagnostic. Real codes (E..., W..., S...) are never changed.
 FORMAT_CODE = "B001"      # the reply was not an answer in the required format
@@ -81,6 +101,30 @@ def load_tasks(directory: Path = TASKS_DIR) -> dict[str, dict]:
         task = json.loads(path.read_text(encoding="utf-8"))
         tasks[task["id"]] = task
     return tasks
+
+
+def load_set(name: str) -> dict[str, dict]:
+    return load_tasks(SETS[name][0])
+
+
+def load_prompt(name: str = "full") -> str:
+    """The system prompt: `prompt.md`, or the minimal variant with the grammar file pasted in."""
+    if name == "minimal":
+        text = MINIMAL_PROMPT_FILE.read_text(encoding="utf-8")
+        return text.replace(GRAMMAR_MARK, GRAMMAR_FILE.read_text(encoding="utf-8").rstrip("\n"))
+    return PROMPT_FILE.read_text(encoding="utf-8")
+
+
+def expectation(task_def: dict) -> tuple[str, str]:
+    """(decision, category) a task expects. Tasks without `expect` (set 1) expect a program."""
+    expect = task_def.get("expect") or {}
+    return expect.get("decision", "program"), expect.get("category", "none")
+
+
+def expected_goals(task_def: dict) -> list[set[tuple[str, str, str]]]:
+    """The acceptable goal sets: `expected_goals` (defensible readings), else `expected_goal`, else none."""
+    sets = task_def["expected_goals"] if "expected_goals" in task_def else [task_def.get("expected_goal", [])]
+    return [{tuple(t) for t in goals} for goals in sets if goals]
 
 
 def world_bytes(task_def: dict) -> bytes:
@@ -111,7 +155,11 @@ def _facts(world: dict) -> list[str]:
         lines.append(f"robots: {'; '.join(robots)}")
     objects = []
     for name, o in world.get("objects", {}).items():
-        where = f"at {o['location']}" if "location" in o else f"held by {o['held_by']}"
+        where = "not present"  # a world object may be absent: it has neither a location nor a holder
+        if "location" in o:
+            where = f"at {o['location']}"
+        elif "held_by" in o:
+            where = f"held by {o['held_by']}"
         objects.append(f"{name} ({o.get('class', 'object')}, {where})")
     if objects:
         lines.append(f"objects: {'; '.join(objects)}")
@@ -132,21 +180,37 @@ def describe_world(world: dict) -> str:
     return "\n".join(_locations(world) + _facts(world))
 
 
+def notes_for(task_def: dict) -> dict[str, str]:
+    """Entity ID -> description, from `<world>.notes.json` next to the world file, if there is one."""
+    path = (ROOT / task_def["world"]).with_suffix(".notes.json")
+    return json.loads(path.read_text(encoding="utf-8")) if path.is_file() else {}
+
+
 def user_message(task_def: dict) -> str:
     world = json.loads(world_bytes(task_def))
-    return f"World:\n{describe_world(world)}\n\nRequest: {task_def['prompt']}"
+    notes = notes_for(task_def)
+    described = "".join(f"\n  {name}: {text}" for name, text in notes.items())
+    return (f"World:\n{describe_world(world)}" + (f"\ndescriptions:{described}" if notes else "")
+            + f"\n\nRequest: {task_def['prompt']}")
 
 
 # -------- the answer --------
 
 def parse_answer(text: str) -> tuple[dict | None, str | None]:
-    """The answer object, or (None, what is wrong with the reply)."""
+    """The answer object, or (None, what is wrong with the reply). The old three-key form is a program."""
     try:
         answer = json.loads(text)
     except ValueError as error:
         return None, f"the reply is not valid JSON ({error})"
-    if not isinstance(answer, dict) or set(answer) != {"rob", "task", "bindings"}:
-        return None, 'the reply must be one JSON object with exactly the keys "rob", "task" and "bindings"'
+    if isinstance(answer, dict) and set(answer) == OLD_ANSWER_KEYS:
+        answer = {"decision": "program", "category": "none", "reason": "", **answer}
+    if not isinstance(answer, dict) or set(answer) != set(ANSWER_SCHEMA["properties"]):
+        return None, ('the reply must be one JSON object with exactly the keys "decision", "category", "reason", '
+                      '"rob", "task" and "bindings"')
+    if answer["decision"] not in DECISIONS or answer["category"] not in CATEGORIES \
+            or not isinstance(answer["reason"], str):
+        return None, ('"decision" must be "program" or "cannot", "category" "inexpressible", "infeasible" or "none", '
+                      'and "reason" a string')
     bindings = answer["bindings"]
     if isinstance(bindings, list):  # the wire form: [{"param", "id"}, ...]; read back as a mapping
         pairs = [(b.get("param"), b.get("id")) if isinstance(b, dict) and set(b) == {"param", "id"} else (None, None)
@@ -255,7 +319,6 @@ def _check_probe(task_def: dict, checked: Checked, probe: dict, bindings: dict[s
 
 def judge(task_def: dict, checked: Checked, bindings: dict[str, str]) -> Judgement:
     """Goal, simulation and the task's optional checks, for an answer that `check_answer` accepted."""
-    expected = {tuple(t) for t in task_def["expected_goal"]}
     try:
         exported = {(t.subject, t.property, t.value) for t in bridge.goal_triples(checked.task, bindings)}
     except bridge.NotExportable:
@@ -267,11 +330,14 @@ def judge(task_def: dict, checked: Checked, bindings: dict[str, str]) -> Judgeme
     if "expected_messages" in task_def:
         sent = {(s.message.channel, s.message.message) for s in result.steps if s.message}
         checks["messages"] = {tuple(m) for m in task_def["expected_messages"]} <= sent
+    if "expected_message_counts" in task_def:  # [channel, message, how many times]: a repeated action really repeats
+        sent_n = Counter((s.message.channel, s.message.message) for s in result.steps if s.message)
+        checks["message_counts"] = all(sent_n[(c, m)] == n for c, m, n in task_def["expected_message_counts"])
     if "expected_end_ms" in task_def:
         checks["end_ms"] = result.end_t_ms == Decimal(task_def["expected_end_ms"])
     if "probes" in task_def:
         checks["probes"] = all(_check_probe(task_def, checked, p, bindings) for p in task_def["probes"])
-    return Judgement(exported == expected, result.state == "SUCCEEDED",
+    return Judgement(exported is not None and exported in expected_goals(task_def), result.state == "SUCCEEDED",
                      result.state, result.failure.code if result.failure else None, checks)
 
 
@@ -300,7 +366,8 @@ def repair_message(report: str) -> str:
 
 def format_repair_message(problem: str) -> str:
     return (f"That reply could not be read: {problem}.\n\n"
-            "Answer again as one JSON object with the keys \"rob\", \"task\" and \"bindings\".")
+            "Answer again as one JSON object with the keys \"decision\", \"category\", \"reason\", "
+            "\"rob\", \"task\" and \"bindings\".")
 
 
 def served_by(call: dict) -> dict:

@@ -1,0 +1,33 @@
+{
+  "id": "k_wait_giveup",
+  "prompt": "With amr1, move crate1 from the dock to the table, but first wait for the aisle to clear. Wait at most 12 seconds; if the aisle has not cleared by then, the job must fail rather than go ahead.",
+  "world": "bench/worlds/warehouse.json",
+  "group": "control",
+  "expect": {
+    "decision": "program",
+    "category": "none"
+  },
+  "expected_goal": [
+    [
+      "rl:thing:crate1",
+      "located_in",
+      "rl:place:table"
+    ]
+  ],
+  "tags": [
+    "control",
+    "wait_until",
+    "timeout",
+    "region",
+    "pick_place"
+  ],
+  "probes": [
+    {
+      "name": "aisle_never_clears",
+      "world_patch": {
+        "events": []
+      },
+      "expect": "not_succeeded"
+    }
+  ]
+}

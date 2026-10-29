@@ -1,0 +1,16 @@
+{
+  "id": "n_wrong_sensor",
+  "prompt": "Have arm1 look at vial1 with the camera cam_rover.",
+  "world": "bench/worlds/lab.json",
+  "group": "infeasible",
+  "expect": {
+    "decision": "cannot",
+    "category": "infeasible"
+  },
+  "tags": [
+    "sensor_mount",
+    "inspect"
+  ],
+  "why": "cam_rover is mounted on rover1; `inspect` needs the sensor mounted on the inspecting robot (S231).",
+  "attempt_fails_with": "S231"
+}

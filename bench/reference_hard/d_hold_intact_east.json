@@ -1,0 +1,8 @@
+{
+  "task": "take",
+  "bindings": {
+    "r": "amr_1",
+    "part": "part_07",
+    "spot": "staging_b"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "id": "n_no_gripper_pick",
+  "prompt": "Use rover1 to pick up vial1 from the bench and carry it to the fridge.",
+  "world": "bench/worlds/lab.json",
+  "group": "infeasible",
+  "expect": {
+    "decision": "cannot",
+    "category": "infeasible"
+  },
+  "tags": [
+    "capability",
+    "gripper"
+  ],
+  "why": "rover1 has no gripper; `grasp` fails (S211). arm1 could do it, but the request names rover1.",
+  "attempt_fails_with": "S211"
+}

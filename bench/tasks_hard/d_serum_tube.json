@@ -1,0 +1,35 @@
+{
+  "id": "d_serum_tube",
+  "prompt": "Using the older arm, take the temperature of the tube with serum with the thermometer on that same arm (it comes online after a few seconds; allow up to 15 seconds), then move the tube into the small centrifuge.",
+  "world": "bench/worlds/cleanroom.json",
+  "group": "decoy",
+  "expect": {
+    "decision": "program",
+    "category": "none"
+  },
+  "expected_goal": [
+    [
+      "rl:thing:tube_A",
+      "located_in",
+      "rl:place:centrifuge_1"
+    ]
+  ],
+  "tags": [
+    "decoy_names",
+    "description",
+    "inspect",
+    "wait_until",
+    "timeout",
+    "sensor_ok",
+    "pick_place"
+  ],
+  "probes": [
+    {
+      "name": "thermometer_never_online",
+      "world_patch": {
+        "events": []
+      },
+      "expect": "not_succeeded"
+    }
+  ]
+}

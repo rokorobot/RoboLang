@@ -1,0 +1,17 @@
+{
+  "id": "x_count_report",
+  "prompt": "Count how many parts are on conveyor_in when the program starts (the line keeps feeding it, so the number changes every shift) and send that number to channel \"ops\" from arm_a.",
+  "world": "bench/worlds/assembly.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "tags": [
+    "counting",
+    "arithmetic",
+    "communicate"
+  ],
+  "why": "A message is a fixed string. There are no variables, no counters and no way to read how many objects are somewhere, so a number measured at run time cannot be sent.",
+  "attempt_fails_with": "E201"
+}

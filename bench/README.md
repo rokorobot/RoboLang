@@ -1,7 +1,9 @@
 # RoboLang authoring benchmark
 
 Can AI models write RoboLang well? 40 plain-English requests, four small simulated worlds, a stable system prompt,
-and an offline scorer. Decision record: [0024](../spec/decisions/0024-authoring-benchmark.md). This directory is not
+and an offline scorer. Set 1 (the default) measures syntax and is saturated; **set 2, `--set hard`**, measures robustness: 40
+requests of which 18 cannot be done (inexpressible in RoboLang 1.3, or infeasible in the world), plus decoy worlds with
+near-miss names, ambiguous requests and tricky controls (see "Set 2" below). Decision record: [0024](../spec/decisions/0024-authoring-benchmark.md). This directory is not
 part of the installed `robolang` package; the package never imports it or the Anthropic SDK.
 
 ## Run it
@@ -16,8 +18,8 @@ python bench/run.py --yes                     # spends it
 python bench/score.py bench/results/<run-id>  # offline: writes report.md and scores.json there
 ```
 
-Options: `--models claude-opus-5-5,claude-sonnet-5-5,claude-haiku-5-5` (default), `--effort medium` (`low` to `max`),
-`--repeats 1`, `--tasks id,id` (default all 40), `--workers 4`, `--run-id NAME` (an existing run is resumed: saved
+Options: `--set 1|hard` (default 1), `--prompt full|minimal` (default full), `--models claude-opus-5-5,claude-sonnet-5-5,claude-haiku-5-5` (default), `--effort medium` (`low` to `max`),
+`--repeats 1`, `--tasks id,id` (default the whole set), `--workers 4`, `--run-id NAME` (an existing run is resumed: saved
 answers are not asked again), `--no-fallbacks`, `--out DIR`.
 
 **Cost.** The default run (3 models, 40 tasks, effort `medium`, one repeat) is estimated at about **$5.5**
@@ -30,9 +32,11 @@ in one dict, `PRICES` in `lib.py`.
 ## What happens to one task
 
 1. The model gets `prompt.md` (cached) and a message with the world (entity IDs and state) and the request, and answers
-   `{"rob", "task", "bindings"}` (structured output, `output_config.effort`).
+   `{"decision", "category", "reason", "rob", "task", "bindings"}` (structured output, `output_config.effort`);
+   `decision` is `program` or `cannot`. Set 1 answers saved before this have only the last three keys and are read as programs.
 2. The answer is checked like `robolang validate` + `robolang simulate` would: source, task name, bindings.
-3. If invalid, the model gets its own answer back with the exact tool output, once, and answers again.
+3. If it is an invalid program, the model gets its own answer back with the exact tool output, once, and answers again.
+   A `cannot` is final and never repaired.
 4. Every request and response is saved to `bench/results/<run-id>/<model>/<task>.<repeat>.json` with token usage and
    which model served it. The API key is redacted from anything written.
 
@@ -68,8 +72,37 @@ Do not read much into a few points of difference: 40 tasks is a small sample. Us
 | `tasks/<id>.json` | `id`, `prompt`, `world`, `expected_goal` (set of Core triples), `tags`; optional `expected_safety`, `expected_messages`, `expected_end_ms`, `probes` |
 | `worlds/*.json`, `../examples/world.json` | the worlds (world file 1.1) |
 | `reference/<id>.rob`, `<id>.json` | a hand-written solution and its task name and bindings; CI runs all 40 |
-| `prompt.md` | the system prompt (keep it stable; its hash is stored with each run) |
+| `prompt.md`, `prompt_minimal.md` | the system prompts (keep them stable; the hash is stored with each run); the minimal one has the grammar pasted in |
+| `tasks_hard/`, `reference_hard/`, `worlds/*.notes.json` | set 2: tasks, references and attempts, entity descriptions |
 | `lib.py`, `run.py`, `score.py` | shared checks and prices; the runner; the scorer |
 
 To add a task: write `tasks/<id>.json`, `reference/<id>.rob` and `reference/<id>.json`, then run `pytest tests/test_bench.py`
 (the count in that test is 40; change it on purpose).
+
+## Set 2: robustness (`--set hard`)
+
+```bash
+python bench/run.py --set hard                  # estimate only; nothing is spent
+python bench/run.py --set hard --prompt minimal --yes   # only the grammar and the answer format as the prompt
+python bench/score.py bench/results/<run-id>
+```
+
+Tasks are in `tasks_hard/`, references in `reference_hard/`, in five kinds (`group` in each task): `inexpressible` (10),
+`infeasible` (8), `decoy` (8), `ambiguous` (6, `expected_goals` lists the acceptable goal sets) and `control` (8).
+A task that expects a decline has `expect: {"decision": "cannot", "category": ...}`, a `why`, and an obvious attempt
+(`<id>.attempt.rob`) that the tests show fails with `attempt_fails_with`. Decoy worlds `depot` and `cleanroom`
+have a `<world>.notes.json` of entity descriptions, printed under the world listing.
+
+Reading the report: the four rates are over the tasks that expect a program. Then, per model:
+
+| Figure | Meaning |
+|---|---|
+| `decision_correct` | the first answer's decision (program or cannot) is the expected one |
+| `false_program` | a program for a task that expects a decline: the dangerous error |
+| `false_program after repair` / `of which valid and SUCCEEDED` | still a program after the repair round; and valid and `SUCCEEDED`, so no tool would catch it |
+| `false_refusal` | `cannot` on a task that expects a program |
+| `category_correct (of declines)` | of the correct declines, the category matches |
+
+and a table per kind of task. To add a set 2 task, write `tasks_hard/<id>.json` and either `reference_hard/<id>.rob` +
+`<id>.json` (feasible) or `<id>.attempt.rob` (+ `<id>.attempt.json` when the attempt parses) with `attempt_fails_with`,
+then run `pytest tests/test_bench_hard.py` (it counts 40 tasks and the five kinds; change the counts on purpose).

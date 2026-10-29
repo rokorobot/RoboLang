@@ -1,0 +1,9 @@
+{
+  "task": "carry",
+  "bindings": {
+    "r": "amr2",
+    "box": "crate1",
+    "src": "dock",
+    "dst": "table"
+  }
+}

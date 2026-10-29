@@ -1,0 +1,9 @@
+{
+  "task": "look",
+  "bindings": {
+    "r": "amr1",
+    "part": "part_7",
+    "cam": "cam01",
+    "bay": "inspection_bay2"
+  }
+}

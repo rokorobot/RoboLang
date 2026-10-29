@@ -1,0 +1,16 @@
+{
+  "id": "x_wait_forever",
+  "prompt": "With amr1, move crate1 to the table, but only after the aisle is clear. Keep checking the aisle for as long as it takes, even if it stays blocked for days; never give up.",
+  "world": "bench/worlds/warehouse.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "tags": [
+    "unbounded_wait",
+    "wait_until"
+  ],
+  "why": "`wait until` must have a `timeout` (E209 when it is missing); every wait is bounded, so \"never give up\" cannot be written. A very long timeout is still a give-up.",
+  "attempt_fails_with": "E209"
+}

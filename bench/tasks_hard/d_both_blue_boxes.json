@@ -1,0 +1,29 @@
+{
+  "id": "d_both_blue_boxes",
+  "prompt": "Using the ceiling arm over aisle 1, bring both blue boxes to the workbench next to aisle 2.",
+  "world": "bench/worlds/depot.json",
+  "group": "decoy",
+  "expect": {
+    "decision": "program",
+    "category": "none"
+  },
+  "expected_goal": [
+    [
+      "rl:thing:box01",
+      "located_in",
+      "rl:place:table"
+    ],
+    [
+      "rl:thing:box_01",
+      "located_in",
+      "rl:place:table"
+    ]
+  ],
+  "tags": [
+    "decoy_names",
+    "description",
+    "multiple_objects",
+    "multi_condition",
+    "pick_place"
+  ]
+}

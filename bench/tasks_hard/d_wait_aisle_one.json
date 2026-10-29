@@ -1,0 +1,34 @@
+{
+  "id": "d_wait_aisle_one",
+  "prompt": "Wait up to 20 seconds for aisle 1 to clear. Then have the floor-mounted arm at the workbench by aisle 2 carry the tote full of fasteners from that workbench to the loading table.",
+  "world": "bench/worlds/depot.json",
+  "group": "decoy",
+  "expect": {
+    "decision": "program",
+    "category": "none"
+  },
+  "expected_goal": [
+    [
+      "rl:thing:tote_A",
+      "located_in",
+      "rl:place:loading_table"
+    ]
+  ],
+  "tags": [
+    "decoy_names",
+    "description",
+    "wait_until",
+    "timeout",
+    "region",
+    "pick_place"
+  ],
+  "probes": [
+    {
+      "name": "aisle_never_clears",
+      "world_patch": {
+        "events": []
+      },
+      "expect": "not_succeeded"
+    }
+  ]
+}

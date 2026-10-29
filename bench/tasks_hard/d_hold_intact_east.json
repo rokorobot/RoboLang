@@ -1,0 +1,22 @@
+{
+  "id": "d_hold_intact_east",
+  "prompt": "Have the large mobile robot go to the east parts staging area, pick up the intact part there and keep holding it.",
+  "world": "bench/worlds/depot.json",
+  "group": "decoy",
+  "expect": {
+    "decision": "program",
+    "category": "none"
+  },
+  "expected_goal": [
+    [
+      "rl:thing:part_07",
+      "carried_by",
+      "rl:robot:amr_1"
+    ]
+  ],
+  "tags": [
+    "decoy_names",
+    "description",
+    "holding"
+  ]
+}

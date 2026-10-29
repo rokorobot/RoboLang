@@ -1,0 +1,10 @@
+// bench/reference_hard/k_either_wait.rob: hand-written reference solution
+robolang 1.3;
+
+task go(robot r, region door, sensor spec, location spot) {
+    goal { robot_at r spot; }
+    plan {
+        wait until region_clear door or sensor_ok spec timeout 15 s;
+        move r to spot;
+    }
+}

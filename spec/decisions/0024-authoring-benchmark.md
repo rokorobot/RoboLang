@@ -52,3 +52,24 @@ correct goals for every task in this set; even the smallest model does, at about
 tasks. The set is **saturated**: it no longer separates models. A harder second set is needed
 (requests the language cannot express, infeasible requests, larger worlds, less guidance).
 
+
+## Set 2 — "hard": robustness, not syntax (`bench/tasks_hard/`, `--set hard`)
+
+Set 1 is saturated, so set 2 asks something else: **does the model know what RoboLang and this world cannot do, and
+does it bind the right entity in a crowded world?** 40 tasks, same JSON shape plus `group`, `expect` and, for a decline,
+`why`. All of A1–A7 hold; these are added.
+
+| # | Decision |
+|---|---|
+| H1 | **Five kinds.** 10 *inexpressible* (branching on world state, unbounded or recurring repetition, a choice made at run time, counting or measuring, waiting for a message, retry on failure); 8 *infeasible* (no gripper, unknown place or object, a sensor on another robot, an absent object, a speed limit above the robot's maximum or in a unit it does not declare, a robot that is never ready); 8 *decoy* (two 40+ entity worlds, near-miss names such as `box_1`/`box1`/`box01`, the request names things by description); 6 *ambiguous* (`expected_goals`: a list of acceptable goal sets); 8 *control* (tricky but expressible: unrolled repetition, `wait until … timeout`, `and`/`or`/`not` preconditions, a swap). 22 of 40 (55%) expect a program, so declining everything scores badly. |
+| H2 | **Answer format.** `{"decision": "program"\|"cannot", "category": "inexpressible"\|"infeasible"\|"none", "reason", "rob", "task", "bindings"}`, all six required, closed object; a decline has `rob`/`task` empty and `bindings` `[]`. An older answer with only `rob`, `task`, `bindings` is read as `decision: "program"`, so set 1 results re-score unchanged. `prompt.md` gains one general paragraph on declining (and on ambiguity: answer the sensible reading); it names no task. **Its hash changed, so run3 (set 1) was made with the previous prompt and is not directly comparable to a new set 1 run.** |
+| H3 | **Scoring.** The decision is judged on the **first** answer, before any tool output. `false_program` (a program for a task that expects a decline) is the headline error; `false_refusal` (a decline of a task that expects a program); `decision_correct`; `category_correct` (among correct declines). Only programs that are invalid get a repair round, as before; a decline is final. If that round turns a program into a decline, it is reported separately (`false_program after repair`), and so is how many false programs were **valid and ended `SUCCEEDED`**, i.e. nothing in the toolchain would have caught them. The four set 1 rates, `goal_correct` etc., are computed over the tasks that expect a program; a decline there counts as no program. Per-kind table in the report. |
+| H4 | **Why a task is a decline.** Each has a `why`, and an "obvious attempt" in `bench/reference_hard/<id>.attempt.rob` that tests prove fails with the recorded code: for inexpressible tasks `robolang validate` rejects the natural syntax (`E203`, `E209`, `E211`, …) and the grammar has none of the constructs; for infeasible ones the world check (`E505`) or the simulation (`S201`, `S211`, `S213`, `S231`, `S001`, `S002`) fails it. Every feasible task has a reference that is valid, reaches an accepted goal and `SUCCEEDED`, and passes its probes (a changed world in which a correct plan must not succeed). |
+| H5 | **Descriptions** of entities come from `bench/worlds/<world>.notes.json` and are printed under the world listing. World files 1.1 are unchanged (no new field); two new worlds, `depot` (42 entities) and `cleanroom` (46), were added. An absent object is listed as `not present`. |
+| H6 | **`--prompt minimal`** sends only the grammar (`spec/grammar-v1.3.ebnf`, pasted in) and the answer format, with the same paragraph on declining, and no language guidance, example or checker hints. It measures how much the result depends on `prompt.md`. Set and prompt are stored in `run.json`; a run is resumed only with the same ones. |
+
+**Limits of set 2.** The split between *inexpressible* and *infeasible* and the accepted readings of *ambiguous* tasks are
+judgement calls, written down in each task's `why` and goals. A request such as "never give up" is judged inexpressible
+because every `wait until` has a timeout; a model that writes a very long timeout counts as a false program. The cannot-tasks
+state that the world may differ at run time where the listing alone would let a model pick one branch. Nothing was run
+against a model for this record; there are no set 2 results yet. No file of the `robolang` package changed.

@@ -1,0 +1,42 @@
+{
+  "id": "m_same_shelf",
+  "prompt": "Put box1 and box2 on the same shelf.",
+  "world": "bench/worlds/warehouse.json",
+  "group": "ambiguous",
+  "expect": {
+    "decision": "program",
+    "category": "none"
+  },
+  "expected_goals": [
+    [
+      [
+        "rl:thing:box1",
+        "located_in",
+        "rl:place:shelf_a"
+      ],
+      [
+        "rl:thing:box2",
+        "located_in",
+        "rl:place:shelf_a"
+      ]
+    ],
+    [
+      [
+        "rl:thing:box1",
+        "located_in",
+        "rl:place:shelf_b"
+      ],
+      [
+        "rl:thing:box2",
+        "located_in",
+        "rl:place:shelf_b"
+      ]
+    ]
+  ],
+  "tags": [
+    "ambiguous",
+    "multiple_objects",
+    "multi_condition",
+    "location_choice"
+  ]
+}

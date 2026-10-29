@@ -1,0 +1,22 @@
+{
+  "id": "d_buffer_to_freezer",
+  "prompt": "With the newer arm, put the vial of buffer B from the left rack of the afternoon batch into the freezer.",
+  "world": "bench/worlds/cleanroom.json",
+  "group": "decoy",
+  "expect": {
+    "decision": "program",
+    "category": "none"
+  },
+  "expected_goal": [
+    [
+      "rl:thing:vial1",
+      "located_in",
+      "rl:place:fridge1"
+    ]
+  ],
+  "tags": [
+    "decoy_names",
+    "description",
+    "pick_place"
+  ]
+}

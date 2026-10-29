@@ -1,0 +1,7 @@
+{
+  "task": "go",
+  "bindings": {
+    "r": "rover1",
+    "spot": "bench"
+  }
+}

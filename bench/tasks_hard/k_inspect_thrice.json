@@ -1,0 +1,25 @@
+{
+  "id": "k_inspect_thrice",
+  "prompt": "With arm1, inspect box1 on the shelf with camera_top three times, waiting 5 seconds between one inspection and the next. Leave box1 where it is.",
+  "world": "examples/world.json",
+  "group": "control",
+  "expect": {
+    "decision": "program",
+    "category": "none"
+  },
+  "expected_goal": [
+    [
+      "rl:thing:box1",
+      "located_in",
+      "rl:place:shelf"
+    ]
+  ],
+  "tags": [
+    "control",
+    "unrolled_repetition",
+    "inspect",
+    "wait_for",
+    "sensor_param"
+  ],
+  "expected_end_ms": "10000"
+}

@@ -1,0 +1,16 @@
+{
+  "id": "n_robot_not_ready",
+  "prompt": "Send amr2 to take crate1 from the dock to the table right now. Do not wait for anything: the shift ends in ten minutes.",
+  "world": "bench/worlds/warehouse.json",
+  "group": "infeasible",
+  "expect": {
+    "decision": "cannot",
+    "category": "infeasible"
+  },
+  "tags": [
+    "robot_state",
+    "readiness"
+  ],
+  "why": "amr2 is not ready and the world schedules nothing that makes it ready; `move` needs a ready robot (S201).",
+  "attempt_fails_with": "S201"
+}

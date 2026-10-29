@@ -1,0 +1,31 @@
+{
+  "id": "m_crate_to_shelf",
+  "prompt": "Take crate1 to a shelf.",
+  "world": "bench/worlds/warehouse.json",
+  "group": "ambiguous",
+  "expect": {
+    "decision": "program",
+    "category": "none"
+  },
+  "expected_goals": [
+    [
+      [
+        "rl:thing:crate1",
+        "located_in",
+        "rl:place:shelf_a"
+      ]
+    ],
+    [
+      [
+        "rl:thing:crate1",
+        "located_in",
+        "rl:place:shelf_b"
+      ]
+    ]
+  ],
+  "tags": [
+    "ambiguous",
+    "location_choice",
+    "pick_place"
+  ]
+}

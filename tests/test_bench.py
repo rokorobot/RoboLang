@@ -99,8 +99,8 @@ def test_every_world_entity_is_shown_to_the_model():
 
 def test_the_prompts_example_is_valid_and_runs():
     text = lib.PROMPT_FILE.read_text(encoding="utf-8")
-    example = text.split("# Example")[1].split('    {"rob"', 1)[1]
-    answer, problem = lib.parse_answer('{"rob"' + example)  # read exactly as a model's reply is read
+    example = text.split("# Example")[1].split('    {"decision"', 1)[1]
+    answer, problem = lib.parse_answer('{"decision"' + example)  # read exactly as a model's reply is read
     assert problem is None, problem
     world = {"world_schema": "robolang.sim.world", "world_schema_version": "1.1",
              "locations": ["dock", "shelf", "table"], "regions": {"cell": {"clear": False}},

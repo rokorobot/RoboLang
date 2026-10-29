@@ -1,0 +1,10 @@
+// bench/reference_hard/k_not_pre.rob: hand-written reference solution
+robolang 1.3;
+
+task park(robot r, location spot, region aisle) {
+    pre { not region_clear aisle; }
+    goal { robot_at r spot; }
+    plan {
+        move r to spot;
+    }
+}

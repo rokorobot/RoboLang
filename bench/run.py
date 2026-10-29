@@ -1,10 +1,12 @@
 """
-Ask Claude models to write RoboLang for the 40 benchmark tasks, check each answer, allow one repair round,
-and save every request and response under bench/results/<run-id>/ (decision record 0024).
+Ask Claude models to write RoboLang for the benchmark tasks (set 1: 40 syntax tasks; `--set hard`: 40 robustness
+tasks), check each answer, allow one repair round for an invalid program, and save every request and response
+under bench/results/<run-id>/ (decision record 0024).
 
     python bench/run.py                       # prints the estimated cost and stops
     python bench/run.py --yes                 # spends it (needs ANTHROPIC_API_KEY, or bench/.env)
     python bench/run.py --models claude-haiku-5-5 --tasks e_pick_place,w_two_boxes --yes
+    python bench/run.py --set hard --prompt minimal    # set 2, with only the grammar and the answer format
 
 Then `python bench/score.py bench/results/<run-id>` scores the saved answers offline.
 
@@ -136,7 +138,7 @@ def run_answer(client, model: str, task_def: dict, repeat: int, effort: str, sys
     calls = [run_call(client, "initial", build_request(model, effort, system_text, [user], fallbacks))]
     answer, problem, kind = lib.answer_of(calls[0])
     follow_up = None
-    if kind == "answer":
+    if kind == "answer" and answer["decision"] == "program":  # a decline is final: only invalid programs are repaired
         checked = lib.check_answer(task_def, answer)
         if not checked.valid:
             follow_up = lib.repair_message(checked.report)
@@ -206,17 +208,18 @@ def print_estimate(est: dict, effort: str, out) -> None:
 
 def run_benchmark(client, models: list[str], tasks: dict[str, dict], effort: str, repeats: int, out_dir: Path,
                   system_text: str, workers: int = 4, fallbacks: bool = True, secrets: list[str] | None = None,
-                  log=sys.stderr) -> list[dict]:
+                  log=sys.stderr, task_set: str = "1", prompt_name: str = "full") -> list[dict]:
     """Run every (model, task, repeat) that has no saved record yet; returns the records made now."""
     secrets = secrets or []
-    meta = {"run_id": out_dir.name, "models": models, "effort": effort, "repeats": repeats, "tasks": list(tasks),
-            "fallbacks": fallbacks, "max_tokens": MAX_TOKENS,
+    meta = {"run_id": out_dir.name, "set": task_set, "prompt": prompt_name, "models": models, "effort": effort,
+            "repeats": repeats, "tasks": list(tasks), "fallbacks": fallbacks, "max_tokens": MAX_TOKENS,
             "prompt_sha256": hashlib.sha256(system_text.encode("utf-8")).hexdigest(),
             "started": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")}
     meta_path = out_dir / "run.json"
     if meta_path.exists():
         old = json.loads(meta_path.read_text(encoding="utf-8"))
-        if any(old[k] != meta[k] for k in ("models", "effort", "repeats", "tasks", "prompt_sha256")):
+        old = {"set": "1", "prompt": "full", **old}  # runs saved before set 2 have neither key
+        if any(old[k] != meta[k] for k in ("set", "prompt", "models", "effort", "repeats", "tasks", "prompt_sha256")):
             raise FatalError(f"{out_dir} holds a different run; choose another --run-id")
     else:
         save_json(meta_path, meta, secrets)
@@ -257,7 +260,11 @@ def parse_args(argv):
     parser.add_argument("--models", default=DEFAULT_MODELS, help="comma-separated model IDs (default: %(default)s)")
     parser.add_argument("--effort", default="medium", choices=EFFORTS, help="output_config.effort (default: medium)")
     parser.add_argument("--repeats", type=int, default=1, help="answers per task and model (default: 1)")
-    parser.add_argument("--tasks", help="comma-separated task IDs (default: all 40)")
+    parser.add_argument("--set", dest="task_set", default="1", choices=tuple(lib.SETS),
+                        help="task set: 1 (syntax, the default) or hard (robustness)")
+    parser.add_argument("--prompt", dest="prompt_name", default="full", choices=lib.PROMPTS,
+                        help="system prompt: full (prompt.md) or minimal (only the grammar and the answer format)")
+    parser.add_argument("--tasks", help="comma-separated task IDs (default: the whole set)")
     parser.add_argument("--workers", type=int, default=4, help="parallel requests (default: 4)")
     parser.add_argument("--run-id", help="results directory name; an existing one is resumed (default: UTC time)")
     parser.add_argument("--out", type=Path, default=RESULTS_DIR, help="results parent directory")
@@ -274,7 +281,7 @@ def main(argv=None, client_factory=make_client, out=sys.stdout, err=sys.stderr, 
     if unknown or not models or args.repeats < 1:
         print(f"unknown model(s) {unknown} (known: {', '.join(lib.PRICES)}) or bad --repeats", file=err)
         return 2
-    tasks = lib.load_tasks()
+    tasks = lib.load_set(args.task_set)
     if args.tasks:
         wanted = [t.strip() for t in args.tasks.split(",")]
         missing = [t for t in wanted if t not in tasks]
@@ -282,7 +289,7 @@ def main(argv=None, client_factory=make_client, out=sys.stdout, err=sys.stderr, 
             print(f"unknown task(s): {', '.join(missing)}", file=err)
             return 2
         tasks = {t: tasks[t] for t in wanted}
-    system_text = lib.PROMPT_FILE.read_text(encoding="utf-8")
+    system_text = lib.load_prompt(args.prompt_name)
     print_estimate(estimate(models, tasks, args.effort, args.repeats, system_text), args.effort, out)
     if not args.yes:
         print("Nothing was sent. Add --yes to spend it.", file=out)
@@ -294,7 +301,7 @@ def main(argv=None, client_factory=make_client, out=sys.stdout, err=sys.stderr, 
     out_dir = args.out / (args.run_id or datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ"))
     try:
         run_benchmark(client_factory(key), models, tasks, args.effort, args.repeats, out_dir, system_text,
-                      args.workers, not args.no_fallbacks, [key], err)
+                      args.workers, not args.no_fallbacks, [key], err, args.task_set, args.prompt_name)
     except FatalError as error:
         print(f"stopped: {error}\nWhat was saved is in {out_dir}", file=err)
         return 1

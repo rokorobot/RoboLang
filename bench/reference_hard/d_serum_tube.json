@@ -1,0 +1,10 @@
+{
+  "task": "spin",
+  "bindings": {
+    "r": "arm_X",
+    "box": "tube_A",
+    "src": "centrifuge1",
+    "dst": "centrifuge_1",
+    "therm": "thermo1"
+  }
+}

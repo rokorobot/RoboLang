@@ -1,0 +1,14 @@
+// bench/reference_hard/x_keep_feeding.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 1.3;
+
+task feed(robot r, location feed, location bin) {
+    goal { robot_at r feed; }
+    plan {
+        while true {
+            move r to feed;
+            grasp r next_part;
+            move r to bin;
+            place r next_part at bin;
+        }
+    }
+}

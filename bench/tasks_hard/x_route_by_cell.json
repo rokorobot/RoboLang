@@ -1,0 +1,16 @@
+{
+  "id": "x_route_by_cell",
+  "prompt": "With arm2, carry box2 from shelf_b to shelf_a if the cell is clear at the moment the job starts, and to the table if it is not. Other operators can enter the cell at any time before that.",
+  "world": "bench/worlds/warehouse.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "tags": [
+    "branching",
+    "world_state"
+  ],
+  "why": "The destination depends on a world fact read at run time. There is no if/else, and a goal states one fixed end state, so no single program covers both outcomes.",
+  "attempt_fails_with": "E203"
+}

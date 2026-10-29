@@ -1,0 +1,16 @@
+{
+  "id": "x_wait_message",
+  "prompt": "Have arm1 wait until amr1 sends the message \"READY\" on channel \"handoff\", then take box1 from the shelf to the table.",
+  "world": "examples/world.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "tags": [
+    "messages",
+    "wait_until"
+  ],
+  "why": "A condition can only test world facts; `message_received` is a reserved word that RoboLang 1.3 does not implement (E211). `communicate` sends, but nothing can wait for a message.",
+  "attempt_fails_with": "E211"
+}

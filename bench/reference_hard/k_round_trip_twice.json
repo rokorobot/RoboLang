@@ -1,0 +1,9 @@
+{
+  "task": "shuttle",
+  "bindings": {
+    "r": "arm1",
+    "box": "box1",
+    "home": "shelf_a",
+    "far": "table"
+  }
+}
