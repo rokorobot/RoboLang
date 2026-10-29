@@ -96,7 +96,7 @@ def test_reference_is_valid_exports_an_accepted_goal_and_succeeds(task_id):
     assert checked.valid, checked.report
     assert checked.language_version == "1.3"
     judgement = lib.judge(task, checked, answer["bindings"])
-    assert judgement.goal_correct
+    assert judgement.goal_correct and judgement.goal_exact
     assert judgement.plan_succeeds, (judgement.state, judgement.failure_code)
     has_checks = any(k in task for k in ("expected_safety", "expected_messages", "expected_message_counts",
                                          "expected_end_ms", "probes"))
@@ -449,3 +449,68 @@ def test_the_minimal_prompt_run_records_set_and_prompt(tmp_path):
         run.run_benchmark(rerun, ["claude-haiku-5-5"], {"x_wait_message": HARD["x_wait_message"]}, "medium", 1,
                           tmp_path / "m", lib.load_prompt("full"), log=io.StringIO(), task_set="hard",
                           prompt_name="full")
+
+
+# -------- goals compared by meaning (N6) --------
+
+VIAL_TASK = """robolang 1.3;
+
+task deliver(robot r, object box, object other, location src, location dst) {
+    goal { GOAL }
+    plan {
+        move r to src;
+        grasp r box;
+        move r to dst;
+        place r box at dst;
+    }
+}
+"""
+
+
+@pytest.mark.parametrize("goal, correct, exact", [
+    ("object_at box dst;", True, True),
+    ("object_at box dst or object_at other dst;", True, False),        # "any of" the two readings
+    ("object_at other dst or object_at box dst;", True, False),
+    ("object_at box dst and object_at box dst;", True, True),          # `and` exports flat since N1
+    ("not (not object_at box dst);", True, False),
+    ("object_at box dst; object_at box dst;", True, True),
+    ("object_at box dst and not holding r box;", True, False),        # implied: a placed vial is not held
+    ("holding r box;", False, False),
+    ("object_at box dst or holding r box;", False, False),
+    ("object_at box dst and object_at other dst;", False, False),     # both is neither reading
+    ("object_at box dst and robot_ready r;", False, False),           # claims more than the request
+    ("not object_at box src;", False, False),
+])
+def test_goal_correct_compares_meaning_not_triples(goal, correct, exact):
+    task = HARD["m_one_vial_scanner"]
+    answer = {"decision": "program", "category": "none", "reason": "ok", "task": "deliver",
+              "rob": VIAL_TASK.replace("GOAL", goal),
+              "bindings": {"r": "arm1", "box": "vial1", "other": "vial2", "src": "bench", "dst": "scanner"}}
+    checked = lib.check_answer(task, answer)
+    assert checked.valid, checked.report
+    judgement = lib.judge(task, checked, answer["bindings"])
+    assert (judgement.goal_correct, judgement.goal_exact) == (correct, exact)
+
+
+def test_goal_means_falls_back_to_triples_when_too_large(monkeypatch):
+    task = HARD["m_one_vial_scanner"]
+    answer = hard_reference("m_one_vial_scanner")
+    checked = lib.check_answer(task, answer)
+    readings = lib.expected_goals(task)
+    assert lib.goal_means(checked.task, answer["bindings"], readings) is True
+    monkeypatch.setattr(lib, "MAX_GOAL_STATES", 1)
+    assert lib.goal_means(checked.task, answer["bindings"], readings) is None
+    assert lib.goal_means(checked.task, answer["bindings"], []) is None
+
+
+def test_a_disjunction_of_compound_readings_is_correct():
+    """"Put box1 and box2 on the same shelf": either shelf, stated as one goal."""
+    task = HARD["m_same_shelf"]
+    answer = hard_reference("m_same_shelf")
+    answer["rob"] = answer["rob"].replace("object_at a dst;\n        object_at b dst;",
+                                          "(object_at a dst and object_at b dst) or "
+                                          "(object_at a src_b and object_at b src_b);")
+    checked = lib.check_answer(task, answer)
+    assert checked.valid, checked.report
+    judgement = lib.judge(task, checked, answer["bindings"])
+    assert judgement.goal_correct and not judgement.goal_exact and judgement.plan_succeeds
