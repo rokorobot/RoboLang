@@ -1,7 +1,7 @@
 # Plan: verified outcomes in the language, and a bridge from `.rob` to Core
 
 **Date:** 2026-10-29
-**Status:** Proposed. Phase 1 done 2026-10-29 (RoboLang 1.3, [0014](../../spec/decisions/0014-lang-2-goals-and-typed-sensors.md)).
+**Status:** Approved by the owner 2026-10-29, with the recommendations for Q1–Q5. Phase 1 done 2026-10-29 (RoboLang 1.3, [0014](../../spec/decisions/0014-lang-2-goals-and-typed-sensors.md)).
 **Fixes:** two gaps found in review.
 
 1. **Outcome gap.** The charter makes success a verified outcome, but `.rob` could not declare
@@ -114,7 +114,7 @@ where the plan leaves the box elsewhere ends `failed`, with criteria not met.
   with a gate 2 bundle v2 in which goals come from `.rob`. Gate 2 then tests the language end to
   end.
 
-## Decisions needed from the owner
+## Owner decisions (approved 2026-10-29: the recommendations)
 
 | # | Question | Recommendation |
 |---|---|---|
