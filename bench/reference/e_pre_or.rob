@@ -1,0 +1,13 @@
+// bench/reference/e_pre_or.rob: hand-written reference solution
+robolang 1.3;
+
+task guarded_move(robot r, object box, location src, location dst, region cell, region zone) {
+    pre { region_clear cell or region_clear zone; }
+    goal { object_at box dst; }
+    plan {
+        move r to src;
+        grasp r box;
+        move r to dst;
+        place r box at dst;
+    }
+}

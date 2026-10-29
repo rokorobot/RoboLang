@@ -1,0 +1,9 @@
+{
+  "id": "e_inspect_shelf",
+  "prompt": "Send arm1 to the shelf and have it take a look at the box with the top camera. It should stay at the shelf afterwards.",
+  "world": "examples/world.json",
+  "expected_goal": [
+    ["rl:robot:arm1", "located_in", "rl:place:shelf"]
+  ],
+  "tags": ["inspect", "sensor_param", "robot_at"]
+}

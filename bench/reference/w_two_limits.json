@@ -1,0 +1,9 @@
+{
+  "task": "limited_move",
+  "bindings": {
+    "r": "arm1",
+    "box": "box2",
+    "src": "shelf_b",
+    "dst": "conveyor"
+  }
+}

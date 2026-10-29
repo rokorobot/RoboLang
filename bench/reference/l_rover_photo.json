@@ -1,0 +1,10 @@
+{
+  "task": "photograph_vial",
+  "bindings": {
+    "r": "rover1",
+    "vial": "vial2",
+    "fridge": "fridge",
+    "park": "scanner",
+    "cam": "cam_rover"
+  }
+}

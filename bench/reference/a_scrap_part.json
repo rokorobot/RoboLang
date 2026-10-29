@@ -1,0 +1,9 @@
+{
+  "task": "scrap",
+  "bindings": {
+    "r": "arm_b",
+    "part": "p4",
+    "here": "station3",
+    "bin": "bin"
+  }
+}

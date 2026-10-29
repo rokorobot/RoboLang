@@ -1,0 +1,12 @@
+{
+  "task": "handover_via_aisle",
+  "bindings": {
+    "arm": "arm1",
+    "mobile": "amr1",
+    "box": "box1",
+    "src": "shelf_a",
+    "handoff": "handoff",
+    "dst": "conveyor",
+    "aisle": "aisle"
+  }
+}

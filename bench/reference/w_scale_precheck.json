@@ -1,0 +1,9 @@
+{
+  "task": "weigh_part",
+  "bindings": {
+    "r": "arm2",
+    "item": "part7",
+    "scale": "scale1",
+    "park": "conveyor"
+  }
+}

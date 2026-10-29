@@ -1,0 +1,9 @@
+{
+  "task": "inspect_crate",
+  "bindings": {
+    "r": "amr1",
+    "crate": "crate1",
+    "bay": "inspection_bay",
+    "cam": "camera_dock"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "id": "w_inspect_dock_camera",
+  "prompt": "Drive amr1 to the inspection bay and inspect crate1 with the dock camera.",
+  "world": "bench/worlds/warehouse.json",
+  "expected_goal": [
+    ["rl:robot:amr1", "located_in", "rl:place:inspection_bay"]
+  ],
+  "tags": ["inspect", "sensor_param", "robot_at", "tricky"]
+}

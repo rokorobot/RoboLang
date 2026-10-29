@@ -1,0 +1,10 @@
+{
+  "id": "a_inspect_hold",
+  "prompt": "Have arm_a pick up p2 from the conveyor, carry it to station1 and hold it under cam_s1 for an inspection. It must still be in the gripper afterwards, and arm_a ends at station1.",
+  "world": "bench/worlds/assembly.json",
+  "expected_goal": [
+    ["rl:thing:p2", "carried_by", "rl:robot:arm_a"],
+    ["rl:robot:arm_a", "located_in", "rl:place:station1"]
+  ],
+  "tags": ["holding", "inspect", "sensor_param", "multi_condition", "robot_at"]
+}

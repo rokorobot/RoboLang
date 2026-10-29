@@ -1,0 +1,9 @@
+{
+  "id": "l_rover_photo",
+  "prompt": "Drive rover1 to the fridge, take a picture of vial2 with the rover camera, and then park rover1 at the scanner.",
+  "world": "bench/worlds/lab.json",
+  "expected_goal": [
+    ["rl:robot:rover1", "located_in", "rl:place:scanner"]
+  ],
+  "tags": ["inspect", "sensor_param", "robot_at", "no_gripper"]
+}

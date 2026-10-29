@@ -1,0 +1,22 @@
+{
+  "id": "w_part_precheck",
+  "prompt": "If part7 is sitting on the table, have arm2 move it to the conveyor; otherwise do nothing.",
+  "world": "bench/worlds/warehouse.json",
+  "expected_goal": [
+    ["rl:thing:part7", "located_in", "rl:place:conveyor"]
+  ],
+  "tags": ["precondition", "object_at", "pick_place"],
+  "probes": [
+    {
+      "name": "part_elsewhere",
+      "world_patch": {
+        "objects": {
+          "part7": {
+            "location": "shelf_b"
+          }
+        }
+      },
+      "expect": "not_succeeded"
+    }
+  ]
+}

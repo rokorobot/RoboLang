@@ -1,0 +1,16 @@
+// bench/reference/a_amr_ferry.rob: hand-written reference solution
+robolang 1.3;
+
+task ferry_and_bin(robot amr, robot arm, object part, location feed, location st, location bin) {
+    goal { object_at part bin; }
+    plan {
+        move amr to feed;
+        grasp amr part;
+        move amr to st;
+        place amr part at st;
+        move arm to st;
+        grasp arm part;
+        move arm to bin;
+        place arm part at bin;
+    }
+}

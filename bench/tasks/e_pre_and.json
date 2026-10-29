@@ -1,0 +1,22 @@
+{
+  "id": "e_pre_and",
+  "prompt": "Use arm1 to move the box from the shelf to the table, but only if arm1 is ready and the cell is clear.",
+  "world": "examples/world.json",
+  "expected_goal": [
+    ["rl:thing:box1", "located_in", "rl:place:table"]
+  ],
+  "tags": ["precondition", "and", "region", "pick_place"],
+  "probes": [
+    {
+      "name": "cell_occupied",
+      "world_patch": {
+        "regions": {
+          "cell": {
+            "clear": false
+          }
+        }
+      },
+      "expect": "not_succeeded"
+    }
+  ]
+}

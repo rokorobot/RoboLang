@@ -1,0 +1,3 @@
+# Benchmark only. Not a dependency of the robolang package (pyproject.toml has none, by design).
+# bench/run.py is the only file that imports it, and only when it makes a client.
+anthropic>=2.3,<3

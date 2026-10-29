@@ -1,0 +1,18 @@
+{
+  "id": "e_handover",
+  "prompt": "arm1 should carry the box from the shelf to the handoff point and set it down. Once the handoff zone is clear, amr1 picks it up there and brings it to the table. Allow up to 30 seconds for the zone to clear.",
+  "world": "examples/world.json",
+  "expected_goal": [
+    ["rl:thing:box1", "located_in", "rl:place:table"]
+  ],
+  "tags": ["handover", "two_robot", "wait_until", "region"],
+  "probes": [
+    {
+      "name": "event_never_happens",
+      "world_patch": {
+        "events": []
+      },
+      "expect": "not_succeeded"
+    }
+  ]
+}

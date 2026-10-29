@@ -1,0 +1,29 @@
+{
+  "world_schema": "robolang.sim.world",
+  "world_schema_version": "1.1",
+  "locations": ["bench", "centrifuge", "fridge", "home", "scanner", "storage"],
+  "regions": {
+    "door_zone": { "clear": false },
+    "hood": { "clear": true }
+  },
+  "robots": {
+    "arm1": { "ready": true, "location": "home", "gripper": true, "max_speed": [{ "value": "0.5", "unit": "m/s" }, { "value": "1", "unit": "rad/s" }] },
+    "rover1": { "ready": true, "location": "home", "gripper": false, "max_speed": [{ "value": "0.6", "unit": "m/s" }] }
+  },
+  "objects": {
+    "plate1": { "present": true, "location": "storage", "class": "plate", "mass": { "value": "0.2", "unit": "kg", "uncertainty": "0.01" } },
+    "vial1": { "present": true, "location": "bench", "class": "vial", "mass": { "value": "0.05", "unit": "kg", "uncertainty": "0.005" } },
+    "vial2": { "present": true, "location": "fridge", "class": "vial", "mass": { "value": "0.05", "unit": "kg", "uncertainty": "0.005" } }
+  },
+  "sensors": {
+    "cam_rover": { "robot": "rover1", "available": true },
+    "microscope": { "robot": "arm1", "available": true },
+    "spectro": { "robot": "arm1", "available": false },
+    "thermo": { "robot": "arm1", "available": true }
+  },
+  "events": [
+    { "at": { "value": "3", "unit": "s" }, "fact": "sensor_available", "target": "spectro", "value": true },
+    { "at": { "value": "12", "unit": "s" }, "fact": "region_clear", "target": "door_zone", "value": true }
+  ],
+  "tasks": {}
+}

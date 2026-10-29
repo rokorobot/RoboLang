@@ -1,0 +1,14 @@
+// bench/reference/l_hood_limit.rob: hand-written reference solution
+robolang 1.3;
+
+task hooded_move(robot r, object vial, location src, location dst, region hood) {
+    @safety max_speed 0.4 m/s;
+    pre { region_clear hood; }
+    goal { object_at vial dst; }
+    plan {
+        move r to src;
+        grasp r vial;
+        move r to dst;
+        place r vial at dst;
+    }
+}

@@ -1,0 +1,18 @@
+{
+  "id": "l_door_quarter",
+  "prompt": "Wait for the door zone to clear, for up to a quarter of a minute, then send rover1 to the scanner.",
+  "world": "bench/worlds/lab.json",
+  "expected_goal": [
+    ["rl:robot:rover1", "located_in", "rl:place:scanner"]
+  ],
+  "tags": ["wait_until", "timeout", "region", "units_in_words", "robot_at", "tricky"],
+  "probes": [
+    {
+      "name": "event_never_happens",
+      "world_patch": {
+        "events": []
+      },
+      "expect": "not_succeeded"
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "id": "l_vial_to_fridge",
+  "prompt": "Put vial1 into the fridge with arm1.",
+  "world": "bench/worlds/lab.json",
+  "expected_goal": [
+    ["rl:thing:vial1", "located_in", "rl:place:fridge"]
+  ],
+  "tags": ["single_robot", "pick_place"]
+}

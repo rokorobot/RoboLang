@@ -1,0 +1,22 @@
+{
+  "id": "e_pick_place_cell_clear",
+  "prompt": "Move the box from the shelf to the table with arm1, but only once the cell is clear.",
+  "world": "examples/world.json",
+  "expected_goal": [
+    ["rl:thing:box1", "located_in", "rl:place:table"]
+  ],
+  "tags": ["single_robot", "pick_place", "precondition", "region"],
+  "probes": [
+    {
+      "name": "cell_occupied",
+      "world_patch": {
+        "regions": {
+          "cell": {
+            "clear": false
+          }
+        }
+      },
+      "expect": "not_succeeded"
+    }
+  ]
+}

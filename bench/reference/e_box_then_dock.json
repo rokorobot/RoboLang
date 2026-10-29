@@ -1,0 +1,10 @@
+{
+  "task": "place_and_dock",
+  "bindings": {
+    "r": "arm1",
+    "box": "box1",
+    "src": "shelf",
+    "dst": "table",
+    "dock": "dock"
+  }
+}

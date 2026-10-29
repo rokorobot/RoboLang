@@ -1,0 +1,8 @@
+{
+  "task": "wait_for_aisle",
+  "bindings": {
+    "r": "amr1",
+    "aisle": "aisle",
+    "dst": "shelf_b"
+  }
+}

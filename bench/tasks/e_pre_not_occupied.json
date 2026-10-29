@@ -1,0 +1,22 @@
+{
+  "id": "e_pre_not_occupied",
+  "prompt": "Take the box from the shelf to the table with arm1, but only while the handoff zone is occupied.",
+  "world": "examples/world.json",
+  "expected_goal": [
+    ["rl:thing:box1", "located_in", "rl:place:table"]
+  ],
+  "tags": ["precondition", "not", "region", "tricky_synonym"],
+  "probes": [
+    {
+      "name": "zone_free",
+      "world_patch": {
+        "regions": {
+          "handoff_zone": {
+            "clear": true
+          }
+        }
+      },
+      "expect": "not_succeeded"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "id": "a_pre_conjunction",
+  "prompt": "Use arm_a to move p1 from the conveyor to station1, but only if p1 is on the conveyor, arm_a is ready and fence_a is clear.",
+  "world": "bench/worlds/assembly.json",
+  "expected_goal": [
+    ["rl:thing:p1", "located_in", "rl:place:station1"]
+  ],
+  "tags": ["precondition", "and", "object_at", "region", "pick_place"],
+  "probes": [
+    {
+      "name": "fence_occupied",
+      "world_patch": {
+        "regions": {
+          "fence_a": {
+            "clear": false
+          }
+        }
+      },
+      "expect": "not_succeeded"
+    }
+  ]
+}

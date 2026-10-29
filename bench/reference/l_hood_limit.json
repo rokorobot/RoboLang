@@ -1,0 +1,10 @@
+{
+  "task": "hooded_move",
+  "bindings": {
+    "r": "arm1",
+    "vial": "vial2",
+    "src": "fridge",
+    "dst": "bench",
+    "hood": "hood"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "task": "relocate",
+  "bindings": {
+    "r": "arm1",
+    "item": "part7",
+    "src": "table",
+    "dst": "shelf_b"
+  }
+}

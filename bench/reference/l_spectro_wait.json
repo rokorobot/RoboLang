@@ -1,0 +1,9 @@
+{
+  "task": "scan_vial",
+  "bindings": {
+    "r": "arm1",
+    "vial": "vial1",
+    "spot": "scanner",
+    "spec": "spectro"
+  }
+}

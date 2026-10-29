@@ -1,0 +1,18 @@
+{
+  "id": "a_arm_handover",
+  "prompt": "arm_a takes p1 from the conveyor to the handoff point between the two arms (handoff12). arm_b then takes it from there to station3, but arm_b must wait for fence_b to be clear, which happens about 20 seconds in; allow 30 seconds.",
+  "world": "bench/worlds/assembly.json",
+  "expected_goal": [
+    ["rl:thing:p1", "located_in", "rl:place:station3"]
+  ],
+  "tags": ["handover", "two_robot", "wait_until", "region"],
+  "probes": [
+    {
+      "name": "event_never_happens",
+      "world_patch": {
+        "events": []
+      },
+      "expect": "not_succeeded"
+    }
+  ]
+}

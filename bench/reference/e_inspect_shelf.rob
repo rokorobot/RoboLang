@@ -1,0 +1,11 @@
+// bench/reference/e_inspect_shelf.rob: hand-written reference solution
+robolang 1.3;
+
+task look_at_box(robot r, object box, location spot, sensor cam) {
+    pre { sensor_ok cam; }
+    goal { robot_at r spot; }
+    plan {
+        move r to spot;
+        inspect r box using cam;
+    }
+}

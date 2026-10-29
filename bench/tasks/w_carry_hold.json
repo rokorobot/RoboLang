@@ -1,0 +1,10 @@
+{
+  "id": "w_carry_hold",
+  "prompt": "Have amr1 pick up crate1 at the dock and drive to the conveyor with it. Do not put it down.",
+  "world": "bench/worlds/warehouse.json",
+  "expected_goal": [
+    ["rl:thing:crate1", "carried_by", "rl:robot:amr1"],
+    ["rl:robot:amr1", "located_in", "rl:place:conveyor"]
+  ],
+  "tags": ["holding", "robot_at", "multi_condition"]
+}

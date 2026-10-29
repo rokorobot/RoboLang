@@ -1,0 +1,24 @@
+// bench/reference/a_sort_three.rob: hand-written reference solution
+robolang 1.3;
+
+task sort_parts(robot r, object x, object y, object z, location feed, location sx, location sy, location sz) {
+    goal {
+        object_at x sx;
+        object_at y sy;
+        object_at z sz;
+    }
+    plan {
+        move r to feed;
+        grasp r x;
+        move r to sx;
+        place r x at sx;
+        move r to feed;
+        grasp r y;
+        move r to sy;
+        place r y at sy;
+        move r to feed;
+        grasp r z;
+        move r to sz;
+        place r z at sz;
+    }
+}

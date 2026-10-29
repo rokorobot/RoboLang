@@ -1,0 +1,12 @@
+// bench/reference/a_scrap_part.rob: hand-written reference solution
+robolang 1.3;
+
+task scrap(robot r, object part, location here, location bin) {
+    goal { object_at part bin; }
+    plan {
+        move r to here;
+        grasp r part;
+        move r to bin;
+        place r part at bin;
+    }
+}

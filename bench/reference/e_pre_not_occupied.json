@@ -1,0 +1,10 @@
+{
+  "task": "move_while_busy",
+  "bindings": {
+    "r": "arm1",
+    "box": "box1",
+    "src": "shelf",
+    "dst": "table",
+    "zone": "handoff_zone"
+  }
+}

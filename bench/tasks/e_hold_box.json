@@ -1,0 +1,9 @@
+{
+  "id": "e_hold_box",
+  "prompt": "Have arm1 pick up the box from the shelf and hold on to it.",
+  "world": "examples/world.json",
+  "expected_goal": [
+    ["rl:thing:box1", "carried_by", "rl:robot:arm1"]
+  ],
+  "tags": ["holding", "single_robot"]
+}

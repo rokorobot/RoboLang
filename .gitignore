@@ -205,3 +205,9 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# RoboLang benchmark: the API key file (bench/README.md)
+bench/.env
+
+# Benchmark raw results (large; summaries go to docs/evidence/)
+bench/results/

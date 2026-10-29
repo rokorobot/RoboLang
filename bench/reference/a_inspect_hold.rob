@@ -1,0 +1,15 @@
+// bench/reference/a_inspect_hold.rob: hand-written reference solution
+robolang 1.3;
+
+task inspect_in_hand(robot r, object part, location feed, location st, sensor cam) {
+    goal {
+        holding r part;
+        robot_at r st;
+    }
+    plan {
+        move r to feed;
+        grasp r part;
+        move r to st;
+        inspect r part using cam;
+    }
+}

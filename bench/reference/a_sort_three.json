@@ -1,0 +1,13 @@
+{
+  "task": "sort_parts",
+  "bindings": {
+    "r": "arm_a",
+    "x": "p1",
+    "y": "p2",
+    "z": "p3",
+    "feed": "conveyor_in",
+    "sx": "station1",
+    "sy": "station2",
+    "sz": "bin"
+  }
+}

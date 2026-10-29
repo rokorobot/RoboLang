@@ -1,0 +1,9 @@
+{
+  "task": "store_vial",
+  "bindings": {
+    "r": "arm1",
+    "vial": "vial1",
+    "src": "bench",
+    "dst": "fridge"
+  }
+}

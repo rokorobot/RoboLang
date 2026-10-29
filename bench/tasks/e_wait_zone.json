@@ -1,0 +1,18 @@
+{
+  "id": "e_wait_zone",
+  "prompt": "Wait for the handoff zone to clear, but give up after 30 seconds. Then drive amr1 to the handoff point.",
+  "world": "examples/world.json",
+  "expected_goal": [
+    ["rl:robot:amr1", "located_in", "rl:place:handoff"]
+  ],
+  "tags": ["wait_until", "timeout", "region", "robot_at"],
+  "probes": [
+    {
+      "name": "event_never_happens",
+      "world_patch": {
+        "events": []
+      },
+      "expect": "not_succeeded"
+    }
+  ]
+}

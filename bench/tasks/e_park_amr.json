@@ -1,0 +1,9 @@
+{
+  "id": "e_park_amr",
+  "prompt": "Park amr1 at the home position.",
+  "world": "examples/world.json",
+  "expected_goal": [
+    ["rl:robot:amr1", "located_in", "rl:place:home"]
+  ],
+  "tags": ["robot_at", "single_robot", "tricky_synonym"]
+}

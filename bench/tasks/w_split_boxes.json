@@ -1,0 +1,10 @@
+{
+  "id": "w_split_boxes",
+  "prompt": "With arm1, put box1 on the table and box2 on the conveyor.",
+  "world": "bench/worlds/warehouse.json",
+  "expected_goal": [
+    ["rl:thing:box1", "located_in", "rl:place:table"],
+    ["rl:thing:box2", "located_in", "rl:place:conveyor"]
+  ],
+  "tags": ["multiple_objects", "multi_condition", "pick_place"]
+}

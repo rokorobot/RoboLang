@@ -1,0 +1,11 @@
+{
+  "id": "l_vial_hold",
+  "prompt": "With arm1, move vial1 to the centrifuge. Then pick up vial2 from the fridge and end with arm1 standing at the bench holding it.",
+  "world": "bench/worlds/lab.json",
+  "expected_goal": [
+    ["rl:thing:vial1", "located_in", "rl:place:centrifuge"],
+    ["rl:thing:vial2", "carried_by", "rl:robot:arm1"],
+    ["rl:robot:arm1", "located_in", "rl:place:bench"]
+  ],
+  "tags": ["multiple_objects", "multi_condition", "holding", "robot_at"]
+}

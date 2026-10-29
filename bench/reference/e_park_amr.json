@@ -1,0 +1,7 @@
+{
+  "task": "park",
+  "bindings": {
+    "r": "amr1",
+    "home": "home"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "task": "guarded_feed",
+  "bindings": {
+    "r": "arm_a",
+    "part": "p1",
+    "feed": "conveyor_in",
+    "dst": "station1",
+    "fence": "fence_a"
+  }
+}

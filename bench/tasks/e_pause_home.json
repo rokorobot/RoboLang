@@ -1,0 +1,10 @@
+{
+  "id": "e_pause_home",
+  "prompt": "Move arm1 to the table, pause there for half a second, and then bring it back home.",
+  "world": "examples/world.json",
+  "expected_goal": [
+    ["rl:robot:arm1", "located_in", "rl:place:home"]
+  ],
+  "tags": ["wait_for", "units_in_words", "robot_at", "tricky"],
+  "expected_end_ms": "500"
+}

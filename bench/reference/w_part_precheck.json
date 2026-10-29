@@ -1,0 +1,9 @@
+{
+  "task": "move_if_present",
+  "bindings": {
+    "r": "arm2",
+    "item": "part7",
+    "src": "table",
+    "dst": "conveyor"
+  }
+}

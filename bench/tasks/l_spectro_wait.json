@@ -1,0 +1,18 @@
+{
+  "id": "l_spectro_wait",
+  "prompt": "Move arm1 to the scanner, wait for the spectrometer to report OK (allow 10 seconds), then inspect vial1 with it. Leave arm1 at the scanner.",
+  "world": "bench/worlds/lab.json",
+  "expected_goal": [
+    ["rl:robot:arm1", "located_in", "rl:place:scanner"]
+  ],
+  "tags": ["inspect", "sensor_param", "wait_until", "sensor_ok", "timeout", "robot_at"],
+  "probes": [
+    {
+      "name": "event_never_happens",
+      "world_patch": {
+        "events": []
+      },
+      "expect": "not_succeeded"
+    }
+  ]
+}

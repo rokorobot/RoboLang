@@ -1,0 +1,9 @@
+{
+  "id": "e_pick_place",
+  "prompt": "Move the box from the shelf to the table with arm1.",
+  "world": "examples/world.json",
+  "expected_goal": [
+    ["rl:thing:box1", "located_in", "rl:place:table"]
+  ],
+  "tags": ["single_robot", "pick_place"]
+}

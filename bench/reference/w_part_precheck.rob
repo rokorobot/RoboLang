@@ -1,0 +1,13 @@
+// bench/reference/w_part_precheck.rob: hand-written reference solution
+robolang 1.3;
+
+task move_if_present(robot r, object item, location src, location dst) {
+    pre { object_at item src; }
+    goal { object_at item dst; }
+    plan {
+        move r to src;
+        grasp r item;
+        move r to dst;
+        place r item at dst;
+    }
+}

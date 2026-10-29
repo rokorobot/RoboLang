@@ -1,0 +1,19 @@
+// bench/reference/w_split_boxes.rob: hand-written reference solution
+robolang 1.3;
+
+task split_boxes(robot r, object a, object b, location sa, location sb, location ta, location tb) {
+    goal {
+        object_at a ta;
+        object_at b tb;
+    }
+    plan {
+        move r to sa;
+        grasp r a;
+        move r to ta;
+        place r a at ta;
+        move r to sb;
+        grasp r b;
+        move r to tb;
+        place r b at tb;
+    }
+}
