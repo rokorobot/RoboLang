@@ -1,6 +1,6 @@
 # RoboLang 1.4 (delta over 1.3)
 
-**Status:** front end only. Decision: [0027](decisions/0027-bounded-branching.md) (B1 to B9). Grammar:
+**Status:** complete in code (front end, simulation, `validate --world` paths, reference); the acceptance run is pending. Decision: [0027](decisions/0027-bounded-branching.md) (B1 to B9). Grammar:
 [grammar-v1.4.ebnf](grammar-v1.4.ebnf). IR: [schema 1.3](ir-schema-v1.3.md).
 Everything not stated here is exactly as in [RoboLang 1.3](robolang-v1.3.md) (and 1.2, 1.1 below it).
 
@@ -11,8 +11,8 @@ rejects it with `E213`. Files with no marker or with `1.1`, `1.2` or `1.3` are r
 before: same diagnostics, same IR, same run records.
 
 **Simulation:** `simulate`, `export-goal` and `delegate` accept a branching task
-([simulation 12](simulation-v1.0.md)). **Not yet:** `validate --world` skips the step checks of such a task and says
-so, and the benchmark scores it per path (decision 0027, PR 3). A task of 1.4 without `if` or `fail` behaves as in 1.3.
+([simulation 12](simulation-v1.0.md)). `validate --world` checks every path of it as a straight line
+([simulation 11](simulation-v1.0.md)). A task of 1.4 without `if` or `fail` behaves as in 1.3.
 
 ## 2. Reserved words
 

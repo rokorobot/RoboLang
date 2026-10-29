@@ -258,11 +258,19 @@ def _print_errors(error: RoboLangError, path: str, err, summary: bool):
 def _world_diagnostic(args, inputs: _RunInputs, finding: Finding):
     """A world-check finding at its source position, or at its JSON Pointer in a Task IR file."""
     part, index = finding.where
+    parts = finding.label.split(".") if finding.label else []  # "3.else.2" -> 3, else, 2
     if inputs.loaded.program is None:
         task_index = inputs.document.tasks.index(inputs.task)
-        return IRDiagnostic(finding.code, finding.message, f"/tasks/{task_index}/{part}/{index}", args.file)
+        pointer = f"/tasks/{task_index}/{part}/{index}"
+        for side, position in zip(parts[1::2], parts[2::2]):
+            pointer += f"/{side}/{int(position) - 1}"
+        return IRDiagnostic(finding.code, finding.message, pointer, args.file)
     node = next(t for t in inputs.loaded.program.tasks if t.name.text == inputs.task.name)
-    span = (node.annotations if part == "safety" else node.plan.statements)[index].span
+    statement = (node.annotations if part == "safety" else node.plan.statements)[index]
+    for side, position in zip(parts[1::2], parts[2::2]):  # into the branch, then to the statement in it
+        branch = statement.then if side == "then" else statement.orelse
+        statement = branch.statements[int(position) - 1]
+    span = statement.span
     return Diagnostic(finding.code, finding.message, span, filename=args.file)
 
 
@@ -291,12 +299,9 @@ def _validate(args, out, err) -> int:
         print(NOT_A_SAFETY_CHECK, file=out)
     if inputs is not None:
         source = "world bindings" if inputs.cli_bindings is None else "--bind"
-        if inputs.task.branching:
-            print(f"{args.file}: task '{inputs.task.name}' branches: its steps were not checked against "
-                  f"{args.world} (only its safety limits were); path checks are not implemented yet", file=out)
-        else:
-            print(f"{args.file}: task '{inputs.task.name}' checked against {args.world} ({source}): "
-                  f"no certain failure found. Run `simulate` for the rest", file=out)
+        paths = " (every path of its branches checked as a straight line)" if inputs.task.branching else ""
+        print(f"{args.file}: task '{inputs.task.name}' checked against {args.world} ({source}){paths}: "
+              f"no certain failure found. Run `simulate` for the rest", file=out)
     return EXIT_OK
 
 

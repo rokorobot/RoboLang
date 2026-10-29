@@ -4,6 +4,9 @@
   "world": "bench/worlds/warehouse.json",
   "group": "branching",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_3": {
     "decision": "cannot",
     "category": "inexpressible"
   },
@@ -18,7 +21,15 @@
             "located_in",
             "rl:place:shelf_a"
           ]
-        ]
+        ],
+        "world_patch": {
+          "events": [],
+          "regions": {
+            "cell": {
+              "clear": true
+            }
+          }
+        }
       },
       {
         "when": "not region_clear cell and region_clear aisle",
@@ -28,7 +39,18 @@
             "located_in",
             "rl:place:conveyor"
           ]
-        ]
+        ],
+        "world_patch": {
+          "events": [],
+          "regions": {
+            "cell": {
+              "clear": false
+            },
+            "aisle": {
+              "clear": true
+            }
+          }
+        }
       },
       {
         "when": "not region_clear cell and not region_clear aisle",
@@ -38,7 +60,18 @@
             "ops",
             "box2 not moved"
           ]
-        ]
+        ],
+        "world_patch": {
+          "events": [],
+          "regions": {
+            "cell": {
+              "clear": false
+            },
+            "aisle": {
+              "clear": false
+            }
+          }
+        }
       }
     ]
   },

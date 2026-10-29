@@ -183,7 +183,7 @@ See
 | Area | State |
 |---|---|
 | Language 1.1, 1.2 and 1.3 (goals, typed sensors), validator, Task IR | Delivered |
-| Language 1.4 (bounded `if`/`else`, `fail`; [0027](spec/decisions/0027-bounded-branching.md)): `validate`, `inspect`, Task IR 1.3 | `simulate`, `export-goal` and `delegate` run branching tasks (record 1.3, [simulation 12](spec/simulation-v1.0.md)); `validate --world` path checks and benchmark scoring not yet |
+| Language 1.4 (bounded `if`/`else`, `fail`; [0027](spec/decisions/0027-bounded-branching.md)): `validate`, `inspect`, Task IR 1.3 | Complete in code: front end, `simulate`, `export-goal` and `delegate` run branching tasks (record 1.3, [simulation 12](spec/simulation-v1.0.md)), `validate --world` checks every path, language reference and benchmark scoring per path. Acceptance run (set 3 under 1.4) pending |
 | Simulation-only execution (`simulate`) | Delivered, signed off 2026-10-27 ([evidence](docs/evidence/rl-basic-01-exit-gate.md)) |
 | Core 0.1 reference simulation (`arch02`) | Implemented, gate 1 signed off 2026-10-27 ([evidence](docs/evidence/rl-arch-02-exit-gate.md)) |
 | Gate 2 independent interoperability | Bundle frozen 2026-10-28. INTEROP-3 deferred until Core 0.2 or a real second implementer ([0023](spec/decisions/0023-keep-interop-3-deferred.md)) |

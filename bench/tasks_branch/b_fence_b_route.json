@@ -4,6 +4,9 @@
   "world": "bench/worlds/assembly.json",
   "group": "branching",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_3": {
     "decision": "cannot",
     "category": "inexpressible"
   },
@@ -18,7 +21,15 @@
             "located_in",
             "rl:place:station2"
           ]
-        ]
+        ],
+        "world_patch": {
+          "events": [],
+          "regions": {
+            "fence_b": {
+              "clear": true
+            }
+          }
+        }
       },
       {
         "when": "not region_clear fence_b",
@@ -28,7 +39,15 @@
             "located_in",
             "rl:place:handoff12"
           ]
-        ]
+        ],
+        "world_patch": {
+          "events": [],
+          "regions": {
+            "fence_b": {
+              "clear": false
+            }
+          }
+        }
       }
     ]
   },

@@ -4,6 +4,9 @@
   "world": "bench/worlds/lab.json",
   "group": "branching",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_3": {
     "decision": "cannot",
     "category": "inexpressible"
   },
@@ -18,7 +21,15 @@
             "located_in",
             "rl:place:bench"
           ]
-        ]
+        ],
+        "world_patch": {
+          "events": [],
+          "objects": {
+            "plate1": {
+              "location": "storage"
+            }
+          }
+        }
       },
       {
         "when": "not object_at plate1 storage",
@@ -28,7 +39,15 @@
             "lab",
             "plate1 not in storage"
           ]
-        ]
+        ],
+        "world_patch": {
+          "events": [],
+          "objects": {
+            "plate1": {
+              "location": "bench"
+            }
+          }
+        }
       }
     ]
   },

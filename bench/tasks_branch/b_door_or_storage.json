@@ -4,6 +4,9 @@
   "world": "bench/worlds/lab.json",
   "group": "branching",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_3": {
     "decision": "cannot",
     "category": "inexpressible"
   },
@@ -18,7 +21,15 @@
             "located_in",
             "rl:place:scanner"
           ]
-        ]
+        ],
+        "world_patch": {
+          "events": [],
+          "regions": {
+            "door_zone": {
+              "clear": true
+            }
+          }
+        }
       },
       {
         "when": "not region_clear door_zone",
@@ -34,7 +45,15 @@
             "lab",
             "door blocked"
           ]
-        ]
+        ],
+        "world_patch": {
+          "events": [],
+          "regions": {
+            "door_zone": {
+              "clear": false
+            }
+          }
+        }
       }
     ]
   },

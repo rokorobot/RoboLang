@@ -110,3 +110,84 @@ def test_a_finding_is_the_failure_the_simulation_hits(robot, speed):
         assert result.state == "FAILED" and result.failure.code == findings[0].code
     else:
         assert result.state == "SUCCEEDED"
+
+
+# -------- RoboLang 1.4: every path checked as a straight line (decision 0027 B6) --------
+
+BRANCHING = """robolang 1.4;
+
+task carry(robot r, object box, location src, location dst, sensor cam, region cell) {
+    goal { not holding r box; }
+    plan {
+        move r to src;
+        grasp r box;
+        if region_clear cell {
+            goal { object_at box dst; }
+            inspect r box using cam;
+            move r to dst;
+            place r box at dst;
+        } else {
+            if robot_ready r {
+                goal { object_at box src; }
+                inspect r box using cam;
+                place r box at src;
+            } else {
+                fail "stuck";
+            }
+        }
+        inspect r box using cam;
+    }
+}
+"""
+BRANCH_BIND = ["--bind", "box=box1", "src=shelf", "dst=table", "cam=camera_top", "cell=bay"]
+
+
+def branch_world(tmp_path):
+    world = json.loads(Path(WORLD).read_text(encoding="utf-8"))
+    world["regions"], world["events"] = {"bay": {"clear": True}}, []
+    path = tmp_path / "world.json"
+    path.write_text(json.dumps(world), encoding="utf-8")
+    return str(path)
+
+
+def test_a_finding_in_a_branch_names_its_path_and_is_reported_once(tmp_path):
+    world = branch_world(tmp_path)
+    code, out, err = validate(tmp_path, "--world", world, *BRANCH_BIND, "r=amr1", source=BRANCHING)
+    assert code == 1 and out == ""
+    assert err.splitlines() == [
+        "task.rob:10:13: error[S231]: sensor 'camera_top' is mounted on 'arm1', not on robot 'amr1' (on path 3.then)",
+        "task.rob:16:17: error[S231]: sensor 'camera_top' is mounted on 'arm1', not on robot 'amr1' "
+        "(on path 3.else.1.then)",
+        "task.rob:22:9: error[S231]: sensor 'camera_top' is mounted on 'arm1', not on robot 'amr1'",
+        f"task.rob: task 'carry' cannot succeed in {world} (3 errors)",
+    ]
+
+
+def test_a_branching_task_that_fits_the_world_is_checked_on_every_path(tmp_path):
+    code, out, err = validate(tmp_path, "--world", branch_world(tmp_path), *BRANCH_BIND, "r=arm1", source=BRANCHING)
+    assert code == 0, err
+    assert "every path of its branches checked" in out and "were not checked" not in out
+
+
+def test_a_finding_in_a_branch_of_task_ir_points_into_the_branch(tmp_path):
+    rob, ir_path = tmp_path / "t.rob", tmp_path / "t.ir.json"
+    rob.write_text(BRANCHING, encoding="utf-8")
+    out = io.StringIO()
+    assert main(["inspect", str(rob), "--json"], out=out, err=io.StringIO()) == 0
+    ir_path.write_text(out.getvalue(), encoding="utf-8")
+    err = io.StringIO()
+    code = main(["validate", "--ir", str(ir_path), "--world", branch_world(tmp_path), *BRANCH_BIND, "r=amr1"],
+                out=io.StringIO(), err=err)
+    assert code == 1
+    assert "/tasks/0/steps/2/then/0: error[S231]" in err.getvalue()
+    assert "/tasks/0/steps/2/else/0/then/0: error[S231]" in err.getvalue()
+
+
+def test_a_path_finding_is_a_failure_the_simulation_hits(tmp_path):
+    """On the path that takes the branch with the bad step, the run ends in the finding's code."""
+    task = ir.compile_source(BRANCHING, "task.rob").ir.tasks[0]
+    bindings = {"r": "amr1", "box": "box1", "src": "shelf", "dst": "table", "cam": "camera_top", "cell": "bay"}
+    world = load_world(Path(branch_world(tmp_path)).read_bytes(), "w.json", task, bindings)
+    assert {f.code for f in check_task(task, world)} == {"S231"}
+    result = simulate_task(task, world)  # the region is clear: path 7.then
+    assert result.state == "FAILED" and result.failure.code == "S231"

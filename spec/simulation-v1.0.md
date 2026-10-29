@@ -750,6 +750,11 @@ failure a run of that task **would certainly hit**, without running it. Decision
 A failure is certain when it depends only on the task, the robot profiles, the sensors and the
 bindings, and never on state that events or steps change. A 1.3 plan has no branches, so every
 step runs unless an earlier one fails. A plan with any of these failures cannot end `SUCCEEDED`.
+A branching plan (RoboLang 1.4, section 12) is checked **path by path**: each path, one choice of `then` or `else`
+at each `if` it reaches, is a straight line of the steps on it, and `S211` and `S231` apply to those steps as above
+(decision [0027](decisions/0027-bounded-branching.md) B6). The limits (`S001`, `S002`) are checked once for the task.
+A finding in a branch is an error even though other paths may succeed: a branch that can never succeed is an
+authoring error.
 
 | Code | Check (same rule as the run) |
 |---|---|
@@ -757,11 +762,17 @@ step runs unless an earlier one fails. A plan with any of these failures cannot 
 | `S211` | A `grasp` whose robot has no gripper (4.5) |
 | `S231` | An `inspect` whose sensor is not declared, or not mounted on its robot (4.5) |
 
-Each finding is one diagnostic in source order: limits first, then steps. Its position is
+Each finding is one diagnostic in source order: limits first, then steps (for a branching task, step by step in the
+order of section 12.1, branches included). A step in a branch is reported **once**, at its own source position (or,
+for `--ir`, the JSON Pointer into the branch, for example `/tasks/0/steps/2/else/0/then/1`), and its message ends with
+the path label of the innermost branch it is in: `... (on path 3.else.1.then)`, where the label is that of section 12.1
+for the branch (every path through that branch has the finding). A step that is on no branch is reported as in 1.3,
+without a path label. Its position is
 `FILE:LINE:COLUMN` of the annotation or statement, or for `--ir` the JSON Pointer
 `/tasks/<i>/safety/<j>` or `/tasks/<i>/steps/<j>`. More than one finding adds the summary line
 `FILE: task 'NAME' cannot succeed in WORLD (N errors)`. Any finding gives exit 1. Without a
-finding, stdout adds one line saying the task was checked and naming the bindings' source.
+finding, stdout adds one line saying the task was checked and naming the bindings' source (for a branching task it
+also says that every path of its branches was checked).
 `--task` and `--bind` without `--world` are a usage error (exit 2).
 
 Not checked: whatever depends on state during the run, such as readiness (`S201`), presence

@@ -34,6 +34,8 @@ def summarize(rows: list[dict]) -> dict[str, dict[str, tuple[int, int]]]:
             "silent_guess": _rate(mine, "silent_guess", lambda r: r.get("expect") == "clarify"),
             "goal_correct": _rate(mine, "goal_correct", feasible),
             "plan_succeeds": _rate(mine, "plan_succeeds", feasible),
+            # informational, no floor: a valid, SUCCEEDED program that is wrong on another path (decision 0027, G1)
+            "half_program": _rate(mine, "half_program", lambda r: r.get("has_paths")),
         }
     return out
 
@@ -68,6 +70,8 @@ def check(summary: dict, floors: dict) -> list[str]:
 
 def table(name: str, summary: dict) -> str:
     keys = ("decision_correct", "false_program", "goal_correct", "plan_succeeds")
+    if any(rates["half_program"][1] for rates in summary.values()):  # only when the run has branching tasks
+        keys += ("half_program",)
     lines = [f"**{name}**", "", "| model | " + " | ".join(keys) + " |", "|---" * (len(keys) + 1) + "|"]
     for model, rates in summary.items():
         cells = [f"{k}/{n}" if n else "—" for k, n in (rates[key] for key in keys)]

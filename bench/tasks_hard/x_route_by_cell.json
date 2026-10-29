@@ -2,10 +2,54 @@
   "id": "x_route_by_cell",
   "prompt": "With arm2, carry box2 from shelf_b to shelf_a if the cell is clear at the moment the job starts, and to the table if it is not. Other operators can enter the cell at any time before that.",
   "world": "bench/worlds/warehouse.json",
-  "group": "inexpressible",
+  "group": "branching",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_3": {
     "decision": "cannot",
     "category": "inexpressible"
+  },
+  "expect_1_4": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "region_clear cell",
+        "goal": [
+          [
+            "rl:thing:box2",
+            "located_in",
+            "rl:place:shelf_a"
+          ]
+        ],
+        "world_patch": {
+          "events": [],
+          "regions": {
+            "cell": {
+              "clear": true
+            }
+          }
+        }
+      },
+      {
+        "when": "not region_clear cell",
+        "goal": [
+          [
+            "rl:thing:box2",
+            "located_in",
+            "rl:place:table"
+          ]
+        ],
+        "world_patch": {
+          "events": [],
+          "regions": {
+            "cell": {
+              "clear": false
+            }
+          }
+        }
+      }
+    ]
   },
   "tags": [
     "branching",

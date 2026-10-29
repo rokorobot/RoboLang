@@ -4,6 +4,9 @@
   "world": "bench/worlds/warehouse.json",
   "group": "branching",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_3": {
     "decision": "cannot",
     "category": "inexpressible"
   },
@@ -18,7 +21,15 @@
             "located_in",
             "rl:place:handoff"
           ]
-        ]
+        ],
+        "world_patch": {
+          "events": [],
+          "objects": {
+            "crate1": {
+              "location": "dock"
+            }
+          }
+        }
       },
       {
         "when": "not object_at crate1 dock",
@@ -28,7 +39,15 @@
             "located_in",
             "rl:place:charging"
           ]
-        ]
+        ],
+        "world_patch": {
+          "events": [],
+          "objects": {
+            "crate1": {
+              "location": "table"
+            }
+          }
+        }
       }
     ]
   },

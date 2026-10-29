@@ -4,6 +4,9 @@
   "world": "bench/worlds/assembly.json",
   "group": "branching",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_3": {
     "decision": "cannot",
     "category": "inexpressible"
   },
@@ -18,7 +21,18 @@
             "located_in",
             "rl:place:station1"
           ]
-        ]
+        ],
+        "world_patch": {
+          "events": [],
+          "objects": {
+            "p1": {
+              "location": "conveyor_in"
+            },
+            "p2": {
+              "location": "conveyor_in"
+            }
+          }
+        }
       },
       {
         "when": "not (object_at p1 conveyor_in and object_at p2 conveyor_in)",
@@ -28,7 +42,15 @@
             "located_in",
             "rl:place:station1"
           ]
-        ]
+        ],
+        "world_patch": {
+          "events": [],
+          "objects": {
+            "p2": {
+              "location": "bin"
+            }
+          }
+        }
       }
     ]
   },

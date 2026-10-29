@@ -4,6 +4,9 @@
   "world": "bench/worlds/warehouse.json",
   "group": "branching",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_3": {
     "decision": "cannot",
     "category": "inexpressible"
   },
@@ -18,7 +21,15 @@
             "located_in",
             "rl:place:table"
           ]
-        ]
+        ],
+        "world_patch": {
+          "events": [],
+          "sensors": {
+            "camera_top": {
+              "available": true
+            }
+          }
+        }
       },
       {
         "when": "not sensor_ok camera_top",
@@ -28,7 +39,15 @@
             "located_in",
             "rl:place:inspection_bay"
           ]
-        ]
+        ],
+        "world_patch": {
+          "events": [],
+          "sensors": {
+            "camera_top": {
+              "available": false
+            }
+          }
+        }
       }
     ]
   },

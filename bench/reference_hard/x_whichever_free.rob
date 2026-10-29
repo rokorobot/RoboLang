@@ -1,0 +1,19 @@
+// bench/reference_hard/x_whichever_free.rob: the reference program (RoboLang 1.4, decision 0027)
+robolang 1.4;
+
+task deliver(robot r1, robot r2, object box, location src, location dst) {
+    goal { object_at box dst; }
+    plan {
+        if robot_ready r1 {
+            move r1 to src;
+            grasp r1 box;
+            move r1 to dst;
+            place r1 box at dst;
+        } else {
+            move r2 to src;
+            grasp r2 box;
+            move r2 to dst;
+            place r2 box at dst;
+        }
+    }
+}

@@ -18,6 +18,12 @@ and `robolang simulate`), so the scores do not depend on anything but the saved 
 goal_correct, plan_succeeds and checks_ok are judged on the final answer, and are false when it is not valid.
 Answers served by a fallback model are scored in their own tables, never in the requested model's.
 
+A task with `expect_1_4.paths` (branching tasks, sets 2 and 3) is judged per path: the answer is run once in each
+path's patched world (`world_patch`). goal_correct holds only if, on every path, the effective goal of the path the
+run took means that path's goal (a fail path: the run ends in `fail`); plan_succeeds only if every goal path ends
+SUCCEEDED and every fail path ends FAILED S262, with the path's messages sent. scores.json lists each path in `paths`.
+`half_program` marks the F3 danger: a valid program that ends SUCCEEDED as given but is wrong on another path.
+
 Set 2 (`--set hard`) adds the decision. A task expects a program, or "cannot" with a category (inexpressible,
 infeasible). The program measures above are over the tasks that expect a program; on top of them, per model:
 
@@ -122,6 +128,9 @@ def evaluate_record(task_def: dict, record: dict) -> dict:
         "checks": checks,
         "request_satisfied": bool(judgement and judgement.goal_correct and judgement.plan_succeeds
                                   and all(checks.values())),
+        "paths": judgement.paths if judgement else None,
+        "has_paths": bool(lib.task_paths(task_def)),
+        "half_program": bool(judgement and judgement.half_program),
         "state": judgement.state if judgement else None, "failure_code": judgement.failure_code if judgement else None,
         "codes": codes, "tokens": tokens, "usd": None if None in costs else sum(costs),
         # the decision (set 2; set 1 answers are programs and its tasks expect programs)
@@ -186,6 +195,11 @@ def _rates_table(rows: list[dict]) -> list[str]:
     checked = [r for r in rows if r["checks_ok"] is not None]
     k = sum(r["checks_ok"] for r in checked)
     lines.append(f"| checks_ok (tasks with optional checks) | {k}/{len(checked)} | {_share(k, len(checked))} |")
+    branching = [r for r in rows if r.get("has_paths")]
+    if branching:
+        k = sum(r["half_program"] for r in branching)
+        lines.append(f"| half_program (valid, SUCCEEDED as given, wrong on another path; branching tasks) "
+                     f"| {k}/{len(branching)} | {_share(k, len(branching))} |")
     return lines
 
 

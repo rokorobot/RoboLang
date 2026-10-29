@@ -79,5 +79,7 @@ as parameters and one common goal. `x_missing_box_branch` needs B4.
 
 Simulation, run record 1.3 and the Core and export rules (B2, B3, B4, B7, B8): N4 PR 2, see
 [simulation-v1.0.md section 12](../simulation-v1.0.md). Reading of B4: Core 0.1 has no reason code `declared`, so the
-Core outcome of a `fail` has `reasons: []` and the reason is in the run record. Not yet: B6 path checks and set 3
-scoring (PR 3).
+Core outcome of a `fail` has `reasons: []` and the reason is in the run record. B6 path checks, the 1.4 language
+reference and prompts, and set 2 and 3 scoring per path: N4 PR 3 ([simulation 11](../simulation-v1.0.md), `bench/README.md`).
+Reading of B6: a step of a branch is reported once, at its source position, with the path label of its innermost
+branch ("on path 3.else"); a step outside every branch is reported as in 1.3. Not yet: the acceptance run (section 3, item 2).

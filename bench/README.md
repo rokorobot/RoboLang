@@ -2,7 +2,7 @@
 
 Can AI models write RoboLang well? 40 plain-English requests, four small simulated worlds, a stable system prompt,
 and an offline scorer. Set 1 (the default) measures syntax and is saturated; **set 2, `--set hard`**, measures robustness: 40
-requests of which 18 cannot be done (inexpressible in RoboLang 1.3, or infeasible in the world), plus decoy worlds with
+requests of which 18 cannot be done (inexpressible, or infeasible in the world; three of the first became expressible in 1.4 and are branching tasks now), plus decoy worlds with
 near-miss names, ambiguous requests and tricky controls (see "Set 2" below). Decision record: [0024](../spec/decisions/0024-authoring-benchmark.md). This directory is not
 part of the installed `robolang` package; the package never imports it or the Anthropic SDK.
 
@@ -88,8 +88,8 @@ python bench/run.py --set hard --prompt minimal --yes   # only the grammar and t
 python bench/score.py bench/results/<run-id>
 ```
 
-Tasks are in `tasks_hard/`, references in `reference_hard/`, in five kinds (`group` in each task): `inexpressible` (10),
-`infeasible` (8), `decoy` (8), `ambiguous` (5, `expected_goals` lists the acceptable goal sets) and `control` (9).
+Tasks are in `tasks_hard/`, references in `reference_hard/`, in six kinds (`group` in each task): `inexpressible` (7), `branching` (3: relabelled for 1.4, a program judged per path, see
+set 3), `infeasible` (8), `decoy` (8), `ambiguous` (5, `expected_goals` lists the acceptable goal sets) and `control` (9).
 A task that expects a decline has `expect: {"decision": "cannot", "category": ...}`, a `why`, and an obvious attempt
 (`<id>.attempt.rob`) that the tests show fails with `attempt_fails_with`. Decoy worlds `depot` and `cleanroom`
 have a `<world>.notes.json` of entity descriptions, printed under the world listing.
@@ -155,17 +155,39 @@ remains `infeasible`. Sufficient timeouts based on guaranteed scheduled events a
 ## Set 3: branching (`--set branch`)
 
 Pre-registered for RoboLang 1.4 (decision record [0027](../spec/decisions/0027-bounded-branching.md), section 3),
-before any 1.4 code. The tasks are in `tasks_branch/` and the programs in `reference_branch/`. There are 36 tasks:
+before any 1.4 code, and run against 1.3 for the [baseline](../docs/evidence/bench-set3-baseline.md). Since N4 PR 3 it is
+labelled for 1.4. The tasks are in `tasks_branch/` and the programs in `reference_branch/`. There are 36 tasks:
 
-| group | tasks | expected today (1.3) | expected with 1.4 (`expect_1_4`) |
+| group | tasks | `expect` (1.4) | `expect_1_3` (kept for history) |
 |---|---:|---|---|
-| `branching` | 20 | decline, inexpressible | a program with `if`; the goal of every path, or `fail "reason"` with its messages |
-| `inexpressible` | 8 | decline, inexpressible | still a decline: retry, failover, loops, counts, clocks, message waits, distances |
-| `control` | 8 | a program with `pre` or `wait until` | the same program; no `if` is needed |
+| `branching` | 20 | a program with `if`; `expect_1_4.paths` has the goal of every path, or `fail "reason"` with its messages | decline, inexpressible |
+| `inexpressible` | 8 | still a decline: retry, failover, loops, counts, clocks, message waits, distances | (unchanged) |
+| `control` | 8 | a program with `pre` or `wait until`; no `if` is needed | (unchanged) |
 
-For a `branching` task, `<id>.attempt.rob` is the 1.4 program under the 1.3 marker. 1.3 rejects it (E203), and with
-`robolang 1.4;` it becomes the reference. The baseline question for 1.3 is the F3 danger: on a branching request,
-does a model decline, or write a valid half-program (`false_program`, "of which valid and SUCCEEDED")?
+A `branching` task has `expect: {"decision": "program"}` and `expect_1_3` with the old label. Its reference is
+`<id>.rob` + `<id>.json`, the 1.4 program (it was `<id>.attempt.rob` while 1.3 could not read it). `inexpressible` tasks
+keep their `<id>.attempt.rob`, which still fails.
+
+**Paths.** Each entry of `expect_1_4.paths` has `when` (a condition, for reading), `goal` (Core triples) or `fail`
+(the reason) with optional `messages`, and a `world_patch`: the probe-patch format of `probes` (merged over the world
+file, objects key by key), with `"events": []` so that nothing changes between the start and the `if`. The scorer runs
+the answer once per path in its patched world:
+
+- `goal_correct`: on every path the run got through its plan to the goal check, and the effective goal of the path
+  it took (`goal_means`) means the path's goal; for a `fail` path, the run ended in `fail` (`S262`);
+- `plan_succeeds`: every goal path ends `SUCCEEDED` and every `fail` path ends `FAILED` `S262`, with the path's messages
+  sent (the reason text is not compared);
+- `scores.json` has `paths`: for each path `goal_ok`, `plan_ok`, `state`, `failure_code`; and `has_paths`.
+
+**`half_program`** (informational, no floor): the answer is valid and `SUCCEEDED` in the world as given, but is wrong
+on another path (G1: the model reads the condition off the description and writes one branch, with or without `pre`).
+It is in `report.md` (the rates table, over branching tasks) and in the `gate.py` table. The acceptance run (0027
+section 3: set 3 goal correctness >= 90% for Sonnet, false programs on the controls <= 5% with the grammar only) is
+read from these numbers.
+
+Set 2 has the same for its three branching tasks (`x_route_by_cell`, `x_whichever_free`, `x_missing_box_branch`),
+group `branching`. The grammar-only prompt pastes `spec/grammar-v1.3.ebnf` and then `spec/grammar-v1.4.ebnf`, which is a
+delta over it.
 
 Run it on demand from GitHub Actions: `Benchmark`, `set3: true`. That runs full and grammar-only prompts with 3
 repeats, for information only and not gated (~$3-4). Locally: `python bench/run.py --set branch --repeats 3`.
