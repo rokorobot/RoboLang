@@ -16,7 +16,7 @@
 
 ---
 
-## 0. Next steps from benchmark evidence (2026-10-29; proposed, owner approval pending)
+## 0. Next steps from benchmark evidence (approved by the owner 2026-10-29)
 
 The authoring benchmark (decision 0024; [set 2 analysis](evidence/bench-set2-analysis.md)) is now the
 main input for ordering work. Each step cites the finding it answers. Listing a step authorizes nothing.
