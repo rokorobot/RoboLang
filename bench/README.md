@@ -52,7 +52,8 @@ Per model, one table of rates (k/n answers, answers served by that model only):
 |---|---|
 | `valid_first` | the first answer validates, names an existing task, and its bindings are accepted |
 | `valid_after_repair` | the same, after at most one repair round (so it is never below `valid_first`) |
-| `goal_correct` | the goal, exported under the bindings, is exactly the expected set of Core triples |
+| `goal_correct` | the goal means what an expected reading means: under the bindings it holds in exactly the same states as one expected set of Core triples, or as "any of" the readings. Checked by enumerating every placement of the things and robots the goals mention, so `and`, `or`, `not`, order and duplicates do not matter |
+| `goal_exact` | the measure before N6: the goal, exported under the bindings, is exactly an expected set of Core triples. Kept in the report for comparison with older runs |
 | `plan_succeeds` | the simulation under the bindings ends `SUCCEEDED` |
 | `checks_ok` | the optional checks of the tasks that have them: safety limits, a message, an exact pause, probe worlds |
 
