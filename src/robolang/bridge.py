@@ -19,6 +19,7 @@ from datetime import datetime, timedelta, timezone
 from decimal import ROUND_FLOOR, Decimal
 
 from . import ir
+from .core import time_ms
 
 CORE_KIND = {"robot": "robot", "object": "thing", "location": "place", "region": "region", "sensor": "sensor"}
 SIM_EPOCH = datetime(2000, 1, 1, tzinfo=timezone.utc)  # Core time of simulated t = 0
@@ -34,6 +35,13 @@ def core_time(t_ms: Decimal | int) -> str:
     ms = int(Decimal(t_ms).to_integral_value(rounding=ROUND_FLOOR))
     t = SIM_EPOCH + timedelta(milliseconds=ms)
     return t.strftime("%Y-%m-%dT%H:%M:%S.") + f"{t.microsecond // 1000:03d}Z"
+
+
+def core_time_after(time: str, delta_ms: int) -> str:
+    """A Core time `delta_ms` after the Core time `time`, in the millisecond form of `core_time`."""
+    total = time_ms(time) + delta_ms
+    t = datetime.fromtimestamp(total // 1000, tz=timezone.utc)
+    return t.strftime("%Y-%m-%dT%H:%M:%S.") + f"{total % 1000:03d}Z"
 
 
 @dataclass(frozen=True)

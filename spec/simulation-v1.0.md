@@ -129,7 +129,14 @@ No new codes are defined; `E508` cannot occur for `--bind`, because an unknown n
 error. The checks of exit 2 happen before the world file is read. The choices are recorded in
 [decision record 0016](decisions/0016-cli-bindings.md).
 
-## 3. World file, schema 1.0
+## 3. World file, schemas 1.0 and 1.1
+
+World file schema **1.1** is schema 1.0 plus two optional object fields (3.3), so that an object
+can become a Core `thing` (`export-goal`, [`export-goal-v0.1.md`](export-goal-v0.1.md)). Everything
+else, including how a run reads the file, is the same: `simulate` ignores `class` and `mass`. A file
+declares one version, and a 1.0 file behaves exactly as before, including rejecting `class` and
+`mass` as unknown fields (`E503`). The run record's `inputs.world_schema_version` is the file's
+version.
 
 ### 3.1 Document
 
@@ -163,7 +170,7 @@ A world file is a UTF-8 JSON document (RFC 8259) with one object at the top leve
 | Field | Required | Content |
 |---|---|---|
 | `world_schema` | yes | Exactly `"robolang.sim.world"` |
-| `world_schema_version` | yes | Exactly `"1.0"` |
+| `world_schema_version` | yes | Exactly `"1.0"` or `"1.1"` |
 | `locations` | yes | Array of location IDs |
 | `regions` | no | Object: region ID → region (3.3) |
 | `robots` | no | Object: robot ID → robot (3.3) |
@@ -214,6 +221,8 @@ true (section 4.4).
 | `present` | no | `true` or `false`; omitted means unknown |
 | `location` | no | ID of a declared location |
 | `held_by` | no | ID of a declared robot |
+| `class` | no | **1.1 only.** A lowercase word: `a`–`z` and `_`, starting with a letter, at most 64 characters (a Core thing class, `core-v0.1.md` 5.5). Not 1.0 (`E503`); malformed `E504` |
+| `mass` | no | **1.1 only.** `{ "value": "<decimal>", "unit": "kg", "uncertainty": "<decimal>" }`. `value` is greater than zero, `uncertainty` is zero or more, both exact decimal strings as in 3.7; the unit is `kg`. Another field is `E503`, a malformed one `E504` |
 
 An object that is `present: true` has exactly one of `location` and `held_by`. An object that
 is not present, or whose presence is unknown, has neither. A robot named in `held_by` has a
@@ -617,7 +626,7 @@ deferred by decision record 0003 section 3 are rows B1–B5 there.
 
 This section adds to sections 3 to 5 for sources written in RoboLang 1.3
 ([`robolang-v1.3.md`](robolang-v1.3.md)). Sources in 1.1 and 1.2 are unchanged by it: same
-IR, same run records, same run IDs. The world file stays at schema 1.0.
+IR, same run records, same run IDs. A 1.3 source may use world file schema 1.0 or 1.1 (section 3).
 
 ### 10.1 Sensor parameters and the world file
 

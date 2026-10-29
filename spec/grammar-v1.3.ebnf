@@ -16,8 +16,12 @@ task          = "task" , IDENT , "(" , [ param , { "," , param } ] , ")" ,
 param         = type , IDENT ;
 type          = "robot" | "object" | "location" | "region" | "sensor" ;    (* [1.3] sensor *)
 
-annotation    = "@safety" , safety_rule , ";" ;
+annotation    = "@safety" , safety_rule , ";"
+              | "@verify" , verify_rule , ";" ;                            (* [1.3] *)
 safety_rule   = "max_speed" , NUMBER , [ SPEED_UNIT ] ;   (* omitting the unit is deprecated: W401 *)
+verify_rule   = "min_confidence" , NUMBER                                  (* [1.3] 0 to 1: E312 *)
+              | "max_age" , duration ;                                     (* [1.3] *)
+(* [1.3] Each verify key at most once per task: E311. "@verify" is lexed only in a 1.3 file. *)
 
 pre           = "pre" , "{" , { condition , ";" } , "}" ;
 goal          = "goal" , "{" , condition , ";" , { condition , ";" } , "}" ;   (* [1.3] at least one *)
@@ -86,4 +90,4 @@ whitespace    = " " | "\t" | "\r" | "\n" ;
      with_approach in_region no_go_region require_guard message_received scalar duration
 
    Not reserved (recognized only in their grammatical position):
-     max_speed, and the unit words ms s min *)
+     max_speed, min_confidence, max_age, and the unit words ms s min *)

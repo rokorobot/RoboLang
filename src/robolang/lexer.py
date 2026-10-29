@@ -26,6 +26,7 @@ _PUNCTUATION = {
 }
 _BOM = "﻿"
 _AT_SAFETY = "@safety"
+_AT_VERIFY = "@verify"
 
 
 class Lexer:
@@ -36,6 +37,13 @@ class Lexer:
         self._line = 1
         self._col = 1
         self.reserved = RESERVED  # RESERVED_BY_VERSION[...] after a `robolang 1.2;` or `1.3;` marker
+        self.verify = False  # `@verify` is an annotation after a `robolang 1.3;` marker only
+
+    def set_language(self, version: str):
+        """Switch to the words and annotations of language `version` (a `robolang` marker was read)."""
+        if version in RESERVED_BY_VERSION:
+            self.reserved = RESERVED_BY_VERSION[version]
+        self.verify = version == "1.3"
 
     # -------- helpers --------
 
@@ -138,11 +146,13 @@ class Lexer:
         return self._take(TokenKind.NUMBER, i)
 
     def _at_safety(self) -> Token:
-        n = len(_AT_SAFETY)
-        after = self._peek(n)
-        if self._src.startswith(_AT_SAFETY, self._pos) and not (after and after in _WORD_CHARS):
-            return self._take(TokenKind.AT_SAFETY, n)
-        self._error("E101", "unexpected character '@': the only annotation is '@safety'")
+        for text, kind in ((_AT_SAFETY, TokenKind.AT_SAFETY), (_AT_VERIFY, TokenKind.AT_VERIFY)):
+            after = self._peek(len(text))
+            if self._src.startswith(text, self._pos) and not (after and after in _WORD_CHARS):
+                if kind is TokenKind.AT_SAFETY or self.verify:
+                    return self._take(kind, len(text))
+        only = "annotations are '@safety' and '@verify'" if self.verify else "annotation is '@safety'"
+        self._error("E101", f"unexpected character '@': the only {only}")
 
     def _unit_or_word(self) -> Token:
         for unit in SPEED_UNITS:
@@ -171,4 +181,4 @@ def tokenize(source: str, filename: str = "<string>") -> list[Token]:
         if token.kind is TokenKind.EOF:
             return tokens
         if len(tokens) == 2 and tokens[0].text == "robolang" and token.text in RESERVED_BY_VERSION:
-            lexer.reserved = RESERVED_BY_VERSION[token.text]
+            lexer.set_language(token.text)

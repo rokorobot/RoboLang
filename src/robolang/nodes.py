@@ -243,6 +243,16 @@ class SafetyAnnotation:
 
 
 @dataclass(frozen=True)
+class VerifyAnnotation:
+    """RoboLang 1.3: `key.text` is "min_confidence" (`value` a Decimal) or "max_age" (`value` a Duration)."""
+
+    key: Name
+    value: Decimal | Duration
+    value_span: Span
+    span: Span
+
+
+@dataclass(frozen=True)
 class PreBlock:
     conditions: tuple[Condition, ...]
     span: Span
@@ -271,6 +281,7 @@ class Task:
     plan: PlanBlock
     span: Span
     goal: GoalBlock | None = None  # required in 1.3 (E309), absent before
+    verify: tuple[VerifyAnnotation, ...] = ()  # 1.3 only
 
 
 @dataclass(frozen=True)
