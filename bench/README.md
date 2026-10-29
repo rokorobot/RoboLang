@@ -107,3 +107,31 @@ Reading the report: the four rates are over the tasks that expect a program. The
 and a table per kind of task. To add a set 2 task, write `tasks_hard/<id>.json` and either `reference_hard/<id>.rob` +
 `<id>.json` (feasible) or `<id>.attempt.rob` (+ `<id>.attempt.json` when the attempt parses) with `attempt_fails_with`,
 then run `pytest tests/test_bench_hard.py` (it counts 40 tasks and the five kinds; change the counts on purpose).
+
+## Set 3: asking as well as declining (`--set 3`)
+
+```bash
+python bench/run.py --set 3                                 # estimate only
+python bench/run.py --set 3 --yes --max-usd 10              # with a hard cap on what the run may spend
+```
+
+80 tasks in three new worlds (`pharmacy`, `yard`, `kitchen`), decision record [0025](../spec/decisions/0025-bench-2.md),
+design [docs/plans/bench-2.md](../docs/plans/bench-2.md). Five kinds (`group`): `feasible` (12), `decoy` (8, look
+impossible or unclear but are not), `infeasible` (20), `inexpressible` (20) and `clarify` (20). A `clarify` task
+expects `"decision": "clarify"`: the request could mean several entities (`candidates`) or omits a value, and the world
+does not decide. A request that leaves the choice to the model ("a shelf", "one of the vials", set 2's `ambiguous`
+kind) still expects a program.
+
+Every answer has an `entities` list: the blockers of a decline, the candidates of a question. Extra figures:
+
+| Figure | Meaning |
+|---|---|
+| `silent_guess` | a program for a task that expects a question: it picked one reading (as serious as `false_program`) |
+| `entities_correct` | of the right declines and questions, `entities` names a blocker / exactly the candidates |
+
+Files: `tasks_set3/<id>.json`; in `reference_set3/`, `<id>.rob` + `.json` (feasible), `<id>.attempt.rob` + `.json`
+(the faithful attempt of an infeasible task, and the rejected attempt of some inexpressible ones) and
+`<id>.reading<n>.rob` + `.json` (one succeeding program per reading of a clarify task). An infeasible task also has
+`blockers`, and a `fix_patch` under which its attempt succeeds (or a `why` saying no world can fix it).
+`tests/test_bench_set3.py` checks all of it. Set 3 is not in the CI benchmark workflow: its runs need the owner's
+authorization (0025 B8).

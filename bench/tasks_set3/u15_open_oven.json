@@ -1,0 +1,14 @@
+{
+  "id": "u15_open_oven",
+  "prompt": "Open the oven door, then have the helper arm take tray A out to the pass.",
+  "world": "bench/worlds/kitchen.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "tags": [
+    "unknown_action"
+  ],
+  "why": "The plan has six statements: move, grasp, place, inspect, wait, communicate."
+}

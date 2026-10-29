@@ -1,0 +1,30 @@
+{
+  "id": "f10_two_robots_two_boxes",
+  "prompt": "Crane 2 should put container 102 at berth 2, and straddle 1 should take container 203 to the wash.",
+  "world": "bench/worlds/yard.json",
+  "group": "feasible",
+  "expect": {
+    "decision": "program",
+    "category": "none"
+  },
+  "expected_goal": [
+    [
+      "rl:thing:cont_102",
+      "located_in",
+      "rl:place:berth_2"
+    ],
+    [
+      "rl:thing:cont_203",
+      "located_in",
+      "rl:place:wash"
+    ]
+  ],
+  "required_entities": [
+    "crane2",
+    "straddle1"
+  ],
+  "tags": [
+    "two_robot",
+    "multiple_objects"
+  ]
+}

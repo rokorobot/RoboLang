@@ -1,0 +1,35 @@
+{
+  "id": "i11_seal_reader_down",
+  "prompt": "Read container 203's seal with the seal reader on straddle 1, then have straddle 1 take it to the out gate.",
+  "world": "bench/worlds/yard.json",
+  "group": "infeasible",
+  "expect": {
+    "decision": "cannot",
+    "category": "infeasible"
+  },
+  "tags": [
+    "sensor_unavailable"
+  ],
+  "why": "seal_reader is unavailable and no scheduled event makes it available (S232).",
+  "blockers": [
+    "seal_reader"
+  ],
+  "required_entities": [
+    "seal_reader"
+  ],
+  "faithful_goal": [
+    [
+      "rl:thing:cont_203",
+      "located_in",
+      "rl:place:gate_out"
+    ]
+  ],
+  "fix_patch": {
+    "sensors": {
+      "seal_reader": {
+        "available": true
+      }
+    }
+  },
+  "attempt_fails_with": "S232"
+}

@@ -1,0 +1,35 @@
+{
+  "id": "i12_scale_down",
+  "prompt": "Weigh tray B with the helper arm's scale, then have the helper arm put it on the pass.",
+  "world": "bench/worlds/kitchen.json",
+  "group": "infeasible",
+  "expect": {
+    "decision": "cannot",
+    "category": "infeasible"
+  },
+  "tags": [
+    "sensor_unavailable"
+  ],
+  "why": "scale_1 is unavailable and no scheduled event makes it available (S232).",
+  "blockers": [
+    "scale_1"
+  ],
+  "required_entities": [
+    "scale_1"
+  ],
+  "faithful_goal": [
+    [
+      "rl:thing:tray_b",
+      "located_in",
+      "rl:place:pass"
+    ]
+  ],
+  "fix_patch": {
+    "sensors": {
+      "scale_1": {
+        "available": true
+      }
+    }
+  },
+  "attempt_fails_with": "S232"
+}

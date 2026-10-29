@@ -253,9 +253,9 @@ def test_old_answers_are_programs_and_new_ones_are_read_fully():
 
 def test_the_schema_requires_every_field_and_closes_the_objects():
     schema = lib.ANSWER_SCHEMA
-    assert list(schema["properties"]) == ["decision", "category", "reason", "rob", "task", "bindings"]
+    assert list(schema["properties"]) == ["decision", "category", "reason", "entities", "rob", "task", "bindings"]
     assert schema["required"] == list(schema["properties"]) and schema["additionalProperties"] is False
-    assert schema["properties"]["decision"]["enum"] == ["program", "cannot"]
+    assert schema["properties"]["decision"]["enum"] == ["program", "cannot", "clarify"]
     assert schema["properties"]["category"]["enum"] == ["inexpressible", "infeasible", "none"]
 
 
@@ -424,7 +424,7 @@ def test_the_default_set_is_1_and_the_flags_are_checked(tmp_path):
     assert run.main(["--set", "hard", "--tasks", "e_pick_place", "--out", str(tmp_path)], out=io.StringIO(), err=err,
                     environ={}) == 2 and "unknown task" in err.getvalue()
     with pytest.raises(SystemExit):
-        run.parse_args(["--set", "3"])
+        run.parse_args(["--set", "4"])
     with pytest.raises(SystemExit):
         run.parse_args(["--prompt", "tiny"])
 

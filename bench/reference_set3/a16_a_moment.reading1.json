@@ -1,0 +1,8 @@
+{
+  "task": "visit",
+  "bindings": {
+    "r": "helper_arm",
+    "there": "oven",
+    "home": "prep_2"
+  }
+}

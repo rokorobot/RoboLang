@@ -1,0 +1,13 @@
+// bench/reference_set3/f08_lane_or.rob: hand-written
+robolang 1.3;
+
+task deliver(robot r, object o, location src, location dst, region l1, region l2) {
+    pre { region_clear l1 or region_clear l2; }
+    goal { object_at o dst; }
+    plan {
+        move r to src;
+        grasp r o;
+        move r to dst;
+        place r o at dst;
+    }
+}

@@ -1,0 +1,13 @@
+// bench/reference_set3/i12_scale_down.attempt.rob: hand-written
+robolang 1.3;
+
+task deliver(robot r, object o, location src, location dst, sensor s) {
+    goal { object_at o dst; }
+    plan {
+        move r to src;
+        inspect r o using s;
+        grasp r o;
+        move r to dst;
+        place r o at dst;
+    }
+}

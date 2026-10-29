@@ -1,0 +1,33 @@
+{
+  "id": "i17_placed_and_held",
+  "prompt": "Put pan 2 on the stove with the helper arm, and make sure the helper arm is still holding it at the end.",
+  "world": "bench/worlds/kitchen.json",
+  "group": "infeasible",
+  "expect": {
+    "decision": "cannot",
+    "category": "infeasible"
+  },
+  "tags": [
+    "contradiction"
+  ],
+  "why": "A held object is not at any location, so 'on the stove' and 'still held' cannot both be true at the end.",
+  "blockers": [
+    "pan_2"
+  ],
+  "required_entities": [
+    "helper_arm"
+  ],
+  "faithful_goal": [
+    [
+      "rl:thing:pan_2",
+      "located_in",
+      "rl:place:stove"
+    ],
+    [
+      "rl:thing:pan_2",
+      "carried_by",
+      "rl:robot:helper_arm"
+    ]
+  ],
+  "attempt_fails_with": "S301"
+}

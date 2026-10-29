@@ -1,0 +1,9 @@
+{
+  "task": "carry",
+  "bindings": {
+    "r": "helper_arm",
+    "o": "tray_b",
+    "src": "prep_2",
+    "dst": "pass"
+  }
+}

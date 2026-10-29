@@ -29,6 +29,8 @@ TASKS_DIR = BENCH / "tasks"
 REFERENCE_DIR = BENCH / "reference"
 HARD_TASKS_DIR = BENCH / "tasks_hard"
 HARD_REFERENCE_DIR = BENCH / "reference_hard"
+SET3_TASKS_DIR = BENCH / "tasks_set3"
+SET3_REFERENCE_DIR = BENCH / "reference_set3"
 PROMPT_FILE = BENCH / "prompt.md"
 REFERENCE_FILE = ROOT / "docs" / "language-reference.md"
 MINIMAL_PROMPT_FILE = BENCH / "prompt_minimal.md"
@@ -37,7 +39,8 @@ GRAMMAR_MARK = "{{GRAMMAR}}"  # in prompt_minimal.md: replaced by the text of th
 REFERENCE_MARK = "{{LANGUAGE_REFERENCE}}"  # in prompt.md: replaced by the shipped, tested reference
 
 # The task sets: name -> (tasks directory, reference directory). Set 1 is the default and stays as it was.
-SETS = {"1": (TASKS_DIR, REFERENCE_DIR), "hard": (HARD_TASKS_DIR, HARD_REFERENCE_DIR)}
+SETS = {"1": (TASKS_DIR, REFERENCE_DIR), "hard": (HARD_TASKS_DIR, HARD_REFERENCE_DIR),
+        "3": (SET3_TASKS_DIR, SET3_REFERENCE_DIR)}  # set 3: decision record 0025
 PROMPTS = ("full", "minimal")
 
 # $ per million tokens: (input, output, cache read). A cache write (5 minutes) costs 1.25 x input.
@@ -59,17 +62,21 @@ PRICES = {
 CACHE_WRITE_FACTOR = 1.25
 
 # The answer: structured output (`output_config.format`), then read back by `parse_answer`.
-DECISIONS = ("program", "cannot")
+DECISIONS = ("program", "cannot", "clarify")
 CATEGORIES = ("inexpressible", "infeasible", "none")
 ANSWER_SCHEMA = {
     "type": "object",
     "properties": {
         "decision": {"type": "string", "enum": list(DECISIONS),
-                     "description": "\"program\" to answer with RoboLang source, \"cannot\" to decline the request."},
+                     "description": "\"program\" to answer with RoboLang source, \"cannot\" to decline the request, "
+                                    "\"clarify\" to ask which reading is meant."},
         "category": {"type": "string", "enum": list(CATEGORIES),
                      "description": "Why it cannot be done: \"inexpressible\" (RoboLang 1.3 cannot say it) or "
                                     "\"infeasible\" (this world or robot cannot do it). \"none\" for a program."},
         "reason": {"type": "string", "description": "One sentence: what the program does, or why it cannot be done."},
+        "entities": {"type": "array", "items": {"type": "string"},
+                     "description": "World entity IDs: for cannot, the ones that block the request; for clarify, every "
+                                    "candidate the request could mean. Empty for a program."},
         "rob": {"type": "string", "description": "The complete RoboLang 1.3 source. Empty when decision is cannot."},
         "task": {"type": "string", "description": "The name of the task in the source to run. Empty when cannot."},
         "bindings": {  # a list of pairs: structured outputs require additionalProperties false on objects
@@ -84,10 +91,11 @@ ANSWER_SCHEMA = {
             },
         },
     },
-    "required": ["decision", "category", "reason", "rob", "task", "bindings"],
+    "required": ["decision", "category", "reason", "entities", "rob", "task", "bindings"],
     "additionalProperties": False,
 }
 OLD_ANSWER_KEYS = {"rob", "task", "bindings"}  # saved answers of benchmark set 1: read as decision "program"
+SET2_ANSWER_KEYS = {"decision", "category", "reason", "rob", "task", "bindings"}  # saved before "entities": none
 
 # Pseudo codes for what is not a `robolang` diagnostic. Real codes (E..., W..., S...) are never changed.
 FORMAT_CODE = "B001"      # the reply was not an answer in the required format
@@ -209,13 +217,16 @@ def parse_answer(text: str) -> tuple[dict | None, str | None]:
         return None, f"the reply is not valid JSON ({error})"
     if isinstance(answer, dict) and set(answer) == OLD_ANSWER_KEYS:
         answer = {"decision": "program", "category": "none", "reason": "", **answer}
+    if isinstance(answer, dict) and set(answer) == SET2_ANSWER_KEYS:
+        answer = {"entities": [], **answer}
     if not isinstance(answer, dict) or set(answer) != set(ANSWER_SCHEMA["properties"]):
         return None, ('the reply must be one JSON object with exactly the keys "decision", "category", "reason", '
-                      '"rob", "task" and "bindings"')
+                      '"entities", "rob", "task" and "bindings"')
     if answer["decision"] not in DECISIONS or answer["category"] not in CATEGORIES \
-            or not isinstance(answer["reason"], str):
-        return None, ('"decision" must be "program" or "cannot", "category" "inexpressible", "infeasible" or "none", '
-                      'and "reason" a string')
+            or not isinstance(answer["reason"], str) or not isinstance(answer["entities"], list) \
+            or not all(isinstance(e, str) for e in answer["entities"]):
+        return None, ('"decision" must be "program", "cannot" or "clarify", "category" "inexpressible", "infeasible" '
+                      'or "none", "reason" a string and "entities" a list of entity IDs')
     bindings = answer["bindings"]
     if isinstance(bindings, list):  # the wire form: [{"param", "id"}, ...]; read back as a mapping
         pairs = [(b.get("param"), b.get("id")) if isinstance(b, dict) and set(b) == {"param", "id"} else (None, None)
@@ -417,6 +428,8 @@ def judge(task_def: dict, checked: Checked, bindings: dict[str, str]) -> Judgeme
     checks = {}
     if "expected_safety" in task_def:
         checks["safety"] = _check_safety(task_def, checked)
+    if "required_entities" in task_def:  # the robot, object or sensor the request named is the one bound
+        checks["entities"] = set(task_def["required_entities"]) <= set(bindings.values())
     if "expected_messages" in task_def:
         sent = {(s.message.channel, s.message.message) for s in result.steps if s.message}
         checks["messages"] = {tuple(m) for m in task_def["expected_messages"]} <= sent
@@ -459,7 +472,7 @@ def repair_message(report: str) -> str:
 def format_repair_message(problem: str) -> str:
     return (f"That reply could not be read: {problem}.\n\n"
             "Answer again as one JSON object with the keys \"decision\", \"category\", \"reason\", "
-            "\"rob\", \"task\" and \"bindings\".")
+            "\"entities\", \"rob\", \"task\" and \"bindings\".")
 
 
 def served_by(call: dict) -> dict:

@@ -1,0 +1,15 @@
+{
+  "id": "a15_nice_and_slow",
+  "prompt": "Have picker1 bring vial B1 to packing gently, nice and slow.",
+  "world": "bench/worlds/pharmacy.json",
+  "group": "clarify",
+  "expect": {
+    "decision": "clarify",
+    "category": "none"
+  },
+  "tags": [
+    "speed"
+  ],
+  "slot": "speed",
+  "candidates": []
+}

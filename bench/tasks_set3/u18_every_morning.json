@@ -1,0 +1,14 @@
+{
+  "id": "u18_every_morning",
+  "prompt": "Every morning at 06:00, have tug1 drive to the in gate.",
+  "world": "bench/worlds/yard.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "tags": [
+    "clock_time"
+  ],
+  "why": "There is no clock; waits are relative durations only."
+}

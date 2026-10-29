@@ -1,0 +1,10 @@
+{
+  "task": "deliver",
+  "bindings": {
+    "r": "crane2",
+    "o": "cont_102",
+    "src": "berth_1",
+    "dst": "berth_2",
+    "s": "cam_drone"
+  }
+}

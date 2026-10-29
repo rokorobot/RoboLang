@@ -1,0 +1,14 @@
+{
+  "id": "u02_if_damaged",
+  "prompt": "Have crane 2 scan container 102 with its camera; if the scan shows damage, move it to the workshop, otherwise to berth 2.",
+  "world": "bench/worlds/yard.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "tags": [
+    "branching"
+  ],
+  "why": "RoboLang 1.3 has no conditional statement, and inspect yields no condition a plan could test."
+}

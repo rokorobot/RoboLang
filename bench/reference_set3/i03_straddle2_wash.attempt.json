@@ -1,0 +1,9 @@
+{
+  "task": "deliver",
+  "bindings": {
+    "r": "straddle2",
+    "o": "cont_203",
+    "src": "stack_b",
+    "dst": "wash"
+  }
+}

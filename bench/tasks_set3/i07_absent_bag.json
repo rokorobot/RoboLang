@@ -1,0 +1,36 @@
+{
+  "id": "i07_absent_bag",
+  "prompt": "Bring the intake bag to packing with picker1.",
+  "world": "bench/worlds/pharmacy.json",
+  "group": "infeasible",
+  "expect": {
+    "decision": "cannot",
+    "category": "infeasible"
+  },
+  "tags": [
+    "absent_object"
+  ],
+  "why": "bag_1 is not present in the world, so it cannot be grasped (S213).",
+  "blockers": [
+    "bag_1"
+  ],
+  "required_entities": [
+    "bag_1"
+  ],
+  "faithful_goal": [
+    [
+      "rl:thing:bag_1",
+      "located_in",
+      "rl:place:packing"
+    ]
+  ],
+  "fix_patch": {
+    "objects": {
+      "bag_1": {
+        "present": true,
+        "location": "intake"
+      }
+    }
+  },
+  "attempt_fails_with": "S213"
+}

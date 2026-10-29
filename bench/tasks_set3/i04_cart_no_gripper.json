@@ -1,0 +1,35 @@
+{
+  "id": "i04_cart_no_gripper",
+  "prompt": "Have cart1 pick up vial A2 from shelf A and bring it to dispatch.",
+  "world": "bench/worlds/pharmacy.json",
+  "group": "infeasible",
+  "expect": {
+    "decision": "cannot",
+    "category": "infeasible"
+  },
+  "tags": [
+    "no_gripper"
+  ],
+  "why": "cart1 has no gripper, so it cannot grasp (S211), and the request names it.",
+  "blockers": [
+    "cart1"
+  ],
+  "required_entities": [
+    "cart1"
+  ],
+  "faithful_goal": [
+    [
+      "rl:thing:vial_a2",
+      "located_in",
+      "rl:place:dispatch"
+    ]
+  ],
+  "fix_patch": {
+    "robots": {
+      "cart1": {
+        "gripper": true
+      }
+    }
+  },
+  "attempt_fails_with": "S211"
+}

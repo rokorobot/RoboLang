@@ -1,0 +1,11 @@
+// bench/reference_set3/a18_hold_briefly.reading2.rob: hand-written
+robolang 1.3;
+
+task visit(robot r, location there, location home) {
+    goal { robot_at r home; }
+    plan {
+        move r to there;
+        wait for 30 s;
+        move r to home;
+    }
+}

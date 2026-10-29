@@ -1,0 +1,34 @@
+{
+  "world_schema": "robolang.sim.world",
+  "world_schema_version": "1.1",
+  "locations": ["pantry", "fridge", "prep_1", "prep_2", "stove", "oven", "pass", "sink", "bin"],
+  "regions": {
+    "hot_zone": { "clear": false },
+    "pass_area": { "clear": true }
+  },
+  "robots": {
+    "chef_arm": { "ready": true, "location": "prep_1", "gripper": true, "max_speed": [{ "value": "0.4", "unit": "m/s" }, { "value": "2", "unit": "rad/s" }] },
+    "helper_arm": { "ready": true, "location": "prep_2", "gripper": true, "max_speed": [{ "value": "0.4", "unit": "m/s" }] },
+    "runner": { "ready": true, "location": "pass", "gripper": false, "max_speed": [{ "value": "1", "unit": "m/s" }] }
+  },
+  "objects": {
+    "pan_1": { "present": true, "location": "stove", "class": "pan" },
+    "pan_2": { "present": true, "location": "sink", "class": "pan" },
+    "tray_a": { "present": true, "location": "oven", "class": "tray" },
+    "tray_b": { "present": true, "location": "prep_2", "class": "tray" },
+    "bowl_1": { "present": true, "location": "pantry", "class": "bowl" },
+    "bowl_2": { "present": true, "location": "fridge", "class": "bowl" },
+    "knife_1": { "present": true, "held_by": "chef_arm", "class": "knife" },
+    "cup_1": { "present": true, "location": "pantry", "class": "cup" }
+  },
+  "sensors": {
+    "cam_chef": { "robot": "chef_arm", "available": true },
+    "probe_temp": { "robot": "chef_arm", "available": true },
+    "scale_1": { "robot": "helper_arm", "available": false },
+    "cam_runner": { "robot": "runner", "available": true }
+  },
+  "events": [
+    { "at": { "value": "30", "unit": "s" }, "fact": "region_clear", "target": "hot_zone", "value": true }
+  ],
+  "tasks": {}
+}

@@ -1,0 +1,15 @@
+{
+  "id": "a16_a_moment",
+  "prompt": "Have the helper arm go to the oven, wait a moment there, then come back to prep 2.",
+  "world": "bench/worlds/kitchen.json",
+  "group": "clarify",
+  "expect": {
+    "decision": "clarify",
+    "category": "none"
+  },
+  "tags": [
+    "duration"
+  ],
+  "slot": "duration",
+  "candidates": []
+}

@@ -1,0 +1,18 @@
+{
+  "id": "a08_which_cart",
+  "prompt": "Have the cart drive to the waste area.",
+  "world": "bench/worlds/pharmacy.json",
+  "group": "clarify",
+  "expect": {
+    "decision": "clarify",
+    "category": "none"
+  },
+  "tags": [
+    "robot"
+  ],
+  "slot": "robot",
+  "candidates": [
+    "cart1",
+    "cart2"
+  ]
+}

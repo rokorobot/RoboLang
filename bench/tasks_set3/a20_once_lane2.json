@@ -1,0 +1,15 @@
+{
+  "id": "a20_once_lane2",
+  "prompt": "Once lane 2 clears, have straddle1 take container 204 to stack C.",
+  "world": "bench/worlds/yard.json",
+  "group": "clarify",
+  "expect": {
+    "decision": "clarify",
+    "category": "none"
+  },
+  "tags": [
+    "timeout"
+  ],
+  "slot": "timeout",
+  "candidates": []
+}

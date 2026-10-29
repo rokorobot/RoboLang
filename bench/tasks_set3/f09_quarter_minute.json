@@ -1,0 +1,23 @@
+{
+  "id": "f09_quarter_minute",
+  "prompt": "Have the helper arm go to the oven, pause there for a quarter of a minute, then come back to prep 2.",
+  "world": "bench/worlds/kitchen.json",
+  "group": "feasible",
+  "expect": {
+    "decision": "program",
+    "category": "none"
+  },
+  "expected_goal": [
+    [
+      "rl:robot:helper_arm",
+      "located_in",
+      "rl:place:prep_2"
+    ]
+  ],
+  "expected_end_ms": "15000",
+  "tags": [
+    "wait_for",
+    "units_in_words",
+    "robot_at"
+  ]
+}

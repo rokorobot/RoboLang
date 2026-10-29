@@ -1,0 +1,18 @@
+{
+  "id": "a06_which_crane",
+  "prompt": "Have the crane put container 305 on berth 2.",
+  "world": "bench/worlds/yard.json",
+  "group": "clarify",
+  "expect": {
+    "decision": "clarify",
+    "category": "none"
+  },
+  "tags": [
+    "robot"
+  ],
+  "slot": "robot",
+  "candidates": [
+    "crane1",
+    "crane2"
+  ]
+}

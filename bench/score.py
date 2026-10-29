@@ -26,6 +26,13 @@ infeasible). The four rates above are over the tasks that expect a program; on t
     false_refusal       "cannot" for a task that expects a program
     category_correct    of the correct "cannot" decisions, the category is the expected one
 
+Set 3 (`--set 3`, decision record 0025) adds tasks that expect "clarify": the request could mean several entities,
+or omits a value, and the world does not decide. On those:
+
+    silent_guess        a program that picks one reading instead of asking (as serious as false_program)
+    entities_correct    of the correct "cannot" or "clarify" decisions, `entities` names a blocker (cannot) or
+                        exactly the candidates (clarify), where the task lists them
+
 The decision is judged on the first answer, before any tool output; a repair round (only for invalid programs)
 may change it, which is reported as false_program_final. An answer without a `decision` (set 1) is a program.
 Writes report.md and scores.json next to the answers.
@@ -58,6 +65,16 @@ def _final(task_def: dict, call: dict, codes: list[str]):
     checked = lib.check_answer(task_def, answer)
     codes.extend(checked.codes)
     return answer, checked, kind
+
+
+def _entities_correct(task_def: dict, answer: dict) -> bool | None:
+    """A correct decline names a blocker; a correct question names exactly the candidates. None: nothing to check."""
+    named = set(answer["entities"])
+    if answer["decision"] == "clarify" and task_def.get("candidates"):
+        return named == set(task_def["candidates"])
+    if answer["decision"] == "cannot" and task_def.get("blockers"):
+        return bool(named & set(task_def["blockers"]))
+    return None
 
 
 def evaluate_record(task_def: dict, record: dict) -> dict:
@@ -111,8 +128,11 @@ def evaluate_record(task_def: dict, record: dict) -> dict:
         "false_program_final": expect == "cannot" and decision_final == "program",
         "false_program_undetected": bool(expect == "cannot" and decision_final == "program" and judgement
                                          and judgement.plan_succeeds),
-        "false_refusal": expect == "program" and decision == "cannot",
-        "false_refusal_final": expect == "program" and decision_final == "cannot",
+        "false_refusal": expect == "program" and decision in ("cannot", "clarify"),
+        "false_refusal_final": expect == "program" and decision_final in ("cannot", "clarify"),
+        "silent_guess": expect == "clarify" and decision == "program",
+        "silent_guess_final": expect == "clarify" and decision_final == "program",
+        "entities_correct": _entities_correct(task_def, first) if first and decision == expect != "program" else None,
         "category_final": category_final,
     }
 
@@ -195,38 +215,55 @@ def _count(rows: list[dict], field: str) -> str:
     return _share(sum(bool(r[field]) for r in rows), len(rows))
 
 
-def _robustness_row(rows: list[dict]) -> list[str]:
-    """Cells: decision_correct, false_program (and after repair, undetected), false_refusal, category_correct."""
+def _asks(rows: list[dict]) -> bool:
+    return any(r["expect"] == "clarify" for r in rows)
+
+
+def _robustness_row(rows: list[dict], asks: bool = False) -> list[str]:
+    """Cells: decision_correct, false_program (and after repair, undetected), false_refusal, category_correct;
+    with `asks` (set 3), also silent_guess and entities_correct."""
     cannot = [r for r in rows if r["expect"] == "cannot"]
     declined = [r for r in cannot if r["decision"] == "cannot"]
     undetected = sum(r["false_program_undetected"] for r in cannot)
+    ask = [r for r in rows if r["expect"] == "clarify"]
+    named = [r for r in rows if r.get("entities_correct") is not None]
+    extra = [_count(ask, "silent_guess") if ask else "-",
+             _share(sum(r["entities_correct"] for r in named), len(named)) if named else "-"] if asks else []
     return [_count(rows, "decision_correct"), _count(cannot, "false_program") if cannot else "-",
             f"{sum(r['false_program_final'] for r in cannot)}/{len(cannot)}" if cannot else "-",
             f"{undetected}/{len(cannot)}" if cannot else "-",
             _count(_programs(rows), "false_refusal") if _programs(rows) else "-",
-            _share(sum(r["category_correct"] for r in declined), len(declined)) if declined else "-"]
+            _share(sum(r["category_correct"] for r in declined), len(declined)) if declined else "-"] + extra
 
 
 ROBUSTNESS_HEAD = ["decision_correct", "false_program", "false_program after repair",
                    "of which valid and SUCCEEDED", "false_refusal", "category_correct (of declines)"]
+ASK_HEAD = ["silent_guess", "entities_correct"]
+
+
+def _head(rows: list[dict]) -> list[str]:
+    return ROBUSTNESS_HEAD + (ASK_HEAD if _asks(rows) else [])
 
 
 def _robustness_table(rows: list[dict]) -> list[str]:
-    lines = ["| " + " | ".join(ROBUSTNESS_HEAD) + " |", "|" + "---:|" * len(ROBUSTNESS_HEAD),
-             "| " + " | ".join(_robustness_row(rows)) + " |"]
+    head = _head(rows)
+    lines = ["| " + " | ".join(head) + " |", "|" + "---:|" * len(head),
+             "| " + " | ".join(_robustness_row(rows, _asks(rows))) + " |"]
     return lines
 
 
 def _kinds_table(rows: list[dict]) -> list[str]:
     """One row per task kind (inexpressible, infeasible, decoy, ambiguous, control)."""
-    lines = ["| kind | answers | " + " | ".join(ROBUSTNESS_HEAD) + " | goal_correct | plan_succeeds |",
-             "|---|---:|" + "---:|" * (len(ROBUSTNESS_HEAD) + 2)]
+    head = _head(rows)
+    lines = ["| kind | answers | " + " | ".join(head) + " | goal_correct | plan_succeeds |",
+             "|---|---:|" + "---:|" * (len(head) + 2)]
     for kind in sorted({r["kind"] for r in rows}):
         sel = [r for r in rows if r["kind"] == kind]
         feasible = _programs(sel)
         goal = _count(feasible, "goal_correct") if feasible else "-"
         succeeds = _count(feasible, "plan_succeeds") if feasible else "-"
-        lines.append(f"| {kind} | {len(sel)} | " + " | ".join(_robustness_row(sel)) + f" | {goal} | {succeeds} |")
+        lines.append(f"| {kind} | {len(sel)} | " + " | ".join(_robustness_row(sel, _asks(rows)))
+                     + f" | {goal} | {succeeds} |")
     return lines
 
 
@@ -267,12 +304,13 @@ def report(meta: dict, rows: list[dict]) -> str:
         lines.append(f"| {model} | {len(own)} | {_shares(own)} | {_usd(None if None in costs else sum(costs))} |")
     if _hard(rows):
         lines += ["", f"The four rates are over the {len(_programs([r for r in rows if r['model'] == models[0]]))} "
-                  "task(s) that expect a program (the others expect a decline). Robustness, per model:", "",
-                  "| model | answers | " + " | ".join(ROBUSTNESS_HEAD) + " |",
-                  "|---|---:|" + "---:|" * len(ROBUSTNESS_HEAD)]
+                  "task(s) that expect a program (the others expect a decline or a question). "
+                  "Robustness, per model:", "",
+                  "| model | answers | " + " | ".join(_head(rows)) + " |",
+                  "|---|---:|" + "---:|" * len(_head(rows))]
         for model in models:
             own = [r for r in rows if r["model"] == model and r["group"] == "requested"]
-            lines.append(f"| {model} | {len(own)} | " + " | ".join(_robustness_row(own)) + " |")
+            lines.append(f"| {model} | {len(own)} | " + " | ".join(_robustness_row(own, _asks(rows))) + " |")
     for model in models:
         own = [r for r in rows if r["model"] == model and r["group"] == "requested"]
         lines += ["", f"## {model}", "", f"{len(own)} answer(s) served by {model}.", ""] + (_group(own) if own else [])

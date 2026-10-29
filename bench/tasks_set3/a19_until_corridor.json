@@ -1,0 +1,15 @@
+{
+  "id": "a19_until_corridor",
+  "prompt": "Wait until the corridor clears, then have picker1 bring tray 2 to dispatch.",
+  "world": "bench/worlds/pharmacy.json",
+  "group": "clarify",
+  "expect": {
+    "decision": "clarify",
+    "category": "none"
+  },
+  "tags": [
+    "timeout"
+  ],
+  "slot": "timeout",
+  "candidates": []
+}

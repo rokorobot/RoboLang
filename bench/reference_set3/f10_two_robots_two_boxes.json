@@ -1,0 +1,13 @@
+{
+  "task": "two",
+  "bindings": {
+    "a": "crane2",
+    "b": "straddle1",
+    "x": "cont_102",
+    "y": "cont_203",
+    "xs": "berth_1",
+    "xd": "berth_2",
+    "ys": "stack_b",
+    "yd": "wash"
+  }
+}

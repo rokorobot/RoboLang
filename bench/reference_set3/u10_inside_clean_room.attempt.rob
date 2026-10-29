@@ -1,0 +1,12 @@
+// bench/reference_set3/u10_inside_clean_room.attempt.rob: hand-written
+robolang 1.3;
+
+task inside(robot r, object o, location src, location dst, region z) {
+    goal { object_at o dst; }
+    plan {
+        move r to src in_region z;
+        grasp r o;
+        move r to dst in_region z;
+        place r o at dst;
+    }
+}

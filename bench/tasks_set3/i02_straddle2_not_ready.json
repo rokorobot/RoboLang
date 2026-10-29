@@ -1,0 +1,35 @@
+{
+  "id": "i02_straddle2_not_ready",
+  "prompt": "Have straddle2 take container 204 from stack B to the in gate.",
+  "world": "bench/worlds/yard.json",
+  "group": "infeasible",
+  "expect": {
+    "decision": "cannot",
+    "category": "infeasible"
+  },
+  "tags": [
+    "not_ready"
+  ],
+  "why": "straddle2 is not ready, so it cannot move (S201), and the request names it.",
+  "blockers": [
+    "straddle2"
+  ],
+  "required_entities": [
+    "straddle2"
+  ],
+  "faithful_goal": [
+    [
+      "rl:thing:cont_204",
+      "located_in",
+      "rl:place:gate_in"
+    ]
+  ],
+  "fix_patch": {
+    "robots": {
+      "straddle2": {
+        "ready": true
+      }
+    }
+  },
+  "attempt_fails_with": "S201"
+}

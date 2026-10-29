@@ -1,0 +1,10 @@
+{
+  "task": "deliver",
+  "bindings": {
+    "r": "helper_arm",
+    "o": "pan_1",
+    "src": "stove",
+    "dst": "sink",
+    "z": "hot_zone"
+  }
+}

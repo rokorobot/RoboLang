@@ -1,0 +1,18 @@
+{
+  "id": "a12_which_shelf",
+  "prompt": "Have picker1 put tray 1 on the shelf.",
+  "world": "bench/worlds/pharmacy.json",
+  "group": "clarify",
+  "expect": {
+    "decision": "clarify",
+    "category": "none"
+  },
+  "tags": [
+    "location"
+  ],
+  "slot": "location",
+  "candidates": [
+    "shelf_a",
+    "shelf_b"
+  ]
+}

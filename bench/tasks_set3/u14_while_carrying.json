@@ -1,0 +1,14 @@
+{
+  "id": "u14_while_carrying",
+  "prompt": "While the helper arm carries tray B to the pass, the chef arm must look at pan 1 with its camera at that same moment.",
+  "world": "bench/worlds/kitchen.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "tags": [
+    "concurrency"
+  ],
+  "why": "Robots do their steps one after another; nothing runs at the same time."
+}

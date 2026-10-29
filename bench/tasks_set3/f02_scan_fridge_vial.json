@@ -1,0 +1,25 @@
+{
+  "id": "f02_scan_fridge_vial",
+  "prompt": "With picker1, take the vial that is in fridge 1 to packing, scanning it with scan_p1 before you pick it up.",
+  "world": "bench/worlds/pharmacy.json",
+  "group": "feasible",
+  "expect": {
+    "decision": "program",
+    "category": "none"
+  },
+  "expected_goal": [
+    [
+      "rl:thing:vial_b1",
+      "located_in",
+      "rl:place:packing"
+    ]
+  ],
+  "required_entities": [
+    "picker1"
+  ],
+  "tags": [
+    "pick_place",
+    "inspect",
+    "referent_by_location"
+  ]
+}

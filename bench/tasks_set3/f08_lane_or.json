@@ -1,0 +1,34 @@
+{
+  "id": "f08_lane_or",
+  "prompt": "Only if lane 1 or lane 2 is clear, have straddle1 move container 204 to stack A.",
+  "world": "bench/worlds/yard.json",
+  "group": "feasible",
+  "expect": {
+    "decision": "program",
+    "category": "none"
+  },
+  "expected_goal": [
+    [
+      "rl:thing:cont_204",
+      "located_in",
+      "rl:place:stack_a"
+    ]
+  ],
+  "probes": [
+    {
+      "name": "both_lanes_closed",
+      "world_patch": {
+        "regions": {
+          "lane_1": {
+            "clear": false
+          }
+        }
+      },
+      "expect": "not_succeeded"
+    }
+  ],
+  "tags": [
+    "precondition",
+    "or"
+  ]
+}

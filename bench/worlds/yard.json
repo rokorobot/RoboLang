@@ -1,0 +1,37 @@
+{
+  "world_schema": "robolang.sim.world",
+  "world_schema_version": "1.1",
+  "locations": ["berth_1", "berth_2", "stack_a", "stack_b", "stack_c", "gate_in", "gate_out", "workshop", "wash"],
+  "regions": {
+    "quay": { "clear": false },
+    "lane_1": { "clear": true },
+    "lane_2": { "clear": false }
+  },
+  "robots": {
+    "crane1": { "ready": true, "location": "berth_1", "gripper": true, "max_speed": [{ "value": "0.5", "unit": "m/s" }, { "value": "0.3", "unit": "rad/s" }] },
+    "crane2": { "ready": true, "location": "berth_2", "gripper": true, "max_speed": [{ "value": "0.5", "unit": "m/s" }] },
+    "straddle1": { "ready": true, "location": "stack_a", "gripper": true, "max_speed": [{ "value": "2", "unit": "m/s" }] },
+    "straddle2": { "ready": false, "location": "stack_b", "gripper": true, "max_speed": [{ "value": "2", "unit": "m/s" }] },
+    "tug1": { "ready": true, "location": "gate_in", "gripper": false, "max_speed": [{ "value": "3", "unit": "m/s" }] },
+    "drone1": { "ready": true, "location": "workshop", "gripper": false, "max_speed": [{ "value": "5", "unit": "m/s" }] }
+  },
+  "objects": {
+    "cont_101": { "present": true, "location": "berth_1", "class": "container" },
+    "cont_102": { "present": true, "location": "berth_1", "class": "container" },
+    "cont_203": { "present": true, "location": "stack_b", "class": "container" },
+    "cont_204": { "present": true, "location": "stack_b", "class": "container" },
+    "cont_305": { "present": true, "location": "stack_c", "class": "reefer" },
+    "cont_999": { "present": false, "class": "container" },
+    "chassis_1": { "present": true, "location": "gate_in", "class": "chassis" }
+  },
+  "sensors": {
+    "lidar_c1": { "robot": "crane1", "available": true },
+    "cam_c2": { "robot": "crane2", "available": true },
+    "seal_reader": { "robot": "straddle1", "available": false },
+    "cam_drone": { "robot": "drone1", "available": true }
+  },
+  "events": [
+    { "at": { "value": "45", "unit": "s" }, "fact": "region_clear", "target": "lane_2", "value": true }
+  ],
+  "tasks": {}
+}

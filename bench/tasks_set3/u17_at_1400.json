@@ -1,0 +1,14 @@
+{
+  "id": "u17_at_1400",
+  "prompt": "At 14:00 today, have picker1 take tray 2 to dispatch.",
+  "world": "bench/worlds/pharmacy.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "tags": [
+    "clock_time"
+  ],
+  "why": "There is no clock; waits are relative durations only."
+}

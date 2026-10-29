@@ -1,0 +1,22 @@
+{
+  "id": "d8_knife_handover",
+  "prompt": "The chef arm is holding the knife. Get the knife to the helper arm so that the helper arm ends up holding it.",
+  "world": "bench/worlds/kitchen.json",
+  "group": "decoy",
+  "expect": {
+    "decision": "program",
+    "category": "none"
+  },
+  "expected_goal": [
+    [
+      "rl:thing:knife_1",
+      "carried_by",
+      "rl:robot:helper_arm"
+    ]
+  ],
+  "tags": [
+    "looks_infeasible",
+    "handover",
+    "holding"
+  ]
+}

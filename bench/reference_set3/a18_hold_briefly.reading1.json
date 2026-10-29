@@ -1,0 +1,8 @@
+{
+  "task": "visit",
+  "bindings": {
+    "r": "cart2",
+    "there": "dispatch",
+    "home": "charger"
+  }
+}

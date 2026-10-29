@@ -1,0 +1,18 @@
+{
+  "id": "a05_which_berth_container",
+  "prompt": "Have crane 1 put the container from berth 1 on stack C.",
+  "world": "bench/worlds/yard.json",
+  "group": "clarify",
+  "expect": {
+    "decision": "clarify",
+    "category": "none"
+  },
+  "tags": [
+    "object"
+  ],
+  "slot": "object",
+  "candidates": [
+    "cont_101",
+    "cont_102"
+  ]
+}

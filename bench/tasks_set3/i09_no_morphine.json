@@ -1,0 +1,28 @@
+{
+  "id": "i09_no_morphine",
+  "prompt": "Move the morphine vial from shelf B to dispatch with picker1.",
+  "world": "bench/worlds/pharmacy.json",
+  "group": "infeasible",
+  "expect": {
+    "decision": "cannot",
+    "category": "infeasible"
+  },
+  "tags": [
+    "unknown_entity"
+  ],
+  "why": "The world has no such object, so nothing can be bound to it.",
+  "blockers": [],
+  "required_entities": [
+    "morphine_1"
+  ],
+  "fix_patch": {
+    "objects": {
+      "morphine_1": {
+        "present": true,
+        "location": "shelf_b",
+        "class": "vial"
+      }
+    }
+  },
+  "attempt_fails_with": "E505"
+}

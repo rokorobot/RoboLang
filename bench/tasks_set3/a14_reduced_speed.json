@@ -1,0 +1,15 @@
+{
+  "id": "a14_reduced_speed",
+  "prompt": "Have crane 1 move container 102 to the wash at a reduced speed.",
+  "world": "bench/worlds/yard.json",
+  "group": "clarify",
+  "expect": {
+    "decision": "clarify",
+    "category": "none"
+  },
+  "tags": [
+    "speed"
+  ],
+  "slot": "speed",
+  "candidates": []
+}

@@ -1,0 +1,20 @@
+{
+  "id": "d1_bowl_in_fridge",
+  "prompt": "Move the bowl that is in the fridge to prep 1 with the helper arm.",
+  "world": "bench/worlds/kitchen.json",
+  "group": "decoy",
+  "expect": {
+    "decision": "program",
+    "category": "none"
+  },
+  "expected_goal": [
+    [
+      "rl:thing:bowl_2",
+      "located_in",
+      "rl:place:prep_1"
+    ]
+  ],
+  "tags": [
+    "looks_ambiguous"
+  ]
+}

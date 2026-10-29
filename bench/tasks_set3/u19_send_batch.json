@@ -1,0 +1,14 @@
+{
+  "id": "u19_send_batch",
+  "prompt": "Scan the insulin with picker1's scanner and send the batch number you read to the \"dispatch\" channel.",
+  "world": "bench/worlds/pharmacy.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "tags": [
+    "value_report"
+  ],
+  "why": "communicate sends a literal string; a measured value cannot be put in it."
+}
