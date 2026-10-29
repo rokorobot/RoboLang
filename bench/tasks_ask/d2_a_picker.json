@@ -20,5 +20,22 @@
   "tags": [
     "looks_ambiguous",
     "capability"
+  ],
+  "expected_action_sequences": [
+    {
+      "steps": [
+        {
+          "kind": "grasp",
+          "robot": "picker1",
+          "obj": "vial_a1"
+        },
+        {
+          "kind": "place",
+          "robot": "picker1",
+          "obj": "vial_a1",
+          "target": "packing"
+        }
+      ]
+    }
   ]
 }

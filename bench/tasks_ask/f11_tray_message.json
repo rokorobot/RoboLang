@@ -23,5 +23,38 @@
   "tags": [
     "communicate",
     "pick_place"
+  ],
+  "expected_action_sequences": [
+    {
+      "steps": [
+        {
+          "kind": "grasp",
+          "robot": "picker1",
+          "obj": "tray_2"
+        },
+        {
+          "kind": "place",
+          "robot": "picker1",
+          "obj": "tray_2",
+          "target": "dispatch"
+        }
+      ]
+    },
+    {
+      "steps": [
+        {
+          "kind": "place",
+          "robot": "picker1",
+          "obj": "tray_2",
+          "target": "dispatch"
+        },
+        {
+          "kind": "communicate",
+          "robot": "picker1",
+          "channel": "pharmacy",
+          "message": "TRAY READY"
+        }
+      ]
+    }
   ]
 }

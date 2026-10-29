@@ -22,5 +22,52 @@
     "looks_unsupported",
     "inspect",
     "two_robot"
+  ],
+  "expected_action_sequences": [
+    {
+      "steps": [
+        {
+          "kind": "grasp",
+          "robot": "helper_arm",
+          "obj": "pan_1"
+        },
+        {
+          "kind": "place",
+          "robot": "helper_arm",
+          "obj": "pan_1",
+          "target": "sink"
+        }
+      ]
+    },
+    {
+      "steps": [
+        {
+          "kind": "inspect",
+          "robot": "chef_arm",
+          "obj": "pan_1",
+          "sensor": "cam_chef"
+        },
+        {
+          "kind": "grasp",
+          "robot": "helper_arm",
+          "obj": "pan_1"
+        }
+      ]
+    },
+    {
+      "steps": [
+        {
+          "kind": "inspect",
+          "robot": "chef_arm",
+          "obj": "pan_1",
+          "sensor": "probe_temp"
+        },
+        {
+          "kind": "grasp",
+          "robot": "helper_arm",
+          "obj": "pan_1"
+        }
+      ]
+    }
   ]
 }

@@ -27,5 +27,22 @@
   "tags": [
     "pick_place",
     "safety"
+  ],
+  "expected_action_sequences": [
+    {
+      "steps": [
+        {
+          "kind": "grasp",
+          "robot": "straddle1",
+          "obj": "cont_203"
+        },
+        {
+          "kind": "place",
+          "robot": "straddle1",
+          "obj": "cont_203",
+          "target": "gate_out"
+        }
+      ]
+    }
   ]
 }

@@ -1,15 +1,15 @@
 {
   "id": "a15_nice_and_slow",
-  "prompt": "Have picker1 bring vial B1 to packing gently, nice and slow.",
+  "prompt": "Have picker1 bring vial B1 to packing gently, limiting grip force to 5 newtons and moving slowly.",
   "world": "bench/worlds/pharmacy.json",
-  "group": "clarify",
+  "group": "inexpressible",
   "expect": {
-    "decision": "clarify",
-    "category": "none"
+    "decision": "cannot",
+    "category": "inexpressible"
   },
   "tags": [
-    "speed"
+    "force_limit",
+    "gentle_handling"
   ],
-  "slot": "speed",
-  "candidates": []
+  "why": "RoboLang 1.3 has no grip-force limit. A speed declaration alone cannot implement the explicitly requested gentle handling constraint."
 }

@@ -24,5 +24,6 @@
       }
     }
   },
-  "attempt_fails_with": "E505"
+  "attempt_fails_with": "E505",
+  "failure_kind": "missing_entity"
 }

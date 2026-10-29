@@ -25,10 +25,38 @@
         }
       },
       "expect": "not_succeeded"
+    },
+    {
+      "name": "helper_not_ready",
+      "world_patch": {
+        "robots": {
+          "helper_arm": {
+            "ready": false
+          }
+        }
+      },
+      "expect": "not_succeeded"
     }
   ],
   "tags": [
     "precondition",
     "and"
+  ],
+  "expected_action_sequences": [
+    {
+      "steps": [
+        {
+          "kind": "grasp",
+          "robot": "helper_arm",
+          "obj": "tray_b"
+        },
+        {
+          "kind": "place",
+          "robot": "helper_arm",
+          "obj": "tray_b",
+          "target": "pass"
+        }
+      ]
+    }
   ]
 }

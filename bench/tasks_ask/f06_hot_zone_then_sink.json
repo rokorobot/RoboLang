@@ -19,5 +19,38 @@
     "wait_until",
     "timeout",
     "region"
+  ],
+  "expected_action_sequences": [
+    {
+      "steps": [
+        {
+          "kind": "grasp",
+          "robot": "helper_arm",
+          "obj": "pan_1"
+        },
+        {
+          "kind": "place",
+          "robot": "helper_arm",
+          "obj": "pan_1",
+          "target": "sink"
+        }
+      ]
+    },
+    {
+      "steps": [
+        {
+          "kind": "wait_until",
+          "condition": {
+            "kind": "region_clear",
+            "region": "hot_zone"
+          }
+        },
+        {
+          "kind": "grasp",
+          "robot": "helper_arm",
+          "obj": "pan_1"
+        }
+      ]
+    }
   ]
 }

@@ -46,8 +46,8 @@ def run_in(task: dict, ans: dict, patch: dict | None = None):
 
 
 def test_the_mix_of_tasks():
-    assert Counter(d["group"] for d in SET3.values()) == {"feasible": 12, "decoy": 8, "infeasible": 20,
-                                                          "inexpressible": 20, "clarify": 20}
+    assert Counter(d["group"] for d in SET3.values()) == {"feasible": 12, "decoy": 11, "infeasible": 19,
+                                                          "inexpressible": 22, "clarify": 16}
     for task in SET3.values():
         assert task["world"] in {"bench/worlds/pharmacy.json", "bench/worlds/yard.json", "bench/worlds/kitchen.json"}
         assert task["prompt"].endswith(".") and task["tags"]
@@ -116,6 +116,127 @@ def test_a_bound_entity_the_request_did_not_name_fails_the_check():
     swapped["bindings"]["r"] = "picker2"
     checked = lib.check_answer(task, swapped)
     assert lib.judge(task, checked, swapped["bindings"]).checks["entities"] is False
+
+
+def test_missing_inspections_and_reordered_actions_cannot_pass_on_final_goals_alone(tmp_path):
+    replies = {}
+    for name in ("f02_scan_fridge_vial", "d5_two_inspections"):
+        ans = answer(name)
+        ans["rob"] = "\n".join(line for line in ans["rob"].splitlines() if "inspect " not in line)
+        replies[name] = ans
+    ans = answer("f05_three_to_packing")
+    ans["rob"] = ans["rob"].replace("inspect r a using s;\n        grasp r a;",
+                                     "grasp r a;\n        inspect r a using s;")
+    replies["f05_three_to_packing"] = ans
+    ans = answer("f11_tray_message")
+    line = '        communicate r to "pharmacy" with "TRAY READY";\n'
+    ans["rob"] = ans["rob"].replace(line, "").replace("    plan {\n", "    plan {\n" + line)
+    replies["f11_tray_message"] = ans
+    ans = answer("f04_crane_straddle_relay")
+    ans["rob"] = "\n".join(line for line in ans["rob"].splitlines()
+                             if not any(f"{op} a " in line for op in ("move", "grasp", "place")))
+    ans["rob"] = ans["rob"].replace("move b to mid;", "move b to src;")
+    replies["f04_crane_straddle_relay"] = ans
+    ans = answer("f10_two_robots_two_boxes")
+    for op in ("move", "grasp", "place"):
+        ans["rob"] = ans["rob"].replace(f"{op} a ", f"{op} b ")
+    replies["f10_two_robots_two_boxes"] = ans
+    _, rows = score.load_rows(ask_run(tmp_path, replies))
+    for row in rows:
+        assert row["valid_first"] and row["goal_correct"] and row["plan_succeeds"], row
+        assert row["checks"]["actions"] is False and row["checks_ok"] is False, row
+        assert row["request_satisfied"] is False, row
+    relay = next(r for r in rows if r["task_id"] == "f04_crane_straddle_relay")
+    assert relay["checks"]["entities"] is False  # crane1 was bound but never acted
+
+
+def test_independent_deliveries_may_be_reordered():
+    ans = answer("f05_three_to_packing")
+    # A2 before A1 is allowed: each scan must precede its own pickup, with no global vial order.
+    ans["bindings"]["a"], ans["bindings"]["b"] = ans["bindings"]["b"], ans["bindings"]["a"]
+    task = SET3["f05_three_to_packing"]
+    judgement = lib.judge(task, lib.check_answer(task, ans), ans["bindings"])
+    assert judgement.goal_correct and judgement.plan_succeeds and all(judgement.checks.values())
+
+
+def test_two_inspections_may_be_in_either_order():
+    ans = answer("d5_two_inspections")
+    ans["rob"] = ans["rob"].replace("inspect c o using cam;\n        inspect c o using probe;",
+                                     "inspect c o using probe;\n        inspect c o using cam;")
+    task = SET3["d5_two_inspections"]
+    judgement = lib.judge(task, lib.check_answer(task, ans), ans["bindings"])
+    assert judgement.goal_correct and judgement.plan_succeeds and all(judgement.checks.values())
+
+
+def test_pause_must_happen_at_the_requested_location():
+    task = SET3["f09_quarter_minute"]
+    ans = answer("f09_quarter_minute")
+    ans["rob"] = ans["rob"].replace("        move r to there;\n", "")
+    judgement = lib.judge(task, lib.check_answer(task, ans), ans["bindings"])
+    assert judgement.goal_correct and judgement.plan_succeeds and judgement.checks["end_ms"]
+    assert judgement.checks["actions"] is False
+    ans = answer("f09_quarter_minute")
+    ans["rob"] = ans["rob"].replace("15 s", "0.25 min")
+    judgement = lib.judge(task, lib.check_answer(task, ans), ans["bindings"])
+    assert all(judgement.checks.values())
+
+
+@pytest.mark.parametrize("name", ["a19_until_corridor", "a20_once_lane2"])
+@pytest.mark.parametrize("reading", [1, 2])
+def test_sufficient_implementation_timeouts_do_not_require_clarification(name, reading):
+    task = SET3[name]
+    ans = answer(f"{name}.reading{reading}")
+    judgement = lib.judge(task, lib.check_answer(task, ans), ans["bindings"])
+    assert judgement.goal_correct and judgement.plan_succeeds and all(judgement.checks.values())
+
+
+def test_timeout_failure_is_not_a_successful_no_op():
+    task = SET3["d7_wait_or_nothing"]
+    checked, result = run_in(task, answer("d7_wait_or_nothing"), {"events": []})
+    assert checked.valid and result.state == "FAILED" and result.failure.code == "S241"
+    assert all(s.status == "not_run" for s in result.steps[1:])
+    assert lib.expectation(task) == ("program", "none")  # feasible in the supplied, clearing world only
+
+
+def test_enabling_the_scale_does_not_add_a_mass_reading():
+    task = SET3["i12_scale_down"]
+    _, result = run_in(task, answer("i12_scale_down.sensor_only"),
+                       {"sensors": {"scale_1": {"available": True}}})
+    assert result.state == "SUCCEEDED"
+    observation = next(s.observation for s in result.steps if s.observation)
+    assert set(vars(observation)) == {"object", "present", "location", "held_by"}
+    assert lib.expectation(task) == ("cannot", "inexpressible")
+
+
+@pytest.mark.parametrize("speed, accepted", [("0.1", True), ("0.3", True), ("0.5", False)])
+def test_reduced_speed_accepts_any_strictly_lower_declared_limit(speed, accepted):
+    task = SET3["a14_reduced_speed"]
+    ans = answer("a14_reduced_speed")
+    ans["rob"] = ans["rob"].replace("0.2 m/s", f"{speed} m/s")
+    judgement = lib.judge(task, lib.check_answer(task, ans), ans["bindings"])
+    assert judgement.goal_correct and judgement.plan_succeeds
+    assert judgement.checks["relative_speed"] is accepted
+
+
+def test_missing_entities_and_unsupported_operations_are_not_rescued_by_prose(tmp_path):
+    fake_open = answer("d7_wait_or_nothing")
+    fake_open["rob"] = fake_open["rob"].replace('        wait until region_clear z timeout 45 s;',
+                                             '        communicate r to "oven" with "OPEN DOOR";')
+    invented = answer("d1_bowl_in_fridge")
+    invented["bindings"]["o"] = "soup_pot"
+    duration = answer("a16_a_moment.reading1")
+    duration["reason"] = "I chose a 2-second pause as a default."
+    _, rows = score.load_rows(ask_run(tmp_path, {
+        "u15_open_oven": fake_open,
+        "i10_no_soup_pot": invented,
+        "i09_no_morphine": other("cannot", "infeasible", ["invented_morphine"]),
+        "a16_a_moment": duration,
+    }))
+    by = {r["task_id"]: r for r in rows}
+    assert by["u15_open_oven"]["false_program_undetected"] and not by["u15_open_oven"]["request_satisfied"]
+    assert not by["i10_no_soup_pot"]["valid_after_repair"]
+    assert by["i09_no_morphine"]["entities_correct"] is False
+    assert by["a16_a_moment"]["unjustified_default"] and not by["a16_a_moment"]["silent_guess"]
 
 
 # -------- the scorer --------

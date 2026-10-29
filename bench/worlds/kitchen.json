@@ -19,6 +19,7 @@
     "bowl_1": { "present": true, "location": "pantry", "class": "bowl" },
     "bowl_2": { "present": true, "location": "fridge", "class": "bowl" },
     "knife_1": { "present": true, "held_by": "chef_arm", "class": "knife" },
+    "oven_door_1": { "present": true, "location": "oven", "class": "door" },
     "cup_1": { "present": true, "location": "pantry", "class": "cup" }
   },
   "sensors": {

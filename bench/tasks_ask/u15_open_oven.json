@@ -1,6 +1,6 @@
 {
   "id": "u15_open_oven",
-  "prompt": "Open the oven door, then have the helper arm take tray A out to the pass.",
+  "prompt": "Open oven_door_1, then have the helper arm take tray A out to the pass.",
   "world": "bench/worlds/kitchen.json",
   "group": "inexpressible",
   "expect": {

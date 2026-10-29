@@ -16,5 +16,22 @@
   ],
   "tags": [
     "looks_ambiguous"
+  ],
+  "expected_action_sequences": [
+    {
+      "steps": [
+        {
+          "kind": "grasp",
+          "robot": "helper_arm",
+          "obj": "bowl_2"
+        },
+        {
+          "kind": "place",
+          "robot": "helper_arm",
+          "obj": "bowl_2",
+          "target": "prep_1"
+        }
+      ]
+    }
   ]
 }

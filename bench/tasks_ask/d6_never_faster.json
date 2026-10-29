@@ -25,5 +25,22 @@
     "looks_unsupported",
     "safety",
     "units_in_words"
+  ],
+  "expected_action_sequences": [
+    {
+      "steps": [
+        {
+          "kind": "grasp",
+          "robot": "crane1",
+          "obj": "cont_102"
+        },
+        {
+          "kind": "place",
+          "robot": "crane1",
+          "obj": "cont_102",
+          "target": "wash"
+        }
+      ]
+    }
   ]
 }

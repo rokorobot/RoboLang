@@ -1,5 +1,11 @@
 # BENCH-2 — knowing when not to write a program
 
+
+> Independent GPT-6 review received 2026-10-29. Corrections are implemented for owner review; **not frozen**.
+> Current coverage is 23 program / 19 infeasible / 22 inexpressible / 16 clarify, below the approved clarification
+> minimum. The original design and pilot below are historical; no thresholds or coverage exceptions are approved.
+> See [review response](../evidence/bench2-label-review-response.md).
+
 **Status:** for the owner's review. Decision record: [0025](../../spec/decisions/0025-bench-2.md).
 Phase 1 (build, `bench/v2/`) and the phase 3 pilot are done (2026-10-29,
 [report](../evidence/bench2-pilot-report.md)). The label review (phase 2) and the full run are not. No full run,

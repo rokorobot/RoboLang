@@ -1,6 +1,6 @@
 {
   "id": "i17_placed_and_held",
-  "prompt": "Put pan 2 on the stove with the helper arm, and make sure the helper arm is still holding it at the end.",
+  "prompt": "With the helper arm, make pan 2 end the task both placed on the stove and held by the helper arm at the same time.",
   "world": "bench/worlds/kitchen.json",
   "group": "infeasible",
   "expect": {

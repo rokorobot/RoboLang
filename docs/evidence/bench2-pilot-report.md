@@ -1,3 +1,7 @@
+> Historical pilot only: the independent label review subsequently disputed seven labels and led to wording,
+> category and procedural-scoring corrections. These numbers have not been re-scored against the revised requests.
+> See [review response](bench2-label-review-response.md).
+
 > Ran on the pre-consolidation code (`bench/v2/`, commit `737ce8d`, 9-key answer format). The cases are now set "ask" of
 > `bench/` ([0025](../../spec/decisions/0025-bench-2.md)); `d3_lane2_right_now` became `d3_lane1_right_now`.
 

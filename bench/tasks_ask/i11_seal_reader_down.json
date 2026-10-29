@@ -1,6 +1,6 @@
 {
   "id": "i11_seal_reader_down",
-  "prompt": "Read container 203's seal with the seal reader on straddle 1, then have straddle 1 take it to the out gate.",
+  "prompt": "Inspect container 203 using the seal reader on straddle1, then have straddle1 take it to the out gate.",
   "world": "bench/worlds/yard.json",
   "group": "infeasible",
   "expect": {

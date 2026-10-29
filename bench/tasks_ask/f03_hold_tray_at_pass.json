@@ -22,5 +22,16 @@
   "tags": [
     "holding",
     "robot_at"
+  ],
+  "expected_action_sequences": [
+    {
+      "steps": [
+        {
+          "kind": "grasp",
+          "robot": "helper_arm",
+          "obj": "tray_b"
+        }
+      ]
+    }
   ]
 }

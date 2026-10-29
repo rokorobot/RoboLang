@@ -2,14 +2,55 @@
   "id": "a20_once_lane2",
   "prompt": "Once lane 2 clears, have straddle1 take container 204 to stack C.",
   "world": "bench/worlds/yard.json",
-  "group": "clarify",
+  "group": "decoy",
   "expect": {
-    "decision": "clarify",
+    "decision": "program",
     "category": "none"
   },
   "tags": [
-    "timeout"
+    "looks_ambiguous",
+    "scheduled_clearance",
+    "wait_until"
   ],
-  "slot": "timeout",
-  "candidates": []
+  "expected_goal": [
+    [
+      "rl:thing:cont_204",
+      "located_in",
+      "rl:place:stack_c"
+    ]
+  ],
+  "expected_end_ms": "45000",
+  "expected_action_sequences": [
+    {
+      "steps": [
+        {
+          "kind": "grasp",
+          "robot": "straddle1",
+          "obj": "cont_204"
+        },
+        {
+          "kind": "place",
+          "robot": "straddle1",
+          "obj": "cont_204",
+          "target": "stack_c"
+        }
+      ]
+    },
+    {
+      "steps": [
+        {
+          "kind": "wait_until",
+          "condition": {
+            "kind": "region_clear",
+            "region": "lane_2"
+          }
+        },
+        {
+          "kind": "grasp",
+          "robot": "straddle1",
+          "obj": "cont_204"
+        }
+      ]
+    }
+  ]
 }

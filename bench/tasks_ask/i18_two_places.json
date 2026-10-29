@@ -1,6 +1,6 @@
 {
   "id": "i18_two_places",
-  "prompt": "Put vial A1 in fridge 1 with picker1, and have it also end up on the packing table.",
+  "prompt": "With picker1, make vial A1 end the task at both fridge 1 and the packing table at the same time.",
   "world": "bench/worlds/pharmacy.json",
   "group": "infeasible",
   "expect": {

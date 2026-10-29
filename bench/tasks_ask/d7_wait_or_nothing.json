@@ -26,5 +26,39 @@
   "tags": [
     "looks_unsupported",
     "wait_until"
+  ],
+  "limitations": "The clear-world run is feasible; in the never-clear probe a timeout fails and leaves the tray untouched. This does not demonstrate a successful alternate branch or general if/else.",
+  "expected_action_sequences": [
+    {
+      "steps": [
+        {
+          "kind": "grasp",
+          "robot": "helper_arm",
+          "obj": "tray_a"
+        },
+        {
+          "kind": "place",
+          "robot": "helper_arm",
+          "obj": "tray_a",
+          "target": "pass"
+        }
+      ]
+    },
+    {
+      "steps": [
+        {
+          "kind": "wait_until",
+          "condition": {
+            "kind": "region_clear",
+            "region": "hot_zone"
+          }
+        },
+        {
+          "kind": "grasp",
+          "robot": "helper_arm",
+          "obj": "tray_a"
+        }
+      ]
+    }
   ]
 }

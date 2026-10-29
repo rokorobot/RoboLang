@@ -26,5 +26,37 @@
   "tags": [
     "two_robot",
     "multiple_objects"
+  ],
+  "expected_action_sequences": [
+    {
+      "steps": [
+        {
+          "kind": "grasp",
+          "robot": "crane2",
+          "obj": "cont_102"
+        },
+        {
+          "kind": "place",
+          "robot": "crane2",
+          "obj": "cont_102",
+          "target": "berth_2"
+        }
+      ]
+    },
+    {
+      "steps": [
+        {
+          "kind": "grasp",
+          "robot": "straddle1",
+          "obj": "cont_203"
+        },
+        {
+          "kind": "place",
+          "robot": "straddle1",
+          "obj": "cont_203",
+          "target": "wash"
+        }
+      ]
+    }
   ]
 }

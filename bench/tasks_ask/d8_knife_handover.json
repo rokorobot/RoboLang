@@ -18,5 +18,22 @@
     "looks_infeasible",
     "handover",
     "holding"
+  ],
+  "expected_action_sequences": [
+    {
+      "steps": [
+        {
+          "kind": "place",
+          "robot": "chef_arm",
+          "obj": "knife_1",
+          "target": "prep_2"
+        },
+        {
+          "kind": "grasp",
+          "robot": "helper_arm",
+          "obj": "knife_1"
+        }
+      ]
+    }
   ]
 }

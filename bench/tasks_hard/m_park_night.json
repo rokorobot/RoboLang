@@ -1,6 +1,6 @@
 {
   "id": "m_park_night",
-  "prompt": "Park amr1 for the night.",
+  "prompt": "Park amr1 at either the dock or the charging location.",
   "world": "bench/worlds/warehouse.json",
   "group": "ambiguous",
   "expect": {

@@ -12,7 +12,7 @@ import json
 import re
 import tempfile
 from collections import Counter
-from dataclasses import dataclass
+from dataclasses import dataclass, fields, is_dataclass
 from decimal import Decimal
 from math import prod
 from pathlib import Path
@@ -22,6 +22,7 @@ from robolang import ir as task_ir
 from robolang.cli import main as robolang_cli
 from robolang.sim import World, WorldError, load_world
 from robolang.sim import run as simulate_task
+from robolang.sim.values import duration_ms_of
 
 ROOT = Path(__file__).resolve().parent.parent
 BENCH = ROOT / "bench"
@@ -418,6 +419,41 @@ def goal_means(task: task_ir.Task, bindings: dict[str, str], readings: list[set[
     return True
 
 
+def _bound_action(node, bindings: dict[str, str]):
+    """An executed IR action/condition with parameter references replaced by world IDs."""
+    if not is_dataclass(node):
+        return node
+    action = {"kind": node.KIND}
+    for field in fields(node):
+        value = getattr(node, field.name)
+        if field.name in ("robot", "obj", "target", "location", "region", "sensor"):
+            value = bindings.get(value, value)
+        elif field.name in ("duration", "timeout"):
+            action[field.name + "_ms"] = task_ir.decimal_text(duration_ms_of(value))
+            continue
+        elif isinstance(value, tuple):
+            value = [_bound_action(v, bindings) for v in value]
+        else:
+            value = _bound_action(value, bindings)
+        action[field.name] = value
+    return action
+
+
+def _action_matches(actual: dict, expected: dict) -> bool:
+    return all(k in actual and (_action_matches(actual[k], v) if isinstance(v, dict) else actual[k] == v)
+               for k, v in expected.items())
+
+
+def _sequence_matches(actions: list[dict], sequence: dict) -> bool:
+    """Required actions in execution order; unrelated actions may intervene unless adjacent is requested."""
+    expected = sequence["steps"]
+    if sequence.get("adjacent"):
+        return any(all(_action_matches(a, e) for a, e in zip(actions[i:i + len(expected)], expected))
+                   for i in range(len(actions) - len(expected) + 1))
+    remaining = iter(actions)
+    return all(any(_action_matches(a, e) for a in remaining) for e in expected)
+
+
 def judge(task_def: dict, checked: Checked, bindings: dict[str, str]) -> Judgement:
     """Goal, simulation and the task's optional checks, for an answer that `check_answer` accepted."""
     try:
@@ -425,11 +461,20 @@ def judge(task_def: dict, checked: Checked, bindings: dict[str, str]) -> Judgeme
     except bridge.NotExportable:
         exported = None
     result = simulate_task(checked.task, checked.world)
+    actions = [_bound_action(s.step, bindings) for s in result.steps if s.status == "succeeded"]
     checks = {}
     if "expected_safety" in task_def:
         checks["safety"] = _check_safety(task_def, checked)
-    if "required_entities" in task_def:  # the robot, object or sensor the request named is the one bound
-        checks["entities"] = set(task_def["required_entities"]) <= set(bindings.values())
+    if "speed_below" in task_def:
+        ceiling = task_def["speed_below"]
+        limits = [s.limit.value for s in checked.task.safety
+                  if s.kind == "max_speed" and s.limit.unit == ceiling["unit"]]
+        checks["relative_speed"] = bool(limits) and all(0 < v < Decimal(ceiling["value"]) for v in limits)
+    if "required_entities" in task_def:
+        used = {a[k] for a in actions for k in ("robot", "obj", "target", "sensor") if k in a}
+        checks["entities"] = set(task_def["required_entities"]) <= used
+    if "expected_action_sequences" in task_def:
+        checks["actions"] = all(_sequence_matches(actions, s) for s in task_def["expected_action_sequences"])
     if "expected_messages" in task_def:
         sent = {(s.message.channel, s.message.message) for s in result.steps if s.message}
         checks["messages"] = {tuple(m) for m in task_def["expected_messages"]} <= sent

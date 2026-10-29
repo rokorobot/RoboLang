@@ -2,31 +2,32 @@
   "id": "m_pass_p1",
   "prompt": "Pass p1 on to arm_b.",
   "world": "bench/worlds/assembly.json",
-  "group": "ambiguous",
+  "group": "control",
   "expect": {
     "decision": "program",
     "category": "none"
   },
-  "expected_goals": [
-    [
-      [
-        "rl:thing:p1",
-        "located_in",
-        "rl:place:station3"
-      ]
-    ],
-    [
-      [
-        "rl:thing:p1",
-        "carried_by",
-        "rl:robot:arm_b"
-      ]
-    ]
-  ],
   "tags": [
-    "ambiguous",
     "handover",
     "holding",
     "two_robot"
+  ],
+  "expected_goal": [
+    [
+      "rl:thing:p1",
+      "carried_by",
+      "rl:robot:arm_b"
+    ]
+  ],
+  "expected_action_sequences": [
+    {
+      "steps": [
+        {
+          "kind": "grasp",
+          "robot": "arm_b",
+          "obj": "p1"
+        }
+      ]
+    }
   ]
 }

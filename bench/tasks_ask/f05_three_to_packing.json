@@ -28,5 +28,100 @@
     "long_plan",
     "multiple_objects",
     "inspect"
+  ],
+  "expected_action_sequences": [
+    {
+      "steps": [
+        {
+          "kind": "grasp",
+          "robot": "picker1",
+          "obj": "vial_a1"
+        },
+        {
+          "kind": "place",
+          "robot": "picker1",
+          "obj": "vial_a1",
+          "target": "packing"
+        }
+      ]
+    },
+    {
+      "steps": [
+        {
+          "kind": "grasp",
+          "robot": "picker1",
+          "obj": "vial_a2"
+        },
+        {
+          "kind": "place",
+          "robot": "picker1",
+          "obj": "vial_a2",
+          "target": "packing"
+        }
+      ]
+    },
+    {
+      "steps": [
+        {
+          "kind": "grasp",
+          "robot": "picker1",
+          "obj": "insulin_1"
+        },
+        {
+          "kind": "place",
+          "robot": "picker1",
+          "obj": "insulin_1",
+          "target": "packing"
+        }
+      ]
+    },
+    {
+      "adjacent": true,
+      "steps": [
+        {
+          "kind": "inspect",
+          "robot": "picker1",
+          "obj": "vial_a1",
+          "sensor": "scan_p1"
+        },
+        {
+          "kind": "grasp",
+          "robot": "picker1",
+          "obj": "vial_a1"
+        }
+      ]
+    },
+    {
+      "adjacent": true,
+      "steps": [
+        {
+          "kind": "inspect",
+          "robot": "picker1",
+          "obj": "vial_a2",
+          "sensor": "scan_p1"
+        },
+        {
+          "kind": "grasp",
+          "robot": "picker1",
+          "obj": "vial_a2"
+        }
+      ]
+    },
+    {
+      "adjacent": true,
+      "steps": [
+        {
+          "kind": "inspect",
+          "robot": "picker1",
+          "obj": "insulin_1",
+          "sensor": "scan_p1"
+        },
+        {
+          "kind": "grasp",
+          "robot": "picker1",
+          "obj": "insulin_1"
+        }
+      ]
+    }
   ]
 }

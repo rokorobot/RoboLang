@@ -20,5 +20,22 @@
     "sensor_ok",
     "inspect",
     "robot_at"
+  ],
+  "expected_action_sequences": [
+    {
+      "steps": [
+        {
+          "kind": "inspect",
+          "robot": "picker1",
+          "obj": "insulin_1",
+          "sensor": "thermo_p1"
+        },
+        {
+          "kind": "move",
+          "robot": "picker1",
+          "target": "dispatch"
+        }
+      ]
+    }
   ]
 }

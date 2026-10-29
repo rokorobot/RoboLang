@@ -19,5 +19,25 @@
     "wait_for",
     "units_in_words",
     "robot_at"
+  ],
+  "expected_action_sequences": [
+    {
+      "steps": [
+        {
+          "kind": "move",
+          "robot": "helper_arm",
+          "target": "oven"
+        },
+        {
+          "kind": "wait_for",
+          "duration_ms": "15000"
+        },
+        {
+          "kind": "move",
+          "robot": "helper_arm",
+          "target": "prep_2"
+        }
+      ]
+    }
   ]
 }

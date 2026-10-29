@@ -21,5 +21,33 @@
   "tags": [
     "handover",
     "two_robot"
+  ],
+  "expected_action_sequences": [
+    {
+      "steps": [
+        {
+          "kind": "grasp",
+          "robot": "crane1",
+          "obj": "cont_101"
+        },
+        {
+          "kind": "place",
+          "robot": "crane1",
+          "obj": "cont_101",
+          "target": "stack_a"
+        },
+        {
+          "kind": "grasp",
+          "robot": "straddle1",
+          "obj": "cont_101"
+        },
+        {
+          "kind": "place",
+          "robot": "straddle1",
+          "obj": "cont_101",
+          "target": "stack_c"
+        }
+      ]
+    }
   ]
 }

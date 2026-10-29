@@ -30,5 +30,22 @@
   "tags": [
     "looks_infeasible",
     "precondition"
+  ],
+  "expected_action_sequences": [
+    {
+      "steps": [
+        {
+          "kind": "grasp",
+          "robot": "straddle1",
+          "obj": "cont_204"
+        },
+        {
+          "kind": "place",
+          "robot": "straddle1",
+          "obj": "cont_204",
+          "target": "stack_a"
+        }
+      ]
+    }
   ]
 }
