@@ -1,0 +1,7 @@
+{
+  "task": "go",
+  "bindings": {
+    "r": "cart1",
+    "dst": "waste"
+  }
+}

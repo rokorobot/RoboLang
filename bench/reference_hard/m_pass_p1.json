@@ -4,6 +4,7 @@
     "r": "arm_a",
     "box": "p1",
     "src": "conveyor_in",
-    "dst": "station3"
+    "dst": "station3",
+    "receiver": "arm_b"
   }
 }

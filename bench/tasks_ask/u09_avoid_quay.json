@@ -1,0 +1,15 @@
+{
+  "id": "u09_avoid_quay",
+  "prompt": "Have straddle1 take container 203 to the out gate, and never drive through the quay on the way.",
+  "world": "bench/worlds/yard.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "tags": [
+    "path_constraint"
+  ],
+  "why": "Staying inside or out of a region while moving needs in_region / no_go_region, deferred (E211).",
+  "attempt_fails_with": "E211"
+}

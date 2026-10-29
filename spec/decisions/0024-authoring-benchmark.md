@@ -1,7 +1,7 @@
 # Decision record 0024 — A benchmark of model-written RoboLang (`bench/`)
 
 **Date:** 2026-10-29
-**Status:** PROPOSED — for the owner's review
+**Status:** Set 1: APPROVED by the owner as a **baseline** — 2026-10-29 (see [Owner review](#owner-review--2026-10-29)). Set 2 (below): PROPOSED — for the owner's review
 **Follows:** [0023](0023-keep-interop-3-deferred.md) reason 3 (the central claim, that AI systems write RoboLang well, is untested)
 
 ## What is measured
@@ -73,3 +73,19 @@ judgement calls, written down in each task's `why` and goals. A request such as 
 because every `wait until` has a timeout; a model that writes a very long timeout counts as a false program. The cannot-tasks
 state that the world may differ at run time where the listing alone would let a model pick one branch. Nothing was run
 against a model for this record; there are no set 2 results yet. No file of the `robolang` package changed.
+
+## Owner review — 2026-10-29
+
+Set 1 is approved as the **baseline** benchmark, not as evidence that models author RoboLang robustly. The 40/40
+results hold for that set only. Its limits, besides those above:
+
+- **Coverage is narrow.** 21 of 40 tasks are tagged `pick_place`; `or`, `not`, `communicate` and `long_plan` have one
+  task each.
+- **Guidance is generous.** The prompt carries a full language reference and a worked example close to many tasks.
+- **Every request is solvable.** Set 1 cannot see a model that should have declined or asked (sets 2 and 3 can).
+- **One run per task.** Repeatability is unknown.
+- **Same family.** The tasks and references were written with a Claude model; only Claude models were run.
+- **run3's cost estimate was about 12× too high** ($5.5 estimated, $0.46 spent).
+
+Set 1's tasks, worlds and references stay unchanged for comparison. Its prompt changed with set 2 and with
+[0025](0025-bench-2.md) (the `clarify` answer), so a new set 1 run is not directly comparable with run3.

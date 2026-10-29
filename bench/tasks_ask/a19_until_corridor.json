@@ -1,0 +1,56 @@
+{
+  "id": "a19_until_corridor",
+  "prompt": "Wait until the corridor clears, then have picker1 bring tray 2 to dispatch.",
+  "world": "bench/worlds/pharmacy.json",
+  "group": "decoy",
+  "expect": {
+    "decision": "program",
+    "category": "none"
+  },
+  "tags": [
+    "looks_ambiguous",
+    "scheduled_clearance",
+    "wait_until"
+  ],
+  "expected_goal": [
+    [
+      "rl:thing:tray_2",
+      "located_in",
+      "rl:place:dispatch"
+    ]
+  ],
+  "expected_end_ms": "20000",
+  "expected_action_sequences": [
+    {
+      "steps": [
+        {
+          "kind": "grasp",
+          "robot": "picker1",
+          "obj": "tray_2"
+        },
+        {
+          "kind": "place",
+          "robot": "picker1",
+          "obj": "tray_2",
+          "target": "dispatch"
+        }
+      ]
+    },
+    {
+      "steps": [
+        {
+          "kind": "wait_until",
+          "condition": {
+            "kind": "region_clear",
+            "region": "corridor"
+          }
+        },
+        {
+          "kind": "grasp",
+          "robot": "picker1",
+          "obj": "tray_2"
+        }
+      ]
+    }
+  ]
+}

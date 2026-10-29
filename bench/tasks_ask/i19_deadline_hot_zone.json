@@ -1,0 +1,41 @@
+{
+  "id": "i19_deadline_hot_zone",
+  "prompt": "Wait no more than 10 seconds for the hot zone to clear, then have the helper arm move pan 1 from the stove to the sink. Pan 1 must end up in the sink.",
+  "world": "bench/worlds/kitchen.json",
+  "group": "infeasible",
+  "expect": {
+    "decision": "cannot",
+    "category": "infeasible"
+  },
+  "tags": [
+    "deadline"
+  ],
+  "why": "hot_zone clears only after the stated wait has run out, so the plan times out (S241).",
+  "blockers": [
+    "hot_zone"
+  ],
+  "required_entities": [
+    "helper_arm"
+  ],
+  "faithful_goal": [
+    [
+      "rl:thing:pan_1",
+      "located_in",
+      "rl:place:sink"
+    ]
+  ],
+  "fix_patch": {
+    "events": [
+      {
+        "at": {
+          "value": "5",
+          "unit": "s"
+        },
+        "fact": "region_clear",
+        "target": "hot_zone",
+        "value": true
+      }
+    ]
+  },
+  "attempt_fails_with": "S241"
+}

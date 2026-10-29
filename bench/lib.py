@@ -12,7 +12,7 @@ import json
 import re
 import tempfile
 from collections import Counter
-from dataclasses import dataclass
+from dataclasses import dataclass, fields, is_dataclass
 from decimal import Decimal
 from math import prod
 from pathlib import Path
@@ -22,6 +22,7 @@ from robolang import ir as task_ir
 from robolang.cli import main as robolang_cli
 from robolang.sim import World, WorldError, load_world
 from robolang.sim import run as simulate_task
+from robolang.sim.values import duration_ms_of
 
 ROOT = Path(__file__).resolve().parent.parent
 BENCH = ROOT / "bench"
@@ -29,6 +30,8 @@ TASKS_DIR = BENCH / "tasks"
 REFERENCE_DIR = BENCH / "reference"
 HARD_TASKS_DIR = BENCH / "tasks_hard"
 HARD_REFERENCE_DIR = BENCH / "reference_hard"
+ASK_TASKS_DIR = BENCH / "tasks_ask"
+ASK_REFERENCE_DIR = BENCH / "reference_ask"
 PROMPT_FILE = BENCH / "prompt.md"
 REFERENCE_FILE = ROOT / "docs" / "language-reference.md"
 MINIMAL_PROMPT_FILE = BENCH / "prompt_minimal.md"
@@ -37,7 +40,8 @@ GRAMMAR_MARK = "{{GRAMMAR}}"  # in prompt_minimal.md: replaced by the text of th
 REFERENCE_MARK = "{{LANGUAGE_REFERENCE}}"  # in prompt.md: replaced by the shipped, tested reference
 
 # The task sets: name -> (tasks directory, reference directory). Set 1 is the default and stays as it was.
-SETS = {"1": (TASKS_DIR, REFERENCE_DIR), "hard": (HARD_TASKS_DIR, HARD_REFERENCE_DIR)}
+SETS = {"1": (TASKS_DIR, REFERENCE_DIR), "hard": (HARD_TASKS_DIR, HARD_REFERENCE_DIR),
+        "ask": (ASK_TASKS_DIR, ASK_REFERENCE_DIR)}  # set "ask": decision record 0025
 PROMPTS = ("full", "minimal")
 
 # $ per million tokens: (input, output, cache read). A cache write (5 minutes) costs 1.25 x input.
@@ -59,17 +63,21 @@ PRICES = {
 CACHE_WRITE_FACTOR = 1.25
 
 # The answer: structured output (`output_config.format`), then read back by `parse_answer`.
-DECISIONS = ("program", "cannot")
+DECISIONS = ("program", "cannot", "clarify")
 CATEGORIES = ("inexpressible", "infeasible", "none")
 ANSWER_SCHEMA = {
     "type": "object",
     "properties": {
         "decision": {"type": "string", "enum": list(DECISIONS),
-                     "description": "\"program\" to answer with RoboLang source, \"cannot\" to decline the request."},
+                     "description": "\"program\" to answer with RoboLang source, \"cannot\" to decline the request, "
+                                    "\"clarify\" to ask which reading is meant."},
         "category": {"type": "string", "enum": list(CATEGORIES),
                      "description": "Why it cannot be done: \"inexpressible\" (RoboLang 1.3 cannot say it) or "
                                     "\"infeasible\" (this world or robot cannot do it). \"none\" for a program."},
         "reason": {"type": "string", "description": "One sentence: what the program does, or why it cannot be done."},
+        "entities": {"type": "array", "items": {"type": "string"},
+                     "description": "World entity IDs: for cannot, the ones that block the request; for clarify, every "
+                                    "candidate the request could mean. Empty for a program."},
         "rob": {"type": "string", "description": "The complete RoboLang 1.3 source. Empty when decision is cannot."},
         "task": {"type": "string", "description": "The name of the task in the source to run. Empty when cannot."},
         "bindings": {  # a list of pairs: structured outputs require additionalProperties false on objects
@@ -84,10 +92,11 @@ ANSWER_SCHEMA = {
             },
         },
     },
-    "required": ["decision", "category", "reason", "rob", "task", "bindings"],
+    "required": ["decision", "category", "reason", "entities", "rob", "task", "bindings"],
     "additionalProperties": False,
 }
 OLD_ANSWER_KEYS = {"rob", "task", "bindings"}  # saved answers of benchmark set 1: read as decision "program"
+SET2_ANSWER_KEYS = {"decision", "category", "reason", "rob", "task", "bindings"}  # saved before "entities": none
 
 # Pseudo codes for what is not a `robolang` diagnostic. Real codes (E..., W..., S...) are never changed.
 FORMAT_CODE = "B001"      # the reply was not an answer in the required format
@@ -209,13 +218,16 @@ def parse_answer(text: str) -> tuple[dict | None, str | None]:
         return None, f"the reply is not valid JSON ({error})"
     if isinstance(answer, dict) and set(answer) == OLD_ANSWER_KEYS:
         answer = {"decision": "program", "category": "none", "reason": "", **answer}
+    if isinstance(answer, dict) and set(answer) == SET2_ANSWER_KEYS:
+        answer = {"entities": [], **answer}
     if not isinstance(answer, dict) or set(answer) != set(ANSWER_SCHEMA["properties"]):
         return None, ('the reply must be one JSON object with exactly the keys "decision", "category", "reason", '
-                      '"rob", "task" and "bindings"')
+                      '"entities", "rob", "task" and "bindings"')
     if answer["decision"] not in DECISIONS or answer["category"] not in CATEGORIES \
-            or not isinstance(answer["reason"], str):
-        return None, ('"decision" must be "program" or "cannot", "category" "inexpressible", "infeasible" or "none", '
-                      'and "reason" a string')
+            or not isinstance(answer["reason"], str) or not isinstance(answer["entities"], list) \
+            or not all(isinstance(e, str) for e in answer["entities"]):
+        return None, ('"decision" must be "program", "cannot" or "clarify", "category" "inexpressible", "infeasible" '
+                      'or "none", "reason" a string and "entities" a list of entity IDs')
     bindings = answer["bindings"]
     if isinstance(bindings, list):  # the wire form: [{"param", "id"}, ...]; read back as a mapping
         pairs = [(b.get("param"), b.get("id")) if isinstance(b, dict) and set(b) == {"param", "id"} else (None, None)
@@ -407,6 +419,41 @@ def goal_means(task: task_ir.Task, bindings: dict[str, str], readings: list[set[
     return True
 
 
+def _bound_action(node, bindings: dict[str, str]):
+    """An executed IR action/condition with parameter references replaced by world IDs."""
+    if not is_dataclass(node):
+        return node
+    action = {"kind": node.KIND}
+    for field in fields(node):
+        value = getattr(node, field.name)
+        if field.name in ("robot", "obj", "target", "location", "region", "sensor"):
+            value = bindings.get(value, value)
+        elif field.name in ("duration", "timeout"):
+            action[field.name + "_ms"] = task_ir.decimal_text(duration_ms_of(value))
+            continue
+        elif isinstance(value, tuple):
+            value = [_bound_action(v, bindings) for v in value]
+        else:
+            value = _bound_action(value, bindings)
+        action[field.name] = value
+    return action
+
+
+def _action_matches(actual: dict, expected: dict) -> bool:
+    return all(k in actual and (_action_matches(actual[k], v) if isinstance(v, dict) else actual[k] == v)
+               for k, v in expected.items())
+
+
+def _sequence_matches(actions: list[dict], sequence: dict) -> bool:
+    """Required actions in execution order; unrelated actions may intervene unless adjacent is requested."""
+    expected = sequence["steps"]
+    if sequence.get("adjacent"):
+        return any(all(_action_matches(a, e) for a, e in zip(actions[i:i + len(expected)], expected))
+                   for i in range(len(actions) - len(expected) + 1))
+    remaining = iter(actions)
+    return all(any(_action_matches(a, e) for a in remaining) for e in expected)
+
+
 def judge(task_def: dict, checked: Checked, bindings: dict[str, str]) -> Judgement:
     """Goal, simulation and the task's optional checks, for an answer that `check_answer` accepted."""
     try:
@@ -414,9 +461,20 @@ def judge(task_def: dict, checked: Checked, bindings: dict[str, str]) -> Judgeme
     except bridge.NotExportable:
         exported = None
     result = simulate_task(checked.task, checked.world)
+    actions = [_bound_action(s.step, bindings) for s in result.steps if s.status == "succeeded"]
     checks = {}
     if "expected_safety" in task_def:
         checks["safety"] = _check_safety(task_def, checked)
+    if "speed_below" in task_def:
+        ceiling = task_def["speed_below"]
+        limits = [s.limit.value for s in checked.task.safety
+                  if s.kind == "max_speed" and s.limit.unit == ceiling["unit"]]
+        checks["relative_speed"] = bool(limits) and all(0 < v < Decimal(ceiling["value"]) for v in limits)
+    if "required_entities" in task_def:
+        used = {a[k] for a in actions for k in ("robot", "obj", "target", "sensor") if k in a}
+        checks["entities"] = set(task_def["required_entities"]) <= used
+    if "expected_action_sequences" in task_def:
+        checks["actions"] = all(_sequence_matches(actions, s) for s in task_def["expected_action_sequences"])
     if "expected_messages" in task_def:
         sent = {(s.message.channel, s.message.message) for s in result.steps if s.message}
         checks["messages"] = {tuple(m) for m in task_def["expected_messages"]} <= sent
@@ -459,7 +517,7 @@ def repair_message(report: str) -> str:
 def format_repair_message(problem: str) -> str:
     return (f"That reply could not be read: {problem}.\n\n"
             "Answer again as one JSON object with the keys \"decision\", \"category\", \"reason\", "
-            "\"rob\", \"task\" and \"bindings\".")
+            "\"entities\", \"rob\", \"task\" and \"bindings\".")
 
 
 def served_by(call: dict) -> dict:

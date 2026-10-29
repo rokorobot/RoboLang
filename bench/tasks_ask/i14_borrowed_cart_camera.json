@@ -1,0 +1,37 @@
+{
+  "id": "i14_borrowed_cart_camera",
+  "prompt": "Have picker1 scan vial B1 with cart1's camera, then bring it to packing.",
+  "world": "bench/worlds/pharmacy.json",
+  "group": "infeasible",
+  "expect": {
+    "decision": "cannot",
+    "category": "infeasible"
+  },
+  "tags": [
+    "sensor_elsewhere"
+  ],
+  "why": "The sensor is mounted on another robot; `inspect` needs it on the inspecting robot (S231).",
+  "blockers": [
+    "picker1",
+    "cam_cart1"
+  ],
+  "required_entities": [
+    "picker1",
+    "cam_cart1"
+  ],
+  "faithful_goal": [
+    [
+      "rl:thing:vial_b1",
+      "located_in",
+      "rl:place:packing"
+    ]
+  ],
+  "fix_patch": {
+    "sensors": {
+      "cam_cart1": {
+        "robot": "picker1"
+      }
+    }
+  },
+  "attempt_fails_with": "S231"
+}

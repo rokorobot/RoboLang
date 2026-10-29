@@ -1,0 +1,13 @@
+{
+  "task": "three",
+  "bindings": {
+    "r": "picker1",
+    "a": "vial_a1",
+    "b": "vial_a2",
+    "c": "insulin_1",
+    "sa": "shelf_a",
+    "sc": "fridge_2",
+    "dst": "packing",
+    "s": "scan_p1"
+  }
+}

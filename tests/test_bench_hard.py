@@ -51,7 +51,7 @@ def decline(category: str, reason: str = "cannot be done") -> dict:
 def test_the_mix_of_tasks():
     assert len(HARD) == 40
     assert Counter(d["group"] for d in HARD.values()) == {"inexpressible": 10, "infeasible": 8, "decoy": 8,
-                                                          "ambiguous": 6, "control": 8}
+                                                          "ambiguous": 5, "control": 9}
     assert len(INEXPRESSIBLE) == 10 and len(INFEASIBLE) == 8
     assert len(FEASIBLE) / len(HARD) >= 0.35  # refusing everything must score badly
     for task_id, task in HARD.items():
@@ -99,7 +99,7 @@ def test_reference_is_valid_exports_an_accepted_goal_and_succeeds(task_id):
     assert judgement.goal_correct and judgement.goal_exact
     assert judgement.plan_succeeds, (judgement.state, judgement.failure_code)
     has_checks = any(k in task for k in ("expected_safety", "expected_messages", "expected_message_counts",
-                                         "expected_end_ms", "probes"))
+                                         "expected_end_ms", "probes", "expected_action_sequences"))
     assert bool(judgement.checks) == has_checks and all(judgement.checks.values())
 
 
@@ -116,6 +116,15 @@ def test_ambiguous_tasks_accept_each_defensible_goal_and_nothing_else():
     answer["rob"] = answer["rob"].replace("        object_at b dst;\n", "")
     judgement = lib.judge(task, lib.check_answer(task, answer), answer["bindings"])
     assert not judgement.goal_correct
+
+
+def test_pass_on_requires_recipient_custody_instead_of_a_nearby_location():
+    task = HARD["m_pass_p1"]
+    answer = hard_reference("m_pass_p1")
+    answer["rob"] = answer["rob"].replace("holding receiver box;", "object_at box dst;")
+    answer["rob"] = answer["rob"].replace("        grasp receiver box;\n", "")
+    judgement = lib.judge(task, lib.check_answer(task, answer), answer["bindings"])
+    assert judgement.plan_succeeds and not judgement.goal_correct and not judgement.checks["actions"]
 
 
 def test_the_new_optional_checks_bite():
@@ -253,9 +262,9 @@ def test_old_answers_are_programs_and_new_ones_are_read_fully():
 
 def test_the_schema_requires_every_field_and_closes_the_objects():
     schema = lib.ANSWER_SCHEMA
-    assert list(schema["properties"]) == ["decision", "category", "reason", "rob", "task", "bindings"]
+    assert list(schema["properties"]) == ["decision", "category", "reason", "entities", "rob", "task", "bindings"]
     assert schema["required"] == list(schema["properties"]) and schema["additionalProperties"] is False
-    assert schema["properties"]["decision"]["enum"] == ["program", "cannot"]
+    assert schema["properties"]["decision"]["enum"] == ["program", "cannot", "clarify"]
     assert schema["properties"]["category"]["enum"] == ["inexpressible", "infeasible", "none"]
 
 
@@ -424,7 +433,7 @@ def test_the_default_set_is_1_and_the_flags_are_checked(tmp_path):
     assert run.main(["--set", "hard", "--tasks", "e_pick_place", "--out", str(tmp_path)], out=io.StringIO(), err=err,
                     environ={}) == 2 and "unknown task" in err.getvalue()
     with pytest.raises(SystemExit):
-        run.parse_args(["--set", "3"])
+        run.parse_args(["--set", "4"])
     with pytest.raises(SystemExit):
         run.parse_args(["--prompt", "tiny"])
 

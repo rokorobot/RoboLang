@@ -1,7 +1,7 @@
 """
 Ask Claude models to write RoboLang for the benchmark tasks (set 1: 40 syntax tasks; `--set hard`: 40 robustness
-tasks), check each answer, allow one repair round for an invalid program, and save every request and response
-under bench/results/<run-id>/ (decision record 0024).
+tasks; `--set ask`: 80 tasks that add asking, decision record 0025), check each answer, allow one repair round for
+an invalid program, and save every request and response under bench/results/<run-id>/ (decision record 0024).
 
     python bench/run.py                       # prints the estimated cost and stops
     python bench/run.py --yes                 # spends it (needs ANTHROPIC_API_KEY, or bench/.env)
@@ -208,8 +208,10 @@ def print_estimate(est: dict, effort: str, out) -> None:
 
 def run_benchmark(client, models: list[str], tasks: dict[str, dict], effort: str, repeats: int, out_dir: Path,
                   system_text: str, workers: int = 4, fallbacks: bool = True, secrets: list[str] | None = None,
-                  log=sys.stderr, task_set: str = "1", prompt_name: str = "full") -> list[dict]:
-    """Run every (model, task, repeat) that has no saved record yet; returns the records made now."""
+                  log=sys.stderr, task_set: str = "1", prompt_name: str = "full",
+                  max_usd: float | None = None) -> list[dict]:
+    """Run every (model, task, repeat) that has no saved record yet; returns the records made now.
+    With `max_usd`, no new request starts once the run (including records saved earlier) has cost that much."""
     secrets = secrets or []
     meta = {"run_id": out_dir.name, "set": task_set, "prompt": prompt_name, "models": models, "effort": effort,
             "repeats": repeats, "tasks": list(tasks), "fallbacks": fallbacks, "max_tokens": MAX_TOKENS,
@@ -226,15 +228,26 @@ def run_benchmark(client, models: list[str], tasks: dict[str, dict], effort: str
     jobs = [(m, t, r) for m in models for t in tasks.values() for r in range(1, repeats + 1)
             if not record_path(out_dir, m, t["id"], r).exists()]
     made = []
+    spent = sum(lib.call_cost(c) or 0 for p in out_dir.glob("*/*.json")
+                for c in json.loads(p.read_text(encoding="utf-8"))["calls"])
+    lock = threading.Lock()
 
     stop = threading.Event()  # set by a fatal error: requests not yet started are skipped, so nothing more is spent
 
     def work(job, gate: bool = False) -> dict | None:
+        nonlocal spent
         model, task_def, repeat = job
+        with lock:
+            if max_usd is not None and spent >= max_usd and not stop.is_set():
+                stop.set()
+                print(f"  stopped at the cap: ${spent:.2f} >= ${max_usd:.2f}; rerun with the same --run-id to resume",
+                      file=log)
         if stop.is_set():
             return None
         record = run_answer(client, model, task_def, repeat, effort, system_text, fallbacks)
         save_json(record_path(out_dir, model, task_def["id"], repeat), record, secrets)
+        with lock:
+            spent += sum(lib.call_cost(c) or 0 for c in record["calls"])
         status = "ok" if record["calls"][-1].get("error") is None else "request failed"
         print(f"  {model} {task_def['id']} #{repeat}: {len(record['calls'])} call(s), {status}", file=log)
         fatal = [c for c in record["calls"] if c["fatal"] or (gate and c["bad_request"])]
@@ -248,7 +261,9 @@ def run_benchmark(client, models: list[str], tasks: dict[str, dict], effort: str
     for job in jobs:  # the first request of each model runs alone: it writes the prompt cache and finds config errors
         first.setdefault(job[0], job)
     for job in first.values():
-        made.append(work(job, gate=True))
+        record = work(job, gate=True)
+        if record is not None:
+            made.append(record)
     rest = [job for job in jobs if job not in first.values()]
     with ThreadPoolExecutor(max_workers=max(1, workers)) as pool:
         made += [record for record in pool.map(work, rest) if record is not None]
@@ -270,6 +285,7 @@ def parse_args(argv):
     parser.add_argument("--out", type=Path, default=RESULTS_DIR, help="results parent directory")
     parser.add_argument("--no-fallbacks", action="store_true", help="do not enable server-side refusal fallbacks")
     parser.add_argument("--yes", action="store_true", help="spend the estimated cost; without it nothing is sent")
+    parser.add_argument("--max-usd", type=float, help="start no new request once the run has cost this much")
     return parser.parse_args(argv)
 
 
@@ -301,7 +317,7 @@ def main(argv=None, client_factory=make_client, out=sys.stdout, err=sys.stderr, 
     out_dir = args.out / (args.run_id or datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ"))
     try:
         run_benchmark(client_factory(key), models, tasks, args.effort, args.repeats, out_dir, system_text,
-                      args.workers, not args.no_fallbacks, [key], err, args.task_set, args.prompt_name)
+                      args.workers, not args.no_fallbacks, [key], err, args.task_set, args.prompt_name, args.max_usd)
     except FatalError as error:
         print(f"stopped: {error}\nWhat was saved is in {out_dir}", file=err)
         return 1

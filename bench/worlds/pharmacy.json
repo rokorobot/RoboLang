@@ -1,0 +1,37 @@
+{
+  "world_schema": "robolang.sim.world",
+  "world_schema_version": "1.1",
+  "locations": ["intake", "shelf_a", "shelf_b", "fridge_1", "fridge_2", "packing", "dispatch", "charger", "waste"],
+  "regions": {
+    "clean_room": { "clear": true },
+    "corridor": { "clear": false },
+    "cold_zone": { "clear": true }
+  },
+  "robots": {
+    "picker1": { "ready": true, "location": "charger", "gripper": true, "max_speed": [{ "value": "0.8", "unit": "m/s" }, { "value": "1.5", "unit": "rad/s" }] },
+    "picker2": { "ready": false, "location": "packing", "gripper": true, "max_speed": [{ "value": "0.8", "unit": "m/s" }] },
+    "cart1": { "ready": true, "location": "dispatch", "gripper": false, "max_speed": [{ "value": "1.2", "unit": "m/s" }] },
+    "cart2": { "ready": true, "location": "intake", "gripper": false, "max_speed": [{ "value": "1.2", "unit": "m/s" }] }
+  },
+  "objects": {
+    "vial_a1": { "present": true, "location": "shelf_a", "class": "vial" },
+    "vial_a2": { "present": true, "location": "shelf_a", "class": "vial" },
+    "vial_b1": { "present": true, "location": "fridge_1", "class": "vial" },
+    "insulin_1": { "present": true, "location": "fridge_2", "class": "vial" },
+    "tray_1": { "present": true, "location": "packing", "class": "tray" },
+    "tray_2": { "present": true, "location": "packing", "class": "tray" },
+    "bag_1": { "present": false, "class": "bag" },
+    "box_d1": { "present": true, "location": "dispatch", "class": "box" }
+  },
+  "sensors": {
+    "scan_p1": { "robot": "picker1", "available": true },
+    "thermo_p1": { "robot": "picker1", "available": false },
+    "scan_p2": { "robot": "picker2", "available": true },
+    "cam_cart1": { "robot": "cart1", "available": true }
+  },
+  "events": [
+    { "at": { "value": "5", "unit": "s" }, "fact": "sensor_available", "target": "thermo_p1", "value": true },
+    { "at": { "value": "20", "unit": "s" }, "fact": "region_clear", "target": "corridor", "value": true }
+  ],
+  "tasks": {}
+}

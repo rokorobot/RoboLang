@@ -1,0 +1,41 @@
+{
+  "id": "d2_a_picker",
+  "prompt": "Use a picker robot to bring vial A1 to packing.",
+  "world": "bench/worlds/pharmacy.json",
+  "group": "decoy",
+  "expect": {
+    "decision": "program",
+    "category": "none"
+  },
+  "expected_goal": [
+    [
+      "rl:thing:vial_a1",
+      "located_in",
+      "rl:place:packing"
+    ]
+  ],
+  "required_entities": [
+    "picker1"
+  ],
+  "tags": [
+    "looks_ambiguous",
+    "capability"
+  ],
+  "expected_action_sequences": [
+    {
+      "steps": [
+        {
+          "kind": "grasp",
+          "robot": "picker1",
+          "obj": "vial_a1"
+        },
+        {
+          "kind": "place",
+          "robot": "picker1",
+          "obj": "vial_a1",
+          "target": "packing"
+        }
+      ]
+    }
+  ]
+}

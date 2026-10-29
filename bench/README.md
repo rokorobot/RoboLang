@@ -89,7 +89,7 @@ python bench/score.py bench/results/<run-id>
 ```
 
 Tasks are in `tasks_hard/`, references in `reference_hard/`, in five kinds (`group` in each task): `inexpressible` (10),
-`infeasible` (8), `decoy` (8), `ambiguous` (6, `expected_goals` lists the acceptable goal sets) and `control` (8).
+`infeasible` (8), `decoy` (8), `ambiguous` (5, `expected_goals` lists the acceptable goal sets) and `control` (9).
 A task that expects a decline has `expect: {"decision": "cannot", "category": ...}`, a `why`, and an obvious attempt
 (`<id>.attempt.rob`) that the tests show fails with `attempt_fails_with`. Decoy worlds `depot` and `cleanroom`
 have a `<world>.notes.json` of entity descriptions, printed under the world listing.
@@ -107,3 +107,47 @@ Reading the report: the four rates are over the tasks that expect a program. The
 and a table per kind of task. To add a set 2 task, write `tasks_hard/<id>.json` and either `reference_hard/<id>.rob` +
 `<id>.json` (feasible) or `<id>.attempt.rob` (+ `<id>.attempt.json` when the attempt parses) with `attempt_fails_with`,
 then run `pytest tests/test_bench_hard.py` (it counts 40 tasks and the five kinds; change the counts on purpose).
+
+## Set "ask": asking as well as declining (`--set ask`)
+
+```bash
+python bench/run.py --set ask                                 # estimate only
+python bench/run.py --set ask --yes --max-usd 10              # with a hard cap on what the run may spend
+```
+
+80 tasks in three new worlds (`pharmacy`, `yard`, `kitchen`), decision record [0025](../spec/decisions/0025-bench-2.md),
+design [docs/plans/bench-2.md](../docs/plans/bench-2.md). After the independent review, five kinds (`group`):
+`feasible` (12), `decoy` (11), `infeasible` (19), `inexpressible` (20) and `clarify` (18).
+The owner approved the replacement plan, freeze, paid validation and merge. See the
+[review response](../docs/evidence/bench2-label-review-response.md),
+[original packet](../docs/plans/bench-2-label-review-baseline.md) and the freeze hash in decision 0025.
+Run `python tools/bench_freeze.py --check` to verify the recorded inputs. Changes after the freeze require errata.
+A `decoy` looks impossible or unclear but is feasible. A `clarify` task
+expects `"decision": "clarify"`: the request could mean several entities (`candidates`) or omits a value, and the world
+does not decide. A request that leaves the choice to the model ("a shelf", "one of the vials", set 2's `ambiguous`
+kind) still expects a program.
+
+Every answer has an `entities` list: the blockers of a decline, the candidates of a question. Extra figures:
+
+| Figure | Meaning |
+|---|---|
+| `silent_guess` | legacy name: a program on entity ambiguity; free text is unscored, so disclosure is not inferred |
+| `unjustified_default` | a program that assumes a required value instead of asking; a lesser error |
+| `request_satisfied` | correct goal, successful simulation and every procedural check together |
+| `entities_correct` | of the right declines and questions, `entities` names a blocker / exactly the candidates |
+
+Files: `tasks_ask/<id>.json`; in `reference_ask/`, `<id>.rob` + `.json` (feasible), `<id>.attempt.rob` + `.json`
+(the faithful attempt of an infeasible task, and the rejected attempt of some inexpressible ones) and
+`<id>.reading<n>.rob` + `.json` (one succeeding program per reading of a clarify task). An infeasible task also has
+`blockers`, and a `fix_patch` under which its attempt succeeds (or a `why` saying no world can fix it).
+`tests/test_bench_ask.py` checks all of it. Set "ask" is not in the CI benchmark workflow: its runs need the owner's
+authorization (0025 B8).
+
+Procedure checks use `expected_action_sequences`: each entry has a `steps` list of patterns over successful executed
+actions (`kind`, world IDs in `robot`/`obj`/`sensor`/`target`, literal `channel`/`message`, normalized `duration_ms`).
+Patterns match in order while allowing unrelated intervening steps; `adjacent: true` requires consecutive actions.
+Separate sequences let independent deliveries occur in any order. `required_entities` requires use in successful
+actions, rather than merely listing an unused binding. `speed_below` accepts any positive declared max speed strictly
+below the recorded bound. These feed `checks_ok` and `request_satisfied`; individual results appear in `scores.json`.
+For missing entities (`failure_kind: missing_entity`), a decline must have an empty `entities` list. The answer category
+remains `infeasible`. Sufficient timeouts based on guaranteed scheduled events are implementation choices.

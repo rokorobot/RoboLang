@@ -1,0 +1,18 @@
+{
+  "id": "a04_which_tray",
+  "prompt": "Have picker1 take the tray from packing to dispatch.",
+  "world": "bench/worlds/pharmacy.json",
+  "group": "clarify",
+  "expect": {
+    "decision": "clarify",
+    "category": "none"
+  },
+  "tags": [
+    "object"
+  ],
+  "slot": "object",
+  "candidates": [
+    "tray_1",
+    "tray_2"
+  ]
+}

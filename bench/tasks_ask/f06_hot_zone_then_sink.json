@@ -1,0 +1,56 @@
+{
+  "id": "f06_hot_zone_then_sink",
+  "prompt": "Once the hot zone is clear (allow up to 45 seconds), have the helper arm move pan 1 from the stove to the sink.",
+  "world": "bench/worlds/kitchen.json",
+  "group": "feasible",
+  "expect": {
+    "decision": "program",
+    "category": "none"
+  },
+  "expected_goal": [
+    [
+      "rl:thing:pan_1",
+      "located_in",
+      "rl:place:sink"
+    ]
+  ],
+  "expected_end_ms": "30000",
+  "tags": [
+    "wait_until",
+    "timeout",
+    "region"
+  ],
+  "expected_action_sequences": [
+    {
+      "steps": [
+        {
+          "kind": "grasp",
+          "robot": "helper_arm",
+          "obj": "pan_1"
+        },
+        {
+          "kind": "place",
+          "robot": "helper_arm",
+          "obj": "pan_1",
+          "target": "sink"
+        }
+      ]
+    },
+    {
+      "steps": [
+        {
+          "kind": "wait_until",
+          "condition": {
+            "kind": "region_clear",
+            "region": "hot_zone"
+          }
+        },
+        {
+          "kind": "grasp",
+          "robot": "helper_arm",
+          "obj": "pan_1"
+        }
+      ]
+    }
+  ]
+}

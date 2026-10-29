@@ -1,0 +1,62 @@
+{
+  "id": "f12_pass_clear_and_ready",
+  "prompt": "Provided the pass area is clear and the helper arm is ready, have the helper arm put tray B at the pass.",
+  "world": "bench/worlds/kitchen.json",
+  "group": "feasible",
+  "expect": {
+    "decision": "program",
+    "category": "none"
+  },
+  "expected_goal": [
+    [
+      "rl:thing:tray_b",
+      "located_in",
+      "rl:place:pass"
+    ]
+  ],
+  "probes": [
+    {
+      "name": "pass_busy",
+      "world_patch": {
+        "regions": {
+          "pass_area": {
+            "clear": false
+          }
+        }
+      },
+      "expect": "not_succeeded"
+    },
+    {
+      "name": "helper_not_ready",
+      "world_patch": {
+        "robots": {
+          "helper_arm": {
+            "ready": false
+          }
+        }
+      },
+      "expect": "not_succeeded"
+    }
+  ],
+  "tags": [
+    "precondition",
+    "and"
+  ],
+  "expected_action_sequences": [
+    {
+      "steps": [
+        {
+          "kind": "grasp",
+          "robot": "helper_arm",
+          "obj": "tray_b"
+        },
+        {
+          "kind": "place",
+          "robot": "helper_arm",
+          "obj": "tray_b",
+          "target": "pass"
+        }
+      ]
+    }
+  ]
+}

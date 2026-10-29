@@ -1,0 +1,14 @@
+{
+  "id": "u20_report_temp",
+  "prompt": "Probe pan 1's temperature and tell the \"pass\" channel the value you measured.",
+  "world": "bench/worlds/kitchen.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "tags": [
+    "value_report"
+  ],
+  "why": "communicate sends a literal string; a measured value cannot be put in it."
+}

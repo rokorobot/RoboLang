@@ -1,0 +1,12 @@
+{
+  "task": "check_and_sink",
+  "bindings": {
+    "c": "chef_arm",
+    "h": "helper_arm",
+    "o": "pan_1",
+    "cam": "cam_chef",
+    "probe": "probe_temp",
+    "src": "stove",
+    "dst": "sink"
+  }
+}

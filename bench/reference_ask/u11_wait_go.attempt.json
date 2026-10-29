@@ -1,0 +1,9 @@
+{
+  "task": "on_go",
+  "bindings": {
+    "r": "picker1",
+    "o": "tray_1",
+    "src": "packing",
+    "dst": "dispatch"
+  }
+}

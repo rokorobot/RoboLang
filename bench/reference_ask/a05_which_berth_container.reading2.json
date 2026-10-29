@@ -1,0 +1,9 @@
+{
+  "task": "deliver",
+  "bindings": {
+    "r": "crane1",
+    "o": "cont_102",
+    "src": "berth_1",
+    "dst": "stack_c"
+  }
+}

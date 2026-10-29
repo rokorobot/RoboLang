@@ -1,0 +1,9 @@
+{
+  "task": "deliver",
+  "bindings": {
+    "r": "straddle1",
+    "o": "cont_204",
+    "src": "stack_b",
+    "dst": "gate_out"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "id": "u12_radio_clearance",
+  "prompt": "Leave container 305 where it is until the port authority radios clearance, then have straddle1 take it to the out gate.",
+  "world": "bench/worlds/yard.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "tags": [
+    "message_wait"
+  ],
+  "why": "Waiting for an incoming message needs message_received, deferred (E211).",
+  "attempt_fails_with": "E211"
+}

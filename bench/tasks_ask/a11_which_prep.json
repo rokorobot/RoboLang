@@ -1,0 +1,18 @@
+{
+  "id": "a11_which_prep",
+  "prompt": "Have the helper arm put bowl 2 on the prep station.",
+  "world": "bench/worlds/kitchen.json",
+  "group": "clarify",
+  "expect": {
+    "decision": "clarify",
+    "category": "none"
+  },
+  "tags": [
+    "location"
+  ],
+  "slot": "location",
+  "candidates": [
+    "prep_1",
+    "prep_2"
+  ]
+}

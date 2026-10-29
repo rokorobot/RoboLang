@@ -1,0 +1,14 @@
+{
+  "id": "u03_until_stop",
+  "prompt": "Keep moving every vial that arrives at intake to packing with picker1, until I tell you to stop.",
+  "world": "bench/worlds/pharmacy.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "tags": [
+    "repetition"
+  ],
+  "why": "RoboLang 1.3 has no loop; the number of repetitions is unbounded, so it cannot be unrolled."
+}

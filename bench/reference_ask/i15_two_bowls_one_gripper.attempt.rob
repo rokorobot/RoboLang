@@ -1,0 +1,15 @@
+// bench/reference_ask/i15_two_bowls_one_gripper.attempt.rob: hand-written
+robolang 1.3;
+
+task both(robot r, object a, object b, location la, location lb) {
+    goal {
+        holding r a;
+        holding r b;
+    }
+    plan {
+        move r to la;
+        grasp r a;
+        move r to lb;
+        grasp r b;
+    }
+}
