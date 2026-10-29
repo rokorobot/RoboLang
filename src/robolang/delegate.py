@@ -457,6 +457,11 @@ class _Exchange:
                 if stop is None:
                     result, pause = None, EXCHANGE_MS
         result = result or run(match.task, match.world)
+        if stop is None:
+            late = self.first_step_past_lease(match, result, start_ms, point, pause)
+            if late is not None:  # the peer would act without a valid commitment: stop before that step
+                result = run(match.task, replace(match.world, task=replace(match.world.task, cancel_before_step=late)))
+                stop = _Stop("lapsed", ("lease_expired",), self.lease_end_ms)
         payload, end = self.record_run(match, result, start_ms, pause)
         if stop is None:
             self.settle("fulfilled" if result.state == "SUCCEEDED" else "failed", end)
@@ -465,6 +470,23 @@ class _Exchange:
         payload["outcome"].update(status="failed", reasons=[{"code": c} for c in stop.reasons],
                                   reported_at=bridge.core_time(stop.at_ms))
         return payload, stop.at_ms
+
+    def first_step_past_lease(self, match: _Match, result: RunResult, start_ms: int,
+                              point: CustodyPoint | None, pause: int) -> int | None:
+        """
+        The first plan step of the peer that would start when the lease no longer holds (judged in the safe
+        direction, as at the custody point), or None. Every act of the peer is checked, not only the custody
+        exchange (decision record 0022, amendment).
+        """
+        bindings = dict(match.world.task.bindings)
+        peer_params = {p.name for p in match.task.parameters if p.type == "robot" and bindings[p.name] == match.peer}
+        for step in result.steps:
+            if step.status == "not_run" or getattr(step.step, "robot", None) not in peer_params:
+                continue
+            shift = pause if point is not None and step.index >= point.step else 0
+            if start_ms + shift + floor(step.t_start_ms) >= self.lease_end_ms - CLOCK_TOLERANCE_MS:
+                return step.index
+        return None
 
     # -- the conversation --
 
