@@ -34,3 +34,21 @@ output. Scores come from the installed `robolang` package only; there is no judg
 ## Not changed
 
 RoboLang 1.3, IR 1.2, run record 1.2 and world 1.1 keep their meaning. No file of the `robolang` package changed.
+
+## First run — 2026-10-29 (`run3`, effort medium, 1 repeat)
+
+| Model | valid first | valid after repair | goal correct | plan succeeds | optional checks | cost |
+|---|---|---|---|---|---|---|
+| claude-opus-5-5 | 40/40 | 40/40 | 40/40 | 40/40 | 20/20 | $0.29 |
+| claude-sonnet-5-5 | 40/40 | 40/40 | 40/40 | 40/40 | 20/20 | $0.15 |
+| claude-haiku-5-5 | 40/40 | 40/40 | 40/40 | 40/40 | 19/20 | $0.02 |
+
+Full report: [docs/evidence/bench-run3-report.md](../../docs/evidence/bench-run3-report.md). No repair
+round was needed. Haiku's one optional-check miss (`w_two_limits`) chose stricter limits than the
+reference for "under 80 cm/s" (0.75 rather than 0.8 m/s): a wording ambiguity in the task.
+
+**Reading.** With a 2,000-token language reference, current models write valid RoboLang 1.3 with
+correct goals for every task in this set; even the smallest model does, at about $0.02 for 40
+tasks. The set is **saturated**: it no longer separates models. A harder second set is needed
+(requests the language cannot express, infeasible requests, larger worlds, less guidance).
+

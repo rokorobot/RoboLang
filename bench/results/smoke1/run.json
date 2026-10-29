@@ -1,0 +1,15 @@
+{
+  "run_id": "smoke1",
+  "models": [
+    "claude-haiku-5-5"
+  ],
+  "effort": "medium",
+  "repeats": 1,
+  "tasks": [
+    "a_amr_ferry"
+  ],
+  "fallbacks": true,
+  "max_tokens": 16000,
+  "prompt_sha256": "93c8359cbeea83883461aff10314cdd874035efa70e4a81f196545e40aecdd68",
+  "started": "2026-10-29T10:32:36Z"
+}

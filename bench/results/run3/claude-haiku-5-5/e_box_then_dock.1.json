@@ -1,0 +1,120 @@
+{
+  "task_id": "e_box_then_dock",
+  "model": "claude-haiku-5-5",
+  "repeat": 1,
+  "effort": "medium",
+  "calls": [
+    {
+      "kind": "initial",
+      "request": {
+        "model": "claude-haiku-5-5",
+        "max_tokens": 16000,
+        "system": [
+          {
+            "type": "text",
+            "text": "You write RoboLang 1.3 programs. RoboLang is a small, checked language for robot tasks. An operator describes a request in plain English and lists the entities of a simulated world. You reply with one program that does what was asked, the name of the task to run, and the bindings that tie the task's parameters to world entities. A program is checked by `robolang validate`, then run in a symbolic simulation. It counts as correct only if it is valid, its `goal` states exactly what the request asks for, and the plan reaches that goal.\n\n# Reply format\n\nReply with one JSON object and nothing else:\n\n    {\"rob\": \"<complete RoboLang source>\", \"task\": \"<name of the task to run>\", \"bindings\": [{\"param\": \"<parameter>\", \"id\": \"<world entity ID>\"}, ...]}\n\n`bindings` binds every parameter of the task, each to an entity of the right kind from the world list. Use the entity IDs exactly as listed.\n\n# The language\n\nA file starts with `robolang 1.3;` and holds one or more tasks. `//` starts a comment. The language is case sensitive. Whitespace only separates tokens.\n\n    task NAME(type param, type param, ...) {\n        @safety max_speed 0.5 m/s;     // zero or more annotations, first\n        pre  { condition; ... }        // optional\n        goal { condition; ... }        // required, at least one condition\n        plan { statement; ... }        // required, at least one statement\n    }\n\nThe order inside a task is fixed: annotations, `pre`, `goal`, `plan`. Every condition and statement ends with `;`.\n\nParameter types: `robot`, `object`, `location`, `region`, `sensor`. A parameter is a placeholder; the bindings give it a world entity. Names are ASCII letters, digits and `_`, starting with a letter. Do not use a reserved word as a name:\n\n    robolang task pre plan goal robot object location region sensor move grasp place inspect wait communicate\n    to at using with for until timeout robot_ready region_clear object_exists sensor_ok object_at robot_at holding\n    and or not in_region with_approach no_go_region require_guard message_received scalar duration\n\nNumbers are unsigned decimals (`2`, `0.5`); there is no sign or exponent. A duration is a number and one unit: `ms`, `s` or `min`. It must be above zero. Words such as \"half a second\" or \"a quarter of a minute\" must be written as numbers (`500 ms`, `15 s`).\n\n## Statements (the plan)\n\n    move r to dst;                      grasp r obj;                      place r obj at dst;\n    inspect r obj using sensor;         wait for 2 s;\n    wait until CONDITION timeout 30 s;  communicate r to \"channel\" with \"message\";\n\n`r` is a robot, `obj` an object, `dst` a location, `sensor` a sensor parameter (never a quoted string). `wait until` always needs a `timeout`. Strings may not contain a line break; the only escapes are `\\\"`, `\\\\`, `\\n`, `\\t`.\n\n## Conditions\n\n| Atom | True when |\n|---|---|\n| `robot_ready r` | the robot is ready for physical actions |\n| `region_clear c` | the region is clear |\n| `object_exists o` | the object is present |\n| `sensor_ok s` | the sensor (a `sensor` parameter) is available |\n| `object_at o l` | the object is present, not held, and at location `l` |\n| `robot_at r l` | the robot is at location `l` |\n| `holding r o` | robot `r` holds object `o` |\n\nCombine with `not`, `and`, `or` and parentheses: `region_clear a or region_clear b`, `not region_clear z`, `(robot_ready r and region_clear c) or object_exists o`. `and` and `or` may not be mixed at one level without parentheses. A condition is at most 8 levels deep. A fact the world does not state is unknown, and unknown is never treated as true.\n\n## pre, goal, annotations\n\n- `pre` conditions are checked once, before the first step. If one is not true, the run stops and nothing moves. Use `pre` for \"only if\", \"provided that\", \"refuse to start unless\". Use `wait until` for \"wait for\", \"once it clears\", \"when it is free\".\n- `goal` is the outcome the request asks for, checked against the final state after the plan has run. Every condition in it must hold. Write one condition for each end state the request names (`object_at`, `robot_at`, `holding`), and nothing the request does not ask for. A held object is not `object_at` anywhere. A goal is the end state, not the steps.\n- `@safety max_speed N m/s;` (linear) or `@safety max_speed N rad/s;` (angular) declares a speed limit. The unit is required; each unit at most once per task; N is above zero. Write a limit only when the request asks for one, converted to `m/s` or `rad/s` (30 centimetres per second is `0.3 m/s`). A limit above a bound robot's declared maximum, or in a unit the robot does not declare, fails the run.\n- `@verify min_confidence 0.9;` (0 to 1) and `@verify max_age 5 s;` say how an observation must support the goal. Use them only if the request mentions them.\n\n## What the simulation requires of a plan\n\n- Every `move`, `grasp` and `place` needs its robot to be ready. Robots can move to any location. A robot that holds an object takes it along.\n- `grasp r o`: `r` has a gripper and holds nothing, `o` is present, and `o` is at `r`'s current location (move there first).\n- `place r o at dst`: `r` holds `o` and is at `dst` (move there first).\n- `inspect r o using s`: sensor `s` is mounted on `r` and available. The object may be anywhere.\n- `wait until C timeout T` checks `C` now, then whenever the world changes during the next `T`. It fails if `C` is still not true when `T` runs out. Only waits take simulated time.\n- `communicate` records a message; it changes nothing else.\n- The task can use any entity in the bindings, including more than one robot. Robots do their steps one after another, in the order written.\n\nCommon mistakes the checker reports: `E303` a name that is not a parameter; `E304` a name used with the wrong type; `E309` no `goal`; `E310` a quoted string where a sensor parameter belongs; `E212` a reserved word used as a name; `E214` `and` and `or` mixed without parentheses; `E208` blocks in the wrong order; `E206` a missing or unknown unit; `E202` a missing `;`.\n\n# Example\n\nWorld: locations dock, shelf, table; regions cell (not clear, clears after 10 s); robots arm1 (at dock, gripper, max speed 1 m/s); objects box1 (at shelf); sensors cam1 (on arm1, available).\nRequest: \"Take box1 from the shelf to the table with arm1, once the cell is clear (allow 20 seconds). Look at it on the way with cam1. Keep below 0.5 metres per second and tell the fleet when done.\"\n\n    {\"rob\": \"robolang 1.3;\\n\\ntask deliver(robot r, object box, location src, location dst, region cell, sensor cam) {\\n    @safety max_speed 0.5 m/s;\\n    pre { sensor_ok cam; }\\n    goal { object_at box dst; }\\n    plan {\\n        wait until region_clear cell timeout 20 s;\\n        move r to src;\\n        inspect r box using cam;\\n        grasp r box;\\n        move r to dst;\\n        place r box at dst;\\n        communicate r to \\\"fleet\\\" with \\\"DONE\\\";\\n    }\\n}\\n\",\n     \"task\": \"deliver\",\n     \"bindings\": [{\"param\": \"r\", \"id\": \"arm1\"}, {\"param\": \"box\", \"id\": \"box1\"}, {\"param\": \"src\", \"id\": \"shelf\"},\n                  {\"param\": \"dst\", \"id\": \"table\"}, {\"param\": \"cell\", \"id\": \"cell\"}, {\"param\": \"cam\", \"id\": \"cam1\"}]}\n",
+            "cache_control": {
+              "type": "ephemeral"
+            }
+          }
+        ],
+        "messages": [
+          {
+            "role": "user",
+            "content": "World:\nlocations: dock, handoff, home, shelf, table\nregions: cell (clear), handoff_zone (not clear)\nrobots: arm1 (at home, has a gripper, ready, max speed 1 m/s); amr1 (at dock, has a gripper, ready, max speed 1.5 m/s)\nobjects: box1 (box, at shelf)\nsensors: camera_top (on arm1, available)\nscheduled: after 5 s, region_clear of handoff_zone becomes true\n\nRequest: With arm1, put the box on the table, and when that is done send arm1 to the dock."
+          }
+        ],
+        "output_config": {
+          "effort": "medium",
+          "format": {
+            "type": "json_schema",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "rob": {
+                  "type": "string",
+                  "description": "The complete RoboLang 1.3 source."
+                },
+                "task": {
+                  "type": "string",
+                  "description": "The name of the task in the source to run."
+                },
+                "bindings": {
+                  "type": "array",
+                  "description": "One entry per task parameter: the parameter name and the world entity ID bound to it.",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "param": {
+                        "type": "string"
+                      },
+                      "id": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "param",
+                      "id"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              },
+              "required": [
+                "rob",
+                "task",
+                "bindings"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "response": {
+        "id": "msg_011CgWNsjhp1jzMMyEDcaTiq",
+        "container": null,
+        "content": [
+          {
+            "signature": "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",
+            "thinking": "",
+            "type": "thinking"
+          },
+          {
+            "text": "{\"rob\": \"robolang 1.3;\\n\\ntask put_box(robot r, object box, location shelf, location table, location dock) {\\n    goal { object_at box table; robot_at r dock; }\\n    plan {\\n        move r to shelf;\\n        grasp r box;\\n        move r to table;\\n        place r box at table;\\n        move r to dock;\\n    }\\n}\\n\", \"task\": \"put_box\", \"bindings\": [{\"param\": \"r\", \"id\": \"arm1\"}, {\"param\": \"box\", \"id\": \"box1\"}, {\"param\": \"shelf\", \"id\": \"shelf\"}, {\"param\": \"table\", \"id\": \"table\"}, {\"param\": \"dock\", \"id\": \"dock\"}]}",
+            "type": "text"
+          }
+        ],
+        "diagnostics": null,
+        "model": "claude-haiku-5-5",
+        "role": "assistant",
+        "stop_details": null,
+        "stop_reason": "end_turn",
+        "stop_sequence": null,
+        "type": "message",
+        "usage": {
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 0,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "cache_creation_input_tokens": 0,
+          "cache_read_input_tokens": 3047,
+          "inference_geo": "global",
+          "input_tokens": 198,
+          "output_tokens": 857,
+          "output_tokens_details": {
+            "thinking_tokens": 630
+          },
+          "service_tier": "standard",
+          "speed": "standard"
+        }
+      },
+      "error": null,
+      "served_by": {
+        "model": "claude-haiku-5-5",
+        "fallback": false
+      },
+      "fatal": false,
+      "bad_request": false
+    }
+  ]
+}

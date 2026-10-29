@@ -1,0 +1,120 @@
+{
+  "task_id": "a_amr_ferry",
+  "model": "claude-haiku-5-5",
+  "repeat": 1,
+  "effort": "medium",
+  "calls": [
+    {
+      "kind": "initial",
+      "request": {
+        "model": "claude-haiku-5-5",
+        "max_tokens": 16000,
+        "system": [
+          {
+            "type": "text",
+            "text": "You write RoboLang 1.3 programs. RoboLang is a small, checked language for robot tasks. An operator describes a request in plain English and lists the entities of a simulated world. You reply with one program that does what was asked, the name of the task to run, and the bindings that tie the task's parameters to world entities. A program is checked by `robolang validate`, then run in a symbolic simulation. It counts as correct only if it is valid, its `goal` states exactly what the request asks for, and the plan reaches that goal.\n\n# Reply format\n\nReply with one JSON object and nothing else:\n\n    {\"rob\": \"<complete RoboLang source>\", \"task\": \"<name of the task to run>\", \"bindings\": [{\"param\": \"<parameter>\", \"id\": \"<world entity ID>\"}, ...]}\n\n`bindings` binds every parameter of the task, each to an entity of the right kind from the world list. Use the entity IDs exactly as listed.\n\n# The language\n\nA file starts with `robolang 1.3;` and holds one or more tasks. `//` starts a comment. The language is case sensitive. Whitespace only separates tokens.\n\n    task NAME(type param, type param, ...) {\n        @safety max_speed 0.5 m/s;     // zero or more annotations, first\n        pre  { condition; ... }        // optional\n        goal { condition; ... }        // required, at least one condition\n        plan { statement; ... }        // required, at least one statement\n    }\n\nThe order inside a task is fixed: annotations, `pre`, `goal`, `plan`. Every condition and statement ends with `;`.\n\nParameter types: `robot`, `object`, `location`, `region`, `sensor`. A parameter is a placeholder; the bindings give it a world entity. Names are ASCII letters, digits and `_`, starting with a letter. Do not use a reserved word as a name:\n\n    robolang task pre plan goal robot object location region sensor move grasp place inspect wait communicate\n    to at using with for until timeout robot_ready region_clear object_exists sensor_ok object_at robot_at holding\n    and or not in_region with_approach no_go_region require_guard message_received scalar duration\n\nNumbers are unsigned decimals (`2`, `0.5`); there is no sign or exponent. A duration is a number and one unit: `ms`, `s` or `min`. It must be above zero. Words such as \"half a second\" or \"a quarter of a minute\" must be written as numbers (`500 ms`, `15 s`).\n\n## Statements (the plan)\n\n    move r to dst;                      grasp r obj;                      place r obj at dst;\n    inspect r obj using sensor;         wait for 2 s;\n    wait until CONDITION timeout 30 s;  communicate r to \"channel\" with \"message\";\n\n`r` is a robot, `obj` an object, `dst` a location, `sensor` a sensor parameter (never a quoted string). `wait until` always needs a `timeout`. Strings may not contain a line break; the only escapes are `\\\"`, `\\\\`, `\\n`, `\\t`.\n\n## Conditions\n\n| Atom | True when |\n|---|---|\n| `robot_ready r` | the robot is ready for physical actions |\n| `region_clear c` | the region is clear |\n| `object_exists o` | the object is present |\n| `sensor_ok s` | the sensor (a `sensor` parameter) is available |\n| `object_at o l` | the object is present, not held, and at location `l` |\n| `robot_at r l` | the robot is at location `l` |\n| `holding r o` | robot `r` holds object `o` |\n\nCombine with `not`, `and`, `or` and parentheses: `region_clear a or region_clear b`, `not region_clear z`, `(robot_ready r and region_clear c) or object_exists o`. `and` and `or` may not be mixed at one level without parentheses. A condition is at most 8 levels deep. A fact the world does not state is unknown, and unknown is never treated as true.\n\n## pre, goal, annotations\n\n- `pre` conditions are checked once, before the first step. If one is not true, the run stops and nothing moves. Use `pre` for \"only if\", \"provided that\", \"refuse to start unless\". Use `wait until` for \"wait for\", \"once it clears\", \"when it is free\".\n- `goal` is the outcome the request asks for, checked against the final state after the plan has run. Every condition in it must hold. Write one condition for each end state the request names (`object_at`, `robot_at`, `holding`), and nothing the request does not ask for. A held object is not `object_at` anywhere. A goal is the end state, not the steps.\n- `@safety max_speed N m/s;` (linear) or `@safety max_speed N rad/s;` (angular) declares a speed limit. The unit is required; each unit at most once per task; N is above zero. Write a limit only when the request asks for one, converted to `m/s` or `rad/s` (30 centimetres per second is `0.3 m/s`). A limit above a bound robot's declared maximum, or in a unit the robot does not declare, fails the run.\n- `@verify min_confidence 0.9;` (0 to 1) and `@verify max_age 5 s;` say how an observation must support the goal. Use them only if the request mentions them.\n\n## What the simulation requires of a plan\n\n- Every `move`, `grasp` and `place` needs its robot to be ready. Robots can move to any location. A robot that holds an object takes it along.\n- `grasp r o`: `r` has a gripper and holds nothing, `o` is present, and `o` is at `r`'s current location (move there first).\n- `place r o at dst`: `r` holds `o` and is at `dst` (move there first).\n- `inspect r o using s`: sensor `s` is mounted on `r` and available. The object may be anywhere.\n- `wait until C timeout T` checks `C` now, then whenever the world changes during the next `T`. It fails if `C` is still not true when `T` runs out. Only waits take simulated time.\n- `communicate` records a message; it changes nothing else.\n- The task can use any entity in the bindings, including more than one robot. Robots do their steps one after another, in the order written.\n\nCommon mistakes the checker reports: `E303` a name that is not a parameter; `E304` a name used with the wrong type; `E309` no `goal`; `E310` a quoted string where a sensor parameter belongs; `E212` a reserved word used as a name; `E214` `and` and `or` mixed without parentheses; `E208` blocks in the wrong order; `E206` a missing or unknown unit; `E202` a missing `;`.\n\n# Example\n\nWorld: locations dock, shelf, table; regions cell (not clear, clears after 10 s); robots arm1 (at dock, gripper, max speed 1 m/s); objects box1 (at shelf); sensors cam1 (on arm1, available).\nRequest: \"Take box1 from the shelf to the table with arm1, once the cell is clear (allow 20 seconds). Look at it on the way with cam1. Keep below 0.5 metres per second and tell the fleet when done.\"\n\n    {\"rob\": \"robolang 1.3;\\n\\ntask deliver(robot r, object box, location src, location dst, region cell, sensor cam) {\\n    @safety max_speed 0.5 m/s;\\n    pre { sensor_ok cam; }\\n    goal { object_at box dst; }\\n    plan {\\n        wait until region_clear cell timeout 20 s;\\n        move r to src;\\n        inspect r box using cam;\\n        grasp r box;\\n        move r to dst;\\n        place r box at dst;\\n        communicate r to \\\"fleet\\\" with \\\"DONE\\\";\\n    }\\n}\\n\",\n     \"task\": \"deliver\",\n     \"bindings\": [{\"param\": \"r\", \"id\": \"arm1\"}, {\"param\": \"box\", \"id\": \"box1\"}, {\"param\": \"src\", \"id\": \"shelf\"},\n                  {\"param\": \"dst\", \"id\": \"table\"}, {\"param\": \"cell\", \"id\": \"cell\"}, {\"param\": \"cam\", \"id\": \"cam1\"}]}\n",
+            "cache_control": {
+              "type": "ephemeral"
+            }
+          }
+        ],
+        "messages": [
+          {
+            "role": "user",
+            "content": "World:\nlocations: bin, conveyor_in, handoff12, station1, station2, station3\nregions: fence_a (clear), fence_b (not clear)\nrobots: arm_a (at station1, has a gripper, ready, max speed 1 m/s); arm_b (at station3, has a gripper, ready, max speed 1 m/s); amr1 (at station2, has a gripper, ready, max speed 1.5 m/s)\nobjects: p1 (part, at conveyor_in); p2 (part, at conveyor_in); p3 (part, at conveyor_in); p4 (part, at station3)\nsensors: cam_s1 (on arm_a, available); cam_s3 (on arm_b, available)\nscheduled: after 20 s, region_clear of fence_b becomes true\n\nRequest: amr1 carries p2 from the conveyor to station2, where arm_b picks it up and puts it in the bin."
+          }
+        ],
+        "output_config": {
+          "effort": "medium",
+          "format": {
+            "type": "json_schema",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "rob": {
+                  "type": "string",
+                  "description": "The complete RoboLang 1.3 source."
+                },
+                "task": {
+                  "type": "string",
+                  "description": "The name of the task in the source to run."
+                },
+                "bindings": {
+                  "type": "array",
+                  "description": "One entry per task parameter: the parameter name and the world entity ID bound to it.",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "param": {
+                        "type": "string"
+                      },
+                      "id": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "param",
+                      "id"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              },
+              "required": [
+                "rob",
+                "task",
+                "bindings"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "response": {
+        "id": "msg_011CgWNo3BQQsvZq4mUhRaJL",
+        "container": null,
+        "content": [
+          {
+            "signature": "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",
+            "thinking": "",
+            "type": "thinking"
+          },
+          {
+            "text": "{\"rob\": \"robolang 1.3;\\n\\ntask carry_and_place(robot amr, robot arm, object part, location src, location station, location dst) {\\n    goal { object_at part dst; }\\n    plan {\\n        move amr to src;\\n        grasp amr part;\\n        move amr to station;\\n        place amr part at station;\\n        move arm to station;\\n        grasp arm part;\\n        move arm to dst;\\n        place arm part at dst;\\n    }\\n}\\n\", \"task\": \"carry_and_place\", \"bindings\": [{\"param\": \"amr\", \"id\": \"amr1\"}, {\"param\": \"arm\", \"id\": \"arm_b\"}, {\"param\": \"part\", \"id\": \"p2\"}, {\"param\": \"src\", \"id\": \"conveyor_in\"}, {\"param\": \"station\", \"id\": \"station2\"}, {\"param\": \"dst\", \"id\": \"bin\"}]}",
+            "type": "text"
+          }
+        ],
+        "diagnostics": null,
+        "model": "claude-haiku-5-5",
+        "role": "assistant",
+        "stop_details": null,
+        "stop_reason": "end_turn",
+        "stop_sequence": null,
+        "type": "message",
+        "usage": {
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 0,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "cache_creation_input_tokens": 0,
+          "cache_read_input_tokens": 3047,
+          "inference_geo": "global",
+          "input_tokens": 303,
+          "output_tokens": 1156,
+          "output_tokens_details": {
+            "thinking_tokens": 871
+          },
+          "service_tier": "standard",
+          "speed": "standard"
+        }
+      },
+      "error": null,
+      "served_by": {
+        "model": "claude-haiku-5-5",
+        "fallback": false
+      },
+      "fatal": false,
+      "bad_request": false
+    }
+  ]
+}
