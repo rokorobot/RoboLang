@@ -299,7 +299,7 @@ bindings, fault indices and cancellation index depend on it.
 | `E508` | A binding names something that is not a parameter of the selected task |
 | `E509` | Duplicate entity ID, within a kind or across kinds |
 | `E510` | Inconsistent state (section 3.3): an object's presence and position disagree, an object is held by a robot without a gripper, or a robot holds more than one object |
-| `E511` | Invalid script: a fault or cancellation step outside the selected task's plan, a repeated fault step, two `max_speed` maxima with the same unit, or an event whose target is of the wrong kind for its fact |
+| `E511` | Invalid script: a fault or cancellation step outside the selected task's plan (1.4: a fault on an `if`), a repeated fault step, two `max_speed` maxima with the same unit, or an event whose target is of the wrong kind for its fact |
 
 ## 4. Execution semantics
 
@@ -589,6 +589,8 @@ Section 3.9 (`E501`–`E511`). They stop processing with exit status 3; no run i
 | `S233` | step | `inspect`: the sensor's availability is unknown |
 | `S241` | step | `wait until`: the timeout expired before the condition was true |
 | `S251` | step | A scripted fault |
+| `S261` | step | RoboLang 1.4: the condition of an `if` is unknown; no branch is taken (section 12) |
+| `S262` | step | RoboLang 1.4: a `fail "reason";` statement was reached (section 12) |
 | `S301` | goal | RoboLang 1.3: a `goal` condition is false after the last step (section 10) |
 | `S302` | goal | RoboLang 1.3: no `goal` condition is false, but at least one is unknown (section 10) |
 
@@ -765,3 +767,62 @@ finding, stdout adds one line saying the task was checked and naming the binding
 Not checked: whatever depends on state during the run, such as readiness (`S201`), presence
 (`S213`), positions, preconditions and the goal. `simulate` still decides those. A clean
 `validate --world` is not evidence that a task is safe on a robot.
+
+## 12. RoboLang 1.4: branching
+
+Decision record [0027](decisions/0027-bounded-branching.md) (B2, B3, B4, B7, B8); language in
+[robolang-v1.4.md](robolang-v1.4.md). A 1.4 task without `if` and `fail` runs exactly as in section 4 and 10.
+
+### 12.1 Step numbers and path labels
+
+The steps of a plan, with the steps inside branches, are numbered in **source order, depth first**: an `if` is one
+step, followed by the steps of its `then`, then those of its `else`, each with its own nested steps. This number is
+the step `index` in the record, in `failure.step`, in `faults` and in `cancel.before_step` of the world file
+(B8). A fault cannot be put on an `if` (`E511`); a cancellation before an `if` is allowed. A fault or a
+cancellation on a step the run never reaches (a branch not taken) has no effect.
+
+The **path label** is the same step as a name: its place in its list, with `.then.` or `.else.` for each `if`
+above it: `3`, `3.then.1`, `3.else.2.then.1`. The label of the `if` itself is the prefix of its branches.
+
+### 12.2 Execution
+
+- An `if` is evaluated **once**, when it is reached, against the state at that moment (events up to the clock
+  are applied, section 4.2). It takes no time.
+- `true` runs `then`; `false` runs `else`, which is no steps when the source has no `else`.
+- `unknown` fails the run with **`S261`**, phase `step`, at the `if`, before either branch (B3).
+- `fail "reason";` fails the run with **`S262`**, phase `step`, at the `fail` step, with the reason in
+  `failure.reason` (B4). The phase is `step` because a `fail` is a step the run reached; the phase set stays the
+  four of section 5.2. Messages sent before it stand: they are recorded and not undone.
+- Faults and cancellation behave as in 4.6. A scripted fault on a `fail` step gives `S251`.
+- The **effective goal** of a run is the task `goal` followed by the `goal` blocks of the branches taken, in
+  that order (B2). It is evaluated after the last step exactly as in 10.3 (`S301`, `S302`). A run that ends in
+  `fail`, in another failure or in a cancellation has no goal evaluation: its goal entries are `not_evaluated`.
+
+### 12.3 Run record 1.3
+
+A 1.4 source writes `run_record_schema_version` `1.3` and embeds Task IR 1.3. 1.1 to 1.3 sources write their
+records unchanged, byte for byte. The key order is that of record 1.2 with:
+
+| Where | Added |
+|---|---|
+| `failure` | `reason`: the reason of `S262`, else `null` |
+| `goal[]` | `from`: `"task"`, or the path label of the branch with `.then` or `.else`, for example `"3.then"` |
+| top level | `decisions`, after `goal` and before `steps` |
+| `steps[]` | `path`: the label (12.1), after `index`. Every step of the plan is listed, in step order; a step of a branch not taken is `not_run`. An `if` is written as `{"kind": "if", "condition": ...}` without its branches, with its `condition_result` |
+
+`decisions` has one entry per `if` reached, in the order reached: `{ "step": <path label>, "condition_result":
+"true" | "false" | "unknown", "branch": "then" | "else" | "none", "t_ms": <time> }`. `branch` is `else` for a
+false condition even when there is no `else`; it is `none` only for `unknown`. The run ID is unchanged in form (section 6).
+
+### 12.4 Core
+
+`core_outcome` (10.5) reports the effective goal of the path **taken** (B7): its criteria are the flattened outcome
+atoms of the goal entries of the record, in order. The decisions are in the record, not in Core. For `S262` the
+`status` is `failed` and `reasons` is `[]`: Core 0.1 has a closed list of reason codes with none for a declared
+failure, so the reason is only in `failure.reason` until Core 0.2. A run that ends in `fail` has `verification`
+`null`.
+
+`export-goal` and `delegate` export a branching task only if **every path has the same effective goal** (the same
+flattened atoms in the same order, for instance a robot choice with one goal on both paths). Otherwise, and when
+a path ends in `fail`, the goal is not exportable: exit 6, code `X603`, naming decision 0027 B7 and Core 0.2.
+`delegate` does not take a branching plan that binds two or more robots (`robots_unsupported`).

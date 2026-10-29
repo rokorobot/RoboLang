@@ -509,12 +509,16 @@ class _Loader:
                 return None
             raw, faults, cancel = entries[name]
             bound = self.check_bindings(world, raw, p + _pointer("bindings"), self.filename)
-        count = len(self.task.steps)
+        flat = [step for _, step in ir.walk(self.task.steps)]  # a step's number counts through both branches of an `if`
+        count = len(flat)
         seen = set()
         for i, step in faults:
             fp = p + _pointer("faults", i, "step")
             if step > count:
                 self.fail("E511", fp, f"step {step} is outside the plan (1 to {count})")
+                return None
+            if isinstance(flat[step - 1], ir.If):
+                self.fail("E511", fp, f"step {step} is an 'if' and cannot be faulted")
                 return None
             if step in seen:
                 self.fail("E511", fp, f"step {step} is faulted twice")

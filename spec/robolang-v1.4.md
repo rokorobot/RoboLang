@@ -10,9 +10,9 @@ Everything not stated here is exactly as in [RoboLang 1.3](robolang-v1.3.md) (an
 rejects it with `E213`. Files with no marker or with `1.1`, `1.2` or `1.3` are read, validated and compiled exactly as
 before: same diagnostics, same IR, same run records.
 
-**Not in this version of the tool:** `simulate`, `export-goal` and `delegate` refuse a task that has an `if` or a
-`fail` (exit 2), and `validate --world` skips the step checks of such a task and says so. They come with the
-simulation of branches (decision 0027, PR 2 and PR 3). A task of 1.4 without `if` or `fail` behaves as in 1.3.
+**Simulation:** `simulate`, `export-goal` and `delegate` accept a branching task
+([simulation 12](simulation-v1.0.md)). **Not yet:** `validate --world` skips the step checks of such a task and says
+so, and the benchmark scores it per path (decision 0027, PR 3). A task of 1.4 without `if` or `fail` behaves as in 1.3.
 
 ## 2. Reserved words
 

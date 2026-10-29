@@ -106,7 +106,7 @@ FORMAT_CODE = "B001"      # the reply was not an answer in the required format
 NO_TASK_CODE = "B002"     # the named task is not in the source
 REFUSED_CODE = "B003"     # the model refused (stop_reason "refusal"): no answer
 API_ERROR_CODE = "B004"   # the request failed: no answer
-BRANCHING_CODE = "B005"   # a RoboLang 1.4 branching task: valid, but not simulated until N4 PR 2
+BRANCHING_CODE = "B005"   # a RoboLang 1.4 branching task: valid and simulated, but scored per path only from N4 PR 3
 
 _CODE = re.compile(r"(?:error|warning)\[([A-Z]\d{3})\]")
 

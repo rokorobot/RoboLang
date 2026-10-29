@@ -252,6 +252,20 @@ class Task:
         return any(isinstance(step, (If, Fail)) for step in self.steps)
 
 
+def walk(steps: tuple[Step, ...], prefix: str = ""):
+    """
+    Every step in source order, depth first (an `if`, then its `then` steps, then its `else` steps), as
+    (path label, step): the label is the step's position in its list, joined by `.then.` / `.else.` for a
+    nested one, for example "3", "3.then.1", "3.else.2.then.1". The step's index is its 1-based place in this order.
+    """
+    for position, step in enumerate(steps, start=1):
+        label = f"{prefix}{position}"
+        yield label, step
+        if isinstance(step, If):
+            yield from walk(step.then, f"{label}.then.")
+            yield from walk(step.orelse, f"{label}.else.")
+
+
 @dataclass(frozen=True)
 class TaskIR:
     tasks: tuple[Task, ...]

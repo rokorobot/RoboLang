@@ -267,7 +267,7 @@ def _world_diagnostic(args, inputs: _RunInputs, finding: Finding):
 
 
 def _validate(args, out, err) -> int:
-    inputs = _run_inputs(args, err, refuse=False) if args.world is not None else None
+    inputs = _run_inputs(args, err) if args.world is not None else None
     loaded = _load(args, err) if inputs is None else inputs.loaded
     document = loaded.document
     if inputs is not None:
@@ -484,21 +484,11 @@ class _RunInputs:
     loaded: _Loaded | None = None
 
 
-def _refuse_branching(command: str, task: task_ir.Task):
-    """A RoboLang 1.4 task with `if` or `fail` has no simulation yet (decision 0027, PR 2): refuse, exit 2."""
-    if task.branching:
-        raise _CommandError(
-            f"task '{task.name}' branches (it has an 'if' or a 'fail'), and {command} does not support a "
-            "branching task yet: simulation of RoboLang 1.4 is not implemented in this version. "
-            "validate and inspect work on it"
-        )
-
-
-def _run_inputs(args, err, refuse: bool = True) -> _RunInputs:
+def _run_inputs(args, err) -> _RunInputs:
     """
     What `simulate`, `export-goal` and `delegate` share: validate FILE (or the --ir file), select the task,
     apply `--bind`, load the world. Raises RoboLangError or IRError (exit 1), _CommandError (2) or
-    WorldError (3). A branching task is refused (exit 2) unless `refuse` is false (validate --world).
+    WorldError (3).
     """
     cli_bindings = _parse_bindings(args.bind)
     loaded = _load(args, err)  # read once: the run ID describes exactly what was run
@@ -515,8 +505,6 @@ def _run_inputs(args, err, refuse: bool = True) -> _RunInputs:
         except KeyError:
             names = ", ".join(t.name for t in tasks)
             raise _CommandError(f"no task named '{args.task}' in '{args.file}'; tasks in this file: {names}") from None
-    if refuse:
-        _refuse_branching(args.command, task)
     if cli_bindings is not None:
         names = [p.name for p in task.parameters]
         for name in cli_bindings:
@@ -564,7 +552,10 @@ def _export_failure(path: str, task: task_ir.Task, error: Exception, err) -> int
     if isinstance(error, ExportError):
         print(f"{path}: error[{error.code}]: task '{task.name}': {error.message}", file=err)
         return EXIT_NOT_EXPORTABLE
-    shown = f" ({_condition(task.goal[error.index - 1], True)})" if error.index else ""
+    if isinstance(error, bridge.PathsDiffer):
+        print(f"{path}: error[X603]: task '{task.name}': {error}", file=err)
+        return EXIT_NOT_EXPORTABLE
+    shown = f" ({_condition(task.goal[error.index - 1], True)})" if 0 < error.index <= len(task.goal) else ""
     print(f"{path}: error[X601]: task '{task.name}': {error}{shown}; "
           "only object_at, robot_at and holding can be exported", file=err)
     return EXIT_NOT_EXPORTABLE
@@ -637,10 +628,6 @@ def _load_plans(paths: list[str], err) -> list[Plan]:
         except RoboLangError as error:
             _print_errors(error, path, err, summary=False)
             raise _PlanInvalid from None
-        for task in result.ir.tasks:
-            if task.branching:
-                raise _CommandError(f"{path}: task '{task.name}' branches, and delegate does not support a "
-                                    "branching plan yet: simulation of RoboLang 1.4 is not implemented in this version")
         plans.append(Plan(_record_path(path), data, result.ir.tasks, result.ir.language_version))
     return plans
 
