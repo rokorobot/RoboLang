@@ -18,6 +18,8 @@
 
 ## 0. Next steps from benchmark evidence (approved by the owner 2026-10-29)
 
+> **Direction:** the long-term direction, horizons and review cadence are in [STRATEGY.md](STRATEGY.md). This section is the current horizon's (H1) work list.
+
 The authoring benchmark (decision 0024; [set 2 analysis](evidence/bench-set2-analysis.md)) is now the
 main input for ordering work. Each step cites the finding it answers. Listing a step authorizes nothing.
 
