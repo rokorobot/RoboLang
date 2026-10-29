@@ -1,0 +1,19 @@
+{
+  "id": "x_nearest_robot",
+  "prompt": "Use whichever robot is closest to shelf_b to bring box2 to the table.",
+  "world": "bench/worlds/warehouse.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_4": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "tags": [
+    "computed_choice"
+  ],
+  "why": "Choosing by distance needs geometry and a computed comparison. A 1.4 `if` tests world facts (ready, at, clear, holding), not distances.",
+  "attempt_fails_with": "E203"
+}

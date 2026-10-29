@@ -261,7 +261,7 @@ def parse_args(argv):
     parser.add_argument("--effort", default="medium", choices=EFFORTS, help="output_config.effort (default: medium)")
     parser.add_argument("--repeats", type=int, default=1, help="answers per task and model (default: 1)")
     parser.add_argument("--set", dest="task_set", default="1", choices=tuple(lib.SETS),
-                        help="task set: 1 (syntax, the default) or hard (robustness)")
+                        help="task set: 1 (syntax, the default), hard (robustness) or branch (set 3, branching)")
     parser.add_argument("--prompt", dest="prompt_name", default="full", choices=lib.PROMPTS,
                         help="system prompt: full (prompt.md) or minimal (only the grammar and the answer format)")
     parser.add_argument("--tasks", help="comma-separated task IDs (default: the whole set)")

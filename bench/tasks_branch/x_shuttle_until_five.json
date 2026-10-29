@@ -1,0 +1,20 @@
+{
+  "id": "x_shuttle_until_five",
+  "prompt": "Keep moving parts from conveyor_in to the bin with arm_a as they arrive, until 17:00.",
+  "world": "bench/worlds/assembly.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_4": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "tags": [
+    "loop",
+    "schedule"
+  ],
+  "why": "An open-ended loop with a wall-clock end. Loops and schedules belong to the orchestrator, in 1.4 as in 1.3.",
+  "attempt_fails_with": "E203"
+}

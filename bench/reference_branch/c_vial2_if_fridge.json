@@ -1,0 +1,9 @@
+{
+  "task": "t",
+  "bindings": {
+    "r": "arm1",
+    "v": "vial2",
+    "src": "fridge",
+    "dst": "bench"
+  }
+}

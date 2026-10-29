@@ -1,0 +1,38 @@
+{
+  "id": "c_only_if_cell",
+  "prompt": "Only if the cell is clear when the job starts should arm2 move box2 from shelf_b to the table; otherwise do nothing.",
+  "world": "bench/worlds/warehouse.json",
+  "group": "control",
+  "expect": {
+    "decision": "program",
+    "category": "none"
+  },
+  "expected_goal": [
+    [
+      "rl:thing:box2",
+      "located_in",
+      "rl:place:table"
+    ]
+  ],
+  "expect_1_4": {
+    "decision": "program"
+  },
+  "tags": [
+    "conditional_wording",
+    "pre",
+    "region"
+  ],
+  "probes": [
+    {
+      "name": "cell_busy",
+      "world_patch": {
+        "regions": {
+          "cell": {
+            "clear": false
+          }
+        }
+      },
+      "expect": "not_succeeded"
+    }
+  ]
+}

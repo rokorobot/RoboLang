@@ -1,0 +1,38 @@
+{
+  "id": "c_if_ready_only",
+  "prompt": "If arm1 is ready, have it take box1 from the shelf to the table. If it is not ready, the job should not run.",
+  "world": "examples/world.json",
+  "group": "control",
+  "expect": {
+    "decision": "program",
+    "category": "none"
+  },
+  "expected_goal": [
+    [
+      "rl:thing:box1",
+      "located_in",
+      "rl:place:table"
+    ]
+  ],
+  "expect_1_4": {
+    "decision": "program"
+  },
+  "tags": [
+    "conditional_wording",
+    "pre",
+    "robot_ready"
+  ],
+  "probes": [
+    {
+      "name": "arm_not_ready",
+      "world_patch": {
+        "robots": {
+          "arm1": {
+            "ready": false
+          }
+        }
+      },
+      "expect": "not_succeeded"
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+// bench/reference_branch/c_only_if_cell.rob: hand-written reference solution
+robolang 1.3;
+
+task t(robot r, object box, location src, location dst, region cell) {
+    pre { region_clear cell; }
+    goal { object_at box dst; }
+    plan {
+        move r to src;
+        grasp r box;
+        move r to dst;
+        place r box at dst;
+    }
+}

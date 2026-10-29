@@ -1,0 +1,11 @@
+{
+  "task": "deliver",
+  "bindings": {
+    "m": "amr1",
+    "a": "arm1",
+    "box": "box1",
+    "dock": "dock",
+    "src": "shelf",
+    "dst": "table"
+  }
+}

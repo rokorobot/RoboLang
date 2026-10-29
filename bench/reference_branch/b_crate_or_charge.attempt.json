@@ -1,0 +1,10 @@
+{
+  "task": "tidy",
+  "bindings": {
+    "r": "amr1",
+    "c": "crate1",
+    "src": "dock",
+    "dst": "handoff",
+    "charge": "charging"
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "id": "c_spectro_ready",
+  "prompt": "Move vial1 from the bench to the scanner with arm1, but only once the spectro sensor is available; give it up to 10 seconds.",
+  "world": "bench/worlds/lab.json",
+  "group": "control",
+  "expect": {
+    "decision": "program",
+    "category": "none"
+  },
+  "expected_goal": [
+    [
+      "rl:thing:vial1",
+      "located_in",
+      "rl:place:scanner"
+    ]
+  ],
+  "expect_1_4": {
+    "decision": "program"
+  },
+  "tags": [
+    "conditional_wording",
+    "wait_until",
+    "sensor"
+  ],
+  "probes": [
+    {
+      "name": "spectro_stays_down",
+      "world_patch": {
+        "events": [
+          {
+            "at": {
+              "value": "12",
+              "unit": "s"
+            },
+            "fact": "region_clear",
+            "target": "door_zone",
+            "value": true
+          }
+        ]
+      },
+      "expect": "not_succeeded"
+    }
+  ]
+}

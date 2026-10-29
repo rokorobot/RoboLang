@@ -1,0 +1,19 @@
+{
+  "id": "x_failover_on_fault",
+  "prompt": "Have arm_a move p1 from conveyor_in to station1; if arm_a faults while doing it, have arm_b finish the job instead.",
+  "world": "bench/worlds/assembly.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_4": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "tags": [
+    "failure_handling"
+  ],
+  "why": "Switching robots after a step fails is error handling, not a branch on a world condition. In 1.3 and 1.4 a failing step ends the run.",
+  "attempt_fails_with": "E203"
+}

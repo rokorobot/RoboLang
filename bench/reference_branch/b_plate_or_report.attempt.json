@@ -1,0 +1,9 @@
+{
+  "task": "fetch",
+  "bindings": {
+    "r": "arm1",
+    "p": "plate1",
+    "src": "storage",
+    "dst": "bench"
+  }
+}

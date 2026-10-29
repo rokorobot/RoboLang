@@ -29,6 +29,8 @@ TASKS_DIR = BENCH / "tasks"
 REFERENCE_DIR = BENCH / "reference"
 HARD_TASKS_DIR = BENCH / "tasks_hard"
 HARD_REFERENCE_DIR = BENCH / "reference_hard"
+BRANCH_TASKS_DIR = BENCH / "tasks_branch"  # set 3: branching (decision 0027), pre-registered against 1.3
+BRANCH_REFERENCE_DIR = BENCH / "reference_branch"
 PROMPT_FILE = BENCH / "prompt.md"
 REFERENCE_FILE = ROOT / "docs" / "language-reference.md"
 MINIMAL_PROMPT_FILE = BENCH / "prompt_minimal.md"
@@ -37,7 +39,8 @@ GRAMMAR_MARK = "{{GRAMMAR}}"  # in prompt_minimal.md: replaced by the text of th
 REFERENCE_MARK = "{{LANGUAGE_REFERENCE}}"  # in prompt.md: replaced by the shipped, tested reference
 
 # The task sets: name -> (tasks directory, reference directory). Set 1 is the default and stays as it was.
-SETS = {"1": (TASKS_DIR, REFERENCE_DIR), "hard": (HARD_TASKS_DIR, HARD_REFERENCE_DIR)}
+SETS = {"1": (TASKS_DIR, REFERENCE_DIR), "hard": (HARD_TASKS_DIR, HARD_REFERENCE_DIR),
+        "branch": (BRANCH_TASKS_DIR, BRANCH_REFERENCE_DIR)}
 PROMPTS = ("full", "minimal")
 
 # $ per million tokens: (input, output, cache read). A cache write (5 minutes) costs 1.25 x input.

@@ -1,0 +1,11 @@
+{
+  "task": "scan",
+  "bindings": {
+    "r": "arm1",
+    "v": "vial1",
+    "src": "bench",
+    "a": "scanner",
+    "b": "storage",
+    "door": "door_zone"
+  }
+}

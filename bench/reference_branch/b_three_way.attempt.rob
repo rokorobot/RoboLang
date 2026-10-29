@@ -1,0 +1,22 @@
+// bench/reference_branch/b_three_way.attempt.rob: the program with `if`; RoboLang 1.3 rejects it. Under `robolang 1.4;` it is the 1.4 reference (decision 0027)
+robolang 1.3;
+
+task route(robot r, object box, location src, location a, location c, region cell, region aisle) {
+    plan {
+        move r to src;
+        grasp r box;
+        if region_clear cell {
+            goal { object_at box a; }
+            move r to a;
+            place r box at a;
+        } else if region_clear aisle {
+            goal { object_at box c; }
+            move r to c;
+            place r box at c;
+        } else {
+            place r box at src;
+            communicate r to "ops" with "box2 not moved";
+            fail "box2 not moved";
+        }
+    }
+}

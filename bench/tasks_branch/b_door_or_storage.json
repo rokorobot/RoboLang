@@ -1,0 +1,49 @@
+{
+  "id": "b_door_or_storage",
+  "prompt": "With arm1, take vial1 from the bench to the scanner. If the door zone is not clear once arm1 holds the vial, put vial1 in storage instead and send \"door blocked\" to channel \"lab\" from arm1.",
+  "world": "bench/worlds/lab.json",
+  "group": "branching",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_4": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "region_clear door_zone",
+        "goal": [
+          [
+            "rl:thing:vial1",
+            "located_in",
+            "rl:place:scanner"
+          ]
+        ]
+      },
+      {
+        "when": "not region_clear door_zone",
+        "goal": [
+          [
+            "rl:thing:vial1",
+            "located_in",
+            "rl:place:storage"
+          ]
+        ],
+        "messages": [
+          [
+            "lab",
+            "door blocked"
+          ]
+        ]
+      }
+    ]
+  },
+  "tags": [
+    "branching",
+    "route",
+    "region",
+    "communicate"
+  ],
+  "why": "The request needs a choice made at run time from the state of the world. RoboLang 1.3 has no if/else: `pre` only stops a run, and a goal states one fixed end state. RoboLang 1.4 (decision 0027) expresses it with `if`.",
+  "attempt_fails_with": "E203"
+}

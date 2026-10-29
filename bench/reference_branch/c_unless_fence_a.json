@@ -1,0 +1,10 @@
+{
+  "task": "t",
+  "bindings": {
+    "r": "arm_a",
+    "p": "p1",
+    "src": "conveyor_in",
+    "dst": "station1",
+    "fence": "fence_a"
+  }
+}

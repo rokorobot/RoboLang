@@ -1,0 +1,24 @@
+{
+  "id": "c_whether_or_not",
+  "prompt": "Whether or not the aisle is clear, have arm1 move box1 from shelf_a to the table; arm1 never enters the aisle.",
+  "world": "bench/worlds/warehouse.json",
+  "group": "control",
+  "expect": {
+    "decision": "program",
+    "category": "none"
+  },
+  "expected_goal": [
+    [
+      "rl:thing:box1",
+      "located_in",
+      "rl:place:table"
+    ]
+  ],
+  "expect_1_4": {
+    "decision": "program"
+  },
+  "tags": [
+    "conditional_wording",
+    "no_branch_needed"
+  ]
+}

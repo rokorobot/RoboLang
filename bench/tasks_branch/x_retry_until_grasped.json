@@ -1,0 +1,20 @@
+{
+  "id": "x_retry_until_grasped",
+  "prompt": "With arm1, try to grasp box1 on shelf_a; if the grasp fails, try again until it works, then put box1 on the table.",
+  "world": "bench/worlds/warehouse.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_4": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "tags": [
+    "retry",
+    "loop"
+  ],
+  "why": "Reacting to a failed step needs error handling and a loop. 1.4 branches on world conditions only (decision 0027); a failing step still ends the run.",
+  "attempt_fails_with": "E203"
+}

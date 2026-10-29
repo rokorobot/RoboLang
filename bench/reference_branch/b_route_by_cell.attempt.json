@@ -1,0 +1,11 @@
+{
+  "task": "route",
+  "bindings": {
+    "r": "arm2",
+    "box": "box2",
+    "src": "shelf_b",
+    "a": "shelf_a",
+    "b": "table",
+    "cell": "cell"
+  }
+}

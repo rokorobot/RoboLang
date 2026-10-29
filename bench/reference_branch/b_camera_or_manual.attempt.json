@@ -1,0 +1,11 @@
+{
+  "task": "check",
+  "bindings": {
+    "r": "arm1",
+    "box": "box1",
+    "src": "shelf_a",
+    "ok": "table",
+    "manual": "inspection_bay",
+    "cam": "camera_top"
+  }
+}

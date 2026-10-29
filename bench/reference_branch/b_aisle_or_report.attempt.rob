@@ -1,0 +1,17 @@
+// bench/reference_branch/b_aisle_or_report.attempt.rob: the program with `if`; RoboLang 1.3 rejects it. Under `robolang 1.4;` it is the 1.4 reference (decision 0027)
+robolang 1.3;
+
+task haul(robot r, object c, location src, location dst, region aisle) {
+    plan {
+        if region_clear aisle {
+            goal { object_at c dst; }
+            move r to src;
+            grasp r c;
+            move r to dst;
+            place r c at dst;
+        } else {
+            communicate r to "ops" with "aisle blocked";
+            fail "aisle blocked";
+        }
+    }
+}

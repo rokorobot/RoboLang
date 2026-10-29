@@ -1,0 +1,42 @@
+{
+  "id": "b_missing_report",
+  "prompt": "Deliver box1 from shelf_a to the table with arm1. If box1 is not there when the job starts, move nothing, send \"box1 missing\" to channel \"alerts\" from arm1 and stop the job as failed.",
+  "world": "bench/worlds/warehouse.json",
+  "group": "branching",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_4": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "object_at box1 shelf_a",
+        "goal": [
+          [
+            "rl:thing:box1",
+            "located_in",
+            "rl:place:table"
+          ]
+        ]
+      },
+      {
+        "when": "not object_at box1 shelf_a",
+        "fail": "box1 missing",
+        "messages": [
+          [
+            "alerts",
+            "box1 missing"
+          ]
+        ]
+      }
+    ]
+  },
+  "tags": [
+    "branching",
+    "report_and_stop",
+    "object"
+  ],
+  "why": "The request needs a choice made at run time from the state of the world. RoboLang 1.3 has no if/else: `pre` only stops a run, and a goal states one fixed end state. RoboLang 1.4 (decision 0027) expresses it with `if`.",
+  "attempt_fails_with": "E203"
+}

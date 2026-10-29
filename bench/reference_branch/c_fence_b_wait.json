@@ -1,0 +1,10 @@
+{
+  "task": "t",
+  "bindings": {
+    "r": "arm_b",
+    "p": "p4",
+    "src": "station3",
+    "dst": "handoff12",
+    "fence": "fence_b"
+  }
+}

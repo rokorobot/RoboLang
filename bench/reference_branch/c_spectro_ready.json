@@ -1,0 +1,10 @@
+{
+  "task": "t",
+  "bindings": {
+    "r": "arm1",
+    "v": "vial1",
+    "src": "bench",
+    "dst": "scanner",
+    "s": "spectro"
+  }
+}

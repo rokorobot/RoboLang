@@ -1,0 +1,10 @@
+{
+  "task": "t",
+  "bindings": {
+    "r": "arm2",
+    "box": "box2",
+    "src": "shelf_b",
+    "dst": "table",
+    "cell": "cell"
+  }
+}
