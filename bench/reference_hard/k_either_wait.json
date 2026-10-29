@@ -1,0 +1,9 @@
+{
+  "task": "go",
+  "bindings": {
+    "r": "arm1",
+    "door": "door_zone",
+    "spec": "spectro",
+    "spot": "scanner"
+  }
+}

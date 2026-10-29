@@ -1,0 +1,264 @@
+{
+  "world_schema": "robolang.sim.world",
+  "world_schema_version": "1.1",
+  "locations": [
+    "shelf_A",
+    "shelf_a",
+    "shelf_a2",
+    "shelf_B",
+    "dock_1",
+    "dock1",
+    "dock_2",
+    "table",
+    "table_2",
+    "loading_table",
+    "charging",
+    "charging_2",
+    "inspection_bay",
+    "inspection_bay2",
+    "staging",
+    "staging_b"
+  ],
+  "regions": {
+    "aisle_1": {
+      "clear": false
+    },
+    "aisle1": {
+      "clear": true
+    },
+    "aisle_2": {
+      "clear": false
+    }
+  },
+  "robots": {
+    "arm_1": {
+      "ready": true,
+      "location": "shelf_a",
+      "gripper": true,
+      "max_speed": [
+        {
+          "value": "1",
+          "unit": "m/s"
+        }
+      ]
+    },
+    "arm1": {
+      "ready": true,
+      "location": "table",
+      "gripper": true,
+      "max_speed": [
+        {
+          "value": "0.8",
+          "unit": "m/s"
+        }
+      ]
+    },
+    "amr_1": {
+      "ready": true,
+      "location": "dock_1",
+      "gripper": true,
+      "max_speed": [
+        {
+          "value": "1.5",
+          "unit": "m/s"
+        }
+      ]
+    },
+    "amr1": {
+      "ready": true,
+      "location": "charging",
+      "gripper": false,
+      "max_speed": [
+        {
+          "value": "0.6",
+          "unit": "m/s"
+        }
+      ]
+    }
+  },
+  "objects": {
+    "box_1": {
+      "present": true,
+      "location": "shelf_A",
+      "class": "box",
+      "mass": {
+        "value": "2",
+        "unit": "kg",
+        "uncertainty": "0.1"
+      }
+    },
+    "box1": {
+      "present": true,
+      "location": "shelf_a",
+      "class": "box",
+      "mass": {
+        "value": "2",
+        "unit": "kg",
+        "uncertainty": "0.1"
+      }
+    },
+    "box01": {
+      "present": true,
+      "location": "shelf_A",
+      "class": "box",
+      "mass": {
+        "value": "2",
+        "unit": "kg",
+        "uncertainty": "0.1"
+      }
+    },
+    "box_01": {
+      "present": true,
+      "location": "shelf_B",
+      "class": "box",
+      "mass": {
+        "value": "2",
+        "unit": "kg",
+        "uncertainty": "0.1"
+      }
+    },
+    "box10": {
+      "present": true,
+      "location": "shelf_a2",
+      "class": "box",
+      "mass": {
+        "value": "2",
+        "unit": "kg",
+        "uncertainty": "0.1"
+      }
+    },
+    "crate_1": {
+      "present": true,
+      "location": "dock_1",
+      "class": "crate",
+      "mass": {
+        "value": "40",
+        "unit": "kg",
+        "uncertainty": "0.1"
+      }
+    },
+    "crate1": {
+      "present": true,
+      "location": "dock1",
+      "class": "crate",
+      "mass": {
+        "value": "8",
+        "unit": "kg",
+        "uncertainty": "0.1"
+      }
+    },
+    "crate01": {
+      "present": true,
+      "location": "dock_2",
+      "class": "crate",
+      "mass": {
+        "value": "8",
+        "unit": "kg",
+        "uncertainty": "0.1"
+      }
+    },
+    "part_7": {
+      "present": true,
+      "location": "staging",
+      "class": "part",
+      "mass": {
+        "value": "0.5",
+        "unit": "kg",
+        "uncertainty": "0.1"
+      }
+    },
+    "part7": {
+      "present": true,
+      "location": "staging",
+      "class": "part",
+      "mass": {
+        "value": "0.5",
+        "unit": "kg",
+        "uncertainty": "0.1"
+      }
+    },
+    "part_07": {
+      "present": true,
+      "location": "staging_b",
+      "class": "part",
+      "mass": {
+        "value": "0.5",
+        "unit": "kg",
+        "uncertainty": "0.1"
+      }
+    },
+    "part70": {
+      "present": true,
+      "location": "inspection_bay",
+      "class": "part",
+      "mass": {
+        "value": "0.5",
+        "unit": "kg",
+        "uncertainty": "0.1"
+      }
+    },
+    "tote_a": {
+      "present": true,
+      "location": "table_2",
+      "class": "tote",
+      "mass": {
+        "value": "3",
+        "unit": "kg",
+        "uncertainty": "0.1"
+      }
+    },
+    "tote_A": {
+      "present": true,
+      "location": "table",
+      "class": "tote",
+      "mass": {
+        "value": "3",
+        "unit": "kg",
+        "uncertainty": "0.1"
+      }
+    }
+  },
+  "sensors": {
+    "cam_1": {
+      "robot": "arm_1",
+      "available": true
+    },
+    "cam1": {
+      "robot": "arm1",
+      "available": true
+    },
+    "cam_01": {
+      "robot": "amr_1",
+      "available": true
+    },
+    "cam01": {
+      "robot": "amr1",
+      "available": false
+    },
+    "scale_1": {
+      "robot": "arm1",
+      "available": true
+    }
+  },
+  "events": [
+    {
+      "at": {
+        "value": "6",
+        "unit": "s"
+      },
+      "fact": "region_clear",
+      "target": "aisle_1",
+      "value": true
+    },
+    {
+      "at": {
+        "value": "4",
+        "unit": "s"
+      },
+      "fact": "sensor_available",
+      "target": "cam01",
+      "value": true
+    }
+  ],
+  "tasks": {}
+}

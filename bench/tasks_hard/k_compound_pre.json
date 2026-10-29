@@ -1,0 +1,37 @@
+{
+  "id": "k_compound_pre",
+  "prompt": "With arm2, deliver part7 from the table to shelf_b, but refuse to start unless both the cell is clear and arm2 is ready, or else the aisle is clear.",
+  "world": "bench/worlds/warehouse.json",
+  "group": "control",
+  "expect": {
+    "decision": "program",
+    "category": "none"
+  },
+  "expected_goal": [
+    [
+      "rl:thing:part7",
+      "located_in",
+      "rl:place:shelf_b"
+    ]
+  ],
+  "tags": [
+    "control",
+    "precondition",
+    "and",
+    "or",
+    "pick_place"
+  ],
+  "probes": [
+    {
+      "name": "cell_and_aisle_blocked",
+      "world_patch": {
+        "regions": {
+          "cell": {
+            "clear": false
+          }
+        }
+      },
+      "expect": "not_succeeded"
+    }
+  ]
+}

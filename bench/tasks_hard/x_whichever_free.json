@@ -1,0 +1,16 @@
+{
+  "id": "x_whichever_free",
+  "prompt": "Move box1 from shelf_a to the table with whichever of arm1 and arm2 is ready when the program runs. The choice has to be made at run time, because operators swap robots in and out of the cell without telling anyone.",
+  "world": "bench/worlds/warehouse.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "tags": [
+    "runtime_choice",
+    "world_state"
+  ],
+  "why": "A robot parameter is bound before the run; the language cannot select between robots (the attempt below is rejected, E101) from the state of the world during the run.",
+  "attempt_fails_with": "E101"
+}

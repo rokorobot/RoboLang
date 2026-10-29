@@ -1,0 +1,18 @@
+// bench/reference_hard/k_two_arm_relay.rob: hand-written reference solution
+robolang 1.3;
+
+task relay(robot a, robot b, object part, location feed, location mid, location dst, region fence) {
+    goal { object_at part dst; }
+    plan {
+        wait until region_clear fence timeout 30 s;
+        move a to feed;
+        grasp a part;
+        move a to mid;
+        place a part at mid;
+        move b to mid;
+        grasp b part;
+        move b to dst;
+        place b part at dst;
+        communicate b to "ops" with "HANDED";
+    }
+}

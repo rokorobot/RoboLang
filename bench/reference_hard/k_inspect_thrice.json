@@ -1,0 +1,9 @@
+{
+  "task": "survey",
+  "bindings": {
+    "r": "arm1",
+    "box": "box1",
+    "cam": "camera_top",
+    "shelf": "shelf"
+  }
+}

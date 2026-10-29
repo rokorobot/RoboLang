@@ -1,0 +1,16 @@
+{
+  "id": "n_missing_object",
+  "prompt": "Move pallet5 from the dock to the table with amr1.",
+  "world": "bench/worlds/warehouse.json",
+  "group": "infeasible",
+  "expect": {
+    "decision": "cannot",
+    "category": "infeasible"
+  },
+  "tags": [
+    "missing_entity",
+    "object"
+  ],
+  "why": "The world has no object pallet5 (objects: box1, box2, crate1, part7); there is nothing to bind (E505).",
+  "attempt_fails_with": "E505"
+}

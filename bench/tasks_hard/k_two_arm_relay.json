@@ -1,0 +1,41 @@
+{
+  "id": "k_two_arm_relay",
+  "prompt": "arm_a takes p1 from conveyor_in to handoff12, and then arm_b takes it from handoff12 to station3. Nothing may move until fence_b is clear; wait at most 30 seconds for that. Say \"HANDED\" on channel \"ops\" when p1 is at station3.",
+  "world": "bench/worlds/assembly.json",
+  "group": "control",
+  "expect": {
+    "decision": "program",
+    "category": "none"
+  },
+  "expected_goal": [
+    [
+      "rl:thing:p1",
+      "located_in",
+      "rl:place:station3"
+    ]
+  ],
+  "tags": [
+    "control",
+    "handover",
+    "two_robot",
+    "wait_until",
+    "timeout",
+    "communicate",
+    "region"
+  ],
+  "expected_messages": [
+    [
+      "ops",
+      "HANDED"
+    ]
+  ],
+  "probes": [
+    {
+      "name": "fence_never_clears",
+      "world_patch": {
+        "events": []
+      },
+      "expect": "not_succeeded"
+    }
+  ]
+}

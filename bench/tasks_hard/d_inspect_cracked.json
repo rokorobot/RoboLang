@@ -1,0 +1,34 @@
+{
+  "id": "d_inspect_cracked",
+  "prompt": "With the small rover, inspect the cracked part in the west staging area using the rover's inspection camera (it comes online in a few seconds; allow up to 10 seconds), then park the rover at inspection bay 2.",
+  "world": "bench/worlds/depot.json",
+  "group": "decoy",
+  "expect": {
+    "decision": "program",
+    "category": "none"
+  },
+  "expected_goal": [
+    [
+      "rl:robot:amr1",
+      "located_in",
+      "rl:place:inspection_bay2"
+    ]
+  ],
+  "tags": [
+    "decoy_names",
+    "description",
+    "inspect",
+    "wait_until",
+    "timeout",
+    "sensor_ok"
+  ],
+  "probes": [
+    {
+      "name": "camera_never_online",
+      "world_patch": {
+        "events": []
+      },
+      "expect": "not_succeeded"
+    }
+  ]
+}

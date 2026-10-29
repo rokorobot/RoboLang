@@ -1,0 +1,16 @@
+{
+  "id": "n_absent_object",
+  "prompt": "With arm_x, pick up flask_9 and put it in the north fume hood.",
+  "world": "bench/worlds/cleanroom.json",
+  "group": "infeasible",
+  "expect": {
+    "decision": "cannot",
+    "category": "infeasible"
+  },
+  "tags": [
+    "absent_object",
+    "world_state"
+  ],
+  "why": "flask_9 is listed as not present (discarded); `grasp` of an absent object fails (S213).",
+  "attempt_fails_with": "S213"
+}

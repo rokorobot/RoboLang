@@ -1,0 +1,37 @@
+{
+  "id": "k_not_pre",
+  "prompt": "Park amr1 at the charging bay, but only if the aisle is not clear right now.",
+  "world": "bench/worlds/warehouse.json",
+  "group": "control",
+  "expect": {
+    "decision": "program",
+    "category": "none"
+  },
+  "expected_goal": [
+    [
+      "rl:robot:amr1",
+      "located_in",
+      "rl:place:charging"
+    ]
+  ],
+  "tags": [
+    "control",
+    "precondition",
+    "not",
+    "robot_at",
+    "region"
+  ],
+  "probes": [
+    {
+      "name": "aisle_clear",
+      "world_patch": {
+        "regions": {
+          "aisle": {
+            "clear": true
+          }
+        }
+      },
+      "expect": "not_succeeded"
+    }
+  ]
+}

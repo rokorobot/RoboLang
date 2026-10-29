@@ -1,0 +1,11 @@
+{
+  "task": "deliver",
+  "bindings": {
+    "r": "arm2",
+    "box": "part7",
+    "src": "table",
+    "dst": "shelf_b",
+    "cell": "cell",
+    "aisle": "aisle"
+  }
+}

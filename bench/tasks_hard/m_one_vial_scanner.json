@@ -1,0 +1,31 @@
+{
+  "id": "m_one_vial_scanner",
+  "prompt": "Put one of the vials on the scanner.",
+  "world": "bench/worlds/lab.json",
+  "group": "ambiguous",
+  "expect": {
+    "decision": "program",
+    "category": "none"
+  },
+  "expected_goals": [
+    [
+      [
+        "rl:thing:vial1",
+        "located_in",
+        "rl:place:scanner"
+      ]
+    ],
+    [
+      [
+        "rl:thing:vial2",
+        "located_in",
+        "rl:place:scanner"
+      ]
+    ]
+  ],
+  "tags": [
+    "ambiguous",
+    "object_choice",
+    "pick_place"
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "task": "carry",
+  "bindings": {
+    "r": "arm_x",
+    "box": "flask_9",
+    "src": "home",
+    "dst": "hood_a"
+  }
+}

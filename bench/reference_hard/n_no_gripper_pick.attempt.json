@@ -1,0 +1,9 @@
+{
+  "task": "carry",
+  "bindings": {
+    "r": "rover1",
+    "box": "vial1",
+    "src": "bench",
+    "dst": "fridge"
+  }
+}

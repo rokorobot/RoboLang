@@ -1,0 +1,23 @@
+// bench/reference_hard/k_round_trip_twice.rob: hand-written reference solution
+robolang 1.3;
+
+task shuttle(robot r, object box, location home, location far) {
+    goal { object_at box home; }
+    plan {
+        move r to home;
+        grasp r box;
+        move r to far;
+        place r box at far;
+        grasp r box;
+        move r to home;
+        place r box at home;
+        communicate r to "ops" with "TRIP";
+        grasp r box;
+        move r to far;
+        place r box at far;
+        grasp r box;
+        move r to home;
+        place r box at home;
+        communicate r to "ops" with "TRIP";
+    }
+}

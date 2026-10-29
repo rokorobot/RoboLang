@@ -1,0 +1,13 @@
+// bench/reference_hard/d_wait_aisle_one.rob: hand-written reference solution
+robolang 1.3;
+
+task carry(robot r, object box, location src, location dst, region aisle) {
+    goal { object_at box dst; }
+    plan {
+        wait until region_clear aisle timeout 20 s;
+        move r to src;
+        grasp r box;
+        move r to dst;
+        place r box at dst;
+    }
+}

@@ -1,0 +1,286 @@
+{
+  "world_schema": "robolang.sim.world",
+  "world_schema_version": "1.1",
+  "locations": [
+    "rack_L",
+    "rack_l",
+    "rack_R",
+    "rack_r",
+    "fridge_1",
+    "fridge1",
+    "fridge_2",
+    "centrifuge_1",
+    "centrifuge1",
+    "scanner",
+    "scanner_2",
+    "hood_a",
+    "hood_A",
+    "bench_1",
+    "bench1",
+    "waste",
+    "home",
+    "home_2"
+  ],
+  "regions": {
+    "door_zone": {
+      "clear": false
+    },
+    "door_zone2": {
+      "clear": true
+    },
+    "hood_a_zone": {
+      "clear": true
+    },
+    "hood_A_zone": {
+      "clear": false
+    }
+  },
+  "robots": {
+    "arm_x": {
+      "ready": true,
+      "location": "home",
+      "gripper": true,
+      "max_speed": [
+        {
+          "value": "0.5",
+          "unit": "m/s"
+        },
+        {
+          "value": "1",
+          "unit": "rad/s"
+        }
+      ]
+    },
+    "arm_X": {
+      "ready": true,
+      "location": "home_2",
+      "gripper": true,
+      "max_speed": [
+        {
+          "value": "0.4",
+          "unit": "m/s"
+        }
+      ]
+    },
+    "rover_1": {
+      "ready": true,
+      "location": "home",
+      "gripper": false,
+      "max_speed": [
+        {
+          "value": "0.6",
+          "unit": "m/s"
+        }
+      ]
+    },
+    "rover1": {
+      "ready": false,
+      "location": "home_2",
+      "gripper": true,
+      "max_speed": [
+        {
+          "value": "0.6",
+          "unit": "m/s"
+        }
+      ]
+    }
+  },
+  "objects": {
+    "vial_1": {
+      "present": true,
+      "location": "rack_L",
+      "class": "vial",
+      "mass": {
+        "value": "0.05",
+        "unit": "kg",
+        "uncertainty": "0.1"
+      }
+    },
+    "vial1": {
+      "present": true,
+      "location": "rack_l",
+      "class": "vial",
+      "mass": {
+        "value": "0.05",
+        "unit": "kg",
+        "uncertainty": "0.1"
+      }
+    },
+    "vial_01": {
+      "present": true,
+      "location": "rack_R",
+      "class": "vial",
+      "mass": {
+        "value": "0.05",
+        "unit": "kg",
+        "uncertainty": "0.1"
+      }
+    },
+    "vial01": {
+      "present": true,
+      "location": "fridge_1",
+      "class": "vial",
+      "mass": {
+        "value": "0.05",
+        "unit": "kg",
+        "uncertainty": "0.1"
+      }
+    },
+    "vial10": {
+      "present": true,
+      "location": "fridge_2",
+      "class": "vial",
+      "mass": {
+        "value": "0.05",
+        "unit": "kg",
+        "uncertainty": "0.1"
+      }
+    },
+    "plate_1": {
+      "present": true,
+      "location": "bench_1",
+      "class": "plate",
+      "mass": {
+        "value": "0.2",
+        "unit": "kg",
+        "uncertainty": "0.1"
+      }
+    },
+    "plate1": {
+      "present": true,
+      "location": "bench1",
+      "class": "plate",
+      "mass": {
+        "value": "0.2",
+        "unit": "kg",
+        "uncertainty": "0.1"
+      }
+    },
+    "plate_01": {
+      "present": true,
+      "location": "rack_r",
+      "class": "plate",
+      "mass": {
+        "value": "0.2",
+        "unit": "kg",
+        "uncertainty": "0.1"
+      }
+    },
+    "tube_a": {
+      "present": true,
+      "location": "centrifuge_1",
+      "class": "tube",
+      "mass": {
+        "value": "0.03",
+        "unit": "kg",
+        "uncertainty": "0.1"
+      }
+    },
+    "tube_A": {
+      "present": true,
+      "location": "centrifuge1",
+      "class": "tube",
+      "mass": {
+        "value": "0.03",
+        "unit": "kg",
+        "uncertainty": "0.1"
+      }
+    },
+    "slide_1": {
+      "present": true,
+      "location": "scanner",
+      "class": "slide",
+      "mass": {
+        "value": "0.01",
+        "unit": "kg",
+        "uncertainty": "0.1"
+      }
+    },
+    "slide1": {
+      "present": true,
+      "location": "scanner_2",
+      "class": "slide",
+      "mass": {
+        "value": "0.01",
+        "unit": "kg",
+        "uncertainty": "0.1"
+      }
+    },
+    "flask_1": {
+      "present": true,
+      "location": "hood_a",
+      "class": "flask",
+      "mass": {
+        "value": "0.4",
+        "unit": "kg",
+        "uncertainty": "0.1"
+      }
+    },
+    "flask1": {
+      "present": true,
+      "location": "hood_A",
+      "class": "flask",
+      "mass": {
+        "value": "0.4",
+        "unit": "kg",
+        "uncertainty": "0.1"
+      }
+    },
+    "flask_9": {
+      "present": false,
+      "class": "flask"
+    }
+  },
+  "sensors": {
+    "scope_1": {
+      "robot": "arm_x",
+      "available": true
+    },
+    "scope1": {
+      "robot": "arm_X",
+      "available": true
+    },
+    "thermo_1": {
+      "robot": "arm_x",
+      "available": true
+    },
+    "thermo1": {
+      "robot": "arm_X",
+      "available": false
+    },
+    "cam_r": {
+      "robot": "rover_1",
+      "available": true
+    }
+  },
+  "events": [
+    {
+      "at": {
+        "value": "5",
+        "unit": "s"
+      },
+      "fact": "region_clear",
+      "target": "door_zone",
+      "value": true
+    },
+    {
+      "at": {
+        "value": "8",
+        "unit": "s"
+      },
+      "fact": "sensor_available",
+      "target": "thermo1",
+      "value": true
+    },
+    {
+      "at": {
+        "value": "10",
+        "unit": "s"
+      },
+      "fact": "robot_ready",
+      "target": "rover1",
+      "value": true
+    }
+  ],
+  "tasks": {}
+}

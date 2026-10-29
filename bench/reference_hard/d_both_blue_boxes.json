@@ -1,0 +1,11 @@
+{
+  "task": "gather",
+  "bindings": {
+    "r": "arm_1",
+    "a": "box01",
+    "b": "box_01",
+    "src_a": "shelf_A",
+    "src_b": "shelf_B",
+    "dst": "table"
+  }
+}

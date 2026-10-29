@@ -1,0 +1,10 @@
+// bench/reference_hard/d_hold_intact_east.rob: hand-written reference solution
+robolang 1.3;
+
+task take(robot r, object part, location spot) {
+    goal { holding r part; }
+    plan {
+        move r to spot;
+        grasp r part;
+    }
+}

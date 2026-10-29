@@ -1,0 +1,29 @@
+{
+  "id": "k_swap_boxes",
+  "prompt": "Swap the boxes with arm1: box1 ends on shelf_b and box2 ends on shelf_a. Use the table as a temporary place; the arm carries only one box at a time.",
+  "world": "bench/worlds/warehouse.json",
+  "group": "control",
+  "expect": {
+    "decision": "program",
+    "category": "none"
+  },
+  "expected_goal": [
+    [
+      "rl:thing:box1",
+      "located_in",
+      "rl:place:shelf_b"
+    ],
+    [
+      "rl:thing:box2",
+      "located_in",
+      "rl:place:shelf_a"
+    ]
+  ],
+  "tags": [
+    "control",
+    "multiple_objects",
+    "multi_condition",
+    "long_plan",
+    "pick_place"
+  ]
+}

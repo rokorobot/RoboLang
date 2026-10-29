@@ -1,0 +1,14 @@
+// bench/reference_hard/d_serum_tube.rob: hand-written reference solution
+robolang 1.3;
+
+task spin(robot r, object box, location src, location dst, sensor therm) {
+    goal { object_at box dst; }
+    plan {
+        wait until sensor_ok therm timeout 15 s;
+        move r to src;
+        inspect r box using therm;
+        grasp r box;
+        move r to dst;
+        place r box at dst;
+    }
+}

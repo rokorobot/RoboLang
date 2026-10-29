@@ -1,0 +1,16 @@
+{
+  "id": "x_missing_box_branch",
+  "prompt": "Deliver box1 from shelf_a to the table with arm1. But someone may take box1 before the run starts: if it is missing, move nothing and tell the fleet on channel \"alerts\" that box1 is missing; if it is there, deliver it.",
+  "world": "bench/worlds/warehouse.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "tags": [
+    "branching",
+    "world_state"
+  ],
+  "why": "Needs one program that acts differently depending on a world fact at run time (deliver, or else report). RoboLang 1.3 has no if/else: `pre` can only stop a run when a condition is false, and a stopped run sends nothing.",
+  "attempt_fails_with": "E203"
+}

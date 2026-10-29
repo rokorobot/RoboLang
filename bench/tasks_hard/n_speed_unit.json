@@ -1,0 +1,17 @@
+{
+  "id": "n_speed_unit",
+  "prompt": "Send rover1 to the bench and declare its angular speed limit as 0.5 rad/s for the trip.",
+  "world": "bench/worlds/lab.json",
+  "group": "infeasible",
+  "expect": {
+    "decision": "cannot",
+    "category": "infeasible"
+  },
+  "tags": [
+    "safety",
+    "speed",
+    "profile"
+  ],
+  "why": "rover1 declares only a linear maximum (m/s). A limit in a unit the robot does not declare fails the run (S002).",
+  "attempt_fails_with": "S002"
+}

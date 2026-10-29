@@ -1,0 +1,17 @@
+{
+  "id": "n_speed_over_max",
+  "prompt": "Move box1 from the shelf to the table with arm1. The safety officer requires the speed limit for this job to be declared as 2 m/s.",
+  "world": "examples/world.json",
+  "group": "infeasible",
+  "expect": {
+    "decision": "cannot",
+    "category": "infeasible"
+  },
+  "tags": [
+    "safety",
+    "speed",
+    "profile"
+  ],
+  "why": "arm1 declares a maximum of 1 m/s. A declared limit above the robot's maximum fails the run (S001); a lower limit would not be the declared 2 m/s.",
+  "attempt_fails_with": "S001"
+}

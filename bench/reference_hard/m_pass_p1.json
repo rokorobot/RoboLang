@@ -1,0 +1,9 @@
+{
+  "task": "deliver",
+  "bindings": {
+    "r": "arm_a",
+    "box": "p1",
+    "src": "conveyor_in",
+    "dst": "station3"
+  }
+}

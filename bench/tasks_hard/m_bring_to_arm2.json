@@ -1,0 +1,31 @@
+{
+  "id": "m_bring_to_arm2",
+  "prompt": "Bring box1 to arm2.",
+  "world": "bench/worlds/warehouse.json",
+  "group": "ambiguous",
+  "expect": {
+    "decision": "program",
+    "category": "none"
+  },
+  "expected_goals": [
+    [
+      [
+        "rl:thing:box1",
+        "located_in",
+        "rl:place:table"
+      ]
+    ],
+    [
+      [
+        "rl:thing:box1",
+        "carried_by",
+        "rl:robot:arm2"
+      ]
+    ]
+  ],
+  "tags": [
+    "ambiguous",
+    "holding",
+    "pick_place"
+  ]
+}

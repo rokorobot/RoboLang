@@ -1,0 +1,16 @@
+{
+  "id": "x_keep_feeding",
+  "prompt": "For as long as the line runs, keep moving every new part that arrives at conveyor_in into the bin with arm_a.",
+  "world": "bench/worlds/assembly.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "tags": [
+    "unbounded_repetition",
+    "event_driven"
+  ],
+  "why": "Open-ended, event-driven repetition over objects that do not exist yet. A plan is a fixed list of steps naming known objects; there is no loop and no way to react to new arrivals.",
+  "attempt_fails_with": "E203"
+}

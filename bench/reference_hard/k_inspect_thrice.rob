@@ -1,0 +1,13 @@
+// bench/reference_hard/k_inspect_thrice.rob: hand-written reference solution
+robolang 1.3;
+
+task survey(robot r, object box, sensor cam, location shelf) {
+    goal { object_at box shelf; }
+    plan {
+        inspect r box using cam;
+        wait for 5 s;
+        inspect r box using cam;
+        wait for 5 s;
+        inspect r box using cam;
+    }
+}

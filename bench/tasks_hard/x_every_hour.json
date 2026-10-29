@@ -1,0 +1,16 @@
+{
+  "id": "x_every_hour",
+  "prompt": "Every hour, for as long as the cell stays in service, have arm1 inspect box1 on the shelf with camera_top.",
+  "world": "examples/world.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "tags": [
+    "unbounded_repetition",
+    "schedule"
+  ],
+  "why": "Recurring, open-ended repetition. RoboLang 1.3 has no loop, no schedule and no clock; only a fixed, finite plan can be written (a fixed count could be unrolled, but \"as long as the cell is in service\" is not a count).",
+  "attempt_fails_with": "E203"
+}

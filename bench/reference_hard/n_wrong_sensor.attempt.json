@@ -1,0 +1,8 @@
+{
+  "task": "look",
+  "bindings": {
+    "r": "arm1",
+    "o": "vial1",
+    "cam": "cam_rover"
+  }
+}

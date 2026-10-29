@@ -1,0 +1,16 @@
+{
+  "id": "n_missing_place",
+  "prompt": "Take vial1 from the bench to the incubator with arm1.",
+  "world": "bench/worlds/lab.json",
+  "group": "infeasible",
+  "expect": {
+    "decision": "cannot",
+    "category": "infeasible"
+  },
+  "tags": [
+    "missing_entity",
+    "location"
+  ],
+  "why": "The world has no location called incubator (locations: bench, centrifuge, fridge, home, scanner, storage); no binding exists for it (E505).",
+  "attempt_fails_with": "E505"
+}

@@ -1,0 +1,8 @@
+{
+  "task": "park",
+  "bindings": {
+    "r": "amr1",
+    "spot": "charging",
+    "aisle": "aisle"
+  }
+}
