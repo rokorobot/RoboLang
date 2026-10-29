@@ -399,7 +399,7 @@ def test_the_estimate_is_printed_and_needs_yes_to_spend(tmp_path):
 
 def test_no_key_no_run(tmp_path):
     code = run.main(["--yes", "--out", str(tmp_path)], client_factory=lambda key: pytest.fail("no client"),
-                    out=io.StringIO(), err=io.StringIO(), environ={})
+                    out=io.StringIO(), err=io.StringIO(), environ={}, env_file=tmp_path / "no.env")
     assert code == 2
 
 

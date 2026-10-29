@@ -266,7 +266,8 @@ def parse_args(argv):
     return parser.parse_args(argv)
 
 
-def main(argv=None, client_factory=make_client, out=sys.stdout, err=sys.stderr, environ=os.environ) -> int:
+def main(argv=None, client_factory=make_client, out=sys.stdout, err=sys.stderr, environ=os.environ,
+         env_file: Path = ENV_FILE) -> int:
     args = parse_args(argv)
     models = [m.strip() for m in args.models.split(",") if m.strip()]
     unknown = [m for m in models if m not in lib.PRICES]
@@ -286,7 +287,7 @@ def main(argv=None, client_factory=make_client, out=sys.stdout, err=sys.stderr, 
     if not args.yes:
         print("Nothing was sent. Add --yes to spend it.", file=out)
         return 2
-    key = read_api_key(environ)
+    key = read_api_key(environ, env_file)
     if not key:
         print("No API key: set ANTHROPIC_API_KEY or put it in bench/.env", file=err)
         return 2
