@@ -81,4 +81,4 @@ The five duties of 1.0 section 2 apply. For duty 1, a schema 1.1 consumer also r
   section 3.3 is never smaller than this IR depth, so every IR this compiler produces is within
   this bound.
 
-Nothing in this repository reads IR yet; reading and re-validating IR is work item CORE-1.
+These rejections are implemented by the IR reader of CORE-1 ([`ir-reader-v0.1.md`](ir-reader-v0.1.md)).

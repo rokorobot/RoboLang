@@ -382,11 +382,10 @@ def run(task: ir.Task, world: World) -> RunResult:
     """
     Run `task` against `world` in simulation (section 4). Never mutates `world`.
 
-    `task` must come from the compiler (`compile_source`) and `world` from `load_world` for that
-    same task, as `robolang simulate` does. `run` re-checks that they belong together and raises
-    `SimulationInputError` otherwise, before anything runs. Externally supplied IR (a task read
-    from JSON or built by hand) is not supported: it needs an IR reader that re-validates it
-    (ir-schema-v1.0.md section 2; planned as CORE-1).
+    `task` must come from the compiler (`compile_source`) or from `ir_reader.read_ir`, which re-validates
+    a Task IR document in full, and `world` from `load_world` for that same task, as `robolang simulate`
+    does. `run` re-checks that they belong together and raises `SimulationInputError` otherwise, before
+    anything runs. A `Task` built by hand has had no static validation at all and is not supported.
     """
     _check_inputs(task, world)
     bindings = world.task.bindings

@@ -1,0 +1,47 @@
+{
+  "ir_schema": "robolang.task-ir",
+  "ir_schema_version": "1.0",
+  "language_version": "1.1",
+  "tasks": [
+    {
+      "name": "t",
+      "parameters": [
+        {
+          "name": "r",
+          "type": "robot"
+        },
+        {
+          "name": "box",
+          "type": "object"
+        },
+        {
+          "name": "src",
+          "type": "location"
+        }
+      ],
+      "safety": [],
+      "preconditions": [
+        {
+          "kind": "and",
+          "conditions": [
+            {
+              "kind": "robot_ready",
+              "robot": "r"
+            },
+            {
+              "kind": "robot_ready",
+              "robot": "r"
+            }
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "kind": "move",
+          "robot": "r",
+          "target": "src"
+        }
+      ]
+    }
+  ]
+}

@@ -140,6 +140,6 @@ frozen gate 2 bundle and the gate 1 evidence must not change; the exchange has t
 | 1 | — | done |
 | 2 | 1 | small: record fields, observation synthesis, tests |
 | 3 | 1, 2 (outcome shape); Q2, Q5 | medium: exporter, 1.4 `@verify`, world 1.1 |
-| 4 + 5 | 2, 3; Q4 | done as `robolang delegate`; CORE-1 and INTEROP-3 are separate items |
+| 4 + 5 | 2, 3; Q4 | done as `robolang delegate`; CORE-1 done (`--ir`, [0021](../../spec/decisions/0021-core-1-ir-reader.md)); INTEROP-3 is a separate item |
 
 Phases 2 and 3 can run in parallel once phase 1 lands; phase 4 needs both.

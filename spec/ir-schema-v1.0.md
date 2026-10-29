@@ -13,7 +13,7 @@ reads source text again.
 > passed parsing and static validation, which makes it well-formed. It does not make it safe,
 > and holding an IR never authorizes anything to move a robot. An IR document from any other
 > origin carries no such guarantee at all: see [Trust boundary](#2-trust-boundary). Nothing in
-> this repository reads or executes an IR.
+> this repository executes an IR; the reader of CORE-1 ([`ir-reader-v0.1.md`](ir-reader-v0.1.md)) re-validates it.
 
 ## 1. Two version numbers
 
@@ -67,9 +67,9 @@ anything this compiler did, a consumer of IR must:
 
 Passing step 1 does not imply steps 2 to 5, and none of them is implied by the IR existing.
 
-**Scope of RL-11D.** No IR reader, schema validator or executor is added. The package only
-*writes* IR. The list above is a requirement on future work, not a description of something
-implemented here.
+**Scope of RL-11D.** No IR reader, schema validator or executor was added: the package only
+*wrote* IR. The list above was a requirement on future work. Duties 1 and 2 are implemented by CORE-1
+([`ir-reader-v0.1.md`](ir-reader-v0.1.md)); duties 3 to 5 are still not implemented.
 
 ## 3. Document
 

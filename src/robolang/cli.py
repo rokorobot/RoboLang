@@ -9,6 +9,9 @@ Developer commands for RoboLang v1.1, v1.2 and v1.3.
                            print the task's goal as a signed Core 0.1 propose_goal message
     delegate FILE --world WORLD --from AGENT_ID --to ROBOT_ID
                            send the task's goal to a robot that runs its own plan; print the delegate record
+
+validate, inspect, simulate, export-goal and delegate take `--ir IR` instead of FILE: a Task IR JSON
+document (schema 1.0 to 1.2), read strictly and re-validated in full (spec/ir-reader-v0.1.md).
     arch02 --scenario SCENARIO --cases CASES --case ID
                            run one case of the RFC-001 reference scenario in simulation
 
@@ -21,7 +24,7 @@ network, no ROS 2, no hardware.
 Exit status:
     0  validate/inspect: the file is valid (warnings do not change this);
        simulate: the run ended SUCCEEDED
-    1  the file is not valid RoboLang; diagnostics are on stderr
+    1  the file is not valid RoboLang (or, with --ir, not valid Task IR); diagnostics are on stderr
     2  the command could not be carried out: bad arguments or seed, unreadable file,
        unknown task name, several tasks and no --task
     3  simulate and export-goal: the world file is not valid; arch02: the scenario or cases file is not valid
@@ -48,6 +51,7 @@ from .core import ReadError
 from .diagnostics import MAX_ERRORS, RoboLangError
 from .delegate import Plan, delegate
 from .export_goal import ExportError, default_recipient, export_goal, valid_participant
+from .ir_reader import IRError, read_ir
 from .sim import DEFAULT_SEED, SEED, World, WorldError, load_world, run_id, sha256_normalized, to_json, to_record
 from .sim import run as simulate_task
 
@@ -62,6 +66,10 @@ EXIT_REJECTED = 7
 
 NOT_A_SAFETY_CHECK = (
     "Validation covers the text of the program only. "
+    "It does not make a task safe to run on a robot."
+)
+NOT_A_SAFETY_CHECK_IR = (
+    "Validation covers the IR document only. "
     "It does not make a task safe to run on a robot."
 )
 NOTHING_EXECUTED = "This is a description only. Nothing was executed."
@@ -80,7 +88,7 @@ safe on a robot.
 _EPILOG = """\
 exit status:
   0  the file is valid (warnings do not change this); for simulate: the run SUCCEEDED
-  1  the file is not valid; diagnostics are printed to stderr
+  1  the file is not valid (RoboLang, or with --ir Task IR); diagnostics are printed to stderr
   2  bad arguments, unreadable file, or unknown task name
   3  simulate only: the world file is not valid
   4  simulate only: the run ended FAILED
@@ -92,9 +100,9 @@ exit status:
 _SIMULATE_EPILOG = """\
 exit status:
   0  the run ended SUCCEEDED; the run record is on stdout
-  1  the source file is not valid RoboLang; nothing is run
-  2  bad arguments or seed, malformed or repeated --bind, --bind of a name that is not a parameter,
-     unreadable file, unknown task name, or several tasks and no --task
+  1  the source file is not valid RoboLang (or the --ir file not valid Task IR); nothing is run
+  2  bad arguments or seed, both or neither of FILE and --ir, malformed or repeated --bind, --bind of a
+     name that is not a parameter, unreadable file, unknown task name, or several tasks and no --task
   3  the world file is not valid, or a --bind names a missing or wrong-kind entity or leaves a
      parameter unbound; diagnostics are printed to stderr
   4  the run ended FAILED; the run record is on stdout
@@ -104,9 +112,10 @@ exit status:
 _EXPORT_EPILOG = """\
 exit status:
   0  the message is on stdout
-  1  the source file is not valid RoboLang; nothing is exported
-  2  bad arguments, malformed or repeated --bind, unreadable file, unknown task name, several tasks
-     and no --task, an invalid --from, --to or --at, or several robots and no --to
+  1  the source file is not valid RoboLang (or the --ir file not valid Task IR); nothing is exported
+  2  bad arguments, both or neither of FILE and --ir, malformed or repeated --bind, unreadable file,
+     unknown task name, several tasks and no --task, an invalid --from, --to or --at, or several robots
+     and no --to
   3  the world file is not valid, or a --bind names a missing or wrong-kind entity or leaves a
      parameter unbound; diagnostics are printed to stderr
   6  the goal has no Core 0.1 form (X601), or a bound object has no class or mass (X602)
@@ -115,9 +124,10 @@ exit status:
 _DELEGATE_EPILOG = """\
 exit status:
   0  the planner recorded a verified `succeeded`; the delegate record is on stdout
-  1  the source file or a plan file is not valid RoboLang; nothing is run
-  2  bad arguments, malformed or repeated --bind, unreadable file, unknown task name, several tasks
-     and no --task, an invalid --from or --to, or no .rob file under --plans
+  1  the source file, the --ir file or a plan file is not valid; nothing is run
+  2  bad arguments, both or neither of FILE and --ir, --ir without --plans, malformed or repeated --bind,
+     unreadable file, unknown task name, several tasks and no --task, an invalid --from or --to, or no
+     .rob file under --plans
   3  a world file is not valid, or a --bind names a missing or wrong-kind entity or leaves a
      parameter unbound; diagnostics are printed to stderr
   4  the planner recorded failed, unknown or cancelled; the delegate record is on stdout
@@ -192,6 +202,34 @@ def _compile(path: str, err, data: bytes | None = None) -> task_ir.CompileResult
     return result
 
 
+@dataclass(frozen=True)
+class _Loaded:
+    data: bytes
+    document: task_ir.TaskIR
+    kind: str  # "source" (a .rob file) or "ir" (a Task IR JSON file, read and re-validated by read_ir)
+    warnings: int = 0
+
+
+def _load(args, err) -> _Loaded:
+    """Read the input file once and turn it into a TaskIR. Raises RoboLangError or IRError (exit 1)."""
+    data = _read_bytes(args.file)
+    if args.ir is not None:
+        return _Loaded(data, read_ir(data, args.file), "ir")
+    result = _compile(args.file, err, data)
+    return _Loaded(data, result.ir, "source", len(result.warnings))
+
+
+def _print_ir_errors(error: IRError, path: str, err, summary: bool):
+    """Every diagnostic, in document order; a summary line (validate only) when there is more than one."""
+    for diagnostic in error.diagnostics:
+        print(diagnostic.format(), file=err)
+    if error.truncated:
+        print(f"{path}: too many errors: stopped after {MAX_ERRORS}", file=err)
+    if summary and (len(error.diagnostics) > 1 or error.truncated):
+        count = f"{MAX_ERRORS}+ errors" if error.truncated else _plural(len(error.diagnostics), "error")
+        print(f"{path}: not valid ({count})", file=err)
+
+
 def _print_errors(error: RoboLangError, path: str, err, summary: bool):
     """
     Print every diagnostic, in source order. A file with more than one diagnostic then gets a
@@ -212,12 +250,18 @@ def _print_errors(error: RoboLangError, path: str, err, summary: bool):
 # -------- validate --------
 
 def _validate(args, out, err) -> int:
-    result = _compile(args.file, err)
-    summary = _plural(len(result.ir.tasks), "task")
-    if result.warnings:
-        summary += f", {_plural(len(result.warnings), 'warning')}"
-    print(f"{args.file}: valid RoboLang {result.ir.language_version} ({summary})", file=out)
-    print(NOT_A_SAFETY_CHECK, file=out)
+    loaded = _load(args, err)
+    document = loaded.document
+    summary = _plural(len(document.tasks), "task")
+    if loaded.warnings:
+        summary += f", {_plural(loaded.warnings, 'warning')}"
+    if loaded.kind == "ir":
+        print(f"{args.file}: valid Task IR {document.ir_schema_version} "
+              f"(RoboLang {document.language_version}, {summary})", file=out)
+        print(NOT_A_SAFETY_CHECK_IR, file=out)
+    else:
+        print(f"{args.file}: valid RoboLang {document.language_version} ({summary})", file=out)
+        print(NOT_A_SAFETY_CHECK, file=out)
     return EXIT_OK
 
 
@@ -318,13 +362,12 @@ def _describe(task: task_ir.Task) -> list[str]:
 
 
 def _inspect(args, out, err) -> int:
-    result = _compile(args.file, err)
-    document = result.ir
+    whole = document = _load(args, err).document
     if args.task is not None:
         try:
             document = document.select(args.task)
         except KeyError:
-            names = ", ".join(t.name for t in result.ir.tasks)
+            names = ", ".join(t.name for t in whole.tasks)
             raise _CommandError(f"no task named '{args.task}' in '{args.file}'; tasks in this file: {names}") from None
 
     if args.json:
@@ -333,7 +376,7 @@ def _inspect(args, out, err) -> int:
 
     shown = _plural(len(document.tasks), "task")
     if args.task is not None:
-        shown = f"task {args.task} (1 of {len(result.ir.tasks)})"
+        shown = f"task {args.task} (1 of {len(whole.tasks)})"
     print(args.file, file=out)
     print(
         f"RoboLang {document.language_version} | IR schema {document.ir_schema_version} | {shown}",
@@ -375,21 +418,23 @@ def _parse_bindings(groups) -> dict[str, str] | None:
 class _RunInputs:
     source_bytes: bytes
     world_bytes: bytes
-    result: task_ir.CompileResult
+    document: task_ir.TaskIR
     task: task_ir.Task
     world: World
     cli_bindings: dict[str, str] | None
+    source_kind: str  # "source" or "ir": what source_bytes is
 
 
 def _run_inputs(args, err) -> _RunInputs:
     """
-    What `simulate` and `export-goal` share: validate FILE, select the task, apply `--bind`, load the
-    world. Raises RoboLangError (exit 1), _CommandError (2) or WorldError (3).
+    What `simulate`, `export-goal` and `delegate` share: validate FILE (or the --ir file), select the task,
+    apply `--bind`, load the world. Raises RoboLangError or IRError (exit 1), _CommandError (2) or
+    WorldError (3).
     """
     cli_bindings = _parse_bindings(args.bind)
-    source_bytes = _read_bytes(args.file)  # read once: the run ID describes exactly what was run
-    result = _compile(args.file, err, source_bytes)
-    tasks = result.ir.tasks
+    loaded = _load(args, err)  # read once: the run ID describes exactly what was run
+    document = loaded.document
+    tasks = document.tasks
     if args.task is None:
         if len(tasks) != 1:
             names = ", ".join(t.name for t in tasks)
@@ -397,7 +442,7 @@ def _run_inputs(args, err) -> _RunInputs:
         task = tasks[0]
     else:
         try:
-            task = result.ir.select(args.task).tasks[0]
+            task = document.select(args.task).tasks[0]
         except KeyError:
             names = ", ".join(t.name for t in tasks)
             raise _CommandError(f"no task named '{args.task}' in '{args.file}'; tasks in this file: {names}") from None
@@ -409,7 +454,7 @@ def _run_inputs(args, err) -> _RunInputs:
                 raise _CommandError(f"--bind: '{name}' is not a parameter of task '{task.name}'; parameters: {listed}")
     world_bytes = _read_bytes(args.world)
     world = load_world(world_bytes, args.world, task, cli_bindings)
-    return _RunInputs(source_bytes, world_bytes, result, task, world, cli_bindings)
+    return _RunInputs(loaded.data, world_bytes, document, task, world, cli_bindings, loaded.kind)
 
 
 def _simulate(args, out, err) -> int:
@@ -417,11 +462,10 @@ def _simulate(args, out, err) -> int:
     if not SEED.fullmatch(seed):
         raise _CommandError("invalid --seed: use 1 to 64 characters from A-Z a-z 0-9 . _ -")
     inputs = _run_inputs(args, err)
-    source_bytes, world_bytes, result, task, world = (
-        inputs.source_bytes, inputs.world_bytes, inputs.result, inputs.task, inputs.world)
+    source_bytes, world_bytes, task, world = inputs.source_bytes, inputs.world_bytes, inputs.task, inputs.world
     cli_bindings = inputs.cli_bindings
     run_result = simulate_task(task, world)
-    identifier = run_id(source_bytes, world_bytes, task.name, seed, cli_bindings)
+    identifier = run_id(source_bytes, world_bytes, task.name, seed, cli_bindings, inputs.source_kind)
     record = to_record(
         run_result,
         task=task,
@@ -429,9 +473,10 @@ def _simulate(args, out, err) -> int:
         source_sha256=sha256_normalized(source_bytes),
         world_sha256=sha256_normalized(world_bytes),
         seed=seed,
-        language_version=result.ir.language_version,
+        language_version=inputs.document.language_version,
         bindings_source="world" if cli_bindings is None else "cli",
         world_schema_version=world.schema_version,
+        source_kind=inputs.source_kind,
     )
     out.write(to_json(record))
     summary = f"simulation only: run {identifier}: {run_result.state}"
@@ -531,10 +576,15 @@ def _delegate(args, out, err) -> int:
             raise _CommandError(
                 f"invalid {flag} '{value}': use a Core identifier without '#', for example rl:agent:planner-1"
             )
+    if args.ir is not None and not args.plans:
+        raise _CommandError("--ir needs --plans: the robot's own plan library is made of .rob files")
     inputs = _run_inputs(args, err)
     task = inputs.task
-    own = Plan(_record_path(args.file), inputs.source_bytes, inputs.result.ir.tasks, inputs.result.ir.language_version)
-    plans = _load_plans(args.plans, err) if args.plans else [own]
+    if args.plans:
+        plans = _load_plans(args.plans, err)
+    else:
+        plans = [Plan(_record_path(args.file), inputs.source_bytes, inputs.document.tasks,
+                      inputs.document.language_version)]
     robot_world_path = args.robot_world or args.world
     robot_world = inputs.world_bytes if robot_world_path == args.world else _read_bytes(robot_world_path)
     try:
@@ -583,6 +633,19 @@ def _arch02(args, out, err) -> int:
 
 # -------- entry point --------
 
+def _input_arguments(command: argparse.ArgumentParser, what: str, note: str = ""):
+    """The input of a command: FILE, or `--ir` for a Task IR document (exactly one of them)."""
+    command.add_argument("file", metavar="FILE", nargs="?", help=f"path to {what}")
+    command.add_argument(
+        "--ir",
+        metavar="IR",
+        help=(
+            "path to a Task IR JSON file (schema 1.0 to 1.2) instead of FILE. It is read strictly and "
+            f"re-validated in full, whatever versions it claims (spec/ir-reader-v0.1.md){note}"
+        ),
+    )
+
+
 def _parser(prog: str) -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog=prog,
@@ -608,7 +671,7 @@ def _parser(prog: str) -> argparse.ArgumentParser:
         epilog=_EPILOG,
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    validate.add_argument("file", metavar="FILE", help="path to a .rob file")
+    _input_arguments(validate, "a .rob file")
     validate.set_defaults(run=_validate)
 
     inspect = commands.add_parser(
@@ -622,7 +685,7 @@ def _parser(prog: str) -> argparse.ArgumentParser:
         epilog=_EPILOG,
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    inspect.add_argument("file", metavar="FILE", help="path to a .rob file")
+    _input_arguments(inspect, "a .rob file")
     inspect.add_argument("--task", metavar="NAME", help="show only the task with this name")
     inspect.add_argument(
         "--json",
@@ -643,7 +706,7 @@ def _parser(prog: str) -> argparse.ArgumentParser:
         epilog=_SIMULATE_EPILOG,
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    simulate.add_argument("file", metavar="FILE", help="path to a .rob file")
+    _input_arguments(simulate, "a .rob file")
     simulate.add_argument("--world", metavar="WORLD", required=True, help="path to a world file (schema 1.0)")
     simulate.add_argument("--task", metavar="NAME", help="the task to run (required when FILE has several tasks)")
     simulate.add_argument(
@@ -680,7 +743,7 @@ def _parser(prog: str) -> argparse.ArgumentParser:
         epilog=_EXPORT_EPILOG,
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    export.add_argument("file", metavar="FILE", help="path to a .rob file (RoboLang 1.3)")
+    _input_arguments(export, "a .rob file (RoboLang 1.3)")
     export.add_argument("--world", metavar="WORLD", required=True, help="path to a world file (schema 1.1)")
     export.add_argument("--task", metavar="NAME", help="the task to export (required when FILE has several tasks)")
     export.add_argument("--bind", metavar="NAME=ID", nargs="+", action="append",
@@ -708,7 +771,7 @@ def _parser(prog: str) -> argparse.ArgumentParser:
         epilog=_DELEGATE_EPILOG,
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    delegation.add_argument("file", metavar="FILE", help="path to the AI's .rob file (RoboLang 1.3)")
+    _input_arguments(delegation, "the AI's .rob file (RoboLang 1.3)", "; --ir then needs --plans")
     delegation.add_argument("--world", metavar="WORLD", required=True,
                             help="path to the world file for the AI's task (schema 1.1)")
     delegation.add_argument("--task", metavar="NAME", help="the AI's task (required when FILE has several tasks)")
@@ -748,14 +811,22 @@ def _parser(prog: str) -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None, out=None, err=None, prog: str = "robolang") -> int:
     out = out or sys.stdout
     err = err or sys.stderr
+    parser = _parser(prog)
     try:
-        args = _parser(prog).parse_args(argv)
+        args = parser.parse_args(argv)
+        if hasattr(args, "ir"):
+            if (args.file is None) == (args.ir is None):
+                parser.error("give exactly one of FILE (a .rob file) and --ir IR (a Task IR JSON file)")
+            args.file = args.ir if args.file is None else args.file
     except SystemExit as stop:  # argparse: --help / --version (0) or a usage error (2)
         return stop.code if isinstance(stop.code, int) else EXIT_USAGE
     try:
         return args.run(args, out, err)
     except RoboLangError as error:
         _print_errors(error, args.file, err, summary=args.command == "validate")
+        return EXIT_INVALID
+    except IRError as error:
+        _print_ir_errors(error, args.file, err, summary=args.command == "validate")
         return EXIT_INVALID
     except WorldError as error:
         print(error.format(), file=err)

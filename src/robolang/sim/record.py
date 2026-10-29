@@ -32,9 +32,15 @@ def sha256_normalized(data: bytes) -> str:
     return hashlib.sha256(data.replace(b"\r\n", b"\n")).hexdigest()
 
 
-def run_id(source: bytes, world: bytes, task: str, seed: str, cli_bindings: Mapping[str, str] | None = None) -> str:
-    """The ID of an input-equivalent simulation run (section 6). `--bind` bindings extend the preimage."""
-    preimage = f"robolang-sim-run/1.0\n{sha256_normalized(source)}\n{sha256_normalized(world)}\n{task}\n{seed}\n"
+def run_id(source: bytes, world: bytes, task: str, seed: str, cli_bindings: Mapping[str, str] | None = None,
+           source_kind: str = "source") -> str:
+    """
+    The ID of an input-equivalent simulation run (section 6). `--bind` bindings extend the preimage, and
+    so does a Task IR input (`source_kind` "ir"): a source file and an IR file never share an ID.
+    """
+    kind = "" if source_kind == "source" else f"source_kind {source_kind}\n"
+    preimage = (f"robolang-sim-run/1.0\n{kind}{sha256_normalized(source)}\n{sha256_normalized(world)}\n"
+                f"{task}\n{seed}\n")
     if cli_bindings is not None:
         preimage += "".join(f"bind {name}={target}\n" for name, target in sorted(cli_bindings.items()))
     return "sim-" + hashlib.sha256(preimage.encode("ascii")).hexdigest()
@@ -128,6 +134,7 @@ def to_record(
     language_version: str = ir.LANGUAGE_VERSION,
     bindings_source: str = "world",
     world_schema_version: str = WORLD_SCHEMA_VERSION,
+    source_kind: str = "source",
 ) -> dict:
     """
     The run record (section 5) as a dict with the key order of the specification: schema 1.0
@@ -136,6 +143,7 @@ def to_record(
     """
     inputs = {
         "source_sha256": source_sha256,
+        **({} if source_kind == "source" else {"source_kind": source_kind}),  # only for IR input (section 5.1)
         "world_sha256": world_sha256,
         "task": result.task_name,
         "seed": seed,

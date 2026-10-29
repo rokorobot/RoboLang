@@ -1,0 +1,175 @@
+{
+  "ir_schema": "robolang.task-ir",
+  "ir_schema_version": "1.2",
+  "language_version": "1.3",
+  "tasks": [
+    {
+      "name": "t",
+      "parameters": [
+        {
+          "name": "r",
+          "type": "robot"
+        },
+        {
+          "name": "box",
+          "type": "object"
+        },
+        {
+          "name": "src",
+          "type": "location"
+        },
+        {
+          "name": "dst",
+          "type": "location"
+        },
+        {
+          "name": "cell",
+          "type": "region"
+        },
+        {
+          "name": "cam",
+          "type": "sensor"
+        }
+      ],
+      "safety": [
+        {
+          "kind": "max_speed",
+          "limit": {
+            "value": "0.5",
+            "unit": "m/s"
+          }
+        }
+      ],
+      "preconditions": [
+        {
+          "kind": "robot_ready",
+          "robot": "r"
+        }
+      ],
+      "goal": [
+        {
+          "kind": "object_at",
+          "object": "box",
+          "location": "dst"
+        }
+      ],
+      "verify": {
+        "min_confidence": "0.9",
+        "max_age": {
+          "value": "5",
+          "unit": "s"
+        }
+      },
+      "steps": [
+        {
+          "kind": "move",
+          "robot": "r",
+          "target": "src"
+        },
+        {
+          "kind": "inspect",
+          "robot": "r",
+          "object": "box",
+          "sensor": "cam"
+        },
+        {
+          "kind": "wait_for",
+          "duration": {
+            "value": "1",
+            "unit": "s"
+          }
+        },
+        {
+          "kind": "communicate",
+          "robot": "r",
+          "channel": "fleet",
+          "message": "done"
+        }
+      ]
+    },
+    {
+      "name": "t",
+      "parameters": [
+        {
+          "name": "r",
+          "type": "robot"
+        },
+        {
+          "name": "box",
+          "type": "object"
+        },
+        {
+          "name": "src",
+          "type": "location"
+        },
+        {
+          "name": "dst",
+          "type": "location"
+        },
+        {
+          "name": "cell",
+          "type": "region"
+        },
+        {
+          "name": "cam",
+          "type": "sensor"
+        }
+      ],
+      "safety": [
+        {
+          "kind": "max_speed",
+          "limit": {
+            "value": "0.5",
+            "unit": "m/s"
+          }
+        }
+      ],
+      "preconditions": [
+        {
+          "kind": "robot_ready",
+          "robot": "r"
+        }
+      ],
+      "goal": [
+        {
+          "kind": "object_at",
+          "object": "box",
+          "location": "dst"
+        }
+      ],
+      "verify": {
+        "min_confidence": "0.9",
+        "max_age": {
+          "value": "5",
+          "unit": "s"
+        }
+      },
+      "steps": [
+        {
+          "kind": "move",
+          "robot": "r",
+          "target": "src"
+        },
+        {
+          "kind": "inspect",
+          "robot": "r",
+          "object": "box",
+          "sensor": "cam"
+        },
+        {
+          "kind": "wait_for",
+          "duration": {
+            "value": "1",
+            "unit": "s"
+          }
+        },
+        {
+          "kind": "communicate",
+          "robot": "r",
+          "channel": "fleet",
+          "message": "done"
+        }
+      ]
+    }
+  ]
+}
