@@ -66,7 +66,9 @@ plan that "runs" but leaves the box elsewhere fails with `S301`.
 **Exit:** every 1.3 run record carries an outcome that passes the Core 0.1 schema, and `C402`
 holds: `succeeded` is reported only when every criterion is met.
 
-### Phase 3 — Export a `.rob` goal as a Core `propose_goal`
+### Phase 3 — Export a `.rob` goal as a Core `propose_goal` · done ([0019](../../spec/decisions/0019-export-goal.md))
+
+As built, `@verify` amends RoboLang 1.3 (unreleased) instead of creating 1.4.
 
 - New command: `robolang export-goal FILE --world W [--task T] [--bind …] --from AGENT --to ROBOT`.
   It prints a signed (simulation-only) Core 0.1 `propose_goal` message on stdout.
