@@ -4,6 +4,9 @@
   "world": "examples/world.json",
   "group": "branching",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_3": {
     "decision": "cannot",
     "category": "inexpressible"
   },
@@ -18,7 +21,15 @@
             "carried_by",
             "rl:robot:amr1"
           ]
-        ]
+        ],
+        "world_patch": {
+          "events": [],
+          "regions": {
+            "handoff_zone": {
+              "clear": true
+            }
+          }
+        }
       },
       {
         "when": "not region_clear handoff_zone",
@@ -28,7 +39,15 @@
             "located_in",
             "rl:place:table"
           ]
-        ]
+        ],
+        "world_patch": {
+          "events": [],
+          "regions": {
+            "handoff_zone": {
+              "clear": false
+            }
+          }
+        }
       }
     ]
   },

@@ -4,6 +4,9 @@
   "world": "examples/world.json",
   "group": "branching",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_3": {
     "decision": "cannot",
     "category": "inexpressible"
   },
@@ -18,7 +21,15 @@
             "located_in",
             "rl:place:table"
           ]
-        ]
+        ],
+        "world_patch": {
+          "events": [],
+          "objects": {
+            "box1": {
+              "location": "shelf"
+            }
+          }
+        }
       },
       {
         "when": "not object_at box1 shelf",
@@ -28,7 +39,15 @@
             "located_in",
             "rl:place:home"
           ]
-        ]
+        ],
+        "world_patch": {
+          "events": [],
+          "objects": {
+            "box1": {
+              "location": "home"
+            }
+          }
+        }
       }
     ]
   },

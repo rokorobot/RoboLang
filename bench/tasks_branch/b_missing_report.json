@@ -4,6 +4,9 @@
   "world": "bench/worlds/warehouse.json",
   "group": "branching",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_3": {
     "decision": "cannot",
     "category": "inexpressible"
   },
@@ -18,7 +21,15 @@
             "located_in",
             "rl:place:table"
           ]
-        ]
+        ],
+        "world_patch": {
+          "events": [],
+          "objects": {
+            "box1": {
+              "location": "shelf_a"
+            }
+          }
+        }
       },
       {
         "when": "not object_at box1 shelf_a",
@@ -28,7 +39,16 @@
             "alerts",
             "box1 missing"
           ]
-        ]
+        ],
+        "world_patch": {
+          "events": [],
+          "objects": {
+            "box1": {
+              "present": false,
+              "location": null
+            }
+          }
+        }
       }
     ]
   },

@@ -4,6 +4,9 @@
   "world": "bench/worlds/warehouse.json",
   "group": "branching",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_3": {
     "decision": "cannot",
     "category": "inexpressible"
   },
@@ -18,7 +21,15 @@
             "located_in",
             "rl:place:table"
           ]
-        ]
+        ],
+        "world_patch": {
+          "events": [],
+          "robots": {
+            "arm1": {
+              "ready": true
+            }
+          }
+        }
       },
       {
         "when": "not robot_ready arm1",
@@ -28,7 +39,15 @@
             "located_in",
             "rl:place:table"
           ]
-        ]
+        ],
+        "world_patch": {
+          "events": [],
+          "robots": {
+            "arm1": {
+              "ready": false
+            }
+          }
+        }
       }
     ]
   },

@@ -12,7 +12,7 @@ import json
 import re
 import tempfile
 from collections import Counter
-from dataclasses import dataclass, fields, is_dataclass
+from dataclasses import dataclass, fields, is_dataclass, replace
 from decimal import Decimal
 from math import prod
 from pathlib import Path
@@ -30,14 +30,15 @@ TASKS_DIR = BENCH / "tasks"
 REFERENCE_DIR = BENCH / "reference"
 HARD_TASKS_DIR = BENCH / "tasks_hard"
 HARD_REFERENCE_DIR = BENCH / "reference_hard"
-BRANCH_TASKS_DIR = BENCH / "tasks_branch"  # set 3: pre-registered against RoboLang 1.3
+BRANCH_TASKS_DIR = BENCH / "tasks_branch"  # set 3: pre-registered against 1.3, scored against 1.4 (per path)
 BRANCH_REFERENCE_DIR = BENCH / "reference_branch"
 ASK_TASKS_DIR = BENCH / "tasks_ask"
 ASK_REFERENCE_DIR = BENCH / "reference_ask"
 PROMPT_FILE = BENCH / "prompt.md"
 REFERENCE_FILE = ROOT / "docs" / "language-reference.md"
 MINIMAL_PROMPT_FILE = BENCH / "prompt_minimal.md"
-GRAMMAR_FILE = ROOT / "spec" / "grammar-v1.3.ebnf"
+GRAMMAR_FILE = ROOT / "spec" / "grammar-v1.4.ebnf"  # a delta over the 1.3 grammar, so the prompt pastes both
+BASE_GRAMMAR_FILE = ROOT / "spec" / "grammar-v1.3.ebnf"
 GRAMMAR_MARK = "{{GRAMMAR}}"  # in prompt_minimal.md: replaced by the text of the grammar file
 REFERENCE_MARK = "{{LANGUAGE_REFERENCE}}"  # in prompt.md: replaced by the shipped, tested reference
 
@@ -75,13 +76,13 @@ ANSWER_SCHEMA = {
                      "description": "\"program\" to answer with RoboLang source, \"cannot\" to decline the request, "
                                     "\"clarify\" to ask which reading is meant."},
         "category": {"type": "string", "enum": list(CATEGORIES),
-                     "description": "Why it cannot be done: \"inexpressible\" (RoboLang 1.3 cannot say it) or "
+                     "description": "Why it cannot be done: \"inexpressible\" (RoboLang 1.4 cannot say it) or "
                                     "\"infeasible\" (this world or robot cannot do it). \"none\" for a program."},
         "reason": {"type": "string", "description": "One sentence: what the program does, or why it cannot be done."},
         "entities": {"type": "array", "items": {"type": "string"},
                      "description": "World entity IDs: for cannot, the ones that block the request; for clarify, every "
                                     "candidate the request could mean. Empty for a program."},
-        "rob": {"type": "string", "description": "The complete RoboLang 1.3 source. Empty when decision is cannot."},
+        "rob": {"type": "string", "description": "The complete RoboLang 1.4 source. Empty when decision is cannot."},
         "task": {"type": "string", "description": "The name of the task in the source to run. Empty when cannot."},
         "bindings": {  # a list of pairs: structured outputs require additionalProperties false on objects
             "type": "array",
@@ -106,7 +107,6 @@ FORMAT_CODE = "B001"      # the reply was not an answer in the required format
 NO_TASK_CODE = "B002"     # the named task is not in the source
 REFUSED_CODE = "B003"     # the model refused (stop_reason "refusal"): no answer
 API_ERROR_CODE = "B004"   # the request failed: no answer
-BRANCHING_CODE = "B005"   # a RoboLang 1.4 branching task: valid and simulated, but scored per path only from N4 PR 3
 
 _CODE = re.compile(r"(?:error|warning)\[([A-Z]\d{3})\]")
 
@@ -128,7 +128,8 @@ def load_prompt(name: str = "full") -> str:
     """A prompt assembled from its stable wrapper and the canonical grammar or language reference."""
     if name == "minimal":
         text = MINIMAL_PROMPT_FILE.read_text(encoding="utf-8")
-        return text.replace(GRAMMAR_MARK, GRAMMAR_FILE.read_text(encoding="utf-8").rstrip("\n"))
+        grammar = "\n\n".join(f.read_text(encoding="utf-8").rstrip("\n") for f in (BASE_GRAMMAR_FILE, GRAMMAR_FILE))
+        return text.replace(GRAMMAR_MARK, grammar)
     text = PROMPT_FILE.read_text(encoding="utf-8")
     return text.replace(REFERENCE_MARK, REFERENCE_FILE.read_text(encoding="utf-8").rstrip("\n"))
 
@@ -302,10 +303,6 @@ def check_answer(task_def: dict, answer: dict, world_data: bytes | None = None) 
         names = ", ".join(t.name for t in result.ir.tasks)
         report = f"error[{NO_TASK_CODE}]: no task named '{answer['task']}' in answer.rob; tasks in this file: {names}"
         return Checked(False, report, (NO_TASK_CODE,))
-    if task.branching:  # RoboLang 1.4: no simulation yet (decision 0027, PR 2), so it cannot be judged
-        report = (f"error[{BRANCHING_CODE}]: task '{answer['task']}' uses `if` or `fail` (RoboLang 1.4), which this "
-                  "version cannot simulate; write RoboLang 1.3")
-        return Checked(False, report, (BRANCHING_CODE,))
     data = world_data or world_bytes(task_def)
     try:
         world = load_world(data, "world.json", task, answer["bindings"])
@@ -328,12 +325,17 @@ class Judgement:
     failure_code: str | None
     checks: dict[str, bool]             # the optional checks the task defines, by name
     goal_exact: bool = False            # the exported triples equal an expected set (goal_correct before N6)
+    paths: list[dict] | None = None     # a task with `expect_1_4.paths`: one entry per path, see `judge_paths`
+    half_program: bool = False          # valid, SUCCEEDED as given, but wrong on another path (decision 0027, G1)
 
 
 def _merge(base: dict, patch: dict) -> dict:
-    """`base` with `patch` laid over it: objects merge key by key, anything else is replaced."""
+    """`base` with `patch` laid over it: objects merge key by key, null removes a key, anything else is replaced."""
     merged = dict(base)
     for key, value in patch.items():
+        if value is None:
+            merged.pop(key, None)
+            continue
         merged[key] = _merge(base[key], value) if isinstance(value, dict) and isinstance(base.get(key), dict) else value
     return merged
 
@@ -355,6 +357,49 @@ def _check_probe(task_def: dict, checked: Checked, probe: dict, bindings: dict[s
         return simulate_task(checked.task, world).state != "SUCCEEDED"
     except WorldError:
         return False
+
+
+def task_paths(task_def: dict) -> list[dict] | None:
+    """The paths of a branching task (set 2 and 3, `expect_1_4.paths`), each with the world that forces it, or None."""
+    return (task_def.get("expect_1_4") or {}).get("paths") or None
+
+
+def judge_paths(task_def: dict, checked: Checked, bindings: dict[str, str]) -> list[dict]:
+    """
+    Run the answer once per expected path, in that path's patched world (decision 0027 B6, N4 PR 3).
+
+    A goal path is `goal_ok` when the run got through its plan to the goal check (no earlier failure: a program that
+    stops on a path has not done what that path asked, even when its goal text is right) and the effective goal of the
+    path it took means the path's goal (goal_means), and `plan_ok` when the run ends SUCCEEDED.
+    A fail path is `goal_ok` when the run ends in `fail` (S262), and `plan_ok`
+    when that is so. Either kind is `plan_ok` only if the path's messages were sent. The reason text is not compared.
+    """
+    results = []
+    for path in task_paths(task_def):
+        entry = {"when": path["when"], "goal_ok": False, "plan_ok": False, "state": None, "failure_code": None}
+        patched = _merge(json.loads(world_bytes(task_def)), path["world_patch"])
+        try:
+            world = load_world(json.dumps(patched).encode("utf-8"), "world.json", checked.task, bindings)
+            result = simulate_task(checked.task, world)
+        except WorldError as error:
+            entry["failure_code"] = error.code
+            results.append(entry)
+            continue
+        entry["state"], entry["failure_code"] = result.state, result.failure.code if result.failure else None
+        sent = {(s.message.channel, s.message.message) for s in result.steps if s.message and s.status == "succeeded"}
+        # [channel, text]; a null text accepts any message on that channel (the request did not fix the wording)
+        messages_ok = all(any(c == channel and text in (None, m) for c, m in sent)
+                          for channel, text in path.get("messages", []))
+        if "fail" in path:
+            entry["goal_ok"] = entry["failure_code"] == "S262"
+            entry["plan_ok"] = entry["goal_ok"] and messages_ok
+        else:
+            effective = replace(checked.task, goal=tuple(g.condition for g in result.goal))
+            reached = all(g.result is not None for g in result.goal)
+            entry["goal_ok"] = reached and bool(goal_means(effective, bindings, [{tuple(t) for t in path["goal"]}]))
+            entry["plan_ok"] = result.state == "SUCCEEDED" and messages_ok
+        results.append(entry)
+    return results
 
 
 # -------- goals compared by meaning --------
@@ -494,9 +539,20 @@ def judge(task_def: dict, checked: Checked, bindings: dict[str, str]) -> Judgeme
     if "probes" in task_def:
         checks["probes"] = all(_check_probe(task_def, checked, p, bindings) for p in task_def["probes"])
     goal_exact = exported is not None and exported in expected_goals(task_def)
-    meaning = goal_means(checked.task, bindings, expected_goals(task_def))
-    return Judgement(goal_exact if meaning is None else meaning, result.state == "SUCCEEDED",
-                     result.state, result.failure.code if result.failure else None, checks, goal_exact)
+    judged = checked.task
+    if checked.task.branching:  # 1.4: the goal of the path this run took, and only if the run reached its goal check
+        reached = bool(result.goal) and all(g.result is not None for g in result.goal)
+        judged = replace(checked.task, goal=tuple(g.condition for g in result.goal) if reached else ())
+    meaning = goal_means(judged, bindings, expected_goals(task_def))
+    judgement = Judgement(goal_exact if meaning is None else meaning, result.state == "SUCCEEDED",
+                          result.state, result.failure.code if result.failure else None, checks, goal_exact)
+    if task_paths(task_def):  # a task with paths: right only if every path is (the state above is the unpatched run)
+        judgement.paths = judge_paths(task_def, checked, bindings)
+        judgement.goal_correct = all(p["goal_ok"] for p in judgement.paths)
+        judgement.plan_succeeds = all(p["plan_ok"] for p in judgement.paths)
+        right = judgement.goal_correct and judgement.plan_succeeds
+        judgement.half_program = result.state == "SUCCEEDED" and not right
+    return judgement
 
 
 # -------- a model's reply --------

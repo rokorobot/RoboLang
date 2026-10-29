@@ -21,7 +21,8 @@ from robolang import tokens
 
 REPO = Path(__file__).resolve().parent.parent
 HARD = lib.load_set("hard")
-FEASIBLE = {t: d for t, d in HARD.items() if lib.expectation(d)[0] == "program"}
+FEASIBLE = {t: d for t, d in HARD.items() if lib.expectation(d)[0] == "program" and d["group"] != "branching"}
+BRANCHING = {t: d for t, d in HARD.items() if d["group"] == "branching"}  # 1.3 declined them, 1.4 expresses them
 CANNOT = {t: d for t, d in HARD.items() if lib.expectation(d)[0] == "cannot"}
 INEXPRESSIBLE = {t for t, d in CANNOT.items() if lib.expectation(d)[1] == "inexpressible"}
 INFEASIBLE = {t for t, d in CANNOT.items() if lib.expectation(d)[1] == "infeasible"}
@@ -50,28 +51,36 @@ def decline(category: str, reason: str = "cannot be done") -> dict:
 
 def test_the_mix_of_tasks():
     assert len(HARD) == 40
-    assert Counter(d["group"] for d in HARD.values()) == {"inexpressible": 10, "infeasible": 8, "decoy": 8,
-                                                          "ambiguous": 5, "control": 9}
-    assert len(INEXPRESSIBLE) == 10 and len(INFEASIBLE) == 8
-    assert len(FEASIBLE) / len(HARD) >= 0.35  # refusing everything must score badly
+    assert Counter(d["group"] for d in HARD.values()) == {"inexpressible": 7, "branching": 3, "infeasible": 8,
+                                                          "decoy": 8, "ambiguous": 5, "control": 9}
+    assert len(INEXPRESSIBLE) == 7 and len(INFEASIBLE) == 8
+    assert (len(FEASIBLE) + len(BRANCHING)) / len(HARD) >= 0.35  # refusing everything must score badly
     for task_id, task in HARD.items():
         assert task["id"] == task_id and (lib.HARD_TASKS_DIR / f"{task_id}.json").is_file()
         assert (REPO / task["world"]).is_file() and task["tags"] and task["prompt"].endswith((".", "?"))
-        assert task["group"] in {"inexpressible", "infeasible", "decoy", "ambiguous", "control"}
+        assert task["group"] in {"inexpressible", "branching", "infeasible", "decoy", "ambiguous", "control"}
 
 
 def test_references_and_attempts_are_where_they_should_be():
     files = list(lib.HARD_REFERENCE_DIR.iterdir())
     refs = {p.name.split(".")[0] for p in files if p.name.endswith((".rob", ".json")) and ".attempt" not in p.name}
     attempts = {p.name.split(".")[0] for p in files if ".attempt." in p.name}
-    assert refs == set(FEASIBLE) and attempts == set(CANNOT)
-    assert {p.stem for p in lib.HARD_REFERENCE_DIR.glob("*.rob") if ".attempt" not in p.stem} == set(FEASIBLE)
+    assert refs == set(FEASIBLE) | set(BRANCHING) and attempts == set(CANNOT)
+    assert {p.stem for p in lib.HARD_REFERENCE_DIR.glob("*.rob") if ".attempt" not in p.stem} \
+        == set(FEASIBLE) | set(BRANCHING)
 
 
 def test_expectations_are_well_formed():
     for task_id, task in HARD.items():
         decision, category = lib.expectation(task)
-        if decision == "program":
+        if task["group"] == "branching":  # relabelled for 1.4 (N4 PR 3): a program, judged per path
+            assert (decision, category) == ("program", "none")
+            assert task["expect_1_3"] == {"decision": "cannot", "category": "inexpressible"}
+            assert not {"expected_goal", "expected_goals"} & set(task) and len(task["why"]) > 40
+            paths = task["expect_1_4"]["paths"]
+            assert task["expect_1_4"]["decision"] == "program" and len(paths) == 2
+            assert all(p["world_patch"]["events"] == [] and p["when"] and ("goal" in p) != ("fail" in p) for p in paths)
+        elif decision == "program":
             assert category == "none" and "why" not in task and "attempt_fails_with" not in task
             goals = lib.expected_goals(task)
             assert goals and all(g for g in goals), task_id
@@ -144,6 +153,18 @@ def test_the_new_optional_checks_bite():
     assert lib.judge(task, lib.check_answer(task, answer), answer["bindings"]).checks == {"probes": False}
 
 
+@pytest.mark.parametrize("task_id", sorted(BRANCHING))
+def test_branching_reference_is_valid_1_4_and_right_on_every_path(task_id):
+    task = BRANCHING[task_id]
+    answer = hard_reference(task_id)
+    checked = lib.check_answer(task, answer)
+    assert checked.valid, checked.report
+    assert checked.language_version == "1.4"
+    judgement = lib.judge(task, checked, answer["bindings"])
+    assert judgement.goal_correct and judgement.plan_succeeds and not judgement.half_program, judgement.paths
+    assert len(judgement.paths) == 2 and all(p["goal_ok"] and p["plan_ok"] for p in judgement.paths)
+
+
 # -------- the tasks that expect a decline --------
 
 def test_inexpressible_requests_fail_in_the_language():
@@ -155,8 +176,18 @@ def test_inexpressible_requests_fail_in_the_language():
         assert checked.codes[0] == task["attempt_fails_with"], (task_id, checked.codes)
 
 
+def test_the_inexpressible_attempts_still_fail_under_the_1_4_marker():
+    """1.4 adds `if`, `else` and `fail` only: a retry, loop, count, clock or message wait is still rejected."""
+    for task_id in sorted(INEXPRESSIBLE):
+        answer = attempt_answer(task_id)
+        answer["rob"] = answer["rob"].replace("robolang 1.3;", "robolang 1.4;", 1)
+        checked = lib.check_answer(HARD[task_id], answer)
+        assert not checked.valid and checked.codes[0] == HARD[task_id]["attempt_fails_with"], (task_id, checked.codes)
+
+
 def test_the_language_has_no_construct_for_what_the_inexpressible_tasks_ask():
-    grammar = lib.GRAMMAR_FILE.read_text(encoding="utf-8")
+    """What is left inexpressible in 1.4: no loop, retry, count, clock or message wait (decision 0027 section 1)."""
+    grammar = (lib.ROOT / "spec" / "grammar-v1.3.ebnf").read_text(encoding="utf-8")
     statement = re.search(r"statement\s*=\s*\(([^)]*)\)", grammar).group(1)
     assert set(re.findall(r"\w+", statement)) == {"move", "grasp", "place", "inspect", "wait", "communicate"}
     atoms = set(re.findall(r'^\s+(?:atom\s+=\s+)?\|?\s*"(\w+)"\s*,\s*(?:IDENT|sensor_ref)', grammar, re.M))
@@ -167,6 +198,12 @@ def test_the_language_has_no_construct_for_what_the_inexpressible_tasks_ask():
     assert 'duration = NUMBER , DURATION_UNIT' in re.sub(r"\s+", " ", grammar).replace("duration      =", "duration =")
     assert re.search(r'"wait"\s*,\s*"until"\s*,\s*condition\s*,\s*"timeout"\s*,\s*duration', grammar)  # always bounded
     assert re.search(r'"communicate"\s*,\s*IDENT\s*,\s*"to"\s*,\s*STRING\s*,\s*"with"\s*,\s*STRING', grammar)
+    # 1.4 adds `if`, `else` and `fail` and nothing else: the loop and retry words are still not in the grammar
+    grammar14 = lib.GRAMMAR_FILE.read_text(encoding="utf-8")
+    for word in ("if", "else", "fail"):
+        assert f'"{word}"' in grammar14
+    for word in ("while", "loop", "every", "retry", "repeat", "for_each", "message_received"):
+        assert f'"{word}"' not in grammar14
 
 
 def test_infeasible_requests_fail_in_the_world():
@@ -299,7 +336,7 @@ def hard_run(tmp_path: Path, replies: dict, repairs: dict | None = None, models=
 
 def canned(tmp_path: Path) -> tuple[Path, dict]:
     replies = {
-        "x_missing_box_branch": decline("inexpressible"),                      # right
+        "x_wait_message": decline("inexpressible"),                            # right
         "x_wait_forever": decline("infeasible"),                               # declined, wrong category
         "x_every_hour": attempt_answer("x_every_hour"),                        # program, invalid: repaired below
         "x_retry_grasp": dict(reference_answer("e_pick_place"), decision="program", category="none",
@@ -322,7 +359,7 @@ def test_scorer_headline_metrics_on_canned_answers(tmp_path):
     by = {r["task_id"]: r for r in rows}
     assert meta["set"] == "hard" and meta["prompt"] == "full"
 
-    right = by["x_missing_box_branch"]
+    right = by["x_wait_message"]
     assert right["decision_correct"] and right["category_correct"] is True and not right["false_program"]
     assert right["valid_first"] is False and right["codes"] == []  # a decline has no program to check
 
@@ -359,7 +396,7 @@ def test_the_report_has_the_headline_figures_and_a_table_per_kind(tmp_path):
     assert "Task set hard, prompt full." in text
     for column in score.ROBUSTNESS_HEAD:
         assert column in text
-    # 10 answers, 6 of which expect a decline (x_missing, x_wait, x_every, x_retry, n_gripper, n_missing_place):
+    # 10 answers, 6 of which expect a decline (x_wait_message, x_wait, x_every, x_retry, n_gripper, n_missing_place):
     # decision right 6 (the three declines, d_red, m_park, m_same); false programs x_every, x_retry, n_gripper (3),
     # 2 after repair, 1 of them valid and SUCCEEDED (x_retry); 1 false refusal of 4; categories right in 2 of 3 declines
     assert "| decision_correct |" in text

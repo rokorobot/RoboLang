@@ -16,7 +16,7 @@ from robolang.ir_reader import IRError, read_ir
 
 ROOT = Path(__file__).resolve().parent.parent
 REFERENCE = ROOT / "bench" / "reference_branch"
-ATTEMPTS = sorted(REFERENCE.glob("b_*.attempt.rob"))
+ATTEMPTS = sorted(REFERENCE.glob("b_*.rob"))
 PARAMS = "robot r, object box, location src, location dst, region cell, sensor cam"
 
 
@@ -314,21 +314,19 @@ def test_inspect_shows_branches_and_fail(tmp_path):
     assert json.loads(out)["tasks"][0]["steps"][0]["kind"] == "if"
 
 
-# -------- validate --world on a branching task (path checks come with PR 3) --------
+# -------- validate --world on a branching task (path checks: see test_validate_world.py) --------
 
 WORLD = "bench/worlds/warehouse.json"
-BRANCHING = (REFERENCE / "b_aisle_or_report.attempt.rob").read_text(encoding="utf-8")
-BRANCHING = BRANCHING.replace("robolang 1.3;", "robolang 1.4;")
+BRANCHING = (REFERENCE / "b_aisle_or_report.rob").read_text(encoding="utf-8")
 BIND = ["--bind", "r=amr1", "c=crate1", "src=dock", "dst=handoff", "aisle=aisle"]
 
 
-def test_validate_world_skips_the_step_checks_of_a_branching_task_and_says_so(tmp_path):
+def test_validate_world_checks_every_path_of_a_branching_task_and_says_so(tmp_path):
     path = tmp_path / "b.rob"
     path.write_text(BRANCHING, encoding="utf-8")
     code, out, err = cli("validate", str(path), "--world", WORLD, *BIND)
     assert code == 0 and err == ""
-    assert "branches: its steps were not checked" in out
-    assert "no certain failure found" not in out
+    assert "every path of its branches checked" in out and "no certain failure found" in out
 
 
 def test_validate_world_still_checks_a_straight_1_4_task(tmp_path):
@@ -339,20 +337,16 @@ def test_validate_world_still_checks_a_straight_1_4_task(tmp_path):
     assert code == 0 and "no certain failure found" in out
 
 
-def test_a_branching_answer_is_reported_b005_until_pr3_scores_paths():
-    """The benchmark judges with the simulator directly: a 1.4 `if` answer must be invalid (B005), not a crash."""
+def test_a_branching_answer_is_valid_for_the_benchmark_and_judged_per_path():
+    """The benchmark accepts a 1.4 `if` answer and scores it on every path (N4 PR 3; B005 is gone)."""
     from bench import lib
-    from robolang.sim import load_world
-    from robolang.sim import run as simulate_task
 
     ref = lib.BRANCH_REFERENCE_DIR
     answer = {"decision": "program", "category": "none", "reason": "",
-              "rob": (ref / "b_route_by_cell.attempt.rob").read_text(encoding="utf-8").replace("robolang 1.3;",
-                                                                                              "robolang 1.4;"),
-              **json.loads((ref / "b_route_by_cell.attempt.json").read_text(encoding="utf-8"))}
+              "rob": (ref / "b_route_by_cell.rob").read_text(encoding="utf-8"),
+              **json.loads((ref / "b_route_by_cell.json").read_text(encoding="utf-8"))}
     task_def = lib.load_set("branch")["b_route_by_cell"]
     checked = lib.check_answer(task_def, answer)
-    assert not checked.valid and checked.codes == (lib.BRANCHING_CODE,)
-    task = compile_source(answer["rob"], "a.rob").ir.tasks[0]
-    world = load_world(lib.world_bytes(task_def), "w.json", task, answer["bindings"])
-    assert simulate_task(task, world).state in ("SUCCEEDED", "FAILED")  # the simulator itself runs it (PR 2)
+    assert checked.valid and checked.language_version == "1.4"
+    judgement = lib.judge(task_def, checked, answer["bindings"])
+    assert judgement.goal_correct and judgement.plan_succeeds and len(judgement.paths) == 2

@@ -2,10 +2,54 @@
   "id": "x_whichever_free",
   "prompt": "Move box1 from shelf_a to the table with whichever of arm1 and arm2 is ready when the program runs. The choice has to be made at run time, because operators swap robots in and out of the cell without telling anyone.",
   "world": "bench/worlds/warehouse.json",
-  "group": "inexpressible",
+  "group": "branching",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_3": {
     "decision": "cannot",
     "category": "inexpressible"
+  },
+  "expect_1_4": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "robot_ready arm1",
+        "goal": [
+          [
+            "rl:thing:box1",
+            "located_in",
+            "rl:place:table"
+          ]
+        ],
+        "world_patch": {
+          "events": [],
+          "robots": {
+            "arm1": {
+              "ready": true
+            }
+          }
+        }
+      },
+      {
+        "when": "not robot_ready arm1",
+        "goal": [
+          [
+            "rl:thing:box1",
+            "located_in",
+            "rl:place:table"
+          ]
+        ],
+        "world_patch": {
+          "events": [],
+          "robots": {
+            "arm1": {
+              "ready": false
+            }
+          }
+        }
+      }
+    ]
   },
   "tags": [
     "runtime_choice",

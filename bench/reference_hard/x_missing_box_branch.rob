@@ -1,16 +1,17 @@
-// bench/reference_hard/x_missing_box_branch.attempt.rob: the obvious attempt; it does not do what the request asks
-robolang 1.3;
+// bench/reference_hard/x_missing_box_branch.rob: the reference program (RoboLang 1.4, decision 0027)
+robolang 1.4;
 
 task deliver(robot r, object box, location src, location dst) {
-    goal { object_at box dst; }
     plan {
-        if object_exists box {
+        if object_at box src {
+            goal { object_at box dst; }
             move r to src;
             grasp r box;
             move r to dst;
             place r box at dst;
         } else {
             communicate r to "alerts" with "box1 missing";
+            fail "box1 missing";
         }
     }
 }

@@ -4,6 +4,9 @@
   "world": "bench/worlds/lab.json",
   "group": "branching",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_3": {
     "decision": "cannot",
     "category": "inexpressible"
   },
@@ -18,7 +21,15 @@
             "located_in",
             "rl:place:scanner"
           ]
-        ]
+        ],
+        "world_patch": {
+          "events": [],
+          "sensors": {
+            "spectro": {
+              "available": true
+            }
+          }
+        }
       },
       {
         "when": "not sensor_ok spectro",
@@ -28,7 +39,15 @@
             "located_in",
             "rl:place:fridge"
           ]
-        ]
+        ],
+        "world_patch": {
+          "events": [],
+          "sensors": {
+            "spectro": {
+              "available": false
+            }
+          }
+        }
       }
     ]
   },

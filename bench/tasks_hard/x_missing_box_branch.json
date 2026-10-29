@@ -2,10 +2,55 @@
   "id": "x_missing_box_branch",
   "prompt": "Deliver box1 from shelf_a to the table with arm1. But someone may take box1 before the run starts: if it is missing, move nothing and tell the fleet on channel \"alerts\" that box1 is missing; if it is there, deliver it.",
   "world": "bench/worlds/warehouse.json",
-  "group": "inexpressible",
+  "group": "branching",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_3": {
     "decision": "cannot",
     "category": "inexpressible"
+  },
+  "expect_1_4": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "object_at box1 shelf_a",
+        "goal": [
+          [
+            "rl:thing:box1",
+            "located_in",
+            "rl:place:table"
+          ]
+        ],
+        "world_patch": {
+          "events": [],
+          "objects": {
+            "box1": {
+              "location": "shelf_a"
+            }
+          }
+        }
+      },
+      {
+        "when": "not object_at box1 shelf_a",
+        "fail": "box1 missing",
+        "messages": [
+          [
+            "alerts",
+            null
+          ]
+        ],
+        "world_patch": {
+          "events": [],
+          "objects": {
+            "box1": {
+              "present": false,
+              "location": null
+            }
+          }
+        }
+      }
+    ]
   },
   "tags": [
     "branching",

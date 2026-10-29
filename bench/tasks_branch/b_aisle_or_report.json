@@ -4,6 +4,9 @@
   "world": "bench/worlds/warehouse.json",
   "group": "branching",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_3": {
     "decision": "cannot",
     "category": "inexpressible"
   },
@@ -18,7 +21,15 @@
             "located_in",
             "rl:place:handoff"
           ]
-        ]
+        ],
+        "world_patch": {
+          "events": [],
+          "regions": {
+            "aisle": {
+              "clear": true
+            }
+          }
+        }
       },
       {
         "when": "not region_clear aisle",
@@ -28,7 +39,15 @@
             "ops",
             "aisle blocked"
           ]
-        ]
+        ],
+        "world_patch": {
+          "events": [],
+          "regions": {
+            "aisle": {
+              "clear": false
+            }
+          }
+        }
       }
     ]
   },

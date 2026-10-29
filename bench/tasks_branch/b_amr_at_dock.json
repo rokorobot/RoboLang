@@ -4,6 +4,9 @@
   "world": "examples/world.json",
   "group": "branching",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_3": {
     "decision": "cannot",
     "category": "inexpressible"
   },
@@ -18,7 +21,15 @@
             "located_in",
             "rl:place:table"
           ]
-        ]
+        ],
+        "world_patch": {
+          "events": [],
+          "robots": {
+            "amr1": {
+              "location": "dock"
+            }
+          }
+        }
       },
       {
         "when": "not robot_at amr1 dock",
@@ -28,7 +39,15 @@
             "located_in",
             "rl:place:table"
           ]
-        ]
+        ],
+        "world_patch": {
+          "events": [],
+          "robots": {
+            "amr1": {
+              "location": "home"
+            }
+          }
+        }
       }
     ]
   },

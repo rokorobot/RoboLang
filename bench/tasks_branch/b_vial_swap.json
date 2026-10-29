@@ -4,6 +4,9 @@
   "world": "bench/worlds/lab.json",
   "group": "branching",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_3": {
     "decision": "cannot",
     "category": "inexpressible"
   },
@@ -18,7 +21,15 @@
             "located_in",
             "rl:place:centrifuge"
           ]
-        ]
+        ],
+        "world_patch": {
+          "events": [],
+          "objects": {
+            "vial2": {
+              "location": "fridge"
+            }
+          }
+        }
       },
       {
         "when": "not object_at vial2 fridge",
@@ -28,7 +39,15 @@
             "located_in",
             "rl:place:centrifuge"
           ]
-        ]
+        ],
+        "world_patch": {
+          "events": [],
+          "objects": {
+            "vial2": {
+              "location": "bench"
+            }
+          }
+        }
       }
     ]
   },

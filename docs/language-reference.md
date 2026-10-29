@@ -1,23 +1,24 @@
-# RoboLang 1.3 language reference
+# RoboLang 1.4 language reference
 
 RoboLang is a small, checked language for robot tasks. A program describes a desired final state and
 a plan for reaching it in a symbolic world. A program is correct only when it validates, names the
 right entities, states the operator's requested outcome in `goal`, and reaches that goal.
 
-RoboLang 1.3 has no run-time branching, loops, schedules, arithmetic, or variables beyond typed task
-parameters. Do not silently drop part of a request. If a request needs an unsupported construct, or
-the available world and robots cannot perform it, say that it cannot be represented or completed.
+RoboLang 1.4 has bounded branching (`if`/`else`, see "Branching") but no loops, retry, error handling,
+counts, clocks, schedules, arithmetic, message waits, or variables beyond typed task parameters. Do
+not silently drop part of a request. If a request needs an unsupported construct, or the available
+world and robots cannot perform it, say that it cannot be represented or completed.
 
 ## File and task structure
 
-A file starts with `robolang 1.3;` and holds one or more tasks. `//` starts a comment. The language
+A file starts with `robolang 1.4;` and holds one or more tasks. `//` starts a comment. The language
 is case-sensitive. Whitespace only separates tokens.
 
 ```text
 task NAME(type param, type param, ...) {
     @safety max_speed 0.5 m/s;     // zero or more annotations, first
     pre  { condition; ... }        // optional
-    goal { condition; ... }        // required, at least one condition
+    goal { condition; ... }        // required unless every branch has its own goal
     plan { statement; ... }        // required, at least one statement
 }
 ```
@@ -33,6 +34,7 @@ and `_`, starting with a letter. These words are reserved and cannot be names:
 robolang task pre plan goal robot object location region sensor move grasp place inspect wait communicate
 to at using with for until timeout robot_ready region_clear object_exists sensor_ok object_at robot_at holding
 and or not in_region with_approach no_go_region require_guard message_received scalar duration
+if else fail
 ```
 
 Numbers are unsigned decimals (`2`, `0.5`); there is no sign or exponent. A duration is a number
@@ -52,8 +54,49 @@ communicate r to "channel" with "message";
 ```
 
 Here `r` is a robot, `obj` an object, `dst` a location, and `camera` a sensor parameter. A sensor is
-never a quoted string in 1.3. `wait until` always needs a timeout. Strings cannot contain a literal
+never a quoted string in 1.3 and 1.4. `wait until` always needs a timeout. Strings cannot contain a literal
 line break; the only escapes are `\"`, `\\`, `\n`, and `\t`.
+
+## Branching
+
+```text
+if region_clear cell {
+    goal { object_at box a; }       // optional: adds to the goal on this path
+    move r to a;
+    place r box at a;
+} else if robot_ready r2 {          // `else if` is shorthand for an `else` holding an `if`
+    goal { object_at box b; }
+    move r2 to b;
+    place r2 box at b;
+} else {
+    communicate r to "alerts" with "no route";
+    fail "no route";                // ends the run as failed; last statement of a branch only
+}
+```
+
+- The condition is any condition (below). It is evaluated **once, when the `if` is reached**, against
+  the world at that moment. An unknown condition fails the run (`S261`); no branch is taken.
+- `else` is optional. A branch has at least one statement. Statements after an `if` run on every path
+  that does not end in `fail`.
+- A path is one choice of `then` or `else` at each `if`. Its goal is the task `goal` plus the `goal`
+  block of each branch it takes. A `goal` block may only be the first item of a branch. **Every path
+  must have at least one goal condition** (from the task or its branches), or end in `fail` (`E309`).
+  An `if` with no `else` has an empty `else` path, so the task needs its own `goal` for it.
+- `fail "reason";` is for "move nothing and report it": the run ends FAILED (`S262`) with the reason.
+  Messages sent before it stand. Use it only as the last statement of a branch (`E313`); the reason
+  must not be empty (`E307`).
+- `if` is nested at most 4 deep (`E216`). `if` cannot be used in `pre` or in a `wait until` condition.
+- `if` and `else` are not conditions: nothing is retried, repeated, counted, or timed. If a request
+  needs a loop ("until it works"), a retry, "after N times", elapsed time, or waiting for a message,
+  it cannot be represented: say so.
+
+**A condition about the moment the job runs is decided by the program, with `if`.** When the request
+says "if arm1 is ready when the job starts", "if the cell is clear at that moment", "if the box is
+still there", or "whichever robot is ready", the answer is not in the world description you were
+given: it is whatever is true when the program runs. Never settle it by reading the description and
+writing only the branch that is true there, and never write only one branch (with or without `pre`).
+Write the `if` with both branches, and with a goal for each path. A program with one branch passes
+in the world shown and fails in the other worlds the request was about.
 
 ## Conditions
 
@@ -109,18 +152,23 @@ levels deep. A fact the world does not state is unknown, and unknown is never tr
 - A task can bind more than one robot. Their steps still run sequentially in written order.
 
 Validation checks source structure, names, and types. World-specific capability and state failures
-appear when the task is checked against a world or simulated. Common source diagnostics are:
+appear when the task is checked against a world or simulated. A run fails with `S261` when the
+condition of an `if` is unknown, and with `S262` when it reaches a `fail`. Common source diagnostics
+are:
 
 | Code | Meaning |
 |---|---|
 | `E202` | missing `;` |
 | `E206` | missing or unknown unit |
-| `E208` | task blocks in the wrong order |
+| `E208` | task blocks in the wrong order, an empty branch, or a `goal` block that is not first in a branch |
 | `E212` | reserved word used as a name |
 | `E214` | `and` and `or` mixed without parentheses |
+| `E216` | `if` nested more than 4 deep |
 | `E303` | name is not a task parameter |
 | `E304` | parameter used with the wrong type |
-| `E309` | RoboLang 1.3 task has no `goal` |
+| `E307` | empty string (for example `fail ""`) |
+| `E309` | a path has no `goal` condition and does not end in `fail` |
+| `E313` | `fail` that is not the last statement of a branch |
 | `E310` | quoted sensor name used instead of a sensor parameter |
 
 ## Complete example
@@ -129,7 +177,7 @@ This task waits for a cell, inspects a box, moves it, and records completion. It
 need bindings to concrete world entities before simulation.
 
 ```rob
-robolang 1.3;
+robolang 1.4;
 
 task deliver(robot r, object box, location src, location dst, region cell, sensor camera) {
     @safety max_speed 0.5 m/s;
@@ -143,6 +191,29 @@ task deliver(robot r, object box, location src, location dst, region cell, senso
         move r to dst;
         place r box at dst;
         communicate r to "fleet" with "DONE";
+    }
+}
+```
+
+This task chooses at run time. If the cell is clear when the job reaches the `if`, the box goes to
+`a`; otherwise it goes to `b`. Each path has its own goal.
+
+```rob
+robolang 1.4;
+
+task route(robot r, object box, location src, location a, location b, region cell) {
+    plan {
+        move r to src;
+        grasp r box;
+        if region_clear cell {
+            goal { object_at box a; }
+            move r to a;
+            place r box at a;
+        } else {
+            goal { object_at box b; }
+            move r to b;
+            place r box at b;
+        }
     }
 }
 ```

@@ -15,7 +15,7 @@ from robolang.sim import load_world, run, run_id, sha256_normalized, to_json, to
 ROOT = Path(__file__).resolve().parent.parent
 REFERENCE = ROOT / "bench" / "reference_branch"
 TASKS = ROOT / "bench" / "tasks_branch"
-IDS = sorted(p.name.removesuffix(".attempt.rob") for p in REFERENCE.glob("b_*.attempt.rob"))
+IDS = sorted(p.name.removesuffix(".rob") for p in REFERENCE.glob("b_*.rob"))
 
 # World patches that make the `when` of each path in expect_1_4["paths"] true, one list per path, in order.
 # An op is ("<section>.<id>.<field>", value). Scripted events are dropped from a patched world, so that a
@@ -59,7 +59,7 @@ def cli(*args: str) -> tuple[int, str, str]:
 
 
 def source_of(task_id: str) -> str:
-    text = (REFERENCE / f"{task_id}.attempt.rob").read_text(encoding="utf-8")
+    text = (REFERENCE / f"{task_id}.rob").read_text(encoding="utf-8")
     return text.replace("robolang 1.3;", "robolang 1.4;", 1)
 
 
@@ -80,7 +80,7 @@ def world_data(task_id: str, ops=None) -> bytes:
 
 def simulate(task_id: str, ops=None, source: str | None = None, data: bytes | None = None):
     task = compile_source(source or source_of(task_id), "a.rob").ir.tasks[0]
-    bindings = json.loads((REFERENCE / f"{task_id}.attempt.json").read_text(encoding="utf-8"))["bindings"]
+    bindings = json.loads((REFERENCE / f"{task_id}.json").read_text(encoding="utf-8"))["bindings"]
     world = load_world(data or world_data(task_id, ops), "w.json", task, bindings)
     return task, world, run(task, world)
 
@@ -271,7 +271,7 @@ def test_fault_indexing_counts_through_both_branches():
     def with_fault(step, ops):
         task = compile_source(source_of("b_box_or_home"), "a.rob").ir.tasks[0]
         world = json.loads(world_data("b_box_or_home", ops))
-        bindings = json.loads((REFERENCE / "b_box_or_home.attempt.json").read_text(encoding="utf-8"))["bindings"]
+        bindings = json.loads((REFERENCE / "b_box_or_home.json").read_text(encoding="utf-8"))["bindings"]
         world["tasks"] = {"tidy": {"bindings": bindings, "faults": [{"step": step}]}}
         return run(task, load_world(json.dumps(world).encode("utf-8"), "w.json", task))
 
@@ -288,7 +288,7 @@ def test_fault_indexing_counts_through_both_branches():
 def test_a_fault_or_cancellation_outside_the_plan_or_on_an_if_is_a_world_error():
     from robolang.sim import WorldError
     task = compile_source(source_of("b_box_or_home"), "a.rob").ir.tasks[0]
-    bindings = json.loads((REFERENCE / "b_box_or_home.attempt.json").read_text(encoding="utf-8"))["bindings"]
+    bindings = json.loads((REFERENCE / "b_box_or_home.json").read_text(encoding="utf-8"))["bindings"]
     for entry, text in (({"faults": [{"step": 7}]}, "outside the plan (1 to 6)"),
                         ({"faults": [{"step": 1}]}, "is an 'if'"),
                         ({"cancel": {"before_step": 7}}, "outside 1 to 6")):
@@ -301,7 +301,7 @@ def test_a_fault_or_cancellation_outside_the_plan_or_on_an_if_is_a_world_error()
 
 def test_cancellation_before_a_step_on_the_taken_path():
     task = compile_source(source_of("b_box_or_home"), "a.rob").ir.tasks[0]
-    bindings = json.loads((REFERENCE / "b_box_or_home.attempt.json").read_text(encoding="utf-8"))["bindings"]
+    bindings = json.loads((REFERENCE / "b_box_or_home.json").read_text(encoding="utf-8"))["bindings"]
     # step 6 is on the else path, which the then world never reaches
     for before, state in ((4, "CANCELLED"), (6, "SUCCEEDED")):
         world = json.loads(world_data("b_box_or_home", PATCHES["b_box_or_home"][0]))
@@ -385,7 +385,7 @@ def test_simulate_runs_a_branching_task(tmp_path):
     src = tmp_path / "b.rob"
     src.write_text(source_of("b_aisle_or_report"), encoding="utf-8")
     bind = ["--bind", *(f"{k}={v}" for k, v in json.loads(
-        (REFERENCE / "b_aisle_or_report.attempt.json").read_text(encoding="utf-8"))["bindings"].items())]
+        (REFERENCE / "b_aisle_or_report.json").read_text(encoding="utf-8"))["bindings"].items())]
     code, out, err = cli("simulate", str(src), "--world", "bench/worlds/warehouse.json", *bind)
     record = json.loads(out)
     assert code != 0 and record["state"] == "FAILED" and record["failure"]["code"] == "S262"
@@ -397,7 +397,7 @@ def test_simulate_runs_a_branching_task(tmp_path):
 def export(task_id, tmp_path, extra=()):
     src = tmp_path / f"{task_id}.rob"
     src.write_text(source_of(task_id), encoding="utf-8")
-    bindings = json.loads((REFERENCE / f"{task_id}.attempt.json").read_text(encoding="utf-8"))["bindings"]
+    bindings = json.loads((REFERENCE / f"{task_id}.json").read_text(encoding="utf-8"))["bindings"]
     return cli("export-goal", str(src), "--world", definition(task_id)["world"], "--bind",
                *(f"{k}={v}" for k, v in bindings.items()), "--from", "rl:agent:planner-1", *extra)
 
