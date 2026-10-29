@@ -1,4 +1,4 @@
-"""Smoke tests for the v1 line-based interpreter (src/robolang_runtime.py)."""
+"""Smoke tests for the v1 line-based interpreter (legacy/robolang_runtime.py)."""
 
 from __future__ import annotations
 import os
@@ -31,7 +31,7 @@ def run_cli(*args: str, encoding: str | None = None) -> subprocess.CompletedProc
     if encoding:
         env["PYTHONIOENCODING"] = encoding
     return subprocess.run(
-        [sys.executable, "src/robolang_runtime.py", *args],
+        [sys.executable, "legacy/robolang_runtime.py", *args],
         cwd=REPO_ROOT,
         env=env,
         capture_output=True,
@@ -54,7 +54,7 @@ def test_pick_and_place_example_call_sequence(runtime, adapter):
 
 
 def test_stdlib_pick_and_place_runs_like_the_example(runtime, adapter):
-    runtime.execute_file(REPO_ROOT / "stdlib" / "robolang_std_v1.rob")
+    runtime.execute_file(REPO_ROOT / "legacy" / "robolang_std_v1.rob")
 
     assert adapter.names() == ["move_to_pose", "set_gripper", "move_to_pose", "set_gripper", "communicate"]
 

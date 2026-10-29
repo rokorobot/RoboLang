@@ -3,10 +3,8 @@ include LICENSE
 include requirements.txt requirements-dev.txt pytest.ini
 # Historical v1 prototype sources. Present in the source distribution so that
 # it mirrors the repository; an installation built from it does not include them.
-include src/__init__.py src/robolang_adapter.py src/robolang_adapter_ros2.py
-include src/robolang_runtime.py src/robolang_ros2_main.py
+graft legacy
 graft examples
-graft stdlib
 graft spec
 graft tests
 global-exclude __pycache__ *.py[cod]

@@ -51,7 +51,7 @@ package-dir = { "" = "src" }
 # `robolang.sim` subpackage, the `robolang.core` Core 0.1 document checks and the
 # simulation-only `robolang.arch02` reference scenario (no adapter, no ROS 2, no network).
 #
-# The v1 prototype in src/ (robolang_runtime, robolang_adapter,
+# The v1 prototype in legacy/ (robolang_runtime, robolang_adapter,
 # robolang_adapter_ros2, robolang_ros2_main) is historical source kept in the
 # repository. It is deliberately NOT installed: it can drive ROS 2 without
 # passing through the validator. Do not add `py-modules` here without an

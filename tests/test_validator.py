@@ -313,7 +313,7 @@ def test_validation_does_not_change_the_program():
 
 # -------- sources in the repository --------
 
-@pytest.mark.parametrize("relative", ["examples/pick_and_place.rob", "stdlib/robolang_std_v1.rob"])
+@pytest.mark.parametrize("relative", ["examples/pick_and_place.rob", "legacy/robolang_std_v1.rob"])
 def test_existing_sources_pass_with_only_the_unit_warning(relative):
     assert [w.code for w in check_file(REPO_ROOT / relative).warnings] == ["W401"]
 

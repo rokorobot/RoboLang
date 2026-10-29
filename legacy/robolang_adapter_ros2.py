@@ -1,4 +1,4 @@
-# src/robolang_adapter_ros2.py
+# legacy/robolang_adapter_ros2.py
 
 from __future__ import annotations
 from typing import List, Optional

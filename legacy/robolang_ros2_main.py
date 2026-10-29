@@ -1,4 +1,4 @@
-# src/robolang_ros2_main.py
+# legacy/robolang_ros2_main.py
 """
 RoboLang ROS2 Runtime Entrypoint
 

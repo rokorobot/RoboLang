@@ -1,0 +1,25 @@
+// examples/handover.rob
+// An arm places a box at a handoff point; a mobile robot picks it up once the zone is clear.
+
+task handover(robot arm, robot mobile, object box, location src, location handoff, location dst, region zone) {
+    @safety max_speed 0.5 m/s;
+
+    pre {
+        robot_ready arm;
+        robot_ready mobile;
+        object_exists box;
+    }
+
+    plan {
+        move arm to src;
+        grasp arm box;
+        move arm to handoff;
+        place arm box at handoff;
+        communicate arm to "fleet" with "BOX_AT_HANDOFF";
+        wait until region_clear zone timeout 30s;
+        move mobile to handoff;
+        grasp mobile box;
+        move mobile to dst;
+        place mobile box at dst;
+    }
+}
