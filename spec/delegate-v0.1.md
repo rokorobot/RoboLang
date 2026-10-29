@@ -62,9 +62,11 @@ first task for which all of these hold:
 1. the task has a goal (RoboLang 1.3);
 2. the robot world has bindings for it (`tasks.<name>.bindings`; a missing or invalid entry makes the
    task a non-candidate, it is not an error);
-3. `bridge.goal_triples(task, bindings)` **equals the proposed `desired_state` as an ordered list**:
-   same triples, same order. Order matters because criterion *i* of the outcome is goal condition *i*;
-   a set match would need a re-indexing the planner could not check;
+3. `bridge.goal_triples(task, bindings)` holds **the same triples as the proposed `desired_state`, in
+   any order** (no duplicates, nothing more, nothing less). The robot re-indexes its outcome to the
+   proposal: each criterion result names the index of the proposed criterion, results and evidence are
+   listed in that order, and each cited observation states the proposed criterion's subject, so the
+   planner checks every criterion against its own goal (amended 2026-10-29, decision record 0020 D2);
 4. `--to`'s entity (`rl:robot:arm1` → `arm1`) is bound to one of the task's robot parameters.
 
 The record lists every task considered with one result: `matched`, `no_goal`, `world_E5xx`,

@@ -63,13 +63,16 @@ def _status(result: RunResult) -> str:
 
 
 def core_outcome(result: RunResult, task: ir.Task, run_id: str, *, goal_id: str | None = None,
-                 reported_by: str = SIM, t0_ms: int = 0) -> dict | None:
+                 reported_by: str = SIM, t0_ms: int = 0,
+                 criterion_of: tuple[int, ...] | None = None) -> dict | None:
     """
     The `outcome` payload for a run of a task with a goal; None when the goal has no Core 0.1 form.
 
     By default it describes the run on its own: the goal is the task's (`rl:goal:<task name>`), the
     reporter is SIM and times count from the start of the run. `delegate` passes the proposed goal's
-    ID, the robot as the reporter and the Core time `t0_ms` at which the run began. The verifier stays SIM.
+    ID, the robot as the reporter, the Core time `t0_ms` at which the run began, and `criterion_of`: for each
+local goal condition, the index of its criterion in the proposed goal, whose order may differ. Results and
+evidence are listed in criterion order. The verifier stays SIM.
     """
     bound = dict(result.bindings)
     try:
@@ -78,8 +81,9 @@ def core_outcome(result: RunResult, task: ir.Task, run_id: str, *, goal_id: str 
         return None
     end = core_time(t0_ms + result.end_t_ms)
     evaluated = all(g.result is not None for g in result.goal)
+    order = criterion_of or tuple(range(len(criteria)))
     evidence, results = [], []
-    for i, (condition, triple, goal) in enumerate(zip(task.goal, criteria, result.goal)):
+    for condition, goal, i in sorted(zip(task.goal, result.goal, order), key=lambda entry: entry[2]):
         actual = _actual(condition, bound, result.final_world) if evaluated else None
         cited = []
         if actual is not None:

@@ -35,3 +35,9 @@ The seam of the plan is: the goal crosses, the plan stays, the outcome returns a
 - `core_outcome` has three keyword parameters; defaults give exactly the previous output.
 - The in-flight `intercept` argument of `delegate()` is a test seam for tampering, not a CLI option.
 - Not shown: a real transport, real signatures, an independent verifier (spec section 8).
+
+## Amendment — 2026-10-29
+
+D2 now matches the goal as a **set**: the same triples in any order, no duplicates. The robot maps each
+of its goal conditions to the index of the proposed criterion (`core_outcome(criterion_of=...)`), so
+criterion *i* of the outcome is criterion *i* of the proposal, and the planner's check is unchanged.

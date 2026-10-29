@@ -67,6 +67,7 @@ class _Match:
     plan: Plan
     task: ir.Task
     world: World
+    order: tuple[int, ...]  # order[i]: the index in the proposed desired_state of local goal condition i
 
 
 class _Rejected(Exception):
@@ -101,12 +102,12 @@ def _consider(plan: Plan, task: ir.Task, robot_world: bytes, world_name: str, ro
         triples = bridge.goal_triples(task, bindings)
     except bridge.NotExportable:
         return "no_core_form", None
-    if triples != proposed:
-        return "goal_differs", None
+    if len(set(triples)) != len(triples) or set(triples) != set(proposed) or len(triples) != len(proposed):
+        return "goal_differs", None  # the same triples, in any order
     robots = {bindings[p.name] for p in task.parameters if p.type == "robot"}
     if robot_entity not in robots:
         return "robot_not_bound", None
-    return "matched", _Match(plan, task, world)
+    return "matched", _Match(plan, task, world, tuple(proposed.index(t) for t in triples))
 
 
 def _robot_entity(recipient: str) -> str | None:
@@ -288,7 +289,7 @@ class _Exchange:
         self.event(end_ms, self.robot, "run_ended", state=result.state,
                    failure=result.failure.code if result.failure else None)
         payload = core_outcome(result, match.task, identifier, goal_id=self.goal["id"], reported_by=self.robot,
-                               t0_ms=start_ms)
+                               t0_ms=start_ms, criterion_of=match.order)
         return payload, end_ms
 
     # -- the conversation --
