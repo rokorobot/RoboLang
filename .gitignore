@@ -208,3 +208,6 @@ __marimo__/
 
 # RoboLang benchmark: the API key file (bench/README.md)
 bench/.env
+
+# Benchmark raw results (large; summaries go to docs/evidence/)
+bench/results/
