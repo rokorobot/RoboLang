@@ -1,7 +1,7 @@
 # Plan: verified outcomes in the language, and a bridge from `.rob` to Core
 
 **Date:** 2026-10-29
-**Status:** Approved by the owner 2026-10-29, with the recommendations for Q1–Q5. Phase 1 done 2026-10-29 (RoboLang 1.3, [0014](../../spec/decisions/0014-lang-2-goals-and-typed-sensors.md)).
+**Status:** Approved by the owner 2026-10-29, with the recommendations for Q1–Q5. Phase 1 done 2026-10-29 (RoboLang 1.3, [0014](../../spec/decisions/0014-lang-2-goals-and-typed-sensors.md)). Phases 2–3 done. Phases 4–5 done together as `robolang delegate` (below, [0020](../../spec/decisions/0020-delegate.md)).
 **Fixes:** two gaps found in review.
 
 1. **Outcome gap.** The charter makes success a verified outcome, but `.rob` could not declare
@@ -89,28 +89,35 @@ As built, `@verify` amends RoboLang 1.3 (unreleased) instead of creating 1.4.
 **Exit:** for each of the three examples, export → `check_message` accepts the message, and the
 goal triples equal the `.rob` goal atoms.
 
-### Phase 4 — Robots run `.rob` locally in the reference simulation
+### Phases 4 and 5 — `robolang delegate`: one command, goal out, local plan, verified outcome · done ([0020](../../spec/decisions/0020-delegate.md))
 
-- A new scenario mode (`robolang arch02 --plans DIR`, or a separate `delegate` scenario). The
-  existing scenario and its 13 failure variants stay byte-identical; the gate 1 evidence and the
-  frozen gate 2 bundle are untouched.
-- Each robot stub gets a local plan library of `.rob` tasks. When it receives an accepted and
-  authorized goal, it:
-  1. picks the task whose goal block matches the goal triples;
-  2. binds the task to its own world view;
-  3. runs it with the symbolic executor;
-  4. reports the phase 2 outcome as the Core `outcome` message.
-- The scripted motion in the arm and AMR stubs is replaced by plan execution for this mode only.
+As built (Q4: a new mode beside `arch02`, which is untouched; phases 4 and 5 together, spec
+[`delegate-v0.1.md`](../../spec/delegate-v0.1.md)):
 
-**Exit:** the planner proposes the goal exported from `handover.rob`, the robot runs the local
-`.rob` plan, and the planner records `succeeded` with verification evidence. A world variant
-where the plan leaves the box elsewhere ends `failed`, with criteria not met.
+- `robolang delegate FILE --world W --from AGENT --to ROBOT [--plans PATH ...] [--robot-world W2]` runs
+  one deterministic, in-process exchange of full Core 0.1 messages, each signed (simulation only)
+  and checked by its receiver with `check_message`: `propose_goal` (from `export_goal`) → the robot
+  matches it to a task of its own plan library → `assessment`, `accept` (or `reject`
+  `capability_unsupported`) → a standing `simulation` authorization → the robot runs its own task with
+  the symbolic executor → `outcome` with evidence → the planner re-verifies it.
+- Matching: the first library task whose goal triples, under the robot world's own bindings, equal the
+  proposed `desired_state` as an ordered list, and which binds `--to` as a robot. The plan never travels.
+- The outcome is the phase 2 `core_outcome`, with the proposed goal's ID and the robot as reporter;
+  `verified_by` stays `rl:sim:world` (Q1).
+- The planner verifies every evidence signature and re-evaluates every criterion itself. `succeeded` needs
+  the robot's claim and its own agreement.
+- Output: a deterministic delegate record (messages with receipts, events, the robot's run record, the
+  planner's verdict). Exit codes: 0 verified `succeeded`, 4 failed/unknown/cancelled, 7 rejected.
+- `examples/plans/` holds the robot-side plans, bound in `examples/world.json`. Handover's goal is served by
+  the robot's own `relocate_box`.
 
-### Phase 5 — One command end to end, then resume interoperability
+Done differently from the first sketch: no `arch02 --plans` mode and no plan-executing stubs, because the
+frozen gate 2 bundle and the gate 1 evidence must not change; the exchange has two participants, not four
+(no custody, leases or authority messages: those stay in `arch02`).
 
-- `robolang delegate FILE --world W` runs phases 3 and 4 in one process and prints both the
-  message log and the outcome.
-- **CORE-1 (IR reader and re-validator)** follows here, so an AI can submit Task IR JSON
+**Remaining from phase 5:**
+
+- **CORE-1 (IR reader and re-validator)** follows, so an AI can submit Task IR JSON
   instead of `.rob` source. It is not needed earlier, because plans stay local (R3).
 - **INTEROP-3 is reconsidered** ([0017](../../spec/decisions/0017-reprioritise-goals-before-interop-3.md))
   with a gate 2 bundle v2 in which goals come from `.rob`. Gate 2 then tests the language end to
@@ -133,7 +140,6 @@ where the plan leaves the box elsewhere ends `failed`, with criteria not met.
 | 1 | — | done |
 | 2 | 1 | small: record fields, observation synthesis, tests |
 | 3 | 1, 2 (outcome shape); Q2, Q5 | medium: exporter, 1.4 `@verify`, world 1.1 |
-| 4 | 2, 3; Q4 | large: plan-executing participants, new scenario cases |
-| 5 | 4 | small CLI; CORE-1 and INTEROP-3 are separate items |
+| 4 + 5 | 2, 3; Q4 | done as `robolang delegate`; CORE-1 and INTEROP-3 are separate items |
 
 Phases 2 and 3 can run in parallel once phase 1 lands; phase 4 needs both.

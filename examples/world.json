@@ -23,6 +23,8 @@
     "demo_pick_and_place": { "bindings": { "r": "arm1", "box": "box1", "src": "shelf", "dst": "table", "cell": "cell" } },
     "inspect_object": { "bindings": { "r": "arm1", "obj": "box1", "cam_pos": "shelf", "cam": "camera_top" } },
     "demo_pick_and_place_v13": { "bindings": { "r": "arm1", "box": "box1", "src": "shelf", "dst": "table", "cell": "cell" } },
+    "relocate_box": { "bindings": { "r": "arm1", "box": "box1", "src": "shelf", "dst": "table" } },
+    "park_robot": { "bindings": { "r": "arm1", "home": "home" } },
     "handover": {
       "bindings": {
         "arm": "arm1", "mobile": "amr1", "box": "box1", "src": "shelf",

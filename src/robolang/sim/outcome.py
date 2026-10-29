@@ -62,14 +62,21 @@ def _status(result: RunResult) -> str:
     return "unknown" if result.failure.code == "S302" else "failed"
 
 
-def core_outcome(result: RunResult, task: ir.Task, run_id: str) -> dict | None:
-    """The `outcome` payload for a run of a task with a goal; None when the goal has no Core 0.1 form."""
+def core_outcome(result: RunResult, task: ir.Task, run_id: str, *, goal_id: str | None = None,
+                 reported_by: str = SIM, t0_ms: int = 0) -> dict | None:
+    """
+    The `outcome` payload for a run of a task with a goal; None when the goal has no Core 0.1 form.
+
+    By default it describes the run on its own: the goal is the task's (`rl:goal:<task name>`), the
+    reporter is SIM and times count from the start of the run. `delegate` passes the proposed goal's
+    ID, the robot as the reporter and the Core time `t0_ms` at which the run began. The verifier stays SIM.
+    """
     bound = dict(result.bindings)
     try:
         criteria = goal_triples(task, bound)
     except NotExportable:
         return None
-    end = core_time(result.end_t_ms)
+    end = core_time(t0_ms + result.end_t_ms)
     evaluated = all(g.result is not None for g in result.goal)
     evidence, results = [], []
     for i, (condition, triple, goal) in enumerate(zip(task.goal, criteria, result.goal)):
@@ -84,11 +91,11 @@ def core_outcome(result: RunResult, task: ir.Task, run_id: str) -> dict | None:
     } if evaluated else None
     outcome = {
         "kind": "outcome",
-        "goal": f"rl:goal:{result.task_name}",
+        "goal": goal_id or f"rl:goal:{result.task_name}",
         "status": _status(result),
         "verification": verification,
         "reasons": [{"code": "evidence_missing"}] if result.failure and result.failure.code == "S302" else [],
-        "reported_by": SIM,
+        "reported_by": reported_by,
         "reported_at": end,
     }
     return {"outcome": outcome, "evidence": evidence}

@@ -1,0 +1,24 @@
+// examples/plans/relocate_box.rob
+// A robot's own plan: carry a box from where it is to a place. Its goal is the same as the
+// goal of examples/handover.rob, so a robot with this library can serve that goal with its own steps.
+robolang 1.3;
+
+task relocate_box(robot r, object box, location src, location dst) {
+    @safety max_speed 0.5 m/s;
+
+    pre {
+        robot_ready r;
+        object_exists box;
+    }
+
+    goal {
+        object_at box dst;
+    }
+
+    plan {
+        move r to src;
+        grasp r box;
+        move r to dst;
+        place r box at dst;
+    }
+}
