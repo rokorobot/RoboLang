@@ -52,7 +52,7 @@ def test_every_compiler_snapshot_reads_back_to_the_compilers_ir(snapshot, source
     read = read_ir(data, snapshot.name)
 
     assert read == compiled
-    assert ir.to_json(read).encode("ascii") == data
+    assert ir.to_json(read).encode("ascii") == data.replace(b"\r\n", b"\n")  # a Windows checkout may use CRLF
 
 
 def test_snapshot_sets_are_complete():
