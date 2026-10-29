@@ -1,10 +1,12 @@
 """
-Static validation for RoboLang v1.1 to v1.3 (spec/robolang-v1.1.md, section 5; spec/robolang-v1.3.md, section 4).
+Static validation for RoboLang v1.1 to v1.4 (spec/robolang-v1.1.md, section 5; spec/robolang-v1.3.md, section 4;
+spec/robolang-v1.4.md, section 4).
 
 Checks a parsed program for errors that the grammar cannot express: duplicate
 and undeclared names, names used with the wrong type, out-of-range values,
 conflicting speed limits and empty strings (E301-E308), and in 1.3 a missing goal, a string
-where a sensor parameter belongs, and a repeated or out-of-range @verify (E309-E312).
+where a sensor parameter belongs, and a repeated or out-of-range @verify (E309-E312); in 1.4 a path
+with no goal (E309) and a misplaced `fail` (E313).
 
 `check` and `check_file` are the complete front end: lex, parse, then validate.
 They only read source text and never touch an adapter.
@@ -20,7 +22,21 @@ from pathlib import Path
 from . import nodes as ast
 from .diagnostics import MAX_ERRORS, Diagnostic, RoboLangError
 from .nodes import ParamType, Span
+from .paths import goalless_path
 from .parser import ParseResult, parse_recovering
+
+
+def _parts(statement: ast.Statement):
+    """The shape `paths.goalless_path` reads: None for a plain statement, "fail", or the two branches of an if."""
+    if isinstance(statement, ast.Fail):
+        return "fail"
+    if not isinstance(statement, ast.If):
+        return None
+    orelse = statement.orelse
+    return (
+        statement.then.statements, statement.then.goal is not None,
+        orelse.statements if orelse else (), bool(orelse and orelse.goal is not None),
+    )
 
 
 def _article(param_type: ParamType) -> str:
@@ -40,7 +56,8 @@ class _Validator:
         self._filename = filename
         self._params: dict[str, ParamType] = {}
         self.errors: list[Diagnostic] = []
-        self._typed_sensors = False  # RoboLang 1.3: sensors are parameters
+        self._typed_sensors = False  # RoboLang 1.3 and 1.4: sensors are parameters
+        self._branching = False  # RoboLang 1.4
 
     def _report(self, code: str, message: str, span: Span):
         self.errors.append(Diagnostic(code, message, span, filename=self._filename))
@@ -71,7 +88,9 @@ class _Validator:
             pass
 
     def _program(self, program: ast.Program):
-        self._typed_sensors = program.version is not None and program.version.version == "1.3"
+        language = program.version.version if program.version is not None else None
+        self._typed_sensors = language in ("1.3", "1.4")
+        self._branching = language == "1.4"
         seen: dict[str, ast.Name] = {}
         for task in program.tasks:
             first = seen.setdefault(task.name.text, task.name)
@@ -101,13 +120,30 @@ class _Validator:
             for condition in task.pre.conditions:
                 self._condition(condition)
         self._goal(task)
-        for statement in task.plan.statements:
+        self._statements(task.plan.statements, branch=False)
+
+    def _statements(self, statements: tuple[ast.Statement, ...], branch: bool):
+        """`branch`: the statements are the body of an if or else, where `fail` may be the last one (E313)."""
+        for i, statement in enumerate(statements):
+            if isinstance(statement, ast.Fail) and not (branch and i == len(statements) - 1):
+                where = "the last statement of an if or else branch" if branch else "inside an if or else branch"
+                self._report("E313", f"'fail' is allowed only as {where}; nothing may follow it", statement.span)
             self._checked(self._statement, statement)
 
     def _goal(self, task: ast.Task):
         if task.goal is not None:
             for condition in task.goal.conditions:
                 self._condition(condition)
+        elif self._branching:
+            label = goalless_path(task.plan.statements, False, _parts)
+            if label is not None:
+                where = f"path {label}" if label else "the plan"
+                self._report(  # not _error: the plan must still be checked
+                    "E309",
+                    f"task '{task.name.text}' has no goal on {where}: RoboLang 1.4 needs a task 'goal' block, "
+                    "or a 'goal' block in the branch, on every path that does not end in 'fail'",
+                    task.name.span,
+                )
         elif self._typed_sensors:
             self._report(  # not _error: a missing goal must not stop the plan from being checked
                 "E309",
@@ -219,6 +255,16 @@ class _Validator:
         elif isinstance(statement, ast.WaitUntil):
             self._condition(statement.condition)
             self._positive(statement.timeout.value, "timeout", statement.timeout.span)
+        elif isinstance(statement, ast.If):
+            self._condition(statement.condition)
+            for branch in (statement.then, statement.orelse):
+                if branch is not None:
+                    if branch.goal is not None:
+                        for condition in branch.goal.conditions:
+                            self._condition(condition)
+                    self._statements(branch.statements, branch=True)
+        elif isinstance(statement, ast.Fail):
+            self._not_empty(statement.reason, "reason")
         else:
             self._use(statement.robot, ParamType.ROBOT, "communicate")
             self._not_empty(statement.channel, "channel name")

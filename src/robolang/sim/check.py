@@ -48,7 +48,8 @@ def check_task(task: ir.Task, world: World) -> list[Finding]:
                                                 f"of robot '{robot}' ({_speed(speeds[unit], unit)})",
                                         ("safety", index)))
                 break
-    for index, step in enumerate(task.steps):  # section 4.5
+    # A branching task (RoboLang 1.4) has no straight line to check: its step checks come with its paths.
+    for index, step in enumerate([] if task.branching else task.steps):  # section 4.5
         if isinstance(step, ir.Grasp) and not world.robots[bound[step.robot]].gripper:
             findings.append(Finding("S211", f"robot '{bound[step.robot]}' has no gripper", ("steps", index)))
         elif isinstance(step, ir.Inspect):

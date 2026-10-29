@@ -1,0 +1,87 @@
+{
+  "ir_schema": "robolang.task-ir",
+  "ir_schema_version": "1.3",
+  "language_version": "1.4",
+  "tasks": [
+    {
+      "name": "haul",
+      "parameters": [
+        {
+          "name": "r",
+          "type": "robot"
+        },
+        {
+          "name": "c",
+          "type": "object"
+        },
+        {
+          "name": "src",
+          "type": "location"
+        },
+        {
+          "name": "dst",
+          "type": "location"
+        },
+        {
+          "name": "aisle",
+          "type": "region"
+        }
+      ],
+      "safety": [],
+      "preconditions": [],
+      "goal": [],
+      "steps": [
+        {
+          "kind": "if",
+          "condition": {
+            "kind": "region_clear",
+            "region": "aisle"
+          },
+          "then": [
+            {
+              "kind": "move",
+              "robot": "r",
+              "target": "src"
+            },
+            {
+              "kind": "grasp",
+              "robot": "r",
+              "object": "c"
+            },
+            {
+              "kind": "move",
+              "robot": "r",
+              "target": "dst"
+            },
+            {
+              "kind": "place",
+              "robot": "r",
+              "object": "c",
+              "target": "dst"
+            }
+          ],
+          "else": [
+            {
+              "kind": "communicate",
+              "robot": "r",
+              "channel": "ops",
+              "message": "aisle blocked"
+            },
+            {
+              "kind": "fail",
+              "reason": "aisle blocked"
+            }
+          ],
+          "goal_then": [
+            {
+              "kind": "object_at",
+              "object": "c",
+              "location": "dst"
+            }
+          ],
+          "goal_else": null
+        }
+      ]
+    }
+  ]
+}

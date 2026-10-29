@@ -1,6 +1,6 @@
 """
 Versioned task IR for RoboLang (spec/ir-schema-v1.0.md; schema 1.1 for RoboLang 1.2: ir-schema-v1.1.md;
-schema 1.2 for RoboLang 1.3: ir-schema-v1.2.md).
+schema 1.2 for RoboLang 1.3: ir-schema-v1.2.md; schema 1.3 for RoboLang 1.4: ir-schema-v1.3.md).
 
 The IR is a description of validated tasks with source details removed:
 no spans, comments or formatting. Two sources that differ only in layout
@@ -28,7 +28,7 @@ IR_SCHEMA = "robolang.task-ir"
 IR_SCHEMA_VERSION = "1.0"
 LANGUAGE_VERSION = DEFAULT_VERSION
 # Language version -> the IR schema version it compiles to (ir-schema-v1.1.md section 1).
-IR_SCHEMA_VERSIONS = {"1.1": "1.0", "1.2": "1.1", "1.3": "1.2"}
+IR_SCHEMA_VERSIONS = {"1.1": "1.0", "1.2": "1.1", "1.3": "1.2", "1.4": "1.3"}
 
 
 def _key(name: str):
@@ -203,7 +203,30 @@ class Communicate:
     message: str
 
 
-Step = Union[Move, Grasp, Place, Inspect, WaitFor, WaitUntil, Communicate]
+@dataclass(frozen=True)
+class If:
+    """
+    Schema 1.3. The condition is evaluated once, when the step is reached. `orelse` is empty when the
+    source has no `else`. `goal_then` and `goal_else` are the goal conditions of that branch, or None.
+    """
+
+    KIND: ClassVar[str] = "if"
+    condition: Condition
+    then: tuple[Step, ...]
+    orelse: tuple[Step, ...] = _key("else")
+    goal_then: tuple[Condition, ...] | None
+    goal_else: tuple[Condition, ...] | None
+
+
+@dataclass(frozen=True)
+class Fail:
+    """Schema 1.3. Ends the run as failed with `reason`; only the last step of a branch."""
+
+    KIND: ClassVar[str] = "fail"
+    reason: str
+
+
+Step = Union[Move, Grasp, Place, Inspect, WaitFor, WaitUntil, Communicate, If, Fail]
 
 
 # -------- structure --------
@@ -214,14 +237,19 @@ class Task:
     parameters: tuple[Parameter, ...]
     safety: tuple[SafetyLimit, ...]
     preconditions: tuple[Condition, ...]
-    goal: tuple[Condition, ...] | None = field(metadata={"omit_none": True})  # schema 1.2; None before
+    goal: tuple[Condition, ...] | None = field(metadata={"omit_none": True})  # 1.2 on; () if only branches give goals
     verify: Verify | None = field(default=None, kw_only=True, metadata={"omit_none": True})  # schema 1.2, if declared
     steps: tuple[Step, ...]
 
     @property
     def typed_sensors(self) -> bool:
-        """True for a schema 1.2 task (RoboLang 1.3), which always has a goal: its sensors are parameters."""
+        """True for a schema 1.2 or 1.3 task (RoboLang 1.3, 1.4), which has a `goal` key: its sensors are parameters."""
         return self.goal is not None
+
+    @property
+    def branching(self) -> bool:
+        """True when the plan holds an `if` or a `fail` (schema 1.3): only the front end handles such a task yet."""
+        return any(isinstance(step, (If, Fail)) for step in self.steps)
 
 
 @dataclass(frozen=True)
@@ -284,7 +312,20 @@ def _sensor(node: ast.StringLit | ast.Name) -> str:
     return node.text if isinstance(node, ast.Name) else node.value
 
 
+def _branch(branch: ast.Branch | None) -> tuple[tuple[Step, ...], tuple[Condition, ...] | None]:
+    if branch is None:
+        return (), None
+    goal = tuple(_condition(c) for c in branch.goal.conditions) if branch.goal else None
+    return tuple(_step(s) for s in branch.statements), goal
+
+
 def _step(node: ast.Statement) -> Step:
+    if isinstance(node, ast.If):
+        then, goal_then = _branch(node.then)
+        orelse, goal_else = _branch(node.orelse)
+        return If(_condition(node.condition), then, orelse, goal_then, goal_else)
+    if isinstance(node, ast.Fail):
+        return Fail(node.reason.value)
     if isinstance(node, ast.Move):
         return Move(node.robot.text, node.target.text)
     if isinstance(node, ast.Grasp):
@@ -308,13 +349,14 @@ def _verify(node: ast.Task) -> Verify | None:
     return Verify(declared.get("min_confidence"), _quantity(max_age) if max_age else None)
 
 
-def _task(node: ast.Task) -> Task:
+def _task(node: ast.Task, language: str) -> Task:
+    goal = tuple(_condition(c) for c in node.goal.conditions) if node.goal else None
     return Task(
         name=node.name.text,
         parameters=tuple(Parameter(p.name.text, p.type.value) for p in node.params),
         safety=tuple(SafetyLimit(a.key.text, _quantity(a.value)) for a in node.annotations),
         preconditions=tuple(_condition(c) for c in node.pre.conditions) if node.pre else (),
-        goal=tuple(_condition(c) for c in node.goal.conditions) if node.goal else None,
+        goal=() if goal is None and language == "1.4" else goal,  # 1.4: no task goal, the branches give them
         steps=tuple(_step(s) for s in node.plan.statements),
         verify=_verify(node),
     )
@@ -322,7 +364,7 @@ def _task(node: ast.Task) -> Task:
 
 def _lower(program: ast.Program) -> TaskIR:
     language = program.version.version if program.version else LANGUAGE_VERSION
-    return TaskIR(tuple(_task(t) for t in program.tasks), language, IR_SCHEMA, IR_SCHEMA_VERSIONS[language])
+    return TaskIR(tuple(_task(t, language) for t in program.tasks), language, IR_SCHEMA, IR_SCHEMA_VERSIONS[language])
 
 
 def compile_program(program: ast.Program, filename: str = "<string>") -> TaskIR:

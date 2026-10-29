@@ -1,6 +1,6 @@
 """
 Recursive-descent parser for RoboLang v1.1 (spec/grammar.ebnf), v1.2 (spec/grammar-v1.2.ebnf) and
-v1.3 (spec/grammar-v1.3.ebnf).
+v1.3 (spec/grammar-v1.3.ebnf) and v1.4 (spec/grammar-v1.4.ebnf).
 
 Produces the AST of `nodes.py` or raises RoboLangError carrying every syntax error found.
 After a syntax error the parser resynchronises (see `_resync`) and carries on, so independent
@@ -39,9 +39,10 @@ from .tokens import (
 )
 
 DEFAULT_VERSION = "1.1"  # the version of a file without a marker
-SUPPORTED_VERSIONS = ("1.1", "1.2", "1.3")
+SUPPORTED_VERSIONS = ("1.1", "1.2", "1.3", "1.4")
 SUPPORTED_VERSION = DEFAULT_VERSION  # kept for existing imports
 MAX_CONDITION_DEPTH = 8  # spec/robolang-v1.2.md section 3.3
+MAX_IF_DEPTH = 4  # spec/robolang-v1.4.md section 3.3 (E216)
 
 _NOT_IN_V1_1 = "is documented for v1 but is not part of v1.1"
 
@@ -97,9 +98,15 @@ class _Parser:
         self._prev: Token | None = None
         self._buffer: deque[Token] = deque()
         self._language = DEFAULT_VERSION
+        self._ifs = 0  # `if` statements open around the one being parsed (RoboLang 1.4)
         self._tok = lexer.next_token()
 
     # -------- helpers --------
+
+    @property
+    def _typed(self) -> bool:
+        """True in 1.3 and 1.4 files: goal blocks, outcome atoms and sensor parameters."""
+        return self._language in ("1.3", "1.4")
 
     def _error(self, code: str, message: str, span: Span | None = None) -> NoReturn:
         raise RoboLangError(Diagnostic(code, message, span or self._tok.span, filename=self._filename))
@@ -119,6 +126,7 @@ class _Parser:
         starts = self._at(TokenKind.RBRACE) or self._at(TokenKind.LPAREN)
         starts = starts or self._at(TokenKind.AT_SAFETY) or self._at(TokenKind.AT_VERIFY)
         starts = starts or self._at_keyword(*STATEMENTS, *CONDITIONS, "not", "pre", "plan")
+        starts = starts or (self._language == "1.4" and self._at_keyword("if", "fail"))
         skip = not (error.code == "E202" and starts)
         while skip and not self._at_boundary():
             self._advance()
@@ -285,7 +293,7 @@ class _Parser:
             except RoboLangError as error:
                 self._resync(error)
         pre = self._pre() if self._at_keyword("pre") else None
-        goal = self._goal() if self._language == "1.3" and self._at_keyword("goal") else None
+        goal = self._goal() if self._typed and self._at_keyword("goal") else None
 
         if not self._at_keyword("plan"):
             if self._at(TokenKind.AT_SAFETY) or self._at(TokenKind.AT_VERIFY):
@@ -301,10 +309,10 @@ class _Parser:
             self._error("E201", f"expected 'plan', found {self._found()}")
         plan = self._plan()
 
-        blocks = ("pre", "goal", "plan") if self._language == "1.3" else ("pre", "plan")
+        blocks = ("pre", "goal", "plan") if self._typed else ("pre", "plan")
         if self._at(TokenKind.AT_SAFETY) or self._at(TokenKind.AT_VERIFY) or self._at_keyword(*blocks):
-            order = "pre, goal, then one plan" if self._language == "1.3" else "pre, then one plan"
-            annotations_text = "@safety and @verify annotations" if self._language == "1.3" else "@safety annotations"
+            order = "pre, goal, then one plan" if self._typed else "pre, then one plan"
+            annotations_text = "@safety and @verify annotations" if self._typed else "@safety annotations"
             self._error(
                 "E208",
                 f"{self._found()} cannot follow the plan block; a task is: {annotations_text}, {order}",
@@ -315,7 +323,7 @@ class _Parser:
 
     def _param(self) -> ast.Param:
         token = self._tok
-        types = PARAM_TYPES_V1_3 if self._language == "1.3" else PARAM_TYPES
+        types = PARAM_TYPES_V1_3 if self._typed else PARAM_TYPES
         if self._at_keyword("scalar", "duration"):
             self._error("E211", f"parameter type '{token.text}' {_NOT_IN_V1_1}")
         if self._at(TokenKind.IDENT):
@@ -404,7 +412,8 @@ class _Parser:
         before = len(self._errors)
         while not self._at(TokenKind.RBRACE):
             try:
-                statements.append(self._statement())
+                if not self._stray_goal():
+                    statements.append(self._statement())
             except RoboLangError as error:
                 self._resync(error)
         if not statements and len(self._errors) == before:
@@ -415,7 +424,7 @@ class _Parser:
     # -------- conditions --------
 
     def _condition(self, expected: str) -> ast.Condition:
-        """One atom in 1.1; a combined condition in 1.2 and 1.3 (spec/robolang-v1.2.md section 3)."""
+        """One atom in 1.1; a combined condition in 1.2 and later (spec/robolang-v1.2.md section 3)."""
         if self._language == "1.1":
             return self._atom(expected)
         start = self._tok
@@ -470,7 +479,7 @@ class _Parser:
 
     def _atom(self, expected: str) -> ast.Condition:
         token = self._tok
-        atoms = CONDITIONS_V1_3 if self._language == "1.3" else CONDITIONS
+        atoms = CONDITIONS_V1_3 if self._typed else CONDITIONS
         if self._at_keyword("message_received"):
             self._error("E211", f"'message_received' {_NOT_IN_V1_1}")
         if self._at(TokenKind.IDENT):
@@ -492,8 +501,8 @@ class _Parser:
         return node[token.text](name, token.span.to(name.span))
 
     def _sensor(self, after: str) -> ast.StringLit | ast.Name:
-        """A quoted sensor name in 1.1 and 1.2; a sensor parameter in 1.3 (a string is read, then E310)."""
-        if self._language != "1.3":
+        """A quoted sensor name in 1.1 and 1.2; a sensor parameter in 1.3 and 1.4 (a string is read, then E310)."""
+        if not self._typed:
             return self._string(f"a sensor name in quotes after '{after}'")
         if self._at(TokenKind.STRING):
             return self._string("a sensor parameter")
@@ -507,10 +516,69 @@ class _Parser:
             self._error("E211", f"'@safety' between statements {_NOT_IN_V1_1}; annotate the task instead")
         if self._at(TokenKind.IDENT):
             self._error("E203", f"unknown statement '{token.text}'; expected one of {_listed(STATEMENTS)}")
+        if self._language == "1.4" and self._at_keyword("if", "fail"):
+            self._advance()
+            return self._if(token) if token.text == "if" else self._fail(token)
         if not self._at_keyword(*STATEMENTS):
             self._error("E201", f"expected a statement or '}}', found {self._found()}")
         self._advance()
         return getattr(self, f"_{token.text}")(token)
+
+    def _fail(self, start: Token) -> ast.Fail:
+        reason = self._string("a reason in quotes after 'fail'")
+        end = self._semicolon("the fail statement")
+        return ast.Fail(reason, start.span.to(end.span))
+
+    def _if(self, start: Token) -> ast.If:
+        """`if C { ... }`, then `else { ... }` or `else if ...` (spec/robolang-v1.4.md section 3)."""
+        if self._ifs == MAX_IF_DEPTH:  # recorded, not raised: the if is still read, so its braces stay balanced
+            self._record(Diagnostic(
+                "E216", f"'if' is nested deeper than {MAX_IF_DEPTH} levels; "
+                "an 'else if' is a nested 'if' too", start.span, filename=self._filename))
+        condition = self._condition("a condition after 'if'")
+        self._ifs += 1
+        try:
+            then = self._branch("if")
+            orelse = None
+            if self._at_keyword("else"):
+                else_token = self._advance()
+                if self._at_keyword("if"):
+                    inner = self._advance()
+                    nested = self._if(inner)
+                    orelse = ast.Branch(None, (nested,), else_token.span.to(nested.span))
+                else:
+                    orelse = self._branch("else")
+        finally:
+            self._ifs -= 1
+        return ast.If(condition, then, orelse, start.span.to((orelse or then).span))
+
+    def _stray_goal(self) -> bool:
+        """In a 1.4 plan or branch, a `goal` block that is not the first item of a branch: read it and report E208."""
+        if not (self._language == "1.4" and self._at_keyword("goal")):
+            return False
+        span = self._tok.span
+        self._goal()
+        self._record(Diagnostic("E208", "a goal block may appear only as the first item inside an if or else branch",
+                                span, filename=self._filename))
+        return True
+
+    def _branch(self, word: str) -> ast.Branch:
+        """`{ [goal { ... }] statement... }`: the body of an if or else."""
+        start = self._expect(TokenKind.LBRACE, f"'{{' to open the {word} branch")
+        goal = self._goal() if self._at_keyword("goal") else None
+        statements = []
+        before = len(self._errors)
+        while not self._at(TokenKind.RBRACE):
+            try:
+                if not self._stray_goal():
+                    statements.append(self._statement())
+            except RoboLangError as error:
+                self._resync(error)
+        end = self._advance()
+        if not statements and len(self._errors) == before:  # recorded, not raised: the branch is already closed
+            self._record(Diagnostic("E208", f"empty {word} branch: a branch must contain at least one statement",
+                                    start.span.to(end.span), filename=self._filename))
+        return ast.Branch(goal, tuple(statements), start.span.to(end.span))
 
     def _move(self, start: Token) -> ast.Move:
         robot = self._name("a robot name after 'move'")
@@ -540,7 +608,7 @@ class _Parser:
         obj = self._name("an object name")
         if not self._at_keyword("using"):
             hint = " ('with' is not accepted here)" if self._at_keyword("with") else ""
-            shown = "using <sensor>" if self._language == "1.3" else 'using "<sensor>"'
+            shown = "using <sensor>" if self._typed else 'using "<sensor>"'
             self._error("E209", f"inspect must name its sensor: expected '{shown}', found {self._found()}{hint}")
         self._advance()
         sensor = self._sensor("using")
@@ -602,7 +670,7 @@ def parse_recovering(source: str, filename: str = "<string>") -> Parsed:
 
 
 def parse(source: str, filename: str = "<string>") -> ParseResult:
-    """Parse RoboLang v1.1, v1.2 or v1.3 source. Raises RoboLangError with every lexical or syntax error found."""
+    """Parse RoboLang v1.1, v1.2, v1.3 or v1.4 source. Raises RoboLangError with every lexical or syntax error found."""
     parsed = parse_recovering(source, filename)
     if parsed.errors:
         raise RoboLangError(parsed.errors, warnings=parsed.warnings)

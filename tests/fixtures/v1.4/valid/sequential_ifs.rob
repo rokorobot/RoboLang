@@ -1,0 +1,20 @@
+// RoboLang v1.4 fixture: valid
+// expect: ok
+// why: an if without else, then more steps after it; the task goal covers every path
+
+robolang 1.4;
+
+task t(robot r, object box, location dst, sensor cam, region cell) {
+    goal { object_at box dst; }
+    plan {
+        if sensor_ok cam {
+            inspect r box using cam;
+        }
+        move r to dst;
+        if not region_clear cell and robot_ready r {
+            wait for 1 s;
+        } else {
+            place r box at dst;
+        }
+    }
+}
