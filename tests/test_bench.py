@@ -77,8 +77,14 @@ def test_the_optional_checks_bite():
 
     task = TASKS["e_speed_half"]
     answer = reference_answer("e_speed_half")
-    answer["rob"] = answer["rob"].replace("0.5 m/s", "5 m/s")
+    answer["rob"] = answer["rob"].replace("0.5 m/s", "0.4 m/s")
     assert lib.judge(task, lib.check_answer(task, answer), answer["bindings"]).checks == {"safety": False}
+    # above the robot's profile: `validate --world` rejects it before any simulation (N2)
+    answer["rob"] = answer["rob"].replace("0.4 m/s", "5 m/s")
+    checked = lib.check_answer(task, answer)
+    assert not checked.valid and checked.codes == ("S001",)
+    assert checked.report.startswith("robolang validate answer.rob --world world.json --task ")
+    assert "answer.rob:" in checked.report and "error[S001]" in checked.report
 
     task = TASKS["e_wait_zone"]
     answer = reference_answer("e_wait_zone")

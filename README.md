@@ -47,6 +47,8 @@ robolang simulate examples/handover.rob --world examples/world.json
 
 `simulate` prints `simulation only: run sim-…: SUCCEEDED`, then the run record as JSON. The
 same commands work from a clone without installing: `python src/robolang validate FILE.rob`.
+Add `--world WORLD` to `validate` to also catch, before any simulation, failures a run would certainly hit
+in that world: a speed limit above the robot's profile, a grasp without a gripper, a sensor on another robot.
 
 Bind task parameters on the command line instead of in the world file (`FILE` comes first):
 

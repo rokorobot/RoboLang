@@ -49,13 +49,15 @@ from . import ir as task_ir
 from .arch02 import ScenarioError, simulate_case
 from .arch02 import to_json as arch02_json
 from .core import ReadError
-from .diagnostics import MAX_ERRORS, RoboLangError
+from .diagnostics import MAX_ERRORS, Diagnostic, RoboLangError
 from .delegate import Plan, delegate
 from .delegate_peer import DEFAULT_LEASE_MS, lease_ms
 from .export_goal import ExportError, default_recipient, export_goal, valid_participant
-from .ir_reader import IRError, read_ir
+from .ir_reader import IRDiagnostic, IRError, read_ir
+from .nodes import Program
 from .sim import DEFAULT_SEED, SEED, World, WorldError, load_world, run_id, sha256_normalized, to_json, to_record
 from .sim import run as simulate_task
+from .sim.check import Finding, check_task
 
 EXIT_OK = 0
 EXIT_INVALID = 1
@@ -211,6 +213,7 @@ class _Loaded:
     document: task_ir.TaskIR
     kind: str  # "source" (a .rob file) or "ir" (a Task IR JSON file, read and re-validated by read_ir)
     warnings: int = 0
+    program: Program | None = None  # the syntax tree of a source file (spans for diagnostics); None for IR
 
 
 def _load(args, err) -> _Loaded:
@@ -219,7 +222,7 @@ def _load(args, err) -> _Loaded:
     if args.ir is not None:
         return _Loaded(data, read_ir(data, args.file), "ir")
     result = _compile(args.file, err, data)
-    return _Loaded(data, result.ir, "source", len(result.warnings))
+    return _Loaded(data, result.ir, "source", len(result.warnings), result.program)
 
 
 def _print_ir_errors(error: IRError, path: str, err, summary: bool):
@@ -252,9 +255,30 @@ def _print_errors(error: RoboLangError, path: str, err, summary: bool):
 
 # -------- validate --------
 
+def _world_diagnostic(args, inputs: _RunInputs, finding: Finding):
+    """A world-check finding at its source position, or at its JSON Pointer in a Task IR file."""
+    part, index = finding.where
+    if inputs.loaded.program is None:
+        task_index = inputs.document.tasks.index(inputs.task)
+        return IRDiagnostic(finding.code, finding.message, f"/tasks/{task_index}/{part}/{index}", args.file)
+    node = next(t for t in inputs.loaded.program.tasks if t.name.text == inputs.task.name)
+    span = (node.annotations if part == "safety" else node.plan.statements)[index].span
+    return Diagnostic(finding.code, finding.message, span, filename=args.file)
+
+
 def _validate(args, out, err) -> int:
-    loaded = _load(args, err)
+    inputs = _run_inputs(args, err) if args.world is not None else None
+    loaded = _load(args, err) if inputs is None else inputs.loaded
     document = loaded.document
+    if inputs is not None:
+        findings = check_task(inputs.task, inputs.world)
+        for finding in findings:
+            print(_world_diagnostic(args, inputs, finding).format(), file=err)
+        if len(findings) > 1:
+            print(f"{args.file}: task '{inputs.task.name}' cannot succeed in {args.world} "
+                  f"({_plural(len(findings), 'error')})", file=err)
+        if findings:
+            return EXIT_INVALID
     summary = _plural(len(document.tasks), "task")
     if loaded.warnings:
         summary += f", {_plural(loaded.warnings, 'warning')}"
@@ -265,6 +289,10 @@ def _validate(args, out, err) -> int:
     else:
         print(f"{args.file}: valid RoboLang {document.language_version} ({summary})", file=out)
         print(NOT_A_SAFETY_CHECK, file=out)
+    if inputs is not None:
+        source = "world bindings" if inputs.cli_bindings is None else "--bind"
+        print(f"{args.file}: task '{inputs.task.name}' checked against {args.world} ({source}): "
+              f"no certain failure found. Run `simulate` for the rest", file=out)
     return EXIT_OK
 
 
@@ -426,6 +454,7 @@ class _RunInputs:
     world: World
     cli_bindings: dict[str, str] | None
     source_kind: str  # "source" or "ir": what source_bytes is
+    loaded: _Loaded | None = None
 
 
 def _run_inputs(args, err) -> _RunInputs:
@@ -457,7 +486,7 @@ def _run_inputs(args, err) -> _RunInputs:
                 raise _CommandError(f"--bind: '{name}' is not a parameter of task '{task.name}'; parameters: {listed}")
     world_bytes = _read_bytes(args.world)
     world = load_world(world_bytes, args.world, task, cli_bindings)
-    return _RunInputs(loaded.data, world_bytes, document, task, world, cli_bindings, loaded.kind)
+    return _RunInputs(loaded.data, world_bytes, document, task, world, cli_bindings, loaded.kind, loaded)
 
 
 def _simulate(args, out, err) -> int:
@@ -687,12 +716,32 @@ def _parser(prog: str) -> argparse.ArgumentParser:
         help="check a .rob file: syntax, names, types and values",
         description=(
             "Check FILE against the RoboLang language contract: syntax, names, types and values.\n"
-            "The whole file is checked. Nothing is executed.\n\n" + NOT_A_SAFETY_CHECK
+            "The whole file is checked. Nothing is executed.\n"
+            "With --world, one task is also checked against a world and its bindings for failures a run\n"
+            "would certainly hit (spec/simulation-v1.0.md section 11).\n\n" + NOT_A_SAFETY_CHECK
         ),
         epilog=_EPILOG,
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     _input_arguments(validate, "a .rob file")
+    validate.add_argument(
+        "--world",
+        metavar="WORLD",
+        help=(
+            "also check one task against a world file, without running it: speed limits against the robots' "
+            "profiles (S001, S002), grasp without a gripper (S211), a sensor not on the inspecting robot (S231), "
+            "and the bindings (E505-E507). Each is a failure the run would certainly hit"
+        ),
+    )
+    validate.add_argument("--task", metavar="NAME",
+                          help="with --world: the task to check (required when FILE has several)")
+    validate.add_argument(
+        "--bind",
+        metavar="NAME=ID",
+        nargs="+",
+        action="append",
+        help="with --world: bind task parameters as for simulate, for example --bind r=arm1 box=box1",
+    )
     validate.set_defaults(run=_validate)
 
     inspect = commands.add_parser(
@@ -842,6 +891,8 @@ def main(argv: list[str] | None = None, out=None, err=None, prog: str = "robolan
             if (args.file is None) == (args.ir is None):
                 parser.error("give exactly one of FILE (a .rob file) and --ir IR (a Task IR JSON file)")
             args.file = args.ir if args.file is None else args.file
+        if args.command == "validate" and args.world is None and (args.task is not None or args.bind):
+            parser.error("--task and --bind need --world")
     except SystemExit as stop:  # argparse: --help / --version (0) or a usage error (2)
         return stop.code if isinstance(stop.code, int) else EXIT_USAGE
     try:
