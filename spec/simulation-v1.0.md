@@ -452,7 +452,7 @@ and speed enforcement remain RL-12B and RL-12C work.
 | `run_record_schema`, `run_record_schema_version` | `"robolang.sim.run"`, `"1.0"` |
 | `mode` | Always `"simulation"` |
 | `run_id` | Section 6 |
-| `inputs` | `source_sha256`, `world_sha256`, `task`, `seed`, `language_version`, `ir_schema_version`, `world_schema_version`, and `bindings_source` when the bindings came from `--bind` |
+| `inputs` | `source_sha256`, `world_sha256`, `task`, `seed`, `language_version`, `ir_schema_version`, `world_schema_version`, and `bindings_source` when the bindings came from `--bind`, and `source_kind` (`"ir"`) when the input was a Task IR file |
 | `task` | The selected task in its IR form (`ir-schema-v1.0.md` section 3.1) |
 | `bindings` | Parameter name → entity ID, in parameter order: the bindings actually used |
 | `states` | Every state the run entered, in order |
@@ -518,6 +518,11 @@ Unknown facts and absent positions are `null`.
 - The record holds codes and structured values only, no free-text messages, so it does not
   change when diagnostic wording changes.
 
+`inputs.source_kind` (after `source_sha256`) is the string `"ir"` and is present only when the input was a
+Task IR JSON file read by `read_ir` ([`ir-reader-v0.1.md`](ir-reader-v0.1.md)); `source_sha256` is then the hash
+of the IR file's bytes. A record without it has `.rob` source input. It is an additive optional key, so the run
+record schema versions do not change.
+
 `inputs.bindings_source` is the string `"cli"` and is present only when the bindings came from
 `--bind`. A record without it has world-file bindings. It is written only for `--bind` so that
 records of runs without `--bind` stay byte-identical to those of earlier implementations.
@@ -536,6 +541,8 @@ preimage          = "robolang-sim-run/1.0\n" + source_sha256 + "\n" + world_sha2
 run_id            = "sim-" + lowercase hex SHA-256 of preimage
 ```
 
+- For Task IR input, the preimage has one more line, `source_kind ir\n`, directly after the first
+  line, so that a source file and an IR file never share an ID. For `.rob` input the preimage is as above.
 - With `--bind`, the preimage ends with one more line for each binding, sorted by parameter
   name: `bind ` + name + `=` + ID + `\n`. The order of the flags does not matter. Without
   `--bind` the preimage is exactly as above, so IDs of such runs do not change. The world

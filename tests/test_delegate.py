@@ -379,3 +379,30 @@ def test_robot_world_defaults_to_world(tmp_path):
 def test_spec_documents_every_exit_code_and_the_limits():
     for code in ("`0`", "`4`", "`7`", "D701", "capability_unsupported", "rl:sim:world", "sim-hmac-sha256"):
         assert code in SPEC
+
+
+CARRY = "move r to src; grasp r box; move r to dst; place r box at dst;"
+
+
+def two_condition_case(tmp_path, robot_goal: str):
+    ai = plan_file(tmp_path, "ai", "object_at box dst; robot_at r dst;", CARRY)
+    mine = plan_file(tmp_path, "mine", robot_goal, CARRY)
+    world = robot_world(tmp_path, {"ai": {"bindings": BINDINGS}, "mine": {"bindings": BINDINGS}})
+    return record_of(ai, "--world", world, "--from", PLANNER, "--to", ARM, "--plans", mine)
+
+
+def test_goal_conditions_match_in_any_order(tmp_path):
+    record, code = two_condition_case(tmp_path, "robot_at r dst; object_at box dst;")
+    assert code == 0 and record["planner_verdict"]["status"] == "succeeded"
+    payload = record["messages"][3]["document"]["payload"]
+    proposed = record["messages"][0]["document"]["payload"]["goal"]["desired_state"]
+    results = payload["outcome"]["verification"]["criteria_results"]
+    assert [r["criterion"] for r in results] == [0, 1]  # re-indexed to the proposal's order
+    observed = {o["id"]: {k: o[k] for k in ("subject", "property", "value")} for o in payload["evidence"]}
+    assert [observed[r["evidence"][0]] for r in results] == proposed
+
+
+def test_a_subset_or_superset_of_the_goal_does_not_match(tmp_path):
+    for goal in ("object_at box dst;", "object_at box dst; robot_at r dst; holding r box;"):
+        record, code = two_condition_case(tmp_path, goal)
+        assert code == 7 and record["planner_verdict"]["status"] == "rejected"

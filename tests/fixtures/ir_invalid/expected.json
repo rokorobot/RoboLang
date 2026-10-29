@@ -1,0 +1,118 @@
+{
+  "I101_not_utf8.json": [
+    "I101",
+    ""
+  ],
+  "I102_not_json.json": [
+    "I102",
+    ""
+  ],
+  "I103_duplicate_key.json": [
+    "I103",
+    ""
+  ],
+  "I104_float.json": [
+    "I104",
+    ""
+  ],
+  "I110_wrong_type.json": [
+    "I110",
+    "/tasks/0/steps/2/duration/value"
+  ],
+  "I111_missing_field.json": [
+    "I111",
+    "/tasks/0"
+  ],
+  "I112_unknown_field.json": [
+    "I112",
+    "/tasks/0/extra"
+  ],
+  "I113_unknown_schema_version.json": [
+    "I113",
+    "/ir_schema_version"
+  ],
+  "I114_unknown_kind.json": [
+    "I114",
+    "/tasks/0/steps/0/kind"
+  ],
+  "I115_and_in_schema_1_0.json": [
+    "I115",
+    "/tasks/0/preconditions/0/kind"
+  ],
+  "I116_bad_decimal.json": [
+    "I116",
+    "/tasks/0/steps/2/duration/value"
+  ],
+  "I117_bad_unit.json": [
+    "I117",
+    "/tasks/0/steps/2/duration/unit"
+  ],
+  "I118_bad_name.json": [
+    "I118",
+    "/tasks/0/parameters/0/name"
+  ],
+  "I119_surrogate.json": [
+    "I119",
+    "/tasks/0/steps/3/message"
+  ],
+  "I120_no_steps.json": [
+    "I120",
+    "/tasks/0/steps"
+  ],
+  "I121_condition_too_deep.json": [
+    "I121",
+    "/tasks/0/preconditions/0/condition/condition/condition/condition/condition/condition/condition/condition"
+  ],
+  "I122_nested_and.json": [
+    "I122",
+    "/tasks/0/preconditions/0/conditions/0"
+  ],
+  "I201_duplicate_task.json": [
+    "I201",
+    "/tasks/1/name"
+  ],
+  "I202_duplicate_parameter.json": [
+    "I202",
+    "/tasks/0/parameters/6/name"
+  ],
+  "I203_undeclared_name.json": [
+    "I203",
+    "/tasks/0/steps/0/target"
+  ],
+  "I204_wrong_type.json": [
+    "I204",
+    "/tasks/0/steps/0/robot"
+  ],
+  "I205_zero_duration.json": [
+    "I205",
+    "/tasks/0/steps/2/duration/value"
+  ],
+  "I206_duplicate_limit.json": [
+    "I206",
+    "/tasks/0/safety/1"
+  ],
+  "I207_empty_string.json": [
+    "I207",
+    "/tasks/0/steps/3/channel"
+  ],
+  "I208_unitless_with_unit.json": [
+    "I208",
+    "/tasks/0/safety/1"
+  ],
+  "I209_missing_goal.json": [
+    "I209",
+    "/tasks/0"
+  ],
+  "I210_string_sensor.json": [
+    "I210",
+    "/tasks/0/steps/1/sensor"
+  ],
+  "I212_min_confidence_above_one.json": [
+    "I212",
+    "/tasks/0/verify/min_confidence"
+  ],
+  "I213_empty_verify.json": [
+    "I213",
+    "/tasks/0/verify"
+  ]
+}

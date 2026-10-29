@@ -125,7 +125,7 @@ def test_binding_errors_against_the_world_exit_3(pairs, diagnostic):
 def test_wrong_kind_diagnostic_names_parameter_and_entity():
     _, _, err = simulate(*bind("r=box1", "box=box1", "src=shelf", "dst=table", "cell=cell"))
     assert err.strip().splitlines()[-1] == (
-        "--bind: error[E507] at /bindings/r: parameter 'r' is a robot, 'box1' is a object"
+        "--bind: error[E507] at /bindings/r: parameter 'r' is a robot, 'box1' is an object"
     )
 
 
