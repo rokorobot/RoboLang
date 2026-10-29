@@ -506,6 +506,11 @@ def _plan_files(paths: list[str]) -> list[str]:
     return files
 
 
+def _record_path(path) -> str:
+    """A plan path as written in the delegate record: '/' separators on every OS, so records match across platforms."""
+    return Path(path).as_posix()
+
+
 def _load_plans(paths: list[str], err) -> list[Plan]:
     """Validate every plan file; a file that is not valid RoboLang raises RoboLangError (exit 1)."""
     plans = []
@@ -516,7 +521,7 @@ def _load_plans(paths: list[str], err) -> list[Plan]:
         except RoboLangError as error:
             _print_errors(error, path, err, summary=False)
             raise _PlanInvalid from None
-        plans.append(Plan(path, data, result.ir.tasks, result.ir.language_version))
+        plans.append(Plan(_record_path(path), data, result.ir.tasks, result.ir.language_version))
     return plans
 
 
@@ -528,8 +533,8 @@ def _delegate(args, out, err) -> int:
             )
     inputs = _run_inputs(args, err)
     task = inputs.task
-    plans = (_load_plans(args.plans, err) if args.plans else
-             [Plan(args.file, inputs.source_bytes, inputs.result.ir.tasks, inputs.result.ir.language_version)])
+    own = Plan(_record_path(args.file), inputs.source_bytes, inputs.result.ir.tasks, inputs.result.ir.language_version)
+    plans = _load_plans(args.plans, err) if args.plans else [own]
     robot_world_path = args.robot_world or args.world
     robot_world = inputs.world_bytes if robot_world_path == args.world else _read_bytes(robot_world_path)
     try:
