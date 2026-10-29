@@ -7,12 +7,14 @@ No network and no SDK import here. An answer is judged only with the installed `
 
 from __future__ import annotations
 import io
+import itertools
 import json
 import re
 import tempfile
 from collections import Counter
 from dataclasses import dataclass
 from decimal import Decimal
+from math import prod
 from pathlib import Path
 
 from robolang import bridge
@@ -288,6 +290,7 @@ class Judgement:
     state: str
     failure_code: str | None
     checks: dict[str, bool]             # the optional checks the task defines, by name
+    goal_exact: bool = False            # the exported triples equal an expected set (goal_correct before N6)
 
 
 def _merge(base: dict, patch: dict) -> dict:
@@ -317,6 +320,76 @@ def _check_probe(task_def: dict, checked: Checked, probe: dict, bindings: dict[s
         return False
 
 
+# -------- goals compared by meaning --------
+
+MAX_GOAL_STATES = 200_000  # beyond this many abstract states, goals are compared by their triples only
+_ELSEWHERE = ("", "")  # the value of a subject that is in none of the states the goals mention
+
+
+def _goal_formula(condition: task_ir.Condition, bindings: dict[str, str]):
+    """A goal condition as a formula: ("atom", key), ("and" | "or", parts) or ("not", part).
+
+    An outcome atom's key is its Core triple; any other condition (robot_ready, ...) is a free proposition."""
+    triple = bridge.triple_of(condition, bindings)
+    if triple is not None:
+        return "atom", (triple.subject, triple.property, triple.value)
+    if isinstance(condition, (task_ir.And, task_ir.Or)):
+        return condition.KIND, tuple(_goal_formula(c, bindings) for c in condition.conditions)
+    if isinstance(condition, task_ir.Not):
+        return "not", _goal_formula(condition.condition, bindings)
+    return "atom", ("?", repr(condition), "")
+
+
+def _atoms(formula, out: set) -> set:
+    kind, body = formula
+    if kind == "atom":
+        out.add(body)
+    elif kind == "not":
+        _atoms(body, out)
+    else:
+        for part in body:
+            _atoms(part, out)
+    return out
+
+
+def _holds(formula, state: dict) -> bool:
+    kind, body = formula
+    if kind == "atom":
+        return state[body] if body[0] == "?" else state[body[0]] == body[1:]
+    if kind == "not":
+        return not _holds(body, state)
+    return (all if kind == "and" else any)(_holds(part, state) for part in body)
+
+
+def goal_means(task: task_ir.Task, bindings: dict[str, str], readings: list[set[tuple[str, str, str]]]) -> bool | None:
+    """Whether the goal holds in exactly the states where one expected reading holds, or where any of them does.
+
+    A state gives each subject (thing or robot) one value: a place it is located in, a robot carrying it, or
+    elsewhere; so `holding r b` and `object_at b t` exclude each other, as in the simulator. Only the subjects and
+    values the formulas mention can change their truth, so enumerating those is exhaustive. None when there is no
+    goal or no reading, or too many states."""
+    if task.goal is None or not readings:
+        return None
+    goal = ("and", tuple(_goal_formula(c, bindings) for c in task.goal))
+    expected = [("and", tuple(("atom", t) for t in sorted(r))) for r in readings]
+    candidates = expected + ([("or", tuple(expected))] if len(expected) > 1 else [])
+    domains: dict = {}
+    for atom in _atoms(goal, set()).union(*(_atoms(f, set()) for f in expected)):
+        if atom[0] == "?":
+            domains[atom] = [False, True]
+        elif atom[1:] not in domains.setdefault(atom[0], [_ELSEWHERE]):
+            domains[atom[0]].append(atom[1:])
+    if prod(len(values) for values in domains.values()) > MAX_GOAL_STATES:
+        return None
+    for combo in itertools.product(*domains.values()):
+        state = dict(zip(domains, combo))
+        truth = _holds(goal, state)
+        candidates = [c for c in candidates if _holds(c, state) == truth]
+        if not candidates:
+            return False
+    return True
+
+
 def judge(task_def: dict, checked: Checked, bindings: dict[str, str]) -> Judgement:
     """Goal, simulation and the task's optional checks, for an answer that `check_answer` accepted."""
     try:
@@ -337,8 +410,10 @@ def judge(task_def: dict, checked: Checked, bindings: dict[str, str]) -> Judgeme
         checks["end_ms"] = result.end_t_ms == Decimal(task_def["expected_end_ms"])
     if "probes" in task_def:
         checks["probes"] = all(_check_probe(task_def, checked, p, bindings) for p in task_def["probes"])
-    return Judgement(exported is not None and exported in expected_goals(task_def), result.state == "SUCCEEDED",
-                     result.state, result.failure.code if result.failure else None, checks)
+    goal_exact = exported is not None and exported in expected_goals(task_def)
+    meaning = goal_means(checked.task, bindings, expected_goals(task_def))
+    return Judgement(goal_exact if meaning is None else meaning, result.state == "SUCCEEDED",
+                     result.state, result.failure.code if result.failure else None, checks, goal_exact)
 
 
 # -------- a model's reply --------

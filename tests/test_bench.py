@@ -62,7 +62,7 @@ def test_reference_is_valid_exports_the_expected_goal_and_succeeds(task_id):
     assert checked.valid, checked.report
     assert checked.language_version == "1.3"
     judgement = lib.judge(task, checked, answer["bindings"])
-    assert judgement.goal_correct
+    assert judgement.goal_correct and judgement.goal_exact
     assert judgement.plan_succeeds, (judgement.state, judgement.failure_code)
     assert all(judgement.checks.values()), judgement.checks
 
