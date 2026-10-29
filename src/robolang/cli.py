@@ -1,6 +1,7 @@
 """
 Developer commands for RoboLang v1.1, v1.2 and v1.3.
 
+    reference              print the shipped RoboLang 1.3 language reference
     validate FILE          check a .rob file against the language contract
     inspect  FILE          show what a validated file describes (text or JSON IR)
     simulate FILE --world WORLD
@@ -40,7 +41,7 @@ import json
 import re
 import sys
 from dataclasses import dataclass
-from importlib import metadata
+from importlib import metadata, resources
 from pathlib import Path
 
 from . import bridge
@@ -78,7 +79,8 @@ NOTHING_EXECUTED = "This is a description only. Nothing was executed."
 _DESCRIPTION = f"""\
 Tools for RoboLang v1.1, v1.2 and v1.3 task files.
 
-validate and inspect check and describe .rob files; they never execute anything.
+reference prints the shipped 1.3 language reference. validate and inspect check and describe .rob
+files; they never execute anything.
 simulate runs a validated task in a symbolic, deterministic simulation only: it never loads a
 robot adapter or connects to ROS 2 or hardware, and its result is not evidence that a task is
 safe on a robot.
@@ -638,6 +640,13 @@ def _arch02(args, out, err) -> int:
 
 # -------- entry point --------
 
+def _reference(args, out, err) -> int:
+    """Print the reference bundled in the installed package, with its final newline unchanged."""
+    del args, err
+    text = resources.files("robolang").joinpath("reference/language-reference.md").read_text(encoding="utf-8")
+    out.write(text)
+    return EXIT_OK
+
 def _input_arguments(command: argparse.ArgumentParser, what: str, note: str = ""):
     """The input of a command: FILE, or `--ir` for a Task IR document (exactly one of them)."""
     command.add_argument("file", metavar="FILE", nargs="?", help=f"path to {what}")
@@ -665,6 +674,13 @@ def _parser(prog: str) -> argparse.ArgumentParser:
         help="show the distribution, language and IR schema versions and exit",
     )
     commands = parser.add_subparsers(dest="command", metavar="COMMAND", required=True)
+
+    reference = commands.add_parser(
+        "reference",
+        help="print the shipped RoboLang 1.3 language reference",
+        description="Print the exact RoboLang 1.3 reference shipped with this installation. Nothing is executed.",
+    )
+    reference.set_defaults(run=_reference)
 
     validate = commands.add_parser(
         "validate",
