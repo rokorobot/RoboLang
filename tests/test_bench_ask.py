@@ -47,7 +47,7 @@ def run_in(task: dict, ans: dict, patch: dict | None = None):
 
 def test_the_mix_of_tasks():
     assert Counter(d["group"] for d in SET3.values()) == {"feasible": 12, "decoy": 11, "infeasible": 19,
-                                                          "inexpressible": 22, "clarify": 16}
+                                                          "inexpressible": 20, "clarify": 18}
     for task in SET3.values():
         assert task["world"] in {"bench/worlds/pharmacy.json", "bench/worlds/yard.json", "bench/worlds/kitchen.json"}
         assert task["prompt"].endswith(".") and task["tags"]
@@ -108,6 +108,18 @@ def test_every_reading_of_a_clarify_task_succeeds_and_the_readings_differ(task_i
         ans = answer(stem)
         seen.add((ans["rob"], tuple(sorted(ans["bindings"].items()))))
     assert len(seen) == len(stems)
+
+
+@pytest.mark.parametrize("task_id", ["a21_operator_speed_limit", "a22_operator_wait_deadline"])
+def test_operator_limits_require_clarification_even_when_a_candidate_program_runs(task_id, tmp_path):
+    task = SET3[task_id]
+    assert task["slot"] in ("speed", "timeout") and task["replaces"] in ("u07_grip_5n", "u08_lift_20kn")
+    _, rows = score.load_rows(ask_run(tmp_path, {task_id: other("clarify")}))
+    assert rows[0]["decision_correct"] and not rows[0]["false_refusal"]
+    # A working plan supplies a candidate value, not the missing operator requirement.
+    _, rows = score.load_rows(ask_run(tmp_path / "guessed", {task_id: answer(f"{task_id}.reading1")}))
+    assert rows[0]["unjustified_default"] and not rows[0]["decision_correct"]
+    assert not rows[0]["silent_guess"]
 
 
 def test_a_bound_entity_the_request_did_not_name_fails_the_check():

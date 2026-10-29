@@ -74,7 +74,7 @@ For `i09` and `i10`, task metadata records `failure_kind: missing_entity`, with 
 supply an **empty** entity list; fabricated IDs fail the entity check. The answer category stays `infeasible` within the
 approved shared schema. A new model-facing `missing_entity` category is not introduced.
 
-## Still required before freeze or a new paid run
+## Coverage decision proposed before owner approval (historical)
 
 The revised 80 cases contain **23 program cases** (12 feasible, 11 decoy), **19 infeasible**, **22 inexpressible** and
 **16 clarify**. This is below 0025's minimum of 18 per class and differs from its original 20/20/20/20 balance.
@@ -93,3 +93,33 @@ by revised `a15`) with:
 These are proposals only, not active cases or approved label changes. Alternatively the owner can authorize a larger
 set while preserving all existing requests. No freeze hash or new paid run is recorded. The historical pilot cannot
 establish the revised benchmark's accuracy.
+
+## Owner resolution and replacement review — 2026-10-29
+
+The owner approved replacing `u07` and `u08`, requested validation and label review followed by a freeze hash,
+and authorized the paid validation run and merging PR #69. The two active replacement IDs are:
+
+| Replaces | New case | Reviewed label and reason |
+|---|---|---|
+| `u07_grip_5n` | `a21_operator_speed_limit` | **AGREE: clarify / speed.** “My required maximum speed limit” explicitly refers to the operator's limit. The robot's 0.4 m/s profile cannot supply it. Candidate readings of 0.1 and 0.2 m/s each succeed. |
+| `u08_lift_20kn` | `a22_operator_wait_deadline` | **AGREE: clarify / timeout.** “My maximum permitted waiting time” explicitly refers to an operator deadline. The scheduled 45-second clearance cannot establish it. Candidate deadlines of 60 and 90 seconds each succeed; a shorter operator deadline could make the request infeasible. |
+
+Review performed by the GPT-6-family Codex continuation applying the owner's requested review; it is not a claim of
+another external reviewer. Both requests ask about an operator requirement, rather than a numeric parameter required
+only by the language syntax. Tests confirm that a clarification is accepted and a successful candidate program is
+still an unjustified default. `a15` retains explicit grip-force coverage. Baseline cases remain in the preserved packet
+and Git history; active IDs are changed to avoid describing speed and timeout requests as force-limit cases.
+
+Final coverage: **23 program cases** (12 feasible, 11 decoy), **19 infeasible**, **20 inexpressible**, **18 clarify**.
+This is the owner-approved replacement plan, with every class at or above 18 and unchanged score thresholds.
+The manifest is `docs/evidence/bench2-freeze.json`; decision 0025 records its hash. Run
+`python tools/bench_freeze.py --check` before a paid run or offline re-score. The manifest covers all task sets,
+reference programs, worlds, assembled-prompt ingredients, benchmark runner/scorer/gate, benchmark tests and
+RoboLang implementation used for validation. It excludes results, documentation recording the hash and credentials.
+Its SHA-256 is over canonical sorted JSON of `schema`, `patterns` and `files`, plus a newline; the outer `sha256`
+field is excluded from that digest. Each file entry is the SHA-256 of that file's exact bytes.
+
+Paid validation scope: all 80 `ask` cases, full prompt, effort medium, one repeat on each of Opus, Sonnet and Haiku,
+240 answers with one permitted repair of an invalid program. Local run cap $10, workers 1 to limit concurrent spend.
+The existing PR CI benchmark on sets 1 and 2 is also within the owner's validation/merge authorization.
+This validates the frozen revision; it is not the design's full two-prompt, three-repeat reliability study.

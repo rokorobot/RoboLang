@@ -1,9 +1,9 @@
 # Benchmark set "ask" — revised packet after GPT-6 review
 
-**Not frozen.** The original packet is preserved in [the review baseline](bench-2-label-review-baseline.md).
-The received verdicts, corrections, remaining coverage decision and pilot-question answers are recorded in
-[the review response](../evidence/bench2-label-review-response.md). This working packet shows the revised cases;
-it does not imply that the reviewer or owner has approved the rewrites.
+The owner approved the reviewed correction plan and the two operator-limit replacements on 2026-10-29.
+The original packet is preserved in [the review baseline](bench-2-label-review-baseline.md). Review dispositions and
+replacement-label review are in [the review response](../evidence/bench2-label-review-response.md).
+The freeze manifest and its digest are recorded in decision 0025.
 
 A benchmark tests whether AI models answer robot requests correctly. They can write a RoboLang 1.3 program, decline (`cannot`), or ask (`clarify`). A Claude model wrote these 80 cases, and Claude models are tested, so a reviewer outside that family checks the expected answers before they are frozen (decision record 0025).
 
@@ -166,7 +166,7 @@ scheduled: after 8 s, region_clear of aisle becomes true
 | `i19_deadline_hot_zone` | kitchen | Wait no more than 10 seconds for the hot zone to clear, then have the helper arm move pan 1 from the stove to the sink. Pan 1 must end up in the sink. | cannot (infeasible): hot_zone clears only after the stated wait has run out, so the plan times out (S241). |
 | `i20_deadline_lane2` | yard | Give lane 2 at most 20 seconds to clear, then have straddle1 take container 204 to stack C; it has to get there. | cannot (infeasible): lane_2 clears only after the stated wait has run out, so the plan times out (S241). |
 
-## inexpressible (22)
+## inexpressible (20)
 
 | id | world | request | expected |
 |---|---|---|---|
@@ -178,8 +178,6 @@ scheduled: after 8 s, region_clear of aisle becomes true
 | `u04_back_and_forth` | kitchen | Have the runner keep driving back and forth between the pass and the sink for as long as service lasts. | cannot (inexpressible): RoboLang 1.3 has no loop; the number of repetitions is unbounded, so it cannot be unrolled. |
 | `u05_below_8c` | pharmacy | Only if the insulin reads below 8 °C on picker1's thermometer, move it to packing. | cannot (inexpressible): RoboLang 1.3 has no numeric reading and no comparison atom. |
 | `u06_cooled_60c` | kitchen | Probe pan 1 with the temperature probe and move it to the pass only once it has cooled below 60 °C. | cannot (inexpressible): RoboLang 1.3 has no numeric reading and no comparison atom. |
-| `u07_grip_5n` | kitchen | Have the helper arm move bowl 2 from the fridge to prep 2, never squeezing with more than 5 newtons of grip force. | cannot (inexpressible): @safety has max_speed only; there is no force or load limit. |
-| `u08_lift_20kn` | yard | Have crane 1 move container 101 to stack A without exceeding 20 kilonewtons of lifting force. | cannot (inexpressible): @safety has max_speed only; there is no force or load limit. |
 | `u09_avoid_quay` | yard | Have straddle1 take container 203 to the out gate, and never drive through the quay on the way. | cannot (inexpressible): Staying inside or out of a region while moving needs in_region / no_go_region, deferred (E211). |
 | `u10_inside_clean_room` | pharmacy | Have picker1 bring vial A2 to packing, staying inside the clean room the whole way. | cannot (inexpressible): Staying inside or out of a region while moving needs in_region / no_go_region, deferred (E211). |
 | `u11_wait_go` | pharmacy | Wait for the pharmacist to send "GO" on the pharmacy channel, then have picker1 bring tray 1 to dispatch. | cannot (inexpressible): Waiting for an incoming message needs message_received, deferred (E211). |
@@ -193,7 +191,7 @@ scheduled: after 8 s, region_clear of aisle becomes true
 | `u19_send_batch` | pharmacy | Scan the insulin with picker1's scanner and send the batch number you read to the "dispatch" channel. | cannot (inexpressible): communicate sends a literal string; a measured value cannot be put in it. |
 | `u20_report_temp` | kitchen | Probe pan 1's temperature and tell the "pass" channel the value you measured. | cannot (inexpressible): communicate sends a literal string; a measured value cannot be put in it. |
 
-## clarify (16)
+## clarify (18)
 
 | id | world | request | expected |
 |---|---|---|---|
@@ -213,3 +211,5 @@ scheduled: after 8 s, region_clear of aisle becomes true
 | `a16_a_moment` | kitchen | Have the helper arm go to the oven, wait a moment there, then come back to prep 2. | clarify, missing duration |
 | `a17_for_a_bit` | yard | Have tug1 drive to the out gate, pause for a bit, then go to the workshop. | clarify, missing duration |
 | `a18_hold_briefly` | pharmacy | Have cart2 move to dispatch, hold there briefly, then go to the charger. | clarify, missing duration |
+| `a21_operator_speed_limit` | kitchen | Have the helper arm take bowl 2 from the fridge to prep 2 using my required maximum speed limit. | clarify, missing speed (operator requirement) |
+| `a22_operator_wait_deadline` | yard | Once lane 2 clears, have straddle1 take container 204 to stack C, subject to my maximum permitted waiting time. | clarify, missing timeout (operator requirement) |

@@ -1,0 +1,18 @@
+{
+  "id": "a22_operator_wait_deadline",
+  "prompt": "Once lane 2 clears, have straddle1 take container 204 to stack C, subject to my maximum permitted waiting time.",
+  "world": "bench/worlds/yard.json",
+  "group": "clarify",
+  "expect": {
+    "decision": "clarify",
+    "category": "none"
+  },
+  "slot": "timeout",
+  "candidates": [],
+  "tags": [
+    "operator_requirement",
+    "timeout"
+  ],
+  "replaces": "u08_lift_20kn",
+  "why": "The operator explicitly requires their own limit but has not supplied it. A robot profile or scheduled event cannot determine that operator requirement."
+}

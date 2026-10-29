@@ -117,10 +117,12 @@ python bench/run.py --set ask --yes --max-usd 10              # with a hard cap 
 
 80 tasks in three new worlds (`pharmacy`, `yard`, `kitchen`), decision record [0025](../spec/decisions/0025-bench-2.md),
 design [docs/plans/bench-2.md](../docs/plans/bench-2.md). After the independent review, five kinds (`group`):
-`feasible` (12), `decoy` (11), `infeasible` (19), `inexpressible` (22) and `clarify` (16). The set is **not frozen**:
-the clarification coverage is below the approved minimum. See the
-[review response](../docs/evidence/bench2-label-review-response.md) and the preserved
-[original packet](../docs/plans/bench-2-label-review-baseline.md). A `decoy` looks impossible or unclear but is feasible. A `clarify` task
+`feasible` (12), `decoy` (11), `infeasible` (19), `inexpressible` (20) and `clarify` (18).
+The owner approved the replacement plan, freeze, paid validation and merge. See the
+[review response](../docs/evidence/bench2-label-review-response.md),
+[original packet](../docs/plans/bench-2-label-review-baseline.md) and the freeze hash in decision 0025.
+Run `python tools/bench_freeze.py --check` to verify the recorded inputs. Changes after the freeze require errata.
+A `decoy` looks impossible or unclear but is feasible. A `clarify` task
 expects `"decision": "clarify"`: the request could mean several entities (`candidates`) or omits a value, and the world
 does not decide. A request that leaves the choice to the model ("a shelf", "one of the vials", set 2's `ambiguous`
 kind) still expects a program.
