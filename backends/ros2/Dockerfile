@@ -25,6 +25,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY backends/ros2/world /opt/h3/world
 COPY backends/ros2/scripts /opt/h3/scripts
 COPY backends/ros2/config /opt/h3/config
+COPY backends/ros2/urdf /opt/h3/urdf
 COPY backends/ros2/robolang_ros2 /opt/h3/backends/ros2/robolang_ros2
 COPY src/robolang /opt/h3/src/robolang
 ENV PYTHONPATH=/opt/h3/src:/opt/h3/backends/ros2
