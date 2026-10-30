@@ -93,16 +93,19 @@ Amends 0.1 section 5.9. `status`, `reasons`, `reported_by` and `reported_at` are
 |---|---|
 | `verified_by`, `method`, `evaluated_at` | As 0.1 |
 | `criteria_results` | List of `{ "alternative": <integer from 0>, "criterion": <integer from 0>, "met": true \| false, "evidence": [<observation id>…] }`. A pair (`alternative`, `criterion`) appears at most once |
-| `met_alternative` | **New.** The index of the alternative the verifier relies on, or `null` |
+| `met_alternative` | **New.** The index of the alternative the robot pursued (a 1.4 task: the path it took), or `null` |
 
 Rules:
 
-- `met_alternative` is the verifier's claim of **which** alternative was met. When it is not `null`, `criteria_results`
-  must list every criterion of that alternative with `met: true`, and the list may also list others.
+- `met_alternative` names the alternative the robot **pursued**: for a 1.4 task, the path it took. When it is not
+  `null`, `criteria_results` lists every criterion of that alternative, each with its `met`, and may also list
+  others.
 - `succeeded` requires a verification whose `met_alternative` is not `null` and whose results for that alternative are
   all `met` (`C402`). A `succeeded` with `verification: null` is `C402` as in 0.1.
-- Any other status may carry `met_alternative: null`. A verifier may report `failed` even when an alternative it did
-  not rely on holds (for example, a simulated run that took path A and ended with only path B's goal true).
+- Another alternative that holds never makes an outcome `succeeded`. A run that took path A and ended with only path
+  B's goal true is `failed`: it went the wrong way, and "any of" must not hide that.
+- Any status other than `succeeded` may carry `met_alternative: null` (for example a `fail` path, or a run that
+  ended before the goal).
 - A receiver that knows the goal re-evaluates the **claimed** alternative from the cited evidence, as the planner in
   `delegate` already does (delegate-v0.1 section 3 and decision 0020 D6). Two alternatives holding together is not an
   error: the claim names one.

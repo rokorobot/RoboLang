@@ -8,8 +8,8 @@ outcome ([`simulation-v1.0.md`](../simulation-v1.0.md) 10.5, 12.4)
 **Evidence:** [set 2 analysis](../../docs/evidence/bench-set2-analysis.md) F2 (models write `or` for "one of the
 vials" and "the same shelf", and the goal cannot be exported); [0027](0027-bounded-branching.md) B4 and B7 (a
 branching task has several goals, and `fail` has no Core reason); [0018](0018-core-shaped-outcomes.md) and
-[0023](0023-keep-interop-3-deferred.md) (the known 0.1 gaps). The set 3 acceptance run is not on file yet
-([0027](0027-bounded-branching.md) section 5).
+[0023](0023-keep-interop-3-deferred.md) (the known 0.1 gaps). RoboLang 1.4 was accepted by the set 3 acceptance run
+([evidence](../../docs/evidence/bench-set3-acceptance.md)).
 
 ## 1. What Core 0.1 does today (the facts this record rests on)
 
@@ -36,7 +36,7 @@ branching task has several goals, and `fail` has no Core reason); [0018](0018-co
 | # | Question | Recommended | Alternatives considered |
 |---|---|---|---|
 | C1 | "Any of" desired states | A goal carries `alternatives`: a list of 1 to 16 alternatives. Each is `{desired_state, success_criteria}` with the 0.1 meaning (a conjunction). The goal is met when **any one** alternative is met. A plain goal is one alternative. The two 0.1 fields leave the goal and live in the alternatives, so there is still one document shape | (b) Keep the 0.1 fields and add an optional `alternatives`: two shapes for one meaning, against 0.1 2.3. (c) A boolean expression tree: nobody needs nesting, and a bounded list is easy to check and test. (d) One `propose_goal` per alternative: the robot would be asked for all of them, not any |
-| C2 | Which alternative was met, and indexing | `criteria_results` entries gain `alternative` (integer from 0), beside `criterion`. `verification` gains `met_alternative`: the index the verifier relies on, or `null`. Indices are positions in the goal **as sent** and never change. `succeeded` needs a non-null `met_alternative` whose criteria are all met (`C402`). The verifier may report `failed` even if another alternative holds (see Q3 below) | (b) Name alternatives with ids: one more field to keep unique, and positions are already how 0.1 indexes criteria. (c) Infer the met alternative from the results: a receiver would have to guess when two hold |
+| C2 | Which alternative was met, and indexing | `criteria_results` entries gain `alternative` (integer from 0), beside `criterion`. `verification` gains `met_alternative`: the index of the alternative the robot **pursued** (for a 1.4 task, the path it took), or `null`. Indices are positions in the goal **as sent** and never change. `succeeded` needs a non-null `met_alternative` whose criteria are all met (`C402`). Another alternative that holds does not make it `succeeded` (Q3) | (b) Name alternatives with ids: one more field to keep unique, and positions are already how 0.1 indexes criteria. (c) Infer the met alternative from the results: a receiver would have to guess when two hold |
 | C3 | Declared failure reason | New reason code `declared` with a `text` field: `{ "code": "declared", "text": "box1 missing" }`. `text` is 1 to 200 characters, no control characters. Allowed only in an `outcome` with status `failed` (`C405`). It is the reporter's own words: never evidence, never used to decide a status, an authorization or a verification, and shown to people and AI planners as untrusted text | (b) A code per cause: the cause is operator text, the list would never close. (c) Keep it out of Core: the planner of a delegated task sees `failed` with no cause, and the sim spec already promised 0.2 (12.4). (d) Allow it in every `reasons` list: no producer needs it in `reject` or `decline` |
 | C4 | Absent thing ("nowhere") | **Out of scope.** No producer: no benchmark task or recorded request wants a goal "box1 is not present" (`not object_exists` is local-only, and [0027](0027-bounded-branching.md) B4 rejected forcing it as a goal). The draft only states 0.1 behaviour: an unobservable criterion is not met, with empty evidence. Design kept for later: a property `absent_from` whose value is the place or domain that was searched, because absence is always relative to what was observed | (b) A reserved place `rl:place:nowhere`: identifiers are opaque (0.1 2.4) and "nowhere" is not a place. (c) Add `absent_from` now: untested syntax, against strategy rule 1 (evidence before syntax) |
 | C5 | Re-indexing | Keep positional indices (C2) and make the rule normative: an outcome indexes alternatives and criteria as the **proposal** did. A robot that matches a goal in another order, or as a set, must re-index. How a robot matches stays local policy, not Core. This writes down what `delegate` already does (0020 D2 amendment) | (b) Criterion ids: robust to reordering but adds a field to every criterion for a problem that positional indices with a rule already solve. Revisit if a second implementer trips on it. (c) Leave it implementation-defined: the planner cannot tell a reordered outcome from a wrong one |
@@ -82,8 +82,8 @@ Core 0.2 is frozen only when **all** of these exist:
 3. **One benchmark task family** exports "any of" goals end to end: the set 3 branching tasks whose paths differ
    (such as `x_route_by_cell`) and the F2 tasks (such as `m_same_shelf`), through `export-goal` and `delegate`, with a
    verified outcome that names the met alternative.
-4. **The 1.4 acceptance run** of set 3 is on file ([0027](0027-bounded-branching.md) section 3 item 2), because it
-   decides whether branching, the producer of C1, stays as designed.
+4. **The 1.4 acceptance run** of set 3 is on file ([0027](0027-bounded-branching.md) section 3 item 2). **Met**
+   on 2026-10-29 ([evidence](../../docs/evidence/bench-set3-acceptance.md)): branching, the producer of C1, stays as designed.
 5. **Owner approval** of the text and of the fixtures.
 
 INTEROP-3 relaunch on frozen Core 0.2 is H3 ([STRATEGY](../../docs/STRATEGY.md)) and is not planned here.
@@ -98,8 +98,10 @@ export `or`), C7 and C8 (version rules, no negotiation), and the freeze criteria
 - **Q1.** Is 200 characters right for `text`? It fits a short operator message; `fail "reason"` has no limit in 1.4
   (`robolang-v1.4.md` 3.4, a non-empty string). 1.4 would need the same limit.
 - **Q2.** Is 16 alternatives right? It is 2⁴, the largest number of paths 1.4 allows (0027 B5).
-- **Q3.** When a 1.4 run takes path A and ends with only path B's goal true, the simulator says `failed`
-  (0027 B7: the taken path counts), while "any of" would say met. The draft lets the verifier be the stricter one.
-  The alternative is to relax the simulator to any-of. Recommended: keep the stricter reading.
+- **Q3 (answered in C2).** A 1.4 run that takes path A and ends with only path B's goal true is `failed`
+  (0027 B7: the taken path counts). Plain "any of" would call it met, and so hide a plan that went the wrong way.
+  Core 0.2 therefore uses the same rule: `met_alternative` is the alternative the robot **pursued**, and `succeeded`
+  needs all of that alternative's criteria met. Another alternative that happens to hold does not make it
+  `succeeded`.
 - **Q4.** `declared` text can carry anything an AI wrote. A planner that feeds it to a model must treat it as
   untrusted. Is a Core rule enough, or should `delegate` also strip it from planner prompts?
