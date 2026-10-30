@@ -14,4 +14,8 @@ source /opt/ros/lyrical/setup.bash
   find /opt/ros/lyrical/share/robotiq_description -maxdepth 3 -type f | sort
   echo '=== gripper xacro ==='
   cat /opt/ros/lyrical/share/robotiq_description/urdf/robotiq_2f_85_gripper.urdf.xacro
+  echo '=== gripper macro ==='
+  cat /opt/ros/lyrical/share/robotiq_description/urdf/robotiq_2f_85_macro.urdf.xacro
+  echo '=== gripper control macro ==='
+  cat /opt/ros/lyrical/share/robotiq_description/urdf/robotiq_gripper.ros2_control.xacro
 } > /out/phase2_probe.txt 2>&1
