@@ -830,10 +830,20 @@ false condition even when there is no `else`; it is `none` only for `unknown`. T
 `core_outcome` (10.5) reports the effective goal of the path **taken** (B7): its criteria are the flattened outcome
 atoms of the goal entries of the record, in order. The decisions are in the record, not in Core. For `S262` the
 `status` is `failed` and `reasons` is `[]`: Core 0.1 has a closed list of reason codes with none for a declared
-failure, so the reason is only in `failure.reason` until Core 0.2. A run that ends in `fail` has `verification`
+failure, so the reason is only in `failure.reason` in Core 0.1. A run that ends in `fail` has `verification`
 `null`.
 
-`export-goal` and `delegate` export a branching task only if **every path has the same effective goal** (the same
+With `simulate --core 0.2` (and in `delegate --core 0.2`) `core_outcome` is the Core 0.2 payload
+([draft](core-v0.2-draft.md) 3, 4): every result has an `alternative`, `verification.met_alternative` is the
+alternative **pursued** (for a branching task, the one of the path taken, its criteria all listed whether met or not;
+for a goal that is a top-level `or`, the first alternative whose criteria all hold in the final world, or `null` with
+every alternative listed), and a run that ends in `S262` has `status` `failed`, `verification` `null` and the reason
+`{ "code": "declared", "text": <the `fail` reason> }`. Evidence IDs are `rl:obs:<run>-<alternative>-<criterion>`.
+Without the flag nothing changes (the record's own schema version is unchanged; a 0.2 payload is recognised by
+`met_alternative`).
+
+With Core 0.1 (the default), `export-goal` and `delegate` export a branching task only if **every path has the same effective goal** (the same
 flattened atoms in the same order, for instance a robot choice with one goal on both paths). Otherwise, and when
-a path ends in `fail`, the goal is not exportable: exit 6, code `X603`, naming decision 0027 B7 and Core 0.2.
+a path ends in `fail`, the goal is not exportable: exit 6, code `X603`, naming decision 0027 B7 and saying to use `--core 0.2`, which exports one alternative per
+distinct path goal ([export-goal 6](export-goal-v0.1.md)).
 `delegate` does not take a branching plan that binds two or more robots (`robots_unsupported`).

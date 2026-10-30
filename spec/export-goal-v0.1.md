@@ -14,7 +14,7 @@
 
 ```text
 robolang export-goal FILE --world WORLD [--task NAME] [--bind NAME=ID ...]
-                     --from AGENT_ID [--to ROBOT_ID] [--at TIME]
+                     --from AGENT_ID [--to ROBOT_ID] [--at TIME] [--core 0.1|0.2]
 ```
 
 `FILE` must be RoboLang 1.3 (earlier sources have no goal). Task selection, `--bind` and the world
@@ -26,6 +26,7 @@ or only the `--bind` ones. The world is validated as for `simulate`, so the same
 | `--from` | The sender and `requested_by`: a Core identifier without `#`, e.g. `rl:agent:planner-1` |
 | `--to` | The recipient. Default: the Core ID of the robot bound to the task's **only** `robot` parameter. Required when the task has none or several |
 | `--at` | `sent_at`, a Core time (core 2.4). Default `2000-01-01T00:00:00.000Z`, the simulation epoch (`bridge.SIM_EPOCH`) |
+| `--core` | The Core version of the message: `0.1` (default, as everywhere above) or `0.2` (section 6) |
 
 Output: the message as JSON on stdout (two-space indent, ASCII, fixed key order, trailing newline).
 On stderr: warnings and one line `simulation only: exported <goal id> as <message id>`.
@@ -92,7 +93,33 @@ Exit 6 prints one diagnostic, `FILE: error[CODE]: task 'T': …`:
 | Code | Meaning |
 |---|---|
 | `X601` | A goal condition has no Core form. Names the condition's index and kind, and its text: `goal condition 2 ('or') has no RoboLang Core 0.1 form (a or b)`. A source without a goal (1.1, 1.2) reports `no goal` |
-| `X603` | RoboLang 1.4: the paths of a branching task do not all have the same goal, or one ends in `fail` (decision 0027 B7; [simulation 12.4](simulation-v1.0.md)) |
+| `X603` | RoboLang 1.4, with `--core 0.1` only: the paths of a branching task do not all have the same goal, or one ends in `fail` (decision 0027 B7; [simulation 12.4](simulation-v1.0.md)). The message says to use `--core 0.2`. Not raised for 0.2 |
+| `X604` | `--core 0.2` only: the goal has more than 16 distinct alternatives (decision 0028 Q2) |
 | `X602` | A bound object has no `class` or no `mass` in the world file (needs `world_schema_version` 1.1) |
 
 Warnings (skipped limits) never change the exit status.
+
+## 6. `--core 0.2` (Core 0.2 draft, decision [0028](decisions/0028-core-0-2-scope.md) C6, C8)
+
+Opt-in. Without `--core 0.2` every output above is byte for byte what it was. With it the message has
+`schema_version` `0.2` and the goal carries `alternatives` (1 to 16) in place of `desired_state` and
+`success_criteria` ([draft](core-v0.2-draft.md) section 2). Each alternative has the criteria of section 2 above
+(`@verify`, defaults and `constraints` are unchanged and apply to every alternative). The signature, the envelope and
+the things are as before; the message passes `robolang.core` configured for 0.2.
+
+The alternatives of a task are, in this **stable order**:
+
+1. The effective goals of its paths, depth-first, `then` before `else` (source order of the plan). A path's goal is
+   the task goal followed by the goals of the branches it takes (decision 0027 B2); atoms are flattened in order.
+2. A path that ends in `fail` adds none (it is a declared failure, reported with `declared`).
+3. A goal that is a **single top-level `or`** of conjunctions of `object_at`, `robot_at` and `holding` adds one
+   alternative per operand, in source order.
+4. Alternatives with the same **set of triples** are one alternative (the first one's atom order is kept).
+
+A task with no alternative left (every path ends in `fail`) is not exportable (`X601`, "no alternative"). Anything else
+that is not an outcome atom (`not`, `robot_ready`, `region_clear`, ... , or an `or` mixed with other goal entries or
+inside a `not`) keeps `X601`. More than 16 distinct alternatives is `X604`.
+
+With `--core 0.1` (the default) a goal that needs two or more alternatives is not exported: exit 6, `X603` or `X601`, and
+the message says to use `--core 0.2`. Alternatives are never dropped (decision 0028 C8). A goal with one alternative
+exports either way.

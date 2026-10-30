@@ -7,8 +7,10 @@
 >
 > **Implementation status.** PR A (documents): [`core/message-0.2.schema.json`](core/message-0.2.schema.json), the
 > 0.2 checks in `robolang.core` (`C102`, `C103`, `C104`, `C402`, `C405`; a receiver is configured for the versions it
-> speaks) and the conformance fixtures are done. PR B (producers): `export-goal`, the simulated outcome with
-> `met_alternative` and `declared`, `delegate` and the bridge are not done; section 7 is still a plan.
+> speaks) and the conformance fixtures are done. PR B (producers) is done: `export-goal --core 0.2`, the simulated
+> outcome with `met_alternative` and `declared` (`simulate --core 0.2`), `delegate --core 0.2` and the bridge
+> (section 7 is now implemented; see [export-goal 6](export-goal-v0.1.md) and [delegate-core-0.2](delegate-core-0.2.md)).
+> Implemented, not frozen.
 
 **Reads with:** [`core-v0.1.md`](core-v0.1.md). Everything in 0.1 that this page does not name is unchanged, with its
 section numbers. A 0.2 text would be the 0.1 text with this delta applied.

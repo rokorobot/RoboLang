@@ -150,6 +150,7 @@ def to_record(
     bindings_source: str = "world",
     world_schema_version: str = WORLD_SCHEMA_VERSION,
     source_kind: str = "source",
+    core: str = "0.1",
 ) -> dict:
     """
     The run record (section 5) as a dict with the key order of the specification: schema 1.0
@@ -193,7 +194,7 @@ def to_record(
         ],
         "end_t_ms": ms_text(result.end_t_ms),
         "final_world": _final_world(result.final_world),
-        **({} if result.goal is None else {"core_outcome": core_outcome(result, task, run_id)}),
+        **({} if result.goal is None else {"core_outcome": core_outcome(result, task, run_id, core=core)}),
     }
 
 

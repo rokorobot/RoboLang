@@ -541,6 +541,7 @@ def _simulate(args, out, err) -> int:
         bindings_source="world" if cli_bindings is None else "cli",
         world_schema_version=world.schema_version,
         source_kind=inputs.source_kind,
+        core=args.core,
     )
     out.write(to_json(record))
     summary = f"simulation only: run {identifier}: {run_result.state}"
@@ -557,12 +558,12 @@ def _export_failure(path: str, task: task_ir.Task, error: Exception, err) -> int
     if isinstance(error, ExportError):
         print(f"{path}: error[{error.code}]: task '{task.name}': {error.message}", file=err)
         return EXIT_NOT_EXPORTABLE
-    if isinstance(error, bridge.PathsDiffer):
-        print(f"{path}: error[X603]: task '{task.name}': {error}", file=err)
+    if error.code != "X601":
+        print(f"{path}: error[{error.code}]: task '{task.name}': {error}", file=err)
         return EXIT_NOT_EXPORTABLE
     shown = f" ({_condition(task.goal[error.index - 1], True)})" if 0 < error.index <= len(task.goal) else ""
-    print(f"{path}: error[X601]: task '{task.name}': {error}{shown}; "
-          "only object_at, robot_at and holding can be exported", file=err)
+    hint = "" if isinstance(error, bridge.NeedsCore02) else "; only object_at, robot_at and holding can be exported"
+    print(f"{path}: error[X601]: task '{task.name}': {error}{shown}{hint}", file=err)
     return EXIT_NOT_EXPORTABLE
 
 
@@ -588,7 +589,8 @@ def _export_goal(args, out, err) -> int:
             "choose the recipient with --to"
         )
     try:
-        exported = export_goal(task, world, sender=args.sender, recipient=recipient, sent_at=args.at)
+        exported = export_goal(task, world, sender=args.sender, recipient=recipient, sent_at=args.at,
+                               core=args.core)
     except (bridge.NotExportable, ExportError) as error:
         return _export_failure(args.file, task, error, err)
     for warning in exported.warnings:
@@ -660,7 +662,8 @@ def _delegate(args, out, err) -> int:
     robot_world = inputs.world_bytes if robot_world_path == args.world else _read_bytes(robot_world_path)
     try:
         delegation = delegate(task, inputs.world, sender=args.sender, recipient=args.recipient, library=plans,
-                              robot_world=robot_world, robot_world_name=robot_world_path, lease_ms=lease)
+                              robot_world=robot_world, robot_world_name=robot_world_path, lease_ms=lease,
+                              core=args.core)
     except (bridge.NotExportable, ExportError) as error:
         return _export_failure(args.file, task, error, err)
     out.write(json.dumps(delegation.record, indent=2, ensure_ascii=True) + "\n")
@@ -833,6 +836,10 @@ def _parser(prog: str) -> argparse.ArgumentParser:
             "may be missing"
         ),
     )
+    simulate.add_argument(
+        "--core", metavar="VERSION", choices=("0.1", "0.2"), default="0.1",
+        help="the Core version of the record's core_outcome (default 0.1; spec/core-v0.2-draft.md)",
+    )
     simulate.set_defaults(run=_simulate)
 
     export = commands.add_parser(
@@ -859,6 +866,10 @@ def _parser(prog: str) -> argparse.ArgumentParser:
                         help="the receiving robot (default: the robot bound to the task's only robot parameter)")
     export.add_argument("--at", metavar="TIME",
                         help="sent_at, a Core time (default 2000-01-01T00:00:00.000Z, the simulation epoch)")
+    export.add_argument(
+        "--core", metavar="VERSION", choices=("0.1", "0.2"), default="0.1",
+        help="the Core version: 0.2 exports one alternative per goal path (default 0.1; spec/core-v0.2-draft.md)",
+    )
     export.set_defaults(run=_export_goal)
 
     delegation = commands.add_parser(
@@ -894,6 +905,10 @@ def _parser(prog: str) -> argparse.ArgumentParser:
     delegation.add_argument("--lease", metavar="DURATION",
                             help="the lease a peer robot offers the commitment, such as 60s, 500ms or 2min "
                                  "(default: 60s; used only when the matched plan binds a second robot)")
+    delegation.add_argument(
+        "--core", metavar="VERSION", choices=("0.1", "0.2"), default="0.1",
+        help="the Core version of every message: 0.2 sends alternatives (default 0.1; spec/core-v0.2-draft.md)",
+    )
     delegation.set_defaults(run=_delegate)
 
     arch02 = commands.add_parser(
