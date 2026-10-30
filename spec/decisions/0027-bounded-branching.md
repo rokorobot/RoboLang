@@ -1,8 +1,8 @@
 # Decision record 0027: RoboLang 1.4, bounded branching (N4)
 
 **Date:** 2026-10-29
-**Status:** **APPROVED by the owner, 2026-10-29**, with the recommended option for B1–B9. Design only: no grammar, parser,
-IR or simulator change yet. Next is benchmark set 3, pre-registered and run against 1.3 (section 3), then code.
+**Status:** **APPROVED by the owner, 2026-10-29** (recommended option for B1–B9), **IMPLEMENTED** in #70, #72 and #73,
+and **ACCEPTED** by the set 3 acceptance run ([evidence](../../docs/evidence/bench-set3-acceptance.md)).
 **Applies to (when decided):** a new `robolang-v1.4.md` and `grammar-v1.4.ebnf`, IR schema 1.3, run record 1.3,
 `simulation-v1.0.md`, the language reference, `validate --world` ([0026](0026-validate-world.md))
 **Evidence:** [set 2 analysis](../../docs/evidence/bench-set2-analysis.md) F3. A model silently dropped half of
