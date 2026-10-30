@@ -149,10 +149,10 @@ def main():
     }
 
     # 4. Camera (already subscribed since the start; give it time if the renderer is slow).
-    if node.spin_until(lambda: node.image is not None, 120):
+    if node.spin_until(lambda: node.image is not None, 60):
         result["camera"] = check_camera(node.image, f"{args.out}/camera.png")
     else:
-        result["camera"] = {"non_empty": False, "reason": "no frame within 120 s"}
+        result["camera"] = {"non_empty": False, "reason": "no frame within 60 s"}
     finish(0 if result["motion"]["ok"] else 1)
 
 
