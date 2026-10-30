@@ -92,6 +92,11 @@ Checked on index.ros.org on 2026-10-30. Every package is released as a binary fo
 | Gripper | `robotiq_description` 0.0.1 (a model only): we add a small `gz_ros2_control` controller config | released | X4, X5 |
 | Holding | Gazebo's detachable-joint system, triggered after the gripper closes | built in | X5 |
 
+**Resolved in phase 1** ([evidence](../../docs/evidence/h3-phase1-harness.md)): the stable apt index gave
+`ur_moveit_config` 6.1.0 and `gz_ros2_control` 3.0.9 (the index pages above list newer versions still in testing),
+with Gazebo Sim 10.5.0, `ros_gz` 3.0.10 and `moveit` 2.15.2 on Ubuntu 26.04.1. The arm moved and the software-rendered
+camera gave a usable frame with the marker detected, so no fallback was needed. The gripper is left for phase 2.
+
 `gz_ros2_control` is a ros2_control hardware plugin, so the controllers and MoveIt talk to the simulated arm exactly
 as they would to a real one. Moving to hardware later (H4, only with owner authorization) swaps that plugin for UR's
 real driver; the executor and the `.rob` do not change. The Jazzy/Harmonic fallback (X2) stays as a contingency only,
