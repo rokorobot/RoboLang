@@ -78,13 +78,18 @@ class ROSOperations:
         available_topics = set(self._command(["gz", "topic", "-l"]).splitlines())
         if not required_topics <= available_topics:
             raise BackendFailure("S501", "declared Gazebo detachable joint is unavailable")
-        # The installed Jetty plugin may start attached despite initial_attach=false.
-        # Make the release request before MoveIt or gripper clients can move the arm.
-        before_detach = self.clock_values[-1]
-        self._command(["gz", "topic", "-t", f"/model/{model}/detachable_joint/detach",
-                       "-m", "gz.msgs.Empty", "-p", ""])
-        if not self._until(lambda: self.clock_values[-1] > before_detach + 500_000_000, 5):
-            raise BackendFailure("S501", "simulation clock stopped after initial detachment request")
+        # The plugin may start attached, and a one-shot transport publication can be lost.
+        # Force a known detached state before any motion. The first detach may be a no-op;
+        # the attach and final detach must each be confirmed by a state transition.
+        for _ in range(3):
+            self._command(["gz", "topic", "-t", f"/model/{model}/detachable_joint/detach",
+                           "-m", "gz.msgs.Empty", "-p", ""])
+            time.sleep(0.2)
+        try:
+            gazebo_joint_command(model, "attach")
+            gazebo_joint_command(model, "detach")
+        except BackendFailure as exc:
+            raise BackendFailure("S501", f"could not initialize detached simulation joint: {exc.message}") from exc
         self.model = model
         # MoveItPy can contact controllers while loading. Construct it only after every graph check passes.
         try:
@@ -166,29 +171,7 @@ class ROSOperations:
     def _joint(self, model: str, action: str) -> None:
         if model != "box" or self.model != "ur":
             raise BackendFailure("S506", "this harness declares only the ur/box detachable joint")
-        topic = f"/model/{self.model}/detachable_joint/{action}"
-        state_topic = f"/model/{self.model}/detachable_joint/state"
-        expected = "attached" if action == "attach" else "detached"
-        # Gazebo publishes the state only when it changes. Subscribe before publishing the command.
-        subscriber = subprocess.Popen(["gz", "topic", "-e", "-t", state_topic, "-n", "1"],
-                                      stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-        try:
-            time.sleep(0.5)
-            subprocess.run(["gz", "topic", "-t", topic, "-m", "gz.msgs.Empty", "-p", ""],
-                           check=True, capture_output=True, text=True, timeout=10)
-            output, errors = subscriber.communicate(timeout=10)
-            if f'data: "{expected}"' not in output:
-                raise BackendFailure("S506", f"Gazebo {action} did not confirm {expected}: {output or errors}")
-        except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired) as exc:
-            raise BackendFailure("S506", f"Gazebo {action} command failed: {exc}") from exc
-        finally:
-            if subscriber.poll() is None:
-                subscriber.terminate()
-                try:
-                    subscriber.communicate(timeout=2)
-                except subprocess.TimeoutExpired:
-                    subscriber.kill()
-                    subscriber.communicate()
+        gazebo_joint_command(self.model, action)
 
     def wait_ms(self, duration: int) -> None:
         target = self.now_ms() + duration
@@ -205,6 +188,43 @@ class ROSOperations:
             except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired):
                 packages[package] = "unknown"
         return packages
+
+
+def gazebo_joint_command(model: str, action: str) -> None:
+    """Publish until Gazebo confirms a state transition; transport discovery can lose one-shot sends."""
+    if action not in ("attach", "detach"):
+        raise ValueError(action)
+    topic = f"/model/{model}/detachable_joint/{action}"
+    state_topic = f"/model/{model}/detachable_joint/state"
+    expected = "attached" if action == "attach" else "detached"
+    try:
+        subscriber = subprocess.Popen(["gz", "topic", "-e", "-t", state_topic, "-n", "1"],
+                                      stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    except OSError as exc:
+        raise BackendFailure("S506", f"Gazebo state subscription failed: {exc}") from exc
+    try:
+        time.sleep(0.5)
+        for _ in range(5):
+            subprocess.run(["gz", "topic", "-t", topic, "-m", "gz.msgs.Empty", "-p", ""],
+                           check=True, capture_output=True, text=True, timeout=10)
+            try:
+                output, errors = subscriber.communicate(timeout=2)
+            except subprocess.TimeoutExpired:
+                continue
+            if f'data: "{expected}"' in output:
+                return
+            raise BackendFailure("S506", f"Gazebo {action} reported an unexpected state: {output or errors}")
+        raise BackendFailure("S506", f"Gazebo {action} did not confirm {expected} after five requests")
+    except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired) as exc:
+        raise BackendFailure("S506", f"Gazebo {action} command failed: {exc}") from exc
+    finally:
+        if subscriber.poll() is None:
+            subscriber.terminate()
+            try:
+                subscriber.communicate(timeout=2)
+            except subprocess.TimeoutExpired:
+                subscriber.kill()
+                subscriber.communicate()
 
 
 def moveit_parameters(description: str) -> dict:
