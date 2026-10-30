@@ -13,9 +13,13 @@ cat /opt/ros/lyrical/share/ur_simulation_gz/config/ur_controllers.yaml >"$OUT/st
     && echo "robotiq xacro: expands" || echo "robotiq xacro: FAILED"; } 2>&1 | tee "$OUT/gripper_probe.txt"
 
 xvfb-run -a -s "-screen 0 1280x1024x24" setsid ros2 launch ur_simulation_gz ur_sim_control.launch.py \
-    ur_type:=ur5e initial_joint_controller:=joint_trajectory_controller controllers_file:=/opt/h3/config/controllers.yaml gazebo_gui:=false launch_rviz:=false world_file:=/opt/h3/world/h3_world.sdf \
+    ur_type:=ur5e initial_joint_controller:=joint_state_broadcaster controllers_file:=/opt/h3/config/controllers.yaml gazebo_gui:=false launch_rviz:=false world_file:=/opt/h3/world/h3_world.sdf \
     >"$OUT/launch.log" 2>&1 &
 LAUNCH=$!
+# On Lyrical the controller manager does not hand the YAML parameters to controllers loaded by the stock launch's
+# spawner (joints came out empty), so the trajectory controller is spawned here with --param-file.
+ros2 run controller_manager spawner joint_trajectory_controller -c /controller_manager \
+    --param-file /opt/h3/config/controllers.yaml --controller-manager-timeout 240 >"$OUT/spawner.log" 2>&1 &
 python3 /opt/h3/scripts/smoke.py --out "$OUT"
 RC=$?
 kill -INT "$LAUNCH" 2>/dev/null; sleep 3; pkill -TERM -f "gz sim" 2>/dev/null
