@@ -3,7 +3,7 @@
 The distribution version (this file) is independent of the language versions (1.1 to 1.4) and the Task IR schema
 versions (1.0 to 1.3). Decision records are in [`spec/decisions/`](https://github.com/rokorobot/RoboLang/tree/main/spec/decisions).
 
-## 0.2.0 (unreleased): first PyPI release
+## 0.2.0 (2026-10-30): first PyPI release
 
 Everything below is simulation only. No command drives a robot, loads an adapter or uses ROS 2.
 
