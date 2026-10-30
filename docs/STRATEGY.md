@@ -57,7 +57,7 @@ Development moves in days, so measurement does too.
 | When | What | Output | Cost |
 |---|---|---|---|
 | Every PR | CI (tests, lint, Windows, packaging) | Green or blocked | – |
-| Every PR that changes the language, Core, the bridge, the reference or the benchmark | GitHub Actions `Benchmark`: sets 1+2, full prompt, 1 repeat. The scores are posted on the PR; a floor in `bench/gate.json` fails the job (rule 2) | PR comment | ~$1 |
+| Every PR that changes the language, Core, the bridge, the reference or the benchmark | GitHub Actions `Benchmark`: sets 1+2, full prompt, 1 repeat, Sonnet and Haiku (Opus runs weekly; owner decision 2026-10-30), plus the Haiku→Sonnet cascade for information. The scores are posted on the PR; a floor in `bench/gate.json` fails the job (rule 2) | PR comment | ~$0.40 |
 | Weekly (Monday 06:00 UTC) | GitHub Actions `Benchmark`: sets 1+2, 3 repeats, plus set 2 with the grammar-only prompt for information | Artifact for 90 days | ~$4–6 |
 | Weekly (Monday, after the run) | A Cloudroom Loop reads the weekly results and the failed answers, adds a row to the [benchmark history](evidence/benchmark-history.md) and opens a PR with a short note. It stays open for the owner only when something regressed or a new failure pattern appears | PR, or nothing | – |
 | Monthly (first Monday) | Strategy review: pillars, horizon progress, kill or continue, dates | This page, with a dated note in section 6 | – |
