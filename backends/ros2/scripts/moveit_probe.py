@@ -1,5 +1,6 @@
 """Informational phase 2 integration probe while the phase 1 Gazebo graph is alive."""
 import json
+import gc
 import sys
 import traceback
 from pathlib import Path
@@ -29,6 +30,9 @@ except Exception as exc:
 finally:
     Path("/out/moveit_probe.json").write_text(json.dumps(result, indent=2))
     print(json.dumps(result, indent=2))
+    arm = None
+    robot = None
+    gc.collect()
     if rclpy.ok():
         rclpy.shutdown()
     sys.exit(0)  # informational until the executor integration is wired
