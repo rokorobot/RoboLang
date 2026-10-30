@@ -10,12 +10,9 @@ jobs:
     steps:
       - run: |
           apt-get update -qq
-          cat /etc/os-release | head -3
-          for p in ros-lyrical-ros-gz ros-lyrical-ur-simulation-gz ros-lyrical-ur-moveit-config ros-lyrical-moveit ros-lyrical-gz-ros2-control ros-lyrical-robotiq-description ros-lyrical-ros-gz-sim ros-lyrical-ur-robot-driver ros-lyrical-joint-trajectory-controller ros-lyrical-joint-state-broadcaster ros-lyrical-controller-manager xvfb mesa-utils; do
-            echo "== $p"; apt-cache policy $p | head -3
-          done
-          apt-cache search ros-lyrical-ur | head -20
-          apt-cache search gz-ros2-control | head
-          apt-cache search robotiq | head
-          apt-cache search apriltag | head
-          apt-cache search 'ros-lyrical-image-tools|ros-lyrical-ros-gz-image' | head
+          apt-get install -y -qq ros-lyrical-ur-simulation-gz ros-lyrical-robotiq-description >/dev/null 2>&1
+          d=/opt/ros/lyrical/share/ur_simulation_gz
+          find $d -type f | head -50
+          cat $d/launch/ur_sim_control.launch.py
+          ls /opt/ros/lyrical/share/robotiq_description /opt/ros/lyrical/share/robotiq_description/*
+          cat $d/config/ur_controllers.yaml | head -60
