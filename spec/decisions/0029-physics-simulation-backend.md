@@ -1,8 +1,8 @@
 # Decision record 0029: H3, a ROS 2 execution backend in physics simulation
 
 **Date:** 2026-10-30
-**Status:** **PROPOSED.** Design only, for owner decision. No code. **Physical execution stays unauthorized**
-(development plan A5; strategy H4).
+**Status:** **APPROVED by the owner, 2026-10-30**, with the recommended option for X1–X10 and the stack in section 6.
+Design only: no code yet. **Physical execution stays unauthorized** (development plan A5; strategy H4).
 **Applies to (when decided):** a new optional package `robolang-ros2` (not part of `pip install robolang`), a new
 `spec/ros2-backend-v0.1.md`, the run record (a `backend` field), a CI workflow, and benchmark acceptance.
 **Evidence and direction:** [STRATEGY](../../docs/STRATEGY.md) pillar P4 and horizon H3 ("one benchmark task family
@@ -77,3 +77,23 @@ the first step towards real execution, and still moves nothing real.
 - **INTEROP-3** relaunches on frozen Core 0.2 within H3 ([0023](0023-keep-interop-3-deferred.md)). It is not planned
   here and needs an outside implementer.
 - **Physical mode** remains out of scope until H4. This record adds no way to reach hardware.
+
+## 6. The stack (decided, 2026-10-30)
+
+Checked on index.ros.org on 2026-10-30. Every package is released as a binary for Lyrical:
+
+| Part | Package | Lyrical | Role |
+|---|---|---|---|
+| ROS 2 | `ros:lyrical` container (Ubuntu 26.04) | LTS to May 2031 | X2 |
+| Simulator | Gazebo Jetty through `ros_gz` | binaries from packages.ros.org | X1 |
+| Robot | Universal Robots arm: `ur_simulation_gz` 2.5.0, `ur_moveit_config` 6.2.0 | released | X3 |
+| Planning | `moveit` 2.15.2 | released | X4 |
+| Control in simulation | `gz_ros2_control` 4.0.1 | released | X4 |
+| Gripper | `robotiq_description` 0.0.1 (a model only): we add a small `gz_ros2_control` controller config | released | X4, X5 |
+| Holding | Gazebo's detachable-joint system, triggered after the gripper closes | built in | X5 |
+
+`gz_ros2_control` is a ros2_control hardware plugin, so the controllers and MoveIt talk to the simulated arm exactly
+as they would to a real one. Moving to hardware later (H4, only with owner authorization) swaps that plugin for UR's
+real driver; the executor and the `.rob` do not change. The Jazzy/Harmonic fallback (X2) stays as a contingency only,
+if phase 1 finds that these packages do not work together. Phase 1 also checks camera rendering and fiducial
+detection (X6, section 5).
