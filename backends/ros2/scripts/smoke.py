@@ -20,7 +20,7 @@ from trajectory_msgs.msg import JointTrajectoryPoint
 
 JOINTS = ["shoulder_pan_joint", "shoulder_lift_joint", "elbow_joint", "wrist_1_joint", "wrist_2_joint", "wrist_3_joint"]
 TARGET = [0.5, -1.2, 1.2, -1.57, -1.57, 0.0]
-ACTION = "/scaled_joint_trajectory_controller/follow_joint_trajectory"
+ACTION = "/joint_trajectory_controller/follow_joint_trajectory"
 
 
 class Smoke(Node):
