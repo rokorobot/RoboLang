@@ -93,10 +93,21 @@ class ROSOperations:
         self.model = model
         # MoveItPy can contact controllers while loading. Construct it only after every graph check passes.
         try:
+            from control_msgs.action import FollowJointTrajectory
             from moveit.planning import MoveItPy
+            from rclpy.action import ActionClient
             parameters = moveit_parameters(self.description)
             self.planner = MoveItPy(node_name="robolang_moveit", config_dict=parameters)
             self.arm = self.planner.get_planning_component("ur_manipulator")
+            arm_server = ActionClient(self.node, FollowJointTrajectory,
+                                      "/joint_trajectory_controller/follow_joint_trajectory")
+            if not self._until(arm_server.server_is_ready, 20):
+                raise BackendFailure("S503", "arm trajectory controller unavailable")
+            # MoveIt's own action client is created separately and does not wait for DDS discovery.
+            # Give that client time to discover the already-active controller before first execution.
+            time.sleep(2)
+        except BackendFailure:
+            raise
         except Exception as exc:
             raise BackendFailure("S502", f"MoveIt did not start: {exc}") from exc
 
