@@ -1,4 +1,4 @@
-# H3 phase 1 harness image (decision record 0029, section 6). SIMULATION ONLY: nothing here can address hardware.
+# H3 Gazebo backend image (decision record 0029). SIMULATION ONLY: nothing here can address hardware.
 # Build context: repository root
 FROM ros:lyrical
 

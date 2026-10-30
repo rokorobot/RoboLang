@@ -1,5 +1,5 @@
 #!/bin/bash
-# Start the UR5e + scene in headless Gazebo (software rendering), run the smoke test, stop everything.
+# Start the UR5e scene in headless Gazebo, check arm and camera, run the RoboLang transfer, stop everything.
 # Simulation only: this launches the Gazebo model; there is no code path to a real controller.
 OUT=${OUT:-/out}
 mkdir -p "$OUT"

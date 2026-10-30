@@ -1,4 +1,4 @@
-# ros2_control controllers for the simulated UR5e (phase 1).
+# ros2_control controllers for the simulated UR5e and Robotiq gripper.
 # The stock ur_simulation_gz 2.5.0 config on Lyrical declares ur_controllers/ScaledJointTrajectoryController, which the
 # controller manager cannot load there, and has no parameters for joint_trajectory_controller. This file replaces it.
 controller_manager:

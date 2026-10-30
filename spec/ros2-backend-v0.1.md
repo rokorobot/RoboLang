@@ -1,6 +1,6 @@
 # RoboLang ROS 2 / Gazebo backend 0.1
 
-**Status:** phase 2 implementation in progress; decision [0029](decisions/0029-physics-simulation-backend.md) approved by the owner. This specification covers the executor, not the phase 3 sensor verdicts.
+**Status:** phase 2 implementation verified in the [integration run](../docs/evidence/h3-phase2-executor.md); decision [0029](decisions/0029-physics-simulation-backend.md) approved by the owner. This specification covers the executor, not the phase 3 sensor verdicts.
 
 ## Scope and safety boundary
 
@@ -30,6 +30,8 @@ The detachable joint is a simulation expedient. The installed Jetty build starts
 ## Record
 
 Each attempt writes a JSON record with `mode: simulation`, `backend.kind: ros2-gazebo`, resolved package versions, Task IR, bindings, ordered step results, failure code, and each goal condition marked `not_evaluated`. Until phase 3 can evaluate goals from sensor observations, completed steps produce `state: UNKNOWN` and no successful Core outcome. A backend failure produces `state: FAILED`. The CLI exits 3 for `UNKNOWN` and 1 for `FAILED`; it never reports unverified completion as exit 0. The symbolic simulator's records remain byte-identical. Phase 3 will add the observation verdict and the full Core outcome without using Gazebo ground truth as evidence.
+
+The Lyrical MoveItPy 2.15.2 binding can crash during Python interpreter teardown after successful execution. The dedicated CLI process writes and closes its record, flushes output, then exits directly with the documented status; it does not destroy MoveItPy in the same process.
 
 ## Verification
 

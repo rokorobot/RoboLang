@@ -8,7 +8,7 @@ The phase 1 arm and camera findings are in [the harness report](../../docs/evide
 
 ## Run the integration test
 
-The on-demand and nightly `ros2-sim.yml` workflow builds the image, runs the arm and camera smoke test, then executes [`transfer.rob`](examples/transfer.rob). It uploads logs and a JSON run record as the `ros2-sim-results` artifact. The record keeps goal status `not_evaluated` until phase 3 adds sensor observations; completed motion steps therefore exit with code 3, not success.
+The on-demand and nightly `ros2-sim.yml` workflow builds the image, runs the arm and camera smoke test, then executes [`transfer.rob`](examples/transfer.rob). It uploads logs and a JSON run record as the `ros2-sim-results` artifact. Each goal condition stays `not_evaluated` until phase 3 adds sensor observations; completed motion steps therefore exit with code 3, not success. [Phase 2 evidence](../../docs/evidence/h3-phase2-executor.md) records the green integration run.
 
 On an amd64 host with Docker:
 
