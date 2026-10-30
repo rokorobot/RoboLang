@@ -20,8 +20,13 @@ LAUNCH=$!
 # spawner (joints came out empty), so the trajectory controller is spawned here with --param-file.
 ros2 run controller_manager spawner joint_trajectory_controller -c /controller_manager \
     --param-file /opt/h3/config/controllers.yaml --controller-manager-timeout 240 >"$OUT/spawner.log" 2>&1 &
+# Camera frames: Gazebo topic -> ROS 2 (the stock launch only bridges /clock).
+ros2 run ros_gz_bridge parameter_bridge /overhead_camera/image@sensor_msgs/msg/Image[gz.msgs.Image \
+    >"$OUT/camera_bridge.log" 2>&1 &
 python3 /opt/h3/scripts/smoke.py --out "$OUT"
 RC=$?
+# Gazebo-side view of the camera, for the findings doc (header of one frame only).
+timeout 20 gz topic -e -t /overhead_camera/image -n 1 2>&1 | head -c 400 >"$OUT/gz_camera_topic.txt"
 kill -INT "$LAUNCH" 2>/dev/null; sleep 3; pkill -TERM -f "gz sim" 2>/dev/null
 tail -n 60 "$OUT/launch.log"
 exit $RC
