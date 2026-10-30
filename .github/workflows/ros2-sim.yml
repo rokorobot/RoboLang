@@ -26,6 +26,8 @@ jobs:
         run: |
           mkdir -p out
           docker run --rm -v "$PWD/out:/out" robolang-ros2-harness /opt/h3/scripts/run_smoke.sh
+      - name: Probe phase 2 package interfaces
+        run: docker run --rm -v "$PWD/out:/out" robolang-ros2-harness /opt/h3/scripts/probe_phase2.sh
       - name: Summary
         if: always()
         run: |
