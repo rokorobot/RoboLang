@@ -1,6 +1,6 @@
 # RoboLang Core 0.2 fixtures
 
-Conformance fixtures for the [Core 0.2 draft](../../../spec/core-v0.2-draft.md) (decision
+Conformance fixtures for the [Core 0.2 draft](../../../spec/core-v0.2.md) (decision
 [0028](../../../spec/decisions/0028-core-0-2-scope.md) section 4, criterion 2). `tests/test_core_v02.py` runs them
 against `robolang.core`. The 0.1 fixtures in [`../core/`](../core/README.md) are unchanged.
 

@@ -1,5 +1,5 @@
 """
-Tests for Core 0.2 documents (spec/core-v0.2-draft.md, decision 0028): the 0.2 message schema, the
+Tests for Core 0.2 documents (spec/core-v0.2.md, decision 0028): the 0.2 message schema, the
 checks in robolang.core, and the conformance fixtures in tests/fixtures/core_v02/.
 
 Every rule and code of the draft has a fixture; 0.1 documents keep their 0.1 receipts.

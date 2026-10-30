@@ -2,7 +2,7 @@
 
 **Status:** implemented in `src/robolang/delegate.py` (PR B of N5); decision [0028](decisions/0028-core-0-2-scope.md) C5, C8.
 **Builds on:** [delegate v0.1](delegate-v0.1.md) and [v0.2](delegate-v0.2.md) (read them first; this adds to them),
-[Core 0.2 draft](core-v0.2-draft.md), [export-goal 6](export-goal-v0.1.md).
+[Core 0.2 draft](core-v0.2.md), [export-goal 6](export-goal-v0.1.md).
 
 **Why a separate file.** The delegate *record* has its own version (`0.1`, or `0.2` when a peer took part, v0.2 above). Core
 0.2 is a different axis: the version of the messages. Calling this "delegate v0.3" would say the record changed

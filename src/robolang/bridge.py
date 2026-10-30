@@ -165,7 +165,7 @@ def goal_triples(task: ir.Task, bindings: dict[str, str]) -> tuple[Triple, ...]:
     return tuple(triples)
 
 
-# -------- Core 0.2: alternatives (spec/core-v0.2-draft.md section 7, decision 0028 C6) --------
+# -------- Core 0.2: alternatives (spec/core-v0.2.md section 7, decision 0028 C6) --------
 
 MAX_ALTERNATIVES = 16  # decision 0028 Q2
 

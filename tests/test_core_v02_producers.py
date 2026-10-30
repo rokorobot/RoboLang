@@ -1,5 +1,5 @@
 """
-Core 0.2 producers (spec/core-v0.2-draft.md, decision 0028 C5, C6 and the producer side of C1 to C3, PR B):
+Core 0.2 producers (spec/core-v0.2.md, decision 0028 C5, C6 and the producer side of C1 to C3, PR B):
 `export-goal --core 0.2`, the simulated outcome, `delegate --core 0.2` and the benchmark family that exports
 "any of" goals (freeze criterion 3). Core 0.1 output stays byte for byte what it was.
 """

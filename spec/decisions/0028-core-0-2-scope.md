@@ -1,9 +1,9 @@
 # Decision record 0028: Core 0.2, scope and compatibility (N5)
 
 **Date:** 2026-10-30
-**Status:** **APPROVED by the owner, 2026-10-30**, with the recommended option for C1–C10 and the answers in section 6.
+**Status:** **APPROVED and FROZEN by the owner, 2026-10-30**, with the recommended option for C1–C10 and the answers in section 6.
 Spec only: no code, no schema file and nothing in `src/` changes. Core 0.2 is not frozen until section 4 holds.
-**Applies to (when decided):** [`core-v0.2-draft.md`](../core-v0.2-draft.md) (this record's delta over
+**Applies to (when decided):** [`core-v0.2.md`](../core-v0.2.md) (this record's delta over
 [`core-v0.1.md`](../core-v0.1.md)), later `spec/core/message-0.2.schema.json`, `export-goal`, `delegate`, the simulation
 outcome ([`simulation-v1.0.md`](../simulation-v1.0.md) 10.5, 12.4)
 **Evidence:** [set 2 analysis](../../docs/evidence/bench-set2-analysis.md) F2 (models write `or` for "one of the
@@ -116,6 +116,5 @@ PR B (producers) is done: `export-goal --core 0.2` (and `bridge.goal_alternative
 simulated outcome with `met_alternative` and `declared`, `delegate --core 0.2` (alternatives matched as sets and
 re-indexed, the planner re-evaluates the claimed alternative and checks completeness), and the benchmark family test
 (`tests/test_core_v02_producers.py`: every set 3 and set 2 `branching` reference task, and the F2 tasks written with
-`or`). Criterion 1 and the producer half of criterion 3 now exist in code. Still open for the freeze: the owner's
-approval of the text and fixtures (criterion 5), and the reading of the choices listed in the PR B description. Core 0.2
-is **implemented, not frozen**.
+`or`). Criterion 1 and the producer half of criterion 3 now exist in code. The owner approved the text, the fixtures and the PR B choices (including the pursued
+alternative of an `or` goal), and **froze Core 0.2 on 2026-10-30** ([`core-v0.2.md`](../core-v0.2.md)).
