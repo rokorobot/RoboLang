@@ -12,7 +12,7 @@ source /opt/ros/lyrical/setup.bash
     && echo "robotiq xacro: expands" || echo "robotiq xacro: FAILED"; } 2>&1 | tee "$OUT/gripper_probe.txt"
 
 xvfb-run -a -s "-screen 0 1280x1024x24" setsid ros2 launch ur_simulation_gz ur_sim_control.launch.py \
-    ur_type:=ur5e gazebo_gui:=false launch_rviz:=false world_file:=/opt/h3/world/h3_world.sdf \
+    ur_type:=ur5e initial_joint_controller:=joint_trajectory_controller gazebo_gui:=false launch_rviz:=false world_file:=/opt/h3/world/h3_world.sdf \
     >"$OUT/launch.log" 2>&1 &
 LAUNCH=$!
 python3 /opt/h3/scripts/smoke.py --out "$OUT"
