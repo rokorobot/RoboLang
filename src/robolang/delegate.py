@@ -74,6 +74,8 @@ class _Match:
     task: ir.Task
     world: World
     order: tuple[int, ...]  # order[i]: the index in the proposed desired_state of local goal condition i
+    # Core 0.2: for local alternative i, (its index in the proposal, the proposed index of each of its criteria)
+    index_of: tuple[tuple[int, tuple[int, ...]], ...] | None
     peer: str | None  # the world ID of the one other robot the task binds, if any
 
 
@@ -104,8 +106,29 @@ def _plain(receipt: Receipt) -> dict:
 
 # -------- the robot's side: matching a goal to a local plan --------
 
+Alternatives = tuple[tuple[bridge.Triple, ...], ...]
+
+
+def _match_alternatives(local: Alternatives, proposed: Alternatives) -> tuple[tuple[int, tuple[int, ...]], ...] | None:
+    """
+    Core 0.2 (decision 0028 C5): the task's alternatives equal the proposal's as sets of alternatives, each a set
+    of triples (no alternative repeats a triple). Returns the re-indexing `Match.index_of`, or None when they differ.
+    """
+    sets = [frozenset(alternative) for alternative in proposed]
+    if len(local) != len(proposed) or len(set(sets)) != len(sets) \
+            or any(len(set(a)) != len(a) for a in (*local, *proposed)):
+        return None
+    index_of = []
+    for alternative in local:
+        position = next((i for i, s in enumerate(sets) if s == frozenset(alternative)), None)
+        if position is None:
+            return None
+        index_of.append((position, tuple(proposed[position].index(t) for t in alternative)))
+    return tuple(index_of) if len({i for i, _ in index_of}) == len(index_of) else None
+
+
 def _consider(plan: Plan, task: ir.Task, robot_world: bytes, world_name: str, robot_entity: str | None,
-              proposed: tuple[bridge.Triple, ...]) -> tuple[str, _Match | None]:
+              proposed: Alternatives, core: str) -> tuple[str, _Match | None]:
     """How one library task relates to the proposed goal, and the match if it is one."""
     if task.goal is None:
         return "no_goal", None
@@ -114,11 +137,18 @@ def _consider(plan: Plan, task: ir.Task, robot_world: bytes, world_name: str, ro
     except WorldError as error:
         return f"world_{error.code}", None
     bindings = dict(world.task.bindings)
+    index_of = None
     try:
-        triples = bridge.goal_triples(task, bindings)
+        if core == "0.2":
+            index_of = _match_alternatives(bridge.alternative_triples(task, bindings), proposed)
+        else:
+            triples = bridge.goal_triples(task, bindings)
     except bridge.NotExportable:
         return "no_core_form", None
-    if len(set(triples)) != len(triples) or set(triples) != set(proposed) or len(triples) != len(proposed):
+    if core == "0.2":
+        if index_of is None:
+            return "goal_differs", None  # the same alternatives, in any order, each the same triples in any order
+    elif len(set(triples)) != len(triples) or set(triples) != set(proposed[0]) or len(triples) != len(proposed[0]):
         return "goal_differs", None  # the same triples, in any order
     robots = {bindings[p.name] for p in task.parameters if p.type == "robot"}
     if robot_entity not in robots:
@@ -128,7 +158,8 @@ def _consider(plan: Plan, task: ir.Task, robot_world: bytes, world_name: str, ro
     if len(robots) > 2:
         return "robots_unsupported", None  # at most one peer takes part (spec/delegate-v0.2.md)
     peer = next(iter(robots - {robot_entity}), None)
-    return "matched", _Match(plan, task, world, tuple(proposed.index(t) for t in triples), peer)
+    order = () if index_of else tuple(proposed[0].index(t) for t in triples)
+    return "matched", _Match(plan, task, world, order, index_of, peer)
 
 
 def _robot_entity(recipient: str) -> str | None:
@@ -183,6 +214,8 @@ def verify_outcome(goal: Mapping, message: Mapping, keys: Mapping[str, Key]) -> 
     `evaluated_at` within `max_age` and the observation's own `valid_for`). `succeeded` is the verdict
     only if the robot claimed it and all of that holds. Returns `{status, criteria, reasons}`.
     """
+    if goal.get("alternatives") is not None:
+        return _verify_outcome_02(goal, message, keys)
     payload = message["payload"]
     outcome = payload["outcome"]
     verification = outcome["verification"]
@@ -204,6 +237,49 @@ def verify_outcome(goal: Mapping, message: Mapping, keys: Mapping[str, Key]) -> 
     return {"status": status, "criteria": criteria, "reasons": reasons}
 
 
+def _verify_outcome_02(goal: Mapping, message: Mapping, keys: Mapping[str, Key]) -> dict:
+    """
+    `verify_outcome` for a Core 0.2 goal (draft section 3). The planner re-evaluates the *claimed* alternative
+    (`met_alternative`) from the cited evidence and checks that the outcome is complete: every criterion of that
+    alternative has a result. Other alternatives are evaluated, and listed, only where the outcome gives a result.
+    An unknown alternative or criterion, or a claim the evidence does not support, is `claim_not_supported`.
+    Returns `{status, met_alternative, criteria, reasons}`; each criterion has an `alternative`.
+    """
+    payload = message["payload"]
+    outcome = payload["outcome"]
+    verification = outcome["verification"]
+    evidence = {o["id"]: o for o in payload["evidence"]}
+    results = {(r["alternative"], r["criterion"]): r for r in verification["criteria_results"]} if verification else {}
+    claimed_alt = verification["met_alternative"] if verification else None
+    evaluated_ms = time_ms(verification["evaluated_at"]) if verification else None
+    alternatives = goal["alternatives"]
+    reasons = []
+    if outcome["goal"] != goal["id"]:
+        reasons.append({"code": "goal_mismatch"})
+    if outcome["reported_by"] != message["sender"]:
+        reasons.append({"code": "reporter_mismatch"})
+    if claimed_alt is not None and claimed_alt >= len(alternatives):
+        reasons.append({"code": "claim_not_supported", "alternative": claimed_alt})
+    criteria = []
+    for a, alternative in enumerate(alternatives):
+        for c, criterion in enumerate(alternative["success_criteria"]):
+            if a != claimed_alt and (a, c) not in results:
+                continue
+            verdict = dict(_evaluate(c, criterion, results.get((a, c)), evidence, keys, evaluated_ms), alternative=a)
+            criteria.append(verdict)
+            incomplete = a == claimed_alt and (a, c) not in results and outcome["status"] == "succeeded"
+            if incomplete or verdict["met"] != bool(results.get((a, c), {}).get("met")):
+                reasons.append({"code": "claim_not_supported", "alternative": a, "criterion": c})
+    reasons += [{"code": "claim_not_supported", "alternative": a, "criterion": c} for a, c in results
+                if a >= len(alternatives) or c >= len(alternatives[a]["success_criteria"])]
+    claimed = outcome["status"]
+    holds = not reasons and claimed_alt is not None \
+        and all(c["met"] for c in criteria if c["alternative"] == claimed_alt)
+    status = ("succeeded" if holds else "unknown") if claimed == "succeeded" else claimed
+    return {"status": status, "met_alternative": claimed_alt if holds else None, "criteria": criteria,
+            "reasons": reasons}
+
+
 # -------- the exchange --------
 
 class _Exchange:
@@ -212,6 +288,7 @@ class _Exchange:
         self.proposal = proposal
         self.planner, self.robot = proposal["sender"], proposal["recipient"]
         self.goal = proposal["payload"]["goal"]
+        self.core = proposal["schema_version"]  # every message of the exchange speaks the version of the proposal
         self.library, self.robot_world, self.robot_world_name = library, robot_world, robot_world_name
         self.intercept, self.lease_ms = intercept, lease_ms
         self.peer: str | None = None
@@ -237,7 +314,7 @@ class _Exchange:
         sent_at = bridge.core_time(sent_ms)
         message = {
             "schema": "robolang.core.message",
-            "schema_version": "0.1",
+            "schema_version": self.core,
             "message_id": "m-" + _digest(MESSAGE_ID_TAG, sender, recipient, conversation, sequence)[:32],
             "conversation_id": conversation,
             "sequence": sequence,
@@ -268,7 +345,7 @@ class _Exchange:
         at_ms = sent_ms + LATENCY_MS
         context = Context(receiver=message["recipient"], now_ms=time_ms(bridge.core_time(at_ms)),
                           clock_tolerance_ms=CLOCK_TOLERANCE_MS, max_message_lifetime_ms=MAX_MESSAGE_LIFETIME_MS,
-                          keys=self.trust(message["recipient"]))
+                          keys=self.trust(message["recipient"]), versions=frozenset({self.core}))
         receipt = check_message(json.dumps(message, ensure_ascii=True).encode("ascii"), context)
         stream = (message["sender"], message["recipient"])
         if receipt.accepted and message["sequence"] != self.expected.get(stream, 1):
@@ -289,12 +366,15 @@ class _Exchange:
     # -- robot --
 
     def find_plan(self, t_ms: int) -> _Match | None:
-        proposed = tuple(bridge.Triple(d["subject"], d["property"], d["value"]) for d in self.goal["desired_state"])
+        goals = self.goal["alternatives"] if self.core == "0.2" else [self.goal]
+        proposed = tuple(tuple(bridge.Triple(d["subject"], d["property"], d["value"]) for d in g["desired_state"])
+                         for g in goals)
         entity = _robot_entity(self.robot)
         considered, found = [], None
         for plan in self.library:
             for task in plan.tasks:
-                result, found = _consider(plan, task, self.robot_world, self.robot_world_name, entity, proposed)
+                result, found = _consider(plan, task, self.robot_world, self.robot_world_name, entity, proposed,
+                                          self.core)
                 considered.append({"file": plan.path, "task": task.name, "result": result})
                 if found is not None:
                     break
@@ -323,7 +403,8 @@ class _Exchange:
         self.event(end_ms, self.robot, "run_ended", state=result.state,
                    failure=result.failure.code if result.failure else None)
         payload = core_outcome(result, match.task, identifier, goal_id=self.goal["id"], reported_by=self.robot,
-                               t0_ms=start_ms + pause_ms, criterion_of=match.order)
+                               t0_ms=start_ms + pause_ms, criterion_of=match.order,
+                               core=self.core, index_of=match.index_of)
         return payload, end_ms
 
     def run_plan(self, match: _Match, start_ms: int) -> tuple[dict, int]:
@@ -559,7 +640,7 @@ class _Exchange:
 def delegate(task: ir.Task, world: World, *, sender: str, recipient: str, library: Sequence[Plan],
              robot_world: bytes, robot_world_name: str = "<robot world>",
              intercept: Callable[[dict], dict] | None = None, mode: str = "simulation",
-             lease_ms: int = DEFAULT_LEASE_MS) -> Delegation:
+             lease_ms: int = DEFAULT_LEASE_MS, core: str = "0.1") -> Delegation:
     """
     Export `task`'s goal as a signed `propose_goal` from `sender` to `recipient`, let the robot match it
     to a task of its `library` (bound by `robot_world`), run that task, report the outcome, and let the
@@ -567,9 +648,10 @@ def delegate(task: ir.Task, world: World, *, sender: str, recipient: str, librar
     tampering. Raises DelegateError (D701) for any `mode` but `simulation`: Core 0.1 never accepts physical,
     and `export_goal.ExportError` or `bridge.NotExportable` for a goal without a Core form. When the
     matched task binds a second robot, that robot is the peer: the robot asks it for help, and `lease_ms`
-    is the lease the peer offers (spec/delegate-v0.2.md).
+    is the lease the peer offers (spec/delegate-v0.2.md). `core` is the Core version of every message,
+    "0.1" (default) or "0.2" (alternatives; spec/delegate-core-0.2.md).
     """
     if mode != "simulation":
         raise DelegateError("D701", f"mode '{mode}' is refused: delegate runs in simulation only")
-    proposal = export_goal(task, world, sender=sender, recipient=recipient).message
+    proposal = export_goal(task, world, sender=sender, recipient=recipient, core=core).message
     return _Exchange(proposal, library, robot_world, robot_world_name, intercept, lease_ms).finish()

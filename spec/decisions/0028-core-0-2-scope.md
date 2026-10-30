@@ -112,4 +112,10 @@ export `or`), C7 and C8 (version rules, no negotiation), and the freeze criteria
 
 PR A (documents) is done: `spec/core/message-0.2.schema.json`, the 0.2 checks in `robolang.core` and the conformance
 fixtures in `tests/fixtures/core_v02/` (freeze criterion 2, fixtures; criterion 1, the schema and `robolang.core`).
-PR B (producers: `export-goal`, the simulated outcome, `delegate`, the bridge, the benchmark family) is open.
+PR B (producers) is done: `export-goal --core 0.2` (and `bridge.goal_alternatives`), `simulate --core 0.2` and the
+simulated outcome with `met_alternative` and `declared`, `delegate --core 0.2` (alternatives matched as sets and
+re-indexed, the planner re-evaluates the claimed alternative and checks completeness), and the benchmark family test
+(`tests/test_core_v02_producers.py`: every set 3 and set 2 `branching` reference task, and the F2 tasks written with
+`or`). Criterion 1 and the producer half of criterion 3 now exist in code. Still open for the freeze: the owner's
+approval of the text and fixtures (criterion 5), and the reading of the choices listed in the PR B description. Core 0.2
+is **implemented, not frozen**.

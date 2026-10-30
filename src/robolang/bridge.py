@@ -56,7 +56,9 @@ class Triple:
 
 
 class NotExportable(ValueError):
-    """The goal has a condition without a Core 0.1 form. `index` counts goal conditions from 1."""
+    """The goal has a condition without a Core form. `index` counts goal conditions from 1. `code` is the X6xx code."""
+
+    code = "X601"
 
     def __init__(self, index: int, kind: str):
         super().__init__(f"goal condition {index} ('{kind}') has no RoboLang Core 0.1 form")
@@ -121,11 +123,13 @@ def path_goals(task: ir.Task) -> list[tuple[str, tuple[ir.Condition, ...] | None
 class PathsDiffer(NotExportable):
     """A branching task whose paths do not all have one goal: Core 0.1 cannot state "any of" (decision 0027 B7)."""
 
+    code = "X603"
+
     def __init__(self, detail: str):
         ValueError.__init__(
             self,
             f"the paths of the plan do not all have the same goal ({detail}); Core 0.1 cannot state \"any of\" "
-            "goals (decision 0027 B7, waiting for Core 0.2)",
+            "goals (decision 0027 B7); Core 0.2 can: use --core 0.2",
         )
         self.index = 0
         self.kind = "paths"
@@ -159,3 +163,76 @@ def goal_triples(task: ir.Task, bindings: dict[str, str]) -> tuple[Triple, ...]:
         assert triple is not None  # goal_atoms admits only the three mapped outcome atom types
         triples.append(triple)
     return tuple(triples)
+
+
+# -------- Core 0.2: alternatives (spec/core-v0.2-draft.md section 7, decision 0028 C6) --------
+
+MAX_ALTERNATIVES = 16  # decision 0028 Q2
+
+
+class TooManyAlternatives(NotExportable):
+    """The goal has more distinct alternatives than Core 0.2 allows (decision 0028 Q2)."""
+
+    code = "X604"
+
+    def __init__(self, count: int):
+        ValueError.__init__(
+            self, f"the goal has {count} distinct alternatives; Core 0.2 allows at most {MAX_ALTERNATIVES}")
+        self.index = 0
+        self.kind = "alternatives"
+
+
+class NoAlternative(NotExportable):
+    """Every path of the plan ends in `fail`: the goal has no alternative to reach."""
+
+    def __init__(self):
+        ValueError.__init__(self, "every path of the plan ends in fail, so the goal has no alternative")
+        self.index = 0
+        self.kind = "fail"
+
+
+class NeedsCore02(NotExportable):
+    """The goal is exportable only as two or more alternatives, which Core 0.1 cannot state (decision 0028 C8)."""
+
+    def __init__(self, original: NotExportable, count: int):
+        ValueError.__init__(
+            self, f"{original}; the goal has {count} alternatives, which Core 0.1 cannot state: use --core 0.2")
+        self.index, self.kind, self.code = original.index, original.kind, original.code
+
+
+def alternatives_of(conditions: tuple[ir.Condition, ...]) -> list[tuple[ir.Condition, ...]]:
+    """
+    The alternatives (each a tuple of outcome atoms in source order) of one effective goal: a single top-level
+    `or` gives one per operand, anything else is one conjunction. Raises NotExportable for any other form.
+    """
+    if len(conditions) == 1 and isinstance(conditions[0], ir.Or):
+        try:
+            return [flatten_atoms((operand,)) for operand in conditions[0].conditions]
+        except NotExportable as error:
+            raise NotExportable(1, error.kind) from None  # the whole `or` is goal condition 1
+    return [flatten_atoms(conditions)]
+
+
+def goal_alternatives(task: ir.Task, bindings: dict[str, str]) -> tuple[tuple[ir.Condition, ...], ...]:
+    """
+    The alternatives of the task's goal for Core 0.2 (decision 0028 C6): the distinct effective goals of its
+    paths, depth-first with `then` before `else` (source order); a path ending in `fail` adds none; goals with the
+    same set of triples are one alternative (the first one's atom order is kept); a top-level `or` adds one
+    alternative per operand. At most 16 (TooManyAlternatives). Raises NotExportable for any other condition.
+    """
+    if task.goal is None:
+        raise NotExportable(0, "no goal")
+    found: dict[frozenset[Triple], tuple[ir.Condition, ...]] = {}
+    for _, goal in path_goals(task):
+        for atoms in () if goal is None else alternatives_of(goal):
+            found.setdefault(frozenset(triple_of(atom, bindings) for atom in atoms), atoms)
+    if not found:
+        raise NoAlternative()
+    if len(found) > MAX_ALTERNATIVES:
+        raise TooManyAlternatives(len(found))
+    return tuple(found.values())
+
+
+def alternative_triples(task: ir.Task, bindings: dict[str, str]) -> tuple[tuple[Triple, ...], ...]:
+    """`goal_alternatives` as triples, one tuple per alternative; triple i is criterion i of that alternative."""
+    return tuple(tuple(triple_of(atom, bindings) for atom in atoms) for atoms in goal_alternatives(task, bindings))

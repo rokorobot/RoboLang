@@ -7,8 +7,10 @@
 >
 > **Implementation status.** PR A (documents): [`core/message-0.2.schema.json`](core/message-0.2.schema.json), the
 > 0.2 checks in `robolang.core` (`C102`, `C103`, `C104`, `C402`, `C405`; a receiver is configured for the versions it
-> speaks) and the conformance fixtures are done. PR B (producers): `export-goal`, the simulated outcome with
-> `met_alternative` and `declared`, `delegate` and the bridge are not done; section 7 is still a plan.
+> speaks) and the conformance fixtures are done. PR B (producers) is done: `export-goal --core 0.2`, the simulated
+> outcome with `met_alternative` and `declared` (`simulate --core 0.2`), `delegate --core 0.2` and the bridge
+> (section 7 is now implemented; see [export-goal 6](export-goal-v0.1.md) and [delegate-core-0.2](delegate-core-0.2.md)).
+> Implemented, not frozen.
 
 **Reads with:** [`core-v0.1.md`](core-v0.1.md). Everything in 0.1 that this page does not name is unchanged, with its
 section numbers. A 0.2 text would be the 0.1 text with this delta applied.
@@ -105,11 +107,15 @@ Amends 0.1 section 5.9. `status`, `reasons`, `reported_by` and `reported_at` are
 
 Rules:
 
-- `met_alternative` names the alternative the robot **pursued**: for a 1.4 task, the path it took. When it is not
+- `met_alternative` names the alternative the robot **pursued**: for a branching 1.4 task, the path it took. A goal
+  that is itself an `or` (no branch decision; any alternative is what was asked) pursues the **first alternative
+  whose criteria all hold** at the end, or none; its outcome lists every alternative's results. When it is not
   `null`, `criteria_results` should list every criterion of that alternative, each with its `met`, and may also list
   others. A stateless receiver cannot count an alternative's criteria, so it checks only what it can: a
   `succeeded` outcome whose `criteria_results` contain **no** entry for `met_alternative`, or any unmet one, is
-  `C402`. The receiver that holds the goal checks completeness when it re-evaluates.
+  `C402`. The receiver that holds the goal checks completeness when it re-evaluates: there, a `succeeded` claim with
+  a result missing for the claimed alternative, or naming an unknown alternative or criterion, is
+  `claim_not_supported` and the planner's verdict is `unknown` ([delegate-core-0.2.md](delegate-core-0.2.md)).
 - `succeeded` requires a verification whose `met_alternative` is not `null` and whose results for that alternative are
   all `met` (`C402`). A `succeeded` with `verification: null` is `C402` as in 0.1.
 - Another alternative that holds never makes an outcome `succeeded`. A run that took path A and ended with only path
@@ -209,5 +215,6 @@ How a `.rob` task maps to alternatives, for the implementation that follows (not
   inside a path's goal are flattened in order, as now ([`export-goal-v0.1.md`](export-goal-v0.1.md) section 2).
 - A path that ends in `fail` adds no alternative. If it is taken, the run reports `failed` with a `declared` reason.
 - A top-level `or` of conjunctions of `object_at`, `robot_at` and `holding` is one alternative per operand. `not` and
-  other atoms keep `X601`. `X603` would no longer be raised.
+  other atoms keep `X601`. With `--core 0.2`, `X603` is no longer raised; with Core 0.1 (the default) it stays, and
+  its message says to use `--core 0.2`. More than 16 alternatives is `X604`.
 - A task with no alternative left (every path ends in `fail`) has no goal and is not exportable.
