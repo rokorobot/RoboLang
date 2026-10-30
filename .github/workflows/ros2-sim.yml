@@ -5,8 +5,6 @@ on:
   workflow_dispatch:
   schedule:
     - cron: "17 3 * * *"
-  push:
-    branches: [room/h3-phase1-harness] # TEMPORARY, removed before the PR is opened
 
 permissions:
   contents: read
