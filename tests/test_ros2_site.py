@@ -12,6 +12,8 @@ from robolang_ros2.site import read_site  # noqa: E402
 
 def site():
     return {"gazebo_model": "ur", "robot": "arm1", "objects": {"box1": "box"},
+            "grasps": {"box1": {"frame": "base_link", "position": [0, 0.4, 0.4],
+                                 "orientation": [0, 0, 0, 1]}},
             "poses": {"table": {"frame": "base_link", "position": [0, 0.4, 0.5],
                                 "orientation": [0, 0, 0, 1]}}}
 
@@ -33,6 +35,14 @@ def test_site_rejects_invalid_or_extra_fields(tmp_path, edit):
     edit(value)
     path = tmp_path / "site.json"
     path.write_text(json.dumps(value))
+    with pytest.raises(BackendFailure) as exc:
+        read_site(path)
+    assert exc.value.code == "S507"
+
+
+def test_duplicate_site_key_is_rejected(tmp_path):
+    path = tmp_path / "site.json"
+    path.write_text('{"gazebo_model":"ur","gazebo_model":"real"}')
     with pytest.raises(BackendFailure) as exc:
         read_site(path)
     assert exc.value.code == "S507"

@@ -31,6 +31,7 @@ class Site:
     robot: str
     object_models: dict[str, str]
     poses: dict[str, dict]
+    grasps: dict[str, dict]
 
 
 def execute(task: ir.Task, bindings: dict[str, str], site: Site, ops: Operations) -> dict:
@@ -68,6 +69,8 @@ def execute(task: ir.Task, bindings: dict[str, str], site: Site, ops: Operations
                 _pose(site, bindings[step.target])
             if isinstance(step, (ir.Grasp, ir.Place)):
                 _object(site, bindings[step.obj])
+            if isinstance(step, ir.Grasp):
+                _grasp_pose(site, bindings[step.obj])
         held = None
         for index, step in enumerate(task.steps, 1):
             start = ops.now_ms()
@@ -78,6 +81,7 @@ def execute(task: ir.Task, bindings: dict[str, str], site: Site, ops: Operations
                     ops.move(_pose(site, bindings[step.target]))
                 elif isinstance(step, ir.Grasp):
                     model = _object(site, bindings[step.obj])
+                    ops.move(_grasp_pose(site, bindings[step.obj]))
                     ops.grip(True)
                     ops.attach(model)
                     held = model
@@ -118,3 +122,10 @@ def _object(site: Site, obj: str) -> str:
         return site.object_models[obj]
     except KeyError:
         raise BackendFailure("S507", f"no Gazebo model for object {obj!r}") from None
+
+
+def _grasp_pose(site: Site, obj: str) -> dict:
+    try:
+        return site.grasps[obj]
+    except KeyError:
+        raise BackendFailure("S507", f"no grasp pose for object {obj!r}") from None

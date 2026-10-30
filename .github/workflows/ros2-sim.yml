@@ -19,7 +19,7 @@ jobs:
       - name: Build image (ros:lyrical, Gazebo Jetty, UR, MoveIt 2)
         run: |
           start=$(date +%s)
-          docker buildx build backends/ros2 --tag robolang-ros2-harness --load \
+          docker buildx build -f backends/ros2/Dockerfile . --tag robolang-ros2-harness --load \
             --cache-from type=gha,scope=ros2-harness --cache-to type=gha,scope=ros2-harness,mode=max
           echo "image_build_seconds=$(( $(date +%s) - start ))" | tee -a "$GITHUB_STEP_SUMMARY" build_time.txt
       - name: Run smoke test (headless Gazebo, one trajectory, one camera frame)

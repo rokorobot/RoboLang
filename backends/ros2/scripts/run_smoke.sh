@@ -25,6 +25,9 @@ ros2 run ros_gz_bridge parameter_bridge /overhead_camera/image@sensor_msgs/msg/I
     >"$OUT/camera_bridge.log" 2>&1 &
 python3 /opt/h3/scripts/smoke.py --out "$OUT"
 RC=$?
+gz model --list >"$OUT/models.txt" 2>&1 || true
+ros2 control list_hardware_components -c /controller_manager >"$OUT/hardware.txt" 2>&1 || true
+timeout 90 python3 /opt/h3/scripts/moveit_probe.py >"$OUT/moveit_probe.log" 2>&1 || true
 # Gazebo-side view of the camera, for the findings doc (header of one frame only).
 timeout 20 gz topic -e -t /overhead_camera/image -n 1 2>&1 | head -c 400 >"$OUT/gz_camera_topic.txt"
 kill -INT "$LAUNCH" 2>/dev/null; sleep 3; pkill -TERM -f "gz sim" 2>/dev/null

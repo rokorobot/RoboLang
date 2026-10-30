@@ -63,8 +63,14 @@ class ROSOperations:
         self.model = model
         # MoveItPy can contact controllers while loading. Construct it only after every graph check passes.
         try:
+            from pathlib import Path
             from moveit.planning import MoveItPy
-            self.planner = MoveItPy(node_name="robolang_moveit")
+            from moveit_configs_utils import MoveItConfigsBuilder
+            config = (MoveItConfigsBuilder(robot_name="ur", package_name="ur_moveit_config")
+                      .robot_description_semantic(Path("srdf") / "ur.srdf.xacro", {"name": "ur5e"})
+                      .to_moveit_configs())
+            self.planner = MoveItPy(node_name="robolang_moveit",
+                                    config_dict={**config.to_dict(), "use_sim_time": True})
             self.arm = self.planner.get_planning_component("ur_manipulator")
         except Exception as exc:
             raise BackendFailure("S502", f"MoveIt did not start: {exc}") from exc

@@ -1,5 +1,5 @@
 # H3 phase 1 harness image (decision record 0029, section 6). SIMULATION ONLY: nothing here can address hardware.
-# Build context: backends/ros2/
+# Build context: repository root
 FROM ros:lyrical
 
 ENV DEBIAN_FRONTEND=noninteractive \
@@ -11,6 +11,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         ros-lyrical-ur-simulation-gz \
         ros-lyrical-ur-moveit-config \
         ros-lyrical-moveit \
+        ros-lyrical-moveit-py \
         ros-lyrical-gz-ros2-control \
         ros-lyrical-robotiq-description \
         ros-lyrical-control-msgs \
@@ -21,9 +22,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         python3-numpy python3-opencv \
     && rm -rf /var/lib/apt/lists/*
 
-COPY world /opt/h3/world
-COPY scripts /opt/h3/scripts
-COPY config /opt/h3/config
+COPY backends/ros2/world /opt/h3/world
+COPY backends/ros2/scripts /opt/h3/scripts
+COPY backends/ros2/config /opt/h3/config
+COPY backends/ros2/robolang_ros2 /opt/h3/backends/ros2/robolang_ros2
+COPY src/robolang /opt/h3/src/robolang
+ENV PYTHONPATH=/opt/h3/src:/opt/h3/backends/ros2
 
 # Fiducial texture for the box: a real ArUco marker (DICT_4X4_50, id 7), drawn with white quiet zone.
 RUN python3 /opt/h3/scripts/make_marker.py /opt/h3/world/marker.png

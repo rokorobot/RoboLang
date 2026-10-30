@@ -25,7 +25,8 @@ class FakeOps:
     def _call(self, name, *args):
         self.calls.append((name, *args))
         if name == self.fail:
-            raise BackendFailure("S501" if name == "guard" else "S502", name)
+            codes = {"guard": "S501", "move": "S502", "grip": "S505", "attach": "S506"}
+            raise BackendFailure(codes[name], name)
 
     def guard(self, model): self._call("guard", model)
     def now_ms(self):
@@ -41,7 +42,7 @@ class FakeOps:
 
 def fixture():
     task = ir.compile_source(SOURCE).ir.tasks[0]
-    site = Site("ur", "arm1", {"box1": "box"}, {"table": {"x": 1}, "shelf": {"x": 2}})
+    site = Site("ur", "arm1", {"box1": "box"}, {"table": {"x": 1}, "shelf": {"x": 2}}, {"box1": {"x": 3}})
     return task, {"r": "arm1", "box": "box1", "src": "table", "dst": "shelf"}, site
 
 
@@ -49,7 +50,9 @@ def test_execution_sequence_never_claims_unobserved_goal():
     task, bindings, site = fixture()
     ops = FakeOps()
     record = execute(task, bindings, site, ops)
-    assert [call[0] for call in ops.calls] == ["guard", "move", "grip", "attach", "move", "move", "grip", "detach"]
+    assert [call[0] for call in ops.calls] == [
+        "guard", "move", "move", "grip", "attach", "move", "move", "grip", "detach",
+    ]
     assert record["state"] == "UNKNOWN"
     assert record["goal"] == "not_evaluated"
     assert record["core_outcome"] is None
@@ -80,4 +83,32 @@ def test_missing_pose_fails_closed():
     ops = FakeOps()
     record = execute(task, bindings, site, ops)
     assert record["failure"]["code"] == "S507"
+    assert ops.calls == [("guard", "ur")]
+
+
+def test_gripper_failure_never_attaches():
+    task, bindings, site = fixture()
+    ops = FakeOps(fail="grip")
+    record = execute(task, bindings, site, ops)
+    assert record["failure"]["code"] == "S505"
+    assert "attach" not in [call[0] for call in ops.calls]
+
+
+def test_precondition_blocks_before_motion():
+    source = SOURCE.replace("  goal {", "  pre { object_exists box; }\n  goal {")
+    task = ir.compile_source(source).ir.tasks[0]
+    _, bindings, site = fixture()
+    ops = FakeOps()
+    record = execute(task, bindings, site, ops)
+    assert record["failure"]["code"] == "S508"
+    assert ops.calls == [("guard", "ur")]
+
+
+def test_unsupported_later_step_blocks_before_first_motion():
+    source = SOURCE.replace("place r box at dst;", 'place r box at dst; communicate r to "fleet" with "done";')
+    task = ir.compile_source(source).ir.tasks[0]
+    _, bindings, site = fixture()
+    ops = FakeOps()
+    record = execute(task, bindings, site, ops)
+    assert record["failure"]["code"] == "S508"
     assert ops.calls == [("guard", "ur")]
