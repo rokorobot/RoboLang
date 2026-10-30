@@ -1,7 +1,8 @@
 # Decision record 0028: Core 0.2, scope and compatibility (N5)
 
 **Date:** 2026-10-30
-**Status:** **PROPOSED.** Owner approval pending. Spec only: no code, no schema file and nothing in `src/` changes.
+**Status:** **APPROVED by the owner, 2026-10-30**, with the recommended option for C1–C10 and the answers in section 6.
+Spec only: no code, no schema file and nothing in `src/` changes. Core 0.2 is not frozen until section 4 holds.
 **Applies to (when decided):** [`core-v0.2-draft.md`](../core-v0.2-draft.md) (this record's delta over
 [`core-v0.1.md`](../core-v0.1.md)), later `spec/core/message-0.2.schema.json`, `export-goal`, `delegate`, the simulation
 outcome ([`simulation-v1.0.md`](../simulation-v1.0.md) 10.5, 12.4)
