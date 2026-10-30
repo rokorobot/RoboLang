@@ -122,5 +122,9 @@
   "I214_fail_not_last.json": [
     "I214",
     "/tasks/0/steps/0/else/0"
+  ],
+  "I215_fail_reason_too_long.json": [
+    "I215",
+    "/tasks/0/steps/0/else/0/reason"
   ]
 }

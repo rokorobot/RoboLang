@@ -22,6 +22,7 @@ from .diagnostics import MAX_ERRORS
 from .parser import MAX_CONDITION_DEPTH, MAX_IF_DEPTH
 from .paths import goalless_path
 from .tokens import DURATION_UNITS, RESERVED, RESERVED_BY_VERSION, SPEED_UNITS, VERIFY_KEYS
+from .validator import fail_reason_problem
 
 SCHEMA_VERSIONS = tuple(ir.IR_SCHEMA_VERSIONS.values())  # "1.0" to "1.3": the index is the schema's rank
 LANGUAGE_OF = {schema: language for language, schema in ir.IR_SCHEMA_VERSIONS.items()}
@@ -523,6 +524,9 @@ class _Reader:
                 self.steps_meaning(node[key], _pointer(ptr, key), branch=True)
         elif kind == "fail":
             self.not_empty(node["reason"], "reason", _pointer(ptr, "reason"))
+            problem = fail_reason_problem(node["reason"])
+            if problem:
+                self.error("I215", problem, _pointer(ptr, "reason"))
         elif kind == "wait_for":
             self.positive(node["duration"]["value"], "duration", _pointer(_pointer(ptr, "duration"), "value"))
         elif kind == "wait_until":

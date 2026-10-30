@@ -82,7 +82,8 @@ if region_clear cell {
   block of each branch it takes. A `goal` block may only be the first item of a branch. **Every path
   must have at least one goal condition** (from the task or its branches), or end in `fail` (`E309`).
   An `if` with no `else` has an empty `else` path, so the task needs its own `goal` for it.
-- `fail "reason";` is for "move nothing and report it": the run ends FAILED (`S262`) with the reason.
+- `fail "reason";` is for "move nothing and report it": the run ends FAILED (`S262`) with the reason. The reason
+  has at most 200 characters and no `\n` or `\t` (`E314`).
   Messages sent before it stand. Use it only as the last statement of a branch (`E313`); the reason
   must not be empty (`E307`).
 - `if` is nested at most 4 deep (`E216`). `if` cannot be used in `pre` or in a `wait until` condition.

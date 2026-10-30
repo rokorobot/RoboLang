@@ -52,7 +52,8 @@ plan level). It adds goal conditions to the paths through that branch.
 ### 3.4 `fail`
 
 `fail "reason";` ends the run as failed. It is allowed only as the last statement of an `if` or `else` branch;
-anywhere else (not last, or at plan level) is `E313`. The reason is a non-empty string (`E307`).
+anywhere else (not last, or at plan level) is `E313`. The reason is a non-empty string (`E307`) of at most 200 characters with no control characters such as `\n`
+or `\t` (`E314`), so that it fits Core 0.2 `declared` text unchanged (decision 0028 Q1).
 
 ## 4. Goals (B2)
 
@@ -69,6 +70,7 @@ with no statements.
 | `E216` | `if` nested deeper than 4 levels (syntax) |
 | `E309` | In 1.4: a path with no goal condition that does not end in `fail`; the message names the path (static) |
 | `E313` | `fail` that is not the last statement of an `if` or `else` branch (static) |
+| `E314` | A `fail` reason longer than 200 characters, or with a control character (static) |
 | `E208` | Also: an empty branch, a misplaced `goal` block (syntax) |
 | `E212` | Also: `if`, `else` or `fail` used as a name in a 1.4 file |
 
