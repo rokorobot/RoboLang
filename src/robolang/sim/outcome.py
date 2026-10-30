@@ -79,7 +79,7 @@ def core_outcome(result: RunResult, task: ir.Task, run_id: str, *, goal_id: str 
 local goal condition, the index of its criterion in the proposed goal, whose order may differ. Results and
 evidence are listed in criterion order. The verifier stays SIM.
 
-    `core="0.2"` gives the Core 0.2 payload (spec/core-v0.2-draft.md section 3): see `_core_outcome_02`;
+    `core="0.2"` gives the Core 0.2 payload (spec/core-v0.2.md section 3): see `_core_outcome_02`;
     `index_of` then replaces `criterion_of`.
     """
     if core == "0.2":

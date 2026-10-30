@@ -137,7 +137,7 @@ def export_goal(task: ir.Task, world: World, *, sender: str, recipient: str | No
     """
     The signed `propose_goal` message for `task` bound as in `world.task`. `recipient` defaults to the
     task's only robot. `core` is the message version: "0.1" (default) or "0.2", whose goal carries one
-    alternative per path (spec/core-v0.2-draft.md; stable order: depth-first, `then` before `else`).
+    alternative per path (spec/core-v0.2.md; stable order: depth-first, `then` before `else`).
     Raises ExportError, or bridge.NotExportable for a goal without a Core form for that version.
     """
     if core not in CORE_VERSIONS:

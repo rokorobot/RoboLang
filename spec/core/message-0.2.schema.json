@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:robolang:core:message:0.2",
-  "title": "RoboLang Core message, version 0.2 (draft)",
-  "description": "spec/core-v0.2-draft.md (delta over core-v0.1.md). Validity under this schema is necessary, not sufficient: core-v0.1.md sections 7 and 8 and the 0.2 delta add signature, time and meaning checks. A valid message never grants permission to act.",
+  "title": "RoboLang Core message, version 0.2",
+  "description": "spec/core-v0.2.md (frozen 2026-10-30; a delta over core-v0.1.md). Validity under this schema is necessary, not sufficient: core-v0.1.md sections 7 and 8 and the 0.2 delta add signature, time and meaning checks. A valid message never grants permission to act.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -714,7 +714,7 @@
           "pattern": "^[^\\u0000-\\u001f\\u007f]*$"
         }
       },
-      "description": "core-v0.2-draft.md section 4. `text` is required for, and only allowed with, code `declared`. `declared` is allowed only in a failed outcome (C405, checked by the receiver).",
+      "description": "core-v0.2.md section 4. `text` is required for, and only allowed with, code `declared`. `declared` is allowed only in a failed outcome (C405, checked by the receiver).",
       "allOf": [
         {
           "if": {
@@ -895,7 +895,7 @@
       ]
     },
     "alternative": {
-      "description": "core-v0.2-draft.md section 2. A conjunction of triples and criteria, as in 0.1. Its index is its position in `alternatives`.",
+      "description": "core-v0.2.md section 2. A conjunction of triples and criteria, as in 0.1. Its index is its position in `alternatives`.",
       "type": "object",
       "additionalProperties": false,
       "required": [
@@ -920,7 +920,7 @@
       }
     },
     "goal": {
-      "description": "RFC-001 7.7, as amended by core-v0.2-draft.md section 2. 1 to 16 alternatives; success criteria are mandatory in each. Two alternatives with the same triples (C104) and index bounds are checked by the receiver.",
+      "description": "RFC-001 7.7, as amended by core-v0.2.md section 2. 1 to 16 alternatives; success criteria are mandatory in each. Two alternatives with the same triples (C104) and index bounds are checked by the receiver.",
       "type": "object",
       "additionalProperties": false,
       "required": [
@@ -1223,10 +1223,10 @@
           ]
         }
       },
-      "description": "core-v0.2-draft.md section 3. A (alternative, criterion) pair appears at most once (C104, checked by the receiver)."
+      "description": "core-v0.2.md section 3. A (alternative, criterion) pair appears at most once (C104, checked by the receiver)."
     },
     "outcome": {
-      "description": "RFC-001 7.10, as amended by core-v0.2-draft.md section 3. 'succeeded' needs a verification whose non-null met_alternative has all its results met (C402).",
+      "description": "RFC-001 7.10, as amended by core-v0.2.md section 3. 'succeeded' needs a verification whose non-null met_alternative has all its results met (C402).",
       "type": "object",
       "additionalProperties": false,
       "required": [

@@ -103,7 +103,7 @@ Warnings (skipped limits) never change the exit status.
 
 Opt-in. Without `--core 0.2` every output above is byte for byte what it was. With it the message has
 `schema_version` `0.2` and the goal carries `alternatives` (1 to 16) in place of `desired_state` and
-`success_criteria` ([draft](core-v0.2-draft.md) section 2). Each alternative has the criteria of section 2 above
+`success_criteria` ([draft](core-v0.2.md) section 2). Each alternative has the criteria of section 2 above
 (`@verify`, defaults and `constraints` are unchanged and apply to every alternative). The signature, the envelope and
 the things are as before; the message passes `robolang.core` configured for 0.2.
 

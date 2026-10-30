@@ -838,7 +838,7 @@ def _parser(prog: str) -> argparse.ArgumentParser:
     )
     simulate.add_argument(
         "--core", metavar="VERSION", choices=("0.1", "0.2"), default="0.1",
-        help="the Core version of the record's core_outcome (default 0.1; spec/core-v0.2-draft.md)",
+        help="the Core version of the record's core_outcome (default 0.1; spec/core-v0.2.md)",
     )
     simulate.set_defaults(run=_simulate)
 
@@ -868,7 +868,7 @@ def _parser(prog: str) -> argparse.ArgumentParser:
                         help="sent_at, a Core time (default 2000-01-01T00:00:00.000Z, the simulation epoch)")
     export.add_argument(
         "--core", metavar="VERSION", choices=("0.1", "0.2"), default="0.1",
-        help="the Core version: 0.2 exports one alternative per goal path (default 0.1; spec/core-v0.2-draft.md)",
+        help="the Core version: 0.2 exports one alternative per goal path (default 0.1; spec/core-v0.2.md)",
     )
     export.set_defaults(run=_export_goal)
 
@@ -907,7 +907,7 @@ def _parser(prog: str) -> argparse.ArgumentParser:
                                  "(default: 60s; used only when the matched plan binds a second robot)")
     delegation.add_argument(
         "--core", metavar="VERSION", choices=("0.1", "0.2"), default="0.1",
-        help="the Core version of every message: 0.2 sends alternatives (default 0.1; spec/core-v0.2-draft.md)",
+        help="the Core version of every message: 0.2 sends alternatives (default 0.1; spec/core-v0.2.md)",
     )
     delegation.set_defaults(run=_delegate)
 

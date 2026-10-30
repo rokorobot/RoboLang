@@ -1,6 +1,6 @@
 {
   "fixture_set": "robolang.core.0.2",
-  "spec": "spec/core-v0.2-draft.md",
+  "spec": "spec/core-v0.2.md",
   "context": "../core/context.json",
   "default_receiver_versions": [
     "0.1",

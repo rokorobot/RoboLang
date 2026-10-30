@@ -1,16 +1,13 @@
-# RoboLang Core: version 0.2 (DRAFT delta over 0.1)
+# RoboLang Core: version 0.2 (a delta over 0.1)
 
-> **DRAFT. Not normative.** This page is a proposal and binds nobody. It follows the recommended options of
-> [decision record 0028](decisions/0028-core-0-2-scope.md) (APPROVED by the owner, 2026-10-30; Core 0.2 is not
-> frozen). Examples are illustrative, with signatures elided; the conformance fixtures are in
-> [`tests/fixtures/core_v02/`](../tests/fixtures/core_v02/README.md).
->
-> **Implementation status.** PR A (documents): [`core/message-0.2.schema.json`](core/message-0.2.schema.json), the
-> 0.2 checks in `robolang.core` (`C102`, `C103`, `C104`, `C402`, `C405`; a receiver is configured for the versions it
-> speaks) and the conformance fixtures are done. PR B (producers) is done: `export-goal --core 0.2`, the simulated
-> outcome with `met_alternative` and `declared` (`simulate --core 0.2`), `delegate --core 0.2` and the bridge
-> (section 7 is now implemented; see [export-goal 6](export-goal-v0.1.md) and [delegate-core-0.2](delegate-core-0.2.md)).
-> Implemented, not frozen.
+> **FROZEN, 2026-10-30, by the owner.** Normative. It follows [decision record 0028](decisions/0028-core-0-2-scope.md)
+> (C1–C10 and the answers in its section 6). Every freeze criterion of 0028 section 4 holds: the reference
+> implementation in this repository (the schema [`core/message-0.2.schema.json`](core/message-0.2.schema.json),
+> `robolang.core`, `export-goal`, `simulate` and `delegate` with `--core 0.2`), the conformance fixtures
+> ([`tests/fixtures/core_v02/`](../tests/fixtures/core_v02/README.md)), a benchmark family exporting "any of" goals
+> (`tests/test_core_v02_producers.py`), the RoboLang 1.4 acceptance run, and the owner's approval. A change from now
+> on is a new decision record and, if it changes meaning, a new version. Examples are illustrative, with signatures
+> elided.
 
 **Reads with:** [`core-v0.1.md`](core-v0.1.md). Everything in 0.1 that this page does not name is unchanged, with its
 section numbers. A 0.2 text would be the 0.1 text with this delta applied.

@@ -834,7 +834,7 @@ failure, so the reason is only in `failure.reason` in Core 0.1. A run that ends 
 `null`.
 
 With `simulate --core 0.2` (and in `delegate --core 0.2`) `core_outcome` is the Core 0.2 payload
-([draft](core-v0.2-draft.md) 3, 4): every result has an `alternative`, `verification.met_alternative` is the
+([draft](core-v0.2.md) 3, 4): every result has an `alternative`, `verification.met_alternative` is the
 alternative **pursued** (for a branching task, the one of the path taken, its criteria all listed whether met or not;
 for a goal that is a top-level `or`, the first alternative whose criteria all hold in the final world, or `null` with
 every alternative listed), and a run that ends in `S262` has `status` `failed`, `verification` `null` and the reason
