@@ -93,15 +93,16 @@ INTEROP-3 relaunch on frozen Core 0.2 is H3 ([STRATEGY](../../docs/STRATEGY.md))
 C1 (the goal shape), C3 (`declared` and its 200-character limit), C4 (leave absence out), C6 (retire `X603`,
 export `or`), C7 and C8 (version rules, no negotiation), and the freeze criteria in section 4.
 
-## 6. Open questions
+## 6. Questions, answered by the owner (2026-10-30)
 
-- **Q1.** Is 200 characters right for `text`? It fits a short operator message; `fail "reason"` has no limit in 1.4
-  (`robolang-v1.4.md` 3.4, a non-empty string). 1.4 would need the same limit.
-- **Q2.** Is 16 alternatives right? It is 2⁴, the largest number of paths 1.4 allows (0027 B5).
+- **Q1. Yes:** `declared` text is 1 to 200 characters. The same limit applies to RoboLang 1.4's `fail "reason"`, so
+  that every reason a task can declare fits Core 0.2 unchanged.
+- **Q2. Yes:** at most 16 alternatives, which is 2⁴, the largest number of paths 1.4 allows (0027 B5).
 - **Q3 (answered in C2).** A 1.4 run that takes path A and ends with only path B's goal true is `failed`
   (0027 B7: the taken path counts). Plain "any of" would call it met, and so hide a plan that went the wrong way.
   Core 0.2 therefore uses the same rule: `met_alternative` is the alternative the robot **pursued**, and `succeeded`
   needs all of that alternative's criteria met. Another alternative that happens to hold does not make it
   `succeeded`.
-- **Q4.** `declared` text can carry anything an AI wrote. A planner that feeds it to a model must treat it as
-  untrusted. Is a Core rule enough, or should `delegate` also strip it from planner prompts?
+- **Q4. Core rule now; stripping later.** `declared` text is untrusted, and is never evidence or an instruction (C3).
+  When `delegate` gains a model in the loop, it strips the text from planner prompts. Until then nothing feeds
+  the text to a model.
