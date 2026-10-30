@@ -1,0 +1,369 @@
+{
+  "fixture_set": "robolang.core.0.2",
+  "spec": "spec/core-v0.2-draft.md",
+  "context": "../core/context.json",
+  "default_receiver_versions": [
+    "0.1",
+    "0.2"
+  ],
+  "cases": [
+    {
+      "file": "valid/goal_one_alternative.json",
+      "expect": "accepted",
+      "note": "C1: a goal with one alternative"
+    },
+    {
+      "file": "valid/goal_two_alternatives.json",
+      "expect": "accepted",
+      "note": "C1: any of two alternatives"
+    },
+    {
+      "file": "valid/goal_sixteen_alternatives.json",
+      "expect": "accepted",
+      "note": "Q2: 16 alternatives is the maximum"
+    },
+    {
+      "file": "valid/goal_alternatives_overlap_but_differ.json",
+      "expect": "accepted",
+      "note": "Same triple in two alternatives is fine; only identical triple sets are C104"
+    },
+    {
+      "file": "valid/outcome_met_alternative_0.json",
+      "expect": "accepted",
+      "note": "C2: succeeded, pursued alternative 0"
+    },
+    {
+      "file": "valid/outcome_met_alternative_1.json",
+      "expect": "accepted",
+      "note": "C2: succeeded, pursued alternative 1 (positional index of the proposal)"
+    },
+    {
+      "file": "valid/outcome_extra_results_for_other_alternative.json",
+      "expect": "accepted",
+      "note": "Results for other alternatives may be listed, met or not"
+    },
+    {
+      "file": "valid/outcome_failed_other_alternative_holds.json",
+      "expect": "accepted",
+      "note": "Q3: pursued alt 0 unmet, alt 1 holds: failed is the right status"
+    },
+    {
+      "file": "valid/outcome_failed_no_met_alternative.json",
+      "expect": "accepted",
+      "note": "Any status other than succeeded may carry met_alternative null"
+    },
+    {
+      "file": "valid/outcome_failed_verification_null.json",
+      "expect": "accepted",
+      "note": "failed with verification null"
+    },
+    {
+      "file": "valid/outcome_failed_declared.json",
+      "expect": "accepted",
+      "note": "C3: declared failure"
+    },
+    {
+      "file": "valid/outcome_failed_declared_200_chars.json",
+      "expect": "accepted",
+      "note": "Q1: 200 characters (not bytes) is the limit"
+    },
+    {
+      "file": "valid/outcome_failed_declared_with_other_reason.json",
+      "expect": "accepted",
+      "note": "declared may sit beside other codes"
+    },
+    {
+      "file": "valid/outcome_cancelled_met_alternative_null.json",
+      "expect": "accepted",
+      "note": "met_alternative null with another status"
+    },
+    {
+      "file": "../core/valid/propose_goal.json",
+      "expect": "accepted",
+      "note": "A 0.1 document, judged by the 0.1 rules, accepted by a receiver configured for 0.1 and 0.2"
+    },
+    {
+      "file": "../core/valid/outcome_succeeded.json",
+      "expect": "accepted",
+      "note": "A 0.1 document, judged by the 0.1 rules, accepted by a receiver configured for 0.1 and 0.2"
+    },
+    {
+      "file": "../core/valid/assessment.json",
+      "expect": "accepted",
+      "note": "A 0.1 document, judged by the 0.1 rules, accepted by a receiver configured for 0.1 and 0.2"
+    },
+    {
+      "file": "../core/valid/commit.json",
+      "expect": "accepted",
+      "note": "A 0.1 document, judged by the 0.1 rules, accepted by a receiver configured for 0.1 and 0.2"
+    },
+    {
+      "file": "../core/valid/custody_confirmed.json",
+      "expect": "accepted",
+      "note": "A 0.1 document, judged by the 0.1 rules, accepted by a receiver configured for 0.1 and 0.2"
+    },
+    {
+      "file": "../core/valid/authorization_decision.json",
+      "expect": "accepted",
+      "note": "A 0.1 document, judged by the 0.1 rules, accepted by a receiver configured for 0.1 and 0.2"
+    },
+    {
+      "file": "invalid/c102_v02_message_to_v01_only_receiver.json",
+      "expect": "C102",
+      "stage": "form",
+      "receiver_versions": [
+        "0.1"
+      ],
+      "note": "C8: a 0.2 message to a receiver configured for 0.1 only"
+    },
+    {
+      "file": "invalid/c102_v02_outcome_to_v01_only_receiver.json",
+      "expect": "C102",
+      "stage": "form",
+      "receiver_versions": [
+        "0.1"
+      ],
+      "note": "C8: same, an outcome"
+    },
+    {
+      "file": "invalid/c103_v02_goal_with_desired_state.json",
+      "expect": "C103",
+      "stage": "form",
+      "note": "0.2 goal still carrying desired_state"
+    },
+    {
+      "file": "invalid/c103_v02_goal_with_success_criteria.json",
+      "expect": "C103",
+      "stage": "form",
+      "note": "0.2 goal still carrying success_criteria"
+    },
+    {
+      "file": "invalid/c103_v01_goal_with_alternatives.json",
+      "expect": "C103",
+      "stage": "form",
+      "note": "A 0.1 document is judged by 0.1 rules: alternatives is unknown"
+    },
+    {
+      "file": "invalid/c103_v02_unknown_field_in_verification.json",
+      "expect": "C103",
+      "stage": "form",
+      "note": "unknown field in a 0.2 verification"
+    },
+    {
+      "file": "invalid/c103_v02_unknown_field_in_declared_reason.json",
+      "expect": "C103",
+      "stage": "form",
+      "note": "unknown field in a declared reason"
+    },
+    {
+      "file": "invalid/c103_v01_outcome_with_met_alternative.json",
+      "expect": "C103",
+      "stage": "form",
+      "note": "A 0.1 verification has no met_alternative"
+    },
+    {
+      "file": "invalid/c103_v01_declared_reason_with_text.json",
+      "expect": "C103",
+      "stage": "form",
+      "note": "0.1: text is an unknown field of a reason (and declared an unknown code)"
+    },
+    {
+      "file": "invalid/c104_v01_declared_code.json",
+      "expect": "C104",
+      "stage": "form",
+      "note": "0.1: declared is not a reason code"
+    },
+    {
+      "file": "invalid/c104_alternatives_empty.json",
+      "expect": "C104",
+      "stage": "form",
+      "note": "alternatives: 0 items"
+    },
+    {
+      "file": "invalid/c104_alternatives_too_many.json",
+      "expect": "C104",
+      "stage": "form",
+      "note": "alternatives: 17 items"
+    },
+    {
+      "file": "invalid/c104_alternative_empty_desired_state.json",
+      "expect": "C104",
+      "stage": "form",
+      "note": "an alternative with an empty desired_state"
+    },
+    {
+      "file": "invalid/c104_alternative_empty_success_criteria.json",
+      "expect": "C104",
+      "stage": "form",
+      "note": "an alternative with empty success_criteria"
+    },
+    {
+      "file": "invalid/c104_duplicate_alternative_triples.json",
+      "expect": "C104",
+      "stage": "form",
+      "note": "two alternatives with the same triples"
+    },
+    {
+      "file": "invalid/c104_duplicate_alternative_triples_reordered.json",
+      "expect": "C104",
+      "stage": "form",
+      "note": "same triple set in another order is the same set"
+    },
+    {
+      "file": "invalid/c104_duplicate_result_pair.json",
+      "expect": "C104",
+      "stage": "form",
+      "note": "(alternative, criterion) twice"
+    },
+    {
+      "file": "invalid/c104_met_alternative_missing.json",
+      "expect": "C104",
+      "stage": "form",
+      "note": "met_alternative is required"
+    },
+    {
+      "file": "invalid/c104_met_alternative_negative.json",
+      "expect": "C104",
+      "stage": "form",
+      "note": "met_alternative below 0"
+    },
+    {
+      "file": "invalid/c104_met_alternative_not_an_integer.json",
+      "expect": "C104",
+      "stage": "form",
+      "note": "met_alternative as a string"
+    },
+    {
+      "file": "invalid/c104_result_alternative_negative.json",
+      "expect": "C104",
+      "stage": "form",
+      "note": "alternative below 0"
+    },
+    {
+      "file": "invalid/c104_result_alternative_missing.json",
+      "expect": "C104",
+      "stage": "form",
+      "note": "alternative is required in 0.2 results"
+    },
+    {
+      "file": "invalid/c104_result_alternative_not_an_integer.json",
+      "expect": "C104",
+      "stage": "form",
+      "note": "alternative as a string"
+    },
+    {
+      "file": "invalid/c104_declared_without_text.json",
+      "expect": "C104",
+      "stage": "form",
+      "note": "declared needs text"
+    },
+    {
+      "file": "invalid/c104_declared_empty_text.json",
+      "expect": "C104",
+      "stage": "form",
+      "note": "text of 0 characters"
+    },
+    {
+      "file": "invalid/c104_declared_text_too_long.json",
+      "expect": "C104",
+      "stage": "form",
+      "note": "text of 201 characters"
+    },
+    {
+      "file": "invalid/c104_declared_text_with_newline.json",
+      "expect": "C104",
+      "stage": "form",
+      "note": "control character U+000A"
+    },
+    {
+      "file": "invalid/c104_declared_text_with_delete.json",
+      "expect": "C104",
+      "stage": "form",
+      "note": "control character U+007F"
+    },
+    {
+      "file": "invalid/c104_text_on_other_code.json",
+      "expect": "C104",
+      "stage": "form",
+      "note": "text is only for declared"
+    },
+    {
+      "file": "invalid/c104_declared_text_not_a_string.json",
+      "expect": "C104",
+      "stage": "form",
+      "note": "text as a number"
+    },
+    {
+      "file": "invalid/c402_succeeded_verification_null.json",
+      "expect": "C402",
+      "stage": "meaning",
+      "note": "succeeded with verification null (rank 6)"
+    },
+    {
+      "file": "invalid/c402_succeeded_met_alternative_null.json",
+      "expect": "C402",
+      "stage": "meaning",
+      "note": "succeeded needs a non-null met_alternative"
+    },
+    {
+      "file": "invalid/c402_succeeded_pursued_alternative_unmet_other_holds.json",
+      "expect": "C402",
+      "stage": "meaning",
+      "note": "Q3: alternative 1 holds but the pursued alternative 0 does not"
+    },
+    {
+      "file": "invalid/c402_succeeded_one_criterion_of_pursued_unmet.json",
+      "expect": "C402",
+      "stage": "meaning",
+      "note": "one criterion of the pursued alternative is unmet"
+    },
+    {
+      "file": "invalid/c402_succeeded_no_results_for_pursued_alternative.json",
+      "expect": "C402",
+      "stage": "meaning",
+      "note": "met_alternative 0 with results only for alternative 1"
+    },
+    {
+      "file": "invalid/c405_declared_in_succeeded_outcome.json",
+      "expect": "C405",
+      "stage": "meaning",
+      "note": "declared in a succeeded outcome"
+    },
+    {
+      "file": "invalid/c405_declared_in_cancelled_outcome.json",
+      "expect": "C405",
+      "stage": "meaning",
+      "note": "declared in a cancelled outcome (only failed allows it)"
+    },
+    {
+      "file": "invalid/c405_declared_in_assessment.json",
+      "expect": "C405",
+      "stage": "meaning",
+      "note": "declared in an assessment"
+    },
+    {
+      "file": "invalid/c405_declared_in_reject.json",
+      "expect": "C405",
+      "stage": "meaning",
+      "note": "declared in a reject"
+    },
+    {
+      "file": "invalid/c405_declared_in_decline.json",
+      "expect": "C405",
+      "stage": "meaning",
+      "note": "declared in a decline"
+    },
+    {
+      "file": "invalid/c405_declared_in_authorization_request.json",
+      "expect": "C405",
+      "stage": "meaning",
+      "note": "declared in an authorization_request"
+    },
+    {
+      "file": "invalid/c405_before_c402.json",
+      "expect": "C405",
+      "stage": "meaning",
+      "note": "declared in succeeded and met_alternative null: both fail, C405 first (interpretation)"
+    }
+  ]
+}

@@ -1,0 +1,104 @@
+{
+  "schema": "robolang.core.message",
+  "schema_version": "0.2",
+  "message_id": "m-02000000000000000000000000000001",
+  "conversation_id": "rl:conv:c42-delivery",
+  "sequence": 1,
+  "in_reply_to": null,
+  "profile": "a2r",
+  "type": "authorization_request",
+  "sender": "rl:robot:arm-02",
+  "recipient": "rl:human:shift-lead-3",
+  "sent_at": "2026-10-19T10:14:00.400Z",
+  "expires_at": "2026-10-19T10:14:30.400Z",
+  "payload": {
+    "goal": {
+      "kind": "goal",
+      "id": "rl:goal:c42-to-s3",
+      "requested_by": "rl:agent:planner-1",
+      "alternatives": [
+        {
+          "desired_state": [
+            {
+              "subject": "rl:thing:container-c42",
+              "property": "located_in",
+              "value": "rl:place:station-s3"
+            }
+          ],
+          "success_criteria": [
+            {
+              "kind": "observed",
+              "subject": "rl:thing:container-c42",
+              "property": "located_in",
+              "value": "rl:place:station-s3",
+              "min_confidence": "0.9",
+              "max_age": {
+                "value": "10",
+                "unit": "s"
+              },
+              "accepted_sources": [
+                "any_participant_in_domain"
+              ]
+            }
+          ]
+        },
+        {
+          "desired_state": [
+            {
+              "subject": "rl:thing:container-c42",
+              "property": "located_in",
+              "value": "rl:place:station-s4"
+            }
+          ],
+          "success_criteria": [
+            {
+              "kind": "observed",
+              "subject": "rl:thing:container-c42",
+              "property": "located_in",
+              "value": "rl:place:station-s4",
+              "min_confidence": "0.9",
+              "max_age": {
+                "value": "10",
+                "unit": "s"
+              },
+              "accepted_sources": [
+                "any_participant_in_domain"
+              ]
+            }
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "kind": "deadline",
+          "at": "2026-10-19T10:30:00Z"
+        }
+      ],
+      "priority": "normal"
+    },
+    "things": [
+      {
+        "kind": "thing",
+        "id": "rl:thing:container-c42",
+        "class": "container",
+        "mass": {
+          "value": "25",
+          "unit": "kg",
+          "uncertainty": "2"
+        }
+      }
+    ],
+    "mode": "simulation",
+    "reasons": [
+      {
+        "code": "declared",
+        "text": "x"
+      }
+    ]
+  },
+  "signature": {
+    "alg": "sim-hmac-sha256",
+    "key": "rl:robot:arm-02#k1",
+    "value": "b40b6c2cea272a571f3da77b021c99cb89cc9286606c29bfcdffb610bf7534ef"
+  }
+}

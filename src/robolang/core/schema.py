@@ -4,7 +4,7 @@ The Core 0.1 schema files and a validator for the JSON Schema 2020-12 keywords t
 The package has no runtime dependencies (decision R12), so this module interprets exactly
 the keywords that spec/core/*.schema.json contain: `$ref` (local), `type`, `const`, `enum`,
 `pattern`, `required`, `properties`, `additionalProperties: false`, `items`, `minItems`,
-`uniqueItems`, `minimum`, `maximum`, `minLength`, `maxLength`, `oneOf`, `allOf`, `if`/`then`.
+`maxItems`, `uniqueItems`, `minimum`, `maximum`, `minLength`, `maxLength`, `oneOf`, `allOf`, `if`/`then`.
 A schema using any other keyword is refused at load time rather than half-checked.
 The tests compare this validator with the `jsonschema` library on every fixture.
 """
@@ -17,12 +17,15 @@ from functools import lru_cache
 from importlib import resources
 
 MESSAGE_SCHEMA = "message-0.1.schema.json"
+MESSAGE_SCHEMA_02 = "message-0.2.schema.json"
+MESSAGE_SCHEMAS = {"0.1": MESSAGE_SCHEMA, "0.2": MESSAGE_SCHEMA_02}
 DESCRIPTOR_SCHEMA = "capability-descriptor-0.1.schema.json"
 
 _ANNOTATIONS = {"$schema", "$id", "$defs", "title", "description"}
 _KEYWORDS = {
     "$ref", "type", "const", "enum", "pattern", "required", "properties", "additionalProperties", "items",
-    "minItems", "uniqueItems", "minimum", "maximum", "minLength", "maxLength", "oneOf", "allOf", "if", "then",
+    "minItems", "maxItems", "uniqueItems", "minimum", "maximum", "minLength", "maxLength", "oneOf", "allOf", "if",
+    "then",
 }
 
 
@@ -129,6 +132,8 @@ class _Validator:
         if isinstance(value, list):
             if "minItems" in schema and len(value) < schema["minItems"]:
                 out.append(SchemaError("minItems", _pointer(path)))
+            if "maxItems" in schema and len(value) > schema["maxItems"]:
+                out.append(SchemaError("maxItems", _pointer(path)))
             if schema.get("uniqueItems"):
                 for i, item in enumerate(value):
                     if any(_equal(item, other) for other in value[:i]):

@@ -1,0 +1,28 @@
+{
+  "schema": "robolang.core.message",
+  "schema_version": "0.2",
+  "message_id": "m-ad5167b49b4f58f754cbc0fef5a1b40c",
+  "conversation_id": "rl:conv:c42-delivery",
+  "sequence": 1,
+  "in_reply_to": null,
+  "profile": "r2r",
+  "type": "decline",
+  "sender": "rl:robot:arm-02",
+  "recipient": "rl:agent:planner-1",
+  "sent_at": "2026-10-19T10:14:00.400Z",
+  "expires_at": "2026-10-19T10:14:30.400Z",
+  "payload": {
+    "goal": "rl:goal:c42-to-s3",
+    "reasons": [
+      {
+        "code": "declared",
+        "text": "x"
+      }
+    ]
+  },
+  "signature": {
+    "alg": "sim-hmac-sha256",
+    "key": "rl:robot:arm-02#k1",
+    "value": "04eed4e1cd3422c8b2ceaead0de2b69e76baf685ba6dba733887e378e0e095b6"
+  }
+}

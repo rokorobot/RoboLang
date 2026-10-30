@@ -1,8 +1,14 @@
 # RoboLang Core: version 0.2 (DRAFT delta over 0.1)
 
 > **DRAFT. Not normative.** This page is a proposal and binds nobody. It follows the recommended options of
-> [decision record 0028](decisions/0028-core-0-2-scope.md) (status PROPOSED, owner approval pending). No schema file
-> exists for 0.2 yet. Examples are illustrative, with signatures elided; they are not conformance fixtures.
+> [decision record 0028](decisions/0028-core-0-2-scope.md) (APPROVED by the owner, 2026-10-30; Core 0.2 is not
+> frozen). Examples are illustrative, with signatures elided; the conformance fixtures are in
+> [`tests/fixtures/core_v02/`](../tests/fixtures/core_v02/README.md).
+>
+> **Implementation status.** PR A (documents): [`core/message-0.2.schema.json`](core/message-0.2.schema.json), the
+> 0.2 checks in `robolang.core` (`C102`, `C103`, `C104`, `C402`, `C405`; a receiver is configured for the versions it
+> speaks) and the conformance fixtures are done. PR B (producers): `export-goal`, the simulated outcome with
+> `met_alternative` and `declared`, `delegate` and the bridge are not done; section 7 is still a plan.
 
 **Reads with:** [`core-v0.1.md`](core-v0.1.md). Everything in 0.1 that this page does not name is unchanged, with its
 section numbers. A 0.2 text would be the 0.1 text with this delta applied.

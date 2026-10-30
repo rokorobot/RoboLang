@@ -17,10 +17,11 @@ from dataclasses import dataclass, field
 from typing import Mapping
 
 from .reader import ReadError, read_document
-from .schema import DESCRIPTOR_SCHEMA, MESSAGE_SCHEMA, load_schema, validate
+from .schema import DESCRIPTOR_SCHEMA, MESSAGE_SCHEMA, MESSAGE_SCHEMAS, load_schema, validate
 from .signatures import SIM_HMAC, Key, verify_sim
 
 MESSAGE = ("robolang.core.message", "0.1")
+MESSAGE_VERSIONS = ("0.1", "0.2")
 DESCRIPTOR = ("robolang.core.capability-descriptor", "0.1")
 RESERVED_TYPES = frozenset(
     "discover observe subscribe negotiate progress cancel advertise renew release share_observation".split()
@@ -60,6 +61,9 @@ class Context:
     keys: Mapping[str, Key]
     authorities: Mapping[str, str] = field(default_factory=dict)
     mode: str = "simulation"
+    # Message versions this receiver is configured for (0.2 draft section 1: no negotiation).
+    # The default is 0.1 only, so a receiver built for Core 0.1 behaves exactly as before.
+    versions: frozenset[str] = frozenset({"0.1"})
 
 
 def time_ms(text: str) -> int:
@@ -77,10 +81,10 @@ def time_ms(text: str) -> int:
 
 # -------- stage 1: form --------
 
-def _type_profiles() -> dict[str, frozenset[str]]:
+def _type_profiles(schema_name: str = MESSAGE_SCHEMA) -> dict[str, frozenset[str]]:
     """Each defined type and the profiles it allows, read from the schema's `allOf` rules."""
     out = {}
-    for rule in load_schema(MESSAGE_SCHEMA)["allOf"]:
+    for rule in load_schema(schema_name)["allOf"]:
         name = rule["if"]["properties"]["type"]["const"]
         profile = rule["then"]["properties"]["profile"]
         out[name] = frozenset(profile["enum"] if "enum" in profile else [profile["const"]])
@@ -105,12 +109,18 @@ def _times(document) -> list[tuple[str, str]]:
     return found
 
 
-def _form(document, kind: tuple[str, str], schema_name: str) -> Receipt | None:
+def _form(document, kind: tuple[str, str], schema_name: str, versions=frozenset({"0.1"})) -> Receipt | None:
+    if kind == MESSAGE and isinstance(document, dict):
+        # A message is judged by the rules of its own version, if this receiver is configured for it.
+        version = document.get("schema_version")
+        kind = (MESSAGE[0], None)
+        if document.get("schema") == MESSAGE[0] and version in versions and version in MESSAGE_VERSIONS:
+            kind, schema_name = (MESSAGE[0], version), MESSAGE_SCHEMAS[version]
     if not isinstance(document, dict) or (document.get("schema"), document.get("schema_version")) != kind:
         return _reject("C102", "form", "/schema_version" if isinstance(document, dict) else "")
-    if kind == MESSAGE:
+    if kind[0] == MESSAGE[0]:
         mtype = document.get("type")
-        profiles = _type_profiles()
+        profiles = _type_profiles(schema_name)
         if mtype in RESERVED_TYPES:
             return _reject("C106", "form", "/type")
         if mtype not in profiles:
@@ -136,6 +146,30 @@ def _form(document, kind: tuple[str, str], schema_name: str) -> Receipt | None:
     for pointer, lease in _leases(document):
         if time_ms(lease["expires_at"]) <= time_ms(lease["granted_at"]):
             return _reject("C104", "form", f"{pointer}/expires_at")
+    if kind == (MESSAGE[0], "0.2"):
+        return _form_02(document)
+    return None
+
+
+def _form_02(document) -> Receipt | None:
+    """The Core 0.2 form rules a schema cannot state (C104): duplicates among alternatives and results."""
+    payload = document["payload"]
+    goal = payload.get("goal")
+    if isinstance(goal, dict):
+        seen = []
+        for i, alternative in enumerate(goal["alternatives"]):
+            triples = frozenset((t["subject"], t["property"], t["value"]) for t in alternative["desired_state"])
+            if triples in seen:
+                return _reject("C104", "form", f"/payload/goal/alternatives/{i}")
+            seen.append(triples)
+    outcome = payload.get("outcome")
+    if document["type"] == "outcome" and isinstance(outcome, dict) and isinstance(outcome.get("verification"), dict):
+        pairs = set()
+        for i, result in enumerate(outcome["verification"]["criteria_results"]):
+            pair = (result["alternative"], result["criterion"])
+            if pair in pairs:
+                return _reject("C104", "form", f"/payload/outcome/verification/criteria_results/{i}")
+            pairs.add(pair)
     return None
 
 
@@ -208,10 +242,42 @@ def _meaning(document, context: Context) -> Receipt | None:
         return _reject("C401", "meaning", "/sender")
     if mtype == "outcome":
         outcome = payload["outcome"]
+    if document["schema_version"] == "0.2":
+        for pointer in _declared(payload):
+            if not (mtype == "outcome" and pointer.startswith("/payload/outcome/reasons/")
+                    and payload["outcome"]["status"] == "failed"):
+                return _reject("C405", "meaning", pointer)
+    if mtype == "outcome":
         verification = outcome["verification"]
-        if outcome["status"] == "succeeded" and not all(r["met"] for r in verification["criteria_results"]):
-            return _reject("C402", "meaning", "/payload/outcome/verification")
+        if outcome["status"] == "succeeded":
+            results = verification["criteria_results"]
+            if document["schema_version"] == "0.2":
+                # Only the pursued alternative counts; another one holding changes nothing (0.2 draft section 3).
+                claimed = verification["met_alternative"]
+                results = [r for r in results if r["alternative"] == claimed]
+                if claimed is None or not results:
+                    return _reject("C402", "meaning", "/payload/outcome/verification/met_alternative")
+            if not all(r["met"] for r in results):
+                return _reject("C402", "meaning", "/payload/outcome/verification")
     return None
+
+
+def _declared(payload) -> list[str]:
+    """JSON Pointers of every reason with code `declared` in a payload, in document order."""
+    found = []
+
+    def walk(node, pointer):
+        if isinstance(node, dict):
+            for key, value in node.items():
+                if key == "reasons" and isinstance(value, list):
+                    found.extend(f"{pointer}/reasons/{i}" for i, r in enumerate(value) if r.get("code") == "declared")
+                walk(value, f"{pointer}/{key}")
+        elif isinstance(node, list):
+            for i, value in enumerate(node):
+                walk(value, f"{pointer}/{i}")
+
+    walk(payload, "/payload")
+    return found
 
 
 def check_message(data: bytes, context: Context, meaning: bool = True) -> Receipt:
@@ -226,7 +292,7 @@ def check_message(data: bytes, context: Context, meaning: bool = True) -> Receip
     except ReadError:
         return _reject("C101", "form")
     return (
-        _form(document, MESSAGE, MESSAGE_SCHEMA)
+        _form(document, MESSAGE, MESSAGE_SCHEMA, context.versions)
         or _signature(document, "sender", context)
         or _freshness(document, context)
         or (_meaning(document, context) if meaning else None)

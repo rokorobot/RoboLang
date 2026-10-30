@@ -1,0 +1,60 @@
+{
+  "schema": "robolang.core.message",
+  "schema_version": "0.2",
+  "message_id": "m-02000000000000000000000000000002",
+  "conversation_id": "rl:conv:c42-delivery",
+  "sequence": 9,
+  "in_reply_to": null,
+  "profile": "a2r",
+  "type": "outcome",
+  "sender": "rl:robot:arm-02",
+  "recipient": "rl:agent:planner-1",
+  "sent_at": "2026-10-19T10:14:00.400Z",
+  "expires_at": "2026-10-19T10:14:30.400Z",
+  "payload": {
+    "outcome": {
+      "kind": "outcome",
+      "goal": "rl:goal:c42-to-s3",
+      "status": "failed",
+      "verification": null,
+      "reasons": [
+        {
+          "code": "declared",
+          "text": "ab"
+        }
+      ],
+      "reported_by": "rl:robot:arm-02",
+      "reported_at": "2026-10-19T10:14:00.400Z"
+    },
+    "evidence": [
+      {
+        "kind": "observation",
+        "id": "rl:obs:amr-07:3",
+        "subject": "rl:thing:container-c42",
+        "property": "located_in",
+        "value": "rl:place:station-s3",
+        "observed_at": "2026-10-19T10:14:00.300Z",
+        "valid_for": {
+          "value": "30",
+          "unit": "s"
+        },
+        "confidence": "0.95",
+        "source": {
+          "participant": "rl:robot:amr-07",
+          "sensor": "deck_camera",
+          "method": "vision"
+        },
+        "signature": {
+          "alg": "sim-hmac-sha256",
+          "key": "rl:robot:amr-07#k1",
+          "value": "94a46c493de09335ec12262ae9dce7e24e965bec03a6844537b8041012cee659"
+        }
+      }
+    ]
+  },
+  "signature": {
+    "alg": "sim-hmac-sha256",
+    "key": "rl:robot:arm-02#k1",
+    "value": "2ce16eaf55acbd11b3c4731a0903742e5549aad25fac83e1a69398ff5fb11761"
+  }
+}
