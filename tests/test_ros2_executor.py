@@ -55,7 +55,8 @@ def test_execution_sequence_never_claims_unobserved_goal():
         "guard", "move", "move", "grip", "attach", "move", "move", "grip", "detach",
     ]
     assert record["state"] == "UNKNOWN"
-    assert record["goal"] == "not_evaluated"
+    assert record["goal"] == [{"index": 1, "condition": {"kind": "object_at", "object": "box",
+                                                    "location": "dst"}, "result": "not_evaluated"}]
     assert record["core_outcome"] is None
     assert record["backend"]["kind"] == "ros2-gazebo"
 

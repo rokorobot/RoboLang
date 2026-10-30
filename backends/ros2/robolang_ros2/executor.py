@@ -42,12 +42,13 @@ def execute(task: ir.Task, bindings: dict[str, str], site: Site, ops: Operations
         "mode": "simulation",
         "backend": {"kind": "ros2-gazebo", "versions": ops.versions(),
                     "grasp_model": "detachable_joint_after_gripper_close"},
-        "task": task.name,
+        "task": ir.to_dict(task),
         "bindings": dict(sorted(bindings.items())),
         "state": "UNKNOWN",
         "failure": None,
         "steps": [],
-        "goal": "not_evaluated",
+        "goal": [{"index": index, "condition": ir.to_dict(condition), "result": "not_evaluated"}
+                 for index, condition in enumerate(task.goal, 1)],
         "core_outcome": None,
     }
     try:

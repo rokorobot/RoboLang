@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -11,6 +12,14 @@ from robolang.diagnostics import RoboLangError
 
 from .executor import BackendFailure, execute
 from .site import read_site
+
+
+def _finish(code: int) -> None:
+    # MoveItPy 2.15.2 can segfault while its native executor is destroyed at Python
+    # shutdown. The CLI is a dedicated process: flush its record and exit directly.
+    sys.stdout.flush()
+    sys.stderr.flush()
+    os._exit(code)
 
 
 def main() -> None:
@@ -37,24 +46,24 @@ def main() -> None:
             bindings[name] = value
         site = read_site(args.site)
         from .ros import ROSOperations  # never import ROS for an invalid task or site
-        with ROSOperations() as ops:
-            record = execute(task, bindings, site, ops)
+        ops = ROSOperations()
+        record = execute(task, bindings, site, ops)
         Path(args.out).write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
         if record["state"] == "FAILED":
             print(f"{record['failure']['code']}: {record['failure']['message']}", file=sys.stderr)
-            sys.exit(1)
+            _finish(1)
         print("goal not evaluated; see run record", file=sys.stderr)
-        sys.exit(3)
+        _finish(3)
     except RoboLangError as exc:
         for diagnostic in exc.diagnostics:
             print(diagnostic.format(), file=sys.stderr)
-        sys.exit(1)
+        _finish(1)
     except OSError as exc:
         print(f"S507: file error: {exc}", file=sys.stderr)
-        sys.exit(1)
+        _finish(1)
     except BackendFailure as exc:
         print(f"{exc.code}: {exc.message}", file=sys.stderr)
-        sys.exit(1)
+        _finish(1)
 
 
 if __name__ == "__main__":

@@ -10,10 +10,6 @@ cat /opt/ros/lyrical/share/ur_simulation_gz/config/ur_controllers.yaml >"$OUT/st
 xacro /opt/h3/urdf/ur5e_robotiq_gz.urdf.xacro ur_type:=ur5e \
     simulation_controllers:=/opt/h3/config/controllers.yaml >"$OUT/combined.urdf" || exit 1
 
-# Informational: does the Robotiq 2F-85 description expand? (Phase 1 does not attach it; see the findings doc.)
-{ xacro /opt/ros/lyrical/share/robotiq_description/urdf/robotiq_2f_85_gripper.urdf.xacro >/dev/null \
-    && echo "robotiq xacro: expands" || echo "robotiq xacro: FAILED"; } 2>&1 | tee "$OUT/gripper_probe.txt"
-
 xvfb-run -a -s "-screen 0 1280x1024x24" setsid ros2 launch ur_simulation_gz ur_sim_control.launch.py \
     ur_type:=ur5e initial_joint_controller:=joint_state_broadcaster controllers_file:=/opt/h3/config/controllers.yaml description_file:=/opt/h3/urdf/ur5e_robotiq_gz.urdf.xacro gazebo_gui:=false launch_rviz:=false world_file:=/opt/h3/world/h3_world.sdf \
     >"$OUT/launch.log" 2>&1 &
@@ -42,7 +38,6 @@ gz model -m ur --link >"$OUT/robot_links.txt" 2>&1 || true
 ros2 control list_hardware_components -c /controller_manager >"$OUT/hardware.txt" 2>&1 || true
 ros2 control list_controllers -c /controller_manager >"$OUT/controllers.txt" 2>&1 || true
 timeout 5 ros2 run tf2_ros tf2_echo base_link tool0 >"$OUT/tool0_tf.txt" 2>&1 || true
-timeout 90 python3 /opt/h3/scripts/moveit_probe.py >"$OUT/moveit_probe.log" 2>&1 || true
 # Phase 2: execute the validated .rob through MoveIt, gripper controller and Gazebo detachable joint.
 timeout 180 python3 -m robolang_ros2.cli /opt/h3/examples/transfer.rob --task transfer \
     --site /opt/h3/site/h3_site.json --bind r=arm1 --bind box=box1 --bind pickup=pickup --bind drop=drop \

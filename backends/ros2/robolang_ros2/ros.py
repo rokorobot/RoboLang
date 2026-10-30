@@ -5,7 +5,6 @@ import re
 import subprocess
 import time
 import xml.etree.ElementTree as ET
-import gc
 
 from .executor import BackendFailure
 
@@ -33,18 +32,6 @@ class ROSOperations:
         self.arm = None
         self.gripper = None
         self.model = None
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, *_):
-        # MoveItPy owns an rclcpp executor. Release it while ROS is still running;
-        # its destructor can crash if rclpy shuts the context down first.
-        self.arm = None
-        self.planner = None
-        gc.collect()
-        self.node.destroy_node()
-        self.rclpy.shutdown()
 
     def _on_clock(self, msg):
         value = msg.clock.sec * 1_000_000_000 + msg.clock.nanosec

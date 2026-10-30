@@ -1,6 +1,6 @@
 name: ROS 2 simulation harness
 
-# H3 phase 1 (decision record 0029). Simulation only. On demand and nightly; NOT on pull requests.
+# H3 simulation backend (decision record 0029). On demand and nightly; not on pull requests.
 on:
   workflow_dispatch:
   schedule:
@@ -22,17 +22,15 @@ jobs:
           docker buildx build -f backends/ros2/Dockerfile . --tag robolang-ros2-harness --load \
             --cache-from type=gha,scope=ros2-harness --cache-to type=gha,scope=ros2-harness,mode=max
           echo "image_build_seconds=$(( $(date +%s) - start ))" | tee -a "$GITHUB_STEP_SUMMARY" build_time.txt
-      - name: Run smoke test (headless Gazebo, one trajectory, one camera frame)
+      - name: Run smoke and RoboLang transfer (headless Gazebo)
         run: |
           mkdir -p out
           docker run --rm -v "$PWD/out:/out" robolang-ros2-harness /opt/h3/scripts/run_smoke.sh
-      - name: Probe phase 2 package interfaces
-        run: docker run --rm -v "$PWD/out:/out" robolang-ros2-harness /opt/h3/scripts/probe_phase2.sh
       - name: Summary
         if: always()
         run: |
           cp build_time.txt out/ 2>/dev/null || true
-          { echo '```json'; cat out/smoke.json 2>/dev/null || true; echo '```'; echo '```'; cat out/versions.txt 2>/dev/null || true; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          { echo '```json'; cat out/smoke.json 2>/dev/null || true; echo '```'; echo '```json'; cat out/executor.json 2>/dev/null || true; echo '```'; echo '```'; cat out/versions.txt 2>/dev/null || true; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
