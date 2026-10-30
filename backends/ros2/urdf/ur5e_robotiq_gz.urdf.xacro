@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://wiki.ros.org/xacro" name="ur">
+  <xacro:arg name="name" default="ur"/>
+  <!-- Include the released UR simulation description; this wrapper adds only the gripper and the simulation joint. -->
+  <xacro:include filename="$(find ur_simulation_gz)/urdf/ur_gz.urdf.xacro"/>
+  <xacro:include filename="$(find robotiq_description)/urdf/robotiq_2f_85_macro.urdf.xacro"/>
+  <!-- The released Robotiq control macro still names IgnitionSystem. We provide gz_ros2_control below. -->
+  <xacro:robotiq_gripper name="RobotiqGazeboSimSystem" prefix="" parent="tool0" include_ros2_control="false">
+    <origin xyz="0 0 0.02" rpy="0 0 0"/>
+  </xacro:robotiq_gripper>
+  <ros2_control name="RobotiqGazeboSimSystem" type="system">
+    <hardware><plugin>gz_ros2_control/GazeboSimSystem</plugin></hardware>
+    <joint name="robotiq_85_left_knuckle_joint">
+      <command_interface name="position"/>
+      <state_interface name="position"><param name="initial_value">0.0</param></state_interface>
+      <state_interface name="velocity"/>
+    </joint>
+    <joint name="robotiq_85_right_knuckle_joint" mimic="true"><state_interface name="position"/><state_interface name="velocity"/></joint>
+    <joint name="robotiq_85_left_inner_knuckle_joint" mimic="true"><state_interface name="position"/><state_interface name="velocity"/></joint>
+    <joint name="robotiq_85_right_inner_knuckle_joint" mimic="true"><state_interface name="position"/><state_interface name="velocity"/></joint>
+    <joint name="robotiq_85_left_finger_tip_joint" mimic="true"><state_interface name="position"/><state_interface name="velocity"/></joint>
+    <joint name="robotiq_85_right_finger_tip_joint" mimic="true"><state_interface name="position"/><state_interface name="velocity"/></joint>
+  </ros2_control>
+  <!-- The installed Jetty plugin starts attached; the harness and executor explicitly detach before motion. -->
+  <gazebo>
+    <plugin filename="gz-sim-detachable-joint-system" name="gz::sim::systems::DetachableJoint">
+      <!-- Gazebo reduces fixed URDF joints; wrist_3_link remains a physical link rigid with the gripper base. -->
+      <parent_link>wrist_3_link</parent_link>
+      <child_model>box</child_model>
+      <child_link>link</child_link>
+      <initial_attach>true</initial_attach>
+      <attach_topic>/model/ur/detachable_joint/attach</attach_topic>
+      <detach_topic>/model/ur/detachable_joint/detach</detach_topic>
+      <output_topic>/model/ur/detachable_joint/state</output_topic>
+    </plugin>
+  </gazebo>
+</robot>

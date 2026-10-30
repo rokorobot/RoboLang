@@ -1,0 +1,250 @@
+"""ROS 2 / MoveIt / Gazebo operations. The graph is checked before constructing a planner or action client."""
+from __future__ import annotations
+
+import re
+import subprocess
+import time
+import xml.etree.ElementTree as ET
+
+from .executor import BackendFailure
+
+
+class ROSOperations:
+    def __init__(self):
+        import rclpy
+        from rosgraph_msgs.msg import Clock
+        from sensor_msgs.msg import JointState
+        from std_msgs.msg import String
+        from rclpy.qos import DurabilityPolicy, QoSProfile
+
+        self.rclpy = rclpy
+        rclpy.init()
+        self.node = rclpy.create_node("robolang_ros2_guard", parameter_overrides=[
+            rclpy.parameter.Parameter("use_sim_time", value=True)])
+        self.clock_values = []
+        self.node.create_subscription(Clock, "/clock", self._on_clock, 10)
+        self.joints = {}
+        self.node.create_subscription(JointState, "/joint_states", self._on_joints, 10)
+        self.description = None
+        description_qos = QoSProfile(depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL)
+        self.node.create_subscription(String, "/robot_description", self._on_description, description_qos)
+        self.planner = None
+        self.arm = None
+        self.gripper = None
+        self.model = None
+
+    def _on_clock(self, msg):
+        value = msg.clock.sec * 1_000_000_000 + msg.clock.nanosec
+        if not self.clock_values or value > self.clock_values[-1]:
+            self.clock_values.append(value)
+
+    def _on_joints(self, msg):
+        self.joints.update(zip(msg.name, msg.position))
+
+    def _on_description(self, msg):
+        self.description = msg.data
+
+    def _until(self, predicate, seconds: float):
+        deadline = time.monotonic() + seconds
+        while not predicate() and time.monotonic() < deadline:
+            self.rclpy.spin_once(self.node, timeout_sec=0.1)
+        return predicate()
+
+    @staticmethod
+    def _command(args: list[str], timeout: int = 20) -> str:
+        try:
+            done = subprocess.run(args, check=True, capture_output=True, text=True, timeout=timeout)
+            return done.stdout
+        except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired) as exc:
+            raise BackendFailure("S501", f"simulation graph check failed: {args[0]}: {exc}") from exc
+
+    def guard(self, model: str) -> None:
+        if self.node.get_parameter("use_sim_time").value is not True:
+            raise BackendFailure("S501", "executor is not using simulation time")
+        if not self._until(lambda: len(self.clock_values) >= 5, 30):
+            raise BackendFailure("S501", "no advancing Gazebo /clock")
+        listing = self._command(["gz", "model", "--list"])
+        if not re.search(rf"^\s*- {re.escape(model)}\s*$", listing, re.MULTILINE):
+            raise BackendFailure("S501", f"declared Gazebo model {model!r} is absent")
+        hardware = self._command(["ros2", "control", "list_hardware_components", "-c", "/controller_manager"])
+        # Lyrical's ros2controlcli prints an empty plugin name even for active Gazebo systems.
+        # Compare the actual component names with the graph's published URDF declarations instead.
+        if not self._until(lambda: self.description is not None, 10):
+            raise BackendFailure("S501", "no published robot description")
+        if not _gazebo_hardware_matches(hardware, self.description, model):
+            raise BackendFailure("S501", "controller hardware must match GazeboSimSystem declarations")
+        required_topics = {f"/model/{model}/detachable_joint/{suffix}"
+                           for suffix in ("attach", "detach", "state")}
+        available_topics = set(self._command(["gz", "topic", "-l"]).splitlines())
+        if not required_topics <= available_topics:
+            raise BackendFailure("S501", "declared Gazebo detachable joint is unavailable")
+        # The installed Jetty plugin may start attached despite initial_attach=false.
+        # Make the release request before MoveIt or gripper clients can move the arm.
+        before_detach = self.clock_values[-1]
+        self._command(["gz", "topic", "-t", f"/model/{model}/detachable_joint/detach",
+                       "-m", "gz.msgs.Empty", "-p", ""])
+        if not self._until(lambda: self.clock_values[-1] > before_detach + 500_000_000, 5):
+            raise BackendFailure("S501", "simulation clock stopped after initial detachment request")
+        self.model = model
+        # MoveItPy can contact controllers while loading. Construct it only after every graph check passes.
+        try:
+            from moveit.planning import MoveItPy
+            parameters = moveit_parameters(self.description)
+            self.planner = MoveItPy(node_name="robolang_moveit", config_dict=parameters)
+            self.arm = self.planner.get_planning_component("ur_manipulator")
+        except Exception as exc:
+            raise BackendFailure("S502", f"MoveIt did not start: {exc}") from exc
+
+    def now_ms(self) -> int:
+        before = self.clock_values[-1]
+        self._until(lambda: self.clock_values[-1] > before, 1)
+        return self.clock_values[-1] // 1_000_000
+
+    def move(self, pose: dict) -> None:
+        from geometry_msgs.msg import PoseStamped
+
+        target = PoseStamped()
+        target.header.frame_id = pose["frame"]
+        target.header.stamp = self.node.get_clock().now().to_msg()
+        target.pose.position.x, target.pose.position.y, target.pose.position.z = map(float, pose["position"])
+        (target.pose.orientation.x, target.pose.orientation.y,
+         target.pose.orientation.z, target.pose.orientation.w) = map(float, pose["orientation"])
+        try:
+            self.arm.set_start_state_to_current_state()
+            if not self.arm.set_goal_state(pose_stamped_msg=target, pose_link="tool0"):
+                raise BackendFailure("S502", "MoveIt rejected the pose goal")
+            plan = self.arm.plan()
+            if not plan:
+                raise BackendFailure("S502", "MoveIt found no motion plan")
+            status = self.planner.execute(plan.trajectory, controllers=["joint_trajectory_controller"])
+            if status.status != "SUCCEEDED":
+                code = "S504" if status.status == "TIMED_OUT" else "S503"
+                raise BackendFailure(code, f"MoveIt execution ended {status.status}")
+        except BackendFailure:
+            raise
+        except Exception as exc:
+            raise BackendFailure("S503", f"MoveIt motion failed: {exc}") from exc
+
+    def grip(self, closed: bool) -> None:
+        from control_msgs.action import FollowJointTrajectory
+        from rclpy.action import ActionClient
+        from rclpy.duration import Duration
+        from trajectory_msgs.msg import JointTrajectoryPoint
+
+        if self.gripper is None:
+            self.gripper = ActionClient(self.node, FollowJointTrajectory,
+                                        "/gripper_trajectory_controller/follow_joint_trajectory")
+        if not self._until(self.gripper.server_is_ready, 20):
+            raise BackendFailure("S505", "gripper controller unavailable")
+        target = 0.8 if closed else 0.0
+        goal = FollowJointTrajectory.Goal()
+        goal.trajectory.joint_names = ["robotiq_85_left_knuckle_joint"]
+        goal.trajectory.points = [JointTrajectoryPoint(positions=[target],
+                                                       time_from_start=Duration(seconds=3).to_msg())]
+        future = self.gripper.send_goal_async(goal)
+        if not self._until(future.done, 10):
+            raise BackendFailure("S504", "gripper goal timed out before acceptance")
+        handle = future.result()
+        if handle is None or not handle.accepted:
+            raise BackendFailure("S505", "gripper goal rejected")
+        result = handle.get_result_async()
+        if not self._until(result.done, 20):
+            handle.cancel_goal_async()
+            raise BackendFailure("S504", "gripper trajectory timed out")
+        if result.result().result.error_code != FollowJointTrajectory.Result.SUCCESSFUL:
+            raise BackendFailure("S505", "gripper trajectory failed")
+        joint = "robotiq_85_left_knuckle_joint"
+        if not self._until(lambda: joint in self.joints and abs(self.joints[joint] - target) < 0.05, 3):
+            raise BackendFailure("S505", "gripper joint state did not reach target")
+
+    def attach(self, model: str) -> None:
+        self._joint(model, "attach")
+
+    def detach(self, model: str) -> None:
+        self._joint(model, "detach")
+
+    def _joint(self, model: str, action: str) -> None:
+        if model != "box" or self.model != "ur":
+            raise BackendFailure("S506", "this harness declares only the ur/box detachable joint")
+        topic = f"/model/{self.model}/detachable_joint/{action}"
+        state_topic = f"/model/{self.model}/detachable_joint/state"
+        expected = "attached" if action == "attach" else "detached"
+        # Gazebo publishes the state only when it changes. Subscribe before publishing the command.
+        subscriber = subprocess.Popen(["gz", "topic", "-e", "-t", state_topic, "-n", "1"],
+                                      stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        try:
+            time.sleep(0.5)
+            subprocess.run(["gz", "topic", "-t", topic, "-m", "gz.msgs.Empty", "-p", ""],
+                           check=True, capture_output=True, text=True, timeout=10)
+            output, errors = subscriber.communicate(timeout=10)
+            if f'data: "{expected}"' not in output:
+                raise BackendFailure("S506", f"Gazebo {action} did not confirm {expected}: {output or errors}")
+        except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired) as exc:
+            raise BackendFailure("S506", f"Gazebo {action} command failed: {exc}") from exc
+        finally:
+            if subscriber.poll() is None:
+                subscriber.terminate()
+                try:
+                    subscriber.communicate(timeout=2)
+                except subprocess.TimeoutExpired:
+                    subscriber.kill()
+                    subscriber.communicate()
+
+    def wait_ms(self, duration: int) -> None:
+        target = self.now_ms() + duration
+        if not self._until(lambda: self.now_ms() >= target, max(10, duration / 1000 * 3)):
+            raise BackendFailure("S504", "simulation clock stopped during wait")
+
+    def versions(self) -> dict[str, str]:
+        packages = {"ros": "lyrical"}
+        for package in ("ros-lyrical-moveit", "ros-lyrical-gz-ros2-control", "ros-lyrical-ur-simulation-gz"):
+            try:
+                result = subprocess.run(["dpkg-query", "-W", "-f=${Version}", package], capture_output=True,
+                                        text=True, check=True, timeout=3)
+                packages[package] = result.stdout.strip()
+            except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired):
+                packages[package] = "unknown"
+        return packages
+
+
+def moveit_parameters(description: str) -> dict:
+    """Use the live URDF and allow only the Robotiq's internal self contacts."""
+    from pathlib import Path
+    from moveit_configs_utils import MoveItConfigsBuilder
+
+    config = (MoveItConfigsBuilder(robot_name="ur", package_name="ur_moveit_config")
+              .robot_description_semantic(Path("srdf") / "ur.srdf.xacro", {"name": "ur"})
+              .to_moveit_configs())
+    parameters = config.to_dict()
+    parameters["robot_description"] = description
+    semantic = ET.fromstring(parameters["robot_description_semantic"])
+    links = sorted(link.attrib["name"] for link in ET.fromstring(description).findall("link")
+                   if link.attrib["name"].startswith("robotiq_85_"))
+    for index, first in enumerate(links):
+        for second in links[index + 1:]:
+            ET.SubElement(semantic, "disable_collisions", link1=first, link2=second, reason="Adjacent")
+    parameters["robot_description_semantic"] = ET.tostring(semantic, encoding="unicode")
+    parameters["planning_pipelines"] = {"pipeline_names": ["ompl"]}
+    parameters["plan_request_params"] = {"planning_attempts": 4, "planning_pipeline": "ompl",
+                                         "planning_time": 15.0}
+    parameters["use_sim_time"] = True
+    return parameters
+
+
+def _gazebo_hardware_matches(hardware: str, description: str, model: str) -> bool:
+    """Require each active controller component to match a Gazebo system in the live URDF."""
+    try:
+        root = ET.fromstring(description)
+        controls = root.findall("ros2_control")
+        declared = {control.attrib["name"]: control.findtext("hardware/plugin") for control in controls}
+    except (ET.ParseError, KeyError):
+        return False
+    blocks = re.findall(r"Hardware Component \d+\n(.*?)(?=Hardware Component \d+\n|\Z)",
+                        hardware, re.DOTALL)
+    names = [re.search(r"^\s*name:\s*(\S+)", block, re.MULTILINE) for block in blocks]
+    observed = [match.group(1) for match in names if match]
+    return (root.attrib.get("name") == model and len(controls) == len(declared) and
+            len(observed) == len(blocks) and len(observed) == len(declared) and
+            set(observed) == set(declared) and
+            all("label=active" in block for block in blocks) and
+            all(plugin == "gz_ros2_control/GazeboSimSystem" for plugin in declared.values()))
