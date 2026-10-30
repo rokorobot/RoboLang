@@ -64,6 +64,9 @@ jobs:
       - uses: pypa/gh-action-pypi-publish@release/v1
         with:
           repository-url: https://test.pypi.org/legacy/
+          # The manual rehearsal has already claimed this immutable version.
+          # A later GitHub Release must still reach the dependent PyPI job.
+          skip-existing: true
 
   pypi:
     needs: testpypi
