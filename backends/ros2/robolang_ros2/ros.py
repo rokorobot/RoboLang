@@ -4,6 +4,7 @@ from __future__ import annotations
 import re
 import subprocess
 import time
+import xml.etree.ElementTree as ET
 
 from .executor import BackendFailure
 
@@ -13,6 +14,8 @@ class ROSOperations:
         import rclpy
         from rosgraph_msgs.msg import Clock
         from sensor_msgs.msg import JointState
+        from std_msgs.msg import String
+        from rclpy.qos import DurabilityPolicy, QoSProfile
 
         self.rclpy = rclpy
         rclpy.init()
@@ -22,6 +25,9 @@ class ROSOperations:
         self.node.create_subscription(Clock, "/clock", self._on_clock, 10)
         self.joints = {}
         self.node.create_subscription(JointState, "/joint_states", self._on_joints, 10)
+        self.description = None
+        description_qos = QoSProfile(depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL)
+        self.node.create_subscription(String, "/robot_description", self._on_description, description_qos)
         self.planner = None
         self.arm = None
         self.gripper = None
@@ -41,6 +47,9 @@ class ROSOperations:
 
     def _on_joints(self, msg):
         self.joints.update(zip(msg.name, msg.position))
+
+    def _on_description(self, msg):
+        self.description = msg.data
 
     def _until(self, predicate, seconds: float):
         deadline = time.monotonic() + seconds
@@ -65,23 +74,25 @@ class ROSOperations:
         if not re.search(rf"^\s*- {re.escape(model)}\s*$", listing, re.MULTILINE):
             raise BackendFailure("S501", f"declared Gazebo model {model!r} is absent")
         hardware = self._command(["ros2", "control", "list_hardware_components", "-c", "/controller_manager"])
-        plugins = re.findall(r"^\s*plugin name:\s*(\S+)", hardware, re.MULTILINE)
-        if not plugins or any(p != "gz_ros2_control/GazeboSimSystem" for p in plugins):
-            raise BackendFailure("S501", "every controller hardware component must be GazeboSimSystem")
+        # Lyrical's ros2controlcli prints an empty plugin name even for active Gazebo systems.
+        # Compare the actual component names with the graph's published URDF declarations instead.
+        components = re.findall(r"^\s*name:\s*(\S+)", hardware, re.MULTILINE)
+        if not self._until(lambda: self.description is not None, 10):
+            raise BackendFailure("S501", "no published robot description")
+        try:
+            root = ET.fromstring(self.description)
+            declared = {control.attrib["name"]: control.findtext("hardware/plugin")
+                        for control in root.findall("ros2_control")}
+        except (ET.ParseError, KeyError) as exc:
+            raise BackendFailure("S501", f"invalid robot description: {exc}") from exc
+        if (not components or set(components) != set(declared) or
+                any(plugin != "gz_ros2_control/GazeboSimSystem" for plugin in declared.values())):
+            raise BackendFailure("S501", "controller hardware must match GazeboSimSystem declarations")
         self.model = model
         # MoveItPy can contact controllers while loading. Construct it only after every graph check passes.
         try:
-            from pathlib import Path
             from moveit.planning import MoveItPy
-            from moveit_configs_utils import MoveItConfigsBuilder
-            config = (MoveItConfigsBuilder(robot_name="ur", package_name="ur_moveit_config")
-                      .robot_description_semantic(Path("srdf") / "ur.srdf.xacro", {"name": "ur"})
-                      .to_moveit_configs())
-            parameters = config.to_dict()
-            parameters["planning_pipelines"] = {"pipeline_names": ["ompl"]}
-            parameters["plan_request_params"] = {"planning_attempts": 1, "planning_pipeline": "ompl",
-                                                 "planning_time": 5.0}
-            parameters["use_sim_time"] = True
+            parameters = moveit_parameters(self.description)
             self.planner = MoveItPy(node_name="robolang_moveit", config_dict=parameters)
             self.arm = self.planner.get_planning_component("ur_manipulator")
         except Exception as exc:
@@ -195,3 +206,27 @@ class ROSOperations:
             except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired):
                 packages[package] = "unknown"
         return packages
+
+
+def moveit_parameters(description: str) -> dict:
+    """Use the live URDF and allow only the Robotiq's internal self contacts."""
+    from pathlib import Path
+    from moveit_configs_utils import MoveItConfigsBuilder
+
+    config = (MoveItConfigsBuilder(robot_name="ur", package_name="ur_moveit_config")
+              .robot_description_semantic(Path("srdf") / "ur.srdf.xacro", {"name": "ur"})
+              .to_moveit_configs())
+    parameters = config.to_dict()
+    parameters["robot_description"] = description
+    semantic = ET.fromstring(parameters["robot_description_semantic"])
+    links = sorted(link.attrib["name"] for link in ET.fromstring(description).findall("link")
+                   if link.attrib["name"].startswith("robotiq_85_"))
+    for index, first in enumerate(links):
+        for second in links[index + 1:]:
+            ET.SubElement(semantic, "disable_collisions", link1=first, link2=second, reason="Adjacent")
+    parameters["robot_description_semantic"] = ET.tostring(semantic, encoding="unicode")
+    parameters["planning_pipelines"] = {"pipeline_names": ["ompl"]}
+    parameters["plan_request_params"] = {"planning_attempts": 1, "planning_pipeline": "ompl",
+                                         "planning_time": 5.0}
+    parameters["use_sim_time"] = True
+    return parameters

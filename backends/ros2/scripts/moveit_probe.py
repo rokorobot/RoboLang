@@ -6,20 +6,13 @@ from pathlib import Path
 
 import rclpy
 from moveit.planning import MoveItPy
-from moveit_configs_utils import MoveItConfigsBuilder
+from robolang_ros2.ros import moveit_parameters
 
 result = {}
 try:
     rclpy.init()
-    config = (MoveItConfigsBuilder(robot_name="ur", package_name="ur_moveit_config")
-              .robot_description_semantic(Path("srdf") / "ur.srdf.xacro", {"name": "ur"})
-              .to_moveit_configs())
-    result["controller_names"] = config.to_dict().get("moveit_simple_controller_manager", {}).get("controller_names")
-    parameters = config.to_dict()
-    parameters["planning_pipelines"] = {"pipeline_names": ["ompl"]}
-    parameters["plan_request_params"] = {"planning_attempts": 1, "planning_pipeline": "ompl",
-                                         "planning_time": 5.0}
-    parameters["use_sim_time"] = True
+    parameters = moveit_parameters(Path("/out/combined.urdf").read_text())
+    result["controller_names"] = parameters.get("moveit_simple_controller_manager", {}).get("controller_names")
     result["pipeline_parameters"] = parameters["planning_pipelines"]
     robot = MoveItPy(node_name="phase2_moveit_probe", config_dict=parameters)
     arm = robot.get_planning_component("ur_manipulator")

@@ -1,38 +1,30 @@
-# robolang-ros2 backend: phase 1 harness (decision 0029)
+# RoboLang ROS 2 backend
 
-Simulation only. This directory is **not** part of `pip install robolang` (`pyproject.toml` lists no package from
-here, and `robolang` has no dependency on ROS 2). Nothing here can address real hardware (0029 X7): the only robot is
-the Gazebo model spawned by `ur_simulation_gz`.
+This optional backend runs a validated `.rob` task with a UR5e, Robotiq 2F-85 gripper, MoveIt 2 and Gazebo Jetty. It is simulation only and is separate from the core `robolang` wheel. The implementation contract and failure codes are in [the backend specification](../../spec/ros2-backend-v0.1.md).
 
-Phase 1 is the harness only: a container, a scene, and a smoke test that moves the arm once and reads one camera frame.
-There is no executor and no RoboLang code yet. Findings: [`docs/evidence/h3-phase1-harness.md`](../../docs/evidence/h3-phase1-harness.md).
+The executor checks for advancing simulation time, the declared Gazebo model and Gazebo hardware plugins before creating motion clients. The site file maps task bindings to poses and Gazebo models. `move` and the approach in `grasp` use MoveIt; a gripper trajectory closes before Gazebo attaches the object. `place` moves with MoveIt, opens the gripper, then detaches it. Attachment is a simulation shortcut and does not validate contact physics.
 
-| Path | What |
-|---|---|
-| `Dockerfile` | `FROM ros:lyrical`; installs `ros-lyrical-ros-gz` (Gazebo Jetty), `ur-simulation-gz`, `ur-moveit-config`, `moveit`, `gz-ros2-control`, `robotiq-description`, Xvfb and Mesa software GL, OpenCV |
-| `world/h3_world.sdf` | table, shelf, a box with an ArUco marker (DICT_4X4_50, id 7; the PNG is generated at image build), a fixed overhead camera |
-| `config/controllers.yaml` | `joint_state_broadcaster` and `joint_trajectory_controller` for the UR5e (the stock Lyrical config does not load, see the findings) |
-| `scripts/run_smoke.sh` | starts headless Gazebo + the arm + a camera bridge, runs the smoke test, stops everything |
-| `scripts/smoke.py` | rclpy, simulation time only: waits for `/clock` and the controller, sends one trajectory, checks `/joint_states`, reads one camera frame |
-| `scripts/versions.sh` | resolved package versions |
+The phase 1 arm and camera findings are in [the harness report](../../docs/evidence/h3-phase1-harness.md).
 
-## Run it
+## Run the integration test
 
-CI: the workflow `ros2-sim.yml` (on demand and nightly, never on pull requests) builds the image, runs the smoke test
-and uploads `smoke.json`, `versions.txt`, `launch.log` and `camera.png` as the `ros2-sim-results` artifact.
+The on-demand and nightly `ros2-sim.yml` workflow builds the image, runs the arm and camera smoke test, then executes [`transfer.rob`](examples/transfer.rob). It uploads logs and a JSON run record as the `ros2-sim-results` artifact. The record keeps goal status `not_evaluated` until phase 3 adds sensor observations; completed motion steps therefore exit with code 3, not success.
 
-Locally, on a machine with Docker (amd64; the sandbox this was written in has none):
+On an amd64 host with Docker:
 
 ```sh
-docker build backends/ros2 -t robolang-ros2-harness
-mkdir -p out && docker run --rm -v "$PWD/out:/out" robolang-ros2-harness /opt/h3/scripts/run_smoke.sh
+docker build -f backends/ros2/Dockerfile . -t robolang-ros2-harness
+mkdir -p out
+docker run --rm -v "$PWD/out:/out" robolang-ros2-harness /opt/h3/scripts/run_smoke.sh
 ```
 
-The smoke test exits non-zero if the arm does not reach the target. The camera result is reported in `smoke.json`
-either way.
+Inside a running ROS 2 simulation graph, the CLI is:
 
-## Gripper
+```sh
+python3 -m robolang_ros2.cli backends/ros2/examples/transfer.rob --task transfer \
+  --site backends/ros2/site/h3_site.json \
+  --bind r=arm1 --bind box=box1 --bind pickup=pickup --bind drop=drop \
+  --out executor.json
+```
 
-Not attached in phase 1. `robotiq_description` expands on its own (`gripper_probe.txt` in the artifact), but
-`ur_simulation_gz`'s xacro has no gripper hook, so attaching it means our own combined description plus a gripper
-controller. That is phase 2 work; see the findings.
+The `robolang-ros2` ament package lives in this directory. The Docker harness includes its Python modules and core source directly so the integration workflow exercises the checked out revision.
