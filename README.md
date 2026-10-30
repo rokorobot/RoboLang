@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://img.shields.io/badge/version-v0.1.0a1-blue?style=for-the-badge" alt="version"/>
+  <img src="https://img.shields.io/badge/version-v0.2.0-blue?style=for-the-badge" alt="version"/>
   <img src="https://img.shields.io/badge/python-3.11%2B-brightgreen?style=for-the-badge" alt="python"/>
   <img src="https://img.shields.io/github/license/rokorobot/RoboLang?style=for-the-badge" alt="license"/>
   <img src="https://img.shields.io/github/stars/rokorobot/RoboLang?style=for-the-badge" alt="stars"/>
@@ -11,7 +11,7 @@
   Built by <a href="https://github.com/rokorobot">@rokorobot</a>
 </p>
 <p align="center">
-  <img src="docs/robolang_banner.png" width="600" alt="RoboLang Logo"/>
+  <img src="https://raw.githubusercontent.com/rokorobot/RoboLang/main/docs/robolang_banner.png" width="600" alt="RoboLang Logo"/>
 </p>
 
 ---
@@ -35,11 +35,18 @@ Created and maintained by **Robert Konecny (@rokorobot)**. Licensed under Apache
 You need Python 3.11 or newer. No ROS 2, no robot, no other packages.
 
 ```bash
+python -m pip install robolang
+robolang reference          # the language reference: everything a task author needs
+robolang validate FILE.rob
+```
+
+The examples and test worlds live in the repository:
+
+```bash
 git clone https://github.com/rokorobot/RoboLang.git
 cd RoboLang
-python -m pip install .
+python -m pip install .     # or use the robolang installed from PyPI
 
-robolang reference
 robolang validate examples/handover.rob
 robolang inspect  examples/handover.rob --json
 robolang simulate examples/handover.rob --world examples/world.json
@@ -64,11 +71,11 @@ robolang simulate examples/handover.rob --world examples/world.json \
 | `inspect FILE [--json] [--task NAME]` | Validates, then shows the tasks as text or as Task IR JSON | as `validate` |
 | `simulate FILE --world W [--task NAME] [--bind P=ID …]` | Runs one task against a world file in a symbolic simulation; the same inputs give a byte-identical run record | 0 succeeded, 1 invalid source, 2 usage, 3 invalid world, 4 failed, 5 cancelled |
 | `export-goal FILE --world W --from AGENT [--to ROBOT] [--bind P=ID …]` | Turns a 1.3 task's goal into a signed Core 0.1 `propose_goal` message (simulation-only signature) | 0 printed, 1 invalid source, 2 usage, 3 invalid world, 6 goal has no Core form |
-| `delegate FILE --world W --from AGENT --to ROBOT [--plans PATH …] [--lease D]` | End to end: the planner sends the task's goal; the robot matches it (in any order) to a plan in its own `.rob` library, runs it, and returns a Core outcome; the planner checks the evidence itself. A plan with a second robot brings it in as a peer: commitment with a lease, then custody transfer before the peer's steps ([spec](spec/delegate-v0.2.md)) | 0 verified success, 4 failed or unknown, 7 rejected; others as `export-goal` |
+| `delegate FILE --world W --from AGENT --to ROBOT [--plans PATH …] [--lease D]` | End to end: the planner sends the task's goal; the robot matches it (in any order) to a plan in its own `.rob` library, runs it, and returns a Core outcome; the planner checks the evidence itself. A plan with a second robot brings it in as a peer: commitment with a lease, then custody transfer before the peer's steps ([spec](https://github.com/rokorobot/RoboLang/blob/main/spec/delegate-v0.2.md)) | 0 verified success, 4 failed or unknown, 7 rejected; others as `export-goal` |
 | `arch02 --scenario S --cases C --case NAME` | Runs one case of the Core 0.1 reference scenario (AI planner, arm and mobile robot exchanging signed messages) | 0 ran, 2 usage, 3 invalid input |
 
 Every command that reads a `.rob` file also reads Task IR JSON instead: `--ir FILE.json`. The IR is
-re-validated from scratch; its version claims are never trusted ([spec](spec/ir-reader-v0.1.md)).
+re-validated from scratch; its version claims are never trusted ([spec](https://github.com/rokorobot/RoboLang/blob/main/spec/ir-reader-v0.1.md)).
 
 Validation and simulation say nothing about whether a task is safe on a real robot.
 
@@ -119,10 +126,10 @@ task handover(robot arm, robot mobile, object box, location src, location handof
   parameters.
 - **`@safety max_speed`** is checked against the robot's profile and recorded, never enforced.
 
-Specifications: [1.1](spec/robolang-v1.1.md) ([grammar](spec/grammar.ebnf)),
-[1.2](spec/robolang-v1.2.md) ([grammar](spec/grammar-v1.2.ebnf)),
-[1.3](spec/robolang-v1.3.md) ([grammar](spec/grammar-v1.3.ebnf)),
-[Task IR](spec/ir-schema-v1.2.md), [simulation, world file and run record](spec/simulation-v1.0.md).
+Specifications: [1.1](https://github.com/rokorobot/RoboLang/blob/main/spec/robolang-v1.1.md) ([grammar](https://github.com/rokorobot/RoboLang/blob/main/spec/grammar.ebnf)),
+[1.2](https://github.com/rokorobot/RoboLang/blob/main/spec/robolang-v1.2.md) ([grammar](https://github.com/rokorobot/RoboLang/blob/main/spec/grammar-v1.2.ebnf)),
+[1.3](https://github.com/rokorobot/RoboLang/blob/main/spec/robolang-v1.3.md) ([grammar](https://github.com/rokorobot/RoboLang/blob/main/spec/grammar-v1.3.ebnf)),
+[Task IR](https://github.com/rokorobot/RoboLang/blob/main/spec/ir-schema-v1.2.md), [simulation, world file and run record](https://github.com/rokorobot/RoboLang/blob/main/spec/simulation-v1.0.md).
 
 ## How it fits together
 
@@ -147,13 +154,13 @@ Specifications: [1.1](spec/robolang-v1.1.md) ([grammar](spec/grammar.ebnf)),
 descriptor for AI-to-robot and robot-to-robot exchanges, with authority, custody and
 evidence-backed outcomes. It runs only inside the `arch02` reference simulation.
 
-The bridge from `.rob` to Core ([plan](docs/plans/goals-and-core-bridge.md)) is built, in simulation.
+The bridge from `.rob` to Core ([plan](https://github.com/rokorobot/RoboLang/blob/main/docs/plans/goals-and-core-bridge.md)) is built, in simulation.
 Goal conditions `object_at`, `robot_at` and `holding` map to Core `located_in` and `carried_by`
 facts (`src/robolang/bridge.py`). `export-goal` sends a task's goal as a Core `propose_goal`,
 and every 1.3 run record ends with `core_outcome`: a Core outcome with signed observations as
 evidence. `delegate` closes the loop: the goal crosses as a Core message, the robot runs its
 own `.rob` plan (plans never travel, Core decision R3), and the planner accepts `succeeded`
-only after re-checking the signed evidence ([spec](spec/delegate-v0.1.md)):
+only after re-checking the signed evidence ([spec](https://github.com/rokorobot/RoboLang/blob/main/spec/delegate-v0.1.md)):
 
 ```bash
 robolang delegate examples/handover.rob --world examples/world.json \
@@ -162,9 +169,9 @@ robolang delegate examples/handover.rob --world examples/world.json \
 ```
 
 See
-[Core 0.1](spec/core-v0.1.md), the
-[reference simulation](spec/reference-simulation-v0.1.md) and
-[RFC-001](spec/architecture/rfc-001-ai-native-architecture.md).
+[Core 0.1](https://github.com/rokorobot/RoboLang/blob/main/spec/core-v0.1.md), the
+[reference simulation](https://github.com/rokorobot/RoboLang/blob/main/spec/reference-simulation-v0.1.md) and
+[RFC-001](https://github.com/rokorobot/RoboLang/blob/main/spec/architecture/rfc-001-ai-native-architecture.md).
 
 ## Limitations
 
@@ -174,28 +181,27 @@ See
 - **No hardware, no ROS 2 runtime, no network transport.** Core signatures are
   simulation-only.
 - **No branching, loops or local bindings yet** (planned language extensions).
-- The original v1 interpreter and ROS 2 adapter live in [`legacy/`](legacy/). They bypass the
+- The original v1 interpreter and ROS 2 adapter live in [`legacy/`](https://github.com/rokorobot/RoboLang/blob/main/legacy/). They bypass the
   validator, are never installed and were never validated against ROS 2
-  ([details](docs/legacy-v1.md)).
+  ([details](https://github.com/rokorobot/RoboLang/blob/main/docs/legacy-v1.md)).
 
 ## Status and roadmap
 
 | Area | State |
 |---|---|
 | Language 1.1, 1.2 and 1.3 (goals, typed sensors), validator, Task IR | Delivered |
-| Language 1.4 (bounded `if`/`else`, `fail`; [0027](spec/decisions/0027-bounded-branching.md)): `validate`, `inspect`, Task IR 1.3 | Complete in code: front end, `simulate`, `export-goal` and `delegate` run branching tasks (record 1.3, [simulation 12](spec/simulation-v1.0.md)), `validate --world` checks every path, language reference and benchmark scoring per path. Acceptance run (set 3 under 1.4) pending |
-| Simulation-only execution (`simulate`) | Delivered, signed off 2026-10-27 ([evidence](docs/evidence/rl-basic-01-exit-gate.md)) |
-| Core 0.1 reference simulation (`arch02`) | Implemented, gate 1 signed off 2026-10-27 ([evidence](docs/evidence/rl-arch-02-exit-gate.md)) |
-| Gate 2 independent interoperability | Bundle frozen 2026-10-28. INTEROP-3 deferred until Core 0.2 or a real second implementer ([0023](spec/decisions/0023-keep-interop-3-deferred.md)) |
-| `.rob` → Core bridge | Delivered in simulation: Core-shaped outcomes, `export-goal`, `delegate` with a peer robot, commitment, lease and custody ([plan](docs/plans/goals-and-core-bridge.md)) |
-| CORE-1, Task IR reader | Delivered: `--ir` on every command ([0021](spec/decisions/0021-core-1-ir-reader.md)) |
+| Language 1.4 (bounded `if`/`else`, `fail`; [0027](https://github.com/rokorobot/RoboLang/blob/main/spec/decisions/0027-bounded-branching.md)): `validate`, `inspect`, Task IR 1.3 | Complete in code: front end, `simulate`, `export-goal` and `delegate` run branching tasks (record 1.3, [simulation 12](https://github.com/rokorobot/RoboLang/blob/main/spec/simulation-v1.0.md)), `validate --world` checks every path, language reference and benchmark scoring per path. Acceptance run (set 3 under 1.4) pending |
+| Simulation-only execution (`simulate`) | Delivered, signed off 2026-10-27 ([evidence](https://github.com/rokorobot/RoboLang/blob/main/docs/evidence/rl-basic-01-exit-gate.md)) |
+| Core 0.1 reference simulation (`arch02`) | Implemented, gate 1 signed off 2026-10-27 ([evidence](https://github.com/rokorobot/RoboLang/blob/main/docs/evidence/rl-arch-02-exit-gate.md)) |
+| Gate 2 independent interoperability | Bundle frozen 2026-10-28. INTEROP-3 deferred until Core 0.2 or a real second implementer ([0023](https://github.com/rokorobot/RoboLang/blob/main/spec/decisions/0023-keep-interop-3-deferred.md)) |
+| `.rob` → Core bridge | Delivered in simulation: Core-shaped outcomes, `export-goal`, `delegate` with a peer robot, commitment, lease and custody ([plan](https://github.com/rokorobot/RoboLang/blob/main/docs/plans/goals-and-core-bridge.md)) |
+| CORE-1, Task IR reader | Delivered: `--ir` on every command ([0021](https://github.com/rokorobot/RoboLang/blob/main/spec/decisions/0021-core-1-ir-reader.md)) |
 
 Every implementation item needs owner approval. The full plan and history are in the
-[development plan](docs/DEVELOPMENT_PLAN.md); decisions are in [`spec/decisions/`](spec/decisions/).
+[development plan](https://github.com/rokorobot/RoboLang/blob/main/docs/DEVELOPMENT_PLAN.md); decisions are in [`spec/decisions/`](https://github.com/rokorobot/RoboLang/blob/main/spec/decisions/).
 
-`robolang --version` prints three independent versions: the Python package (`0.1.0a1`, alpha),
-the language (`1.1`, `1.2`, `1.3`) and the Task IR schema (`1.0`, `1.1`, `1.2` for 1.1, 1.2
-and 1.3 sources).
+`robolang --version` prints three independent versions: the Python package (`0.2.0`, alpha),
+the language (`1.1` to `1.4`) and the Task IR schema (`1.0` to `1.3`, one for each language version).
 
 ## Contributing
 

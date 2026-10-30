@@ -1,22 +1,23 @@
 [build-system]
-requires = ["setuptools>=64"]
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "robolang"
-# Distribution version: the maturity of this package (a pre-release).
-# It is independent of the language version (1.1) and the IR schema
-# version (1.0), which are defined in src/robolang/.
-version = "0.1.0a1"
-description = "RoboLang: a task description language for robots, with a parser, validator and simulation-only task execution."
+# Distribution version: the maturity of this package (0.2.0 is the first PyPI release, still alpha).
+# It is independent of the language versions (1.1 to 1.4) and the IR schema
+# versions (1.0 to 1.3), which are defined in src/robolang/.
+version = "0.2.0"
+description = "RoboLang: a checked robot task language (1.1 to 1.4) with a validator, symbolic simulation and RoboLang Core outcomes."
 readme = "README.md"
 requires-python = ">=3.11"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
 authors = [{ name = "Robert Konecny" }]
-keywords = ["robotics", "dsl", "task-language", "validation"]
+keywords = ["robotics", "dsl", "task-language", "validation", "simulation", "llm"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: Apache Software License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -35,6 +36,7 @@ dev = ["pytest>=8", "ruff>=0.6", "build>=1.2", "jsonschema>=4.18"]
 Repository = "https://github.com/rokorobot/RoboLang"
 Documentation = "https://rokorobot.github.io/RoboLang/"
 Issues = "https://github.com/rokorobot/RoboLang/issues"
+Changelog = "https://github.com/rokorobot/RoboLang/blob/main/CHANGELOG.md"
 
 [project.scripts]
 # The only installed command. Read-only: `robolang validate FILE`, `robolang inspect FILE`.
