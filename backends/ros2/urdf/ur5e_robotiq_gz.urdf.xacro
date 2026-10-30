@@ -24,7 +24,8 @@
   <!-- Gazebo 10.5 starts this joint detached. The executor requests attachment only after gripper closure. -->
   <gazebo>
     <plugin filename="gz-sim-detachable-joint-system" name="gz::sim::systems::DetachableJoint">
-      <parent_link>robotiq_85_base_link</parent_link>
+      <!-- Gazebo reduces fixed URDF joints; wrist_3_link remains a physical link rigid with the gripper base. -->
+      <parent_link>wrist_3_link</parent_link>
       <child_model>box</child_model>
       <child_link>link</child_link>
       <initial_attach>false</initial_attach>

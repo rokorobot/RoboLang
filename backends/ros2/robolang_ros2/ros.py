@@ -76,17 +76,9 @@ class ROSOperations:
         hardware = self._command(["ros2", "control", "list_hardware_components", "-c", "/controller_manager"])
         # Lyrical's ros2controlcli prints an empty plugin name even for active Gazebo systems.
         # Compare the actual component names with the graph's published URDF declarations instead.
-        components = re.findall(r"^\s*name:\s*(\S+)", hardware, re.MULTILINE)
         if not self._until(lambda: self.description is not None, 10):
             raise BackendFailure("S501", "no published robot description")
-        try:
-            root = ET.fromstring(self.description)
-            declared = {control.attrib["name"]: control.findtext("hardware/plugin")
-                        for control in root.findall("ros2_control")}
-        except (ET.ParseError, KeyError) as exc:
-            raise BackendFailure("S501", f"invalid robot description: {exc}") from exc
-        if (not components or set(components) != set(declared) or
-                any(plugin != "gz_ros2_control/GazeboSimSystem" for plugin in declared.values())):
+        if not _gazebo_hardware_matches(hardware, self.description, model):
             raise BackendFailure("S501", "controller hardware must match GazeboSimSystem declarations")
         self.model = model
         # MoveItPy can contact controllers while loading. Construct it only after every graph check passes.
@@ -107,9 +99,9 @@ class ROSOperations:
         target = PoseStamped()
         target.header.frame_id = pose["frame"]
         target.header.stamp = self.node.get_clock().now().to_msg()
-        target.pose.position.x, target.pose.position.y, target.pose.position.z = pose["position"]
+        target.pose.position.x, target.pose.position.y, target.pose.position.z = map(float, pose["position"])
         (target.pose.orientation.x, target.pose.orientation.y,
-         target.pose.orientation.z, target.pose.orientation.w) = pose["orientation"]
+         target.pose.orientation.z, target.pose.orientation.w) = map(float, pose["orientation"])
         try:
             self.arm.set_start_state_to_current_state()
             if not self.arm.set_goal_state(pose_stamped_msg=target, pose_link="tool0"):
@@ -230,3 +222,22 @@ def moveit_parameters(description: str) -> dict:
                                          "planning_time": 5.0}
     parameters["use_sim_time"] = True
     return parameters
+
+
+def _gazebo_hardware_matches(hardware: str, description: str, model: str) -> bool:
+    """Require each active controller component to match a Gazebo system in the live URDF."""
+    try:
+        root = ET.fromstring(description)
+        controls = root.findall("ros2_control")
+        declared = {control.attrib["name"]: control.findtext("hardware/plugin") for control in controls}
+    except (ET.ParseError, KeyError):
+        return False
+    blocks = re.findall(r"Hardware Component \d+\n(.*?)(?=Hardware Component \d+\n|\Z)",
+                        hardware, re.DOTALL)
+    names = [re.search(r"^\s*name:\s*(\S+)", block, re.MULTILINE) for block in blocks]
+    observed = [match.group(1) for match in names if match]
+    return (root.attrib.get("name") == model and len(controls) == len(declared) and
+            len(observed) == len(blocks) and len(observed) == len(declared) and
+            set(observed) == set(declared) and
+            all("label=active" in block for block in blocks) and
+            all(plugin == "gz_ros2_control/GazeboSimSystem" for plugin in declared.values()))

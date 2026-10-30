@@ -6,6 +6,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "backends" / "ros2"
 
 from robolang import ir  # noqa: E402
 from robolang_ros2.executor import BackendFailure, Site, execute  # noqa: E402
+from robolang_ros2.ros import _gazebo_hardware_matches  # noqa: E402
 
 
 SOURCE = """robolang 1.3;
@@ -122,3 +123,14 @@ def test_declared_speed_limit_blocks_until_enforced():
     record = execute(task, bindings, site, ops)
     assert record["failure"]["code"] == "S508"
     assert ops.calls == [("guard", "ur")]
+
+
+def test_live_hardware_guard_matches_active_gazebo_components():
+    description = '<robot name="ur"><ros2_control name="ur"><hardware><plugin>' \
+                  'gz_ros2_control/GazeboSimSystem</plugin></hardware></ros2_control></robot>'
+    hardware = 'Hardware Component 1\n  name: ur\n  plugin name: \n  state: id=3 label=active\n'
+    assert _gazebo_hardware_matches(hardware, description, "ur")
+    assert not _gazebo_hardware_matches(hardware, description, "other")
+    assert not _gazebo_hardware_matches(hardware.replace("label=active", "label=inactive"), description, "ur")
+    assert not _gazebo_hardware_matches(hardware + hardware.replace("Component 1", "Component 2"), description, "ur")
+    assert not _gazebo_hardware_matches(hardware, description.replace("GazeboSimSystem", "RealSystem"), "ur")

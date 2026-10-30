@@ -30,9 +30,12 @@ GRIPPER_SPAWNER=$!
 ros2 run ros_gz_bridge parameter_bridge /overhead_camera/image@sensor_msgs/msg/Image[gz.msgs.Image \
     >"$OUT/camera_bridge.log" 2>&1 &
 BRIDGE=$!
+wait "$SPAWNER" || { cat "$OUT/spawner.log" >&2; exit 1; }
+wait "$GRIPPER_SPAWNER" || { cat "$OUT/gripper_spawner.log" >&2; exit 1; }
 python3 /opt/h3/scripts/smoke.py --out "$OUT"
 RC=$?
 gz model --list >"$OUT/models.txt" 2>&1 || true
+gz model -m ur --link >"$OUT/robot_links.txt" 2>&1 || true
 ros2 control list_hardware_components -c /controller_manager >"$OUT/hardware.txt" 2>&1 || true
 ros2 control list_controllers -c /controller_manager >"$OUT/controllers.txt" 2>&1 || true
 timeout 5 ros2 run tf2_ros tf2_echo base_link tool0 >"$OUT/tool0_tf.txt" 2>&1 || true
