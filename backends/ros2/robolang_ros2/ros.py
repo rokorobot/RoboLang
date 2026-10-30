@@ -103,6 +103,8 @@ class ROSOperations:
             raise BackendFailure("S502", f"MoveIt did not start: {exc}") from exc
 
     def now_ms(self) -> int:
+        before = self.clock_values[-1]
+        self._until(lambda: self.clock_values[-1] > before, 1)
         return self.clock_values[-1] // 1_000_000
 
     def move(self, pose: dict) -> None:
@@ -230,8 +232,8 @@ def moveit_parameters(description: str) -> dict:
             ET.SubElement(semantic, "disable_collisions", link1=first, link2=second, reason="Adjacent")
     parameters["robot_description_semantic"] = ET.tostring(semantic, encoding="unicode")
     parameters["planning_pipelines"] = {"pipeline_names": ["ompl"]}
-    parameters["plan_request_params"] = {"planning_attempts": 1, "planning_pipeline": "ompl",
-                                         "planning_time": 5.0}
+    parameters["plan_request_params"] = {"planning_attempts": 4, "planning_pipeline": "ompl",
+                                         "planning_time": 15.0}
     parameters["use_sim_time"] = True
     return parameters
 
