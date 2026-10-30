@@ -1,5 +1,6 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://wiki.ros.org/xacro" name="ur">
+  <xacro:arg name="name" default="ur"/>
   <!-- Include the released UR simulation description; this wrapper adds only the gripper and the simulation joint. -->
   <xacro:include filename="$(find ur_simulation_gz)/urdf/ur_gz.urdf.xacro"/>
   <xacro:include filename="$(find robotiq_description)/urdf/robotiq_2f_85_macro.urdf.xacro"/>

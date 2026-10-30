@@ -12,6 +12,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         ros-lyrical-ur-moveit-config \
         ros-lyrical-moveit \
         ros-lyrical-moveit-py \
+        ros-lyrical-moveit-planners-ompl \
+        ros-lyrical-ros2controlcli \
         ros-lyrical-gz-ros2-control \
         ros-lyrical-robotiq-description \
         ros-lyrical-control-msgs \
@@ -26,6 +28,8 @@ COPY backends/ros2/world /opt/h3/world
 COPY backends/ros2/scripts /opt/h3/scripts
 COPY backends/ros2/config /opt/h3/config
 COPY backends/ros2/urdf /opt/h3/urdf
+COPY backends/ros2/examples /opt/h3/examples
+COPY backends/ros2/site /opt/h3/site
 COPY backends/ros2/robolang_ros2 /opt/h3/backends/ros2/robolang_ros2
 COPY src/robolang /opt/h3/src/robolang
 ENV PYTHONPATH=/opt/h3/src:/opt/h3/backends/ros2

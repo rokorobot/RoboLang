@@ -12,10 +12,16 @@ result = {}
 try:
     rclpy.init()
     config = (MoveItConfigsBuilder(robot_name="ur", package_name="ur_moveit_config")
-              .robot_description_semantic(Path("srdf") / "ur.srdf.xacro", {"name": "ur5e"})
+              .robot_description_semantic(Path("srdf") / "ur.srdf.xacro", {"name": "ur"})
               .to_moveit_configs())
     result["controller_names"] = config.to_dict().get("moveit_simple_controller_manager", {}).get("controller_names")
-    robot = MoveItPy(node_name="phase2_moveit_probe", config_dict={**config.to_dict(), "use_sim_time": True})
+    parameters = config.to_dict()
+    parameters["planning_pipelines"] = {"pipeline_names": ["ompl"]}
+    parameters["plan_request_params"] = {"planning_attempts": 1, "planning_pipeline": "ompl",
+                                         "planning_time": 5.0}
+    parameters["use_sim_time"] = True
+    result["pipeline_parameters"] = parameters["planning_pipelines"]
+    robot = MoveItPy(node_name="phase2_moveit_probe", config_dict=parameters)
     arm = robot.get_planning_component("ur_manipulator")
     arm.set_start_state_to_current_state()
     result["set_home"] = arm.set_goal_state(configuration_name="home")

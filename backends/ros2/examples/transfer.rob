@@ -1,0 +1,11 @@
+robolang 1.3;
+
+task transfer(robot r, object box, location pickup, location drop) {
+    goal { object_at box drop; }
+    plan {
+        move r to pickup;
+        grasp r box;
+        move r to drop;
+        place r box at drop;
+    }
+}

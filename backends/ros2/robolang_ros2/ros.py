@@ -75,10 +75,14 @@ class ROSOperations:
             from moveit.planning import MoveItPy
             from moveit_configs_utils import MoveItConfigsBuilder
             config = (MoveItConfigsBuilder(robot_name="ur", package_name="ur_moveit_config")
-                      .robot_description_semantic(Path("srdf") / "ur.srdf.xacro", {"name": "ur5e"})
+                      .robot_description_semantic(Path("srdf") / "ur.srdf.xacro", {"name": "ur"})
                       .to_moveit_configs())
-            self.planner = MoveItPy(node_name="robolang_moveit",
-                                    config_dict={**config.to_dict(), "use_sim_time": True})
+            parameters = config.to_dict()
+            parameters["planning_pipelines"] = {"pipeline_names": ["ompl"]}
+            parameters["plan_request_params"] = {"planning_attempts": 1, "planning_pipeline": "ompl",
+                                                 "planning_time": 5.0}
+            parameters["use_sim_time"] = True
+            self.planner = MoveItPy(node_name="robolang_moveit", config_dict=parameters)
             self.arm = self.planner.get_planning_component("ur_manipulator")
         except Exception as exc:
             raise BackendFailure("S502", f"MoveIt did not start: {exc}") from exc

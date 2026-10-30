@@ -32,7 +32,7 @@ jobs:
         if: always()
         run: |
           cp build_time.txt out/ 2>/dev/null || true
-          { echo '```json'; cat out/smoke.json 2>/dev/null; echo '```'; echo '```'; cat out/versions.txt 2>/dev/null; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          { echo '```json'; cat out/smoke.json 2>/dev/null || true; echo '```'; echo '```'; cat out/versions.txt 2>/dev/null || true; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4
         if: always()
         with:

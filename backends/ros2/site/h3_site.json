@@ -1,0 +1,12 @@
+{
+  "gazebo_model": "ur",
+  "robot": "arm1",
+  "objects": {"box1": "box"},
+  "poses": {
+    "pickup": {"frame": "base_link", "position": [0.0, 0.60, 0.55], "orientation": [0, 1, 0, 0]},
+    "drop": {"frame": "base_link", "position": [0.20, 0.50, 0.55], "orientation": [0, 1, 0, 0]}
+  },
+  "grasps": {
+    "box1": {"frame": "base_link", "position": [0.0, 0.65, 0.45], "orientation": [0, 1, 0, 0]}
+  }
+}

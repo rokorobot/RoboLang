@@ -60,6 +60,8 @@ def execute(task: ir.Task, bindings: dict[str, str], site: Site, ops: Operations
             raise BackendFailure("S507", "this site supports exactly its declared robot")
         if task.preconditions:
             raise BackendFailure("S508", "preconditions need the phase 3 observation adapter")
+        if task.safety:
+            raise BackendFailure("S508", "declared speed limits are not enforced by this backend yet")
         for step in task.steps:
             if not isinstance(step, (ir.Move, ir.Grasp, ir.Place, ir.WaitFor)):
                 raise BackendFailure("S508", f"{step.KIND} is not supported by this backend yet")
@@ -100,6 +102,7 @@ def execute(task: ir.Task, bindings: dict[str, str], site: Site, ops: Operations
                     raise BackendFailure("S508", f"{step.KIND} is not supported by this backend yet")
             except BackendFailure:
                 entry["status"] = "failed"
+                entry["t_end_ms"] = ops.now_ms()
                 raise
             entry["status"] = "succeeded"
             entry["t_end_ms"] = ops.now_ms()

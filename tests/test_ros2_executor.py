@@ -112,3 +112,13 @@ def test_unsupported_later_step_blocks_before_first_motion():
     record = execute(task, bindings, site, ops)
     assert record["failure"]["code"] == "S508"
     assert ops.calls == [("guard", "ur")]
+
+
+def test_declared_speed_limit_blocks_until_enforced():
+    source = SOURCE.replace("  goal {", "  @safety max_speed 0.5 m/s;\n  goal {")
+    task = ir.compile_source(source).ir.tasks[0]
+    _, bindings, site = fixture()
+    ops = FakeOps()
+    record = execute(task, bindings, site, ops)
+    assert record["failure"]["code"] == "S508"
+    assert ops.calls == [("guard", "ur")]

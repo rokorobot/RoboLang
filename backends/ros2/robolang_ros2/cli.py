@@ -7,6 +7,7 @@ import sys
 from pathlib import Path
 
 from robolang import ir
+from robolang.diagnostics import RoboLangError
 
 from .executor import BackendFailure, execute
 from .site import read_site
@@ -42,6 +43,15 @@ def main() -> None:
         if record["state"] == "FAILED":
             print(f"{record['failure']['code']}: {record['failure']['message']}", file=sys.stderr)
             sys.exit(1)
+        print("goal not evaluated; see run record", file=sys.stderr)
+        sys.exit(3)
+    except RoboLangError as exc:
+        for diagnostic in exc.diagnostics:
+            print(diagnostic.format(), file=sys.stderr)
+        sys.exit(1)
+    except OSError as exc:
+        print(f"S507: file error: {exc}", file=sys.stderr)
+        sys.exit(1)
     except BackendFailure as exc:
         print(f"{exc.code}: {exc.message}", file=sys.stderr)
         sys.exit(1)
