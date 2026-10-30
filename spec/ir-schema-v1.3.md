@@ -42,4 +42,4 @@ Key order is `kind`, then the fields as listed. All six `if` keys are always wri
 The duties of the earlier schemas apply. A schema 1.3 consumer also rejects: a missing `goal` key; an `if` or `fail`
 that breaks the rules of section 3; a task whose `goal` is empty and that has a path with no `goal_then` or
 `goal_else` and no `fail`; and, inside branches, everything it rejects at the top level of the plan. The
-`ir_reader` codes are `I123` (nesting), `I214` (`fail` position) and `I209` (a path with no goal).
+`ir_reader` codes are `I123` (nesting), `I214` (`fail` position), `I215` (`fail` reason length or control characters) and `I209` (a path with no goal).

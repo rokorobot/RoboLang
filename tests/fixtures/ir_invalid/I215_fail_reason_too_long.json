@@ -1,0 +1,53 @@
+{
+  "ir_schema": "robolang.task-ir",
+  "ir_schema_version": "1.3",
+  "language_version": "1.4",
+  "tasks": [
+    {
+      "name": "t",
+      "parameters": [
+        {
+          "name": "r",
+          "type": "robot"
+        },
+        {
+          "name": "a",
+          "type": "location"
+        }
+      ],
+      "safety": [],
+      "preconditions": [],
+      "goal": [],
+      "steps": [
+        {
+          "kind": "if",
+          "condition": {
+            "kind": "robot_ready",
+            "robot": "r"
+          },
+          "then": [
+            {
+              "kind": "move",
+              "robot": "r",
+              "target": "a"
+            }
+          ],
+          "else": [
+            {
+              "kind": "fail",
+              "reason": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+            }
+          ],
+          "goal_then": [
+            {
+              "kind": "robot_at",
+              "robot": "r",
+              "location": "a"
+            }
+          ],
+          "goal_else": null
+        }
+      ]
+    }
+  ]
+}

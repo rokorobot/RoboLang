@@ -350,3 +350,29 @@ def test_a_branching_answer_is_valid_for_the_benchmark_and_judged_per_path():
     assert checked.valid and checked.language_version == "1.4"
     judgement = lib.judge(task_def, checked, answer["bindings"])
     assert judgement.goal_correct and judgement.plan_succeeds and len(judgement.paths) == 2
+
+
+@pytest.mark.parametrize("reason, ok", [("x" * 200, True), ("x" * 201, False), ("two\\nlines", False),
+                                        ("tab\\there", False), ("box1 missing", True)])
+def test_a_fail_reason_fits_core_declared_text(reason, ok):
+    """At most 200 characters and no control characters (E314), as Core 0.2 `declared` text (decision 0028 Q1)."""
+    source = ("robolang 1.4;\n\ntask t(robot r, location a) {\n    plan {\n        if robot_ready r {\n"
+              "            goal { robot_at r a; }\n            move r to a;\n        } else {\n"
+              f'            fail "{reason}";\n        }}\n    }}\n}}\n').replace("}}", "}")
+    if ok:
+        check(source)
+    else:
+        assert codes(source) == ["E314"]
+
+
+def test_the_ir_reader_restates_the_fail_reason_rule():
+    from robolang.ir_reader import IRError, read_ir
+
+    source = ("robolang 1.4;\n\ntask t(robot r, location a) {\n    plan {\n        if robot_ready r {\n"
+              "            goal { robot_at r a; }\n            move r to a;\n        } else {\n"
+              '            fail "ok";\n        }\n    }\n}\n')
+    document = json.loads(to_json(compile_source(source, "t.rob").ir))
+    document["tasks"][0]["steps"][0]["else"][0]["reason"] = "x" * 201
+    with pytest.raises(IRError) as error:
+        read_ir(json.dumps(document).encode("utf-8"), "t.json")
+    assert [d.code for d in error.value.diagnostics] == ["I215"]

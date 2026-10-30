@@ -265,6 +265,9 @@ class _Validator:
                     self._statements(branch.statements, branch=True)
         elif isinstance(statement, ast.Fail):
             self._not_empty(statement.reason, "reason")
+            problem = fail_reason_problem(statement.reason.value)
+            if problem:
+                self._error("E314", problem, statement.reason.span)
         else:
             self._use(statement.robot, ParamType.ROBOT, "communicate")
             self._not_empty(statement.channel, "channel name")
@@ -303,6 +306,18 @@ class _Validator:
     def _not_empty(self, string: ast.StringLit, what: str):
         if string.value == "":
             self._error("E307", f"empty string: a {what} must not be empty", string.span)
+
+
+FAIL_REASON_MAX = 200  # characters; Core 0.2 `declared` text has the same limit (decision 0028 Q1)
+
+
+def fail_reason_problem(reason: str) -> str | None:
+    """Why a `fail` reason cannot be Core 0.2 `declared` text, or None: at most 200 characters, no control chars."""
+    if len(reason) > FAIL_REASON_MAX:
+        return f"a 'fail' reason has at most {FAIL_REASON_MAX} characters; this one has {len(reason)}"
+    if any(ord(c) < 0x20 or ord(c) == 0x7F for c in reason):
+        return "a 'fail' reason must not contain control characters such as \\n or \\t"
+    return None
 
 
 def collect(program: ast.Program, filename: str = "<string>") -> list[Diagnostic]:
