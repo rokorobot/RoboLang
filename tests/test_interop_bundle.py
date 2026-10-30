@@ -59,7 +59,7 @@ def files(directory: Path) -> set[str]:
 
 def test_bundle_holds_exactly_the_allowlist(bundle):
     kit = {p.relative_to(ROOT).as_posix() for p in (ROOT / "tests" / "fixtures" / "core").rglob("*") if p.is_file()}
-    schemas = {p.relative_to(ROOT).as_posix() for p in (ROOT / "spec" / "core").glob("*.schema.json")}
+    schemas = {p.relative_to(ROOT).as_posix() for p in (ROOT / "spec" / "core").glob("*-0.1.schema.json")}
     expected = set(bundle_tool.DOCUMENTS) | schemas | kit | {bundle_tool.VIEW, bundle_tool.README, bundle_tool.MANIFEST}
     assert files(bundle) == expected
     assert len([f for f in kit if "/valid/" in f or "/invalid/" in f]) == 47

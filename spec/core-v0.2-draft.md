@@ -1,8 +1,14 @@
 # RoboLang Core: version 0.2 (DRAFT delta over 0.1)
 
 > **DRAFT. Not normative.** This page is a proposal and binds nobody. It follows the recommended options of
-> [decision record 0028](decisions/0028-core-0-2-scope.md) (status PROPOSED, owner approval pending). No schema file
-> exists for 0.2 yet. Examples are illustrative, with signatures elided; they are not conformance fixtures.
+> [decision record 0028](decisions/0028-core-0-2-scope.md) (APPROVED by the owner, 2026-10-30; Core 0.2 is not
+> frozen). Examples are illustrative, with signatures elided; the conformance fixtures are in
+> [`tests/fixtures/core_v02/`](../tests/fixtures/core_v02/README.md).
+>
+> **Implementation status.** PR A (documents): [`core/message-0.2.schema.json`](core/message-0.2.schema.json), the
+> 0.2 checks in `robolang.core` (`C102`, `C103`, `C104`, `C402`, `C405`; a receiver is configured for the versions it
+> speaks) and the conformance fixtures are done. PR B (producers): `export-goal`, the simulated outcome with
+> `met_alternative` and `declared`, `delegate` and the bridge are not done; section 7 is still a plan.
 
 **Reads with:** [`core-v0.1.md`](core-v0.1.md). Everything in 0.1 that this page does not name is unchanged, with its
 section numbers. A 0.2 text would be the 0.1 text with this delta applied.
@@ -22,6 +28,8 @@ section numbers. A 0.2 text would be the 0.1 text with this delta applied.
 - A 0.1-only receiver rejects a 0.2 message with `C102` (0.1 section 2.2) at stage 1 and sends no reply (0.1 8.2).
   There is **no version negotiation**. Which version a peer speaks stays configuration (0.1 section 10, "Discovery
   and version negotiation"). A sender sends 0.2 only to a peer configured for it.
+- A receiver is configured for 0.1 only unless it says otherwise. The 0.1 conformance fixtures that use `"0.2"` as
+  their example of an unsupported version (`C102`) assume such a receiver, and stay valid.
 - A goal with one alternative may be sent as 0.1. A goal with two or more alternatives may not: the sender must not
   drop alternatives to fit 0.1.
 - A reply uses the version of the message it answers.
@@ -98,8 +106,10 @@ Amends 0.1 section 5.9. `status`, `reasons`, `reported_by` and `reported_at` are
 Rules:
 
 - `met_alternative` names the alternative the robot **pursued**: for a 1.4 task, the path it took. When it is not
-  `null`, `criteria_results` lists every criterion of that alternative, each with its `met`, and may also list
-  others.
+  `null`, `criteria_results` should list every criterion of that alternative, each with its `met`, and may also list
+  others. A stateless receiver cannot count an alternative's criteria, so it checks only what it can: a
+  `succeeded` outcome whose `criteria_results` contain **no** entry for `met_alternative`, or any unmet one, is
+  `C402`. The receiver that holds the goal checks completeness when it re-evaluates.
 - `succeeded` requires a verification whose `met_alternative` is not `null` and whose results for that alternative are
   all `met` (`C402`). A `succeeded` with `verification: null` is `C402` as in 0.1.
 - Another alternative that holds never makes an outcome `succeeded`. A run that took path A and ended with only path
@@ -174,7 +184,8 @@ The code style of 0.1 section 8.2 is kept: `C1xx` form, `C4xx` meaning. One code
 | `C405` | meaning | **New.** A `declared` reason outside an `outcome` with status `failed` |
 
 Stage order (0.1 8.1) and the precedence tables are unchanged. `C405` is a stage 5 code, applied after duplicate and
-order handling, like `C402`, `C401`, `C403` and `C404`. A stateless receiver cannot know the number of alternatives or
+order handling, like `C402`, `C401`, `C403` and `C404`. Within stage 5 the order is `C404`, `C401`, `C405`, `C402`
+(fixture `c405_before_c402`). A stateless receiver cannot know the number of alternatives or
 criteria of the goal, so it does not check that `met_alternative` is within it; the receiver that holds the goal does,
 when it re-evaluates (section 3).
 

@@ -1,5 +1,5 @@
 """
-RoboLang Core 0.1 document checks (ARCH-1; spec/core-v0.1.md).
+RoboLang Core 0.1 and 0.2 document checks (ARCH-1; spec/core-v0.1.md).
 
 Strict JSON reading, the Core 0.1 schemas, RFC 8785 canonical form, `sim-hmac-sha256`
 signatures and the per-message receiver checks with their stable codes.
@@ -17,6 +17,7 @@ from .receiver import (
     ACCEPTED,
     DESCRIPTOR,
     MESSAGE,
+    MESSAGE_VERSIONS,
     RESERVED_TYPES,
     Context,
     Receipt,
@@ -26,7 +27,15 @@ from .receiver import (
     descriptor_is_current,
     time_ms,
 )
-from .schema import DESCRIPTOR_SCHEMA, MESSAGE_SCHEMA, SchemaError, load_schema, validate
+from .schema import (
+    DESCRIPTOR_SCHEMA,
+    MESSAGE_SCHEMA,
+    MESSAGE_SCHEMA_02,
+    MESSAGE_SCHEMAS,
+    SchemaError,
+    load_schema,
+    validate,
+)
 from .signatures import ED25519, SIM_HMAC, Key, sign_sim, signed_bytes, verify_sim
 
 __all__ = [
@@ -36,6 +45,9 @@ __all__ = [
     "ED25519",
     "MESSAGE",
     "MESSAGE_SCHEMA",
+    "MESSAGE_SCHEMAS",
+    "MESSAGE_SCHEMA_02",
+    "MESSAGE_VERSIONS",
     "RESERVED_TYPES",
     "SIM_HMAC",
     "Context",

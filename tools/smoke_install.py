@@ -162,7 +162,7 @@ def check_install(artifact: Path, work: Path):
 
     message = REPO / "tests" / "fixtures" / "core" / "valid" / "commit.json"
     core = run([python, "-c", CORE_PROBE, message], cwd=outside, env=env).stdout.decode().split()
-    expect(core == ["0", "0"], "the installed robolang.core ships both Core 0.1 schemas and validates a message")
+    expect(core == ["0", "0"], "the installed robolang.core ships the Core 0.1 and 0.2 schemas and validates a message")
 
     fixtures = REPO / "tests" / "fixtures" / "arch02"
     reference = run([robolang, "arch02", "--scenario", fixtures / "scenario.json", "--cases",
@@ -185,6 +185,7 @@ import robolang.core as core
 document = core.read_document(open(sys.argv[1], "rb").read())
 descriptor = core.load_schema(core.DESCRIPTOR_SCHEMA)
 shipped = descriptor["$id"] == "urn:robolang:core:capability-descriptor:0.1"
+shipped = shipped and core.load_schema(core.MESSAGE_SCHEMA_02)["$id"] == "urn:robolang:core:message:0.2"
 print(len(core.validate(document, core.MESSAGE_SCHEMA)), 0 if shipped else 1)
 """
 

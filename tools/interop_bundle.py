@@ -40,6 +40,7 @@ DOCUMENTS = (  # gate 2 4.1, in its order
     "spec/decisions/0008-core-sequencing-per-recipient.md",
     "spec/interop-gate-2-v0.1.md",
 )
+NOT_GATE_2 = ("spec/core/message-0.2.schema.json",)  # Core 0.2 is not in the gate 2 bundle, which is Core 0.1
 DIRECTORIES = ("spec/core", "tests/fixtures/core")  # the schemas; the conformance kit (G-T0)
 VIEW = "view/amr-07-base-scenario.json"
 README = "BUNDLE-README.md"
@@ -84,8 +85,10 @@ class Source:
     def files(self, directory: str) -> list[str]:
         if self.rev:
             listed = self._git("ls-tree", "-r", "--name-only", self.rev, "--", directory).decode()
-            return sorted(listed.splitlines())
-        return sorted(p.relative_to(REPO).as_posix() for p in (REPO / directory).rglob("*") if p.is_file())
+            found = listed.splitlines()
+        else:
+            found = [p.relative_to(REPO).as_posix() for p in (REPO / directory).rglob("*") if p.is_file()]
+        return sorted(f for f in found if f not in NOT_GATE_2)
 
     def read(self, path: str) -> bytes:
         if self.rev:

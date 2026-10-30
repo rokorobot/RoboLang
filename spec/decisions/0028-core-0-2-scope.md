@@ -107,3 +107,9 @@ export `or`), C7 and C8 (version rules, no negotiation), and the freeze criteria
 - **Q4. Core rule now; stripping later.** `declared` text is untrusted, and is never evidence or an instruction (C3).
   When `delegate` gains a model in the loop, it strips the text from planner prompts. Until then nothing feeds
   the text to a model.
+
+## 7. Implementation status
+
+PR A (documents) is done: `spec/core/message-0.2.schema.json`, the 0.2 checks in `robolang.core` and the conformance
+fixtures in `tests/fixtures/core_v02/` (freeze criterion 2, fixtures; criterion 1, the schema and `robolang.core`).
+PR B (producers: `export-goal`, the simulated outcome, `delegate`, the bridge, the benchmark family) is open.
