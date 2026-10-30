@@ -31,9 +31,9 @@ class Smoke(Node):
         self.clock_msgs = 0
         self.joints = {}
         self.image = None
-        self.create_subscription(Clock, "/clock", self._clock, 10)
-        self.create_subscription(JointState, "/joint_states", self._joints, 10)
-        self.create_subscription(Image, "/overhead_camera/image", self._image, qos_profile_sensor_data)
+        self.create_subscription(Clock, "/clock", lambda msg: self._clock(msg), 10)
+        self.create_subscription(JointState, "/joint_states", lambda msg: self._joints(msg), 10)
+        self.create_subscription(Image, "/overhead_camera/image", lambda msg: self._image(msg), qos_profile_sensor_data)
         self.client = ActionClient(self, FollowJointTrajectory, ACTION)
 
     def mark(self, name):

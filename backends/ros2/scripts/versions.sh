@@ -10,7 +10,6 @@ dpkg-query -W -f='${Package} ${Version}\n' \
     'ros-lyrical-ros-gz' 'ros-lyrical-ros-gz-sim' 'ros-lyrical-ur-simulation-gz' 'ros-lyrical-ur-moveit-config' \
     'ros-lyrical-moveit' 'ros-lyrical-gz-ros2-control' 'ros-lyrical-robotiq-description' \
     'ros-lyrical-ur-description' 'ros-lyrical-ros2-control' 'ros-lyrical-controller-manager' \
-    'ros-lyrical-ros-base' 'libgz-sim*' 'libgz-sensors*' 'libgz-rendering*' 'libgz-physics*' 'libgz-transport*' \
-    'libgl1-mesa-dri' 2>/dev/null | sort
+    'ros-lyrical-ros-base' 'ros-lyrical-gz-*-vendor' 'ros-lyrical-ros-gz-*' 'libgl1-mesa-dri' 'libegl-mesa0' 2>/dev/null | sort
 echo "--- gz"
 gz sim --versions 2>&1 | head -3
