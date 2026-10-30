@@ -1,5 +1,8 @@
 name: ros2-probe
-on: workflow_dispatch
+on:
+  workflow_dispatch:
+  push:
+    branches: [room/h3-phase1-harness]
 jobs:
   probe:
     runs-on: ubuntu-latest
