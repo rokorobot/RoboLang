@@ -2,8 +2,8 @@ name: Benchmark
 
 # The authoring benchmark (docs/STRATEGY.md, section 5).
 # - Pull requests that change the language, Core, the bridge, the reference or the benchmark:
-#   sets 1 and 2, full prompt, 1 repeat (~$1). The scores are posted on the PR; a breached floor in
-#   bench/gate.json fails the job (decision rule 2).
+#   sets 1 and 2, full prompt, 1 repeat, Sonnet and Haiku only (~$0.40; Opus runs weekly). The scores are posted
+#   on the PR; a breached floor in bench/gate.json fails the job (decision rule 2).
 # - Weekly (Monday 06:00 UTC) and on demand: sets 1 and 2 with 3 repeats, plus set 2 with the
 #   grammar-only prompt for information (~$4-6). Results are kept as an artifact for 90 days.
 # - On demand with `set3: true`: only set 3 (branching, decision 0027), full and grammar-only prompts,
@@ -75,8 +75,8 @@ jobs:
       - name: Run (pull request)
         if: steps.key.outputs.present == 'true' && github.event_name == 'pull_request'
         run: |
-          python bench/run.py --yes --run-id set1
-          python bench/run.py --yes --set hard --run-id set2
+          python bench/run.py --yes --models claude-sonnet-5-5,claude-haiku-5-5 --run-id set1
+          python bench/run.py --yes --models claude-sonnet-5-5,claude-haiku-5-5 --set hard --run-id set2
       - name: Run (set 3, on demand)
         if: steps.key.outputs.present == 'true' && inputs.set3
         run: |
@@ -102,6 +102,13 @@ jobs:
             echo "code=0" >> "$GITHUB_OUTPUT"
             : > summary.md
           fi
+          echo "" >> summary.md
+          echo "_For information, not gated: Haiku first, Sonnet when escalated (bench/cascade.py)._" >> summary.md
+          for dir in bench/results/*/; do
+            if python bench/cascade.py "$dir" --summary cascade.md >/dev/null 2>&1; then
+              echo "" >> summary.md; cat cascade.md >> summary.md
+            fi
+          done
           for extra in set3 set3-minimal; do
             if [ -d "bench/results/$extra" ]; then
               echo "" >> summary.md

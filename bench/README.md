@@ -152,6 +152,19 @@ below the recorded bound. These feed `checks_ok` and `request_satisfied`; indivi
 For missing entities (`failure_kind: missing_entity`), a decline must have an empty `entities` list. The answer category
 remains `infeasible`. Sufficient timeouts based on guaranteed scheduled events are implementation choices.
 
+## A Haiku-first cascade (`bench/cascade.py`)
+
+`python bench/cascade.py bench/results/<run-id>` scores, offline and from the saved answers, a cascade in which
+Claude Haiku 5.5 answers first and Claude Sonnet 5.5 answers only when Haiku's final answer is not a valid program or
+is a decline or a question. That is what a deployed system can see without labels. It needs a run in which both
+models answered. The output is the gate table for both models and the cascade, the escalation rate and the cost per
+answer, written to `cascade.json`. It is for information: no floor applies.
+
+On the set 3 acceptance run with the full reference, the cascade matched Sonnet: 108/108 decisions, 0 false
+programs, 84/84 goals. It escalated 22% of tasks and cost $1.35 per 1,000 answers, against $5.53 for Sonnet alone and
+$0.59 for Haiku alone. With the grammar only it could not catch half-programs, because they are valid programs and
+are never escalated. The reference is the fix there, not the cascade.
+
 ## Set 3: branching (`--set branch`)
 
 Pre-registered for RoboLang 1.4 (decision record [0027](../spec/decisions/0027-bounded-branching.md), section 3),
