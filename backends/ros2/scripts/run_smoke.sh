@@ -32,6 +32,9 @@ ros2 run ros_gz_bridge parameter_bridge /overhead_camera/image@sensor_msgs/msg/I
 BRIDGE=$!
 wait "$SPAWNER" || { cat "$OUT/spawner.log" >&2; exit 1; }
 wait "$GRIPPER_SPAWNER" || { cat "$OUT/gripper_spawner.log" >&2; exit 1; }
+# This Jetty build starts DetachableJoint attached even when initial_attach=false. Release it before arm motion.
+gz topic -t /model/ur/detachable_joint/detach -m gz.msgs.Empty -p '' || exit 1
+sleep 1
 python3 /opt/h3/scripts/smoke.py --out "$OUT"
 RC=$?
 gz model --list >"$OUT/models.txt" 2>&1 || true

@@ -80,6 +80,18 @@ class ROSOperations:
             raise BackendFailure("S501", "no published robot description")
         if not _gazebo_hardware_matches(hardware, self.description, model):
             raise BackendFailure("S501", "controller hardware must match GazeboSimSystem declarations")
+        required_topics = {f"/model/{model}/detachable_joint/{suffix}"
+                           for suffix in ("attach", "detach", "state")}
+        available_topics = set(self._command(["gz", "topic", "-l"]).splitlines())
+        if not required_topics <= available_topics:
+            raise BackendFailure("S501", "declared Gazebo detachable joint is unavailable")
+        # The installed Jetty plugin may start attached despite initial_attach=false.
+        # Make the release request before MoveIt or gripper clients can move the arm.
+        before_detach = self.clock_values[-1]
+        self._command(["gz", "topic", "-t", f"/model/{model}/detachable_joint/detach",
+                       "-m", "gz.msgs.Empty", "-p", ""])
+        if not self._until(lambda: self.clock_values[-1] > before_detach + 500_000_000, 5):
+            raise BackendFailure("S501", "simulation clock stopped after initial detachment request")
         self.model = model
         # MoveItPy can contact controllers while loading. Construct it only after every graph check passes.
         try:
