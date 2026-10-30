@@ -1,0 +1,18 @@
+name: ros2-probe
+on: workflow_dispatch
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    container: ros:lyrical
+    steps:
+      - run: |
+          apt-get update -qq
+          cat /etc/os-release | head -3
+          for p in ros-lyrical-ros-gz ros-lyrical-ur-simulation-gz ros-lyrical-ur-moveit-config ros-lyrical-moveit ros-lyrical-gz-ros2-control ros-lyrical-robotiq-description ros-lyrical-ros-gz-sim ros-lyrical-ur-robot-driver ros-lyrical-joint-trajectory-controller ros-lyrical-joint-state-broadcaster ros-lyrical-controller-manager xvfb mesa-utils; do
+            echo "== $p"; apt-cache policy $p | head -3
+          done
+          apt-cache search ros-lyrical-ur | head -20
+          apt-cache search gz-ros2-control | head
+          apt-cache search robotiq | head
+          apt-cache search apriltag | head
+          apt-cache search 'ros-lyrical-image-tools|ros-lyrical-ros-gz-image' | head
