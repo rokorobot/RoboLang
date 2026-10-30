@@ -23,6 +23,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 COPY world /opt/h3/world
 COPY scripts /opt/h3/scripts
+COPY config /opt/h3/config
 
 # Fiducial texture for the box: a real ArUco marker (DICT_4X4_50, id 7), drawn with white quiet zone.
 RUN python3 /opt/h3/scripts/make_marker.py /opt/h3/world/marker.png
