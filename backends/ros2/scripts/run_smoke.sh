@@ -28,9 +28,9 @@ ros2 run ros_gz_bridge parameter_bridge /overhead_camera/image@sensor_msgs/msg/I
 BRIDGE=$!
 wait "$SPAWNER" || { cat "$OUT/spawner.log" >&2; exit 1; }
 wait "$GRIPPER_SPAWNER" || { cat "$OUT/gripper_spawner.log" >&2; exit 1; }
-# This Jetty build starts DetachableJoint attached even when initial_attach=false. Release it before arm motion.
-gz topic -t /model/ur/detachable_joint/detach -m gz.msgs.Empty -p '' || exit 1
-sleep 1
+# This Jetty build starts attached. Require a confirmed release before the arm smoke test moves.
+python3 -c 'from robolang_ros2.ros import gazebo_joint_command; gazebo_joint_command("ur", "detach")' \
+    >"$OUT/initial_detach.log" 2>&1 || { cat "$OUT/initial_detach.log" >&2; exit 1; }
 python3 /opt/h3/scripts/smoke.py --out "$OUT"
 RC=$?
 gz model --list >"$OUT/models.txt" 2>&1 || true

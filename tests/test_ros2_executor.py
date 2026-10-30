@@ -1,12 +1,15 @@
 """The simulation-only contract is checked without importing ROS or contacting a controller."""
 import sys
+import subprocess
 from pathlib import Path
+
+import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "backends" / "ros2"))
 
 from robolang import ir  # noqa: E402
 from robolang_ros2.executor import BackendFailure, Site, execute  # noqa: E402
-from robolang_ros2.ros import _gazebo_hardware_matches  # noqa: E402
+from robolang_ros2.ros import _gazebo_hardware_matches, gazebo_joint_command  # noqa: E402
 
 
 SOURCE = """robolang 1.3;
@@ -135,3 +138,42 @@ def test_live_hardware_guard_matches_active_gazebo_components():
     assert not _gazebo_hardware_matches(hardware.replace("label=active", "label=inactive"), description, "ur")
     assert not _gazebo_hardware_matches(hardware + hardware.replace("Component 1", "Component 2"), description, "ur")
     assert not _gazebo_hardware_matches(hardware, description.replace("GazeboSimSystem", "RealSystem"), "ur")
+
+
+def test_gazebo_joint_retries_a_lost_transport_publication(monkeypatch):
+    sends = []
+
+    class Subscriber:
+        attempts = 0
+
+        def communicate(self, timeout):
+            self.attempts += 1
+            if self.attempts == 1:
+                raise subprocess.TimeoutExpired("gz topic", timeout)
+            return 'data: "attached"\n', ""
+
+        def poll(self):
+            return 0 if self.attempts > 1 else None
+
+    subscriber = Subscriber()
+    monkeypatch.setattr(subprocess, "Popen", lambda *args, **kwargs: subscriber)
+    monkeypatch.setattr(subprocess, "run", lambda args, **kwargs: sends.append(args))
+    monkeypatch.setattr("robolang_ros2.ros.time.sleep", lambda _: None)
+    gazebo_joint_command("ur", "attach")
+    assert len(sends) == 2
+
+
+def test_gazebo_joint_fails_after_bounded_retries(monkeypatch):
+    class Subscriber:
+        def communicate(self, timeout):
+            raise subprocess.TimeoutExpired("gz topic", timeout)
+
+        def poll(self):
+            return 0
+
+    monkeypatch.setattr(subprocess, "Popen", lambda *args, **kwargs: Subscriber())
+    monkeypatch.setattr(subprocess, "run", lambda *args, **kwargs: None)
+    monkeypatch.setattr("robolang_ros2.ros.time.sleep", lambda _: None)
+    with pytest.raises(BackendFailure, match="five requests") as exc:
+        gazebo_joint_command("ur", "attach")
+    assert exc.value.code == "S506"
