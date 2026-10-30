@@ -1,0 +1,112 @@
+<?xml version="1.0"?>
+<!-- H3 phase 1 scene: ground, a table, a shelf, a box with an ArUco marker, a fixed overhead camera.
+     The UR arm is spawned into this world by ur_simulation_gz (ur_sim_control.launch.py world_file:=...).
+     The arm base is at the origin; the scene sits on the +y / -y sides so the arm's test motion is clear of it. -->
+<sdf version="1.9">
+  <world name="h3_world">
+    <physics name="1ms" type="ignored">
+      <max_step_size>0.001</max_step_size>
+      <real_time_factor>1.0</real_time_factor>
+    </physics>
+    <plugin filename="gz-sim-physics-system" name="gz::sim::systems::Physics"/>
+    <plugin filename="gz-sim-user-commands-system" name="gz::sim::systems::UserCommands"/>
+    <plugin filename="gz-sim-scene-broadcaster-system" name="gz::sim::systems::SceneBroadcaster"/>
+    <plugin filename="gz-sim-sensors-system" name="gz::sim::systems::Sensors">
+      <render_engine>ogre2</render_engine>
+    </plugin>
+
+    <light type="directional" name="sun">
+      <cast_shadows>false</cast_shadows>
+      <pose>0 0 10 0 0 0</pose>
+      <diffuse>0.9 0.9 0.9 1</diffuse>
+      <specular>0.2 0.2 0.2 1</specular>
+      <direction>-0.3 0.2 -1</direction>
+    </light>
+
+    <model name="ground">
+      <static>true</static>
+      <link name="link">
+        <collision name="c"><geometry><plane><normal>0 0 1</normal><size>10 10</size></plane></geometry></collision>
+        <visual name="v">
+          <geometry><plane><normal>0 0 1</normal><size>10 10</size></plane></geometry>
+          <material><ambient>0.5 0.5 0.5 1</ambient><diffuse>0.5 0.5 0.5 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Table: top surface at z = 0.25, centred at (0, 0.65). -->
+    <model name="table">
+      <static>true</static>
+      <pose>0 0.65 0.125 0 0 0</pose>
+      <link name="link">
+        <collision name="c"><geometry><box><size>0.6 0.6 0.25</size></box></geometry></collision>
+        <visual name="v">
+          <geometry><box><size>0.6 0.6 0.25</size></box></geometry>
+          <material><ambient>0.6 0.4 0.2 1</ambient><diffuse>0.6 0.4 0.2 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Shelf: two boards and two sides, on the -y side. -->
+    <model name="shelf">
+      <static>true</static>
+      <pose>0 -0.65 0 0 0 0</pose>
+      <link name="link">
+        <visual name="side_l"><pose>-0.3 0 0.2 0 0 0</pose><geometry><box><size>0.02 0.3 0.4</size></box></geometry>
+          <material><ambient>0.3 0.3 0.7 1</ambient><diffuse>0.3 0.3 0.7 1</diffuse></material></visual>
+        <collision name="side_l"><pose>-0.3 0 0.2 0 0 0</pose><geometry><box><size>0.02 0.3 0.4</size></box></geometry></collision>
+        <visual name="side_r"><pose>0.3 0 0.2 0 0 0</pose><geometry><box><size>0.02 0.3 0.4</size></box></geometry>
+          <material><ambient>0.3 0.3 0.7 1</ambient><diffuse>0.3 0.3 0.7 1</diffuse></material></visual>
+        <collision name="side_r"><pose>0.3 0 0.2 0 0 0</pose><geometry><box><size>0.02 0.3 0.4</size></box></geometry></collision>
+        <visual name="board_low"><pose>0 0 0.2 0 0 0</pose><geometry><box><size>0.6 0.3 0.02</size></box></geometry>
+          <material><ambient>0.3 0.3 0.7 1</ambient><diffuse>0.3 0.3 0.7 1</diffuse></material></visual>
+        <collision name="board_low"><pose>0 0 0.2 0 0 0</pose><geometry><box><size>0.6 0.3 0.02</size></box></geometry></collision>
+        <visual name="board_top"><pose>0 0 0.4 0 0 0</pose><geometry><box><size>0.6 0.3 0.02</size></box></geometry>
+          <material><ambient>0.3 0.3 0.7 1</ambient><diffuse>0.3 0.3 0.7 1</diffuse></material></visual>
+        <collision name="board_top"><pose>0 0 0.4 0 0 0</pose><geometry><box><size>0.6 0.3 0.02</size></box></geometry></collision>
+      </link>
+    </model>
+
+    <!-- Box with a fiducial on its top face (ArUco DICT_4X4_50 id 7, generated into the image at build time). -->
+    <model name="box">
+      <pose>0 0.65 0.31 0 0 0</pose>
+      <link name="link">
+        <inertial>
+          <mass>0.2</mass>
+          <inertia><ixx>0.0005</ixx><iyy>0.0005</iyy><izz>0.0005</izz><ixy>0</ixy><ixz>0</ixz><iyz>0</iyz></inertia>
+        </inertial>
+        <collision name="c"><geometry><box><size>0.1 0.1 0.1</size></box></geometry></collision>
+        <visual name="body">
+          <geometry><box><size>0.1 0.1 0.1</size></box></geometry>
+          <material><ambient>0.8 0.8 0.8 1</ambient><diffuse>0.8 0.8 0.8 1</diffuse></material>
+        </visual>
+        <visual name="marker">
+          <pose>0 0 0.0505 0 0 0</pose>
+          <geometry><box><size>0.1 0.1 0.001</size></box></geometry>
+          <material>
+            <ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse>
+            <pbr><metal><albedo_map>file:///opt/h3/world/marker.png</albedo_map></metal></pbr>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Fixed overhead camera, looking straight down at the table. Image up = +x. -->
+    <model name="overhead_camera">
+      <static>true</static>
+      <pose>0 0.65 1.4 0 1.5708 0</pose>
+      <link name="link">
+        <sensor name="camera" type="camera">
+          <always_on>true</always_on>
+          <update_rate>10</update_rate>
+          <topic>overhead_camera/image</topic>
+          <camera>
+            <horizontal_fov>1.0</horizontal_fov>
+            <image><width>640</width><height>480</height><format>R8G8B8</format></image>
+            <clip><near>0.1</near><far>5</far></clip>
+          </camera>
+        </sensor>
+      </link>
+    </model>
+  </world>
+</sdf>
