@@ -1,13 +1,17 @@
 """The simulation-only contract is checked without importing ROS or contacting a controller."""
+import json
 import sys
 import subprocess
 from pathlib import Path
 
+import jsonschema
 import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "backends" / "ros2"))
 
 from robolang import ir  # noqa: E402
+from robolang.core import verify_sim  # noqa: E402
+from robolang_ros2 import observe  # noqa: E402
 from robolang_ros2.executor import BackendFailure, Site, execute  # noqa: E402
 from robolang_ros2.ros import _gazebo_hardware_matches, gazebo_joint_command  # noqa: E402
 
@@ -20,11 +24,29 @@ task transfer(robot r, object box, location src, location dst) {
 """
 
 
+ROOT = Path(__file__).resolve().parents[1]
+SCHEMA = json.loads((ROOT / "spec" / "core" / "message-0.1.schema.json").read_text(encoding="utf-8"))
+DOWN = (1.0, 0.0, 0.0, 0.0)
+IN_DST = (0.0, 0.4, 0.3)
+IN_SRC = (0.0, -0.4, 0.3)
+
+
+def reading(position, confidence=1.0, stamp=1000, orientation=None):
+    return observe.Reading("overhead_camera", "aruco_fiducial", position, orientation, confidence, stamp)
+
+
+def snapshot(marker=IN_DST, confidence=1.0, stamp=1000, t=1500, tool=(0.0, 0.4, 0.5), grip=0.0):
+    markers = {} if marker is None else {7: reading(marker, confidence, stamp)}
+    return observe.Snapshot(t, markers, observe.Reading("tf", "tf_tool0", tool, DOWN, 1.0, t),
+                            observe.Reading("joint_states", "gripper", (grip,), None, 1.0, t))
+
+
 class FakeOps:
-    def __init__(self, fail=None):
+    def __init__(self, fail=None, snap=None):
         self.calls = []
         self.fail = fail
         self.time = 0
+        self.snap = snap or snapshot()
 
     def _call(self, name, *args):
         self.calls.append((name, *args))
@@ -42,26 +64,159 @@ class FakeOps:
     def detach(self, model): self._call("detach", model)
     def wait_ms(self, duration): self._call("wait", duration)
     def versions(self): return {"ros": "lyrical"}
+    def observe(self, marker_ids):
+        self.calls.append(("observe", tuple(marker_ids)))
+        return self.snap
+
+
+def pose(position):
+    return {"frame": "base_link", "position": list(position), "orientation": list(DOWN)}
+
+
+def region(lo, hi):
+    return {"frame": "base_link", "min": list(lo), "max": list(hi)}
 
 
 def fixture():
     task = ir.compile_source(SOURCE).ir.tasks[0]
-    site = Site("ur", "arm1", {"box1": "box"}, {"table": {"x": 1}, "shelf": {"x": 2}}, {"box1": {"x": 3}})
+    site = Site("ur", "arm1", {"box1": "box"}, {"table": pose((0, -0.4, 0.5)), "shelf": pose((0, 0.4, 0.5))},
+                {"box1": pose((0, -0.4, 0.4))}, {"box1": 7},
+                {"table": region((-0.1, -0.5, 0.2), (0.1, -0.3, 0.4)),
+                 "shelf": region((-0.1, 0.3, 0.2), (0.1, 0.5, 0.4))}, None)
     return task, {"r": "arm1", "box": "box1", "src": "table", "dst": "shelf"}, site
 
 
-def test_execution_sequence_never_claims_unobserved_goal():
+def validator(name):
+    return jsonschema.Draft202012Validator({"$ref": f"#/$defs/{name}", "$defs": SCHEMA["$defs"]})
+
+
+def check_core(core):
+    validator("payload_outcome").validate(core)
+    for observation in core["evidence"]:
+        assert verify_sim(observation, observe.GAZEBO_KEY)
+        assert observation["source"]["participant"] == observe.GAZEBO
+    return core["outcome"]
+
+
+def compile_task(source):
+    return ir.compile_source(source).ir.tasks[0]
+
+
+def test_goal_verified_from_observations():
     task, bindings, site = fixture()
     ops = FakeOps()
     record = execute(task, bindings, site, ops)
     assert [call[0] for call in ops.calls] == [
-        "guard", "move", "move", "grip", "attach", "move", "move", "grip", "detach",
+        "guard", "move", "move", "grip", "attach", "move", "move", "grip", "detach", "observe",
     ]
-    assert record["state"] == "UNKNOWN"
-    assert record["goal"] == [{"index": 1, "condition": {"kind": "object_at", "object": "box",
-                                                    "location": "dst"}, "result": "not_evaluated"}]
-    assert record["core_outcome"] is None
+    assert record["state"] == "SUCCEEDED" and record["failure"] is None
+    assert [g["result"] for g in record["goal"]] == ["true"]
+    assert record["observations"][0]["markers"]["7"]["position"] == list(IN_DST)
+    outcome = check_core(record["core_outcome"])
+    assert outcome["status"] == "succeeded"
+    assert outcome["verification"]["criteria_results"][0]["met"] is True
+    (evidence,) = record["core_outcome"]["evidence"]
+    assert (evidence["subject"], evidence["value"], evidence["confidence"]) == (
+        "rl:thing:box1", "rl:place:shelf", "1")
     assert record["backend"]["kind"] == "ros2-gazebo"
+
+
+def test_object_seen_elsewhere_is_false():
+    task, bindings, site = fixture()
+    record = execute(task, bindings, site, FakeOps(snap=snapshot(marker=IN_SRC)))
+    assert record["failure"] == {"code": "S301", "message": "a goal condition is false from the observations",
+                                 "step": None}
+    outcome = check_core(record["core_outcome"])
+    assert outcome["status"] == "failed"
+    assert record["core_outcome"]["evidence"][0]["value"] == "rl:place:table"
+
+
+@pytest.mark.parametrize("snap", [
+    snapshot(marker=None),  # camera covered or object absent
+    snapshot(confidence=0.8),  # below the default min_confidence 0.9
+    snapshot(stamp=0, t=10_001),  # older than the default max_age 10 s
+], ids=["unseen", "low_confidence", "stale"])
+def test_unusable_observation_is_never_success(snap):
+    task, bindings, site = fixture()
+    record = execute(task, bindings, site, FakeOps(snap=snap))
+    assert record["state"] == "FAILED" and record["failure"]["code"] == "S302"
+    outcome = check_core(record["core_outcome"])
+    assert outcome["status"] == "unknown" and record["core_outcome"]["evidence"] == []
+    assert outcome["verification"]["criteria_results"][0]["met"] is False
+
+
+def test_verify_annotation_sets_thresholds():
+    task = compile_task(SOURCE.replace("  goal {", "  @verify min_confidence 0.7;\n  @verify max_age 2s;\n  goal {"))
+    _, bindings, site = fixture()
+    assert execute(task, bindings, site, FakeOps(snap=snapshot(confidence=0.8)))["state"] == "SUCCEEDED"
+    record = execute(task, bindings, site, FakeOps(snap=snapshot(stamp=0, t=2001)))
+    assert record["failure"]["code"] == "S302"
+    assert record["verify"] == {"min_confidence": "0.7", "max_age_ms": 2000}
+
+
+def test_robot_at_and_holding_from_tool_and_gripper():
+    _, bindings, site = fixture()
+    policy = observe.Policy(observe.DEFAULT_MIN_CONFIDENCE, observe.DEFAULT_MAX_AGE_MS)
+    at = compile_task(SOURCE.replace("object_at box dst;", "robot_at r dst;")).goal[0]
+    held = compile_task(SOURCE.replace("object_at box dst;", "holding r box;")).goal[0]
+    assert observe.evaluate(at, bindings, site, snapshot(), policy) == "true"
+    assert observe.evaluate(at, bindings, site, snapshot(tool=(0.0, 0.43, 0.5)), policy) == "false"
+    near = snapshot(marker=(0.0, 0.4, 0.4), grip=0.8)
+    assert observe.evaluate(held, bindings, site, near, policy) == "true"
+    assert observe.evaluate(held, bindings, site, snapshot(marker=(0.0, 0.4, 0.4)), policy) == "false"
+    assert observe.evaluate(held, bindings, site, snapshot(marker=None, grip=0.8), policy) == "unknown"
+    assert observe.evaluate(held, bindings, site, snapshot(marker=IN_SRC, grip=0.8), policy) == "false"
+
+
+def test_precondition_false_blocks_before_motion():
+    task = compile_task(SOURCE.replace("  goal {", "  pre { object_at box src; }\n  goal {"))
+    _, bindings, site = fixture()
+    ops = FakeOps()  # the box is seen at dst, not src
+    record = execute(task, bindings, site, ops)
+    assert record["failure"]["code"] == "S101"
+    assert [call[0] for call in ops.calls] == ["guard", "observe"]
+    assert record["preconditions"][0]["result"] == "false"
+    assert record["core_outcome"]["outcome"]["verification"] is None
+
+
+def test_precondition_unknown_blocks_before_motion():
+    task = compile_task(SOURCE.replace("  goal {", "  pre { object_at box src; }\n  goal {"))
+    _, bindings, site = fixture()
+    record = execute(task, bindings, site, FakeOps(snap=snapshot(marker=None)))
+    assert record["failure"]["code"] == "S102"
+
+
+def test_object_without_marker_fails_before_motion():
+    task, bindings, site = fixture()
+    site.markers.clear()
+    ops = FakeOps()
+    record = execute(task, bindings, site, ops)
+    assert record["failure"]["code"] == "S507"
+    assert ops.calls == [("guard", "ur")]
+
+
+def test_goal_without_core_form_still_verified():
+    task = compile_task(SOURCE.replace("object_at box dst;", "not object_at box src;"))
+    _, bindings, site = fixture()
+    record = execute(task, bindings, site, FakeOps())
+    assert record["state"] == "SUCCEEDED" and record["core_outcome"] is None
+
+
+def test_camera_geometry_maps_optical_frame_to_base():
+    camera = {"position": [0.0, 0.65, 1.4], "orientation": [0.0, 0.70711, 0.0, 0.70711],
+              "width": 640, "height": 480, "horizontal_fov": 1.0}
+    below = observe.camera_to_base((0.0, 0.0, 1.0), camera)
+    assert below == pytest.approx((0.0, 0.65, 0.4), abs=1e-4)
+    # image right is -y and image down is -x for this downward camera (h3_world.sdf: image up = +x)
+    assert observe.camera_to_base((0.1, 0.2, 1.0), camera) == pytest.approx((-0.2, 0.55, 0.4), abs=1e-4)
+    assert observe.intrinsics(camera)[1:] == (320, 240)
+
+
+def test_fusion_confidence_counts_agreeing_frames():
+    positions = [(0.0, 0.4, 0.3)] * 8 + [(0.2, 0.4, 0.3)]
+    fused = observe.fuse(positions, list(range(9)), 10, "camera", "aruco")
+    assert fused.position == (0.0, 0.4, 0.3) and fused.confidence == 0.8 and fused.stamp_ms == 7
+    assert observe.fuse([], [], 10, "camera", "aruco") is None
 
 
 def test_guard_blocks_every_control_call():
@@ -99,7 +254,7 @@ def test_gripper_failure_never_attaches():
     assert "attach" not in [call[0] for call in ops.calls]
 
 
-def test_precondition_blocks_before_motion():
+def test_condition_without_observation_blocks_before_motion():
     source = SOURCE.replace("  goal {", "  pre { object_exists box; }\n  goal {")
     task = ir.compile_source(source).ir.tasks[0]
     _, bindings, site = fixture()

@@ -2,13 +2,13 @@
 
 This optional backend runs a validated `.rob` task with a UR5e, Robotiq 2F-85 gripper, MoveIt 2 and Gazebo Jetty. It is simulation only and is separate from the core `robolang` wheel. The implementation contract and failure codes are in [the backend specification](../../spec/ros2-backend-v0.1.md).
 
-The executor checks for advancing simulation time, the declared Gazebo model and Gazebo hardware plugins before creating motion clients. The site file maps task bindings to poses and Gazebo models. `move` and the approach in `grasp` use MoveIt; a gripper trajectory closes before Gazebo attaches the object. `place` moves with MoveIt, opens the gripper, then detaches it. Attachment is a simulation shortcut and does not validate contact physics.
+The executor checks for advancing simulation time, the declared Gazebo model and Gazebo hardware plugins before creating motion clients. The site file maps task bindings to poses, Gazebo models, marker IDs, location regions and the camera calibration. `move` and the approach in `grasp` use MoveIt; a gripper trajectory closes before Gazebo attaches the object. `place` moves with MoveIt, opens the gripper, then detaches it. Attachment is a simulation shortcut and does not validate contact physics.
 
 The phase 1 arm and camera findings are in [the harness report](../../docs/evidence/h3-phase1-harness.md).
 
 ## Run the integration test
 
-The on-demand and nightly `ros2-sim.yml` workflow builds the image, runs the arm and camera smoke test, then executes [`transfer.rob`](examples/transfer.rob). It uploads logs and a JSON run record as the `ros2-sim-results` artifact. Each goal condition stays `not_evaluated` until phase 3 adds sensor observations; completed motion steps therefore exit with code 3, not success. [Phase 2 evidence](../../docs/evidence/h3-phase2-executor.md) records the green integration run.
+The on-demand and nightly `ros2-sim.yml` workflow builds the image, runs the arm and camera smoke test, then executes [`transfer.rob`](examples/transfer.rob). The goal is then decided from the overhead camera's ArUco marker, the `tool0` transform and the gripper joint state; Gazebo ground truth is read only by the test oracle afterwards. It uploads logs, the JSON run record and `oracle.json` as the `ros2-sim-results` artifact. [Phase 2 evidence](../../docs/evidence/h3-phase2-executor.md) records the executor run.
 
 On an amd64 host with Docker:
 

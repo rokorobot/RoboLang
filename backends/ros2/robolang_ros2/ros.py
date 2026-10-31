@@ -6,11 +6,15 @@ import subprocess
 import time
 import xml.etree.ElementTree as ET
 
+from . import observe
 from .executor import BackendFailure
+
+FRAMES = 10  # camera frames fused per observation (10 Hz camera: one simulated second)
+SETTLE_MS = 500  # let a released object come to rest before the first fused frame
 
 
 class ROSOperations:
-    def __init__(self):
+    def __init__(self, camera: dict):
         import rclpy
         from rosgraph_msgs.msg import Clock
         from sensor_msgs.msg import JointState
@@ -24,7 +28,12 @@ class ROSOperations:
         self.clock_values = []
         self.node.create_subscription(Clock, "/clock", self._on_clock, 10)
         self.joints = {}
+        self.joint_stamp_ms = None
         self.node.create_subscription(JointState, "/joint_states", self._on_joints, 10)
+        from tf2_ros import Buffer, TransformListener
+        self.tf = Buffer()
+        self.tf_listener = TransformListener(self.tf, self.node, spin_thread=False)
+        self.frames = None
         self.description = None
         description_qos = QoSProfile(depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL)
         self.node.create_subscription(String, "/robot_description", self._on_description, description_qos)
@@ -32,6 +41,7 @@ class ROSOperations:
         self.arm = None
         self.gripper = None
         self.model = None
+        self.camera = camera
 
     def _on_clock(self, msg):
         value = msg.clock.sec * 1_000_000_000 + msg.clock.nanosec
@@ -40,6 +50,11 @@ class ROSOperations:
 
     def _on_joints(self, msg):
         self.joints.update(zip(msg.name, msg.position))
+        self.joint_stamp_ms = (msg.header.stamp.sec * 1_000_000_000 + msg.header.stamp.nanosec) // 1_000_000
+
+    def _on_image(self, msg):
+        if self.frames is not None:
+            self.frames.append(msg)
 
     def _on_description(self, msg):
         self.description = msg.data
@@ -189,6 +204,50 @@ class ROSOperations:
         if not self._until(lambda: self.now_ms() >= target, max(10, duration / 1000 * 3)):
             raise BackendFailure("S504", "simulation clock stopped during wait")
 
+    def observe(self, marker_ids: list[int]) -> observe.Snapshot:
+        """Fuse FRAMES overhead camera frames, the latest tool0 transform and the gripper joint state."""
+        from rclpy.qos import qos_profile_sensor_data
+        from rclpy.time import Time
+        from sensor_msgs.msg import Image
+
+        self.frames = []
+        start = self.now_ms()
+        subscription = self.node.create_subscription(Image, "/overhead_camera/image", self._on_image,
+                                                     qos_profile_sensor_data)
+        stamp = lambda m: (m.header.stamp.sec * 1_000_000_000 + m.header.stamp.nanosec) // 1_000_000  # noqa: E731
+        try:
+            self._until(lambda: sum(stamp(m) >= start + SETTLE_MS for m in self.frames) >= FRAMES, 60)
+            frames = [m for m in self.frames if stamp(m) >= start + SETTLE_MS][:FRAMES]
+        finally:
+            self.node.destroy_subscription(subscription)
+            self.frames = None
+        found = {i: ([], []) for i in marker_ids}
+        for message in frames:
+            for marker, point in detect_markers(message, self.camera).items():
+                if marker in found:
+                    found[marker][0].append(observe.camera_to_base(point, self.camera))
+                    found[marker][1].append(stamp(message))
+        markers = {}
+        for marker, (positions, stamps) in found.items():
+            reading = observe.fuse(positions, stamps, FRAMES, "overhead_camera", "aruco_fiducial")
+            if reading is not None:
+                markers[marker] = reading
+        tool = None
+        try:
+            t = self.tf.lookup_transform("base_link", "tool0", Time())
+            tool = observe.Reading("tf", "tf_tool0_from_joint_states",
+                                   (t.transform.translation.x, t.transform.translation.y, t.transform.translation.z),
+                                   (t.transform.rotation.x, t.transform.rotation.y, t.transform.rotation.z,
+                                    t.transform.rotation.w), 1.0, stamp(t))
+        except Exception:  # no transform yet: robot_at and holding stay unknown
+            pass
+        joint = "robotiq_85_left_knuckle_joint"
+        gripper = None
+        if joint in self.joints and self.joint_stamp_ms is not None:
+            gripper = observe.Reading("joint_states", "gripper_joint_state", (self.joints[joint],), None, 1.0,
+                                      self.joint_stamp_ms)
+        return observe.Snapshot(self.now_ms(), markers, tool, gripper)
+
     def versions(self) -> dict[str, str]:
         packages = {"ros": "lyrical"}
         for package in ("ros-lyrical-moveit", "ros-lyrical-gz-ros2-control", "ros-lyrical-ur-simulation-gz"):
@@ -199,6 +258,35 @@ class ROSOperations:
             except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired):
                 packages[package] = "unknown"
         return packages
+
+
+def detect_markers(message, camera: dict) -> dict[int, tuple[float, float, float]]:
+    """ArUco 4x4_50 marker centres in the camera's optical frame, from one RGB frame."""
+    import cv2
+    import numpy as np
+
+    if message.width != camera["width"] or message.height != camera["height"] or message.encoding != "rgb8":
+        return {}
+    image = np.frombuffer(bytes(message.data), dtype=np.uint8).reshape(message.height, message.width, 3)
+    gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
+    parameters = cv2.aruco.DetectorParameters()
+    # Subpixel corners: the marker is about 40 px wide, so a one-pixel corner bias is a 5% depth error.
+    parameters.cornerRefinementMethod = cv2.aruco.CORNER_REFINE_SUBPIX
+    detector = cv2.aruco.ArucoDetector(cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50), parameters)
+    corners, ids, _ = detector.detectMarkers(gray)
+    if ids is None:
+        return {}
+    focal, cx, cy = observe.intrinsics(camera)
+    matrix = np.array([[focal, 0, cx], [0, focal, cy], [0, 0, 1]], dtype=np.float64)
+    half = camera["marker_length"] / 2
+    square = np.array([[-half, half, 0], [half, half, 0], [half, -half, 0], [-half, -half, 0]], dtype=np.float64)
+    result = {}
+    for marker, corner in zip(ids.flatten(), corners):
+        ok, _, tvec = cv2.solvePnP(square, corner.reshape(4, 2).astype(np.float64), matrix, None,
+                                   flags=cv2.SOLVEPNP_IPPE_SQUARE)
+        if ok and int(marker) not in result:
+            result[int(marker)] = tuple(float(v) for v in tvec.flatten())
+    return result
 
 
 def gazebo_joint_command(model: str, action: str) -> None:
