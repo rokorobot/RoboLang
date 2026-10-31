@@ -22,23 +22,24 @@ REFERENCE = IMAGE_REFERENCE if IMAGE_REFERENCE.is_dir() else ROOT.parent.parent 
 TABLE_TOP = 0.25
 BOX = 0.1
 GRASP_Z = 0.55  # tool0 above a box's slot: the fingertips (about 0.16 m below tool0) clear the box top
-POSE_Z = 0.71  # tool0 at a location: a held box hangs clear of the boxes on the table
+POSE_Z = 0.68  # tool0 at a location: a held box hangs clear of the boxes on the table
 APPROACH = POSE_Z - GRASP_Z  # grasp and place come straight down to the grasp height
 DOWN = [0.8601, -0.5101, 0.0, 0.0]  # tool0 pointing down, as verified in phases 2 and 3
 MARKER_LENGTH = BOX * 400 / 600  # the black square of a 400 px marker with a 100 px white border, on a 0.1 m face
-SLOT = {  # a ring of radius 0.5 m around the arm base: distinct x, so the side camera sees every box
-    "A": (-0.433, 0.25), "B": (-0.25, 0.433), "C": (0.0, 0.5), "D": (0.25, 0.433), "E": (0.433, 0.25),
+TABLE_Y = (0.3, 0.85)  # the arm's start pose lies low near the base, up to y = 0.2
+SLOT = {  # an arc 0.55 to 0.6 m from the arm base: distinct x, so the side camera sees every box
+    "A": (-0.42, 0.38), "B": (-0.22, 0.54), "C": (0.0, 0.6), "D": (0.22, 0.54), "E": (0.42, 0.38),
 }
 AIR = {"home": (0.0, 0.35, 0.75), "dock": (-0.3, 0.3, 0.75)}  # robot-only locations
 CAMERAS = [  # name, position, roll-pitch-yaw of the Gazebo camera link, horizontal field of view
-    ("overhead", (0.0, 0.45, 1.5), (0.0, math.pi / 2, 0.0), 1.1),
+    ("overhead", (0.0, 0.55, 1.5), (0.0, math.pi / 2, math.pi / 2), 1.1),  # image width along x: the table's length
     ("side", (0.0, 1.6, 0.42), (0.0, 0.1, -math.pi / 2), 0.9),
 ]
 
 # task: ({location parameter: slot or air pose}, {object parameter: start slot}); "feed" holds three boxes in a row.
 TASKS = {
     "a_scrap_part": ({"here": "B", "bin": "D"}, {"part": "B"}),
-    "a_sort_three": ({"feed": "feed", "sx": "A", "sy": "E", "sz": "D"},
+    "a_sort_three": ({"feed": "feed", "sx": "A", "sy": "E", "sz": "C"},
                      {"x": "feed0", "y": "feed1", "z": "feed2"}),
     "e_box_then_dock": ({"src": "B", "dst": "D", "dock": "dock"}, {"box": "B"}),
     "e_hold_box": ({"src": "C"}, {"box": "C"}),
@@ -51,13 +52,13 @@ TASKS = {
     "w_split_boxes": ({"sa": "A", "sb": "B", "ta": "D", "tb": "E"}, {"a": "A", "b": "B"}),
 }
 # Scripted failure cases (0029 section 3, item 4) on e_pick_place. Each must end FAILED with a code.
-CASES = {
-    "fail_object_absent": "the box is outside the workcell, seen by no camera",
-    "fail_object_moved": "the box is in slot E, not at the source the site declares",
-    "fail_out_of_reach": "the destination pose is 1.3 m from the arm base",
-    "fail_cameras_covered": "an opaque plate covers each camera lens",
+CASES = {  # scene: (what is wrong, the failure code the run must end with)
+    "fail_object_absent": ("the box is outside the workcell, seen by no camera", "S506"),
+    "fail_object_moved": ("the box is in slot E, not at the source the site declares", "S506"),
+    "fail_out_of_reach": ("the destination pose is 1.3 m from the arm base", "S502"),
+    "fail_cameras_covered": ("an opaque plate covers each camera lens", "S506"),
 }
-FEED = [(-0.12, 0.62), (0.0, 0.62), (0.12, 0.62)]
+FEED = [(-0.12, 0.38), (0.0, 0.38), (0.12, 0.38)]  # three boxes in a row, between slots A and E
 
 
 def names() -> list[str]:
@@ -81,7 +82,7 @@ def build(scene: str) -> dict:
         if scene == "fail_out_of_reach" and param == "dst":
             x, y = 1.3, 0.0
         poses[location] = _pose(x, y, POSE_Z)
-        half = (0.2, 0.08) if slot == "feed" else (0.08, 0.08)  # neighbouring ring slots are 0.18 m apart in x and y
+        half = (0.2, 0.07) if slot == "feed" else (0.08, 0.08)  # neighbouring ring slots are 0.18 m apart in x and y
         regions[location] = {"frame": "base_link", "min": [round(x - half[0], 3), round(y - half[1], 3), 0.2],
                              "max": [round(x + half[0], 3), round(y + half[1], 3), 0.4]}
     for index, (param, slot) in enumerate(sorted(starts.items())):
@@ -104,12 +105,14 @@ def build(scene: str) -> dict:
         "gazebo_model": "ur", "robot": robot, "objects": objects, "poses": poses, "grasps": grasps,
         "markers": markers, "regions": regions, "cameras": cameras,
         # The table and a 0.1 m layer above it for the boxes, so MoveIt keeps the gripper clear of both.
-        "obstacles": [{"frame": "base_link", "min": [-0.6, 0.15, 0.0], "max": [0.6, 0.85, TABLE_TOP + BOX]}],
+        "obstacles": [{"frame": "base_link", "min": [-0.6, TABLE_Y[0], 0.0],
+                       "max": [0.6, TABLE_Y[1], TABLE_TOP + BOX]}],
         "approach_height": round(APPROACH, 3),
     }
     return {"scene": scene, "task_id": task_id, "task": reference["task"], "bindings": bindings,
             "source": str(REFERENCE / f"{task_id}.rob"), "expect": "FAILED" if scene in CASES else "SUCCEEDED",
-            "case": CASES.get(scene), "site": site, "boxes": boxes}
+            "case": CASES[scene][0] if scene in CASES else None,
+            "expect_code": CASES[scene][1] if scene in CASES else None, "site": site, "boxes": boxes}
 
 
 def _robot_params(task_id: str) -> set[str]:
@@ -171,6 +174,7 @@ def world_sdf(spec: dict, out: Path) -> str:
       <link name="link"><visual name="v"><geometry><box><size>0.01 0.5 0.5</size></box></geometry>
         <material><ambient>0.2 0.2 0.2 1</ambient><diffuse>0.2 0.2 0.2 1</diffuse></material></visual></link>
     </model>""")
+    table = f"1.2 {TABLE_Y[1] - TABLE_Y[0]:.2f} {TABLE_TOP}"
     return f"""<?xml version="1.0"?>
 <!-- Generated by backends/ros2/scripts/scenes.py for scene {spec["scene"]}. Arm base at the origin. -->
 <sdf version="1.9">
@@ -193,9 +197,9 @@ def world_sdf(spec: dict, out: Path) -> str:
       <visual name="v"><geometry><plane><normal>0 0 1</normal><size>10 10</size></plane></geometry>
         <material><ambient>0.5 0.5 0.5 1</ambient><diffuse>0.5 0.5 0.5 1</diffuse></material></visual></link>
     </model>
-    <model name="table"><static>true</static><pose>0 0.5 {TABLE_TOP / 2} 0 0 0</pose><link name="link">
-      <collision name="c"><geometry><box><size>1.2 0.7 {TABLE_TOP}</size></box></geometry></collision>
-      <visual name="v"><geometry><box><size>1.2 0.7 {TABLE_TOP}</size></box></geometry>
+    <model name="table"><static>true</static><pose>0 {sum(TABLE_Y) / 2} {TABLE_TOP / 2} 0 0 0</pose><link name="link">
+      <collision name="c"><geometry><box><size>{table}</size></box></geometry></collision>
+      <visual name="v"><geometry><box><size>{table}</size></box></geometry>
         <material><ambient>0.35 0.25 0.15 1</ambient><diffuse>0.35 0.25 0.15 1</diffuse></material></visual></link>
     </model>{"".join(models)}
   </world>

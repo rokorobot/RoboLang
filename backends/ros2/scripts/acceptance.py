@@ -25,6 +25,7 @@ def main():
             directory, "oracle.json")
         runs.append({
             "run": str(directory.relative_to(sys.argv[1])), "scene": scene["scene"], "expect": scene["expect"],
+            "expect_code": scene.get("expect_code"),
             "state": record["state"] if record else "NO_RECORD",
             "code": ((record or {}).get("failure") or {}).get("code"),
             "message": ((record or {}).get("failure") or {}).get("message"),
@@ -38,7 +39,7 @@ def main():
     succeeded = sum(r["state"] == "SUCCEEDED" for r in family)
     agreed = sum(c["agree"] for c in checks)
     false_successes = sum(r["false_success"] for r in runs)
-    cases_ok = all(r["state"] == "FAILED" and r["code"] for r in cases)
+    cases_ok = all(r["state"] == "FAILED" and r["code"] == r["expect_code"] for r in cases)
     rate = succeeded / len(family) if family else 0.0
     agreement = agreed / len(checks) if checks else 0.0
     passed = bool(family) and rate >= SUCCESS_RATE and agreement >= AGREEMENT and false_successes == 0 and cases_ok \
@@ -53,12 +54,13 @@ def main():
     print(f"| Family runs SUCCEEDED | {succeeded}/{len(family)} ({rate:.1%}) | ≥ {SUCCESS_RATE:.0%} |")
     print(f"| Goal checks agreeing with the oracle | {agreed}/{len(checks)} ({agreement:.1%}) | ≥ {AGREEMENT:.0%} |")
     print(f"| False successes | {false_successes} | 0 |")
-    failed_with_code = sum(r["state"] == "FAILED" and bool(r["code"]) for r in cases)
-    print(f"| Failure cases ending FAILED with a code | {failed_with_code}/{len(cases)} | 4/4 |\n")
+    failed_as_expected = sum(r["state"] == "FAILED" and r["code"] == r["expect_code"] for r in cases)
+    print(f"| Failure cases ending FAILED with their expected code | {failed_as_expected}/{len(cases)} | 4/4 |\n")
     print("| Run | Expected | State | Code | Goal checks (observed/oracle) |\n|---|---|---|---|---|")
     for r in runs:
         goal = ", ".join(f"{c['observed']}/{str(c['oracle']).lower()}" for c in r["checks"]) or "-"
-        print(f"| {r['run']} | {r['expect']} | {r['state']} | {r['code'] or ''} | {goal} |")
+        expected = r["expect"] + (f" {r['expect_code']}" if r["expect_code"] else "")
+        print(f"| {r['run']} | {expected} | {r['state']} | {r['code'] or ''} | {goal} |")
     sys.exit(0 if passed else 1)
 
 

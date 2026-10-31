@@ -1,18 +1,18 @@
 # RoboLang ROS 2 / Gazebo backend 0.1
 
-**Status:** phase 2 executor verified in the [integration run](../docs/evidence/h3-phase2-executor.md); phase 3 adds goal and precondition verdicts from sensor observations. Decision [0029](decisions/0029-physics-simulation-backend.md) approved by the owner.
+**Status:** phase 2 executor verified in the [integration run](../docs/evidence/h3-phase2-executor.md); phase 3 added goal and precondition verdicts from sensor observations; phase 4 adds several cameras, a grasp check, approach moves and the benchmark acceptance run. Decision [0029](decisions/0029-physics-simulation-backend.md) approved by the owner.
 
 ## Scope and safety boundary
 
 The optional `robolang-ros2` ament Python package executes a validated, single-robot task against the declared Gazebo model. The core `robolang` wheel does not import ROS 2. There is no physical-mode option. Before creating MoveIt or gripper clients, the backend requires an advancing `/clock`, `use_sim_time=true`, the declared model in `gz model --list`, active controller hardware components matching `gz_ros2_control/GazeboSimSystem` declarations in the published robot description, and the declared Gazebo detachable-joint topics. It requests initial detachment before motion. Failure is `S501`, with no motion command sent. The backend does not treat language safety limits as hardware safety functions.
 
-The site file maps IDs in `.rob` bindings to a Gazebo model and `base_link` poses. It has exactly `gazebo_model`, `robot`, `objects` (object ID to Gazebo model name), `poses` (location ID to `{frame, position, orientation}`), `grasps` (object ID to approach pose), `markers` (object ID to a distinct ArUco 4x4_50 ID), `regions` (location ID to a `base_link` box `{frame, min, max}` that the object's marker face must be inside) and `camera` (the overhead camera link's `base_link` pose, `horizontal_fov`, image `width` and `height`, and printed `marker_length` in metres). The camera pose is a calibration, not an observation. Quaternions must be normalized and all coordinates finite. No extra keys, including a physical-mode key, are accepted.
+The site file maps IDs in `.rob` bindings to a Gazebo model and `base_link` poses. It has exactly `gazebo_model`, `robot`, `objects` (object ID to Gazebo model name), `poses` (location ID to `{frame, position, orientation}`), `grasps` (object ID to approach pose), `markers` (object ID to a distinct ArUco 4x4_50 ID), `regions` (location ID to a `base_link` box `{frame, min, max}` that the object's marker must be inside), `cameras` (a nonempty list, each with a unique `name`, an image `topic`, the camera link's `base_link` pose, `horizontal_fov`, image `width` and `height`, and printed `marker_length` in metres), `obstacles` (`base_link` boxes added to MoveIt's planning scene) and `approach_height` (metres, from 0 to 0.5). Camera poses are calibrations, not observations. Quaternions must be normalized and all coordinates finite. No extra keys, including a physical-mode key, are accepted.
 
 ## Execution
 
-`move r to L` gives MoveIt 2 a pose goal from the site file and executes the resulting trajectory through `joint_trajectory_controller`. A motion step passes only when MoveIt reports completed execution, not goal acceptance. `grasp r O` moves through MoveIt to the site grasp pose, closes the gripper action, waits for its final reached-goal result, then attaches the declared object with Gazebo's detachable joint. `place r O at L` moves to the site pose, opens the gripper, then detaches. `wait for` advances on `/clock`. The backend stops at the first failure. Other steps and declared speed limits are rejected before executing the plan.
+`move r to L` gives MoveIt 2 a pose goal from the site file and executes the resulting trajectory through `joint_trajectory_controller`. A motion step passes only when MoveIt reports completed execution, not goal acceptance. `grasp r O` moves through MoveIt to `approach_height` above the site grasp pose, then down to it. It then takes an observation snapshot: the object's marker must be seen under the gripper (as for `holding`, below) or the step fails with S506 before the gripper closes. It closes the gripper action, waits for its final reached-goal result, attaches the declared object with Gazebo's detachable joint, and moves back up. `place r O at L` moves to the site pose and `approach_height` down from it, opens the gripper, detaches, then moves back up. With `approach_height` 0 there are no extra moves. `wait for` advances on `/clock`. The backend stops at the first failure. Other steps and declared speed limits are rejected before executing the plan.
 
-The detachable joint is a simulation expedient. The installed Jetty build starts it attached despite an `initial_attach=false` request, so the harness explicitly detaches the box before its smoke motion and the executor repeats the release request during its guard. A record says `grasp_model: detachable_joint_after_gripper_close`; it does not claim friction or contact physics has been validated.
+The detachable joint is a simulation expedient: one per object, with topics `/model/<robot model>/detachable_joint/<object model>/{attach,detach,state}`. The installed Jetty build starts each attached despite an `initial_attach=false` request, so the harness detaches every object before anything moves and the executor repeats the release during its guard. In the acceptance scenes the 0.1 m boxes are wider than the gripper's 85 mm opening, so the grasp pose keeps the fingertips above the box and the joint carries it; the fingers never touch it. A record says `grasp_model: detachable_joint_after_gripper_close`; it does not claim friction or contact physics has been validated.
 
 ## Observations and verdicts
 
@@ -20,7 +20,7 @@ Preconditions are evaluated from one observation snapshot before the first step;
 
 | Reading | Source | Confidence |
 |---|---|---|
-| Marker position | ten overhead camera frames stamped at least 500 ms of simulation time after the request; each detected marker's pose from `solvePnP` with ideal pinhole intrinsics from the site camera | the median position; confidence is the fraction of the ten frames whose detection lies within 1 cm of the median |
+| Marker position | for each site camera, ten frames stamped at least 500 ms of simulation time after the request; each detected marker's pose from `solvePnP` (subpixel corners) with ideal pinhole intrinsics from the site camera | per camera, the median position with confidence = the fraction of the ten frames whose detection lies within 1 cm of the median; the reading kept is the most confident camera's, the earlier camera in the site on a tie |
 | Tool pose | latest `base_link` to `tool0` transform | 1 |
 | Gripper | latest `robotiq_85_left_knuckle_joint` position | 1 |
 
@@ -30,9 +30,9 @@ A reading is usable only when its confidence is at least `min_confidence` and it
 |---|---|---|
 | `object_at o l` | the marker of `o` is inside the region of `l` | the marker is seen anywhere else |
 | `robot_at r l` | `tool0` is within 2 cm and 0.05 rad of the site pose of `l` | it is not |
-| `holding r o` | the gripper is closed (within 0.05 rad of 0.8) and the marker of `o` is within 15 cm of `tool0` | the gripper is open, or the marker is seen farther away |
+| `holding r o` | the gripper is closed (within 0.05 rad of 0.8) and the marker of `o` is under `tool0`: within 10 cm horizontally and 5 to 35 cm below it | the gripper is open, or the marker is seen elsewhere |
 
-A closed gripper whose object marker is hidden, for example by the gripper itself, gives `unknown`. Results follow the symbolic simulator: a false precondition is S101, an unknown one S102; a false goal condition is S301, an unknown one S302, each with `step: null`.
+A closed gripper whose object marker no camera sees gives `unknown`. Results follow the symbolic simulator: a false precondition is S101, an unknown one S102; a false goal condition is S301, an unknown one S302, each with `step: null`.
 
 ## Failure codes
 
@@ -59,4 +59,4 @@ The Lyrical MoveItPy 2.15.2 binding can crash during Python interpreter teardown
 
 ## Verification
 
-Unit tests use fake operations and snapshots to check guard ordering, failure propagation, thresholds and verdicts. The on-demand/nightly ROS 2 workflow runs the transfer in the Lyrical Gazebo container, then a test-only oracle (`scripts/oracle.py`) reads Gazebo's box pose and fails the job on any disagreement or false success. Phase 4 has the benchmark acceptance threshold from 0029 section 3.
+Unit tests use fake operations and snapshots to check guard ordering, failure propagation, thresholds, the grasp check and verdicts, and validate every generated scene's site. The on-demand/nightly ROS 2 workflow is the acceptance run of 0029 sections 3 and 7: `scripts/scenes.py` generates a Gazebo world and site per benchmark task with the same entity IDs, each task runs three times in a fresh container (`scripts/run_task.sh`), the four failure cases once each, and a test-only oracle (`scripts/oracle.py`) compares every evaluated goal condition with Gazebo's box and wrist poses and the simulated gripper joint. `scripts/acceptance.py` applies the pass bar.
