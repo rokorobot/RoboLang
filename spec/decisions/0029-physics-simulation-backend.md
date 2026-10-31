@@ -102,3 +102,23 @@ as they would to a real one. Moving to hardware later (H4, only with owner autho
 real driver; the executor and the `.rob` do not change. The Jazzy/Harmonic fallback (X2) stays as a contingency only,
 if phase 1 finds that these packages do not work together. Phase 1 also checks camera rendering and fiducial
 detection (X6, section 5).
+
+## 7. Phase 4 scope (owner decision, 2026-10-31)
+
+The owner chose option A for the acceptance family (section 3, item 1).
+
+- **Family:** the 11 single-arm tasks of benchmark set 1 that use only `move`, `grasp`, `place` and `wait for`,
+  with `object_at`, `robot_at` and `holding` conditions: `a_scrap_part`, `a_sort_three`, `e_box_then_dock`,
+  `e_hold_box`, `e_pause_home`, `e_pick_place`, `l_vial_hold`, `l_vial_to_fridge`, `w_part_precheck`,
+  `w_pick_from_table`, `w_split_boxes`.
+- **Left out, with the reason:** tasks with `region_clear` or `robot_ready` (deferred: a marker-only camera cannot
+  show that a region is clear of unmarked things, so these need their own observation design); tasks for a mobile base
+  (`e_park_amr`, `w_carry_hold`, `w_clear_dock`) or two robots; tasks with `inspect`, `wait until`, `communicate` or
+  `@safety`; and `w_two_boxes`, which places two boxes at one location while the site has one place pose per
+  location, so the second box would be lowered onto the first.
+- **Holding:** a fixed side camera and markers on a side face of each box, because the closed gripper hides a box's
+  top marker from the overhead camera.
+- **Failure cases:** the box outside the workcell (absent), the box in another slot than the site declares (moved
+  before the grasp), the destination 1.3 m from the base (out of reach), and an opaque plate in front of **each**
+  camera. With two cameras, covering only one can correctly leave the goal observable, so the scripted case covers
+  both.

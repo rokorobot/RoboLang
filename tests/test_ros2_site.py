@@ -9,6 +9,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "backends" / "ros2"
 from robolang_ros2.executor import BackendFailure  # noqa: E402
 from robolang_ros2.site import read_site  # noqa: E402
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "backends" / "ros2" / "scripts"))
+import scenes  # noqa: E402
+
 
 def site():
     return {"gazebo_model": "ur", "robot": "arm1", "objects": {"box1": "box"},
@@ -18,8 +21,11 @@ def site():
                                 "orientation": [0, 0, 0, 1]}},
             "markers": {"box1": 7},
             "regions": {"table": {"frame": "base_link", "min": [-0.1, 0.3, 0.2], "max": [0.1, 0.5, 0.4]}},
-            "camera": {"frame": "base_link", "position": [0, 0.4, 1.4], "orientation": [0, 0.70711, 0, 0.70711],
-                       "horizontal_fov": 1.0, "width": 640, "height": 480, "marker_length": 0.0667}}
+            "cameras": [{"name": "overhead", "topic": "/overhead_camera/image", "frame": "base_link",
+                         "position": [0, 0.4, 1.4], "orientation": [0, 0.70711, 0, 0.70711],
+                         "horizontal_fov": 1.0, "width": 640, "height": 480, "marker_length": 0.0667}],
+            "obstacles": [{"frame": "base_link", "min": [-0.5, 0.2, 0], "max": [0.5, 0.8, 0.35]}],
+            "approach_height": 0.16}
 
 
 def test_site_accepts_finite_pose(tmp_path):
@@ -28,9 +34,17 @@ def test_site_accepts_finite_pose(tmp_path):
     assert read_site(path).poses["table"]["position"] == [0, 0.4, 0.5]
 
 
-def test_repository_site_is_valid():
-    loaded = read_site(Path(__file__).resolve().parents[1] / "backends" / "ros2" / "site" / "h3_site.json")
-    assert loaded.markers == {"box1": 7} and set(loaded.regions) == {"pickup", "drop"}
+@pytest.mark.parametrize("scene", scenes.names())
+def test_generated_scene_sites_are_valid(tmp_path, scene):
+    spec = scenes.build(scene)
+    path = tmp_path / "site.json"
+    path.write_text(json.dumps(spec["site"]))
+    loaded = read_site(path)
+    assert set(loaded.markers) == set(loaded.object_models) and len(loaded.cameras) == 2
+    regions = list(loaded.regions.values())
+    for i, a in enumerate(regions):  # a box can be in at most one location
+        for b in regions[i + 1:]:
+            assert any(a["max"][k] < b["min"][k] or b["max"][k] < a["min"][k] for k in range(3))
 
 
 @pytest.mark.parametrize("edit", [
@@ -41,8 +55,12 @@ def test_repository_site_is_valid():
     lambda s: s["markers"].__setitem__("box2", 8),
     lambda s: s["markers"].__setitem__("box1", 50),
     lambda s: s["regions"]["table"]["min"].__setitem__(0, 0.2),
-    lambda s: s["camera"].__setitem__("horizontal_fov", 4.0),
-    lambda s: s.__delitem__("camera"),
+    lambda s: s["cameras"][0].__setitem__("horizontal_fov", 4.0),
+    lambda s: s["cameras"][0].__setitem__("topic", "camera; rm"),
+    lambda s: s["cameras"].append(dict(s["cameras"][0])),  # duplicate name
+    lambda s: s.__setitem__("cameras", []),
+    lambda s: s["obstacles"][0]["max"].__setitem__(2, -1),
+    lambda s: s.__setitem__("approach_height", 0.9),
 ])
 def test_site_rejects_invalid_or_extra_fields(tmp_path, edit):
     value = site()
