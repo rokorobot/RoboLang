@@ -42,11 +42,13 @@ def snapshot(marker=IN_DST, confidence=1.0, stamp=1000, t=1500, tool=(0.0, 0.4, 
 
 
 class FakeOps:
-    def __init__(self, fail=None, snap=None):
+    def __init__(self, fail=None, snap=None, grasp_snap=None):
+        """`snap` answers the goal and precondition observations, `grasp_snap` the check right after a move."""
         self.calls = []
         self.fail = fail
         self.time = 0
         self.snap = snap or snapshot()
+        self.grasp_snap = grasp_snap or snapshot()
 
     def _call(self, name, *args):
         self.calls.append((name, *args))
@@ -65,8 +67,9 @@ class FakeOps:
     def wait_ms(self, duration): self._call("wait", duration)
     def versions(self): return {"ros": "lyrical"}
     def observe(self, marker_ids):
+        after_move = self.calls[-1][0] == "move"
         self.calls.append(("observe", tuple(marker_ids)))
-        return self.snap
+        return self.grasp_snap if after_move else self.snap
 
 
 def pose(position):
@@ -80,9 +83,9 @@ def region(lo, hi):
 def fixture():
     task = ir.compile_source(SOURCE).ir.tasks[0]
     site = Site("ur", "arm1", {"box1": "box"}, {"table": pose((0, -0.4, 0.5)), "shelf": pose((0, 0.4, 0.5))},
-                {"box1": pose((0, -0.4, 0.4))}, {"box1": 7},
-                {"table": region((-0.1, -0.5, 0.2), (0.1, -0.3, 0.4)),
-                 "shelf": region((-0.1, 0.3, 0.2), (0.1, 0.5, 0.4))}, None)
+                {"box1": pose((0, -0.4, 0.4))}, markers={"box1": 7},
+                regions={"table": region((-0.1, -0.5, 0.2), (0.1, -0.3, 0.4)),
+                         "shelf": region((-0.1, 0.3, 0.2), (0.1, 0.5, 0.4))})
     return task, {"r": "arm1", "box": "box1", "src": "table", "dst": "shelf"}, site
 
 
@@ -107,7 +110,7 @@ def test_goal_verified_from_observations():
     ops = FakeOps()
     record = execute(task, bindings, site, ops)
     assert [call[0] for call in ops.calls] == [
-        "guard", "move", "move", "grip", "attach", "move", "move", "grip", "detach", "observe",
+        "guard", "move", "move", "observe", "grip", "attach", "move", "move", "grip", "detach", "observe",
     ]
     assert record["state"] == "SUCCEEDED" and record["failure"] is None
     assert [g["result"] for g in record["goal"]] == ["true"]
@@ -184,6 +187,25 @@ def test_precondition_unknown_blocks_before_motion():
     _, bindings, site = fixture()
     record = execute(task, bindings, site, FakeOps(snap=snapshot(marker=None)))
     assert record["failure"]["code"] == "S102"
+
+
+@pytest.mark.parametrize("snap", [snapshot(marker=None), snapshot(marker=IN_SRC)], ids=["unseen", "elsewhere"])
+def test_grasp_needs_the_object_seen_under_the_gripper(snap):
+    task, bindings, site = fixture()
+    ops = FakeOps(grasp_snap=snap)
+    record = execute(task, bindings, site, ops)
+    assert record["failure"]["code"] == "S506" and record["failure"]["step"] == 2
+    assert [call[0] for call in ops.calls][-2:] == ["move", "observe"]  # never closed or attached
+
+
+def test_approach_height_adds_straight_moves():
+    task, bindings, site = fixture()
+    site = Site(**{**site.__dict__, "approach_height": 0.1})
+    ops = FakeOps()
+    assert execute(task, bindings, site, ops)["state"] == "SUCCEEDED"
+    heights = [round(call[1]["position"][2], 3) for call in ops.calls if call[0] == "move"]
+    # move to src; grasp: above, down, back up; move to dst; place: to dst, down, (release), back up
+    assert heights == [0.5, 0.5, 0.4, 0.5, 0.5, 0.5, 0.4, 0.5]
 
 
 def test_object_without_marker_fails_before_motion():
@@ -314,8 +336,9 @@ def test_gazebo_joint_retries_a_lost_transport_publication(monkeypatch):
     monkeypatch.setattr(subprocess, "Popen", lambda *args, **kwargs: subscriber)
     monkeypatch.setattr(subprocess, "run", lambda args, **kwargs: sends.append(args))
     monkeypatch.setattr("robolang_ros2.ros.time.sleep", lambda _: None)
-    gazebo_joint_command("ur", "attach")
+    gazebo_joint_command("ur", "box", "attach")
     assert len(sends) == 2
+    assert sends[0][3] == "/model/ur/detachable_joint/box/attach"
 
 
 def test_gazebo_joint_fails_after_bounded_retries(monkeypatch):
@@ -330,5 +353,5 @@ def test_gazebo_joint_fails_after_bounded_retries(monkeypatch):
     monkeypatch.setattr(subprocess, "run", lambda *args, **kwargs: None)
     monkeypatch.setattr("robolang_ros2.ros.time.sleep", lambda _: None)
     with pytest.raises(BackendFailure, match="five requests") as exc:
-        gazebo_joint_command("ur", "attach")
+        gazebo_joint_command("ur", "box", "attach")
     assert exc.value.code == "S506"

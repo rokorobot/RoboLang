@@ -39,7 +39,9 @@ class Site:
     grasps: dict[str, dict]
     markers: dict[str, int] = field(default_factory=dict)  # object ID -> ArUco ID
     regions: dict[str, dict] = field(default_factory=dict)  # location ID -> {"min", "max"} box in base_link
-    camera: dict | None = None
+    cameras: tuple[dict, ...] = ()
+    obstacles: tuple[dict, ...] = ()  # {"min", "max"} boxes in base_link, added to MoveIt's planning scene
+    approach_height: float = 0.0  # grasp and place come straight down from this far above their poses
 
 
 def execute(task: ir.Task, bindings: dict[str, str], site: Site, ops: Operations) -> dict:
@@ -110,18 +112,31 @@ def execute(task: ir.Task, bindings: dict[str, str], site: Site, ops: Operations
                     ops.move(_pose(site, bindings[step.target]))
                 elif isinstance(step, ir.Grasp):
                     model = _object(site, bindings[step.obj])
-                    ops.move(_grasp_pose(site, bindings[step.obj]))
+                    grasp = _grasp_pose(site, bindings[step.obj])
+                    _approach(ops, site, grasp)
+                    ops.move(grasp)
+                    # The detachable joint attaches whatever is declared; only attach what the cameras see.
+                    seen = observe.object_under_tool(bindings[step.obj], site,
+                                                     _observe(task, bindings, site, ops, record), policy)
+                    if seen != "true":
+                        raise BackendFailure("S506", f"object not observed under the gripper ({seen})")
                     ops.grip(True)
                     ops.attach(model)
                     held = model
+                    _approach(ops, site, grasp)
                 elif isinstance(step, ir.Place):
                     if held != _object(site, bindings[step.obj]):
                         raise BackendFailure("S506", "place requires a prior successful grasp of this object")
                     model = _object(site, bindings[step.obj])
-                    ops.move(_pose(site, bindings[step.target]))
+                    pose = _pose(site, bindings[step.target])
+                    ops.move(pose)
+                    if site.approach_height:
+                        ops.move(_lowered(pose, site.approach_height))
                     ops.grip(False)
                     ops.detach(model)
                     held = None
+                    if site.approach_height:
+                        ops.move(pose)
                 elif isinstance(step, ir.WaitFor):
                     from robolang.sim.values import duration_ms_of
                     ops.wait_ms(int(duration_ms_of(step.duration)))
@@ -193,6 +208,16 @@ def _check_observable(condition, bindings: dict[str, str], site: Site) -> None:
         if bindings[condition.robot] != site.robot:
             raise BackendFailure("S507", "condition names a robot outside this site")
         _pose(site, bindings[condition.location])
+
+
+def _lowered(pose: dict, height: float) -> dict:
+    x, y, z = pose["position"]
+    return {**pose, "position": [x, y, z - height]}
+
+
+def _approach(ops: Operations, site: Site, pose: dict) -> None:
+    if site.approach_height:
+        ops.move(_lowered(pose, -site.approach_height))
 
 
 def _pose(site: Site, location: str) -> dict:

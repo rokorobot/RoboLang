@@ -18,10 +18,12 @@ DEFAULT_MAX_AGE_MS = 10_000
 # robot_at: the tool frame is within these of the location's site pose.
 POSITION_TOLERANCE_M = 0.02
 ANGLE_TOLERANCE_RAD = 0.05
-# holding: gripper closed (Robotiq knuckle near its closed command) and the object's marker near the tool.
+# holding: gripper closed (Robotiq knuckle near its closed command) and the object's marker under the tool:
+# horizontally within UNDER_XY_M of tool0 and between UNDER_Z_M below it (a marker on the top or a side face).
 GRIPPER_CLOSED_RAD = 0.8
 GRIPPER_TOLERANCE_RAD = 0.05
-HOLDING_DISTANCE_M = 0.15
+UNDER_XY_M = 0.1
+UNDER_Z_M = (0.05, 0.35)
 
 GAZEBO = "rl:sim:gazebo"
 GAZEBO_KEY_REF = GAZEBO + "#sim-1"
@@ -102,8 +104,9 @@ def evaluate(condition: ir.Condition, bound: dict[str, str], site, snap: Snapsho
 
 
 def atom(condition, bound: dict[str, str], site, snap: Snapshot, policy: Policy) -> Verdict:
-    usable = lambda r: (r is not None and Decimal(str(r.confidence)) >= policy.min_confidence  # noqa: E731
-                        and 0 <= snap.t_ms - r.stamp_ms <= policy.max_age_ms)
+    def usable(reading):
+        return _usable(reading, snap, policy)
+
     if isinstance(condition, ir.ObjectAt):
         obj = bound[condition.obj]
         marker = snap.markers.get(site.markers[obj])
@@ -128,13 +131,31 @@ def atom(condition, bound: dict[str, str], site, snap: Snapshot, policy: Policy)
         marker = snap.markers.get(site.markers[obj])
         if not usable(marker) or not usable(snap.tool):
             return Verdict("unknown", None, marker)
-        if math.dist(marker.position, snap.tool.position) > HOLDING_DISTANCE_M:
+        if not under(marker.position, snap.tool.position):
             return Verdict("false", None, marker)
-        fused = Reading("overhead_camera+gripper", "aruco_fiducial_near_closed_gripper", marker.position, None,
+        fused = Reading(f"{marker.sensor}+gripper", "aruco_fiducial_under_closed_gripper", marker.position, None,
                         min(marker.confidence, grip.confidence, snap.tool.confidence),
                         min(marker.stamp_ms, grip.stamp_ms, snap.tool.stamp_ms))
         return Verdict("true", Triple(core_id("object", obj), "carried_by", core_id("robot", robot)), fused)
     raise ValueError(f"no observation for {condition.KIND}")
+
+
+def object_under_tool(obj: str, site, snap: Snapshot, policy: Policy) -> str:
+    """Whether the object's marker is seen under the tool, as `holding` requires but whatever the gripper state."""
+    marker, tool = snap.markers.get(site.markers[obj]), snap.tool
+    if not (_usable(marker, snap, policy) and _usable(tool, snap, policy)):
+        return "unknown"
+    return "true" if under(marker.position, tool.position) else "false"
+
+
+def _usable(reading: Reading | None, snap: Snapshot, policy: Policy) -> bool:
+    return (reading is not None and Decimal(str(reading.confidence)) >= policy.min_confidence and
+            0 <= snap.t_ms - reading.stamp_ms <= policy.max_age_ms)
+
+
+def under(point, tool) -> bool:
+    drop = tool[2] - point[2]
+    return math.dist(point[:2], tool[:2]) <= UNDER_XY_M and UNDER_Z_M[0] <= drop <= UNDER_Z_M[1]
 
 
 def _first(target: str, places: dict, test) -> str | None:

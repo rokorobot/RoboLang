@@ -14,7 +14,7 @@ SETTLE_MS = 500  # let a released object come to rest before the first fused fra
 
 
 class ROSOperations:
-    def __init__(self, camera: dict):
+    def __init__(self, site):
         import rclpy
         from rosgraph_msgs.msg import Clock
         from sensor_msgs.msg import JointState
@@ -41,7 +41,7 @@ class ROSOperations:
         self.arm = None
         self.gripper = None
         self.model = None
-        self.camera = camera
+        self.site = site
 
     def _on_clock(self, msg):
         value = msg.clock.sec * 1_000_000_000 + msg.clock.nanosec
@@ -52,9 +52,9 @@ class ROSOperations:
         self.joints.update(zip(msg.name, msg.position))
         self.joint_stamp_ms = (msg.header.stamp.sec * 1_000_000_000 + msg.header.stamp.nanosec) // 1_000_000
 
-    def _on_image(self, msg):
+    def _on_image(self, name, msg):
         if self.frames is not None:
-            self.frames.append(msg)
+            self.frames[name].append(msg)
 
     def _on_description(self, msg):
         self.description = msg.data
@@ -88,23 +88,25 @@ class ROSOperations:
             raise BackendFailure("S501", "no published robot description")
         if not _gazebo_hardware_matches(hardware, self.description, model):
             raise BackendFailure("S501", "controller hardware must match GazeboSimSystem declarations")
-        required_topics = {f"/model/{model}/detachable_joint/{suffix}"
-                           for suffix in ("attach", "detach", "state")}
+        objects = sorted(self.site.object_models.values())
+        required_topics = {joint_topic(model, obj, suffix)
+                           for obj in objects for suffix in ("attach", "detach", "state")}
         available_topics = set(self._command(["gz", "topic", "-l"]).splitlines())
         if not required_topics <= available_topics:
             raise BackendFailure("S501", "declared Gazebo detachable joint is unavailable")
         # The plugin may start attached, and a one-shot transport publication can be lost.
         # Force a known detached state before any motion. The first detach may be a no-op;
         # the attach and final detach must each be confirmed by a state transition.
-        for _ in range(3):
-            self._command(["gz", "topic", "-t", f"/model/{model}/detachable_joint/detach",
-                           "-m", "gz.msgs.Empty", "-p", ""])
-            time.sleep(0.2)
-        try:
-            gazebo_joint_command(model, "attach")
-            gazebo_joint_command(model, "detach")
-        except BackendFailure as exc:
-            raise BackendFailure("S501", f"could not initialize detached simulation joint: {exc.message}") from exc
+        for obj in objects:
+            for _ in range(3):
+                self._command(["gz", "topic", "-t", joint_topic(model, obj, "detach"),
+                               "-m", "gz.msgs.Empty", "-p", ""])
+                time.sleep(0.2)
+            try:
+                gazebo_joint_command(model, obj, "attach")
+                gazebo_joint_command(model, obj, "detach")
+            except BackendFailure as exc:
+                raise BackendFailure("S501", f"could not initialize detached joint of {obj}: {exc.message}") from exc
         self.model = model
         # MoveItPy can contact controllers while loading. Construct it only after every graph check passes.
         try:
@@ -114,6 +116,7 @@ class ROSOperations:
             parameters = moveit_parameters(self.description)
             self.planner = MoveItPy(node_name="robolang_moveit", config_dict=parameters)
             self.arm = self.planner.get_planning_component("ur_manipulator")
+            self._add_obstacles()
             arm_server = ActionClient(self.node, FollowJointTrajectory,
                                       "/joint_trajectory_controller/follow_joint_trajectory")
             if not self._until(arm_server.server_is_ready, 20):
@@ -125,6 +128,30 @@ class ROSOperations:
             raise
         except Exception as exc:
             raise BackendFailure("S502", f"MoveIt did not start: {exc}") from exc
+
+    def _add_obstacles(self) -> None:
+        """Site obstacles (the table and the objects on it) as MoveIt collision boxes."""
+        from geometry_msgs.msg import Pose
+        from moveit_msgs.msg import CollisionObject
+        from shape_msgs.msg import SolidPrimitive
+
+        with self.planner.get_planning_scene_monitor().read_write() as scene:
+            for index, box in enumerate(self.site.obstacles):
+                item = CollisionObject()
+                item.header.frame_id = box["frame"]
+                item.id = f"site_obstacle_{index}"
+                shape = SolidPrimitive()
+                shape.type = SolidPrimitive.BOX
+                shape.dimensions = [float(hi - lo) for lo, hi in zip(box["min"], box["max"])]
+                pose = Pose()
+                pose.position.x, pose.position.y, pose.position.z = (
+                    float(lo + hi) / 2 for lo, hi in zip(box["min"], box["max"]))
+                pose.orientation.w = 1.0
+                item.primitives = [shape]
+                item.primitive_poses = [pose]
+                item.operation = CollisionObject.ADD
+                scene.apply_collision_object(item)
+            scene.current_state.update()
 
     def now_ms(self) -> int:
         before = self.clock_values[-1]
@@ -194,10 +221,10 @@ class ROSOperations:
     def detach(self, model: str) -> None:
         self._joint(model, "detach")
 
-    def _joint(self, model: str, action: str) -> None:
-        if model != "box" or self.model != "ur":
-            raise BackendFailure("S506", "this harness declares only the ur/box detachable joint")
-        gazebo_joint_command(self.model, action)
+    def _joint(self, obj: str, action: str) -> None:
+        if obj not in self.site.object_models.values() or self.model is None:
+            raise BackendFailure("S506", f"no declared detachable joint for {obj!r}")
+        gazebo_joint_command(self.model, obj, action)
 
     def wait_ms(self, duration: int) -> None:
         target = self.now_ms() + duration
@@ -205,40 +232,49 @@ class ROSOperations:
             raise BackendFailure("S504", "simulation clock stopped during wait")
 
     def observe(self, marker_ids: list[int]) -> observe.Snapshot:
-        """Fuse FRAMES overhead camera frames, the latest tool0 transform and the gripper joint state."""
+        """Fuse FRAMES frames per camera, the latest tool0 transform and the gripper joint state."""
+        from functools import partial
+
         from rclpy.qos import qos_profile_sensor_data
         from rclpy.time import Time
         from sensor_msgs.msg import Image
 
-        self.frames = []
+        cameras = self.site.cameras
+        self.frames = {camera["name"]: [] for camera in cameras}
         start = self.now_ms()
-        subscription = self.node.create_subscription(Image, "/overhead_camera/image", self._on_image,
-                                                     qos_profile_sensor_data)
-        stamp = lambda m: (m.header.stamp.sec * 1_000_000_000 + m.header.stamp.nanosec) // 1_000_000  # noqa: E731
+        subscriptions = [self.node.create_subscription(Image, camera["topic"], partial(self._on_image, camera["name"]),
+                                                       qos_profile_sensor_data) for camera in cameras]
+
+        def settled(name):
+            return [m for m in self.frames[name] if _stamp_ms(m) >= start + SETTLE_MS][:FRAMES]
+
         try:
-            self._until(lambda: sum(stamp(m) >= start + SETTLE_MS for m in self.frames) >= FRAMES, 60)
-            frames = [m for m in self.frames if stamp(m) >= start + SETTLE_MS][:FRAMES]
+            # A covered or broken camera may deliver nothing; its markers then stay unseen.
+            self._until(lambda: all(len(settled(c["name"])) >= FRAMES for c in cameras), 60)
+            frames = {c["name"]: settled(c["name"]) for c in cameras}
         finally:
-            self.node.destroy_subscription(subscription)
+            for subscription in subscriptions:
+                self.node.destroy_subscription(subscription)
             self.frames = None
-        found = {i: ([], []) for i in marker_ids}
-        for message in frames:
-            for marker, point in detect_markers(message, self.camera).items():
-                if marker in found:
-                    found[marker][0].append(observe.camera_to_base(point, self.camera))
-                    found[marker][1].append(stamp(message))
         markers = {}
-        for marker, (positions, stamps) in found.items():
-            reading = observe.fuse(positions, stamps, FRAMES, "overhead_camera", "aruco_fiducial")
-            if reading is not None:
-                markers[marker] = reading
+        for camera in cameras:  # site order breaks confidence ties
+            found = {i: ([], []) for i in marker_ids}
+            for message in frames[camera["name"]]:
+                for marker, point in detect_markers(message, camera).items():
+                    if marker in found:
+                        found[marker][0].append(observe.camera_to_base(point, camera))
+                        found[marker][1].append(_stamp_ms(message))
+            for marker, (positions, stamps) in found.items():
+                reading = observe.fuse(positions, stamps, FRAMES, camera["name"], "aruco_fiducial")
+                if reading is not None and (marker not in markers or reading.confidence > markers[marker].confidence):
+                    markers[marker] = reading
         tool = None
         try:
             t = self.tf.lookup_transform("base_link", "tool0", Time())
             tool = observe.Reading("tf", "tf_tool0_from_joint_states",
                                    (t.transform.translation.x, t.transform.translation.y, t.transform.translation.z),
                                    (t.transform.rotation.x, t.transform.rotation.y, t.transform.rotation.z,
-                                    t.transform.rotation.w), 1.0, stamp(t))
+                                    t.transform.rotation.w), 1.0, _stamp_ms(t))
         except Exception:  # no transform yet: robot_at and holding stay unknown
             pass
         joint = "robotiq_85_left_knuckle_joint"
@@ -289,12 +325,21 @@ def detect_markers(message, camera: dict) -> dict[int, tuple[float, float, float
     return result
 
 
-def gazebo_joint_command(model: str, action: str) -> None:
+def _stamp_ms(message) -> int:
+    return (message.header.stamp.sec * 1_000_000_000 + message.header.stamp.nanosec) // 1_000_000
+
+
+def joint_topic(model: str, obj: str, suffix: str) -> str:
+    """Topics of the detachable joint between the robot model and one object model."""
+    return f"/model/{model}/detachable_joint/{obj}/{suffix}"
+
+
+def gazebo_joint_command(model: str, obj: str, action: str) -> None:
     """Publish until Gazebo confirms a state transition; transport discovery can lose one-shot sends."""
     if action not in ("attach", "detach"):
         raise ValueError(action)
-    topic = f"/model/{model}/detachable_joint/{action}"
-    state_topic = f"/model/{model}/detachable_joint/state"
+    topic = joint_topic(model, obj, action)
+    state_topic = joint_topic(model, obj, "state")
     expected = "attached" if action == "attach" else "detached"
     try:
         subscriber = subprocess.Popen(["gz", "topic", "-e", "-t", state_topic, "-n", "1"],

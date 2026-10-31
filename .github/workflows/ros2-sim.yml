@@ -1,6 +1,6 @@
 name: ROS 2 simulation harness
 
-# H3 simulation backend (decision record 0029). On demand and nightly; not on pull requests.
+# H3 simulation backend acceptance (decision record 0029 section 3). On demand and nightly; not on pull requests.
 on:
   workflow_dispatch:
   schedule:
@@ -10,29 +10,64 @@ permissions:
   contents: read
 
 jobs:
-  smoke:
+  image:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
       - uses: docker/setup-buildx-action@v3
-      - name: Build image (ros:lyrical, Gazebo Jetty, UR, MoveIt 2)
+      - name: Build image cache (ros:lyrical, Gazebo Jetty, UR, MoveIt 2)
         run: |
-          start=$(date +%s)
-          docker buildx build -f backends/ros2/Dockerfile . --tag robolang-ros2-harness --load \
+          docker buildx build -f backends/ros2/Dockerfile . --tag robolang-ros2-harness \
             --cache-from type=gha,scope=ros2-harness --cache-to type=gha,scope=ros2-harness,mode=max
-          echo "image_build_seconds=$(( $(date +%s) - start ))" | tee -a "$GITHUB_STEP_SUMMARY" build_time.txt
-      - name: Run smoke and RoboLang transfer (headless Gazebo)
+
+  run:
+    needs: image
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        scene: [a_scrap_part, a_sort_three, e_box_then_dock, e_hold_box, e_pause_home, e_pick_place, l_vial_hold,
+                l_vial_to_fridge, w_part_precheck, w_pick_from_table, w_split_boxes, fail_object_absent,
+                fail_object_moved, fail_out_of_reach, fail_cameras_covered]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Load image from cache
         run: |
-          mkdir -p out
-          docker run --rm -v "$PWD/out:/out" robolang-ros2-harness /opt/h3/scripts/run_smoke.sh
-      - name: Summary
-        if: always()
+          docker buildx build -f backends/ros2/Dockerfile . --tag robolang-ros2-harness --load \
+            --cache-from type=gha,scope=ros2-harness
+      - name: Run (3 repeats for a task, 1 for a failure case), each in a fresh container
         run: |
-          cp build_time.txt out/ 2>/dev/null || true
-          { echo '```json'; cat out/smoke.json 2>/dev/null || true; echo '```'; echo '```json'; cat out/executor.json 2>/dev/null || true; echo '```'; echo '```'; cat out/versions.txt 2>/dev/null || true; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          repeats=3; case "${{ matrix.scene }}" in fail_*) repeats=1;; esac
+          for i in $(seq 1 "$repeats"); do
+            mkdir -p "out/${{ matrix.scene }}/$i"
+            docker run --rm -e OUT=/out -v "$PWD/out/${{ matrix.scene }}/$i:/out" robolang-ros2-harness \
+              /opt/h3/scripts/run_task.sh "${{ matrix.scene }}" || echo "harness error in repeat $i"
+          done
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: ros2-sim-results
+          name: ros2-acceptance-${{ matrix.scene }}
           path: out/
+
+  acceptance:
+    needs: run
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: ros2-acceptance-*
+          merge-multiple: true
+          path: results
+      - name: Acceptance verdict
+        shell: bash
+        run: python3 backends/ros2/scripts/acceptance.py results acceptance.json | tee -a "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ros2-acceptance
+          path: acceptance.json
