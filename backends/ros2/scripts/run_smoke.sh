@@ -1,5 +1,5 @@
 #!/bin/bash
-# Start the UR5e scene in headless Gazebo, check arm and camera, run the RoboLang transfer, stop everything.
+# Start the UR5e scene in headless Gazebo, check arm and camera, run and verify the RoboLang transfer, stop everything.
 # Simulation only: this launches the Gazebo model; there is no code path to a real controller.
 OUT=${OUT:-/out}
 mkdir -p "$OUT"
@@ -38,23 +38,31 @@ gz model -m ur --link >"$OUT/robot_links.txt" 2>&1 || true
 ros2 control list_hardware_components -c /controller_manager >"$OUT/hardware.txt" 2>&1 || true
 ros2 control list_controllers -c /controller_manager >"$OUT/controllers.txt" 2>&1 || true
 timeout 5 ros2 run tf2_ros tf2_echo base_link tool0 >"$OUT/tool0_tf.txt" 2>&1 || true
-# Phase 2: execute the validated .rob through MoveIt, gripper controller and Gazebo detachable joint.
-timeout 180 python3 -m robolang_ros2.cli /opt/h3/examples/transfer.rob --task transfer \
+# Execute the validated .rob through MoveIt, gripper controller and Gazebo detachable joint. The goal verdict
+# comes from camera, TF and joint observations only; the oracle then checks it against Gazebo ground truth.
+timeout 240 python3 -m robolang_ros2.cli /opt/h3/examples/transfer.rob --task transfer \
     --site /opt/h3/site/h3_site.json --bind r=arm1 --bind box=box1 --bind pickup=pickup --bind drop=drop \
     --out "$OUT/executor.json" >"$OUT/executor.log" 2>&1
 EXEC_RC=$?
-if [ "$EXEC_RC" -ne 3 ]; then
-    echo "executor exit $EXEC_RC (expected 3: steps completed, goal awaiting observations)" >&2
+if [ "$EXEC_RC" -ne 0 ]; then
+    echo "executor exit $EXEC_RC (expected 0: goal verified from observations)" >&2
     RC=1
-else
+fi
+if [ -f "$OUT/executor.json" ]; then
+    python3 /opt/h3/scripts/oracle.py "$OUT/executor.json" /opt/h3/site/h3_site.json "$OUT/oracle.json" \
+        >"$OUT/oracle.log" 2>&1 || { cat "$OUT/oracle.log" >&2; RC=1; }
     python3 - "$OUT/executor.json" <<'PY_RECORD'
 import json
 import sys
 record = json.load(open(sys.argv[1]))
-assert record["state"] == "UNKNOWN" and len(record["steps"]) == 4
+assert record["state"] == "SUCCEEDED" and len(record["steps"]) == 4
 assert all(step["status"] == "succeeded" for step in record["steps"])
+assert [g["result"] for g in record["goal"]] == ["true"]
+assert record["core_outcome"]["outcome"]["status"] == "succeeded"
 PY_RECORD
     [ $? -eq 0 ] || RC=1
+else
+    RC=1
 fi
 # Gazebo-side view of the camera, for the findings doc (header of one frame only).
 timeout 20 gz topic -e -t /overhead_camera/image -n 1 2>&1 | head -c 400 >"$OUT/gz_camera_topic.txt"

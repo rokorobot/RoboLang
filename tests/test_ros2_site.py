@@ -15,7 +15,11 @@ def site():
             "grasps": {"box1": {"frame": "base_link", "position": [0, 0.4, 0.4],
                                  "orientation": [0, 0, 0, 1]}},
             "poses": {"table": {"frame": "base_link", "position": [0, 0.4, 0.5],
-                                "orientation": [0, 0, 0, 1]}}}
+                                "orientation": [0, 0, 0, 1]}},
+            "markers": {"box1": 7},
+            "regions": {"table": {"frame": "base_link", "min": [-0.1, 0.3, 0.2], "max": [0.1, 0.5, 0.4]}},
+            "camera": {"frame": "base_link", "position": [0, 0.4, 1.4], "orientation": [0, 0.70711, 0, 0.70711],
+                       "horizontal_fov": 1.0, "width": 640, "height": 480, "marker_length": 0.0667}}
 
 
 def test_site_accepts_finite_pose(tmp_path):
@@ -24,11 +28,21 @@ def test_site_accepts_finite_pose(tmp_path):
     assert read_site(path).poses["table"]["position"] == [0, 0.4, 0.5]
 
 
+def test_repository_site_is_valid():
+    loaded = read_site(Path(__file__).resolve().parents[1] / "backends" / "ros2" / "site" / "h3_site.json")
+    assert loaded.markers == {"box1": 7} and set(loaded.regions) == {"pickup", "drop"}
+
+
 @pytest.mark.parametrize("edit", [
     lambda s: s["poses"]["table"]["position"].__setitem__(0, float("nan")),
     lambda s: s["poses"]["table"]["orientation"].__setitem__(3, 0.1),
     lambda s: s["objects"].__setitem__("box1", "box;rm -rf /"),
     lambda s: s.__setitem__("physical_mode", True),
+    lambda s: s["markers"].__setitem__("box2", 8),
+    lambda s: s["markers"].__setitem__("box1", 50),
+    lambda s: s["regions"]["table"]["min"].__setitem__(0, 0.2),
+    lambda s: s["camera"].__setitem__("horizontal_fov", 4.0),
+    lambda s: s.__delitem__("camera"),
 ])
 def test_site_rejects_invalid_or_extra_fields(tmp_path, edit):
     value = site()

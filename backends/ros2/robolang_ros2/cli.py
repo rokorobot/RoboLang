@@ -46,14 +46,15 @@ def main() -> None:
             bindings[name] = value
         site = read_site(args.site)
         from .ros import ROSOperations  # never import ROS for an invalid task or site
-        ops = ROSOperations()
+        ops = ROSOperations(site.camera)
         record = execute(task, bindings, site, ops)
         Path(args.out).write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
-        if record["state"] == "FAILED":
-            print(f"{record['failure']['code']}: {record['failure']['message']}", file=sys.stderr)
-            _finish(1)
-        print("goal not evaluated; see run record", file=sys.stderr)
-        _finish(3)
+        if record["state"] == "SUCCEEDED":
+            print("goal verified from observations", file=sys.stderr)
+            _finish(0)
+        print(f"{record['failure']['code']}: {record['failure']['message']}", file=sys.stderr)
+        # S302: the observations could not decide the goal. Never reported as completion.
+        _finish(3 if record["failure"]["code"] == "S302" else 1)
     except RoboLangError as exc:
         for diagnostic in exc.diagnostics:
             print(diagnostic.format(), file=sys.stderr)
