@@ -46,7 +46,7 @@ def main() -> None:
             bindings[name] = value
         site = read_site(args.site)
         from .ros import ROSOperations  # never import ROS for an invalid task or site
-        ops = ROSOperations(site.camera)
+        ops = ROSOperations(site)
         record = execute(task, bindings, site, ops)
         Path(args.out).write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
         if record["state"] == "SUCCEEDED":

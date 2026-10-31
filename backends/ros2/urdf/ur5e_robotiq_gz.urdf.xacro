@@ -21,17 +21,7 @@
     <joint name="robotiq_85_left_finger_tip_joint" mimic="true"><state_interface name="position"/><state_interface name="velocity"/></joint>
     <joint name="robotiq_85_right_finger_tip_joint" mimic="true"><state_interface name="position"/><state_interface name="velocity"/></joint>
   </ros2_control>
-  <!-- The installed Jetty plugin starts attached; the harness and executor explicitly detach before motion. -->
-  <gazebo>
-    <plugin filename="gz-sim-detachable-joint-system" name="gz::sim::systems::DetachableJoint">
-      <!-- Gazebo reduces fixed URDF joints; wrist_3_link remains a physical link rigid with the gripper base. -->
-      <parent_link>wrist_3_link</parent_link>
-      <child_model>box</child_model>
-      <child_link>link</child_link>
-      <initial_attach>true</initial_attach>
-      <attach_topic>/model/ur/detachable_joint/attach</attach_topic>
-      <detach_topic>/model/ur/detachable_joint/detach</detach_topic>
-      <output_topic>/model/ur/detachable_joint/state</output_topic>
-    </plugin>
-  </gazebo>
+  <!-- scripts/scenes.py inserts one Gazebo detachable joint per box here. The installed Jetty plugin starts
+       attached, so the executor detaches each one before any motion. -->
+  <!-- DETACHABLE_JOINTS -->
 </robot>

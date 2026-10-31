@@ -24,17 +24,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         python3-numpy python3-opencv \
     && rm -rf /var/lib/apt/lists/*
 
-COPY backends/ros2/world /opt/h3/world
 COPY backends/ros2/scripts /opt/h3/scripts
 COPY backends/ros2/config /opt/h3/config
 COPY backends/ros2/urdf /opt/h3/urdf
 COPY backends/ros2/examples /opt/h3/examples
-COPY backends/ros2/site /opt/h3/site
+COPY bench/reference /opt/h3/bench/reference
 COPY backends/ros2/robolang_ros2 /opt/h3/backends/ros2/robolang_ros2
 COPY src/robolang /opt/h3/src/robolang
 ENV PYTHONPATH=/opt/h3/src:/opt/h3/backends/ros2
 
-# Fiducial texture for the box: a real ArUco marker (DICT_4X4_50, id 7), drawn with white quiet zone.
-RUN python3 /opt/h3/scripts/make_marker.py /opt/h3/world/marker.png
 
 WORKDIR /opt/h3
