@@ -9,6 +9,7 @@ import xml.etree.ElementTree as ET
 from . import observe
 from .executor import BackendFailure
 
+PLAN_ATTEMPTS = 3
 FRAMES = 10  # camera frames fused per observation (10 Hz camera: one simulated second)
 SETTLE_MS = 500  # let a released object come to rest before the first fused frame
 
@@ -167,21 +168,30 @@ class ROSOperations:
         target.pose.position.x, target.pose.position.y, target.pose.position.z = map(float, pose["position"])
         (target.pose.orientation.x, target.pose.orientation.y,
          target.pose.orientation.z, target.pose.orientation.w) = map(float, pose["orientation"])
-        try:
-            self.arm.set_start_state_to_current_state()
-            if not self.arm.set_goal_state(pose_stamped_msg=target, pose_link="tool0"):
-                raise BackendFailure("S502", "MoveIt rejected the pose goal")
-            plan = self.arm.plan()
-            if not plan:
-                raise BackendFailure("S502", "MoveIt found no motion plan")
-            status = self.planner.execute(plan.trajectory, controllers=["joint_trajectory_controller"])
-            if status.status != "SUCCEEDED":
+        # OMPL can return a path that MoveIt's finer validation rejects, and execution aborts when the arm has not
+        # settled at the planned start. Both are transient: plan again from the current state, a bounded number
+        # of times.
+        failure = None
+        for _ in range(PLAN_ATTEMPTS):
+            try:
+                self.arm.set_start_state_to_current_state()
+                if not self.arm.set_goal_state(pose_stamped_msg=target, pose_link="tool0"):
+                    raise BackendFailure("S502", "MoveIt rejected the pose goal")
+                plan = self.arm.plan()
+                if not plan:
+                    failure = BackendFailure("S502", "MoveIt found no motion plan")
+                    continue
+                status = self.planner.execute(plan.trajectory, controllers=["joint_trajectory_controller"])
+                if status.status == "SUCCEEDED":
+                    return
                 code = "S504" if status.status == "TIMED_OUT" else "S503"
-                raise BackendFailure(code, f"MoveIt execution ended {status.status}")
-        except BackendFailure:
-            raise
-        except Exception as exc:
-            raise BackendFailure("S503", f"MoveIt motion failed: {exc}") from exc
+                failure = BackendFailure(code, f"MoveIt execution ended {status.status}")
+                self._until(lambda: False, 0.5)  # let the joint states settle before planning again
+            except BackendFailure:
+                raise
+            except Exception as exc:
+                raise BackendFailure("S503", f"MoveIt motion failed: {exc}") from exc
+        raise failure
 
     def grip(self, closed: bool) -> None:
         from control_msgs.action import FollowJointTrajectory
@@ -391,6 +401,8 @@ def moveit_parameters(description: str) -> dict:
     parameters["planning_pipelines"] = {"pipeline_names": ["ompl"]}
     parameters["plan_request_params"] = {"planning_attempts": 4, "planning_pipeline": "ompl",
                                          "planning_time": 15.0}
+    # Check each path segment at 0.5% of the state space extent, so OMPL's paths pass MoveIt's own validation.
+    parameters.setdefault("ompl", {}).setdefault("ur_manipulator", {})["longest_valid_segment_fraction"] = 0.005
     parameters["use_sim_time"] = True
     return parameters
 

@@ -42,6 +42,7 @@ from robolang_ros2.ros import gazebo_joint_command
 for model in json.load(open(sys.argv[1]))["box_models"]:
     gazebo_joint_command("ur", model, "detach")
 PY
+python3 /opt/h3/scripts/ready.py >"$OUT/ready.log" 2>&1 || { cat "$OUT/ready.log" >&2; stop; exit 1; }
 
 mapfile -t ARGS < <(python3 -c 'import json,sys; s=json.load(open(sys.argv[1]))
 print(s["source"]); print("--task"); print(s["task"])
