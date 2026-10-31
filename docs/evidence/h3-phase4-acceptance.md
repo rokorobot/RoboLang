@@ -33,6 +33,12 @@ Final marker readings against the oracle's box face centres, 42 readings: x erro
 - **Fixes:** path segments are checked at 0.5% of the state space; a failed plan or a start-state abort is retried from the current state, at most three times per motion; the harness raises the arm to a ready pose before each run (phases 1–3 did this through the smoke test). In the passing run, two motions needed a retry (`a_scrap_part` run 2, `l_vial_to_fridge` run 3). Without retries those two runs would have failed: 31/33, still above the bar.
 - **Grasp check from observation:** the detachable joint would attach a box wherever it is, so `grasp` now requires the object's marker seen under the gripper before closing. This is what makes the absent, moved and covered cases fail instead of carrying an unseen box.
 
+## After merge
+
+The [first run on `main`](https://github.com/rokorobot/RoboLang/actions/runs/41242633592) did not pass: 32/33 succeeded and all 44 checked goals agreed, but two `l_vial_hold` runs had no oracle result and were counted as false successes. Their observed verdicts were all `true`; the oracle had crashed parsing `ros2 topic echo` output that contained a dropped-message notice. The oracle now reads the gripper joint by subscription, and the verdict reports runs the oracle could not check as their own blocking count. With that fix the [next run](https://github.com/rokorobot/RoboLang/actions/runs/41243986636) passed again: 33/33, 51/51, no false success, no oracle error, 4/4 failure cases.
+
+The one failed run on `main`, `w_pick_from_table` run 3, ended S501 safely: during the guard, Gazebo did not confirm a detachable-joint attach after five requests. Follow-up: make that startup handshake more robust.
+
 ## Limits
 
 - **Grasping is not physical.** The 0.1 m boxes are wider than the Robotiq's 85 mm opening; the grasp pose keeps the fingertips above the box and Gazebo's detachable joint carries it. This run validates planning, execution, observation and verdicts, not contact grasping.

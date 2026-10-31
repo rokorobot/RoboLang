@@ -9,8 +9,6 @@ import re
 import subprocess
 import sys
 
-import yaml
-
 POSITION_TOLERANCE_M = 0.02  # as robot_at in robolang_ros2.observe
 GRIPPER_CLOSED_RAD = 0.75
 UNDER_XY_M, UNDER_Z_M = 0.1, (0.05, 0.4)  # the box centre under tool0 (tool0 sits on wrist_3_link's origin)
@@ -25,10 +23,24 @@ def _pose(args):
 
 
 def _gripper() -> float:
-    out = subprocess.run(["ros2", "topic", "echo", "--once", "/joint_states"], check=True, capture_output=True,
-                         text=True, timeout=30).stdout
-    message = next(doc for doc in yaml.safe_load_all(out) if doc)
-    return dict(zip(message["name"], message["position"]))["robotiq_85_left_knuckle_joint"]
+    """The simulated knuckle joint from one /joint_states message, read directly (CLI output can carry notices)."""
+    import time
+
+    import rclpy
+    from sensor_msgs.msg import JointState
+
+    rclpy.init()
+    node = rclpy.create_node("h3_oracle")
+    joints = {}
+    node.create_subscription(JointState, "/joint_states", lambda m: joints.update(zip(m.name, m.position)), 10)
+    deadline = time.monotonic() + 30
+    while "robotiq_85_left_knuckle_joint" not in joints and time.monotonic() < deadline:
+        rclpy.spin_once(node, timeout_sec=0.1)
+    node.destroy_node()
+    rclpy.shutdown()
+    if "robotiq_85_left_knuckle_joint" not in joints:
+        raise SystemExit("no gripper joint state")
+    return joints["robotiq_85_left_knuckle_joint"]
 
 
 def truth(condition, bound, site, cache):
