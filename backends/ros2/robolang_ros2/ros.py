@@ -269,7 +269,10 @@ def detect_markers(message, camera: dict) -> dict[int, tuple[float, float, float
         return {}
     image = np.frombuffer(bytes(message.data), dtype=np.uint8).reshape(message.height, message.width, 3)
     gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
-    detector = cv2.aruco.ArucoDetector(cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50))
+    parameters = cv2.aruco.DetectorParameters()
+    # Subpixel corners: the marker is about 40 px wide, so a one-pixel corner bias is a 5% depth error.
+    parameters.cornerRefinementMethod = cv2.aruco.CORNER_REFINE_SUBPIX
+    detector = cv2.aruco.ArucoDetector(cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50), parameters)
     corners, ids, _ = detector.detectMarkers(gray)
     if ids is None:
         return {}
