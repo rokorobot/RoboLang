@@ -1,7 +1,8 @@
 # Decision record 0031: Observing `region_clear` and `robot_ready` in physics simulation
 
 **Date:** 2026-11-02
-**Status:** **PROPOSED**, for owner review. Design only: no code, no new site key and no CI change yet.
+**Status:** **APPROVED by the owner, 2026-11-02**, with the recommended option for R1–R7. Design only: each delivery
+step of R7 is its own PR.
 **Applies to (when decided):** [`ros2-backend-v0.1.md`](../ros2-backend-v0.1.md) "Observations and verdicts", the site
 file, the H3 scenes, and the acceptance family of [0029](0029-physics-simulation-backend.md) section 7.
 **Evidence:** 0029 section 7 deferred these two conditions. Five single-arm tasks of benchmark set 1 wait on them:
