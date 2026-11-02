@@ -327,9 +327,11 @@ class FakeGz:
         if "-i" in args:
             count = self.listed[min(self.queries, len(self.listed) - 1)]
             self.queries += 1
-            subscribers = "".join(f"  tcp://127.0.0.1:{4000 + i}, gz.msgs.StringMsg\n" for i in range(count))
-            text = f"Publishers [Address, Message Type]:\n  tcp://127.0.0.1:1, gz.msgs.StringMsg\n" \
-                   f"Subscribers [Address, Message Type]:\n{subscribers}" if self.info else "No publishers\n"
+            # As Jetty prints it: no Subscribers section at all while there are none.
+            subscribers = "".join(f"  tcp://127.0.0.1:{4000 + i}, google.protobuf.Message\n" for i in range(count))
+            section = f"Subscribers [Address, Message Type]:\n{subscribers}" if count else ""
+            text = f"Publishers [Address, Message Type]:\n  tcp://127.0.0.1:1, gz.msgs.StringMsg\n{section}" \
+                if self.info else "No publishers\n"
             return subprocess.CompletedProcess(args, 0, text, "")
         self.sends.append(args)
         return subprocess.CompletedProcess(args, 0, "", "")
@@ -340,6 +342,8 @@ def test_subscriber_count_reads_gz_topic_info(monkeypatch):
 
     monkeypatch.setattr(subprocess, "run", FakeGz([], listed=(2,)))
     assert _subscriber_count("/t") == 2
+    monkeypatch.setattr(subprocess, "run", FakeGz([], listed=(0,)))
+    assert _subscriber_count("/t") == 0  # a Publishers section without a Subscribers section
     monkeypatch.setattr(subprocess, "run", FakeGz([], info=False))
     assert _subscriber_count("/t") is None  # unknown format: fall back to the fixed wait
 

@@ -356,12 +356,15 @@ def _topic_info(topic: str) -> str:
 
 
 def _subscriber_count(topic: str) -> int | None:
-    """Subscribers Gazebo lists for a topic (`gz topic -i`), or None if its output has no subscriber section."""
+    """Subscribers Gazebo lists for a topic (`gz topic -i`), or None if the output is not recognised.
+
+    Jetty prints a `Subscribers` section only when there is one, so a `Publishers` section alone means zero.
+    """
     info = _topic_info(topic)
     lines = info.splitlines()
     start = next((i for i, line in enumerate(lines) if line.strip().startswith("Subscribers")), None)
     if start is None:
-        return None
+        return 0 if any(line.strip().startswith("Publishers") for line in lines) else None
     count = 0
     for line in lines[start + 1:]:
         if line.strip().endswith(":") or not line.strip():
