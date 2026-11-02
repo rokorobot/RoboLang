@@ -1,6 +1,7 @@
 # Gate 2 specification bundle — freeze record
 
-**Status:** **FROZEN — approved by the owner on 2026-10-28.** The bundle below is the bundle of
+**Status:** **SUPERSEDED, 2026-11-02**, by the Core 0.2 bundle ([freeze record](gate2-bundle-freeze-core-0-2.md); decision [0030](../../spec/decisions/0030-relaunch-interop-3-on-core-0-2.md) J2). It was never delivered. Kept for history.
+Was: **FROZEN — approved by the owner on 2026-10-28.** The bundle below is the bundle of
 the whole gate 2 run (`spec/interop-gate-2-v0.1.md` 4.2): any change to a bundled file is an
 erratum with a new bundle and a new record. The frozen source commit is fixed at
 `28c69feece0de14b1537a4d29e0cd4b700cff920`; the commit that merges this record does not change it,

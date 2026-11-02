@@ -1,0 +1,171 @@
+# Gate 2 specification bundle for Core 0.2: freeze record
+
+**Status:** **PROPOSED FOR FREEZE, 2026-11-02.** It becomes frozen when the owner approves this record (decision
+[0030](../../spec/decisions/0030-relaunch-interop-3-on-core-0-2.md) J6 step 3). After that, the bundle below is the
+bundle of the whole gate 2 run (`spec/interop-gate-2-v0.1.md` 4.2). Any change to a bundled file is an erratum with
+a new bundle and a new record. The source commit is fixed below; the commit that merges this record does not change
+it, and the bundle is never rebuilt from a later commit.
+
+**Supersedes:** the Core 0.1 bundle `e6c9bb75…d104` ([its freeze record](gate2-bundle-freeze.md)), which was never
+delivered (0030 J2).
+
+This record lives outside the bundle on purpose: writing the bundle ID into a bundled file would change the bundle.
+
+## Identity
+
+| | |
+|---|---|
+| Source commit | `39bc07a1aeeb6ff0799338715d6b9dce9489f67c` (merge of PR #95, the 0030 J4 audit fixes, on `main`) |
+| CI on the source commit | [Run 41536475230](https://github.com/rokorobot/RoboLang/actions/runs/41536475230): Ubuntu and Windows, Python 3.11 and 3.13, all passed |
+| Bundle ID (SHA-256 of `MANIFEST.sha256`) | `f3164c5afc54893be232433c785f11f765dae780483a3e8d7ba28178247c7e22` |
+| Files | 121, plus the manifest |
+| Built by | `tools/interop_bundle.py build <dir> --rev 39bc07a1aeeb6ff0799338715d6b9dce9489f67c`, in a clean detached worktree at that commit (the tool refuses any other checkout) |
+| Contents beyond the first bundle | `spec/core-v0.2.md`, decision 0028, `spec/core/message-0.2.schema.json`, the Core 0.2 kit `tests/fixtures/core_v02/` (56 fixtures, `expected.json`, README), and the gate 2 errata of 0030 J3 and the audit ([report](interop-0030-bundle-audit.md)) |
+
+## Verification performed (2026-11-02)
+
+1. Built twice from the clean worktree into empty directories: byte-identical (`diff -r`).
+2. `python tools/interop_bundle.py verify`: the files are exactly those of the manifest.
+3. `sha256sum -c MANIFEST.sha256`: every file OK.
+4. `BUNDLE-README.md` names the source commit above.
+5. On the source commit, `tests/test_interop_bundle.py` passes, including the pinned build: both conformance kits
+   give their stated receipts from bundled files alone (47 Core 0.1 fixtures with a 0.1-only receiver, 62 Core 0.2
+   entries), and all three schemas resolve without external references.
+
+Anyone can repeat it: clone the repository, `git checkout --detach 39bc07a1aeeb6ff0799338715d6b9dce9489f67c`, build
+into an empty directory, and compare the manifest with the one below. Its SHA-256 must be the bundle ID.
+
+## Manifest
+
+```
+b12928d3a53a8eb05ea6ab4c21f779f8c4b449b3c070400968cc7dd4f8136cf6  BUNDLE-README.md
+30c6cb9062e7a34a984315760b21c42e182a8f49a4a696b0a81a50048a1eda13  spec/architecture/rfc-001-ai-native-architecture.md
+3f180e87bb68d94a9edfd92eab4234a24cca8abcc4dee59544754889a73b698a  spec/core/capability-descriptor-0.1.schema.json
+a7eaa9d35e5399b088bb7cf4ca77dd86de23bca998abeb0fbf5bdb40ce881f94  spec/core/message-0.1.schema.json
+e0482de30053cd8fd8a42b6579a13bb86de23493ca2c6c91236b821ab7b302e7  spec/core/message-0.2.schema.json
+fac387097f01f64d5d35ed72767ed990dec6085357c45118e9bd428d31251db8  spec/core-v0.1.md
+41203d8eb8161d35184a6a5f8640a3d1ab45c6d82df2bc586180e354f0d8d128  spec/core-v0.2.md
+736719c64fa0ac9a32e1b96aa505893f2ae471ab7d55e062ae83e3119404fbdf  spec/decisions/0007-rl-arch-02-core-and-reference-simulation.md
+f0e6f58124151d7c9f7f0879afe1eccecdd3640fdc80a27f8a5d3547dcca3e71  spec/decisions/0008-core-sequencing-per-recipient.md
+55fc46c033b3ba516c03ec28ad22b1d5a5eb386295d94cf9d166944bfd6df106  spec/decisions/0028-core-0-2-scope.md
+6cc83db3bcd71ddde296fe47a26dcdab3d1ee2d33404e7e8215f70b421df31b8  spec/interop-gate-2-v0.1.md
+c0bf8cb67ce6df896546bf87aa736d8eb030de642ab543aeb58849d38e59729f  spec/reference-simulation-v0.1.md
+6aef3cf1ba2af43dd7631e6161c38ef12fb52bae8e31cf1a91b31676aa8735a4  tests/fixtures/core/README.md
+67103648ad735684de65db85c340382d721ef010507b6658a51dc4e8313c99c3  tests/fixtures/core/cases.json
+53ff08bb009acb689b14931c1e853ca00f5f26f9175069d930b4819190cc1893  tests/fixtures/core/context.json
+f764efcb88aeed324a1a4eb487b22464f7c8b549208388482fd751b5afb46085  tests/fixtures/core/invalid/c101_byte_order_mark.json
+e6b11433e05d399add7d0c6398c380bec50eed6e1948ac8a77063d33e7f9cb0d  tests/fixtures/core/invalid/c101_duplicate_key.json
+6f975ff195b823559fae2515c150215edc9350308c89eb50114e9bef187034ae  tests/fixtures/core/invalid/c101_non_integer_number.json
+50f3090449faf175bc751a3f0e9d4f81afe0e44f40ba64ddcda0a3752ae89e14  tests/fixtures/core/invalid/c102_before_c106.json
+b1ba5551daa3ce5b79220ce2d444a5aa6d77ffe369d687d8aea53127cf6c6bab  tests/fixtures/core/invalid/c102_before_c107.json
+042f0e7007d9208d9aeb23f963e0a17a45810759b3897e002136273ba3e547bc  tests/fixtures/core/invalid/c102_before_c201.json
+da1970f197f2a3538a043923acd7db5c1d6cf1f2d6bb54517f2796b4ff849fa1  tests/fixtures/core/invalid/c102_before_c402.json
+e10157a70e7ae70dd4c862f6f8e47b465e316ff12f99c2f6ccb4de06bbdc5b5d  tests/fixtures/core/invalid/c102_unsupported_version.json
+26d8497b9a843a6d6c0c757398b57ae122f295e756e49d2047c34323f92d1a0b  tests/fixtures/core/invalid/c103_before_c104.json
+1188ed96c4ef77c576935e5d8b808915b58974e46c5e8457d3c55182544c7f82  tests/fixtures/core/invalid/c103_unknown_field.json
+3fd3c2218047e7b94497c598d3374f1063d2fa293bd12e290327dd2812735001  tests/fixtures/core/invalid/c104_goal_without_criteria.json
+ffaa0abba3e42022f803980f28733cabf59d14e904db4d9ed4e4692444699d42  tests/fixtures/core/invalid/c104_missing_field.json
+6aab4ae0b8d8fe573d5254412aadc4b500cc413a92e5ba75c2b0e999338d9138  tests/fixtures/core/invalid/c105_before_c201.json
+59a3522e21b4ae8194c479343c164c47b2721e170b832aab538f5e947b134543  tests/fixtures/core/invalid/c105_unknown_type.json
+fcbf1e90d295356883403f69aed830d53f73f4eacf54a104bba016b9faefe4c8  tests/fixtures/core/invalid/c106_before_c201.json
+7f9ebf30171c4f4c5e5d5c7f3fde049d8e55c6ea80a79f5b9d1e73ee0a36d572  tests/fixtures/core/invalid/c106_reserved_type.json
+26251b878dd8a12e5deb53e5c163bd3e0207e345c8097ca6e09197774778f924  tests/fixtures/core/invalid/c107_profile_mismatch.json
+eaee2c547040946fa14fcf12d726b628bbe4c5f632387835b2ed2407d5e015f1  tests/fixtures/core/invalid/c201_before_c107.json
+33f23803cdc4344384bad63a5264a15c0cf843499ab1e9541767325a8e7c1d63  tests/fixtures/core/invalid/c201_before_c402.json
+149736e5b9efa864c1ad1e6a9917b198e20bd60935d62b28f8f6c163e5b84163  tests/fixtures/core/invalid/c201_unsigned.json
+c4fba5d5a6bb5bad3772aa4e518951164e56f4671fcdbbfc1bc75ee9228fdb8f  tests/fixtures/core/invalid/c202_message_before_c203_observation.json
+c810f3c892a04107e2ee2ac8475f17151068c8fee10e8cfb1a03a37f8b32b887  tests/fixtures/core/invalid/c202_wrong_signature.json
+f35dc429565981fbc91690ca4248ae1a8d7b115938347c74945445ad9407c2d4  tests/fixtures/core/invalid/c203_before_c202.json
+a9d61511765dca0f238b0d07f2dec68366b2aa6c229d1d68b60e03562fa23ddc  tests/fixtures/core/invalid/c203_key_not_the_senders.json
+4359e4d60f1fe50d943d8be07a73c8d881692a0879b295cb608d4c8f211bb483  tests/fixtures/core/invalid/c203_message_before_c204_observation.json
+ead5cbec1b7b6ed49c2bd629eab13a383af9fd50d9861c4bdabd2016d0f76a93  tests/fixtures/core/invalid/c204_before_c203_before_c202.json
+0eb636d6c2755b4cca76909ce14ad06fcbfb0003bfa62492f33a2edabdcb82b5  tests/fixtures/core/invalid/c204_simulation_signature_in_physical_mode.json
+44935aa083b5c7a1d18b8624e0ea5e9e4bc823938ac07e1fa4ead6f766d78a57  tests/fixtures/core/invalid/c301_before_c307.json
+93cc264f895aa1b826e32f9791b5a5b785bd24bd1e03d5064cfadd2152da83dd  tests/fixtures/core/invalid/c301_expired.json
+9001b2ac20c66e9f3f06898931af4ce1c89b1f9fe4dccd4f4d8588b7356735fd  tests/fixtures/core/invalid/c302_before_c301.json
+223814d7ae5d5a5c7be3b47a43833b8049dcb4bba8f3cc733b4873e4bd2dafbc  tests/fixtures/core/invalid/c302_before_c303.json
+f14b1eb2aaeb1344341a0ff928e668d3887b4ba96ee34d233413c5d535f80d07  tests/fixtures/core/invalid/c302_lifetime_too_long.json
+5b5764b779f85d6bef43cecef8940743b2ae054ad3bcd210b41a07b981fd3a28  tests/fixtures/core/invalid/c303_before_c307.json
+805a69a6382b65c1b23416a6b1064ec716924a0effda8a409248d41350e73908  tests/fixtures/core/invalid/c303_sent_in_the_future.json
+0eb636d6c2755b4cca76909ce14ad06fcbfb0003bfa62492f33a2edabdcb82b5  tests/fixtures/core/invalid/c307_wrong_recipient.json
+dc73ef769237885ecd98de96985b5ee66f3ef756ec24c68caf2570c2cc3ef863  tests/fixtures/core/invalid/c401_requester_authorizes_its_own_goal.json
+c524ee711d98ca036cef870fa57f97b5d2abb68a6a881b54a365d4ae33dbcda2  tests/fixtures/core/invalid/c402_succeeded_with_unmet_criterion.json
+a93e623574747a0b9ba55b50a7e136f767409577a8b9b9b9103e5679ec21647d  tests/fixtures/core/invalid/c402_succeeded_without_verification.json
+9c9d9fa34adbd2c06163c6f69c5771587c48016eb32af3df8c2f7a861dd3781f  tests/fixtures/core/invalid/c404_physical_mode.json
+0eb636d6c2755b4cca76909ce14ad06fcbfb0003bfa62492f33a2edabdcb82b5  tests/fixtures/core/valid/assessment.json
+73a94926601552bab6a8a9e31b4a34ebe54edea2942c284054969e26f234fa94  tests/fixtures/core/valid/authorization_decision.json
+c3843f73449a0f99710b658d6c63315cc2fb4b9128c07c9f861e322668c1a887  tests/fixtures/core/valid/commit.json
+8529f8803eb7b491253e34b2a58663849d67be1e5b85bd47562fd65fd87517e5  tests/fixtures/core/valid/custody_confirmed.json
+46683daf402c2630fc78031fef7e163029475d29eb8ffeb9a2e0e3040480bd28  tests/fixtures/core/valid/descriptor_amr_07.json
+8bc187a2ac482faa801e06801d8e32a42754ac5c10cc3923da1a53fdcca15315  tests/fixtures/core/valid/descriptor_arm_02.json
+dc85157eb8d7d557d557d7eb6f1c910c40be8a988bbe0318e39b05538a1dd18d  tests/fixtures/core/valid/outcome_succeeded.json
+939be05544a144cea736e710ae1c0876060001ab304661d9fbff9c61375bf511  tests/fixtures/core/valid/propose_goal.json
+94e6a5f386ec8892046ecc337d269e57bc034fb2a5ad81af7e9f1208dbba6aae  tests/fixtures/core_v02/README.md
+d59fd8e20fa64012b7f2505a6bd9d176d4ea95f0940fa546fdd493c95d6fd7c5  tests/fixtures/core_v02/expected.json
+e478020865ed955b413766a856313d55d6d04ab714dbd5f8ba7fc5db721d98a4  tests/fixtures/core_v02/invalid/c102_v02_message_to_v01_only_receiver.json
+817782f593b46c87223e9c4c10a5c77311221f5280ae21ab8a40138afbf1e1b3  tests/fixtures/core_v02/invalid/c102_v02_outcome_to_v01_only_receiver.json
+ed0274da77705355ef31751a7e208b2602b2159b49a45d60bdfbb55ac15d5294  tests/fixtures/core_v02/invalid/c103_v01_declared_reason_with_text.json
+cabaf1fae8114253d4b4169bfc14a2d7862f038fdffa19afa80cdb2e355e2f22  tests/fixtures/core_v02/invalid/c103_v01_goal_with_alternatives.json
+195439bf51f08b350e1c07fc8959a2c4314e5cc2cdb6aa50679feab04b87bd39  tests/fixtures/core_v02/invalid/c103_v01_outcome_with_met_alternative.json
+639aa4d58e019b9987efe0af9f965ecb81c78da6b20f889cc6bfc850e4b94400  tests/fixtures/core_v02/invalid/c103_v02_goal_with_desired_state.json
+858f3d49676a4f0fa59316b452ded284b13a59805cc466039f43bfc65629ee3b  tests/fixtures/core_v02/invalid/c103_v02_goal_with_success_criteria.json
+6ceceafe68792be8d3ec22703dd4bcd58f8e2ae3c2cd681c20927b288e6881a6  tests/fixtures/core_v02/invalid/c103_v02_unknown_field_in_declared_reason.json
+b79ec20d96cc10ee906b971a91113b6a88c292aac4f4fa825e334cd8b41f22c1  tests/fixtures/core_v02/invalid/c103_v02_unknown_field_in_verification.json
+22aed4f4de0f549697a7603f74cb0f61e9f0432956c778cc19bbcebef52f031a  tests/fixtures/core_v02/invalid/c104_alternative_empty_desired_state.json
+62e0d7c6eaf04378d54cb3e0c45b6e62782d544f4a4f8ed0809c28bddadb60ec  tests/fixtures/core_v02/invalid/c104_alternative_empty_success_criteria.json
+a1de52343dac1c2b1fcabc692a35e003856dec48b889e75be86fb308a73ad1ef  tests/fixtures/core_v02/invalid/c104_alternatives_empty.json
+62f508a8636e3c5ad1383952b64caa203312facb30767e4dae9bc52d5be9508a  tests/fixtures/core_v02/invalid/c104_alternatives_too_many.json
+e869f3b6bc28cc526ff194e7732dd36a53c65167111901e7fff70ebeb29b7457  tests/fixtures/core_v02/invalid/c104_declared_empty_text.json
+fddd20a834bb2e071575b005034367bc65384c75be6385e64fa8a88d4a9a8cff  tests/fixtures/core_v02/invalid/c104_declared_text_not_a_string.json
+e8a7aadc0c08e694036dcf99ce2c6cf3bddb756c864e35481d2135d4116dc4fd  tests/fixtures/core_v02/invalid/c104_declared_text_too_long.json
+903a6651c69aa3c9dec2eadd7e737fdbf39f3e2119f2cb60fde0194f021f4470  tests/fixtures/core_v02/invalid/c104_declared_text_with_delete.json
+d9eda4c77745a29ae3af8896b1e1efc04d37380ece9b25958455c73c9ecef17a  tests/fixtures/core_v02/invalid/c104_declared_text_with_newline.json
+3061fb9cc5a342b838de3c1e370397403b02f589f188677a61a23a5a1a03aab4  tests/fixtures/core_v02/invalid/c104_declared_without_text.json
+e9e23ea8b0661d898c2c2aa6ff97472608598da3ef0b527896ebf2e8805cf83a  tests/fixtures/core_v02/invalid/c104_duplicate_alternative_triples.json
+e7eb6901ce1c4a6c3985aaa05895c929ec8d35ea0194c7cc565020659f96144a  tests/fixtures/core_v02/invalid/c104_duplicate_alternative_triples_reordered.json
+805e8388470996e877c4a7929b874ba705b659f85ff08ee522553606b8b391fa  tests/fixtures/core_v02/invalid/c104_duplicate_result_pair.json
+c31a9f915d8760723fc70b1eff539a7d92e24da63a774208c18d42a9fd971d9d  tests/fixtures/core_v02/invalid/c104_met_alternative_missing.json
+66d32b4675dc79b520eeac99db63eef2e09dc3f5b69c9f7314398bf7a2674d8b  tests/fixtures/core_v02/invalid/c104_met_alternative_negative.json
+a0044de357790cc24059c3f11e7b2a787d31f33b776a6150491c88db29f76132  tests/fixtures/core_v02/invalid/c104_met_alternative_not_an_integer.json
+9f132ecbd868d929f10bf041ace088a507df6123b49733fa653228eb4a5bae25  tests/fixtures/core_v02/invalid/c104_result_alternative_missing.json
+e198b15194840f8b6e4bfb056276891a69411cf5bc367a497b29bf9d1450b0dd  tests/fixtures/core_v02/invalid/c104_result_alternative_negative.json
+eef6a34945cf86b34fd7d20fe6dc941f9e82c36e325effc745bc095c3d54f313  tests/fixtures/core_v02/invalid/c104_result_alternative_not_an_integer.json
+e6639d924fa33f707cf1c5f4461efc5d733993e0938eb80f60d0f8abc4eedcd9  tests/fixtures/core_v02/invalid/c104_text_on_other_code.json
+2fd35f4d3cf81e97cddfa418263fca4b87ca5bacecd8ed832fa24dfda9e74a32  tests/fixtures/core_v02/invalid/c104_v01_declared_code.json
+5751d1046d1bfb7c525fb48ee13cbc2468f71bcb0e1c6c07fa898738c0db0249  tests/fixtures/core_v02/invalid/c402_succeeded_met_alternative_null.json
+db745a74ecc23e60d962ec8f98211bc7a6e2a857e9a43673ba2ca59e25073266  tests/fixtures/core_v02/invalid/c402_succeeded_no_results_for_pursued_alternative.json
+7a6f1ecb42257f629a5cd27273aa1a1f98d04d482ae32902b11d945b5fa96ffb  tests/fixtures/core_v02/invalid/c402_succeeded_one_criterion_of_pursued_unmet.json
+d3ddd9f561df7a8d50c2ebd84c04944ef9061c854f52b3fff8cd03eca0961950  tests/fixtures/core_v02/invalid/c402_succeeded_pursued_alternative_unmet_other_holds.json
+cbcf95c4414ff0d3d57d892855391c2ade350cc081066ce44d05019b848aac50  tests/fixtures/core_v02/invalid/c402_succeeded_verification_null.json
+17072e49093908ce601497ddde18b2d14fdfdadb4d757b5e7736a02cfd3d2f12  tests/fixtures/core_v02/invalid/c405_before_c402.json
+08aa20dbf71aab56b37465927e2900ba0873f50dfad807b20bd8736d28d5c59a  tests/fixtures/core_v02/invalid/c405_declared_in_assessment.json
+aa73cd1b4037bf8ea538b1e49843fa01d454145e5e7af7c09dfa782e8d218b31  tests/fixtures/core_v02/invalid/c405_declared_in_authorization_request.json
+d99b7f2149f6b6a7240dbea1356bf35d74de11c566ab9b48857fd37bd1ea562b  tests/fixtures/core_v02/invalid/c405_declared_in_cancelled_outcome.json
+6123b150dc8e2019c8c0570d6229b6065a27af32cbd24d8e0590bc7c04e3a2db  tests/fixtures/core_v02/invalid/c405_declared_in_decline.json
+9f5a54b94f89ccb4121b50d41e627ae98ec0bca2a110ffa94207a2632da4619c  tests/fixtures/core_v02/invalid/c405_declared_in_reject.json
+93ea1d9c6f182523db456b5e47cfe0b24207b339ac26724b8fcf88f50c5408b1  tests/fixtures/core_v02/invalid/c405_declared_in_succeeded_outcome.json
+6f52e04e16d2b5dfa4d82fd05777422e2f4322367977c52fb08541a1619a9482  tests/fixtures/core_v02/valid/goal_alternatives_overlap_but_differ.json
+567b86684836ad6d341cf75f6a7191e4eb7e2c46455fb96b9f0b12206b00c328  tests/fixtures/core_v02/valid/goal_one_alternative.json
+7e8b0267f3af873391f5cd37245be667c3fd7dd8da11278f9e7c6462aa726259  tests/fixtures/core_v02/valid/goal_sixteen_alternatives.json
+e478020865ed955b413766a856313d55d6d04ab714dbd5f8ba7fc5db721d98a4  tests/fixtures/core_v02/valid/goal_two_alternatives.json
+9406c822ebfcc48fdae47cc91a8759a35482f941a51f76658d3294faec481652  tests/fixtures/core_v02/valid/outcome_cancelled_met_alternative_null.json
+55c42b1d827daf85705997abffcfcb34bca7a41b3f004c2169d20c8b77c2bc87  tests/fixtures/core_v02/valid/outcome_extra_results_for_other_alternative.json
+ea3676dac76a81fe8cb2b5a93b58e54cc06603eb447e943524403d307a1f5952  tests/fixtures/core_v02/valid/outcome_failed_declared.json
+a803d43205c524aa92301c313fe89db06fad8e56362ccbe9f6fc3de77a013b49  tests/fixtures/core_v02/valid/outcome_failed_declared_200_chars.json
+075eadb1b1520a03b7e8c15692fced35adb2d28dae49f748ea2551d3948927f9  tests/fixtures/core_v02/valid/outcome_failed_declared_with_other_reason.json
+04beb85ee4ac37b5e0ffeef5c72e28babd6d10ea2dc786c5639ec246e9e3ee8c  tests/fixtures/core_v02/valid/outcome_failed_no_met_alternative.json
+c539fa5a43094c2f4c7cfbd85d0416caf7085372f5a678b724f67351f985e285  tests/fixtures/core_v02/valid/outcome_failed_other_alternative_holds.json
+bda0a701d5d729035b0e5955468d4f84e2468fa767e861d2ee9456440c7bfe7d  tests/fixtures/core_v02/valid/outcome_failed_verification_null.json
+817782f593b46c87223e9c4c10a5c77311221f5280ae21ab8a40138afbf1e1b3  tests/fixtures/core_v02/valid/outcome_met_alternative_0.json
+5848ec2b3f58f81ca24a09b31d364f96f528aa6860a973316cde9098c3c013bd  tests/fixtures/core_v02/valid/outcome_met_alternative_1.json
+598e0c9b78b2fe29b86704d7e375af9bdba7c4e4234eed89305e7c14b6c86f66  view/amr-07-base-scenario.json
+```
+
+## Not covered by this record
+
+- **Delivery.** As for the first bundle (owner requirement of 2026-10-28): before INTEROP-3 begins, this bundle is
+  packed into one ZIP or TAR archive containing exactly the 122 files above. The archive is preserved, its own
+  SHA-256 is recorded separately from the bundle ID, and only that archive is delivered. The independent author
+  never clones this repository. The archive is made with the protocol update (0030 J6 step 4).
+- **Launch.** INTEROP-3 needs the updated protocol, a verified model ID, the operator's attestation and the owner's
+  authorization (0030 J6 steps 4 and 5).
