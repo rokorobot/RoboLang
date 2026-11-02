@@ -22,25 +22,30 @@ def _pose(args):
     return [float(v) for v in match.group(1).split()]
 
 
+GRIPPER_READER = """
+import os, sys, time
+import rclpy
+from sensor_msgs.msg import JointState
+rclpy.init()
+node = rclpy.create_node("h3_oracle")
+joints = {}
+node.create_subscription(JointState, "/joint_states", lambda m: joints.update(zip(m.name, m.position)), 10)
+deadline = time.monotonic() + 30
+while "robotiq_85_left_knuckle_joint" not in joints and time.monotonic() < deadline:
+    rclpy.spin_once(node, timeout_sec=0.1)
+print(joints.get("robotiq_85_left_knuckle_joint", "missing"))
+sys.stdout.flush()
+os._exit(0)  # rclpy can crash while shutting down; the value is already printed
+"""
+
+
 def _gripper() -> float:
-    """The simulated knuckle joint from one /joint_states message, read directly (CLI output can carry notices)."""
-    import time
-
-    import rclpy
-    from sensor_msgs.msg import JointState
-
-    rclpy.init()
-    node = rclpy.create_node("h3_oracle")
-    joints = {}
-    node.create_subscription(JointState, "/joint_states", lambda m: joints.update(zip(m.name, m.position)), 10)
-    deadline = time.monotonic() + 30
-    while "robotiq_85_left_knuckle_joint" not in joints and time.monotonic() < deadline:
-        rclpy.spin_once(node, timeout_sec=0.1)
-    node.destroy_node()
-    rclpy.shutdown()
-    if "robotiq_85_left_knuckle_joint" not in joints:
-        raise SystemExit("no gripper joint state")
-    return joints["robotiq_85_left_knuckle_joint"]
+    """The simulated knuckle joint from one /joint_states message, read in a child process (its teardown can crash)."""
+    out = subprocess.run([sys.executable, "-c", GRIPPER_READER], capture_output=True, text=True, timeout=60).stdout
+    try:
+        return float(out.strip().splitlines()[-1])
+    except (IndexError, ValueError):
+        raise SystemExit(f"no gripper joint state: {out!r}") from None
 
 
 def truth(condition, bound, site, cache):

@@ -54,6 +54,7 @@ echo "$?" >"$OUT/exit_code"
 echo "$(( $(date +%s) - start ))" >"$OUT/wall_seconds"
 if [ -f "$OUT/executor.json" ]; then
     python3 /opt/h3/scripts/oracle.py "$OUT/executor.json" "$S/site.json" "$OUT/oracle.json" >"$OUT/oracle.log" 2>&1
+    echo "$?" >"$OUT/oracle_exit_code"
 fi
 # One frame per camera, for the evidence document.
 python3 /opt/h3/scripts/snapshot.py "$OUT" >"$OUT/snapshot.log" 2>&1 || true

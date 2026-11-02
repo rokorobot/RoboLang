@@ -348,12 +348,16 @@ def joint_topic(model: str, obj: str, suffix: str) -> str:
 SUBSCRIBE_TIMEOUT_S = 10
 
 
+def _topic_info(topic: str) -> str:
+    try:
+        return subprocess.run(["gz", "topic", "-i", "-t", topic], capture_output=True, text=True, timeout=10).stdout
+    except (OSError, subprocess.TimeoutExpired):
+        return ""
+
+
 def _subscriber_count(topic: str) -> int | None:
     """Subscribers Gazebo lists for a topic (`gz topic -i`), or None if its output has no subscriber section."""
-    try:
-        info = subprocess.run(["gz", "topic", "-i", "-t", topic], capture_output=True, text=True, timeout=10).stdout
-    except (OSError, subprocess.TimeoutExpired):
-        return None
+    info = _topic_info(topic)
     lines = info.splitlines()
     start = next((i for i, line in enumerate(lines) if line.strip().startswith("Subscribers")), None)
     if start is None:
@@ -393,7 +397,8 @@ def gazebo_joint_command(model: str, obj: str, action: str) -> None:
             if before is not None:
                 raise BackendFailure("S506", f"Gazebo did not list a subscriber to {state_topic}")
         if before is None:  # without a subscriber list, the earlier fixed wait
-            print(f"gz topic -i lists no subscribers for {state_topic}; waiting 0.5 s instead", file=sys.stderr)
+            print(f"gz topic -i lists no subscribers for {state_topic}; waiting 0.5 s instead. It printed: "
+                  f"{_topic_info(state_topic)[:300]!r}", file=sys.stderr)
         time.sleep(0.5 if before is None else 0.1)
         for _ in range(5):
             subprocess.run(["gz", "topic", "-t", topic, "-m", "gz.msgs.Empty", "-p", ""],
@@ -440,6 +445,9 @@ def moveit_parameters(description: str) -> dict:
                                          "planning_time": 15.0}
     # Check each path segment at 0.5% of the state space extent, so OMPL's paths pass MoveIt's own validation.
     parameters.setdefault("ompl", {}).setdefault("ur_manipulator", {})["longest_valid_segment_fraction"] = 0.005
+    # MoveIt's default 0.01 rad start tolerance aborts when the simulated arm is still settling; 0.05 rad is
+    # still far below anything that changes a plan between two poses of this scene.
+    parameters.setdefault("trajectory_execution", {})["allowed_start_tolerance"] = 0.05
     parameters["use_sim_time"] = True
     return parameters
 
