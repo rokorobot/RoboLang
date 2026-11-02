@@ -35,13 +35,14 @@ from robolang.interop import AMR, build_view  # noqa: E402
 DOCUMENTS = (  # gate 2 4.1, in its order
     "spec/architecture/rfc-001-ai-native-architecture.md",
     "spec/core-v0.1.md",
+    "spec/core-v0.2.md",  # 0030 J2: the independent receiver implements Core 0.2, which accepts 0.1
+    "spec/decisions/0028-core-0-2-scope.md",
     "spec/reference-simulation-v0.1.md",
     "spec/decisions/0007-rl-arch-02-core-and-reference-simulation.md",
     "spec/decisions/0008-core-sequencing-per-recipient.md",
     "spec/interop-gate-2-v0.1.md",
 )
-NOT_GATE_2 = ("spec/core/message-0.2.schema.json",)  # Core 0.2 is not in the gate 2 bundle, which is Core 0.1
-DIRECTORIES = ("spec/core", "tests/fixtures/core")  # the schemas; the conformance kit (G-T0)
+DIRECTORIES = ("spec/core", "tests/fixtures/core", "tests/fixtures/core_v02")  # the schemas; both conformance kits
 VIEW = "view/amr-07-base-scenario.json"
 README = "BUNDLE-README.md"
 MANIFEST = "MANIFEST.sha256"
@@ -88,7 +89,7 @@ class Source:
             found = listed.splitlines()
         else:
             found = [p.relative_to(REPO).as_posix() for p in (REPO / directory).rglob("*") if p.is_file()]
-        return sorted(f for f in found if f not in NOT_GATE_2)
+        return sorted(found)
 
     def read(self, path: str) -> bytes:
         if self.rev:
@@ -112,11 +113,13 @@ relative links between them work.
 | Path | What |
 |---|---|
 | `spec/architecture/rfc-001-ai-native-architecture.md` | RFC-001: semantics and authority rules |
-| `spec/core-v0.1.md`, `spec/core/*.schema.json` | Core 0.1 and its two JSON Schemas |
+| `spec/core-v0.1.md`, `spec/core/*.schema.json` | Core 0.1; schemas for the 0.1 descriptor, 0.1 and 0.2 messages |
+| `spec/core-v0.2.md`, `spec/decisions/0028-…` | Core 0.2, its delta over 0.1, and the choices behind it |
 | `spec/reference-simulation-v0.1.md` | amr-07's behavior, the scenario and the faults |
 | `spec/decisions/0007-…`, `spec/decisions/0008-…` | Choices and their reasons |
 | `spec/interop-gate-2-v0.1.md` | The test binding `robolang-sim-stdio` 0.1 and the tests |
-| `tests/fixtures/core/` | The conformance kit (G-T0): fixtures, `context.json`, `cases.json`, README |
+| `tests/fixtures/core/` | The Core 0.1 conformance kit (G-T0): fixtures, `context.json`, `cases.json`, README |
+| `tests/fixtures/core_v02/` | The Core 0.2 conformance kit (G-T0): fixtures, `expected.json`, README |
 | `{VIEW}` | An example `start` view for amr-07 in the base scenario (gate 2 6.4) |
 | `{MANIFEST}` | SHA-256 of every other file |
 
@@ -129,9 +132,11 @@ hold exactly the files the manifest lists, plus the manifest itself.
 
 ## Starting
 
-1. Core 0.1 (`spec/core-v0.1.md`) and its schemas: the contract on the wire.
-2. The conformance kit (`tests/fixtures/core/README.md` and gate 2 section 7): a `check` mode
-   that gives each of the 47 fixtures its stated receipt is the first thing you can test alone.
+1. Core 0.1 (`spec/core-v0.1.md`), then Core 0.2 (`spec/core-v0.2.md`, its delta), and the schemas: the
+   contract on the wire. You implement a Core 0.2 receiver, which also accepts 0.1; the scenario sends 0.1.
+2. The conformance kits (`tests/fixtures/core/README.md`, `tests/fixtures/core_v02/README.md` and gate 2
+   section 7): a `check` mode that gives each of the 47 Core 0.1 fixtures and 62 Core 0.2 entries its stated
+   receipt is the first thing you can test alone.
 3. The reference simulation (`spec/reference-simulation-v0.1.md`), sections 4 to 8: what amr-07
    does, with section 6.4 for amr-07 in detail.
 4. Gate 2 (`spec/interop-gate-2-v0.1.md`), section 6: the binding, and the view this bundle's

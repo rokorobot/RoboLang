@@ -12,7 +12,8 @@ decision records [0007](decisions/0007-rl-arch-02-core-and-reference-simulation.
 ([evidence](../docs/evidence/rl-arch-02-exit-gate.md)).
 **Errata:** [decision record 0010](decisions/0010-binding-errata-lease-expired-commitment-state.md)
 (B1, B2, approved 2026-10-27) and [decision record 0011](decisions/0011-interop-2a-bundle-errata.md) (N1–N14, approved 2026-10-28) amend sections 3, 6.2–6.5,
-9.1.1 and 9.2. The amended text is marked. Where the reference or the INTEROP-1 harness does
+9.1.1 and 9.2. [Decision record 0030](decisions/0030-relaunch-interop-3-on-core-0-2.md) (J3, approved 2026-11-02)
+amends sections 1, 4.1, 7, 8 and 13 for the relaunch on Core 0.2. The amended text is marked. Where the reference or the INTEROP-1 harness does
 not yet follow it, the [discrepancy register](../docs/interop/spec-implementation-discrepancies.md) lists the difference.
 
 ## 1. What gate 2 proves, and what it does not
@@ -21,12 +22,14 @@ RFC-001 1.4 defines gate 2: *a participant implemented independently, in a diffe
 communicates with the reference implementation using only the published schemas and this
 specification, with no private integration logic.* It is what distinguishes an open standard
 from a product: gate 1 showed that one team's implementation is consistent with itself;
-gate 2 shows that someone else can implement Core 0.1 from the documents alone.
+gate 2 shows that someone else can implement Core from the documents alone. *(0030 J3:)* The independent
+participant implements a **Core 0.2** receiver, which also accepts Core 0.1 messages ([Core 0.2](core-v0.2.md),
+decision record [0028](decisions/0028-core-0-2-scope.md) C7). The scenario's messages stay Core 0.1.
 
-Gate 2 **proves**, to the independence level chosen (I1): that Core 0.1 and the reference
+Gate 2 **proves**, to the independence level chosen (I1): that Core 0.2 and the reference
 simulation's behavior rules are complete and unambiguous enough for an independent
 implementation of one participant to produce the same protocol outcomes as the reference,
-across the happy path and the failure variants; and that Core 0.1 is implementable without
+across the happy path and the failure variants; and that Core 0.2 is implementable without
 the RoboLang Python package (P10).
 
 Gate 2 **does not prove**: interoperability over a real network or binding (RFC-001 open
@@ -87,10 +90,11 @@ repository, with a manifest of SHA-256 values:
 |---|---|
 | `spec/architecture/rfc-001-ai-native-architecture.md` | Semantics and authority rules |
 | `spec/core-v0.1.md`, `spec/core/*.schema.json` | The contract |
+| `spec/core-v0.2.md`, `spec/decisions/0028-…` *(0030 J3)* | Core 0.2: its delta over 0.1, and the choices behind it |
 | `spec/reference-simulation-v0.1.md` | amr-07's behavior, the scenario and the faults |
 | `spec/decisions/0007-…`, `spec/decisions/0008-…` | Choices and their reasons |
 | `spec/interop-gate-2-v0.1.md` (this document) | The binding and the tests |
-| `tests/fixtures/core/` | Conformance fixtures (G-T0) |
+| `tests/fixtures/core/`, `tests/fixtures/core_v02/` *(0030 J3)* | Conformance fixtures (G-T0): Core 0.1 and Core 0.2 |
 | An example `view` for amr-07 in the base scenario (6.4), produced in INTEROP-2 | The exact shape of what the participant receives |
 
 Nothing else: no source code, no run records, no `golden_records.json`, no test code, and no
@@ -272,14 +276,16 @@ which participant produced a message. Gate 2 does not test participant identity.
 
 Before any scenario run, the independent implementation's receiver checks must give the stated
 receipt for all 47 Core fixtures (A-T16), 17 of them multi-fault precedence fixtures (INTEROP-2f): a `check` mode reads one fixture and the context of
-`tests/fixtures/core/context.json` and prints the code and stage, or `accepted`. This is
+`tests/fixtures/core/context.json` and prints the code and stage, or `accepted`. *(0030 J3:)* They must also
+give the stated receipt for all 62 entries of the Core 0.2 kit (`tests/fixtures/core_v02/expected.json`), with
+the receiver version configuration each entry states (default 0.1 and 0.2) and the same context. This is
 level 3 of section 2 and the first thing the independent author can test alone.
 
 ## 8. Interoperability tests
 
 | # | Test | Cases | amr-07 role |
 |---|---|---|---|
-| G-T0 | Conformance kit | 47 Core fixtures | Receiver checks |
+| G-T0 | Conformance kit | 47 Core 0.1 fixtures and 62 Core 0.2 entries *(0030 J3)* | Receiver checks |
 | G-T1 | Happy path | `happy_path`, `happy_path_seed_1` | The full role |
 | G-T2 | amr-07 behavior under faults | `v01_declines`, `v02_duplicate_commit`, `v03_replayed_commit`, `v05_stale_confirmation`, `v06_partition_before_release`, `v07_release_ack_lost`, `v08_arrived_without_evidence`, `v11_payload_beyond_standing_authorization`, `v12a_unsigned_commit`, `v12b_wrongly_signed_commit` | Exercised directly |
 | G-T3 | Sequencing (0008) | All 9 `seq_*` cases | Exercised directly where amr-07 sends or receives the affected stream (`seq_replay_while_fresh`, `seq_lost_ack_holds_next`, and `seq_silent_while_held`, where amr-07 holds a message and the harness closes the hold, 6.2); otherwise a regression check, since amr-07 numbers and receives its own streams in every case |
@@ -394,5 +400,6 @@ physical execution; the language front end (`.rob`, Task IR).
 | INTEROP-2e: harness corrections N3, H1, H2, N13(c) | Done 2026-10-28 (PR #43) |
 | H3: decision record 0013, receiver-scoped verification keys | Approved and applied 2026-10-28 (PR #44) |
 | INTEROP-2f: precedence fixtures (47 Core fixtures) and `seq_silent_while_held` (25 cases) | Done 2026-10-28 (PR #45) |
-| INTEROP-2g: final bundle audit and freeze preparation | Authorized 2026-10-28; the freeze itself needs owner approval |
+| INTEROP-2g: final bundle audit and freeze preparation | Done; bundle `e6c9bb75…d104` frozen 2026-10-28, **superseded** by 0030 J2 and never delivered |
+| Decision record 0030 (J1–J6): relaunch on Core 0.2 | Approved 2026-11-02; J3 applied here. The new bundle needs its J4 audit and the owner's freeze approval |
 | INTEROP-3, INTEROP-4 | Not authorized |
