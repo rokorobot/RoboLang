@@ -2,8 +2,9 @@
 INTEROP-2g: the gate 2 specification bundle (spec/interop-gate-2-v0.1.md 4.1), built by
 tools/interop_bundle.py into an isolated directory and checked from that directory alone.
 
-A3: exactly the allowlist, and nothing private (source, golden records, scenario, fault scripts,
-expected run results). A4: the 47 fixtures give their stated receipts from the bundle's own files,
+A3: exactly the allowlist (with Core 0.2 since 0030 J2), and nothing private (source, golden records,
+scenario, fault scripts, expected run results). A4: the 47 + 62 fixtures give their stated receipts from
+the bundle's own files,
 and the schemas resolve. A5: the example view is exactly what 6.4 allows. A6: the bundle is
 reproducible and its manifest detects any change. Links: every relative link either resolves in
 the bundle or is one of the classified informative citations.
@@ -41,6 +42,13 @@ INFORMATIVE = {
     "spec/decisions/0013-h3-receiver-scoped-verification-keys.md",
     "spec/ir-schema-v1.0.md", "spec/robolang-v1.1.md", "spec/simulation-v1.0.md",
     "tests/fixtures/arch02/README.md", "tests/fixtures/arch02",
+    # 0030 J2: citations in core-v0.2.md and 0028. Export, delegation and benchmark context, not receiver rules;
+    # the J4 audit confirms that no rule amr-07 needs is stated only there.
+    "docs/STRATEGY.md", "docs/evidence/bench-set2-analysis.md", "docs/evidence/bench-set3-acceptance.md",
+    "docs/plans/goals-and-core-bridge.md", "spec/decisions/0018-core-shaped-outcomes.md",
+    "spec/decisions/0020-delegate.md", "spec/decisions/0023-keep-interop-3-deferred.md",
+    "spec/decisions/0027-bounded-branching.md", "spec/decisions/0030-relaunch-interop-3-on-core-0-2.md",
+    "spec/delegate-core-0.2.md", "spec/delegate-v0.1.md", "spec/export-goal-v0.1.md",
 }
 
 
@@ -59,11 +67,16 @@ def files(directory: Path) -> set[str]:
 
 def test_bundle_holds_exactly_the_allowlist(bundle):
     kit = {p.relative_to(ROOT).as_posix() for p in (ROOT / "tests" / "fixtures" / "core").rglob("*") if p.is_file()}
-    schemas = {p.relative_to(ROOT).as_posix() for p in (ROOT / "spec" / "core").glob("*-0.1.schema.json")}
-    expected = set(bundle_tool.DOCUMENTS) | schemas | kit | {bundle_tool.VIEW, bundle_tool.README, bundle_tool.MANIFEST}
+    kit02 = {p.relative_to(ROOT).as_posix() for p in (ROOT / "tests" / "fixtures" / "core_v02").rglob("*")
+             if p.is_file()}
+    schemas = {p.relative_to(ROOT).as_posix() for p in (ROOT / "spec" / "core").glob("*.schema.json")}
+    expected = set(bundle_tool.DOCUMENTS) | schemas | kit | kit02 | {
+        bundle_tool.VIEW, bundle_tool.README, bundle_tool.MANIFEST}
     assert files(bundle) == expected
     assert len([f for f in kit if "/valid/" in f or "/invalid/" in f]) == 47
-    assert len(schemas) == 2
+    assert len([f for f in kit02 if "/valid/" in f or "/invalid/" in f]) == 56  # plus 6 entries reusing 0.1 files
+    assert sorted(Path(s).name for s in schemas) == [
+        "capability-descriptor-0.1.schema.json", "message-0.1.schema.json", "message-0.2.schema.json"]
 
 
 def test_bundle_holds_no_private_or_implementation_material(bundle):
@@ -160,6 +173,28 @@ def test_every_link_resolves_in_the_bundle_or_is_a_classified_citation(bundle):
             if not (bundle / path).exists() and path not in INFORMATIVE:
                 unclassified.add(f"{name} -> {path}")
     assert unclassified == set()
+
+
+def test_all_62_core_0_2_entries_give_their_stated_receipt_from_the_bundle(bundle):
+    """0030 J3, G-T0: the Core 0.2 kit, with the receiver versions each entry states, from bundled files only."""
+    kit = bundle / "tests" / "fixtures" / "core_v02"
+    expected = json.loads((kit / "expected.json").read_text(encoding="utf-8"))
+    context = json.loads((kit / expected["context"]).read_text(encoding="utf-8"))
+    keys = {ref: Key(k["participant"], k["alg"], bytes.fromhex(k["secret"])) for ref, k in context["keys"].items()}
+    assert len(expected["cases"]) == 62
+    for case in expected["cases"]:
+        data = (kit / case["file"]).read_bytes()  # entries starting with ../core/ are bundled 0.1 fixtures
+        document = json.loads(data)
+        receipt = check_message(data, Context(
+            receiver=document["recipient"], now_ms=core.time_ms(context["now"]),
+            clock_tolerance_ms=ms(context["clock_tolerance"]),
+            max_message_lifetime_ms=ms(context["max_message_lifetime"]), keys=keys,
+            authorities=context["authorities"], mode="simulation",
+            versions=frozenset(case.get("receiver_versions", expected["default_receiver_versions"]))))
+        if case["expect"] == "accepted":
+            assert receipt.status == "accepted", case
+        else:
+            assert (receipt.code, receipt.stage) == (case["expect"], case["stage"]), case
 
 
 # -------- A6: reproducibility and integrity --------
