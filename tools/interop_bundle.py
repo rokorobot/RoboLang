@@ -143,7 +143,8 @@ hold exactly the files the manifest lists, plus the manifest itself.
    example shows.
 
 Some documents link to files that are not in the bundle: other decision records, the
-development plan, evidence, and the reference's fixtures and code. Those links are informative
+development plan and strategy, plans, evidence, the export-goal and delegate specifications, and the
+reference's fixtures and code. Those links are informative
 citations. Every rule they record is stated in the documents above; a rule you cannot find here
 is a finding to raise through the question log (gate 2 4.3), not something to look up elsewhere.
 """.encode("utf-8")

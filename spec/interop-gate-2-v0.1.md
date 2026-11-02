@@ -6,14 +6,14 @@ approved 2026-10-27. Each slice of section 11 needs its own authorization; secti
 their status.
 **Gate:** Gate 2 — independent implementation ([RFC-001 section 1.4](architecture/rfc-001-ai-native-architecture.md#14-how-the-ambition-is-tested);
 decision D9).
-**Builds on:** [Core 0.1](core-v0.1.md), [reference simulation 0.1](reference-simulation-v0.1.md),
+**Builds on:** [Core 0.1](core-v0.1.md), [Core 0.2](core-v0.2.md) *(0030 J3)*, [reference simulation 0.1](reference-simulation-v0.1.md),
 decision records [0007](decisions/0007-rl-arch-02-core-and-reference-simulation.md) and
 [0008](decisions/0008-core-sequencing-per-recipient.md); gate 1 passed 2026-10-27
 ([evidence](../docs/evidence/rl-arch-02-exit-gate.md)).
 **Errata:** [decision record 0010](decisions/0010-binding-errata-lease-expired-commitment-state.md)
 (B1, B2, approved 2026-10-27) and [decision record 0011](decisions/0011-interop-2a-bundle-errata.md) (N1–N14, approved 2026-10-28) amend sections 3, 6.2–6.5,
 9.1.1 and 9.2. [Decision record 0030](decisions/0030-relaunch-interop-3-on-core-0-2.md) (J3, approved 2026-11-02)
-amends sections 1, 4.1, 7, 8 and 13 for the relaunch on Core 0.2. The amended text is marked. Where the reference or the INTEROP-1 harness does
+amends sections 1, 4.1, 6.4, 7, 8 and 13 for the relaunch on Core 0.2. The amended text is marked. Where the reference or the INTEROP-1 harness does
 not yet follow it, the [discrepancy register](../docs/interop/spec-implementation-discrepancies.md) lists the difference.
 
 ## 1. What gate 2 proves, and what it does not
@@ -241,6 +241,13 @@ and keeps everything else private.
 | Public deployment facts | The participant records (7.2 form) of the participants it deals with, the places and their `within` relations, the `arbiters` of shared resources, and its own authority (`authorities` for itself) |
 | Verification material | The `sim-hmac-sha256` secrets of the keys of participants whose messages it must verify: arm-02 and the authority. These are inherently shared in this scheme (Core 7) |
 
+*(0030 J3, audit A1:)* **Core versions in the scenario.** The reference participants (planner-1, arm-02 and the
+authority) are configured for Core 0.1 messages only, and that is not in the view because it is the same in every
+case. amr-07 sends every message as `schema_version` `0.1` ([Core 0.2](core-v0.2.md) section 1: a sender sends 0.2
+only to a peer configured for it). A 0.2 message from amr-07 is rejected with `C102` at stage 1 and gets no reply.
+amr-07 may be configured to receive 0.1 only, or 0.1 and 0.2. Every message it receives in the scenario is 0.1 and
+is judged by the 0.1 rules either way. A `request_assistance` sub-goal is read as a goal with one alternative.
+
 **Never in the view:** other participants' policies, standing authorizations, sensors and
 private configuration; the planner's goal; the authority's decision table; durations (the
 harness applies them); faults, the case ID and the expected results.
@@ -278,7 +285,10 @@ Before any scenario run, the independent implementation's receiver checks must g
 receipt for all 47 Core fixtures (A-T16), 17 of them multi-fault precedence fixtures (INTEROP-2f): a `check` mode reads one fixture and the context of
 `tests/fixtures/core/context.json` and prints the code and stage, or `accepted`. *(0030 J3:)* They must also
 give the stated receipt for all 62 entries of the Core 0.2 kit (`tests/fixtures/core_v02/expected.json`), with
-the receiver version configuration each entry states (default 0.1 and 0.2) and the same context. This is
+the receiver version configuration each entry states (default 0.1 and 0.2) and the same context. *(Audit A2:)* The
+47 fixtures of the Core 0.1 kit are checked with a receiver configured for Core 0.1 only, as
+[Core 0.2](core-v0.2.md) section 1 says they assume: five of them use `0.2` as their example of an unsupported
+version and expect `C102`. This is
 level 3 of section 2 and the first thing the independent author can test alone.
 
 ## 8. Interoperability tests
