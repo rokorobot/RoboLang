@@ -2,7 +2,7 @@
 
 **Status:** **APPROVED FOR PREPARATION — 2026-10-28.** Updated for the relaunch on Core 0.2 (decision
 [0030](../../spec/decisions/0030-relaunch-interop-3-on-core-0-2.md) J5, 2026-11-02): the frozen inputs, the scope, the
-archive checks and the prompt. **The new prompt wording needs the owner's approval** before launch. Launch is **not** authorized. The archive is
+archive checks and the prompt. **The new prompt wording was approved by the owner on 2026-11-02.** Launch is **not** authorized. The archive is
 not delivered and no implementation starts until (1) the exact model ID and API access are verified
 outside the RoboLang sessions, (2) the environment operator signs the attestation of section 5, and
 (3) the owner authorizes launch.
@@ -87,7 +87,7 @@ each point.
 reference, this session included, may act as the author or pass reference knowledge to it, and
 answers given as the Q&A intermediary come only from the bundle.
 
-## 4. Initial prompt (verbatim; Core 0.2 wording proposed 2026-11-02, needs owner approval)
+## 4. Initial prompt (verbatim; Core 0.2 wording approved by the owner 2026-11-02)
 
 The Core 0.1 prompt approved on 2026-10-28 is replaced. The changes, and nothing else: "the published Core 0.1
 specification" becomes "the published Core 0.1 and Core 0.2 specifications (implement a Core 0.2 receiver, which
