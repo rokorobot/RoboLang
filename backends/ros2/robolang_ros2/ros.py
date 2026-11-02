@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import re
 import subprocess
+import sys
 import time
 import xml.etree.ElementTree as ET
 
@@ -344,6 +345,27 @@ def joint_topic(model: str, obj: str, suffix: str) -> str:
     return f"/model/{model}/detachable_joint/{obj}/{suffix}"
 
 
+SUBSCRIBE_TIMEOUT_S = 10
+
+
+def _subscriber_count(topic: str) -> int | None:
+    """Subscribers Gazebo lists for a topic (`gz topic -i`), or None if its output has no subscriber section."""
+    try:
+        info = subprocess.run(["gz", "topic", "-i", "-t", topic], capture_output=True, text=True, timeout=10).stdout
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    lines = info.splitlines()
+    start = next((i for i, line in enumerate(lines) if line.strip().startswith("Subscribers")), None)
+    if start is None:
+        return None
+    count = 0
+    for line in lines[start + 1:]:
+        if line.strip().endswith(":") or not line.strip():
+            break
+        count += "://" in line
+    return count
+
+
 def gazebo_joint_command(model: str, obj: str, action: str) -> None:
     """Publish until Gazebo confirms a state transition; transport discovery can lose one-shot sends."""
     if action not in ("attach", "detach"):
@@ -351,13 +373,28 @@ def gazebo_joint_command(model: str, obj: str, action: str) -> None:
     topic = joint_topic(model, obj, action)
     state_topic = joint_topic(model, obj, "state")
     expected = "attached" if action == "attach" else "detached"
+    # The joint publishes its state once per change. A request is confirmed only if our subscriber is already
+    # connected when Gazebo answers: wait until Gazebo lists it, so a first answer cannot be lost and leave every
+    # retry asking for a state the joint is already in.
+    before = _subscriber_count(state_topic)
     try:
         subscriber = subprocess.Popen(["gz", "topic", "-e", "-t", state_topic, "-n", "1"],
                                       stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     except OSError as exc:
         raise BackendFailure("S506", f"Gazebo state subscription failed: {exc}") from exc
     try:
-        time.sleep(0.5)
+        deadline = time.monotonic() + SUBSCRIBE_TIMEOUT_S
+        while before is not None and time.monotonic() < deadline:
+            count = _subscriber_count(state_topic)
+            if count is None or count > before:
+                break
+            time.sleep(0.1)
+        else:
+            if before is not None:
+                raise BackendFailure("S506", f"Gazebo did not list a subscriber to {state_topic}")
+        if before is None:  # without a subscriber list, the earlier fixed wait
+            print(f"gz topic -i lists no subscribers for {state_topic}; waiting 0.5 s instead", file=sys.stderr)
+        time.sleep(0.5 if before is None else 0.1)
         for _ in range(5):
             subprocess.run(["gz", "topic", "-t", topic, "-m", "gz.msgs.Empty", "-p", ""],
                            check=True, capture_output=True, text=True, timeout=10)
