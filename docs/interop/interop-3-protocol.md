@@ -1,6 +1,8 @@
 # INTEROP-3 — Independent author protocol
 
-**Status:** **APPROVED FOR PREPARATION — 2026-10-28.** Launch is **not** authorized. The archive is
+**Status:** **APPROVED FOR PREPARATION — 2026-10-28.** Updated for the relaunch on Core 0.2 (decision
+[0030](../../spec/decisions/0030-relaunch-interop-3-on-core-0-2.md) J5, 2026-11-02): the frozen inputs, the scope, the
+archive checks and the prompt. **The new prompt wording was approved by the owner on 2026-11-02.** Launch is **not** authorized. The archive is
 not delivered and no implementation starts until (1) the exact model ID and API access are verified
 outside the RoboLang sessions, (2) the environment operator signs the attestation of section 5, and
 (3) the owner authorizes launch.
@@ -8,10 +10,13 @@ outside the RoboLang sessions, (2) the environment operator signs the attestatio
 **For the owner and the environment operator only.** This document is never placed in the author's
 environment. The author receives the frozen archive and the initial prompt of section 4, nothing else.
 
-**Frozen inputs:** source commit `28c69feece0de14b1537a4d29e0cd4b700cff920`, bundle ID
-`e6c9bb751503d52a16aa7f6aa0c42c9fe54726027ae5ff6ef229e566df22d104`
-([freeze record](gate2-bundle-freeze.md)); archive `robolang-gate2-bundle-e6c9bb75.zip`, SHA-256
-`02bcc7d490532081eb32c70cf3bc9ef8665d94f6e1264f885ebf24fb17860ba1`.
+**Frozen inputs (Core 0.2):** source commit `39bc07a1aeeb6ff0799338715d6b9dce9489f67c`, bundle ID
+`f3164c5afc54893be232433c785f11f765dae780483a3e8d7ba28178247c7e22`
+([freeze record](gate2-bundle-freeze-core-0-2.md)); archive `robolang-gate2-bundle-f3164c5a.zip`, SHA-256
+`ba87425152ebf007fb7d740de90ec130b4151b2bb78f7bb5a95e83e93476da70`, 547,496 bytes. The archive is reproducible:
+build the bundle at the source commit, then `python tools/interop_bundle.py archive <bundle> <out.zip>` gives the
+same bytes. The earlier Core 0.1 inputs (bundle `e6c9bb75…d104`, archive `02bcc7d4…860ba1`) are superseded and
+were never delivered.
 
 ## 1. Decisions
 
@@ -25,7 +30,7 @@ environment. The author receives the frozen archive and the initial prompt of se
 | Repository access | None: no GitHub or other access to the RoboLang repository |
 | Memory | No earlier conversation, shared memory or RoboLang-specific custom instructions |
 | Network | Only the required OpenAI API endpoint |
-| Scope | The Core 0.1 receiver and an independent amr-07 participant |
+| Scope | A Core 0.2 receiver (which also accepts Core 0.1) and an independent amr-07 participant |
 | Tests | G-T0 by the author; G-T1 to G-T5 belong to INTEROP-4 |
 | Evidence | Full transcript, environment configuration, Q&A log, implementation commits |
 
@@ -36,9 +41,9 @@ environment. The author receives the frozen archive and the initial prompt of se
    empty directory. No reference repository, harness, golden records or other project file is
    mounted.
 2. **Archive verification, before the author starts.**
-   - The archive's SHA-256 is `02bcc7d4…860ba1`.
-   - After extraction, there are exactly 61 files.
-   - The SHA-256 of `MANIFEST.sha256` is `e6c9bb75…d104`.
+   - The archive's SHA-256 is `ba874251…da70`.
+   - After extraction, there are exactly 122 files.
+   - The SHA-256 of `MANIFEST.sha256` is `f3164c5a…7e22`.
    - `sha256sum -c MANIFEST.sha256` passes.
 3. **Tools.**
    - Permitted: local editing, compiling, deterministic testing, and standard-library cryptography.
@@ -75,24 +80,29 @@ each point.
 | 2.1 | Evidence: model and provider, complete initial prompt, configuration showing no memory and no repository access, full transcript, Q&A log | Section 2.5 and the attestation. Record the model ID **as returned by the API in each response**, not only as requested |
 | 4.3 | Questions logged; a rule-adding answer is an erratum | Section 2.4 |
 | 5 | Not Python; standard library; optional JSON Schema validator; JCS from Core 7 or a published library; nothing from this repository; no network, filesystem or clock access during a run beyond the binding | TypeScript on Node.js. Libraries are pre-installed (network is closed), each recorded with name, version and integrity hash. The run-time restriction binds the author's code and is exercised by G-T5 |
-| 7 | G-T0: the stated receipt for all 47 fixtures | The author's step 3. The check-mode output format is the author's choice (audit risk R-2), recorded with the results |
+| 7 | G-T0: the stated receipt for the 47 Core 0.1 fixtures (0.1-only receiver) and the 62 Core 0.2 entries | The author's step 3. The check-mode output format is the author's choice (audit risk R-2), recorded with the results |
 | 11 | INTEROP-3 is done when the author declares the implementation ready | Section 2.6 |
 
 **Who may operate the environment:** the RoboLang team may provision it. Nobody who worked on the
 reference, this session included, may act as the author or pass reference knowledge to it, and
 answers given as the Q&A intermediary come only from the bundle.
 
-## 4. Initial prompt (verbatim, as approved)
+## 4. Initial prompt (verbatim; Core 0.2 wording approved by the owner 2026-11-02)
+
+The Core 0.1 prompt approved on 2026-10-28 is replaced. The changes, and nothing else: "the published Core 0.1
+specification" becomes "the published Core 0.1 and Core 0.2 specifications (implement a Core 0.2 receiver, which
+also accepts Core 0.1)" in the third line; step 2 names Core 0.2; step 3 names both conformance kits instead
+of "all 47 supplied fixtures".
 
 ```text
 You are an independent software engineer implementing the RoboLang Gate 2 participant `rl:robot:amr-07`.
 You have received a frozen specification bundle. It is your sole source of RoboLang requirements.
-Implement the participant independently in TypeScript, using the published Core 0.1 specification, reference simulation requirements, JSON schemas, conformance fixtures, and `robolang-sim-stdio` 0.1 binding.
+Implement the participant independently in TypeScript, using the published Core 0.1 and Core 0.2 specifications (implement a Core 0.2 receiver, which also accepts Core 0.1), reference simulation requirements, JSON schemas, conformance fixtures, and `robolang-sim-stdio` 0.1 binding.
 Work in this order:
 
 1. Study the bundle and identify the normative requirements.
-2. Implement Core 0.1 validation and the required receiver behavior.
-3. Implement the conformance `check` mode and evaluate all 47 supplied fixtures.
+2. Implement Core 0.2 validation and the required receiver behavior.
+3. Implement the conformance `check` mode and evaluate every supplied fixture of both conformance kits.
 4. Implement the `amr-07` participant, its local state transitions, authorization, commitments, custody, sequencing, sensing, timing, and messages.
 5. Implement the published standard-input/standard-output binding.
 6. Add independent tests and reproducible build/run instructions.
@@ -123,8 +133,8 @@ are, how to submit a question, and which tools exist. Those additions are record
 | Pre-installed libraries: name, version, integrity hash, source | |
 | Network egress policy: only the API endpoint (attach the rule set) | |
 | Filesystem layout: read-only bundle path, empty implementation path, nothing else mounted | |
-| Archive SHA-256 computed in the environment (must be `02bcc7d4…860ba1`) | |
-| Files after extraction (must be 61); SHA-256 of `MANIFEST.sha256` (must be `e6c9bb75…d104`); `sha256sum -c` result | |
+| Archive SHA-256 computed in the environment (must be `ba874251…da70`) | |
+| Files after extraction (must be 122); SHA-256 of `MANIFEST.sha256` (must be `f3164c5a…7e22`); `sha256sum -c` result | |
 | Transcript capture: mechanism, storage location, confirmed active | |
 | Q&A channel and intermediary | |
 | Confirmation that nothing from the RoboLang repository, including this document, is in the environment | |

@@ -208,6 +208,26 @@ def test_bundle_is_reproducible_and_verifiable(bundle, tmp_path):
     assert len(lines) == len(files(bundle)) - 1 and all(re.fullmatch(r"[0-9a-f]{64}  \S+", line) for line in lines)
 
 
+def test_archive_is_reproducible_and_holds_exactly_the_bundle(bundle, tmp_path):
+    import zipfile
+
+    first = bundle_tool.archive(bundle, tmp_path / "a.zip")
+    assert bundle_tool.archive(bundle, tmp_path / "b.zip") == first
+    assert (tmp_path / "a.zip").read_bytes() == (tmp_path / "b.zip").read_bytes()
+    with zipfile.ZipFile(tmp_path / "a.zip") as packed:
+        packed.extractall(tmp_path / "out")
+    assert files(tmp_path / "out") == files(bundle)
+    assert bundle_tool.verify(tmp_path / "out") == bundle_tool.verify(bundle)
+
+
+def test_archive_refuses_a_changed_bundle(bundle, tmp_path):
+    copy = tmp_path / "copy"
+    bundle_tool.build(copy)
+    (copy / "spec" / "core-v0.2.md").write_bytes(b"changed")
+    with pytest.raises(SystemExit):
+        bundle_tool.archive(copy, tmp_path / "x.zip")
+
+
 @pytest.mark.parametrize("change", ["edit", "extra", "missing"])
 def test_verify_detects_any_change(bundle, tmp_path, change):
     copy = tmp_path / "copy"
