@@ -151,12 +151,13 @@ def test_schemas_resolve_within_the_bundle(bundle):
         jsonschema.Draft202012Validator.check_schema(schema)
         refs = re.findall(r'"\$ref":\s*"([^"]*)"', path.read_text(encoding="utf-8"))
         assert refs and all(ref.startswith("#/") for ref in refs), path.name  # no external schema
-    validator = jsonschema.Draft202012Validator(
-        json.loads((bundle / "spec" / "core" / "message-0.1.schema.json").read_text(encoding="utf-8")))
-    for path in (bundle / "tests" / "fixtures" / "core" / "valid").glob("*.json"):
-        document = json.loads(path.read_text(encoding="utf-8"))
-        if document["schema"] == "robolang.core.message":
-            assert validator.is_valid(document), path.name
+    for version, kit in (("0.1", "core"), ("0.2", "core_v02")):  # 0030 audit A5: the 0.2 schema too
+        validator = jsonschema.Draft202012Validator(json.loads(
+            (bundle / "spec" / "core" / f"message-{version}.schema.json").read_text(encoding="utf-8")))
+        for path in (bundle / "tests" / "fixtures" / kit / "valid").glob("*.json"):
+            document = json.loads(path.read_text(encoding="utf-8"))
+            if document["schema"] == "robolang.core.message":
+                assert validator.is_valid(document), path.name
 
 
 # -------- links (A2, C) --------
