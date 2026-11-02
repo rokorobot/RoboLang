@@ -6,6 +6,7 @@ directory, and verifies a built bundle.
 
     python tools/interop_bundle.py build OUT_DIR [--rev REV]
     python tools/interop_bundle.py verify BUNDLE_DIR
+    python tools/interop_bundle.py archive BUNDLE_DIR OUT.zip
 
 With `--rev`, every file is read from that git revision, so a bundle built from the same commit
 is byte-identical on every platform. The example view is made by the view builder
@@ -13,6 +14,10 @@ is byte-identical on every platform. The example view is made by the view builde
 checkout is that commit and its code (`src/`, `tools/`) has no local change. Without `--rev`, the
 working tree is read with line endings normalized to LF, as git stores them: a candidate, never a
 freeze.
+
+`archive` packs a verified bundle into the one file that is delivered (freeze record, "Delivery"): a ZIP with
+the bundle's paths at its root, sorted, stored without compression, with a fixed date and permissions, so the same
+bundle always gives the same archive bytes and anyone can recompute its SHA-256.
 
 `verify` needs nothing from this repository: it checks that the directory holds exactly the files
 the manifest lists, with those hashes. `sha256sum -c MANIFEST.sha256` checks the hashes too.
@@ -24,6 +29,7 @@ import hashlib
 import json
 import subprocess
 import sys
+import zipfile
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
@@ -190,6 +196,18 @@ def verify(directory: Path) -> str:
     return hashlib.sha256(manifest).hexdigest()
 
 
+def archive(directory: Path, out: Path) -> str:
+    """Pack a verified bundle into a reproducible ZIP; return the archive's SHA-256."""
+    verify(directory)
+    with zipfile.ZipFile(out, "x", zipfile.ZIP_STORED) as packed:
+        for path in sorted(p for p in directory.rglob("*") if p.is_file()):
+            info = zipfile.ZipInfo(path.relative_to(directory).as_posix(), date_time=(1980, 1, 1, 0, 0, 0))
+            info.external_attr = 0o100444 << 16  # a regular, read-only file
+            info.create_system = 3  # Unix, so the permissions above are read
+            packed.writestr(info, path.read_bytes())
+    return hashlib.sha256(out.read_bytes()).hexdigest()
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[1])
     commands = parser.add_subparsers(dest="command", required=True)
@@ -198,9 +216,14 @@ def main() -> None:
     b.add_argument("--rev")
     v = commands.add_parser("verify")
     v.add_argument("bundle", type=Path)
+    a = commands.add_parser("archive")
+    a.add_argument("bundle", type=Path)
+    a.add_argument("out", type=Path)
     args = parser.parse_args()
     if args.command == "build":
         print(f"bundle {build(args.out, args.rev)}")
+    elif args.command == "archive":
+        print(f"archive {archive(args.bundle, args.out)}")
     else:
         print(f"verified {verify(args.bundle)}")
 

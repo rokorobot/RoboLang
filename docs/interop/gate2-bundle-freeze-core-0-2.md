@@ -166,6 +166,8 @@ bda0a701d5d729035b0e5955468d4f84e2468fa767e861d2ee9456440c7bfe7d  tests/fixtures
 - **Delivery.** As for the first bundle (owner requirement of 2026-10-28): before INTEROP-3 begins, this bundle is
   packed into one ZIP or TAR archive containing exactly the 122 files above. The archive is preserved, its own
   SHA-256 is recorded separately from the bundle ID, and only that archive is delivered. The independent author
-  never clones this repository. The archive is made with the protocol update (0030 J6 step 4).
+  never clones this repository. **Archive (made 2026-11-02, 0030 J6 step 4):** `robolang-gate2-bundle-f3164c5a.zip`,
+  SHA-256 `ba87425152ebf007fb7d740de90ec130b4151b2bb78f7bb5a95e83e93476da70`, 547,496 bytes, 122 files after
+  extraction. It is reproducible from this bundle with `tools/interop_bundle.py archive`.
 - **Launch.** INTEROP-3 needs the updated protocol, a verified model ID, the operator's attestation and the owner's
   authorization (0030 J6 steps 4 and 5).
