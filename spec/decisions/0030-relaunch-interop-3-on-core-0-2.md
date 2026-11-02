@@ -1,7 +1,8 @@
 # Decision record 0030: Relaunch INTEROP-3 on Core 0.2 (H3 gate 2)
 
 **Date:** 2026-11-01
-**Status:** **PROPOSED**, for owner review. Nothing is built, frozen or launched by this record.
+**Status:** **APPROVED by the owner, 2026-11-02**, with the recommended option for J1–J6. Nothing is built, frozen or
+launched by this record: each step of J6 needs its own authorization.
 **Amends:** [0023](0023-keep-interop-3-deferred.md) K1 (INTEROP-3 and INTEROP-4 deferred) and the gate 2 bundle
 contents of [0009](0009-gate-2-independent-interoperability.md) I3 and I12. All other 0009 rows stand.
 **Evidence and direction:** [STRATEGY](../../docs/STRATEGY.md) H3, second exit criterion: "Independent Core 0.2
