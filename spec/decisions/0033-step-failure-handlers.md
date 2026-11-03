@@ -1,9 +1,9 @@
 # Decision record 0033: RoboLang 1.5, step failure handlers
 
 **Date:** 2026-11-03
-**Status:** **PROPOSED.** Owner decisions of 2026-11-03: F5 and F6 below, and implementation after
-[0032](0032-holder-check.md). The rest needs the owner.
-**Applies to (when decided):** a new `robolang-v1.5.md` and `grammar-v1.5.ebnf`, IR schema 1.4, the run record,
+**Status:** **APPROVED by the owner, 2026-11-03**: F5 and F6 as the owner's options, the recommended option for F1–F4,
+F7 and F8. Implemented after [0032](0032-holder-check.md).
+**Applies to:** a new `robolang-v1.5.md` and `grammar-v1.5.ebnf`, IR schema 1.4, the run record,
 `simulation-v1.0.md`, `bridge.py`, `delegate_peer.py`, the language reference.
 **Evidence:** in 1.4 any failed step fails the run, and the reference says error handling and retry cannot be
 represented. A task cannot say "if the zone never clears, put the box back and tell the fleet".
@@ -55,4 +55,4 @@ task handover(robot arm, robot mobile, object box, location src, location handof
 
 ## 3. Needs the owner
 
-F1–F4, F7, F8.
+Nothing: F1–F8 decided.
