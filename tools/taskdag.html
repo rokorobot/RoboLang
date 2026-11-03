@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Task DAG</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+:root{--bg:#0f1115;--panel:#171a21;--line:#2a2f3a;--text:#e6e8ee;--dim:#8b93a5;
+--pending:#6b7280;--ready:#60a5fa;--progress:#f59e0b;--done:#22c55e}
+*{box-sizing:border-box}html,body{margin:0;height:100%;background:var(--bg);color:var(--text);
+font:13px/1.4 ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif}
+header{display:flex;gap:16px;align-items:center;padding:10px 16px;border-bottom:1px solid var(--line);background:var(--panel)}
+h1{font-size:14px;margin:0;font-weight:600}select{background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:6px;padding:4px 6px;max-width:420px}
+.bar{flex:1;max-width:360px;height:8px;background:var(--line);border-radius:4px;overflow:hidden;display:flex}
+.bar i{display:block;height:100%}.counts{color:var(--dim);white-space:nowrap}.counts b{color:var(--text)}
+.live{margin-left:auto;color:var(--dim);display:flex;gap:6px;align-items:center}.dot{width:8px;height:8px;border-radius:50%;background:#ef4444}.dot.on{background:var(--done)}
+main{position:absolute;top:49px;bottom:0;left:0;right:0;display:flex}#wrap{flex:1;overflow:hidden;cursor:grab}#wrap:active{cursor:grabbing}
+svg{width:100%;height:100%;display:block}aside{width:320px;border-left:1px solid var(--line);background:var(--panel);padding:14px;overflow:auto}
+aside h2{font-size:14px;margin:0 0 6px}aside .meta{color:var(--dim);margin-bottom:10px}aside pre{white-space:pre-wrap;font:12px/1.5 ui-monospace,monospace;color:#c9cfdb;margin:0}
+.legend span{display:inline-flex;align-items:center;gap:5px;margin-right:10px;color:var(--dim)}.legend i{width:10px;height:10px;border-radius:3px;display:inline-block}
+.node rect{stroke-width:1.5;rx:8}.node{cursor:pointer}.node text{fill:var(--text);font-size:12px}.node .sub{fill:var(--dim);font-size:11px}
+.node.sel rect{stroke:#fff;stroke-width:2.5}.edge{fill:none;stroke:#3a4150;stroke-width:1.5}.edge.done{stroke:#2f6b43}.edge.hot{stroke:var(--progress);stroke-dasharray:6 4;animation:flow 0.8s linear infinite}
+@keyframes flow{to{stroke-dashoffset:-10}}@keyframes pulse{50%{opacity:.45}}.node.in_progress rect{animation:pulse 1.6s ease-in-out infinite}
+.node.flash rect{stroke:#fff;stroke-width:3}.empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--dim);text-align:center;padding:40px}
+</style></head><body>
+<header><h1>Task DAG</h1><select id="list"></select>
+<div class="bar" id="bar"></div><div class="counts" id="counts"></div>
+<div class="legend"><span><i style="background:var(--pending)"></i>blocked</span><span><i style="background:var(--ready)"></i>ready</span><span><i style="background:var(--progress)"></i>in progress</span><span><i style="background:var(--done)"></i>completed</span></div>
+<div class="live"><span class="dot" id="dot"></span><span id="ago">connecting</span></div></header>
+<main><div id="wrap"><svg id="svg"><defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0L10,5L0,10z" fill="#4b5363"/></marker></defs><g id="vp"></g></svg></div>
+<aside id="side"><div class="meta">Click a task for details. Drag to pan, scroll to zoom, double-click to fit.</div></aside></main>
+<div class="empty" id="empty" hidden></div>
+<script>
+const LABEL={pending:'blocked',ready:'ready',in_progress:'in progress',completed:'completed'},W=230,H=58,GX=70,GY=18,COL={pending:'--pending',ready:'--ready',in_progress:'--progress',completed:'--done'};
+let state=null,pinned=null,current=null,selected=null,prev={},view=null,lastAt=0;
+const $=id=>document.getElementById(id),svg=$('svg'),vp=$('vp'),esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v);
+function kind(t,byId){if(t.status!=='pending')return t.status;return t.blockedBy.every(b=>byId[b]&&byId[b].status==='completed')?'ready':'pending'}
+function layout(tasks){const byId=Object.fromEntries(tasks.map(t=>[t.id,t])),layer={},seen={};
+  const depth=id=>{if(id in layer)return layer[id];if(seen[id])return 0;seen[id]=1;const t=byId[id];
+    return layer[id]=t.blockedBy.length?1+Math.max(...t.blockedBy.map(depth)):0};
+  tasks.forEach(t=>depth(t.id));const cols=[];tasks.forEach(t=>(cols[layer[t.id]]||(cols[layer[t.id]]=[])).push(t.id));
+  const pos={};cols.forEach((c,i)=>c.forEach((id,j)=>pos[id]=j));
+  const kids={};tasks.forEach(t=>t.blockedBy.forEach(b=>(kids[b]||(kids[b]=[])).push(t.id)));
+  const avg=(ids)=>ids.length?ids.reduce((s,i)=>s+pos[i],0)/ids.length:null;
+  for(let pass=0;pass<6;pass++){const fwd=pass%2===0;const order=fwd?cols.slice(1):cols.slice(0,-1).reverse();
+    order.forEach(c=>{c.forEach(id=>{const a=avg(fwd?byId[id].blockedBy:(kids[id]||[]));byId[id]._b=a===null?pos[id]:a});
+      c.sort((x,y)=>byId[x]._b-byId[y]._b);c.forEach((id,j)=>pos[id]=j)})}
+  const maxRows=Math.max(1,...cols.map(c=>c.length)),xy={};
+  cols.forEach((c,i)=>{const off=(maxRows-c.length)*(H+GY)/2;c.forEach((id,j)=>xy[id]={x:i*(W+GX),y:off+j*(H+GY)})});
+  return {xy,byId,w:cols.length*(W+GX)-GX,h:maxRows*(H+GY)-GY}}
+function fit(L){const r=svg.getBoundingClientRect(),pad=40,s=Math.min(1.2,(r.width-pad*2)/L.w,(r.height-pad*2)/L.h);
+  view={s,x:(r.width-L.w*s)/2,y:(r.height-L.h*s)/2};apply()}
+function apply(){vp.setAttribute('transform',`translate(${view.x},${view.y}) scale(${view.s})`)}
+function trunc(s,n){return s.length>n?s.slice(0,n-1)+'…':s}
+function render(){const lists=state.lists,ids=Object.keys(lists).sort((a,b)=>lists[b].mtime-lists[a].mtime);
+  if(!ids.length){$('empty').hidden=false;$('empty').innerHTML='No task lists yet in <code>'+esc(state.root)+'</code>.<br>They appear here as soon as an agent creates tasks.';vp.innerHTML='';$('list').innerHTML='';return}
+  $('empty').hidden=true;const want=pinned&&lists[pinned]?pinned:ids[0];
+  $('list').innerHTML=ids.map(id=>{const l=lists[id],d=l.tasks.filter(t=>t.status==='completed').length;
+    return `<option value="${esc(id)}"${id===want?' selected':''}>${esc((l.label?l.label+' · ':'')+(/^[0-9a-f-]{32,}$/i.test(id)?id.slice(0,8):id))} — ${d}/${l.tasks.length}</option>`}).join('');
+  const changedList=want!==current;current=want;const tasks=lists[want].tasks,L=layout(tasks);
+  const n={pending:0,ready:0,in_progress:0,completed:0};tasks.forEach(t=>n[kind(t,L.byId)]++);
+  $('bar').innerHTML=['completed','in_progress','ready','pending'].map(k=>`<i style="width:${100*n[k]/tasks.length}%;background:var(${COL[k]})"></i>`).join('');
+  $('counts').innerHTML=`<b>${n.completed}</b>/${tasks.length} done · <b>${n.in_progress}</b> running · ${n.ready} ready · ${n.pending} blocked`;
+  let out='';tasks.forEach(t=>t.blockedBy.forEach(b=>{const a=L.xy[b],c=L.xy[t.id],x1=a.x+W,y1=a.y+H/2,x2=c.x-2,y2=c.y+H/2,m=(x1+x2)/2;
+    const src=L.byId[b].status,cls=src==='completed'&&t.status==='in_progress'?'hot':src==='completed'?'done':'';
+    out+=`<path class="edge ${cls}" marker-end="url(#arr)" d="M${x1},${y1}C${m},${y1} ${m},${y2} ${x2},${y2}"/>`}));
+  tasks.forEach(t=>{const k=kind(t,L.byId),p=L.xy[t.id],c=css(COL[k]),flash=prev[want+t.id]&&prev[want+t.id]!==t.status?' flash':'';
+    const line2=k==='in_progress'&&t.activeForm?t.activeForm:(t.owner?'@'+t.owner:LABEL[k]);
+    out+=`<g class="node ${t.status}${t.id===selected?' sel':''}${flash}" data-id="${esc(t.id)}" transform="translate(${p.x},${p.y})">
+      <rect width="${W}" height="${H}" fill="var(--bg)" stroke="none"/><rect width="${W}" height="${H}" fill="${c}22" stroke="${c}"/><rect width="5" height="${H}" fill="${c}" stroke="none" rx="2"/>
+      <text x="14" y="23">${esc(trunc('#'+t.id+' '+t.subject,32))}</text><text class="sub" x="14" y="42">${esc(trunc(line2,36))}${k==='completed'?' ✓':''}</text>
+      <title>${esc(t.subject)}</title></g>`});
+  vp.innerHTML=out;tasks.forEach(t=>prev[want+t.id]=t.status);
+  if(changedList||!view)fit(L);vp._L=L;if(selected)detail(L.byId[selected])}
+function detail(t){if(!t){$('side').innerHTML='';return}const L=vp._L,k=kind(t,L.byId);
+  const blocks=Object.values(L.byId).filter(o=>o.blockedBy.includes(t.id)).map(o=>'#'+o.id);
+  $('side').innerHTML=`<h2>#${esc(t.id)} ${esc(t.subject)}</h2><div class="meta">${LABEL[k]}${t.owner?' · @'+esc(t.owner):''}<br>
+    blocked by: ${t.blockedBy.map(b=>'#'+esc(b)).join(', ')||'—'}<br>blocks: ${blocks.join(', ')||'—'}${t.activeForm?'<br>'+esc(t.activeForm):''}</div><pre>${esc(t.description)}</pre>`}
+vp.addEventListener('click',e=>{const g=e.target.closest('.node');if(!g)return;selected=g.dataset.id;render()});
+$('list').addEventListener('change',e=>{pinned=e.target.value;selected=null;render()});
+let drag=null;svg.addEventListener('mousedown',e=>drag={x:e.clientX-view.x,y:e.clientY-view.y});
+addEventListener('mouseup',()=>drag=null);addEventListener('mousemove',e=>{if(drag){view.x=e.clientX-drag.x;view.y=e.clientY-drag.y;apply()}});
+svg.addEventListener('wheel',e=>{e.preventDefault();const r=svg.getBoundingClientRect(),f=Math.exp(-e.deltaY*0.0015),mx=e.clientX-r.left,my=e.clientY-r.top;
+  view.x=mx-(mx-view.x)*f;view.y=my-(my-view.y)*f;view.s*=f;apply()},{passive:false});
+svg.addEventListener('dblclick',()=>vp._L&&fit(vp._L));addEventListener('resize',()=>vp._L&&fit(vp._L));
+setInterval(()=>{if(lastAt)$('ago').textContent='updated '+Math.round((Date.now()-lastAt)/1000)+'s ago'},1000);
+const es=new EventSource('/events');es.onmessage=e=>{state=JSON.parse(e.data);lastAt=Date.now();$('dot').classList.add('on');render()};
+es.onerror=()=>{$('dot').classList.remove('on');$('ago').textContent='reconnecting…'};
+</script></body></html>
