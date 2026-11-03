@@ -130,5 +130,9 @@
   "I216_grasp_while_held.json": [
     "I216",
     "/tasks/0/steps/3"
+  ],
+  "I217_wait_until_without_handler.json": [
+    "I217",
+    "/tasks/0/steps/0"
   ]
 }

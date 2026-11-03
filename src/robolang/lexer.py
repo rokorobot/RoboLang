@@ -36,14 +36,14 @@ class Lexer:
         self._pos = 0
         self._line = 1
         self._col = 1
-        self.reserved = RESERVED  # RESERVED_BY_VERSION[...] after a `robolang 1.2;`, `1.3;` or `1.4;` marker
-        self.verify = False  # `@verify` is an annotation after a `robolang 1.3;` or `1.4;` marker only
+        self.reserved = RESERVED  # RESERVED_BY_VERSION[...] after a `robolang 1.2;` to `1.5;` marker
+        self.verify = False  # `@verify` is an annotation after a `robolang 1.3;`, `1.4;` or `1.5;` marker only
 
     def set_language(self, version: str):
         """Switch to the words and annotations of language `version` (a `robolang` marker was read)."""
         if version in RESERVED_BY_VERSION:
             self.reserved = RESERVED_BY_VERSION[version]
-        self.verify = version in ("1.3", "1.4")
+        self.verify = version in ("1.3", "1.4", "1.5")
 
     # -------- helpers --------
 

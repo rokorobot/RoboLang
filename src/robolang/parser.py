@@ -39,7 +39,7 @@ from .tokens import (
 )
 
 DEFAULT_VERSION = "1.1"  # the version of a file without a marker
-SUPPORTED_VERSIONS = ("1.1", "1.2", "1.3", "1.4")
+SUPPORTED_VERSIONS = ("1.1", "1.2", "1.3", "1.4", "1.5")
 SUPPORTED_VERSION = DEFAULT_VERSION  # kept for existing imports
 MAX_CONDITION_DEPTH = 8  # spec/robolang-v1.2.md section 3.3
 MAX_IF_DEPTH = 4  # spec/robolang-v1.4.md section 3.3 (E216)
@@ -105,8 +105,13 @@ class _Parser:
 
     @property
     def _typed(self) -> bool:
-        """True in 1.3 and 1.4 files: goal blocks, outcome atoms and sensor parameters."""
-        return self._language in ("1.3", "1.4")
+        """True in 1.3 to 1.5 files: goal blocks, outcome atoms and sensor parameters."""
+        return self._language in ("1.3", "1.4", "1.5")
+
+    @property
+    def _branching(self) -> bool:
+        """True in 1.4 and 1.5 files: `if`, `else` and `fail`."""
+        return self._language in ("1.4", "1.5")
 
     def _error(self, code: str, message: str, span: Span | None = None) -> NoReturn:
         raise RoboLangError(Diagnostic(code, message, span or self._tok.span, filename=self._filename))
@@ -126,7 +131,7 @@ class _Parser:
         starts = self._at(TokenKind.RBRACE) or self._at(TokenKind.LPAREN)
         starts = starts or self._at(TokenKind.AT_SAFETY) or self._at(TokenKind.AT_VERIFY)
         starts = starts or self._at_keyword(*STATEMENTS, *CONDITIONS, "not", "pre", "plan")
-        starts = starts or (self._language == "1.4" and self._at_keyword("if", "fail"))
+        starts = starts or (self._branching and self._at_keyword("if", "fail"))
         skip = not (error.code == "E202" and starts)
         while skip and not self._at_boundary():
             self._advance()
@@ -516,7 +521,7 @@ class _Parser:
             self._error("E211", f"'@safety' between statements {_NOT_IN_V1_1}; annotate the task instead")
         if self._at(TokenKind.IDENT):
             self._error("E203", f"unknown statement '{token.text}'; expected one of {_listed(STATEMENTS)}")
-        if self._language == "1.4" and self._at_keyword("if", "fail"):
+        if self._branching and self._at_keyword("if", "fail"):
             self._advance()
             return self._if(token) if token.text == "if" else self._fail(token)
         if not self._at_keyword(*STATEMENTS):
@@ -526,7 +531,7 @@ class _Parser:
 
     def _fail(self, start: Token) -> ast.Fail:
         reason = self._string("a reason in quotes after 'fail'")
-        end = self._semicolon("the fail statement")
+        end = self._plain_end("fail", "the fail statement")
         return ast.Fail(reason, start.span.to(end.span))
 
     def _if(self, start: Token) -> ast.If:
@@ -553,8 +558,8 @@ class _Parser:
         return ast.If(condition, then, orelse, start.span.to((orelse or then).span))
 
     def _stray_goal(self) -> bool:
-        """In a 1.4 plan or branch, a `goal` block that is not the first item of a branch: read it and report E208."""
-        if not (self._language == "1.4" and self._at_keyword("goal")):
+        """In a 1.4 or 1.5 plan or branch, a `goal` block that is not first in a branch: read it and report E208."""
+        if not (self._branching and self._at_keyword("goal")):
             return False
         span = self._tok.span
         self._goal()
@@ -580,28 +585,57 @@ class _Parser:
                                     start.span.to(end.span), filename=self._filename))
         return ast.Branch(goal, tuple(statements), start.span.to(end.span))
 
+    def _end(self, after: str):
+        """
+        `;`, or in 1.5 a failure handler `else { ... }` (decision 0033). Returns (handler or None, the last token or
+        branch, for the span). A handler counts as a nesting level, as an `if` does (E216).
+        """
+        if not (self._language == "1.5" and self._at_keyword("else")):
+            return None, self._semicolon(after)
+        start = self._advance()
+        if self._ifs == MAX_IF_DEPTH:  # recorded, not raised, as for `if`
+            self._record(Diagnostic(
+                "E216", f"a failure handler is nested deeper than {MAX_IF_DEPTH} levels; "
+                "an 'if' and a step's 'else' each count as one", start.span, filename=self._filename))
+        self._ifs += 1
+        try:
+            handler = self._branch("else")
+        finally:
+            self._ifs -= 1
+        return handler, handler
+
+    def _plain_end(self, what: str, after: str):
+        """`;` after a statement that takes no failure handler. In 1.5 an `else { ... }` there is read and reported."""
+        if not (self._language == "1.5" and self._at_keyword("else")):
+            return self._semicolon(after)
+        start = self._advance()
+        self._record(Diagnostic("E201", f"'{what}' takes no failure handler; only move, grasp, place, inspect and "
+                                        "wait until may be followed by 'else { ... }'", start.span,
+                                filename=self._filename))
+        return self._branch("else")  # read, so the braces stay balanced
+
     def _move(self, start: Token) -> ast.Move:
         robot = self._name("a robot name after 'move'")
         self._expect_keyword("to", "after the robot name")
         target = self._name("a location name after 'to'")
         if self._at_keyword("with_approach", "in_region"):
             self._error("E211", f"'{self._tok.text}' {_NOT_IN_V1_1}")
-        end = self._semicolon("the move statement")
-        return ast.Move(robot, target, start.span.to(end.span))
+        handler, end = self._end("the move statement")
+        return ast.Move(robot, target, start.span.to(end.span), handler)
 
     def _grasp(self, start: Token) -> ast.Grasp:
         robot = self._name("a robot name after 'grasp'")
         obj = self._name("an object name")
-        end = self._semicolon("the grasp statement")
-        return ast.Grasp(robot, obj, start.span.to(end.span))
+        handler, end = self._end("the grasp statement")
+        return ast.Grasp(robot, obj, start.span.to(end.span), handler)
 
     def _place(self, start: Token) -> ast.Place:
         robot = self._name("a robot name after 'place'")
         obj = self._name("an object name")
         self._expect_keyword("at", "after the object name")
         target = self._name("a location name after 'at'")
-        end = self._semicolon("the place statement")
-        return ast.Place(robot, obj, target, start.span.to(end.span))
+        handler, end = self._end("the place statement")
+        return ast.Place(robot, obj, target, start.span.to(end.span), handler)
 
     def _inspect(self, start: Token) -> ast.Inspect:
         robot = self._name("a robot name after 'inspect'")
@@ -612,14 +646,14 @@ class _Parser:
             self._error("E209", f"inspect must name its sensor: expected '{shown}', found {self._found()}{hint}")
         self._advance()
         sensor = self._sensor("using")
-        end = self._semicolon("the inspect statement")
-        return ast.Inspect(robot, obj, sensor, start.span.to(end.span))
+        handler, end = self._end("the inspect statement")
+        return ast.Inspect(robot, obj, sensor, start.span.to(end.span), handler)
 
     def _wait(self, start: Token) -> ast.WaitFor | ast.WaitUntil:
         if self._at_keyword("for"):
             self._advance()
             duration = self._duration("after 'wait for'")
-            end = self._semicolon("the wait statement")
+            end = self._plain_end("wait for", "the wait statement")
             return ast.WaitFor(duration, start.span.to(end.span))
         if self._at_keyword("until"):
             self._advance()
@@ -631,8 +665,8 @@ class _Parser:
                 )
             self._advance()
             timeout = self._duration("after 'timeout'")
-            end = self._semicolon("the wait statement")
-            return ast.WaitUntil(condition, timeout, start.span.to(end.span))
+            handler, end = self._end("the wait statement")
+            return ast.WaitUntil(condition, timeout, start.span.to(end.span), handler)
         self._error("E201", f"expected 'for' or 'until' after 'wait', found {self._found()}")
 
     def _communicate(self, start: Token) -> ast.Communicate:
@@ -641,7 +675,7 @@ class _Parser:
         channel = self._string("a channel name in quotes after 'to'")
         self._expect_keyword("with", "after the channel")
         message = self._string("a message in quotes after 'with'")
-        end = self._semicolon("the communicate statement")
+        end = self._plain_end("communicate", "the communicate statement")
         return ast.Communicate(robot, channel, message, start.span.to(end.span))
 
     def _duration(self, where: str) -> ast.Duration:

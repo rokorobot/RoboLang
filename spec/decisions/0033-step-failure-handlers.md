@@ -2,8 +2,9 @@
 
 **Date:** 2026-11-03
 **Status:** **APPROVED by the owner, 2026-11-03**: F5 and F6 as the owner's options, the recommended option for F1–F4,
-F7 and F8. Implemented after [0032](0032-holder-check.md).
-**Applies to:** a new `robolang-v1.5.md` and `grammar-v1.5.ebnf`, IR schema 1.4, the run record,
+F7 and F8. Implemented after [0032](0032-holder-check.md). **IMPLEMENTED** in the front end, Task IR 1.4 and
+simulation (record 1.4); the language reference and benchmark prompts still teach 1.4 (section 5).
+**Applies to:** [`robolang-v1.5.md`](../robolang-v1.5.md), `grammar-v1.5.ebnf`, IR schema 1.4, the run record,
 `simulation-v1.0.md`, `bridge.py`, `delegate_peer.py`, the language reference.
 **Evidence:** in 1.4 any failed step fails the run, and the reference says error handling and retry cannot be
 represented. A task cannot say "if the zone never clears, put the box back and tell the fleet".
@@ -56,3 +57,28 @@ task handover(robot arm, robot mobile, object box, location src, location handof
 ## 3. Needs the owner
 
 Nothing: F1–F8 decided.
+
+## 4. Correction to the example in section 1
+
+The example cannot succeed when the zone does not clear. A handler's `goal` adds to the task goal, as F2 makes it
+"like a branch", so that path needs the box both at `dst` and at `src` (`S301`). The plan also goes on after the
+handler, so `mobile` then looks for the box at `handoff`. The implementation follows F2 as written. A handler can
+retry (F5), report and go on, or clean up and `fail`. A **fallback outcome**, a handler that replaces the goal and
+ends the run, is not expressible: it would need a new rule (a handler `goal` that replaces the goal of its path) and a
+way to end a plan successfully. That is an open question for the owner.
+
+## 5. Implementation notes
+
+- Syntax: `<step> else { ... }` in place of `;`. In IR, `else` and `goal_else` on the step, both or neither.
+- F2: the two sides of a handled step are named `ok` and `failed` in path labels (`E309`, Core export). Handler steps
+  are numbered after the handled step, labelled `<step>.else.<n>`.
+- F3: `E316`, and `I217` in the IR reader. `else` after `wait for`, `communicate` or `fail` is `E201`.
+- F4: record 1.4 adds `handled` (the code taken over) to every step; a handler's goal entries have `from`
+  `"<step>.else"`.
+- F6: a task with a handler is a branching task. `delegate` already refuses a branching plan with two or more robots,
+  so no peer step can have a handler. This is stricter than F6, which bans handlers only after the custody point.
+- F8: a grasp that always fails is still `E315` when it has a handler.
+- The ROS 2 backend refuses a handler with `S508`.
+- Not in this change: the shipped language reference and the benchmark prompts. Moving them to 1.5 changes at least
+  one benchmark label (`x_failover_on_fault`, "switch robots after a step fails", becomes expressible), so it needs
+  benchmark errata ([0025](0025-bench-2.md)) and its own approval.

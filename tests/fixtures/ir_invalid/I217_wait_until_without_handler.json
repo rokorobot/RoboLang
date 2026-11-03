@@ -1,0 +1,51 @@
+{
+  "ir_schema": "robolang.task-ir",
+  "ir_schema_version": "1.4",
+  "language_version": "1.5",
+  "tasks": [
+    {
+      "name": "wait_for_cell",
+      "parameters": [
+        {
+          "name": "r",
+          "type": "robot"
+        },
+        {
+          "name": "dst",
+          "type": "location"
+        },
+        {
+          "name": "cell",
+          "type": "region"
+        }
+      ],
+      "safety": [],
+      "preconditions": [],
+      "goal": [
+        {
+          "kind": "robot_at",
+          "robot": "r",
+          "location": "dst"
+        }
+      ],
+      "steps": [
+        {
+          "kind": "wait_until",
+          "condition": {
+            "kind": "region_clear",
+            "region": "cell"
+          },
+          "timeout": {
+            "value": "20",
+            "unit": "s"
+          }
+        },
+        {
+          "kind": "move",
+          "robot": "r",
+          "target": "dst"
+        }
+      ]
+    }
+  ]
+}

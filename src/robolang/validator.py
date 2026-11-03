@@ -27,9 +27,15 @@ from .parser import ParseResult, parse_recovering
 
 
 def _parts(statement: ast.Statement):
-    """The shape `paths.goalless_path` reads: None for a plain statement, "fail", or the two branches of an if."""
+    """
+    The shape `paths.goalless_path` reads: None for a plain statement, "fail", the two branches of an if, or for a
+    1.5 step with a failure handler its two outcomes: "ok" (nothing more) and "failed" (the handler).
+    """
     if isinstance(statement, ast.Fail):
         return "fail"
+    handler = getattr(statement, "handler", None)
+    if handler is not None:
+        return (), False, handler.statements, handler.goal is not None, ("ok", "failed")
     if not isinstance(statement, ast.If):
         return None
     orelse = statement.orelse
@@ -45,9 +51,11 @@ def _holding_kinds(statement: ast.Statement):
         return "fail"
     if isinstance(statement, ast.If):
         return "if", statement.then.statements, statement.orelse.statements if statement.orelse else ()
+    handler = statement.handler.statements if getattr(statement, "handler", None) is not None else None
     if isinstance(statement, (ast.Grasp, ast.Place)):
-        return ("grasp" if isinstance(statement, ast.Grasp) else "place"), statement.robot.text, statement.obj.text
-    return None
+        kind = "grasp" if isinstance(statement, ast.Grasp) else "place"
+        return kind, statement.robot.text, statement.obj.text, handler
+    return None if handler is None else ("step", None, None, handler)
 
 
 def double_grasp_message(robot: str, obj: str, holder: str, held: str, earlier: str) -> str:
@@ -74,8 +82,9 @@ class _Validator:
         self._filename = filename
         self._params: dict[str, ParamType] = {}
         self.errors: list[Diagnostic] = []
-        self._typed_sensors = False  # RoboLang 1.3 and 1.4: sensors are parameters
-        self._branching = False  # RoboLang 1.4
+        self._typed_sensors = False  # RoboLang 1.3 to 1.5: sensors are parameters
+        self._branching = False  # RoboLang 1.4 and 1.5
+        self._handlers = False  # RoboLang 1.5
 
     def _report(self, code: str, message: str, span: Span):
         self.errors.append(Diagnostic(code, message, span, filename=self._filename))
@@ -107,8 +116,9 @@ class _Validator:
 
     def _program(self, program: ast.Program):
         language = program.version.version if program.version is not None else None
-        self._typed_sensors = language in ("1.3", "1.4")
-        self._branching = language == "1.4"
+        self._typed_sensors = language in ("1.3", "1.4", "1.5")
+        self._branching = language in ("1.4", "1.5")
+        self._handlers = language == "1.5"
         seen: dict[str, ast.Name] = {}
         for task in program.tasks:
             first = seen.setdefault(task.name.text, task.name)
@@ -156,6 +166,19 @@ class _Validator:
                 where = "the last statement of an if or else branch" if branch else "inside an if or else branch"
                 self._report("E313", f"'fail' is allowed only as {where}; nothing may follow it", statement.span)
             self._checked(self._statement, statement)
+            self._handler(statement)
+
+    def _handler(self, statement: ast.Statement):
+        """RoboLang 1.5 (decision 0033): a `wait until` needs a failure handler (E316); a handler is a branch."""
+        handler = getattr(statement, "handler", None)
+        if self._handlers and isinstance(statement, ast.WaitUntil) and handler is None:
+            self._report("E316", "in RoboLang 1.5 a 'wait until' needs a failure handler: add 'else { ... }' to say "
+                                 "what happens when it times out", statement.span)
+        if handler is not None:
+            if handler.goal is not None:
+                for condition in handler.goal.conditions:
+                    self._checked(self._condition, condition)
+            self._statements(handler.statements, branch=True)
 
     def _goal(self, task: ast.Task):
         if task.goal is not None:

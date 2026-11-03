@@ -1,0 +1,23 @@
+(* RoboLang v1.5 grammar, implemented in src/robolang/parser.py.
+   RoboLang 1.4 plus step failure handlers (decision 0033). Differences from grammar-v1.4.ebnf are marked [1.5].
+   Everything not shown here is as in grammar-v1.4.ebnf (and grammar-v1.3.ebnf below it).
+   Normative text, diagnostics and static rules: spec/robolang-v1.5.md *)
+
+version_decl  = "robolang" , NUMBER , ";" ;                (* [1.5] NUMBER written exactly 1.5 *)
+
+statement     = ( move | grasp | place | inspect | wait_until ) , ( ";" | handler )        (* [1.5] *)
+              | ( wait_for | communicate | fail ) , ";"
+              | if ;
+
+wait_for      = "wait" , "for" , duration ;
+wait_until    = "wait" , "until" , condition , "timeout" , duration ;
+handler       = "else" , branch ;                                                           (* [1.5] *)
+
+(* [1.5] Static rules the grammar does not express:
+   - a handler counts as one nesting level, as an "if" does: at most 4 in all (E216).
+   - "else" after wait for, communicate or fail: E201.
+   - every "wait until" has a handler: E316.
+   - "fail" only as the last statement of a branch, a handler included: E313.
+   - every path, the "ok" and "failed" sides of each handled step included, has a goal or ends in "fail": E309. *)
+
+(* Reserved words in a 1.5 file: those of grammar-v1.4.ebnf; 1.5 adds none. *)

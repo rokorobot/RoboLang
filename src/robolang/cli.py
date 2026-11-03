@@ -268,7 +268,8 @@ def _world_diagnostic(args, inputs: _RunInputs, finding: Finding):
     node = next(t for t in inputs.loaded.program.tasks if t.name.text == inputs.task.name)
     statement = (node.annotations if part == "safety" else node.plan.statements)[index]
     for side, position in zip(parts[1::2], parts[2::2]):  # into the branch, then to the statement in it
-        branch = statement.then if side == "then" else statement.orelse
+        branch = statement.then if side == "then" else statement.orelse if hasattr(statement, "then") \
+            else statement.handler  # a 1.5 failure handler is under `else`
         statement = branch.statements[int(position) - 1]
     span = statement.span
     return Diagnostic(finding.code, finding.message, span, filename=args.file)
@@ -375,6 +376,12 @@ def _plan_lines(steps, typed: bool, number: str = "") -> list[str]:
     for i, step in enumerate(steps, 1):
         label = f"{number}{i}."
         lines.append(f"{label} {_step(step, typed)}")
+        handler = task_ir.handler_of(step)
+        if handler is not None:  # RoboLang 1.5: run when the step fails (decision 0033)
+            lines.append("  if it fails:")
+            if step.goal_else:
+                lines.append(f"    goal: {'; '.join(_condition(c, typed) for c in step.goal_else)}")
+            lines += [f"    {line}" for line in _plan_lines(handler, typed, f"{label[:-1]}.")]
         if isinstance(step, task_ir.If):
             for word, goal, body in (("then", step.goal_then, step.then), ("else", step.goal_else, step.orelse)):
                 if not body:

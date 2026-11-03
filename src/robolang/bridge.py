@@ -100,7 +100,8 @@ def flatten_atoms(conditions: tuple[ir.Condition, ...]) -> tuple[ir.Condition, .
 def path_goals(task: ir.Task) -> list[tuple[str, tuple[ir.Condition, ...] | None]]:
     """
     The effective goal of every path of the plan (decision 0027 B2): (label, conditions), or None as the
-    conditions of a path that ends in `fail`. The label is "then", "else/then", ... and "" for no `if` at all.
+    conditions of a path that ends in `fail`. The label is "then", "else/then", ... and "" for no `if` at all; a step
+    with a failure handler (RoboLang 1.5, decision 0033) has the sides "ok" (it succeeded) and "failed" (its handler).
     """
     out: list[tuple[str, tuple[ir.Condition, ...] | None]] = []
 
@@ -109,8 +110,10 @@ def path_goals(task: ir.Task) -> list[tuple[str, tuple[ir.Condition, ...] | None
             if isinstance(step, ir.Fail):
                 out.append((label, None))
                 return
-            if isinstance(step, ir.If):
-                sides = (("then", step.then, step.goal_then), ("else", step.orelse, step.goal_else))
+            handler = ir.handler_of(step)
+            if isinstance(step, ir.If) or handler is not None:
+                sides = (("then", step.then, step.goal_then), ("else", step.orelse, step.goal_else)) \
+                    if isinstance(step, ir.If) else (("ok", (), None), ("failed", handler, step.goal_else))
                 for side, body, branch_goal in sides:
                     walk((*body, *steps[i + 1:]), goal + (branch_goal or ()), f"{label}/{side}" if label else side)
                 return

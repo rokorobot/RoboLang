@@ -7,12 +7,13 @@ of ir-schema-v1.0.md section 2 (duties 1 and 2): strict JSON, the schema of the 
 the static rules of the compiler again. The version fields are claims, never evidence.
 
 Codes: I1xx are form errors (the bytes, the shape, the vocabulary of the claimed schema version),
-I2xx are meaning errors (the compiler's static rules E301 to E315, restated on IR). A task with a
+I2xx are meaning errors (the compiler's static rules E301 to E316, restated on IR). A task with a
 form error is not checked for meaning; other tasks are. Nothing here executes anything.
 """
 
 from __future__ import annotations
 import re
+import dataclasses
 from dataclasses import dataclass, fields
 from decimal import Decimal
 
@@ -24,7 +25,7 @@ from .paths import double_grasps, goalless_path
 from .tokens import DURATION_UNITS, RESERVED, RESERVED_BY_VERSION, SPEED_UNITS, VERIFY_KEYS
 from .validator import double_grasp_message, fail_reason_problem
 
-SCHEMA_VERSIONS = tuple(ir.IR_SCHEMA_VERSIONS.values())  # "1.0" to "1.3": the index is the schema's rank
+SCHEMA_VERSIONS = tuple(ir.IR_SCHEMA_VERSIONS.values())  # "1.0" to "1.4": the index is the schema's rank
 LANGUAGE_OF = {schema: language for language, schema in ir.IR_SCHEMA_VERSIONS.items()}
 SAFETY_KINDS = ("max_speed",)
 MAX_DECIMAL_CHARS = 64
@@ -69,6 +70,8 @@ _USES = {
 }
 _PARAM_TYPES = {"robot": 0, "object": 0, "location": 0, "region": 0, "sensor": 2}
 _BRANCH_STEPS = {"if": 3, "fail": 3}  # kind -> first schema rank that has it
+_HANDLED = ("move", "grasp", "place", "inspect", "wait_until")  # may have a failure handler from schema 1.4 (rank 4)
+_HANDLER_KEYS = ("else", "goal_else")
 
 
 @dataclass(frozen=True)
@@ -259,8 +262,8 @@ class _Reader:
             return node["kind"]
         return None
 
-    def strings(self, node, ptr: str, required, string_keys) -> bool:
-        ok = self.shape(node, ptr, required)
+    def strings(self, node, ptr: str, required, string_keys, optional=()) -> bool:
+        ok = self.shape(node, ptr, required, optional)
         for key in string_keys:
             if key in node:
                 ok = self.string(node[key], _pointer(ptr, key)) and ok
@@ -337,23 +340,48 @@ class _Reader:
             if "condition" in node:
                 ok = self.condition(node["condition"], _pointer(ptr, "condition")) and ok
             return self.branch(node, ptr, "then", ifs) and self.branch(node, ptr, "else", ifs) and ok
+        handled = _HANDLER_KEYS if kind in _HANDLED and self._rank >= 4 else ()
         if kind in _STEPS:
             keys = _STEPS[kind]
-            return self.strings(node, ptr, ("kind", *keys), keys)
+            return self.strings(node, ptr, ("kind", *keys), keys, handled) and self.handler(node, ptr, ifs)
         if kind == "wait_for":
             ok = self.shape(node, ptr, ("kind", "duration"))
             if "duration" in node:
                 ok = self.quantity(node["duration"], _pointer(ptr, "duration"), DURATION_UNITS, False) and ok
             return ok
         if kind == "wait_until":
-            ok = self.shape(node, ptr, ("kind", "condition", "timeout"))
+            ok = self.shape(node, ptr, ("kind", "condition", "timeout"), handled)
             if "condition" in node:
                 ok = self.condition(node["condition"], _pointer(ptr, "condition")) and ok
             if "timeout" in node:
                 ok = self.quantity(node["timeout"], _pointer(ptr, "timeout"), DURATION_UNITS, False) and ok
-            return ok
+            return self.handler(node, ptr, ifs) and ok
         self.error("I114", f"unknown step kind '{kind}'", _pointer(ptr, "kind"))
         return False
+
+    def handler(self, node: dict, ptr: str, ifs: int) -> bool:
+        """Schema 1.4 (decision 0033): `else`, the non-empty steps run when the step fails, with `goal_else`."""
+        if not isinstance(node, dict) or self._rank < 4 or not any(key in node for key in _HANDLER_KEYS):
+            return True
+        if ifs >= MAX_IF_DEPTH:
+            self.error("I123", f"failure handler nested deeper than {MAX_IF_DEPTH} levels (an 'if' and a handler "
+                               "each count as one)", ptr)
+            return False
+        ok = True
+        for key in _HANDLER_KEYS:
+            if key not in node:
+                self.error("I111", f"missing field '{key}': a failure handler has both 'else' and 'goal_else'", ptr)
+                ok = False
+        if "else" in node:
+            ok = self.steps(node["else"], _pointer(ptr, "else"), ifs + 1) and ok
+        goal = node.get("goal_else")
+        if goal is not None:
+            at = _pointer(ptr, "goal_else")
+            ok = self.conditions(goal, at) and ok
+            if isinstance(goal, list) and not goal:
+                self.error("I120", "a handler goal needs at least one condition (use null for none)", at)
+                ok = False
+        return ok
 
     # -------- task (form) --------
 
@@ -479,6 +507,7 @@ class _Reader:
                 pointers[id(step)] = _pointer(at, i)
                 if step["kind"] == "if":
                     locate(step["then"], _pointer(_pointer(at, i), "then"))
+                if "else" in step:
                     locate(step["else"], _pointer(_pointer(at, i), "else"))
 
         locate(steps, ptr)
@@ -534,6 +563,13 @@ class _Reader:
                 self.sensor(node["sensor"], _pointer(ptr, "sensor"), "sensor_ok")
 
     def step_meaning(self, node: dict, ptr: str):
+        self.plain_step_meaning(node, ptr)
+        if "else" in node and node["kind"] != "if":  # a failure handler is a branch (decision 0033 F2)
+            if node["goal_else"] is not None:
+                self.condition_list(node["goal_else"], _pointer(ptr, "goal_else"))
+            self.steps_meaning(node["else"], _pointer(ptr, "else"), branch=True)
+
+    def plain_step_meaning(self, node: dict, ptr: str):
         kind = node["kind"]
         if kind == "if":
             self.condition_meaning(node["condition"], _pointer(ptr, "condition"))
@@ -551,6 +587,8 @@ class _Reader:
         elif kind == "wait_until":
             self.condition_meaning(node["condition"], _pointer(ptr, "condition"))
             self.positive(node["timeout"]["value"], "timeout", _pointer(_pointer(ptr, "timeout"), "value"))
+            if self._rank >= 4 and "else" not in node:
+                self.error("I217", "in IR schema 1.4 a 'wait_until' needs a failure handler ('else') (E316)", ptr)
         else:
             self.uses(node, ptr)
             if kind == "inspect":
@@ -628,7 +666,7 @@ def _condition(node: dict) -> ir.Condition:
 
 def _of(cls, node: dict):
     """A dataclass with only string fields, read from the JSON keys the schema gives them."""
-    return cls(**{f.name: node[f.metadata.get("key", f.name)] for f in fields(cls)})
+    return cls(**{f.name: node[f.metadata.get("key", f.name)] for f in fields(cls) if not f.kw_only})
 
 
 _CONDITIONS = (ir.RobotReady, ir.RegionClear, ir.ObjectExists, ir.SensorOk, ir.ObjectAt, ir.RobotAt, ir.Holding)
@@ -643,6 +681,8 @@ def _parts(step: dict):
     """The shape `paths.goalless_path` reads, from a step object."""
     if step["kind"] == "fail":
         return "fail"
+    if step["kind"] != "if" and "else" in step:
+        return (), False, step["else"], step["goal_else"] is not None, ("ok", "failed")
     if step["kind"] != "if":
         return None
     return step["then"], step["goal_then"] is not None, step["else"], step["goal_else"] is not None
@@ -655,12 +695,20 @@ def _holding_kinds(step: dict):
         return "fail"
     if kind == "if":
         return "if", step["then"], step["else"]
+    handler = step.get("else")
     if kind in ("grasp", "place"):
-        return kind, step["robot"], step["object"]
-    return None
+        return kind, step["robot"], step["object"], handler
+    return None if handler is None else ("step", None, None, handler)
 
 
 def _step(node: dict) -> ir.Step:
+    step = _plain_step(node)
+    if node["kind"] == "if" or "else" not in node:
+        return step
+    return dataclasses.replace(step, orelse=tuple(_step(s) for s in node["else"]), goal_else=_goal(node["goal_else"]))
+
+
+def _plain_step(node: dict) -> ir.Step:
     kind = node["kind"]
     if kind == "if":
         return ir.If(_condition(node["condition"]), tuple(_step(s) for s in node["then"]),

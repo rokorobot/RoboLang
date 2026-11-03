@@ -85,6 +85,8 @@ def execute(task: ir.Task, bindings: dict[str, str], site: Site, ops: Operations
         for step in task.steps:
             if not isinstance(step, (ir.Move, ir.Grasp, ir.Place, ir.WaitFor)):
                 raise BackendFailure("S508", f"{step.KIND} is not supported by this backend yet")
+            if ir.handler_of(step) is not None:
+                raise BackendFailure("S508", "a failure handler is not supported by this backend yet")
             if isinstance(step, (ir.Move, ir.Grasp, ir.Place)) and bindings[step.robot] != site.robot:
                 raise BackendFailure("S507", "step names a robot outside this site")
             if isinstance(step, (ir.Move, ir.Place)):

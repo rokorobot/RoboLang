@@ -1,0 +1,22 @@
+// RoboLang v1.5 fixture: valid
+// expect: ok
+// why: every wait until has a handler (E316); the inner handler puts the box back and ends in fail
+
+robolang 1.5;
+
+task deliver(robot r, object box, location src, location dst, region zone) {
+    goal { object_at box dst; }
+    plan {
+        move r to src;
+        grasp r box;
+        wait until region_clear zone timeout 10 s else {
+            communicate r to "fleet" with "ZONE_BUSY";
+            wait until region_clear zone timeout 30 s else {
+                place r box at src;
+                fail "the zone did not clear";
+            }
+        }
+        move r to dst;
+        place r box at dst;
+    }
+}
