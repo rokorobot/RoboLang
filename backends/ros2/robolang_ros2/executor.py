@@ -27,7 +27,7 @@ class Operations(Protocol):
     def detach(self, model: str) -> None: ...
     def wait_ms(self, duration: int) -> None: ...
     def versions(self) -> dict[str, str]: ...
-    def observe(self, marker_ids: list[int]) -> observe.Snapshot: ...
+    def observe(self, marker_ids: list[int], ready: bool = False) -> observe.Snapshot: ...
 
 
 @dataclass(frozen=True)
@@ -94,7 +94,7 @@ def execute(task: ir.Task, bindings: dict[str, str], site: Site, ops: Operations
             if isinstance(step, ir.Grasp):
                 _grasp_pose(site, bindings[step.obj])
         if task.preconditions:
-            snap = _observe(task, bindings, site, ops, record)
+            snap = _observe(task, bindings, site, ops, record, observe.uses_ready(task.preconditions))
             for entry, condition in zip(record["preconditions"], task.preconditions):
                 entry["result"] = observe.evaluate(condition, bindings, site, snap, policy)
             results = [entry["result"] for entry in record["preconditions"]]
@@ -148,7 +148,7 @@ def execute(task: ir.Task, bindings: dict[str, str], site: Site, ops: Operations
                 raise
             entry["status"] = "succeeded"
             entry["t_end_ms"] = ops.now_ms()
-        snap = _observe(task, bindings, site, ops, record)
+        snap = _observe(task, bindings, site, ops, record, observe.uses_ready(task.goal))
         for entry, condition in zip(record["goal"], task.goal):
             entry["result"] = observe.evaluate(condition, bindings, site, snap, policy)
         results = [entry["result"] for entry in record["goal"]]
@@ -170,14 +170,18 @@ def execute(task: ir.Task, bindings: dict[str, str], site: Site, ops: Operations
     return record
 
 
-def _observe(task: ir.Task, bindings: dict[str, str], site: Site, ops: Operations, record: dict):
+def _observe(task: ir.Task, bindings: dict[str, str], site: Site, ops: Operations, record: dict,
+             ready: bool = False):
     """One sensor snapshot, kept in the record so every verdict can be audited."""
-    snap = ops.observe(sorted(set(site.markers.values())))
-    record["observations"].append({
+    snap = ops.observe(sorted(set(site.markers.values())), ready)
+    entry = {
         "t_ms": snap.t_ms,
         "markers": {str(k): _reading(v) for k, v in sorted(snap.markers.items())},
         "tool": _reading(snap.tool), "gripper": _reading(snap.gripper),
-    })
+    }
+    if ready:
+        entry["ready"] = _reading(snap.ready)
+    record["observations"].append(entry)
     return snap
 
 
@@ -203,6 +207,9 @@ def _check_observable(condition, bindings: dict[str, str], site: Site) -> None:
         if isinstance(condition, ir.ObjectAt) and bindings[condition.location] not in site.regions:
             raise BackendFailure("S507", f"no region for location {bindings[condition.location]!r}")
         if isinstance(condition, ir.Holding) and bindings[condition.robot] != site.robot:
+            raise BackendFailure("S507", "condition names a robot outside this site")
+    elif isinstance(condition, ir.RobotReady):
+        if bindings[condition.robot] != site.robot:
             raise BackendFailure("S507", "condition names a robot outside this site")
     elif isinstance(condition, ir.RobotAt):
         if bindings[condition.robot] != site.robot:
