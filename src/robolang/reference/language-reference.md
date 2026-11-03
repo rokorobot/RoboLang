@@ -143,7 +143,8 @@ levels deep. A fact the world does not state is unknown, and unknown is never tr
 - Every `move`, `grasp`, and `place` requires its robot to be ready. Robots can move to any declared
   location. A robot carrying an object takes it along.
 - `grasp r o` requires `r` to have a gripper and hold nothing, and requires present object `o` to be
-  at `r`'s current location. Move there first.
+  at `r`'s current location. Move there first. A robot holds one object at a time: `place` it before the
+  same robot grasps another, or before another robot grasps it (`E315`).
 - `place r o at dst` requires `r` to hold `o` and be at `dst`. Move there first.
 - `inspect r o using s` requires sensor `s` to be mounted on `r` and available. The object can be
   anywhere.
@@ -170,6 +171,7 @@ are:
 | `E307` | empty string (for example `fail ""`) |
 | `E309` | a path has no `goal` condition and does not end in `fail` |
 | `E313` | `fail` that is not the last statement of a branch |
+| `E315` | `grasp` of an object a robot still holds, or by a robot that still holds one: `place` it first |
 | `E310` | quoted sensor name used instead of a sensor parameter |
 
 ## Complete example

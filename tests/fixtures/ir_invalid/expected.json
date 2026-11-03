@@ -126,5 +126,9 @@
   "I215_fail_reason_too_long.json": [
     "I215",
     "/tasks/0/steps/0/else/0/reason"
+  ],
+  "I216_grasp_while_held.json": [
+    "I216",
+    "/tasks/0/steps/3"
   ]
 }

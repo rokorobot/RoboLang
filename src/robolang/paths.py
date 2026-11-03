@@ -38,3 +38,53 @@ def _run(steps, states: dict[bool, str], parts: Parts) -> dict[bool, str]:
 def goalless_path(steps, task_has_goal: bool, parts: Parts) -> str | None:
     """Label of a path that ends with no goal condition and no `fail` ("" for a plan with no `if`), or None."""
     return _run(steps, {task_has_goal: ""}, parts).get(False)
+
+
+# kinds(step) -> None (no effect on holding), "fail", ("if", then_steps, else_steps),
+# or ("grasp" | "place", robot parameter, object parameter)
+Kinds = Callable[[object], "None | str | tuple"]
+
+
+def double_grasps(steps, kinds: Kinds) -> list[tuple[object, object, str, str]]:
+    """
+    Grasps that fail on every world where their path is taken (decision 0032, E315): a `grasp` of an object
+    that a robot parameter still holds, or by a robot parameter that still holds an object, since that robot's
+    `grasp` and before any `place`. A `place` ends what is known: any two parameters may be bound to one
+    entity, so after it only "the placing robot holds nothing" is certain, and that is never an error. A path
+    stops at its first such grasp, as the run would. Returns (grasp, earlier grasp, holder robot, held object)
+    once per grasp, in the order found.
+    """
+    found: list[tuple[object, object, str, str]] = []
+    grasps: list[object] = []  # every grasp in the order visited; a fact names one by its index
+
+    def run(steps, states: set[frozenset]) -> set[frozenset]:
+        # a state is the facts (robot, object, grasp index) known on one or more paths; each step is visited once
+        for step in steps:
+            part = kinds(step)
+            if part is None:
+                continue
+            if part == "fail":
+                return set()
+            if part[0] == "if":
+                states = run(part[1], states) | run(part[2], states)
+                continue
+            kind, robot, obj = part
+            if kind == "place":
+                states = {frozenset()} if states else set()
+                continue
+            after, clashes = set(), []
+            for facts in states:
+                clash = next((f for f in facts if f[0] == robot), None) or next((f for f in facts if f[1] == obj), None)
+                if clash is None:
+                    after.add(facts | {(robot, obj, len(grasps))})
+                else:
+                    clashes.append(clash)
+            if clashes:  # the earliest grasp, so the report does not depend on set order
+                holder, held, earlier = min(clashes, key=lambda f: f[2])
+                found.append((step, grasps[earlier], holder, held))
+            grasps.append(step)
+            states = after
+        return states
+
+    run(steps, {frozenset()})
+    return found
