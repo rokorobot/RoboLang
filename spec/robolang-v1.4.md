@@ -71,9 +71,10 @@ with no statements.
 | `E309` | In 1.4: a path with no goal condition that does not end in `fail`; the message names the path (static) |
 | `E313` | `fail` that is not the last statement of an `if` or `else` branch (static) |
 | `E314` | A `fail` reason longer than 200 characters, or with a control character (static) |
+| `E315` | In every version: on some path, a `grasp` of an object a robot parameter still holds, or by a robot parameter that still holds an object, since that `grasp` and before any `place`; that path fails on every world ([0032](decisions/0032-holder-check.md), static) |
 | `E208` | Also: an empty branch, a misplaced `goal` block (syntax) |
 | `E212` | Also: `if`, `else` or `fail` used as a name in a 1.4 file |
 
 ## 6. Compatibility
 
-Nothing changes for 1.1, 1.2 and 1.3 files. `E213` now lists `1.1, 1.2, 1.3 and 1.4`.
+Nothing changes for 1.1, 1.2 and 1.3 files, except `E315`, which applies to every version: a program it rejects could never succeed. `E213` now lists `1.1, 1.2, 1.3 and 1.4`.

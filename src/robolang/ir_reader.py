@@ -7,7 +7,7 @@ of ir-schema-v1.0.md section 2 (duties 1 and 2): strict JSON, the schema of the 
 the static rules of the compiler again. The version fields are claims, never evidence.
 
 Codes: I1xx are form errors (the bytes, the shape, the vocabulary of the claimed schema version),
-I2xx are meaning errors (the compiler's static rules E301 to E312, restated on IR). A task with a
+I2xx are meaning errors (the compiler's static rules E301 to E315, restated on IR). A task with a
 form error is not checked for meaning; other tasks are. Nothing here executes anything.
 """
 
@@ -20,9 +20,9 @@ from . import ir
 from .core import ReadError, read_document
 from .diagnostics import MAX_ERRORS
 from .parser import MAX_CONDITION_DEPTH, MAX_IF_DEPTH
-from .paths import goalless_path
+from .paths import double_grasps, goalless_path
 from .tokens import DURATION_UNITS, RESERVED, RESERVED_BY_VERSION, SPEED_UNITS, VERIFY_KEYS
-from .validator import fail_reason_problem
+from .validator import double_grasp_message, fail_reason_problem
 
 SCHEMA_VERSIONS = tuple(ir.IR_SCHEMA_VERSIONS.values())  # "1.0" to "1.3": the index is the schema's rank
 LANGUAGE_OF = {schema: language for language, schema in ir.IR_SCHEMA_VERSIONS.items()}
@@ -459,13 +459,32 @@ class _Reader:
         self.condition_list(task["preconditions"], _pointer(ptr, "preconditions"))
         if self._rank >= 2:
             self.condition_list(task.get("goal", []), _pointer(ptr, "goal"))
+        before = len(self.errors)
         self.steps_meaning(task["steps"], _pointer(ptr, "steps"), branch=False)
+        if len(self.errors) == before:  # names and types are right, so the grasps can be followed
+            self.holders(task["steps"], _pointer(ptr, "steps"))
         if self._rank >= 3 and not task["goal"]:
             label = goalless_path(task["steps"], False, _parts)
             if label is not None:
                 where = f"path {label}" if label else "the plan"
                 self.error("I209", f"no goal on {where}: the task 'goal' is empty and a path that does not end in "
                                    "'fail' has no branch goal", _pointer(ptr, "goal"))
+
+    def holders(self, steps: list, ptr: str):
+        """E315 (decision 0032): a grasp that fails whenever its path is taken, as the object or robot is held."""
+        pointers: dict[int, str] = {}
+
+        def locate(steps: list, at: str):
+            for i, step in enumerate(steps):
+                pointers[id(step)] = _pointer(at, i)
+                if step["kind"] == "if":
+                    locate(step["then"], _pointer(_pointer(at, i), "then"))
+                    locate(step["else"], _pointer(_pointer(at, i), "else"))
+
+        locate(steps, ptr)
+        for grasp, earlier, holder, held in double_grasps(steps, _holding_kinds):
+            message = double_grasp_message(grasp["robot"], grasp["object"], holder, held, pointers[id(earlier)])
+            self.error("I216", message, pointers[id(grasp)])
 
     def steps_meaning(self, steps: list, ptr: str, branch: bool):
         """`branch`: the steps are an `if` or `else` body, where a `fail` may be the last step (I214)."""
@@ -627,6 +646,18 @@ def _parts(step: dict):
     if step["kind"] != "if":
         return None
     return step["then"], step["goal_then"] is not None, step["else"], step["goal_else"] is not None
+
+
+def _holding_kinds(step: dict):
+    """The shape `paths.double_grasps` reads, from a step object."""
+    kind = step["kind"]
+    if kind == "fail":
+        return "fail"
+    if kind == "if":
+        return "if", step["then"], step["else"]
+    if kind in ("grasp", "place"):
+        return kind, step["robot"], step["object"]
+    return None
 
 
 def _step(node: dict) -> ir.Step:

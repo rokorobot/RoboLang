@@ -85,6 +85,7 @@ the whole document; a missing field is reported at the object that lacks it). Th
 | `I213` | An empty `verify` object (the compiler never writes one) |
 | `I214` | A `fail` step that is not the last step of an `if` or `else` branch (E313) |
 | `I215` | A `fail` reason longer than 200 characters, or with a control character (E314) |
+| `I216` | A `grasp` of an object a robot parameter still holds, or by a robot parameter that still holds an object (E315); checked only when the task has no other meaning error in its steps |
 
 `I211` is not used: a repeated `@verify` key (E311) cannot be written in a JSON object, where it is `I103`.
 

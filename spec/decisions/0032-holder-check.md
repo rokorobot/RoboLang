@@ -1,10 +1,10 @@
 # Decision record 0032: Holder check in `validate`
 
 **Date:** 2026-11-03
-**Status:** **PROPOSED.** Owner decided on 2026-11-03 that this record is implemented before [0033](0033-step-failure-handlers.md).
-H1–H4 need the owner.
-**Applies to (when decided):** `validator.py`, the language reference's diagnostics table, `robolang-v1.4.md` section on
-static checks.
+**Status:** **APPROVED by the owner, 2026-11-03** (recommended option for H1–H4), and implemented before
+[0033](0033-step-failure-handlers.md). **IMPLEMENTED** with the refinement of H1 in section 5.
+**Applies to:** `validator.py` and `ir_reader.py` (through `paths.double_grasps`), the language reference,
+`robolang-v1.4.md` section 5, `ir-reader-v0.1.md` (`I216`).
 **Evidence:** an object has one holder at a time. Only `grasp` and `place` change who holds an object
 (`sim/executor.py`, `Grasp` and `Place`); world events do not. A plan that grasps an object a robot already holds fails
 at run time with `S212` or `S215`, and today that is found only by `simulate`.
@@ -37,4 +37,16 @@ needs a declared owner, a handoff, or read-only use, or the file does not valida
 
 ## 4. Needs the owner
 
-H1–H4.
+Nothing: H1–H4 approved.
+
+## 5. Implementation notes
+
+- **H1, refined.** Any `place` ends what is known about **every** robot on that path, not only the placing one. Two
+  robot parameters and two object parameters may each be bound to one entity, so after `place R O` a fact about
+  another robot may no longer hold. Keeping it could reject a program that can succeed; dropping it only misses some
+  errors. The check stays certain.
+- The check runs only on a task whose plan steps have no other error, so a wrong name does not add an `E315`.
+- The IR reader restates it as `I216`, located by JSON Pointer, as it restates the other static rules.
+- Benchmark set "ask" tasks `i15_two_bowls_one_gripper` and `i16_two_containers_one_crane` have attempts that one robot
+  grasps a second object. They are now rejected with `E315` instead of failing with `S212` at run time. The frozen
+  labels (`attempt_fails_with` `S212`) are unchanged; `tests/test_bench_ask.py` maps them.

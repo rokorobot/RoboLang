@@ -1,0 +1,59 @@
+{
+  "ir_schema": "robolang.task-ir",
+  "ir_schema_version": "1.3",
+  "language_version": "1.4",
+  "tasks": [
+    {
+      "name": "handoff",
+      "parameters": [
+        {
+          "name": "arm",
+          "type": "robot"
+        },
+        {
+          "name": "mobile",
+          "type": "robot"
+        },
+        {
+          "name": "box",
+          "type": "object"
+        },
+        {
+          "name": "src",
+          "type": "location"
+        }
+      ],
+      "safety": [],
+      "preconditions": [],
+      "goal": [
+        {
+          "kind": "holding",
+          "robot": "mobile",
+          "object": "box"
+        }
+      ],
+      "steps": [
+        {
+          "kind": "move",
+          "robot": "arm",
+          "target": "src"
+        },
+        {
+          "kind": "grasp",
+          "robot": "arm",
+          "object": "box"
+        },
+        {
+          "kind": "move",
+          "robot": "mobile",
+          "target": "src"
+        },
+        {
+          "kind": "grasp",
+          "robot": "mobile",
+          "object": "box"
+        }
+      ]
+    }
+  ]
+}

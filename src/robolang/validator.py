@@ -6,7 +6,7 @@ Checks a parsed program for errors that the grammar cannot express: duplicate
 and undeclared names, names used with the wrong type, out-of-range values,
 conflicting speed limits and empty strings (E301-E308), and in 1.3 a missing goal, a string
 where a sensor parameter belongs, and a repeated or out-of-range @verify (E309-E312); in 1.4 a path
-with no goal (E309) and a misplaced `fail` (E313).
+with no goal (E309) and a misplaced `fail` (E313); in every version a grasp of something still held (E315).
 
 `check` and `check_file` are the complete front end: lex, parse, then validate.
 They only read source text and never touch an adapter.
@@ -22,7 +22,7 @@ from pathlib import Path
 from . import nodes as ast
 from .diagnostics import MAX_ERRORS, Diagnostic, RoboLangError
 from .nodes import ParamType, Span
-from .paths import goalless_path
+from .paths import double_grasps, goalless_path
 from .parser import ParseResult, parse_recovering
 
 
@@ -37,6 +37,24 @@ def _parts(statement: ast.Statement):
         statement.then.statements, statement.then.goal is not None,
         orelse.statements if orelse else (), bool(orelse and orelse.goal is not None),
     )
+
+
+def _holding_kinds(statement: ast.Statement):
+    """The shape `paths.double_grasps` reads."""
+    if isinstance(statement, ast.Fail):
+        return "fail"
+    if isinstance(statement, ast.If):
+        return "if", statement.then.statements, statement.orelse.statements if statement.orelse else ()
+    if isinstance(statement, (ast.Grasp, ast.Place)):
+        return ("grasp" if isinstance(statement, ast.Grasp) else "place"), statement.robot.text, statement.obj.text
+    return None
+
+
+def double_grasp_message(robot: str, obj: str, holder: str, held: str, earlier: str) -> str:
+    """E315 and its IR form I216 (decision 0032)."""
+    if holder == robot:
+        return f"'grasp {robot} {obj}': '{robot}' already holds '{held}' (grasped at {earlier}); place it first"
+    return f"'grasp {robot} {obj}': '{obj}' is still held by '{holder}' (grasped at {earlier}); place it first"
 
 
 def _article(param_type: ParamType) -> str:
@@ -120,7 +138,16 @@ class _Validator:
             for condition in task.pre.conditions:
                 self._condition(condition)
         self._goal(task)
+        before = len(self.errors)
         self._statements(task.plan.statements, branch=False)
+        if len(self.errors) == before:  # names and types are right, so the plan's grasps can be followed
+            self._holders(task.plan.statements)
+
+    def _holders(self, statements: tuple[ast.Statement, ...]):
+        """E315 (decision 0032): a grasp that fails whenever its path is taken, as the object or robot is held."""
+        for grasp, earlier, holder, held in double_grasps(statements, _holding_kinds):
+            at = f"{earlier.span.line}:{earlier.span.column}"
+            self._report("E315", double_grasp_message(grasp.robot.text, grasp.obj.text, holder, held, at), grasp.span)
 
     def _statements(self, statements: tuple[ast.Statement, ...], branch: bool):
         """`branch`: the statements are the body of an if or else, where `fail` may be the last one (E313)."""

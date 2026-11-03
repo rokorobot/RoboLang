@@ -78,7 +78,10 @@ def test_infeasible_attempt_fails_for_its_reason_and_its_fix_succeeds(task_id):
     task = SET3[task_id]
     checked, result = run_in(task, answer(f"{task_id}.attempt"))
     code = result.failure.code if result else checked.codes[0]
-    assert code == task["attempt_fails_with"] and task["why"]
+    # the S212 attempts (one robot grasps a second object) are rejected by validate since decision 0032;
+    # the frozen label keeps the run-time code they hit before
+    expected = "E315" if task["attempt_fails_with"] == "S212" else task["attempt_fails_with"]
+    assert code == expected and task["why"]
     if "fix_patch" in task:
         _, fixed = run_in(task, answer(f"{task_id}.attempt"), task["fix_patch"])
         assert fixed is not None and fixed.state == "SUCCEEDED"
