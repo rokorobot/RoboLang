@@ -43,7 +43,12 @@ if handle is None or not handle.accepted:
     sys.exit("ready goal rejected")
 result = handle.get_result_async()
 spin_until(result.done, 120)
-spin_until(lambda: False, 1.0)  # settle
+# Settle: wait until no joint moves more than 1 mrad in 0.5 s of wall time (at most 20 s).
+for _ in range(40):
+    before = dict(joints)
+    spin_until(lambda: False, 0.5)
+    if all(abs(joints[j] - before.get(j, 1e9)) < 0.001 for j in JOINTS):
+        break
 error = max(abs(joints[j] - q) for j, q in zip(JOINTS, READY))
 print(f"ready: max joint error {error:.4f} rad")
 sys.exit(0 if result.done() and result.result().result.error_code == 0 and error < 0.02 else 1)
