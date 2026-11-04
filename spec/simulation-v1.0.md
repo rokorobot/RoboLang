@@ -847,3 +847,42 @@ flattened atoms in the same order, for instance a robot choice with one goal on 
 a path ends in `fail`, the goal is not exportable: exit 6, code `X603`, naming decision 0027 B7 and saying to use `--core 0.2`, which exports one alternative per
 distinct path goal ([export-goal 6](export-goal-v0.1.md)).
 `delegate` does not take a branching plan that binds two or more robots (`robots_unsupported`).
+
+## 13. RoboLang 1.5: failure handlers
+
+Decision record [0033](decisions/0033-step-failure-handlers.md); language in [robolang-v1.5.md](robolang-v1.5.md).
+A 1.5 task without handlers runs exactly as a 1.4 task.
+
+### 13.1 Step numbers and path labels
+
+As in 12.1, with a handled step followed by the steps of its handler: in **source order, depth first**, the handled
+step, then its handler's steps, each with its own nested steps. A handler's steps are labelled under `.else.`:
+`3.else.1`, `3.else.2.else.1`. A fault or a cancellation may be put on any of these steps.
+
+### 13.2 Execution
+
+- A handled step that succeeds runs as in section 4. Its handler's steps are `not_run`, and the run goes on with the
+  step after the handler.
+- A handled step that fails, for any step failure of section 4.5 or 4.6 (a scripted fault `S251` included), changes
+  nothing: its requirements and faults are checked before its effect. Time a `wait until` waited has passed. The step
+  is recorded `failed` with the code in `handled`, and the run does **not** fail: the handler runs. It adds nothing to
+  the effective goal (decision 0034). When it ends without failing, the run goes on with the step after the handled
+  step.
+- A failure inside a handler is handled by that step's own handler if it has one; otherwise it fails the run, as in
+  4.6. A `fail` in a handler fails the run with `S262`.
+- A cancellation before a step of a handler cancels the run as in 4.6.
+
+### 13.3 Run record 1.4
+
+A 1.5 source writes `run_record_schema_version` `1.4` and embeds Task IR 1.4. Earlier sources write their records
+unchanged, byte for byte. The key order is that of record 1.3 with one key added to every `steps[]` entry, after
+`status`: **`handled`**, the code of the failure the step's handler took over (for example `"S241"`), else `null`.
+A handled step is written without its `else`: the handler's steps are entries of their own. A run that succeeds on a
+path through a handler shows it in the step's `handled` code; it is judged on the same goal as any other run.
+
+### 13.4 Core
+
+As in 12.4, with the `ok` and `failed` sides of a handled step as the two sides of an `if`. A handler adds no goal,
+so its side has the goal of the `ok` side unless it ends in `fail`. Core 0.1 exports a task whose handlers all end
+without `fail`; a handler that ends in `fail` makes the paths differ (`X603`), as a branch that ends in `fail` does.
+Core 0.2 exports one alternative per distinct path goal, at most 16 (decision 0028 Q2).

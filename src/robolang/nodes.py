@@ -175,6 +175,7 @@ class Move:
     robot: Name
     target: Name
     span: Span
+    handler: Branch | None = None  # RoboLang 1.5: `else { ... }`, run when the step fails (decision 0033)
 
 
 @dataclass(frozen=True)
@@ -182,6 +183,7 @@ class Grasp:
     robot: Name
     obj: Name
     span: Span
+    handler: Branch | None = None  # RoboLang 1.5: `else { ... }`, run when the step fails (decision 0033)
 
 
 @dataclass(frozen=True)
@@ -190,6 +192,7 @@ class Place:
     obj: Name
     target: Name
     span: Span
+    handler: Branch | None = None  # RoboLang 1.5: `else { ... }`, run when the step fails (decision 0033)
 
 
 @dataclass(frozen=True)
@@ -198,6 +201,7 @@ class Inspect:
     obj: Name
     sensor: StringLit | Name  # a Name in 1.3, as in SensorOk
     span: Span
+    handler: Branch | None = None  # RoboLang 1.5: `else { ... }`, run when the step fails (decision 0033)
 
 
 @dataclass(frozen=True)
@@ -211,6 +215,7 @@ class WaitUntil:
     condition: Condition
     timeout: Duration
     span: Span
+    handler: Branch | None = None  # RoboLang 1.5: `else { ... }`, run when the step fails (decision 0033)
 
 
 @dataclass(frozen=True)
@@ -252,6 +257,7 @@ class If:
 
 
 Statement = Union[Move, Grasp, Place, Inspect, WaitFor, WaitUntil, Communicate, If, Fail]
+HANDLED = (Move, Grasp, Place, Inspect, WaitUntil)  # the statements that may take a failure handler (RoboLang 1.5)
 
 
 # -------- structure --------

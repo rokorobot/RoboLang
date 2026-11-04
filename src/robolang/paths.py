@@ -9,7 +9,8 @@ paths: a path is summarised by whether it has a goal yet, and one example label 
 from __future__ import annotations
 from typing import Callable
 
-# parts(step) -> None (a plain step), "fail", or (then_steps, then_has_goal, else_steps, else_has_goal)
+# parts(step) -> None (a plain step), "fail", or (then_steps, then_has_goal, else_steps, else_has_goal[, sides]):
+# an `if`, or in 1.5 a step with a failure handler, whose sides are named ("ok", "failed") instead of ("then", "else")
 Parts = Callable[[object], "None | str | tuple"]
 
 
@@ -25,10 +26,11 @@ def _run(steps, states: dict[bool, str], parts: Parts) -> dict[bool, str]:
             continue
         if part == "fail":
             return {}
-        then_steps, then_goal, else_steps, else_goal = part
+        then_steps, then_goal, else_steps, else_goal, *named = part
+        first, second = named[0] if named else ("then", "else")
         after: dict[bool, str] = {}
         for has_goal, label in states.items():
-            for side, branch, goal in (("then", then_steps, then_goal), ("else", else_steps, else_goal)):
+            for side, branch, goal in ((first, then_steps, then_goal), (second, else_steps, else_goal)):
                 for key, found in _run(branch, {has_goal or goal: _join(label, side)}, parts).items():
                     after.setdefault(key, found)
         states = after
@@ -40,8 +42,9 @@ def goalless_path(steps, task_has_goal: bool, parts: Parts) -> str | None:
     return _run(steps, {task_has_goal: ""}, parts).get(False)
 
 
-# kinds(step) -> None (no effect on holding), "fail", ("if", then_steps, else_steps),
-# or ("grasp" | "place", robot parameter, object parameter)
+# kinds(step) -> None (no effect on holding, no handler), "fail", ("if", then_steps, else_steps),
+# or (kind, robot parameter, object parameter, handler steps or None) where kind is "grasp", "place" or "step"
+# (any other step with a 1.5 failure handler; robot and object are then None)
 Kinds = Callable[[object], "None | str | tuple"]
 
 
@@ -68,22 +71,26 @@ def double_grasps(steps, kinds: Kinds) -> list[tuple[object, object, str, str]]:
             if part[0] == "if":
                 states = run(part[1], states) | run(part[2], states)
                 continue
-            kind, robot, obj = part
+            kind, robot, obj, handler = part
+            before = states
             if kind == "place":
                 states = {frozenset()} if states else set()
-                continue
-            after, clashes = set(), []
-            for facts in states:
-                clash = next((f for f in facts if f[0] == robot), None) or next((f for f in facts if f[1] == obj), None)
-                if clash is None:
-                    after.add(facts | {(robot, obj, len(grasps))})
-                else:
-                    clashes.append(clash)
-            if clashes:  # the earliest grasp, so the report does not depend on set order
-                holder, held, earlier = min(clashes, key=lambda f: f[2])
-                found.append((step, grasps[earlier], holder, held))
-            grasps.append(step)
-            states = after
+            elif kind == "grasp":
+                after, clashes = set(), []
+                for facts in states:
+                    clash = next((f for f in facts if f[0] == robot), None) or next((f for f in facts if f[1] == obj),
+                                                                                    None)
+                    if clash is None:
+                        after.add(facts | {(robot, obj, len(grasps))})
+                    else:
+                        clashes.append(clash)
+                if clashes:  # the earliest grasp, so the report does not depend on set order
+                    holder, held, earlier = min(clashes, key=lambda f: f[2])
+                    found.append((step, grasps[earlier], holder, held))
+                grasps.append(step)
+                states = after
+            if handler is not None:  # the step failed and had no effect, then its handler ran (decision 0033 F8)
+                states = states | run(handler, before)
         return states
 
     run(steps, {frozenset()})

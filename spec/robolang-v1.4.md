@@ -77,4 +77,4 @@ with no statements.
 
 ## 6. Compatibility
 
-Nothing changes for 1.1, 1.2 and 1.3 files, except `E315`, which applies to every version: a program it rejects could never succeed. `E213` now lists `1.1, 1.2, 1.3 and 1.4`.
+Nothing changes for 1.1, 1.2 and 1.3 files, except `E315`, which applies to every version: a program it rejects could never succeed. `E213` now lists `1.1, 1.2, 1.3 and 1.4` (`1.1` to `1.5` since [RoboLang 1.5](robolang-v1.5.md)).

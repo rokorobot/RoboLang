@@ -1,0 +1,91 @@
+{
+  "ir_schema": "robolang.task-ir",
+  "ir_schema_version": "1.4",
+  "language_version": "1.5",
+  "tasks": [
+    {
+      "name": "check_box",
+      "parameters": [
+        {
+          "name": "r",
+          "type": "robot"
+        },
+        {
+          "name": "box",
+          "type": "object"
+        },
+        {
+          "name": "src",
+          "type": "location"
+        },
+        {
+          "name": "home",
+          "type": "location"
+        },
+        {
+          "name": "cell",
+          "type": "region"
+        },
+        {
+          "name": "cam",
+          "type": "sensor"
+        }
+      ],
+      "safety": [],
+      "preconditions": [],
+      "goal": [
+        {
+          "kind": "robot_at",
+          "robot": "r",
+          "location": "home"
+        }
+      ],
+      "steps": [
+        {
+          "kind": "if",
+          "condition": {
+            "kind": "region_clear",
+            "region": "cell"
+          },
+          "then": [
+            {
+              "kind": "move",
+              "robot": "r",
+              "target": "src",
+              "else": [
+                {
+                  "kind": "communicate",
+                  "robot": "r",
+                  "channel": "ops",
+                  "message": "cannot reach src"
+                }
+              ]
+            },
+            {
+              "kind": "inspect",
+              "robot": "r",
+              "object": "box",
+              "sensor": "cam",
+              "else": [
+                {
+                  "kind": "communicate",
+                  "robot": "r",
+                  "channel": "ops",
+                  "message": "camera unavailable"
+                }
+              ]
+            }
+          ],
+          "else": [],
+          "goal_then": null,
+          "goal_else": null
+        },
+        {
+          "kind": "move",
+          "robot": "r",
+          "target": "home"
+        }
+      ]
+    }
+  ]
+}

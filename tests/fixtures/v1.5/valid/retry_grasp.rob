@@ -1,0 +1,17 @@
+// RoboLang v1.5 fixture: valid
+// expect: ok
+// why: a failed grasp is retried once by its handler (decision 0033 F5)
+
+robolang 1.5;
+
+task pick(robot r, object box, location src, location dst) {
+    goal { object_at box dst; }
+    plan {
+        move r to src;
+        grasp r box else {
+            grasp r box;
+        }
+        move r to dst;
+        place r box at dst;
+    }
+}

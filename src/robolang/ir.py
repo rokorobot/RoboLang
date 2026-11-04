@@ -1,6 +1,7 @@
 """
 Versioned task IR for RoboLang (spec/ir-schema-v1.0.md; schema 1.1 for RoboLang 1.2: ir-schema-v1.1.md;
-schema 1.2 for RoboLang 1.3: ir-schema-v1.2.md; schema 1.3 for RoboLang 1.4: ir-schema-v1.3.md).
+schema 1.2 for RoboLang 1.3: ir-schema-v1.2.md; schema 1.3 for RoboLang 1.4: ir-schema-v1.3.md; schema 1.4 for
+RoboLang 1.5: ir-schema-v1.4.md).
 
 The IR is a description of validated tasks with source details removed:
 no spans, comments or formatting. Two sources that differ only in layout
@@ -28,12 +29,17 @@ IR_SCHEMA = "robolang.task-ir"
 IR_SCHEMA_VERSION = "1.0"
 LANGUAGE_VERSION = DEFAULT_VERSION
 # Language version -> the IR schema version it compiles to (ir-schema-v1.1.md section 1).
-IR_SCHEMA_VERSIONS = {"1.1": "1.0", "1.2": "1.1", "1.3": "1.2", "1.4": "1.3"}
+IR_SCHEMA_VERSIONS = {"1.1": "1.0", "1.2": "1.1", "1.3": "1.2", "1.4": "1.3", "1.5": "1.4"}
 
 
 def _key(name: str):
     """Field whose JSON key differs from its Python attribute name."""
     return field(metadata={"key": name})
+
+
+def _handler():
+    """Schema 1.4 (RoboLang 1.5, decision 0033): the steps run when this step fails; None (no key) without one."""
+    return field(default=None, kw_only=True, metadata={"key": "else", "omit_none": True})
 
 
 @dataclass(frozen=True)
@@ -155,6 +161,7 @@ class Move:
     KIND: ClassVar[str] = "move"
     robot: str
     target: str
+    orelse: tuple[Step, ...] | None = _handler()
 
 
 @dataclass(frozen=True)
@@ -162,6 +169,7 @@ class Grasp:
     KIND: ClassVar[str] = "grasp"
     robot: str
     obj: str = _key("object")
+    orelse: tuple[Step, ...] | None = _handler()
 
 
 @dataclass(frozen=True)
@@ -170,6 +178,7 @@ class Place:
     robot: str
     obj: str = _key("object")
     target: str = _key("target")
+    orelse: tuple[Step, ...] | None = _handler()
 
 
 @dataclass(frozen=True)
@@ -180,6 +189,7 @@ class Inspect:
     robot: str
     obj: str = _key("object")
     sensor: str = _key("sensor")
+    orelse: tuple[Step, ...] | None = _handler()
 
 
 @dataclass(frozen=True)
@@ -193,6 +203,7 @@ class WaitUntil:
     KIND: ClassVar[str] = "wait_until"
     condition: Condition
     timeout: Quantity
+    orelse: tuple[Step, ...] | None = _handler()
 
 
 @dataclass(frozen=True)
@@ -227,6 +238,12 @@ class Fail:
 
 
 Step = Union[Move, Grasp, Place, Inspect, WaitFor, WaitUntil, Communicate, If, Fail]
+HANDLED = (Move, Grasp, Place, Inspect, WaitUntil)  # the step kinds that may have a failure handler (schema 1.4)
+
+
+def handler_of(step: Step) -> tuple[Step, ...] | None:
+    """The failure handler of a step (schema 1.4), or None."""
+    return step.orelse if isinstance(step, HANDLED) else None
 
 
 # -------- structure --------
@@ -248,21 +265,24 @@ class Task:
 
     @property
     def branching(self) -> bool:
-        """True when the plan holds an `if` or a `fail` (schema 1.3): only the front end handles such a task yet."""
-        return any(isinstance(step, (If, Fail)) for step in self.steps)
+        """True when the plan has more than one path: an `if` or a `fail` (schema 1.3), or a failure handler (1.4)."""
+        return any(isinstance(step, (If, Fail)) or handler_of(step) is not None for step in self.steps)
 
 
 def walk(steps: tuple[Step, ...], prefix: str = ""):
     """
-    Every step in source order, depth first (an `if`, then its `then` steps, then its `else` steps), as
-    (path label, step): the label is the step's position in its list, joined by `.then.` / `.else.` for a
-    nested one, for example "3", "3.then.1", "3.else.2.then.1". The step's index is its 1-based place in this order.
+    Every step in source order, depth first (an `if`, then its `then` steps, then its `else` steps; a step with a
+    failure handler, then the handler's steps), as (path label, step): the label is the step's position in its list,
+    joined by `.then.` / `.else.` for a nested one, for example "3", "3.then.1", "3.else.2.then.1" (a handler's steps
+    are under `.else.`). The step's index is its 1-based place in this order.
     """
     for position, step in enumerate(steps, start=1):
         label = f"{prefix}{position}"
         yield label, step
         if isinstance(step, If):
             yield from walk(step.then, f"{label}.then.")
+            yield from walk(step.orelse, f"{label}.else.")
+        elif handler_of(step) is not None:
             yield from walk(step.orelse, f"{label}.else.")
 
 
@@ -334,6 +354,14 @@ def _branch(branch: ast.Branch | None) -> tuple[tuple[Step, ...], tuple[Conditio
 
 
 def _step(node: ast.Statement) -> Step:
+    step = _plain_step(node)
+    if getattr(node, "handler", None) is None:
+        return step
+    orelse, _ = _branch(node.handler)  # a handler has no goal block (decision 0034)
+    return dataclasses.replace(step, orelse=orelse)
+
+
+def _plain_step(node: ast.Statement) -> Step:
     if isinstance(node, ast.If):
         then, goal_then = _branch(node.then)
         orelse, goal_else = _branch(node.orelse)
@@ -370,7 +398,7 @@ def _task(node: ast.Task, language: str) -> Task:
         parameters=tuple(Parameter(p.name.text, p.type.value) for p in node.params),
         safety=tuple(SafetyLimit(a.key.text, _quantity(a.value)) for a in node.annotations),
         preconditions=tuple(_condition(c) for c in node.pre.conditions) if node.pre else (),
-        goal=() if goal is None and language == "1.4" else goal,  # 1.4: no task goal, the branches give them
+        goal=() if goal is None and language in ("1.4", "1.5") else goal,  # 1.4 on: no task goal, branches give them
         steps=tuple(_step(s) for s in node.plan.statements),
         verify=_verify(node),
     )

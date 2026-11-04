@@ -70,7 +70,7 @@ the whole document; a missing field is reported at the object that lacks it). Th
 | `I120` | Empty `tasks` or `steps`; `and`/`or` with fewer than two operands |
 | `I121` | Condition nested deeper than 8 levels |
 | `I122` | `and` directly inside `and`, or `or` inside `or` (grouping not flattened) |
-| `I123` | `if` step nested deeper than 4 levels (E216) |
+| `I123` | `if` step, or in schema 1.4 a failure handler, nested deeper than 4 levels (E216) |
 | `I201` | Duplicate task name (E301) |
 | `I202` | Duplicate parameter name (E302) |
 | `I203` | Undeclared name (E303) |
@@ -86,6 +86,7 @@ the whole document; a missing field is reported at the object that lacks it). Th
 | `I214` | A `fail` step that is not the last step of an `if` or `else` branch (E313) |
 | `I215` | A `fail` reason longer than 200 characters, or with a control character (E314) |
 | `I216` | A `grasp` of an object a robot parameter still holds, or by a robot parameter that still holds an object (E315); checked only when the task has no other meaning error in its steps |
+| `I217` | Schema 1.4: a `wait_until` step without a failure handler (`else`) (E316) |
 
 `I211` is not used: a repeated `@verify` key (E311) cannot be written in a JSON object, where it is `I103`.
 

@@ -1,0 +1,106 @@
+{
+  "ir_schema": "robolang.task-ir",
+  "ir_schema_version": "1.4",
+  "language_version": "1.5",
+  "tasks": [
+    {
+      "name": "deliver",
+      "parameters": [
+        {
+          "name": "r",
+          "type": "robot"
+        },
+        {
+          "name": "box",
+          "type": "object"
+        },
+        {
+          "name": "src",
+          "type": "location"
+        },
+        {
+          "name": "dst",
+          "type": "location"
+        },
+        {
+          "name": "zone",
+          "type": "region"
+        }
+      ],
+      "safety": [],
+      "preconditions": [],
+      "goal": [
+        {
+          "kind": "object_at",
+          "object": "box",
+          "location": "dst"
+        }
+      ],
+      "steps": [
+        {
+          "kind": "move",
+          "robot": "r",
+          "target": "src"
+        },
+        {
+          "kind": "grasp",
+          "robot": "r",
+          "object": "box"
+        },
+        {
+          "kind": "wait_until",
+          "condition": {
+            "kind": "region_clear",
+            "region": "zone"
+          },
+          "timeout": {
+            "value": "10",
+            "unit": "s"
+          },
+          "else": [
+            {
+              "kind": "communicate",
+              "robot": "r",
+              "channel": "fleet",
+              "message": "ZONE_BUSY"
+            },
+            {
+              "kind": "wait_until",
+              "condition": {
+                "kind": "region_clear",
+                "region": "zone"
+              },
+              "timeout": {
+                "value": "30",
+                "unit": "s"
+              },
+              "else": [
+                {
+                  "kind": "place",
+                  "robot": "r",
+                  "object": "box",
+                  "target": "src"
+                },
+                {
+                  "kind": "fail",
+                  "reason": "the zone did not clear"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "kind": "move",
+          "robot": "r",
+          "target": "dst"
+        },
+        {
+          "kind": "place",
+          "robot": "r",
+          "object": "box",
+          "target": "dst"
+        }
+      ]
+    }
+  ]
+}
