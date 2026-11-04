@@ -865,9 +865,9 @@ step, then its handler's steps, each with its own nested steps. A handler's step
   step after the handler.
 - A handled step that fails, for any step failure of section 4.5 or 4.6 (a scripted fault `S251` included), changes
   nothing: its requirements and faults are checked before its effect. Time a `wait until` waited has passed. The step
-  is recorded `failed` with the code in `handled`, and the run does **not** fail: the handler's goal block, if any, is
-  added to the effective goal (12.2) with `from` `"<label>.else"`, and the handler runs. When it ends without failing,
-  the run goes on with the step after the handled step.
+  is recorded `failed` with the code in `handled`, and the run does **not** fail: the handler runs. It adds nothing to
+  the effective goal (decision 0034). When it ends without failing, the run goes on with the step after the handled
+  step.
 - A failure inside a handler is handled by that step's own handler if it has one; otherwise it fails the run, as in
   4.6. A `fail` in a handler fails the run with `S262`.
 - A cancellation before a step of a handler cancels the run as in 4.6.
@@ -877,13 +877,12 @@ step, then its handler's steps, each with its own nested steps. A handler's step
 A 1.5 source writes `run_record_schema_version` `1.4` and embeds Task IR 1.4. Earlier sources write their records
 unchanged, byte for byte. The key order is that of record 1.3 with one key added to every `steps[]` entry, after
 `status`: **`handled`**, the code of the failure the step's handler took over (for example `"S241"`), else `null`.
-A handled step is written without its `else` and `goal_else`: the handler's steps are entries of their own. A run
-that succeeds on a path through a handler shows it in two places: the step's `handled` code, and the `from` of any
-goal entry the handler added.
+A handled step is written without its `else`: the handler's steps are entries of their own. A run that succeeds on a
+path through a handler shows it in the step's `handled` code; it is judged on the same goal as any other run.
 
 ### 13.4 Core
 
-As in 12.4, with the `ok` and `failed` sides of a handled step as the two sides of an `if`. Core 0.1 exports a task
-with handlers only if every path has the same effective goal: a handler that only retries or reports, without a
-`goal` block and without `fail`, keeps the goal. Core 0.2 exports one alternative per distinct path goal, at most 16
-(decision 0028 Q2).
+As in 12.4, with the `ok` and `failed` sides of a handled step as the two sides of an `if`. A handler adds no goal,
+so its side has the goal of the `ok` side unless it ends in `fail`. Core 0.1 exports a task whose handlers all end
+without `fail`; a handler that ends in `fail` makes the paths differ (`X603`), as a branch that ends in `fail` does.
+Core 0.2 exports one alternative per distinct path goal, at most 16 (decision 0028 Q2).

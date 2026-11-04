@@ -1,6 +1,6 @@
 // RoboLang v1.5 fixture: valid
 // expect: ok
-// why: a handler with a goal block, inside an if branch; a handled inspect reports and the plan goes on
+// why: handlers inside an if branch report and the plan goes on
 
 robolang 1.5;
 
@@ -9,7 +9,6 @@ task check_box(robot r, object box, location src, location home, region cell, se
     plan {
         if region_clear cell {
             move r to src else {
-                goal { robot_at r home; }
                 communicate r to "ops" with "cannot reach src";
             }
             inspect r box using cam else {

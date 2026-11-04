@@ -113,7 +113,7 @@ def path_goals(task: ir.Task) -> list[tuple[str, tuple[ir.Condition, ...] | None
             handler = ir.handler_of(step)
             if isinstance(step, ir.If) or handler is not None:
                 sides = (("then", step.then, step.goal_then), ("else", step.orelse, step.goal_else)) \
-                    if isinstance(step, ir.If) else (("ok", (), None), ("failed", handler, step.goal_else))
+                    if isinstance(step, ir.If) else (("ok", (), None), ("failed", handler, None))
                 for side, body, branch_goal in sides:
                     walk((*body, *steps[i + 1:]), goal + (branch_goal or ()), f"{label}/{side}" if label else side)
                 return

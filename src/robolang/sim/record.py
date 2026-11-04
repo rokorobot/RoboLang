@@ -94,7 +94,6 @@ def _step(step, branching: bool, handlers: bool = False) -> dict:
     else:
         shown = ir.to_dict(step.step)
         shown.pop("else", None)
-        shown.pop("goal_else", None)
     return {
         "index": step.index,
         **({"path": step.path} if branching else {}),

@@ -85,11 +85,9 @@
                   "kind": "fail",
                   "reason": "the zone did not clear"
                 }
-              ],
-              "goal_else": null
+              ]
             }
-          ],
-          "goal_else": null
+          ]
         },
         {
           "kind": "move",

@@ -35,7 +35,7 @@ def _parts(statement: ast.Statement):
         return "fail"
     handler = getattr(statement, "handler", None)
     if handler is not None:
-        return (), False, handler.statements, handler.goal is not None, ("ok", "failed")
+        return (), False, handler.statements, False, ("ok", "failed")
     if not isinstance(statement, ast.If):
         return None
     orelse = statement.orelse
@@ -174,10 +174,7 @@ class _Validator:
         if self._handlers and isinstance(statement, ast.WaitUntil) and handler is None:
             self._report("E316", "in RoboLang 1.5 a 'wait until' needs a failure handler: add 'else { ... }' to say "
                                  "what happens when it times out", statement.span)
-        if handler is not None:
-            if handler.goal is not None:
-                for condition in handler.goal.conditions:
-                    self._checked(self._condition, condition)
+        if handler is not None:  # a branch without a goal block (decision 0034)
             self._statements(handler.statements, branch=True)
 
     def _goal(self, task: ast.Task):

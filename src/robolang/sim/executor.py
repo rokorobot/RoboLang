@@ -347,11 +347,10 @@ def _names(node, typed_sensors: bool) -> list[str]:
         return [name for condition in conditions for name in _names(condition, typed_sensors)]
     if isinstance(node, ir.Fail):
         return []
-    handler_goal = [n for c in (getattr(node, "goal_else", None) or ()) for n in _names(c, typed_sensors)]
     if isinstance(node, (ir.WaitUntil, ir.Not)):
-        return _names(node.condition, typed_sensors) + handler_goal
+        return _names(node.condition, typed_sensors)
     fields = ("robot", "region", "obj", "target", "location") + (("sensor",) if typed_sensors else ())
-    return [getattr(node, f) for f in fields if hasattr(node, f)] + handler_goal
+    return [getattr(node, f) for f in fields if hasattr(node, f)]
 
 
 def _goal_not_evaluated(goal: list[tuple[str, ir.Condition]] | None) -> tuple[PreconditionResult, ...] | None:
@@ -482,8 +481,6 @@ def run(task: ir.Task, world: World) -> RunResult:
                 # decision 0033: the failed step changed nothing; its handler runs, then the plan goes on
                 done[i] = StepResult(i, step, "failed", start, state.clock, None, None, exc.condition_result, label,
                                      exc.code)
-                if step.goal_else and effective is not None:
-                    effective.extend((f"{label}.else", c) for c in step.goal_else)
                 if execute(handler, i + 1, f"{label}.else."):
                     return True
                 i += 1 + sum(1 for _ in ir.walk(handler))

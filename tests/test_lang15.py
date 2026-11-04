@@ -69,7 +69,7 @@ def test_each_failable_step_takes_a_handler_that_compiles_to_else(step):
     source = task(f'{step} else {{\n communicate r to "ops" with "x";\n}}\nmove r to dst;',
                   goal="goal { robot_at r dst; }")
     first = json.loads(to_json(compile_source(source).ir))["tasks"][0]["steps"][0]
-    assert list(first)[-2:] == ["else", "goal_else"] and first["goal_else"] is None
+    assert list(first)[-1] == "else" and "goal_else" not in first
     assert first["else"] == [{"kind": "communicate", "robot": "r", "channel": "ops", "message": "x"}]
 
 
@@ -112,14 +112,16 @@ def test_a_handler_counts_as_a_nesting_level_e216():
 
 def test_every_path_needs_a_goal_the_ok_and_failed_sides_e309():
     with pytest.raises(RoboLangError) as caught:
-        check(task(f"move r to src else {{ goal {{ robot_at r src; }} move r to src; }}\n{DELIVER}", goal=None))
+        check(task(f"move r to src else {{ move r to src; }}\n{DELIVER}", goal=None))
     assert caught.value.code == "E309" and "path ok" in caught.value.diagnostic.message
     check(task(f'move r to src else {{ fail "x"; }}\n{DELIVER}'))
 
 
-def test_a_handler_goal_is_checked_like_a_branch_goal():
-    assert codes(task(f"move r to src else {{ goal {{ robot_at nobody src; }} move r to src; }}\n{DELIVER}")) \
-        == ["E303"]
+def test_a_handler_has_no_goal_block_e208_decision_0034():
+    with pytest.raises(RoboLangError) as caught:
+        check(task(f"move r to src else {{ goal {{ robot_at r src; }} move r to src; }}\n{DELIVER}"))
+    assert [d.code for d in caught.value.diagnostics] == ["E208"]
+    assert "a failure handler has no goal block" in caught.value.diagnostic.message
 
 
 def test_holder_check_follows_both_outcomes_f8():
@@ -130,8 +132,7 @@ def test_holder_check_follows_both_outcomes_f8():
 
 
 def test_ir_reads_back_identical_and_rejects_schema_1_4_keys_in_1_3():
-    source = task(f"wait until region_clear zone timeout 5 s else {{ goal {{ robot_at r src; }} move r to src; }}"
-                  f"\n{DELIVER}")
+    source = task(f"wait until region_clear zone timeout 5 s else {{ move r to src; }}\n{DELIVER}")
     compiled = compile_source(source).ir
     data = to_json(compiled).encode()
     assert read_ir(data) == compiled
@@ -139,8 +140,12 @@ def test_ir_reads_back_identical_and_rejects_schema_1_4_keys_in_1_3():
     older.update(ir_schema_version="1.3", language_version="1.4")
     with pytest.raises(Exception) as caught:
         read_ir(json.dumps(older).encode())
-    assert [(d.code, d.pointer) for d in caught.value.diagnostics][:2] == [
-        ("I112", "/tasks/0/steps/0/else"), ("I112", "/tasks/0/steps/0/goal_else")]
+    assert [(d.code, d.pointer) for d in caught.value.diagnostics][:1] == [("I112", "/tasks/0/steps/0/else")]
+    newer = json.loads(data)
+    newer["tasks"][0]["steps"][0]["goal_else"] = None  # a handler has no goal (decision 0034)
+    with pytest.raises(Exception) as caught:
+        read_ir(json.dumps(newer).encode())
+    assert [(d.code, d.pointer) for d in caught.value.diagnostics] == [("I112", "/tasks/0/steps/0/goal_else")]
 
 
 def test_inspect_prints_the_handler(tmp_path):
@@ -209,12 +214,11 @@ def test_a_handler_not_needed_is_not_run_and_step_numbers_count_through_it():
     assert record["failure"]["code"] == "S251"
 
 
-def test_a_handler_goal_is_added_to_the_effective_goal():
-    plan = ("move r to src else {\n goal { robot_at r dst; }\n move r to src;\n}\n"
+def test_a_handler_path_is_judged_on_the_task_goal_alone():
+    plan = ('move r to src else {\n communicate r to "ops" with "retrying";\n move r to src;\n}\n'
             "grasp r box;\nmove r to dst;\nplace r box at dst;")
     _, record = simulate(task(plan), faults=[1])
-    assert [(g["from"], g["condition"]["kind"], g["result"]) for g in record["goal"]] == [
-        ("task", "object_at", "true"), ("1.else", "robot_at", "true")]
+    assert [(g["from"], g["result"]) for g in record["goal"]] == [("task", "true")]
     assert record["state"] == "SUCCEEDED"
 
 

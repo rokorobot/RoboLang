@@ -557,25 +557,28 @@ class _Parser:
             self._ifs -= 1
         return ast.If(condition, then, orelse, start.span.to((orelse or then).span))
 
-    def _stray_goal(self) -> bool:
+    def _stray_goal(self, handler: bool = False) -> bool:
         """In a 1.4 or 1.5 plan or branch, a `goal` block that is not first in a branch: read it and report E208."""
         if not (self._branching and self._at_keyword("goal")):
             return False
         span = self._tok.span
         self._goal()
-        self._record(Diagnostic("E208", "a goal block may appear only as the first item inside an if or else branch",
-                                span, filename=self._filename))
+        message = "a goal block may appear only as the first item inside an if or else branch"
+        if handler:
+            message = ("a failure handler has no goal block: it recovers and reaches the task's goal, or cleans up "
+                       "and ends in 'fail' (decision 0034)")
+        self._record(Diagnostic("E208", message, span, filename=self._filename))
         return True
 
-    def _branch(self, word: str) -> ast.Branch:
-        """`{ [goal { ... }] statement... }`: the body of an if or else."""
+    def _branch(self, word: str, handler: bool = False) -> ast.Branch:
+        """`{ [goal { ... }] statement... }`: an if or else body; a failure handler has no goal (decision 0034)."""
         start = self._expect(TokenKind.LBRACE, f"'{{' to open the {word} branch")
-        goal = self._goal() if self._at_keyword("goal") else None
+        goal = self._goal() if self._at_keyword("goal") and not handler else None
         statements = []
         before = len(self._errors)
         while not self._at(TokenKind.RBRACE):
             try:
-                if not self._stray_goal():
+                if not self._stray_goal(handler):
                     statements.append(self._statement())
             except RoboLangError as error:
                 self._resync(error)
@@ -599,7 +602,7 @@ class _Parser:
                 "an 'if' and a step's 'else' each count as one", start.span, filename=self._filename))
         self._ifs += 1
         try:
-            handler = self._branch("else")
+            handler = self._branch("else", handler=True)
         finally:
             self._ifs -= 1
         return handler, handler

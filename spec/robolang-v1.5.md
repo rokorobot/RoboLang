@@ -2,7 +2,7 @@
 
 **Status:** front end, Task IR 1.4 and simulation (run record 1.4) complete in code. The shipped language reference
 and the benchmark prompts still teach 1.4: moving them to 1.5 changes benchmark labels and needs its own decision.
-Decision: [0033](decisions/0033-step-failure-handlers.md) (F1 to F8). Grammar: [grammar-v1.5.ebnf](grammar-v1.5.ebnf).
+Decisions: [0033](decisions/0033-step-failure-handlers.md) (F1 to F8) and [0034](decisions/0034-no-goal-in-handlers.md). Grammar: [grammar-v1.5.ebnf](grammar-v1.5.ebnf).
 IR: [schema 1.4](ir-schema-v1.4.md). Simulation: [section 13](simulation-v1.0.md).
 Everything not stated here is exactly as in [RoboLang 1.4](robolang-v1.4.md).
 
@@ -15,7 +15,7 @@ rejects it with `E213`. Files with no marker or with `1.1` to `1.4` are read, va
 ## 2. Failure handlers
 
 ```
-move r to dst else { [goal { <condition>; ... }] <statement> ... }
+move r to dst else { <statement> ... }
 grasp r obj else { ... }
 place r obj at dst else { ... }
 inspect r obj using s else { ... }
@@ -26,8 +26,8 @@ wait until <condition> timeout <duration> else { ... }
   **handler**, runs only when that step fails. `wait for`, `communicate` and `fail` take no handler (`E201`).
 - **The failed step changes nothing** (F1): the simulator checks a step's requirements and scripted faults before its
   effect. Time a `wait until` spent waiting has passed, and events up to its timeout have been applied.
-- **A handler is a branch** (F2): at least one statement (`E208`); an optional `goal` block, only first; `fail` only as
-  its last statement (`E313`). It counts as one nesting level, as an `if` does, at most 4 in all (`E216`). Unless it
+- **A handler is a branch without a goal** (F2, [0034](decisions/0034-no-goal-in-handlers.md)): at least one
+  statement (`E208`), no `goal` block (`E208`), `fail` only as its last statement (`E313`). It counts as one nesting level, as an `if` does, at most 4 in all (`E216`). Unless it
   ends in `fail`, the plan goes on with the statement after the handled step.
 - **Every `wait until` has a handler** (F3): its timeout already says it can fail. A `wait until` with `;` is `E316`.
 - **Retry** (F5): a handler may repeat the step, `grasp r box else { grasp r box; }`. That is one bounded retry. A
@@ -38,8 +38,10 @@ wait until <condition> timeout <duration> else { ... }
 
 A handled step has two sides: **`ok`** (it succeeded, nothing more runs) and **`failed`** (its handler ran). A path
 is one choice at each `if` and at each handled step it reaches. Its goal is the task `goal` plus the `goal` blocks of
-the branches **and handlers** it passes through, as in 1.4: a handler's `goal` adds to the goal, it does not replace
-it. Every path must have a goal condition or end in `fail` (`E309`, which names a path such as `path ok/failed`).
+the `if` branches it passes through, as in 1.4. A handler adds no goal: it either recovers, so the path still reaches
+the goal the task states, or cleans up and ends in `fail`. A run never succeeds on a goal other than the one asked
+for (decision 0034). Every path must have a goal condition or end in `fail` (`E309`, which names a path such as
+`path ok/failed`).
 
 ## 4. Holder check
 
@@ -60,6 +62,7 @@ ROS 2 backend refuses a handler with `S508` before any motion.
 |---|---|
 | `E316` | A `wait until` without a failure handler in a 1.5 file (static) |
 | `E201` | Also: `else` after `wait for`, `communicate` or `fail` in a 1.5 file (syntax) |
+| `E208` | Also: a `goal` block in a failure handler (syntax, decision 0034) |
 | `E216` | Also: a failure handler nested deeper than 4 levels, counting `if` statements and handlers (syntax) |
 | `E313` | Also: `fail` that is not the last statement of a handler (static) |
 | `E309` | Also: the `ok` or `failed` side of a handled step on a path with no goal (static) |

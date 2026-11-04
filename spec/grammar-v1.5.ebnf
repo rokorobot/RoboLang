@@ -11,11 +11,11 @@ statement     = ( move | grasp | place | inspect | wait_until ) , ( ";" | handle
 
 wait_for      = "wait" , "for" , duration ;
 wait_until    = "wait" , "until" , condition , "timeout" , duration ;
-handler       = "else" , branch ;                                                           (* [1.5] *)
+handler       = "else" , "{" , statement , { statement } , "}" ;                           (* [1.5] no goal block *)
 
 (* [1.5] Static rules the grammar does not express:
    - a handler counts as one nesting level, as an "if" does: at most 4 in all (E216).
-   - "else" after wait for, communicate or fail: E201.
+   - "else" after wait for, communicate or fail: E201. A goal block in a handler: E208 (decision 0034).
    - every "wait until" has a handler: E316.
    - "fail" only as the last statement of a branch, a handler included: E313.
    - every path, the "ok" and "failed" sides of each handled step included, has a goal or ends in "fail": E309. *)

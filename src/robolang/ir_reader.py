@@ -71,7 +71,7 @@ _USES = {
 _PARAM_TYPES = {"robot": 0, "object": 0, "location": 0, "region": 0, "sensor": 2}
 _BRANCH_STEPS = {"if": 3, "fail": 3}  # kind -> first schema rank that has it
 _HANDLED = ("move", "grasp", "place", "inspect", "wait_until")  # may have a failure handler from schema 1.4 (rank 4)
-_HANDLER_KEYS = ("else", "goal_else")
+_HANDLER_KEYS = ("else",)  # a handler has no goal (decision 0034)
 
 
 @dataclass(frozen=True)
@@ -360,28 +360,14 @@ class _Reader:
         return False
 
     def handler(self, node: dict, ptr: str, ifs: int) -> bool:
-        """Schema 1.4 (decision 0033): `else`, the non-empty steps run when the step fails, with `goal_else`."""
-        if not isinstance(node, dict) or self._rank < 4 or not any(key in node for key in _HANDLER_KEYS):
+        """Schema 1.4 (decisions 0033, 0034): `else`, the non-empty steps run when the step fails. No goal."""
+        if not isinstance(node, dict) or self._rank < 4 or "else" not in node:
             return True
         if ifs >= MAX_IF_DEPTH:
             self.error("I123", f"failure handler nested deeper than {MAX_IF_DEPTH} levels (an 'if' and a handler "
                                "each count as one)", ptr)
             return False
-        ok = True
-        for key in _HANDLER_KEYS:
-            if key not in node:
-                self.error("I111", f"missing field '{key}': a failure handler has both 'else' and 'goal_else'", ptr)
-                ok = False
-        if "else" in node:
-            ok = self.steps(node["else"], _pointer(ptr, "else"), ifs + 1) and ok
-        goal = node.get("goal_else")
-        if goal is not None:
-            at = _pointer(ptr, "goal_else")
-            ok = self.conditions(goal, at) and ok
-            if isinstance(goal, list) and not goal:
-                self.error("I120", "a handler goal needs at least one condition (use null for none)", at)
-                ok = False
-        return ok
+        return self.steps(node["else"], _pointer(ptr, "else"), ifs + 1)
 
     # -------- task (form) --------
 
@@ -564,9 +550,7 @@ class _Reader:
 
     def step_meaning(self, node: dict, ptr: str):
         self.plain_step_meaning(node, ptr)
-        if "else" in node and node["kind"] != "if":  # a failure handler is a branch (decision 0033 F2)
-            if node["goal_else"] is not None:
-                self.condition_list(node["goal_else"], _pointer(ptr, "goal_else"))
+        if "else" in node and node["kind"] != "if":  # a failure handler is a branch without a goal (0033, 0034)
             self.steps_meaning(node["else"], _pointer(ptr, "else"), branch=True)
 
     def plain_step_meaning(self, node: dict, ptr: str):
@@ -682,7 +666,7 @@ def _parts(step: dict):
     if step["kind"] == "fail":
         return "fail"
     if step["kind"] != "if" and "else" in step:
-        return (), False, step["else"], step["goal_else"] is not None, ("ok", "failed")
+        return (), False, step["else"], False, ("ok", "failed")
     if step["kind"] != "if":
         return None
     return step["then"], step["goal_then"] is not None, step["else"], step["goal_else"] is not None
@@ -705,7 +689,7 @@ def _step(node: dict) -> ir.Step:
     step = _plain_step(node)
     if node["kind"] == "if" or "else" not in node:
         return step
-    return dataclasses.replace(step, orelse=tuple(_step(s) for s in node["else"]), goal_else=_goal(node["goal_else"]))
+    return dataclasses.replace(step, orelse=tuple(_step(s) for s in node["else"]))
 
 
 def _plain_step(node: dict) -> ir.Step:

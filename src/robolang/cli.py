@@ -379,8 +379,6 @@ def _plan_lines(steps, typed: bool, number: str = "") -> list[str]:
         handler = task_ir.handler_of(step)
         if handler is not None:  # RoboLang 1.5: run when the step fails (decision 0033)
             lines.append("  if it fails:")
-            if step.goal_else:
-                lines.append(f"    goal: {'; '.join(_condition(c, typed) for c in step.goal_else)}")
             lines += [f"    {line}" for line in _plan_lines(handler, typed, f"{label[:-1]}.")]
         if isinstance(step, task_ir.If):
             for word, goal, body in (("then", step.goal_then, step.then), ("else", step.goal_else, step.orelse)):

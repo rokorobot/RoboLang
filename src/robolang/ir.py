@@ -42,11 +42,6 @@ def _handler():
     return field(default=None, kw_only=True, metadata={"key": "else", "omit_none": True})
 
 
-def _handler_goal():
-    """Schema 1.4: the goal conditions the handler adds, or None. Written, as `null` too, only with a handler."""
-    return field(default=None, kw_only=True, metadata={"omit_with": "orelse"})
-
-
 @dataclass(frozen=True)
 class Quantity:
     """A number with the unit written in the source. `unit` is None when none was given."""
@@ -167,7 +162,6 @@ class Move:
     robot: str
     target: str
     orelse: tuple[Step, ...] | None = _handler()
-    goal_else: tuple[Condition, ...] | None = _handler_goal()
 
 
 @dataclass(frozen=True)
@@ -176,7 +170,6 @@ class Grasp:
     robot: str
     obj: str = _key("object")
     orelse: tuple[Step, ...] | None = _handler()
-    goal_else: tuple[Condition, ...] | None = _handler_goal()
 
 
 @dataclass(frozen=True)
@@ -186,7 +179,6 @@ class Place:
     obj: str = _key("object")
     target: str = _key("target")
     orelse: tuple[Step, ...] | None = _handler()
-    goal_else: tuple[Condition, ...] | None = _handler_goal()
 
 
 @dataclass(frozen=True)
@@ -198,7 +190,6 @@ class Inspect:
     obj: str = _key("object")
     sensor: str = _key("sensor")
     orelse: tuple[Step, ...] | None = _handler()
-    goal_else: tuple[Condition, ...] | None = _handler_goal()
 
 
 @dataclass(frozen=True)
@@ -213,7 +204,6 @@ class WaitUntil:
     condition: Condition
     timeout: Quantity
     orelse: tuple[Step, ...] | None = _handler()
-    goal_else: tuple[Condition, ...] | None = _handler_goal()
 
 
 @dataclass(frozen=True)
@@ -367,8 +357,8 @@ def _step(node: ast.Statement) -> Step:
     step = _plain_step(node)
     if getattr(node, "handler", None) is None:
         return step
-    orelse, goal_else = _branch(node.handler)
-    return dataclasses.replace(step, orelse=orelse, goal_else=goal_else)
+    orelse, _ = _branch(node.handler)  # a handler has no goal block (decision 0034)
+    return dataclasses.replace(step, orelse=orelse)
 
 
 def _plain_step(node: ast.Statement) -> Step:
@@ -461,8 +451,6 @@ def to_dict(node):
         out = {"kind": node.KIND} if hasattr(node, "KIND") else {}
         for f in dataclasses.fields(node):
             if f.metadata.get("omit_none") and getattr(node, f.name) is None:
-                continue
-            if "omit_with" in f.metadata and getattr(node, f.metadata["omit_with"]) is None:
                 continue
             out[f.metadata.get("key", f.name)] = to_dict(getattr(node, f.name))
         return out

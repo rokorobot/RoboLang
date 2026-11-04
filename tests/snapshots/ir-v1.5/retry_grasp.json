@@ -48,8 +48,7 @@
               "robot": "r",
               "object": "box"
             }
-          ],
-          "goal_else": null
+          ]
         },
         {
           "kind": "move",

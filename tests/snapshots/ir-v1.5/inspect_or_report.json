@@ -59,13 +59,6 @@
                   "channel": "ops",
                   "message": "cannot reach src"
                 }
-              ],
-              "goal_else": [
-                {
-                  "kind": "robot_at",
-                  "robot": "r",
-                  "location": "home"
-                }
               ]
             },
             {
@@ -80,8 +73,7 @@
                   "channel": "ops",
                   "message": "camera unavailable"
                 }
-              ],
-              "goal_else": null
+              ]
             }
           ],
           "else": [],
