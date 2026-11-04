@@ -1,0 +1,20 @@
+{
+  "id": "f12_message_delivery",
+  "prompt": "Send \"start\" to channel \"ops\" from arm1, then have arm1 move box1 from shelf_a to the table. If the message cannot be delivered, move nothing.",
+  "world": "bench/worlds/warehouse.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_5": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "tags": [
+    "message",
+    "delivery"
+  ],
+  "why": "RoboLang records a message; it does not observe delivery, and `communicate` takes no failure handler (RoboLang 1.5 section 2).",
+  "attempt_fails_with": "E201"
+}

@@ -1,0 +1,15 @@
+// bench/reference_failure/f20_wait_or_fail.rob: the RoboLang 1.5 answer
+robolang 1.5;
+
+task deliver(robot r, object box, location src, location dst, region aisle) {
+    goal { object_at box dst; }
+    plan {
+        wait until region_clear aisle timeout 10 s else {
+            fail "the aisle did not clear";
+        }
+        move r to src;
+        grasp r box;
+        move r to dst;
+        place r box at dst;
+    }
+}

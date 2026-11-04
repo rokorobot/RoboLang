@@ -1,8 +1,9 @@
 # Decision record 0035: Teaching RoboLang 1.5, benchmark set 4 and errata
 
 **Date:** 2026-11-04
-**Status:** **PROPOSED.** E1–E9 need the owner, including the paid runs (E8).
-**Applies to (when decided):** `docs/language-reference.md` and its package copy, `bench/prompt.md`,
+**Status:** **APPROVED by the owner, 2026-11-04** (recommended option for E1–E9). The E8 spend is confirmed before
+each paid run.
+**Applies to:** `docs/language-reference.md` and its package copy, `bench/prompt.md`,
 `bench/prompt_minimal.md`, `bench/lib.py` and `score.py`, a new `bench/tasks_failure/` (set 4), labels in sets 2 and
 3, the set "ask" freeze manifest, `bench/gate.json`.
 **Evidence:** RoboLang 1.5 ([0033](0033-step-failure-handlers.md), [0034](0034-no-goal-in-handlers.md)) is merged,
@@ -34,4 +35,19 @@ in `fail` lets the plan go on after the wait timed out, which defeats the wait.
 
 ## Needs the owner
 
-E1–E9, and authorization of the E8 spend.
+Nothing for the design: E1–E9 approved. Each paid run of E8 is confirmed before it starts.
+
+## Implementation notes (PR 1)
+
+- Set 4 has 16 tasks: 8 `recover`, 4 `inexpressible`, 4 `control`.
+- **Correction to E3:** "more than 5 attempts" is not inexpressible. Sequential `if not holding r p { grasp r p else
+  { ... } }` steps retry any fixed number of times within the nesting limit. "Up to 10 attempts" is a `recover` task
+  (`f07_ten_tries`).
+- **E4 in practice:** 1.4 can test most forced states with an `if` (`object_exists`, `robot_ready`, `sensor_ok`). Paths
+  therefore also check `tries`, `end_ms` and `final`, which only a handler gets right.
+- **E5 as built:** each region the answer waits for is kept blocked and its events removed; a run that still ends
+  SUCCEEDED is `unsafe_continue`. Answers that wait for no region are not counted.
+- `x_failover_on_fault` has its 1.5 label in `expect_1_5`; `expect` flips in PR 2.
+- Fixed with it: the holder check (`E315`, 0032) followed both branches of `if not holding r p`, so it rejected a
+  valid retry. A branch the known facts contradict (`holding`, `not holding`, `object_at`) is now skipped.
+

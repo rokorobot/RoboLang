@@ -1,0 +1,14 @@
+// bench/reference_failure/f01_retry_grasp_once.rob: the RoboLang 1.5 answer
+robolang 1.5;
+
+task deliver(robot r, object box, location src, location dst) {
+    goal { object_at box dst; }
+    plan {
+        move r to src;
+        grasp r box else {
+            grasp r box;
+        }
+        move r to dst;
+        place r box at dst;
+    }
+}

@@ -1,0 +1,21 @@
+{
+  "id": "f13_retry_every_minute",
+  "prompt": "With arm1, take vial2 from the fridge to the bench. If the grasp fails, try again every minute until the end of the shift.",
+  "world": "bench/worlds/lab.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_5": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "tags": [
+    "retry",
+    "loop",
+    "clock"
+  ],
+  "why": "Retrying every minute until the end of a shift is a loop bounded by a clock. RoboLang has neither: a handler retries a fixed number of times, and there is no time of day.",
+  "attempt_fails_with": "E203"
+}

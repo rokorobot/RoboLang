@@ -1,0 +1,16 @@
+// bench/reference_failure/f03_wait_then_report.rob: the RoboLang 1.5 answer
+robolang 1.5;
+
+task deliver(robot r, object box, location src, location dst, region aisle) {
+    goal { object_at box dst; }
+    plan {
+        wait until region_clear aisle timeout 10 s else {
+            communicate r to "ops" with "aisle blocked";
+            fail "aisle blocked";
+        }
+        move r to src;
+        grasp r box;
+        move r to dst;
+        place r box at dst;
+    }
+}

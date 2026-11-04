@@ -1,0 +1,16 @@
+// bench/reference_failure/f05_cleanup_abort.attempt.rob: the 1.5 answer under 1.4, which has no failure handlers
+robolang 1.4;
+
+task deliver(robot r, object box, location src, location dst, region aisle) {
+    goal { object_at box dst; }
+    plan {
+        move r to src;
+        grasp r box;
+        wait until region_clear aisle timeout 10 s else {
+            place r box at src;
+            fail "the aisle did not clear";
+        }
+        move r to dst;
+        place r box at dst;
+    }
+}

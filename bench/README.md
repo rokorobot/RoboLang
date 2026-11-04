@@ -206,3 +206,25 @@ delta over it.
 
 Run it on demand from GitHub Actions: `Benchmark`, `set3: true`. That runs full and grammar-only prompts with 3
 repeats, for information only and not gated (~$3-4). Locally: `python bench/run.py --set branch --repeats 3`.
+
+## Set 4: failure handling (`--set failure`)
+
+16 tasks in `tasks_failure/`, references in `reference_failure/`, decision record
+[0035](../spec/decisions/0035-bench-errata-1-5.md). Pre-registered against RoboLang 1.4 (`expect`), with the 1.5 label
+in `expect_1_5`. Groups: `recover` (8: retry once, three and ten attempts, report and stop after a wait, wait longer,
+clean up then abort, skip an inspection, report any failure; inexpressible in 1.4, a program in 1.5), `inexpressible`
+(4: retry until it works, a fallback outcome, message delivery, retry every minute) and `control` (4: no handler
+needed). A `recover` task's attempt is its 1.5 answer marked 1.4 (`E202`).
+
+Failures are forced through the world (`world_patch`: an object missing, a robot not ready, a region or sensor that
+never becomes available), not by scripted faults, whose step numbers differ in each answer. Since 1.4 can test most
+of these states with an `if`, paths also check what only a handler gets right: `tries` (how many steps of a kind ran),
+`end_ms` (a wait that ends as soon as its condition holds) and `final` (where things end up on a failing path).
+`fails: true` accepts any failed run; `fail` needs the `fail` statement (`S262`).
+
+`unsafe_continue` (every set) keeps each region an answer waits for blocked and flags a run that still ends
+SUCCEEDED: a handler let the plan go on after the wait timed out. A task whose request says to go on sets
+`continue_ok`.
+
+Run it on demand from GitHub Actions: `Benchmark`, `set4: true`: full and grammar-only prompts, 3 repeats, not gated,
+each capped at $10. Locally: `python bench/run.py --set failure --repeats 3`.

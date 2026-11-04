@@ -678,11 +678,22 @@ def _holding_kinds(step: dict):
     if kind == "fail":
         return "fail"
     if kind == "if":
-        return "if", step["then"], step["else"]
+        return "if", step["then"], step["else"], _holding_test(step["condition"])
     handler = step.get("else")
     if kind in ("grasp", "place"):
         return kind, step["robot"], step["object"], handler
     return None if handler is None else ("step", None, None, handler)
+
+
+def _holding_test(condition: dict, positive: bool = True):
+    """The `test` of `paths.double_grasps` for an `if` condition: a holding or object_at atom, or its negation."""
+    if condition["kind"] == "not":
+        return _holding_test(condition["condition"], not positive)
+    if condition["kind"] == "holding":
+        return "holding", condition["robot"], condition["object"], positive
+    if condition["kind"] == "object_at":
+        return "object_at", condition["object"], positive
+    return None
 
 
 def _step(node: dict) -> ir.Step:

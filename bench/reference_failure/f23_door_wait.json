@@ -1,0 +1,10 @@
+{
+  "task": "fetch",
+  "bindings": {
+    "r": "arm1",
+    "v": "vial2",
+    "src": "fridge",
+    "dst": "scanner",
+    "door": "door_zone"
+  }
+}

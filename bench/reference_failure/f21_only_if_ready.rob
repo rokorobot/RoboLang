@@ -1,0 +1,13 @@
+// bench/reference_failure/f21_only_if_ready.rob: the RoboLang 1.5 answer
+robolang 1.5;
+
+task inspect_part(robot r, object p, location src, location dst) {
+    pre { robot_ready r; }
+    goal { object_at p dst; }
+    plan {
+        move r to src;
+        grasp r p;
+        move r to dst;
+        place r p at dst;
+    }
+}

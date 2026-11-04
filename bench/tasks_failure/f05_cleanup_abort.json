@@ -1,0 +1,60 @@
+{
+  "id": "f05_cleanup_abort",
+  "prompt": "Pick up box1 from shelf_a with arm1, then wait up to 10 seconds for the aisle to clear and put box1 on the table. If the aisle does not clear in time, put box1 back on shelf_a and stop the job as failed.",
+  "world": "bench/worlds/warehouse.json",
+  "group": "recover",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_5": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "the aisle clears at 8 s",
+        "goal": [
+          [
+            "rl:thing:box1",
+            "located_in",
+            "rl:place:table"
+          ]
+        ],
+        "end_ms": "8000",
+        "world_patch": {
+          "events": [
+            {
+              "at": {
+                "value": "8",
+                "unit": "s"
+              },
+              "fact": "region_clear",
+              "target": "aisle",
+              "value": true
+            }
+          ]
+        }
+      },
+      {
+        "when": "the aisle never clears",
+        "fail": "the aisle did not clear",
+        "final": [
+          [
+            "rl:thing:box1",
+            "located_in",
+            "rl:place:shelf_a"
+          ]
+        ],
+        "world_patch": {
+          "events": []
+        }
+      }
+    ]
+  },
+  "tags": [
+    "wait",
+    "cleanup",
+    "report_and_stop"
+  ],
+  "why": "Reacting to a failed step is error handling. In RoboLang 1.4 a failing step ends the run, and an `if` is judged once, so it cannot put the box back after a wait timed out. RoboLang 1.5 failure handlers (decision 0033) express it.",
+  "attempt_fails_with": "E202"
+}

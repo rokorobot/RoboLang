@@ -11,6 +11,47 @@
     "decision": "cannot",
     "category": "inexpressible"
   },
+  "expect_1_5": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "arm_a ready",
+        "goal": [
+          [
+            "rl:thing:p1",
+            "located_in",
+            "rl:place:station1"
+          ]
+        ],
+        "world_patch": {
+          "events": [],
+          "robots": {
+            "arm_a": {
+              "ready": true
+            }
+          }
+        }
+      },
+      {
+        "when": "arm_a not ready",
+        "goal": [
+          [
+            "rl:thing:p1",
+            "located_in",
+            "rl:place:station1"
+          ]
+        ],
+        "world_patch": {
+          "events": [],
+          "robots": {
+            "arm_a": {
+              "ready": false
+            }
+          }
+        }
+      }
+    ]
+  },
   "tags": [
     "failure_handling"
   ],

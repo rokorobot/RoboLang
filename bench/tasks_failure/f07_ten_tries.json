@@ -1,0 +1,56 @@
+{
+  "id": "f07_ten_tries",
+  "prompt": "With arm2, take part7 from the table to the inspection_bay. If grasping part7 fails, keep retrying, up to 10 grasp attempts in all.",
+  "world": "bench/worlds/warehouse.json",
+  "group": "recover",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_5": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "part7 on the table",
+        "goal": [
+          [
+            "rl:thing:part7",
+            "located_in",
+            "rl:place:inspection_bay"
+          ]
+        ],
+        "tries": [
+          "grasp",
+          1
+        ],
+        "world_patch": {
+          "events": []
+        }
+      },
+      {
+        "when": "part7 missing",
+        "fails": true,
+        "tries": [
+          "grasp",
+          10
+        ],
+        "world_patch": {
+          "events": [],
+          "objects": {
+            "part7": {
+              "present": false,
+              "location": null
+            }
+          }
+        }
+      }
+    ]
+  },
+  "tags": [
+    "retry",
+    "grasp",
+    "count"
+  ],
+  "why": "Reacting to a failed step is error handling. In RoboLang 1.4 a failing step ends the run, and an `if` is judged once, so it cannot grasp again after a grasp failed; ten attempts are written as sequential `if not holding` steps, since handlers nest at most 4 deep. RoboLang 1.5 failure handlers (decision 0033) express it.",
+  "attempt_fails_with": "E202"
+}

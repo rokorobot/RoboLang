@@ -1,0 +1,15 @@
+// bench/reference_failure/f12_message_delivery.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 1.5;
+
+task t(robot r, object box, location src, location dst) {
+    goal { object_at box dst; }
+    plan {
+        communicate r to "ops" with "start" else {
+            fail "not delivered";
+        }
+        move r to src;
+        grasp r box;
+        move r to dst;
+        place r box at dst;
+    }
+}

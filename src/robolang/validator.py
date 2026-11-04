@@ -50,12 +50,24 @@ def _holding_kinds(statement: ast.Statement):
     if isinstance(statement, ast.Fail):
         return "fail"
     if isinstance(statement, ast.If):
-        return "if", statement.then.statements, statement.orelse.statements if statement.orelse else ()
+        orelse = statement.orelse.statements if statement.orelse else ()
+        return "if", statement.then.statements, orelse, _holding_test(statement.condition)
     handler = statement.handler.statements if getattr(statement, "handler", None) is not None else None
     if isinstance(statement, (ast.Grasp, ast.Place)):
         kind = "grasp" if isinstance(statement, ast.Grasp) else "place"
         return kind, statement.robot.text, statement.obj.text, handler
     return None if handler is None else ("step", None, None, handler)
+
+
+def _holding_test(condition, positive: bool = True):
+    """The `test` of `paths.double_grasps` for an `if` condition: a holding or object_at atom, or its negation."""
+    if isinstance(condition, ast.Not):
+        return _holding_test(condition.operand, not positive)
+    if isinstance(condition, ast.Holding):
+        return "holding", condition.robot.text, condition.obj.text, positive
+    if isinstance(condition, ast.ObjectAt):
+        return "object_at", condition.obj.text, positive
+    return None
 
 
 def double_grasp_message(robot: str, obj: str, holder: str, held: str, earlier: str) -> str:

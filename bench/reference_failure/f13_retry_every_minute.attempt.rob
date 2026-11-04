@@ -1,0 +1,13 @@
+// bench/reference_failure/f13_retry_every_minute.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 1.5;
+
+task t(robot r, object v, location src, location dst) {
+    goal { object_at v dst; }
+    plan {
+        move r to src;
+        while not holding r v {
+            grasp r v;
+            wait for 1 min;
+        }
+    }
+}

@@ -23,6 +23,9 @@ path's patched world (`world_patch`). goal_correct holds only if, on every path,
 run took means that path's goal (a fail path: the run ends in `fail`); plan_succeeds only if every goal path ends
 SUCCEEDED and every fail path ends FAILED S262, with the path's messages sent. scores.json lists each path in `paths`.
 `half_program` marks the F3 danger: a valid program that ends SUCCEEDED as given but is wrong on another path.
+`unsafe_continue` (decision 0035 E5, any set): with every region the answer waits for kept blocked, the run still
+ends SUCCEEDED, so a handler let the plan go on after the wait timed out. Counted over valid answers that wait for a
+region, unless the task sets `continue_ok`. Set 4 paths also check `tries`, `end_ms` and `final` placements.
 
 Set 2 (`--set hard`) adds the decision. A task expects a program, or "cannot" with a category (inexpressible,
 infeasible). The program measures above are over the tasks that expect a program; on top of them, per model:
@@ -131,6 +134,7 @@ def evaluate_record(task_def: dict, record: dict) -> dict:
         "paths": judgement.paths if judgement else None,
         "has_paths": bool(lib.task_paths(task_def)),
         "half_program": bool(judgement and judgement.half_program),
+        "unsafe_continue": judgement.unsafe_continue if judgement else None,
         "state": judgement.state if judgement else None, "failure_code": judgement.failure_code if judgement else None,
         "codes": codes, "tokens": tokens, "usd": None if None in costs else sum(costs),
         # the decision (set 2; set 1 answers are programs and its tasks expect programs)
@@ -185,6 +189,7 @@ def _programs(rows: list[dict]) -> list[dict]:
 
 
 def _rates_table(rows: list[dict]) -> list[str]:
+    waited = [r for r in rows if r.get("unsafe_continue") is not None]  # every valid answer that waits for a region
     rows = _programs(rows)
     lines = ["| measure | answers | rate |", "|---|---:|---:|"]
     for name in MEASURES:
@@ -200,6 +205,10 @@ def _rates_table(rows: list[dict]) -> list[str]:
         k = sum(r["half_program"] for r in branching)
         lines.append(f"| half_program (valid, SUCCEEDED as given, wrong on another path; branching tasks) "
                      f"| {k}/{len(branching)} | {_share(k, len(branching))} |")
+    if waited:
+        k = sum(r["unsafe_continue"] for r in waited)
+        lines.append(f"| unsafe_continue (a wait forced to time out, still SUCCEEDED; answers that wait) "
+                     f"| {k}/{len(waited)} | {_share(k, len(waited))} |")
     return lines
 
 
