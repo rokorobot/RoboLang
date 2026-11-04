@@ -1,0 +1,58 @@
+{
+  "id": "f03_wait_then_report",
+  "prompt": "With arm1, carry box1 from shelf_a to the table once the aisle is clear. Wait at most 10 seconds for it; if it is still blocked by then, send \"aisle blocked\" to channel \"ops\" from arm1 and stop the job as failed.",
+  "world": "bench/worlds/warehouse.json",
+  "group": "recover",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_5": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "the aisle clears at 8 s",
+        "goal": [
+          [
+            "rl:thing:box1",
+            "located_in",
+            "rl:place:table"
+          ]
+        ],
+        "end_ms": "8000",
+        "world_patch": {
+          "events": [
+            {
+              "at": {
+                "value": "8",
+                "unit": "s"
+              },
+              "fact": "region_clear",
+              "target": "aisle",
+              "value": true
+            }
+          ]
+        }
+      },
+      {
+        "when": "the aisle never clears",
+        "fail": "aisle blocked",
+        "messages": [
+          [
+            "ops",
+            "aisle blocked"
+          ]
+        ],
+        "world_patch": {
+          "events": []
+        }
+      }
+    ]
+  },
+  "tags": [
+    "wait",
+    "report_and_stop"
+  ],
+  "why": "Reacting to a failed step is error handling. In RoboLang 1.4 a failing step ends the run, and an `if` is judged once, so it cannot send a message after a wait timed out; `wait for 10 s` then `if` waits the full 10 s even when the aisle clears sooner. RoboLang 1.5 failure handlers (decision 0033) express it.",
+  "attempt_fails_with": "E202"
+}

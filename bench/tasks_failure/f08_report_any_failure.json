@@ -1,0 +1,71 @@
+{
+  "id": "f08_report_any_failure",
+  "prompt": "With arm1, move box1 from shelf_a to the table. If any step of the job fails, send \"job failed\" to channel \"ops\" from arm1 and stop the job as failed.",
+  "world": "bench/worlds/warehouse.json",
+  "group": "recover",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_5": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "everything works",
+        "goal": [
+          [
+            "rl:thing:box1",
+            "located_in",
+            "rl:place:table"
+          ]
+        ],
+        "world_patch": {
+          "events": []
+        }
+      },
+      {
+        "when": "box1 missing",
+        "fail": "job failed",
+        "messages": [
+          [
+            "ops",
+            "job failed"
+          ]
+        ],
+        "world_patch": {
+          "events": [],
+          "objects": {
+            "box1": {
+              "present": false,
+              "location": null
+            }
+          }
+        }
+      },
+      {
+        "when": "arm1 not ready",
+        "fail": "job failed",
+        "messages": [
+          [
+            "ops",
+            "job failed"
+          ]
+        ],
+        "world_patch": {
+          "events": [],
+          "robots": {
+            "arm1": {
+              "ready": false
+            }
+          }
+        }
+      }
+    ]
+  },
+  "tags": [
+    "report_and_stop",
+    "any_step"
+  ],
+  "why": "Reacting to a failed step is error handling. In RoboLang 1.4 a failing step ends the run, and an `if` is judged once, so it cannot react to a step that fails for a reason no condition names in advance, such as a fault. RoboLang 1.5 failure handlers (decision 0033) express it.",
+  "attempt_fails_with": "E202"
+}

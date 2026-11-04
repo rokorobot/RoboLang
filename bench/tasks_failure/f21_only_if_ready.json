@@ -1,0 +1,49 @@
+{
+  "id": "f21_only_if_ready",
+  "prompt": "Only if arm2 is ready, have it move part7 from the table to the inspection_bay; otherwise move nothing.",
+  "world": "bench/worlds/warehouse.json",
+  "group": "control",
+  "expect": {
+    "decision": "program"
+  },
+  "expect_1_5": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "arm2 ready",
+        "goal": [
+          [
+            "rl:thing:part7",
+            "located_in",
+            "rl:place:inspection_bay"
+          ]
+        ],
+        "world_patch": {
+          "events": []
+        }
+      },
+      {
+        "when": "arm2 not ready",
+        "fails": true,
+        "final": [
+          [
+            "rl:thing:part7",
+            "located_in",
+            "rl:place:table"
+          ]
+        ],
+        "world_patch": {
+          "events": [],
+          "robots": {
+            "arm2": {
+              "ready": false
+            }
+          }
+        }
+      }
+    ]
+  },
+  "tags": [
+    "precondition"
+  ]
+}

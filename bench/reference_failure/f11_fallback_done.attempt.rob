@@ -1,0 +1,17 @@
+// bench/reference_failure/f11_fallback_done.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 1.5;
+
+task t(robot r, object box, location src, location dst, location side, region aisle) {
+    goal { object_at box dst; }
+    plan {
+        move r to src;
+        grasp r box;
+        wait until region_clear aisle timeout 10 s else {
+            goal { object_at box side; }
+            move r to side;
+            place r box at side;
+        }
+        move r to dst;
+        place r box at dst;
+    }
+}

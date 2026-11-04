@@ -1,0 +1,48 @@
+{
+  "id": "f23_door_wait",
+  "prompt": "Wait for the door zone to clear, giving it at most 20 seconds, then have arm1 take vial2 from the fridge to the scanner.",
+  "world": "bench/worlds/lab.json",
+  "group": "control",
+  "expect": {
+    "decision": "program"
+  },
+  "expect_1_5": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "the door zone clears at 12 s",
+        "goal": [
+          [
+            "rl:thing:vial2",
+            "located_in",
+            "rl:place:scanner"
+          ]
+        ],
+        "end_ms": "12000",
+        "world_patch": {
+          "events": [
+            {
+              "at": {
+                "value": "12",
+                "unit": "s"
+              },
+              "fact": "region_clear",
+              "target": "door_zone",
+              "value": true
+            }
+          ]
+        }
+      },
+      {
+        "when": "the door zone never clears",
+        "fails": true,
+        "world_patch": {
+          "events": []
+        }
+      }
+    ]
+  },
+  "tags": [
+    "wait"
+  ]
+}

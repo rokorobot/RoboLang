@@ -1,0 +1,20 @@
+{
+  "id": "f11_fallback_done",
+  "prompt": "With arm1, take box1 from shelf_a to the table, waiting up to 10 seconds for the aisle to clear. If it does not clear in time, leave box1 at the handoff instead and count the job as done.",
+  "world": "bench/worlds/warehouse.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_5": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "tags": [
+    "fallback_outcome",
+    "wait"
+  ],
+  "why": "Counting a different end state as done is a fallback outcome. A RoboLang run succeeds only on the goal the task states; a handler has no goal of its own (decision 0034).",
+  "attempt_fails_with": "E208"
+}

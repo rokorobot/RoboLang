@@ -1,0 +1,15 @@
+// bench/reference_failure/f23_door_wait.rob: the RoboLang 1.5 answer
+robolang 1.5;
+
+task fetch(robot r, object v, location src, location dst, region door) {
+    goal { object_at v dst; }
+    plan {
+        wait until region_clear door timeout 20 s else {
+            fail "the door zone did not clear";
+        }
+        move r to src;
+        grasp r v;
+        move r to dst;
+        place r v at dst;
+    }
+}

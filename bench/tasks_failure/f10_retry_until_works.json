@@ -1,0 +1,20 @@
+{
+  "id": "f10_retry_until_works",
+  "prompt": "With arm2, take part7 from the table to the inspection_bay. If the grasp fails, keep trying until it works.",
+  "world": "bench/worlds/warehouse.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_5": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "tags": [
+    "retry",
+    "loop"
+  ],
+  "why": "Trying until it works is a loop with no bound. RoboLang 1.5 handlers retry a fixed number of times only (decision 0033 F5); there is no loop.",
+  "attempt_fails_with": "E203"
+}

@@ -1,0 +1,75 @@
+{
+  "id": "f06_skip_inspection",
+  "prompt": "With arm1, wait up to 5 seconds for the spectro sensor, inspect vial1 with it, then put vial1 in the fridge. If the sensor is not available in time, send \"spectro unavailable\" to channel \"lab\" from arm1, skip the inspection, and still put vial1 in the fridge.",
+  "world": "bench/worlds/lab.json",
+  "group": "recover",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_5": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "spectro is available at 3 s",
+        "goal": [
+          [
+            "rl:thing:vial1",
+            "located_in",
+            "rl:place:fridge"
+          ]
+        ],
+        "end_ms": "3000",
+        "tries": [
+          "inspect",
+          1
+        ],
+        "world_patch": {
+          "events": [
+            {
+              "at": {
+                "value": "3",
+                "unit": "s"
+              },
+              "fact": "sensor_available",
+              "target": "spectro",
+              "value": true
+            }
+          ]
+        }
+      },
+      {
+        "when": "spectro never becomes available",
+        "goal": [
+          [
+            "rl:thing:vial1",
+            "located_in",
+            "rl:place:fridge"
+          ]
+        ],
+        "end_ms": "5000",
+        "tries": [
+          "inspect",
+          0
+        ],
+        "messages": [
+          [
+            "lab",
+            "spectro unavailable"
+          ]
+        ],
+        "world_patch": {
+          "events": []
+        }
+      }
+    ]
+  },
+  "tags": [
+    "wait",
+    "sensor",
+    "report"
+  ],
+  "why": "Reacting to a failed step is error handling. In RoboLang 1.4 a failing step ends the run, and an `if` is judged once, so it cannot go on after a wait timed out; `wait for 5 s` then `if` waits the full 5 s. RoboLang 1.5 failure handlers (decision 0033) express it.",
+  "continue_ok": true,
+  "attempt_fails_with": "E202"
+}

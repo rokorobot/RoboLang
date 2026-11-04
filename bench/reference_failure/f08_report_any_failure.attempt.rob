@@ -1,0 +1,24 @@
+// bench/reference_failure/f08_report_any_failure.attempt.rob: the 1.5 answer under 1.4, which has no failure handlers
+robolang 1.4;
+
+task deliver(robot r, object box, location src, location dst) {
+    goal { object_at box dst; }
+    plan {
+        move r to src else {
+            communicate r to "ops" with "job failed";
+            fail "job failed";
+        }
+        grasp r box else {
+            communicate r to "ops" with "job failed";
+            fail "job failed";
+        }
+        move r to dst else {
+            communicate r to "ops" with "job failed";
+            fail "job failed";
+        }
+        place r box at dst else {
+            communicate r to "ops" with "job failed";
+            fail "job failed";
+        }
+    }
+}

@@ -1,0 +1,18 @@
+// bench/reference_failure/f04_wait_longer.attempt.rob: the 1.5 answer under 1.4, which has no failure handlers
+robolang 1.4;
+
+task deliver(robot r, object v, location src, location dst, region door) {
+    goal { object_at v dst; }
+    plan {
+        wait until region_clear door timeout 5 s else {
+            communicate r to "lab" with "door busy";
+            wait until region_clear door timeout 20 s else {
+                fail "the door zone did not clear";
+            }
+        }
+        move r to src;
+        grasp r v;
+        move r to dst;
+        place r v at dst;
+    }
+}

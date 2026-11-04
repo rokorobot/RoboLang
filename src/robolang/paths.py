@@ -42,9 +42,20 @@ def goalless_path(steps, task_has_goal: bool, parts: Parts) -> str | None:
     return _run(steps, {task_has_goal: ""}, parts).get(False)
 
 
-# kinds(step) -> None (no effect on holding, no handler), "fail", ("if", then_steps, else_steps),
+# kinds(step) -> None (no effect on holding, no handler), "fail", ("if", then_steps, else_steps, test),
 # or (kind, robot parameter, object parameter, handler steps or None) where kind is "grasp", "place" or "step"
-# (any other step with a 1.5 failure handler; robot and object are then None)
+# (any other step with a 1.5 failure handler; robot and object are then None). `test` describes an `if` condition
+# that the holder facts can contradict: ("holding", robot, object, positive), ("object_at", object, positive), or None.
+
+
+def _possible(facts: frozenset, test, side: bool) -> bool:
+    """False when the known facts make the `then` (side True) or `else` branch of an `if` impossible to take."""
+    if test is None:
+        return True
+    required = test[-1] if side else not test[-1]  # what the branch needs the atom to be
+    if test[0] == "holding":
+        return required or (test[1], test[2]) not in {(f[0], f[1]) for f in facts}
+    return not (required and any(f[1] == test[1] for f in facts))  # object_at: a held object is at no location
 Kinds = Callable[[object], "None | str | tuple"]
 
 
@@ -69,7 +80,9 @@ def double_grasps(steps, kinds: Kinds) -> list[tuple[object, object, str, str]]:
             if part == "fail":
                 return set()
             if part[0] == "if":
-                states = run(part[1], states) | run(part[2], states)
+                test = part[3] if len(part) > 3 else None
+                then = run(part[1], {f for f in states if _possible(f, test, True)})
+                states = then | run(part[2], {f for f in states if _possible(f, test, False)})
                 continue
             kind, robot, obj, handler = part
             before = states
