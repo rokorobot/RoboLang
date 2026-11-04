@@ -1,8 +1,9 @@
 # Decision record 0035: Teaching RoboLang 1.5, benchmark set 4 and errata
 
 **Date:** 2026-11-04
-**Status:** **PROPOSED.** E1–E9 need the owner, including the paid runs (E8).
-**Applies to (when decided):** `docs/language-reference.md` and its package copy, `bench/prompt.md`,
+**Status:** **APPROVED by the owner, 2026-11-04** (recommended option for E1–E9). The E8 spend is confirmed before
+each paid run.
+**Applies to:** `docs/language-reference.md` and its package copy, `bench/prompt.md`,
 `bench/prompt_minimal.md`, `bench/lib.py` and `score.py`, a new `bench/tasks_failure/` (set 4), labels in sets 2 and
 3, the set "ask" freeze manifest, `bench/gate.json`.
 **Evidence:** RoboLang 1.5 ([0033](0033-step-failure-handlers.md), [0034](0034-no-goal-in-handlers.md)) is merged,
@@ -34,4 +35,4 @@ in `fail` lets the plan go on after the wait timed out, which defeats the wait.
 
 ## Needs the owner
 
-E1–E9, and authorization of the E8 spend.
+Nothing for the design: E1–E9 approved. Each paid run of E8 is confirmed before it starts.
