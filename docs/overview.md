@@ -30,6 +30,7 @@ These define what the implemented tooling does. They live in the repository's `s
 - [Decision records](https://github.com/rokorobot/RoboLang/tree/main/spec/decisions)
 - [Development plan](DEVELOPMENT_PLAN.md): milestones and development tracks; listing an item
   authorizes nothing
+- [Development steps](development-steps.md): a timeline of what has been delivered so far
 - [Foundation 1 exit-gate evidence](evidence/rl-basic-01-exit-gate.md)
 
 ## Current limitations
