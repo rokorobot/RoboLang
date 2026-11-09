@@ -71,6 +71,7 @@ def test_reference_teaches_the_1_5_handler_rules():
     for phrase in ("Every `wait until` has a handler", 'else { fail "<what did not happen>"; }',
                    "never changes what success means", "call it done", "cannot be represented",
                    "A fixed number of retries is allowed", "as many times as it takes",
+                   "If it does not clear, do nothing", "It is representable: write the program",
                    "give each step that can fail its own handler", "only when the request says to carry on"):
         assert phrase in text, phrase
 
