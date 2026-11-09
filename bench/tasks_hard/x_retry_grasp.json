@@ -11,6 +11,6 @@
     "retry",
     "error_handling"
   ],
-  "why": "Reacting to a failed step needs error handling and a loop. A failing step ends the run; there is no retry, catch or loop construct.",
+  "why": "\"As many times as it takes\" is a loop. RoboLang 1.5 failure handlers allow a fixed number of retries (decision 0033 F5), but no loop and no unbounded retry.",
   "attempt_fails_with": "E203"
 }

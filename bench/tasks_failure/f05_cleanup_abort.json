@@ -4,6 +4,9 @@
   "world": "bench/worlds/warehouse.json",
   "group": "recover",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_4": {
     "decision": "cannot",
     "category": "inexpressible"
   },

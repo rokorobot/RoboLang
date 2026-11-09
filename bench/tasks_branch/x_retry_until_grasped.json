@@ -15,6 +15,6 @@
     "retry",
     "loop"
   ],
-  "why": "Reacting to a failed step needs error handling and a loop. 1.4 branches on world conditions only (decision 0027); a failing step still ends the run.",
+  "why": "\"Until it works\" is a loop. RoboLang 1.5 failure handlers allow a fixed number of retries (decision 0033 F5), but no loop and no unbounded retry; 1.4 branches on world conditions only (decision 0027).",
   "attempt_fails_with": "E203"
 }

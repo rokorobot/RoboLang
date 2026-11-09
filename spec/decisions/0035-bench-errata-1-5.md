@@ -51,3 +51,13 @@ Nothing for the design: E1–E9 approved. Each paid run of E8 is confirmed befor
 - Fixed with it: the holder check (`E315`, 0032) followed both branches of `if not holding r p`, so it rejected a
   valid retry. A branch the known facts contradict (`holding`, `not holding`, `object_at`) is now skipped.
 
+## Implementation notes (PR 2)
+
+- The reference, its package copy and both prompts teach 1.5; the grammar-only prompt pastes grammars 1.3, 1.4 and 1.5.
+  Changes, before and after: [errata](../../docs/evidence/bench-errata-1-5.md).
+- E2 as built: the 8 set 4 `recover` tasks and set 3 `x_failover_on_fault` expect a program; `expect_1_4` keeps the old
+  label. `x_failover_on_fault` moves to group `recover` and gets a reference program. Only `why` changes for
+  `x_retry_grasp` and `x_retry_until_grasped`.
+- E9: freeze v2, 726 files, digest `fb4b0f59795d948ca2948e1b5654ab0ea2cd23d30bdd317cf11b26e94e293da7`; v1 kept.
+- Baseline before the switch: [bench-set4-baseline.md](../../docs/evidence/bench-set4-baseline.md). The acceptance
+  run (E7, E8) is confirmed by the owner before it starts.

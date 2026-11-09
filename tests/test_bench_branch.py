@@ -5,6 +5,8 @@ labelled for RoboLang 1.4 in N4 PR 3.
 20 branching requests that 1.3 could not express (`expect_1_3` keeps that label) and 1.4 does (`expect`: a program;
 `expect_1_4.paths`: the goal and the world patch of every path; the reference is the 1.4 program), 8 requests that stay
 inexpressible in 1.4, and 8 conditional-sounding requests that 1.3 already expresses with `pre` or `wait until`.
+One of the 8, `x_failover_on_fault`, is a program in 1.5 (decision 0035 E2): group `recover`, `expect_1_4` keeps the
+old label and `expect_1_5` holds its paths.
 No network and no SDK.
 """
 
@@ -49,7 +51,8 @@ def judged(task_id: str, answer: dict):
 
 def test_the_mix_of_tasks():
     assert len(SET) == 36
-    assert Counter(d["group"] for d in SET.values()) == {"branching": 20, "inexpressible": 8, "control": 8}
+    groups = Counter(d["group"] for d in SET.values())
+    assert groups == {"branching": 20, "inexpressible": 7, "control": 8, "recover": 1}
     for task_id, task in SET.items():
         assert task["id"] == task_id and (REPO / task["world"]).is_file() and task["tags"]
         assert task["prompt"].endswith(".") and "expect_1_4" in task
@@ -57,7 +60,8 @@ def test_the_mix_of_tasks():
 
 def test_files_are_where_they_should_be():
     names = {p.name for p in REF.iterdir()}
-    assert {n.split(".")[0] for n in names if ".attempt." in n} == set(CANNOT)
+    recover = {t for t, d in SET.items() if d["group"] == "recover"}
+    assert {n.split(".")[0] for n in names if ".attempt." in n} == set(CANNOT) | recover
     assert {n.split(".")[0] for n in names if ".attempt." not in n} == set(FEASIBLE)
     for task_id in BRANCHING:
         assert (REF / f"{task_id}.rob").read_text(encoding="utf-8").splitlines()[1] == "robolang 1.4;"
@@ -72,6 +76,11 @@ def test_expectations_are_well_formed():
             assert lib.expected_goals(task) and "why" not in task and "expect_1_3" not in task
             continue
         assert len(task["why"]) > 40
+        if task["group"] == "recover":  # 0035 E2: a program in 1.5 only
+            assert (decision, category) == ("program", "none") and task["expect"] == {"decision": "program"}
+            assert later == {"decision": "cannot", "category": "inexpressible"}
+            assert task["expect_1_5"]["decision"] == "program" and len(task["expect_1_5"]["paths"]) >= 2
+            continue
         if task["group"] == "inexpressible":
             assert (decision, category) == ("cannot", "inexpressible")
             assert later == {"decision": "cannot", "category": "inexpressible"} and "expect_1_3" not in task

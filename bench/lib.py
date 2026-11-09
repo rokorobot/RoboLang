@@ -39,8 +39,10 @@ FAILURE_REFERENCE_DIR = BENCH / "reference_failure"
 PROMPT_FILE = BENCH / "prompt.md"
 REFERENCE_FILE = ROOT / "docs" / "language-reference.md"
 MINIMAL_PROMPT_FILE = BENCH / "prompt_minimal.md"
-GRAMMAR_FILE = ROOT / "spec" / "grammar-v1.4.ebnf"  # a delta over the 1.3 grammar, so the prompt pastes both
+# 1.5 is a delta over 1.4, itself a delta over 1.3: the grammar-only prompt pastes all three
+GRAMMAR_FILE = ROOT / "spec" / "grammar-v1.5.ebnf"
 BASE_GRAMMAR_FILE = ROOT / "spec" / "grammar-v1.3.ebnf"
+GRAMMAR_FILES = (BASE_GRAMMAR_FILE, ROOT / "spec" / "grammar-v1.4.ebnf", GRAMMAR_FILE)
 GRAMMAR_MARK = "{{GRAMMAR}}"  # in prompt_minimal.md: replaced by the text of the grammar file
 REFERENCE_MARK = "{{LANGUAGE_REFERENCE}}"  # in prompt.md: replaced by the shipped, tested reference
 
@@ -131,7 +133,7 @@ def load_prompt(name: str = "full") -> str:
     """A prompt assembled from its stable wrapper and the canonical grammar or language reference."""
     if name == "minimal":
         text = MINIMAL_PROMPT_FILE.read_text(encoding="utf-8")
-        grammar = "\n\n".join(f.read_text(encoding="utf-8").rstrip("\n") for f in (BASE_GRAMMAR_FILE, GRAMMAR_FILE))
+        grammar = "\n\n".join(f.read_text(encoding="utf-8").rstrip("\n") for f in GRAMMAR_FILES)
         return text.replace(GRAMMAR_MARK, grammar)
     text = PROMPT_FILE.read_text(encoding="utf-8")
     return text.replace(REFERENCE_MARK, REFERENCE_FILE.read_text(encoding="utf-8").rstrip("\n"))

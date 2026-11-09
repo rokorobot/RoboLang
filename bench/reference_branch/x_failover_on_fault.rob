@@ -1,0 +1,11 @@
+// bench/reference_branch/x_failover_on_fault.rob: the RoboLang 1.5 answer (decision 0035 E2)
+robolang 1.5;
+
+task move_part(robot a, robot b, object p, location src, location dst) {
+    goal { object_at p dst; }
+    plan {
+        move a to src else { move b to src; }
+        if robot_at a src { grasp a p; move a to dst; place a p at dst; }
+        else { grasp b p; move b to dst; place b p at dst; }
+    }
+}

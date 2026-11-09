@@ -66,7 +66,7 @@ robolang simulate examples/handover.rob --world examples/world.json \
 
 | Command | What it does | Exit status |
 |---|---|---|
-| `reference` | Prints the tested RoboLang 1.3 language reference shipped in the package | 0 |
+| `reference` | Prints the tested RoboLang 1.5 language reference shipped in the package | 0 |
 | `validate FILE` | Checks the file and prints **every** diagnostic (up to 50) as `file:line:column: error[CODE]: …` | 0 valid, 1 invalid, 2 usage error |
 | `inspect FILE [--json] [--task NAME]` | Validates, then shows the tasks as text or as Task IR JSON | as `validate` |
 | `simulate FILE --world W [--task NAME] [--bind P=ID …]` | Runs one task against a world file in a symbolic simulation; the same inputs give a byte-identical run record | 0 succeeded, 1 invalid source, 2 usage, 3 invalid world, 4 failed, 5 cancelled |

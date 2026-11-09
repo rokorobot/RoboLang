@@ -1,17 +1,18 @@
-# RoboLang 1.4 language reference
+# RoboLang 1.5 language reference
 
 RoboLang is a small, checked language for robot tasks. A program describes a desired final state and
 a plan for reaching it in a symbolic world. A program is correct only when it validates, names the
 right entities, states the operator's requested outcome in `goal`, and reaches that goal.
 
-RoboLang 1.4 has bounded branching (`if`/`else`, see "Branching") but no loops, retry, error handling,
-counts, clocks, schedules, arithmetic, message waits, or variables beyond typed task parameters. Do
-not silently drop part of a request. If a request needs an unsupported construct, or the available
+RoboLang 1.5 has bounded branching (`if`/`else`, see "Branching") and step failure handlers (a step
+`else { ... }` that runs when that step fails, see "Failure handlers"). It has no loops ("until it
+works"), counts, clocks, schedules, arithmetic, message waits, or variables beyond typed task
+parameters. Do not silently drop part of a request. If a request needs an unsupported construct, or the available
 world and robots cannot perform it, say that it cannot be represented or completed.
 
 ## File and task structure
 
-A file starts with `robolang 1.4;` and holds one or more tasks. `//` starts a comment. The language
+A file starts with `robolang 1.5;` and holds one or more tasks. `//` starts a comment. The language
 is case-sensitive. Whitespace only separates tokens.
 
 ```text
@@ -49,12 +50,12 @@ grasp r obj;
 place r obj at dst;
 inspect r obj using camera;
 wait for 2 s;
-wait until region_clear cell timeout 30 s;
+wait until region_clear cell timeout 30 s else { fail "cell not clear"; }
 communicate r to "channel" with "message";
 ```
 
 Here `r` is a robot, `obj` an object, `dst` a location, and `camera` a sensor parameter. A sensor is
-never a quoted string in 1.3 and 1.4. `wait until` always needs a timeout. Strings cannot contain a literal
+never a quoted string. `wait until` always needs a timeout and a failure handler (`E316`). Strings cannot contain a literal
 line break; the only escapes are `\"`, `\\`, `\n`, and `\t`.
 
 ## Branching
@@ -87,9 +88,10 @@ if region_clear cell {
   Messages sent before it stand. Use it only as the last statement of a branch (`E313`); the reason
   must not be empty (`E307`).
 - `if` is nested at most 4 deep (`E216`). `if` cannot be used in `pre` or in a `wait until` condition.
-- `if` and `else` are not conditions: nothing is retried, repeated, counted, or timed. If a request
-  needs a loop ("until it works"), a retry, "after N times", elapsed time, or waiting for a message,
-  it cannot be represented: say so.
+- An `if` is decided by the world, not by whether an earlier step worked. To react to a failed step,
+  use a failure handler (below). Nothing is repeated, counted, or timed: if a request needs a loop
+  ("until it works", "as many times as it takes"), elapsed time, or waiting for a message, it cannot
+  be represented: say so.
 
 **A condition about the moment the job runs is decided by the program, with `if`.** When the request
 says "if arm1 is ready when the job starts", "if the cell is clear at that moment", "if the box is
@@ -98,6 +100,39 @@ given: it is whatever is true when the program runs. Never settle it by reading 
 writing only the branch that is true there, and never write only one branch (with or without `pre`).
 Write the `if` with both branches, and with a goal for each path. A program with one branch passes
 in the world shown and fails in the other worlds the request was about.
+
+## Failure handlers
+
+```text
+move r to src else { communicate r to "ops" with "cannot reach src"; fail "cannot reach src"; }
+grasp r box else { grasp r box; }               // one more attempt
+wait until region_clear aisle timeout 10 s else {
+    place r box at src;                         // clean up
+    fail "the aisle did not clear";             // then stop
+}
+```
+
+- A `move`, `grasp`, `place`, `inspect` or `wait until` may end with `else { ... }` instead of `;`.
+  The block, the **handler**, runs only when that step fails. `wait for`, `communicate` and `fail`
+  take no handler (`E201`). There is no handler for a group of steps: to react to any step failing,
+  give each step that can fail its own handler.
+- A step that fails changes nothing. Time a `wait until` spent waiting has passed.
+- **Every `wait until` has a handler** (`E316`). If the request does not say what to do when the
+  wait times out, the handler is `else { fail "<what did not happen>"; }`. If it does say (report,
+  wait longer, clean up), do that, and end with `fail` unless the request says to carry on.
+- **A handler has no `goal`** (`E208`) and never changes what success means. It either recovers, so
+  the run still reaches the task's own goal, or it cleans up and ends in `fail`. A request that counts
+  a different end state as done ("otherwise leave it at the handoff and call it done") cannot be
+  represented: say so.
+- Unless a handler ends in `fail`, the plan goes on with the step after the handled one. Use that
+  only when the request says to carry on (for example, skip an inspection and still deliver).
+- **A fixed number of retries is allowed:** a handler may repeat its step, and handlers nest, so
+  `grasp r box else { grasp r box else { grasp r box; } }` is up to three attempts. A handler counts
+  as one nesting level, as an `if` does: at most 4 in all (`E216`). For more attempts, follow with
+  `if not holding r box { grasp r box else { ... } }` steps. "Until it works" or "as many times as
+  it takes" is a loop: it cannot be represented.
+- A path is one choice at each `if` and at each handled step (it worked, or its handler ran). Every
+  path needs a goal or must end in `fail` (`E309`).
 
 ## Conditions
 
@@ -149,7 +184,7 @@ levels deep. A fact the world does not state is unknown, and unknown is never tr
 - `inspect r o using s` requires sensor `s` to be mounted on `r` and available. The object can be
   anywhere.
 - `wait until C timeout T` checks `C` immediately and whenever the world changes during `T`. It
-  fails if `C` is not true by the timeout. Only waits advance simulated time.
+  fails if `C` is not true by the timeout, and its handler runs. Only waits advance simulated time.
 - `communicate` records a message and changes no other state.
 - A task can bind more than one robot. Their steps still run sequentially in written order.
 
@@ -160,34 +195,39 @@ are:
 
 | Code | Meaning |
 |---|---|
+| `E201` | a handler after `wait for`, `communicate` or `fail` |
 | `E202` | missing `;` |
 | `E206` | missing or unknown unit |
-| `E208` | task blocks in the wrong order, an empty branch, or a `goal` block that is not first in a branch |
+| `E208` | task blocks in the wrong order, an empty branch or handler, a `goal` block that is not first in a branch, or a `goal` block in a handler |
 | `E212` | reserved word used as a name |
 | `E214` | `and` and `or` mixed without parentheses |
-| `E216` | `if` nested more than 4 deep |
+| `E216` | `if` statements and handlers nested more than 4 deep |
 | `E303` | name is not a task parameter |
 | `E304` | parameter used with the wrong type |
 | `E307` | empty string (for example `fail ""`) |
 | `E309` | a path has no `goal` condition and does not end in `fail` |
-| `E313` | `fail` that is not the last statement of a branch |
+| `E313` | `fail` that is not the last statement of a branch or handler |
 | `E315` | `grasp` of an object a robot still holds, or by a robot that still holds one: `place` it first |
 | `E310` | quoted sensor name used instead of a sensor parameter |
+| `E316` | `wait until` without a failure handler |
 
 ## Complete example
 
-This task waits for a cell, inspects a box, moves it, and records completion. Its parameters still
+This task waits for a cell (and stops if it does not clear in time), inspects a box, moves it, and
+records completion. Its parameters still
 need bindings to concrete world entities before simulation.
 
 ```rob
-robolang 1.4;
+robolang 1.5;
 
 task deliver(robot r, object box, location src, location dst, region cell, sensor camera) {
     @safety max_speed 0.5 m/s;
     pre { sensor_ok camera; }
     goal { object_at box dst; }
     plan {
-        wait until region_clear cell timeout 20 s;
+        wait until region_clear cell timeout 20 s else {
+            fail "the cell did not clear";
+        }
         move r to src;
         inspect r box using camera;
         grasp r box;
@@ -202,7 +242,7 @@ This task chooses at run time. If the cell is clear when the job reaches the `if
 `a`; otherwise it goes to `b`. Each path has its own goal.
 
 ```rob
-robolang 1.4;
+robolang 1.5;
 
 task route(robot r, object box, location src, location a, location b, region cell) {
     plan {
@@ -217,6 +257,27 @@ task route(robot r, object box, location src, location a, location b, region cel
             move r to b;
             place r box at b;
         }
+    }
+}
+```
+
+This task retries a failed grasp once. If the second grasp also fails, it reports and stops.
+
+```rob
+robolang 1.5;
+
+task fetch(robot r, object box, location src, location dst) {
+    goal { object_at box dst; }
+    plan {
+        move r to src;
+        grasp r box else {
+            grasp r box else {
+                communicate r to "ops" with "grasp failed";
+                fail "grasp failed twice";
+            }
+        }
+        move r to dst;
+        place r box at dst;
     }
 }
 ```

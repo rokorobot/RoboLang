@@ -1,4 +1,4 @@
-"""The shipped RoboLang 1.4 reference, CLI command, examples, vocabulary and benchmark integration."""
+"""The shipped RoboLang 1.5 reference, CLI command, examples, vocabulary and benchmark integration."""
 
 from __future__ import annotations
 import io
@@ -35,7 +35,7 @@ def test_every_complete_rob_example_compiles():
     assert examples
     for index, source in enumerate(examples, start=1):
         result = compile_source(source, f"language-reference-example-{index}.rob")
-        assert result.ir.language_version == "1.4"
+        assert result.ir.language_version == "1.5"
 
 
 def test_reference_names_every_reserved_word_and_annotation_key():
@@ -52,15 +52,27 @@ def test_every_diagnostic_code_in_the_reference_exists_in_the_implementation():
     assert cited and cited <= implemented
 
 
-def test_reference_is_1_4_and_teaches_branching_and_what_stays_out():
+def test_reference_is_1_5_and_teaches_branching_handlers_and_what_stays_out():
     text = reference()
-    assert text.startswith("# RoboLang 1.4 language reference") and "robolang 1.3;" not in text
-    for new in ("`if", "`else if", "fail \"", "E216", "E307", "E309", "E313", "S261", "S262"):
+    assert text.startswith("# RoboLang 1.5 language reference")
+    assert "robolang 1.3;" not in text and "robolang 1.4;" not in text
+    for new in ("`if", "`else if", "fail \"", "E216", "E307", "E309", "E313", "S261", "S262",
+                "else {", "E201", "E316"):
         assert new in text, new
     # nesting depth, the goal of a path, and what stays out of the language
     assert "at most 4 deep" in text and "Every path\n  must have at least one goal condition" in text
-    for out in ("loops", "retry", "error handling", "counts", "clocks", "message waits"):
+    for out in ("loops", "counts", "clocks", "message waits"):
         assert out in " ".join(text.split()), out
+
+
+def test_reference_teaches_the_1_5_handler_rules():
+    """Decision 0035 E6: a wait's handler fails unless told otherwise; a handler never succeeds on another goal."""
+    text = " ".join(reference().split())
+    for phrase in ("Every `wait until` has a handler", 'else { fail "<what did not happen>"; }',
+                   "never changes what success means", "call it done", "cannot be represented",
+                   "A fixed number of retries is allowed", "as many times as it takes",
+                   "give each step that can fail its own handler", "only when the request says to carry on"):
+        assert phrase in text, phrase
 
 
 def test_reference_teaches_that_a_run_time_condition_is_decided_by_an_if_never_by_the_description():
@@ -71,13 +83,14 @@ def test_reference_teaches_that_a_run_time_condition_is_decided_by_an_if_never_b
         assert phrase in text, phrase
 
 
-def test_the_prompts_are_for_1_4():
+def test_the_prompts_are_for_1_5():
     full, minimal = bench.load_prompt("full"), bench.load_prompt("minimal")
     for prompt in (full, minimal):
-        assert prompt.startswith("You write RoboLang 1.4 programs.") and "RoboLang 1.3 programs" not in prompt
-    assert "robolang 1.4;" in full and "robolang 1.3;" not in full
-    # 1.4 is a delta over 1.3, so the grammar-only prompt pastes both files, the base first
-    assert "spec/grammar-v1.4.ebnf" in minimal and '"if"' in minimal and "robolang 1.3 grammar" not in minimal.lower()
-    assert bench.GRAMMAR_FILE.name == "grammar-v1.4.ebnf" and bench.BASE_GRAMMAR_FILE.name == "grammar-v1.3.ebnf"
-    base, delta = (f.read_text(encoding="utf-8").strip() for f in (bench.BASE_GRAMMAR_FILE, bench.GRAMMAR_FILE))
-    assert base in minimal and delta in minimal and minimal.index(base) < minimal.index(delta)
+        assert prompt.startswith("You write RoboLang 1.5 programs.") and "RoboLang 1.4 programs" not in prompt
+    assert "robolang 1.5;" in full and "robolang 1.4;" not in full and "robolang 1.3;" not in full
+    # 1.5 is a delta over 1.4, itself a delta over 1.3: the grammar-only prompt pastes all three, the base first
+    assert "spec/grammar-v1.5.ebnf" in minimal and '"if"' in minimal and "handler" in minimal
+    assert [f.name for f in bench.GRAMMAR_FILES] == ["grammar-v1.3.ebnf", "grammar-v1.4.ebnf", "grammar-v1.5.ebnf"]
+    texts = [f.read_text(encoding="utf-8").strip() for f in bench.GRAMMAR_FILES]
+    assert all(t in minimal for t in texts)
+    assert [minimal.index(t) for t in texts] == sorted(minimal.index(t) for t in texts)
