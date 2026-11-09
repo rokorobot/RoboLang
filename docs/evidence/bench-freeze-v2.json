@@ -1,5 +1,5 @@
 {
-  "sha256": "fb4b0f59795d948ca2948e1b5654ab0ea2cd23d30bdd317cf11b26e94e293da7",
+  "sha256": "808f472526251a73f2c66852feb47eccf8c5a8b8823de8980b05fd995038d0a7",
   "schema": "robolang.bench.freeze.v2",
   "patterns": [
     "bench/tasks*/*.json",
@@ -23,7 +23,7 @@
     "bench/cascade.py": "961f7de80e241fb16370ea880ddf154e24366aeebcdd902c942c6530e52112a3",
     "bench/gate.json": "eee14479043dc6fdd5cf504d92b3514138c903f20a79cea053939bdf1a1134d5",
     "bench/gate.py": "85461506edd726f72c14830a682846715415404971f6e464a49218e58466b2db",
-    "bench/lib.py": "5757837cf2d27d706c90bf9a7ea54492534efb9ce9664a59a8d6b1a439438c8b",
+    "bench/lib.py": "e7f22363c1180004e9830990a7bac3829670bfa008cdfd2831abb34403fc621f",
     "bench/prompt.md": "32627530dd71a85a600967943fc7744aa1d4304ee4168ff505698adca9e9e7af",
     "bench/prompt_minimal.md": "a420448c433f74d73c9c022e95c15ed9f463ef646ab274006fea94508583bcd2",
     "bench/reference/a_amr_ferry.json": "abec64c10f81cf7a91c2539fc38244cebba832903646ab1540fa52680a82a939",
@@ -741,7 +741,7 @@
     "tests/test_bench_ask.py": "86a79a37231afd0b8ea51ea16a8694695b1f572fff3f6910c2f5e613cd88fb7a",
     "tests/test_bench_branch.py": "ad6cfe43cc265e6d7d833eb7e89bd8770b4d47ee656a2c8e54238a600fdd66d2",
     "tests/test_bench_cascade.py": "5bb726f33ea9f6f23c2dfad8df07b43d551d9697e94409b4fb2798366f323e50",
-    "tests/test_bench_failure.py": "785a8f520b3bb66d010dbd01ff0fc801e5d52a12395fef389d32499471f2d430",
+    "tests/test_bench_failure.py": "0eaf64464bcc628431f079147266c73fd23ccb746894c0e7965c6db569633958",
     "tests/test_bench_gate.py": "653be1ae7d454b4b93d8df99b6a999214511d76bae37c1f147108dbe98d608b9",
     "tests/test_bench_hard.py": "d941fff22c624eb8d6592e962508a406b05a66f2981c1f02f1989d0de6ec602f",
     "tools/bench_freeze.py": "921ce22129c37ddbfdd2ea2c716189f6195759b8377b6ce97383556a93852065"

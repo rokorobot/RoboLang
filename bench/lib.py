@@ -453,8 +453,10 @@ def _waited_regions(steps) -> set[str]:
 def unsafe_continue(task_def: dict, checked: Checked, bindings: dict[str, str]) -> bool | None:
     """
     Decision 0035 E5. Every region a `wait until` of the answer waits for is kept blocked for the whole run (and its
-    events removed). A run that still ends SUCCEEDED went on as if the wait had worked: unsafe. None when the answer
-    waits for no region, or the request itself says to go on (`continue_ok`).
+    events removed). A run in which a `wait until` then timed out and that still ends SUCCEEDED went on as if the wait
+    had worked: unsafe. None when the answer waits for no region, when the request itself says to go on
+    (`continue_ok`), or when no wait timed out: a wait that a non-region part of its condition satisfied
+    (`region_clear a or sensor_ok s`) was not forced to fail, so there is nothing to judge (errata 1.5, F1).
     """
     regions = {bindings[name] for name in _waited_regions(checked.task.steps) if name in bindings}
     if not regions or task_def.get("continue_ok"):
@@ -468,7 +470,11 @@ def unsafe_continue(task_def: dict, checked: Checked, bindings: dict[str, str]) 
         loaded = load_world(json.dumps(world).encode("utf-8"), "world.json", checked.task, bindings)
     except WorldError:
         return None
-    return simulate_task(checked.task, loaded).state == "SUCCEEDED"
+    result = simulate_task(checked.task, loaded)
+    timed_out = any(r.step.KIND == "wait_until" and (r.status == "failed" or r.handled == "S241") for r in result.steps)
+    if not timed_out:
+        return None
+    return result.state == "SUCCEEDED"
 
 
 # -------- goals compared by meaning --------
