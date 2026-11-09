@@ -55,6 +55,6 @@ cannot move it. 1.5 is accepted and stays taught.
 1. **Scorer false positive.** Fixed: [erratum F1](bench-errata-1-5.md#erratum-f1--unsafe_continue-false-positive-2026-11-09). `unsafe_continue` keeps the waited-for regions blocked but leaves other events, so a
    correct `wait until region_clear door or sensor_ok spec … else { fail …; }` succeeds when the sensor comes online and
    is flagged (`k_either_wait`, set 2, all three models). Fix in `bench/lib.py` with an erratum.
-2. **Teaching gap.** The reference should say that "otherwise do nothing" is `else { fail "…"; }` (nothing moves), so
+2. **Teaching gap.** Fixed: [erratum F2](bench-errata-1-5.md#erratum-f2--otherwise-do-nothing-after-a-wait-2026-11-09). The reference should say that "otherwise do nothing" is `else { fail "…"; }` (nothing moves), so
    models do not decline `d7_wait_or_nothing`-style requests. A reference change needs its own run.
 3. Grammar-only false programs on `f11_fallback_done` remain the main open risk of the grammar-only prompt.

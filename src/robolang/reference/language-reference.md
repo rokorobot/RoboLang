@@ -119,7 +119,9 @@ wait until region_clear aisle timeout 10 s else {
 - A step that fails changes nothing. Time a `wait until` spent waiting has passed.
 - **Every `wait until` has a handler** (`E316`). If the request does not say what to do when the
   wait times out, the handler is `else { fail "<what did not happen>"; }`. If it does say (report,
-  wait longer, clean up), do that, and end with `fail` unless the request says to carry on.
+  wait longer, clean up), do that, and end with `fail` unless the request says to carry on. "If it
+  does not clear, do nothing" (or "move nothing") is also `else { fail "<reason>"; }`: the run ends
+  failed and nothing moves, which is what was asked. It is representable: write the program.
 - **A handler has no `goal`** (`E208`) and never changes what success means. It either recovers, so
   the run still reaches the task's own goal, or it cleans up and ends in `fail`. A request that counts
   a different end state as done ("otherwise leave it at the handoff and call it done") cannot be
