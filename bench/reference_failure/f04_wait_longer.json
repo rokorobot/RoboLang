@@ -1,0 +1,10 @@
+{
+  "task": "deliver",
+  "bindings": {
+    "r": "arm1",
+    "v": "vial1",
+    "src": "bench",
+    "dst": "scanner",
+    "door": "door_zone"
+  }
+}

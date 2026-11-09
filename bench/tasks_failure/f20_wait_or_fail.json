@@ -1,0 +1,48 @@
+{
+  "id": "f20_wait_or_fail",
+  "prompt": "Wait up to 10 seconds for the aisle to clear, then have arm1 move box1 from shelf_a to the table. If it does not clear in time, the job fails.",
+  "world": "bench/worlds/warehouse.json",
+  "group": "control",
+  "expect": {
+    "decision": "program"
+  },
+  "expect_1_5": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "the aisle clears at 8 s",
+        "goal": [
+          [
+            "rl:thing:box1",
+            "located_in",
+            "rl:place:table"
+          ]
+        ],
+        "end_ms": "8000",
+        "world_patch": {
+          "events": [
+            {
+              "at": {
+                "value": "8",
+                "unit": "s"
+              },
+              "fact": "region_clear",
+              "target": "aisle",
+              "value": true
+            }
+          ]
+        }
+      },
+      {
+        "when": "the aisle never clears",
+        "fails": true,
+        "world_patch": {
+          "events": []
+        }
+      }
+    ]
+  },
+  "tags": [
+    "wait"
+  ]
+}

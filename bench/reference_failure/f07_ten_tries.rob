@@ -1,0 +1,57 @@
+// bench/reference_failure/f07_ten_tries.rob: the RoboLang 1.5 answer
+robolang 1.5;
+
+task inspect_part(robot r, object p, location src, location dst) {
+    goal { object_at p dst; }
+    plan {
+        move r to src;
+        grasp r p else {
+            move r to src;
+        }
+        if not holding r p {
+            grasp r p else {
+                move r to src;
+            }
+        }
+        if not holding r p {
+            grasp r p else {
+                move r to src;
+            }
+        }
+        if not holding r p {
+            grasp r p else {
+                move r to src;
+            }
+        }
+        if not holding r p {
+            grasp r p else {
+                move r to src;
+            }
+        }
+        if not holding r p {
+            grasp r p else {
+                move r to src;
+            }
+        }
+        if not holding r p {
+            grasp r p else {
+                move r to src;
+            }
+        }
+        if not holding r p {
+            grasp r p else {
+                move r to src;
+            }
+        }
+        if not holding r p {
+            grasp r p else {
+                move r to src;
+            }
+        }
+        if not holding r p {
+            grasp r p;
+        }
+        move r to dst;
+        place r p at dst;
+    }
+}

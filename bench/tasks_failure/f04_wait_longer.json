@@ -1,0 +1,89 @@
+{
+  "id": "f04_wait_longer",
+  "prompt": "Move vial1 from the bench to the scanner with arm1 once the door zone is clear. Wait up to 5 seconds; if it is not clear by then, send \"door busy\" to channel \"lab\" from arm1 and wait up to 20 seconds more. If it is still not clear, stop the job as failed.",
+  "world": "bench/worlds/lab.json",
+  "group": "recover",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_5": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "the door zone clears at 3 s",
+        "goal": [
+          [
+            "rl:thing:vial1",
+            "located_in",
+            "rl:place:scanner"
+          ]
+        ],
+        "end_ms": "3000",
+        "world_patch": {
+          "events": [
+            {
+              "at": {
+                "value": "3",
+                "unit": "s"
+              },
+              "fact": "region_clear",
+              "target": "door_zone",
+              "value": true
+            }
+          ]
+        }
+      },
+      {
+        "when": "the door zone clears at 12 s",
+        "goal": [
+          [
+            "rl:thing:vial1",
+            "located_in",
+            "rl:place:scanner"
+          ]
+        ],
+        "end_ms": "12000",
+        "messages": [
+          [
+            "lab",
+            "door busy"
+          ]
+        ],
+        "world_patch": {
+          "events": [
+            {
+              "at": {
+                "value": "12",
+                "unit": "s"
+              },
+              "fact": "region_clear",
+              "target": "door_zone",
+              "value": true
+            }
+          ]
+        }
+      },
+      {
+        "when": "the door zone never clears",
+        "fail": "the door zone did not clear",
+        "messages": [
+          [
+            "lab",
+            "door busy"
+          ]
+        ],
+        "world_patch": {
+          "events": []
+        }
+      }
+    ]
+  },
+  "tags": [
+    "wait",
+    "report",
+    "report_and_stop"
+  ],
+  "why": "Reacting to a failed step is error handling. In RoboLang 1.4 a failing step ends the run, and an `if` is judged once, so it cannot go on waiting after a first wait timed out. RoboLang 1.5 failure handlers (decision 0033) express it.",
+  "attempt_fails_with": "E202"
+}

@@ -1,0 +1,55 @@
+{
+  "id": "f01_retry_grasp_once",
+  "prompt": "With arm1, move box1 from shelf_a to the table. If the grasp of box1 fails, try it once more before giving up.",
+  "world": "bench/worlds/warehouse.json",
+  "group": "recover",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_5": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "box1 on shelf_a",
+        "goal": [
+          [
+            "rl:thing:box1",
+            "located_in",
+            "rl:place:table"
+          ]
+        ],
+        "tries": [
+          "grasp",
+          1
+        ],
+        "world_patch": {
+          "events": []
+        }
+      },
+      {
+        "when": "box1 missing",
+        "fails": true,
+        "tries": [
+          "grasp",
+          2
+        ],
+        "world_patch": {
+          "events": [],
+          "objects": {
+            "box1": {
+              "present": false,
+              "location": null
+            }
+          }
+        }
+      }
+    ]
+  },
+  "tags": [
+    "retry",
+    "grasp"
+  ],
+  "why": "Reacting to a failed step is error handling. In RoboLang 1.4 a failing step ends the run, and an `if` is judged once, so it cannot grasp again after a grasp failed. RoboLang 1.5 failure handlers (decision 0033) express it.",
+  "attempt_fails_with": "E202"
+}

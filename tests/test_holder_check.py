@@ -14,7 +14,7 @@ PARAMS = "robot arm, robot mobile, object box, object b2, location src, location
 
 
 def source(plan: str, version: str = "1.4") -> str:
-    goal = "    goal { robot_at arm src; }\n" if version in ("1.3", "1.4") else ""  # no goal block before 1.3
+    goal = "    goal { robot_at arm src; }\n" if version in ("1.3", "1.4", "1.5") else ""  # no goal block before 1.3
     return (f"robolang {version};\ntask t({PARAMS}) {{\n{goal}    plan {{\n"
             + "".join(f"        {line}\n" for line in textwrap.dedent(plan).strip().splitlines()) + "    }\n}\n")
 
@@ -115,3 +115,20 @@ def test_ir_reader_reports_i216_at_the_grasp():
     assert [(d.code, d.pointer, d.message) for d in caught.value.diagnostics] == [
         ("I216", "/tasks/0/steps/1",
          "'grasp mobile box': 'box' is still held by 'arm' (grasped at /tasks/0/steps/0); place it first")]
+
+
+def test_an_if_on_holding_is_followed_only_where_it_can_be_taken():
+    retry = """
+        move arm to src;
+        grasp arm box else {
+            move arm to src;
+        }
+        if not holding arm box {
+            grasp arm box;
+        }
+    """
+    assert diagnostics(retry, "1.5") == []  # the then branch runs only when arm does not hold box
+    assert [c for c, _, _ in diagnostics("grasp arm box;\nif holding arm box {\n    grasp arm box;\n}")] == ["E315"]
+    assert diagnostics("grasp arm box;\nif object_at box dst {\n    grasp mobile box;\n}") == []  # held: at no place
+    assert [c for c, _, _ in diagnostics("grasp arm box;\nif region_clear cell {\n    grasp mobile box;\n}")] \
+        == ["E315"]

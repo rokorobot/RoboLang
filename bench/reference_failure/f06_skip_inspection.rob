@@ -1,0 +1,18 @@
+// bench/reference_failure/f06_skip_inspection.rob: the RoboLang 1.5 answer
+robolang 1.5;
+
+task check(robot r, object v, location src, location dst, sensor s) {
+    goal { object_at v dst; }
+    plan {
+        wait until sensor_ok s timeout 5 s else {
+            communicate r to "lab" with "spectro unavailable";
+        }
+        if sensor_ok s {
+            inspect r v using s;
+        }
+        move r to src;
+        grasp r v;
+        move r to dst;
+        place r v at dst;
+    }
+}

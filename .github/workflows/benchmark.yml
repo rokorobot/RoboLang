@@ -8,6 +8,8 @@ name: Benchmark
 #   grammar-only prompt for information (~$4-6). Results are kept as an artifact for 90 days.
 # - On demand with `set3: true`: only set 3 (branching, decision 0027), full and grammar-only prompts,
 #   3 repeats each, for information and not gated (~$3-4). Used for the pre-registered 1.3 baseline.
+# - On demand with `set4: true`: only set 4 (failure handling, decision 0035), full and grammar-only prompts,
+#   3 repeats each, for information and not gated; each prompt capped at $10 (`--max-usd`).
 # Needs the repository secret ANTHROPIC_API_KEY; without it (and on pull requests from forks) the
 # job is skipped and nothing is spent.
 
@@ -38,6 +40,10 @@ on:
     inputs:
       set3:
         description: "Run only set 3 (branching), full and minimal prompts, 3 repeats; not gated"
+        type: boolean
+        default: false
+      set4:
+        description: "Run only set 4 (failure handling), full and minimal prompts, 3 repeats; not gated"
         type: boolean
         default: false
 
@@ -82,8 +88,13 @@ jobs:
         run: |
           python bench/run.py --yes --set branch --repeats 3 --run-id set3
           python bench/run.py --yes --set branch --prompt minimal --repeats 3 --run-id set3-minimal
+      - name: Run (set 4, on demand)
+        if: steps.key.outputs.present == 'true' && inputs.set4
+        run: |
+          python bench/run.py --yes --set failure --repeats 3 --max-usd 10 --run-id set4
+          python bench/run.py --yes --set failure --prompt minimal --repeats 3 --max-usd 10 --run-id set4-minimal
       - name: Run (weekly or on demand)
-        if: steps.key.outputs.present == 'true' && github.event_name != 'pull_request' && !inputs.set3
+        if: steps.key.outputs.present == 'true' && github.event_name != 'pull_request' && !inputs.set3 && !inputs.set4
         run: |
           python bench/run.py --yes --repeats 3 --run-id set1
           python bench/run.py --yes --set hard --repeats 3 --run-id set2
@@ -109,7 +120,7 @@ jobs:
               echo "" >> summary.md; cat cascade.md >> summary.md
             fi
           done
-          for extra in set3 set3-minimal; do
+          for extra in set3 set3-minimal set4 set4-minimal; do
             if [ -d "bench/results/$extra" ]; then
               echo "" >> summary.md
               echo "_For information, not gated: $extra._" >> summary.md

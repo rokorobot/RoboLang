@@ -1,0 +1,12 @@
+// bench/reference_failure/f10_retry_until_works.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 1.5;
+
+task t(robot r, object p, location src, location dst) {
+    goal { object_at p dst; }
+    plan {
+        move r to src;
+        while not holding r p {
+            grasp r p;
+        }
+    }
+}

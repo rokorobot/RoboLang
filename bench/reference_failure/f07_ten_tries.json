@@ -1,0 +1,9 @@
+{
+  "task": "inspect_part",
+  "bindings": {
+    "r": "arm2",
+    "p": "part7",
+    "src": "table",
+    "dst": "inspection_bay"
+  }
+}

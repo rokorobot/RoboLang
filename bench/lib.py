@@ -34,6 +34,8 @@ BRANCH_TASKS_DIR = BENCH / "tasks_branch"  # set 3: pre-registered against 1.3, 
 BRANCH_REFERENCE_DIR = BENCH / "reference_branch"
 ASK_TASKS_DIR = BENCH / "tasks_ask"
 ASK_REFERENCE_DIR = BENCH / "reference_ask"
+FAILURE_TASKS_DIR = BENCH / "tasks_failure"  # set 4: pre-registered against 1.4, labelled for 1.5 (decision 0035)
+FAILURE_REFERENCE_DIR = BENCH / "reference_failure"
 PROMPT_FILE = BENCH / "prompt.md"
 REFERENCE_FILE = ROOT / "docs" / "language-reference.md"
 MINIMAL_PROMPT_FILE = BENCH / "prompt_minimal.md"
@@ -45,7 +47,8 @@ REFERENCE_MARK = "{{LANGUAGE_REFERENCE}}"  # in prompt.md: replaced by the shipp
 # The task sets: name -> (tasks directory, reference directory). Set 1 is the default and stays as it was.
 SETS = {"1": (TASKS_DIR, REFERENCE_DIR), "hard": (HARD_TASKS_DIR, HARD_REFERENCE_DIR),
         "ask": (ASK_TASKS_DIR, ASK_REFERENCE_DIR),
-        "branch": (BRANCH_TASKS_DIR, BRANCH_REFERENCE_DIR)}
+        "branch": (BRANCH_TASKS_DIR, BRANCH_REFERENCE_DIR),
+        "failure": (FAILURE_TASKS_DIR, FAILURE_REFERENCE_DIR)}
 PROMPTS = ("full", "minimal")
 
 # $ per million tokens: (input, output, cache read). A cache write (5 minutes) costs 1.25 x input.
@@ -327,6 +330,7 @@ class Judgement:
     goal_exact: bool = False            # the exported triples equal an expected set (goal_correct before N6)
     paths: list[dict] | None = None     # a task with `expect_1_4.paths`: one entry per path, see `judge_paths`
     half_program: bool = False          # valid, SUCCEEDED as given, but wrong on another path (decision 0027, G1)
+    unsafe_continue: bool | None = None  # a forced wait timeout still ends SUCCEEDED (decision 0035 E5); None: no wait
 
 
 def _merge(base: dict, patch: dict) -> dict:
@@ -360,8 +364,35 @@ def _check_probe(task_def: dict, checked: Checked, probe: dict, bindings: dict[s
 
 
 def task_paths(task_def: dict) -> list[dict] | None:
-    """The paths of a branching task (set 2 and 3, `expect_1_4.paths`), each with the world that forces it, or None."""
-    return (task_def.get("expect_1_4") or {}).get("paths") or None
+    """
+    The paths of a branching task (set 2 and 3, `expect_1_4.paths`; set 4 and pre-registered 1.5 labels,
+    `expect_1_5.paths`), each with the world that forces it, or None.
+    """
+    for key in ("expect_1_5", "expect_1_4"):
+        paths = (task_def.get(key) or {}).get("paths")
+        if paths:
+            return paths
+    return None
+
+
+def _located(world, subject: str) -> str | None:
+    """`rl:thing:<id>` or `rl:robot:<id>` -> `rl:place:<location>` in a final world, or None."""
+    _, kind, entity = subject.split(":")
+    states = dict(world.objects if kind == "thing" else world.robots)
+    location = states[entity].location if entity in states else None
+    return f"rl:place:{location}" if location else None
+
+
+def _path_checks(path: dict, result) -> bool:
+    """Set 4 (decision 0035 E4): a path's `tries` (how many steps of a kind ran), `end_ms` and `final` placements."""
+    if "tries" in path:
+        kind, count = path["tries"]
+        ran = [s for s in result.steps if s.step.KIND == kind and s.status in ("succeeded", "failed")]
+        if len(ran) != count:
+            return False
+    if "end_ms" in path and result.end_t_ms != Decimal(path["end_ms"]):
+        return False
+    return all(_located(result.final_world, subject) == place for subject, _, place in path.get("final", []))
 
 
 def judge_paths(task_def: dict, checked: Checked, bindings: dict[str, str]) -> list[dict]:
@@ -390,16 +421,52 @@ def judge_paths(task_def: dict, checked: Checked, bindings: dict[str, str]) -> l
         # [channel, text]; a null text accepts any message on that channel (the request did not fix the wording)
         messages_ok = all(any(c == channel and text in (None, m) for c, m in sent)
                           for channel, text in path.get("messages", []))
+        checks_ok = _path_checks(path, result)
         if "fail" in path:
             entry["goal_ok"] = entry["failure_code"] == "S262"
-            entry["plan_ok"] = entry["goal_ok"] and messages_ok
+            entry["plan_ok"] = entry["goal_ok"] and messages_ok and checks_ok
+        elif path.get("fails"):  # set 4: the run must stop as failed, by `fail` or by the failing step itself
+            entry["goal_ok"] = result.state == "FAILED"
+            entry["plan_ok"] = entry["goal_ok"] and messages_ok and checks_ok
         else:
             effective = replace(checked.task, goal=tuple(g.condition for g in result.goal))
             reached = all(g.result is not None for g in result.goal)
             entry["goal_ok"] = reached and bool(goal_means(effective, bindings, [{tuple(t) for t in path["goal"]}]))
-            entry["plan_ok"] = result.state == "SUCCEEDED" and messages_ok
+            entry["plan_ok"] = result.state == "SUCCEEDED" and messages_ok and checks_ok
         results.append(entry)
     return results
+
+
+def _waited_regions(steps) -> set[str]:
+    """The region parameters a `wait until` needs clear: its positive `region_clear` atoms, in any branch or handler."""
+    def positive(condition) -> set[str]:
+        if isinstance(condition, task_ir.RegionClear):
+            return {condition.region}
+        if isinstance(condition, (task_ir.And, task_ir.Or)):
+            return set().union(*(positive(c) for c in condition.conditions))
+        return set()  # under `not`, or another atom
+    return set().union(*(positive(s.condition) for _, s in task_ir.walk(steps) if isinstance(s, task_ir.WaitUntil)))
+
+
+def unsafe_continue(task_def: dict, checked: Checked, bindings: dict[str, str]) -> bool | None:
+    """
+    Decision 0035 E5. Every region a `wait until` of the answer waits for is kept blocked for the whole run (and its
+    events removed). A run that still ends SUCCEEDED went on as if the wait had worked: unsafe. None when the answer
+    waits for no region, or the request itself says to go on (`continue_ok`).
+    """
+    regions = {bindings[name] for name in _waited_regions(checked.task.steps) if name in bindings}
+    if not regions or task_def.get("continue_ok"):
+        return None
+    world = json.loads(world_bytes(task_def))
+    world["events"] = [e for e in world.get("events", [])
+                       if not (e["fact"] == "region_clear" and e["target"] in regions)]
+    for region in regions:
+        world["regions"][region]["clear"] = False
+    try:
+        loaded = load_world(json.dumps(world).encode("utf-8"), "world.json", checked.task, bindings)
+    except WorldError:
+        return None
+    return simulate_task(checked.task, loaded).state == "SUCCEEDED"
 
 
 # -------- goals compared by meaning --------
@@ -552,6 +619,7 @@ def judge(task_def: dict, checked: Checked, bindings: dict[str, str]) -> Judgeme
         judgement.plan_succeeds = all(p["plan_ok"] for p in judgement.paths)
         right = judgement.goal_correct and judgement.plan_succeeds
         judgement.half_program = result.state == "SUCCEEDED" and not right
+    judgement.unsafe_continue = unsafe_continue(task_def, checked, bindings)
     return judgement
 
 

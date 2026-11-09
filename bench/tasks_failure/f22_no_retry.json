@@ -1,0 +1,51 @@
+{
+  "id": "f22_no_retry",
+  "prompt": "Have arm1 move box1 from shelf_a to the table. Do not retry anything: if a step fails, the job simply fails.",
+  "world": "bench/worlds/warehouse.json",
+  "group": "control",
+  "expect": {
+    "decision": "program"
+  },
+  "expect_1_5": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "box1 on shelf_a",
+        "goal": [
+          [
+            "rl:thing:box1",
+            "located_in",
+            "rl:place:table"
+          ]
+        ],
+        "tries": [
+          "grasp",
+          1
+        ],
+        "world_patch": {
+          "events": []
+        }
+      },
+      {
+        "when": "box1 missing",
+        "fails": true,
+        "tries": [
+          "grasp",
+          1
+        ],
+        "world_patch": {
+          "events": [],
+          "objects": {
+            "box1": {
+              "present": false,
+              "location": null
+            }
+          }
+        }
+      }
+    ]
+  },
+  "tags": [
+    "grasp"
+  ]
+}
