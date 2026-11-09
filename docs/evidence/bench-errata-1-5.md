@@ -66,3 +66,19 @@ history; it no longer matches `main`. Freeze v2: **726 files**, digest
 
 The acceptance run: set 4 under 1.5 with both prompts and 3 repeats, plus sets 1, 2, 3 and "ask" once each with the
 full prompt. If E7 fails, the reference goes back to 1.4 and the failing measure is analysed before another try.
+
+## Erratum F1 — `unsafe_continue` false positive (2026-11-09)
+
+Found in the [acceptance run](bench-1-5-acceptance.md). `unsafe_continue` (0035 E5) keeps the regions a `wait until`
+waits for blocked, but leaves other events. In `k_either_wait` (set 2) the correct answer
+`wait until region_clear door or sensor_ok spec timeout 15 s else { fail ...; }` succeeds because the spectrometer
+comes online at 3 s; nothing timed out, yet the run was flagged unsafe (all three models).
+
+| | Before | After |
+|---|---|---|
+| `bench/lib.py` `unsafe_continue` | SUCCEEDED in the blocked world is unsafe | unsafe only if a `wait until` **timed out** (failed, or its handler took over `S241`) and the run still ended SUCCEEDED; no timed-out wait is `None` (not judged) |
+| Acceptance run, re-scored offline | full prompt 3/98 flagged (all `k_either_wait`) | full prompt **0/95**; grammar only 6/54, unchanged (all `f11_fallback_done`) |
+
+Regression test: `tests/test_bench_failure.py::test_unsafe_continue_ignores_a_wait_that_another_part_of_its_condition_satisfies`
+(fails before the fix). No label, prompt or reference changes. Freeze v2 regenerated: `fb4b0f59795d948ca2948e1b5654ab0ea2cd23d30bdd317cf11b26e94e293da7` → `808f472526251a73f2c66852feb47eccf8c5a8b8823de8980b05fd995038d0a7` (726 files).
+

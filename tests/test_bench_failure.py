@@ -159,3 +159,22 @@ task move_part(robot a, robot b, object p, location src, location dst) {
     assert checked.valid, checked.report
     judgement = lib.judge(branch, checked, bindings)
     assert judgement.goal_correct and judgement.plan_succeeds, judgement.paths
+
+
+def test_unsafe_continue_ignores_a_wait_that_another_part_of_its_condition_satisfies():
+    """Errata 1.5, F1: blocking the region does not force `region_clear door or sensor_ok spec` to time out when the
+    sensor comes online, so a correct answer that fails on timeout is not judged (it was flagged unsafe before)."""
+    task = lib.load_set("hard")["k_either_wait"]
+    rob = """robolang 1.5;
+task go(robot r, location dst, region door, sensor spec) {
+    goal { robot_at r dst; }
+    plan {
+        wait until region_clear door or sensor_ok spec timeout 15 s else { fail "neither came free"; }
+        move r to dst;
+    }
+}
+"""
+    bindings = {"r": "arm1", "dst": "scanner", "door": "door_zone", "spec": "spectro"}
+    checked = lib.check_answer(task, answer(rob, "go", bindings))
+    assert checked.valid, checked.report
+    assert lib.unsafe_continue(task, checked, bindings) is None
