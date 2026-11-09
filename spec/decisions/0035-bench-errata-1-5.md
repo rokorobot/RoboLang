@@ -61,3 +61,10 @@ Nothing for the design: E1–E9 approved. Each paid run of E8 is confirmed befor
 - E9: freeze v2, 726 files, digest `fb4b0f59795d948ca2948e1b5654ab0ea2cd23d30bdd317cf11b26e94e293da7`; v1 kept.
 - Baseline before the switch: [bench-set4-baseline.md](../../docs/evidence/bench-set4-baseline.md). The acceptance
   run (E7, E8) is confirmed by the owner before it starts.
+
+## E7 amended by the owner, 2026-11-09 (option B)
+
+For the grammar-only prompt, the bound on set 4 inexpressible controls is "no worse than the 1.4 baseline" instead of
+≤ 5%: that prompt carries no teaching, so the 1.5 reference cannot move it. The acceptance run meets the amended E7 and
+1.5 stays taught: [bench-1-5-acceptance.md](../../docs/evidence/bench-1-5-acceptance.md). The other E7 bounds are
+unchanged.
