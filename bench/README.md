@@ -232,3 +232,12 @@ SUCCEEDED: a handler let the plan go on after the wait timed out. A task whose r
 
 Run it on demand from GitHub Actions: `Benchmark`, `set4: true`: full and grammar-only prompts, 3 repeats, not gated,
 each capped at $10. Locally: `python bench/run.py --set failure --repeats 3`.
+
+## Set 5: measured values (`--set values`)
+
+26 tasks in `tasks_values/`, decision record [0036](../spec/decisions/0036-lang-4-measured-values.md), plan and
+approved labels in [bench-5-values.md](../docs/plans/bench-5-values.md). Pre-registered against RoboLang 1.5: every
+task except two plain controls expects `cannot / inexpressible` now; `expect_1_6` holds the label for 1.6 (15 programs,
+6 still inexpressible, 3 infeasible). Kitchen tasks use `worlds/kitchen_values.json`. Locally:
+`python bench/run.py --set values --repeats 3`.
+

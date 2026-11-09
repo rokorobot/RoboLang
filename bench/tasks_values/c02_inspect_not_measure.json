@@ -1,0 +1,24 @@
+{
+  "id": "c02_inspect_not_measure",
+  "prompt": "Look at pan 1 with the chef arm's camera, then move it to the pass with the chef arm.",
+  "world": "bench/worlds/kitchen_values.json",
+  "group": "control",
+  "expect": {
+    "decision": "program"
+  },
+  "expect_1_6": {
+    "decision": "program"
+  },
+  "expected_goal": [
+    [
+      "rl:thing:pan_1",
+      "located_in",
+      "rl:place:pass"
+    ]
+  ],
+  "tags": [
+    "no_reading",
+    "inspect",
+    "pick_place"
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "id": "x04_every_minute",
+  "prompt": "Check pan 1's temperature with the chef arm's probe every minute and report each reading to \"pass\" until it is below 40 °C.",
+  "world": "bench/worlds/kitchen_values.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_6": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "tags": [
+    "schedule",
+    "loop"
+  ],
+  "why": "A schedule and a loop. RoboLang 1.5 also cannot read a value."
+}

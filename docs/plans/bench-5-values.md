@@ -1,19 +1,23 @@
 # Benchmark set 5: measured values (pre-registration draft)
 
-**Status:** DRAFT, 2026-11-09. Labels need the owner before any model sees a task (rule 1, [0024](../../spec/decisions/0024-authoring-benchmark.md)).
+**Status:** labels **APPROVED by the owner, 2026-11-09**, with `v15` as a program (0036 V3, option b). Built in
+`bench/tasks_values/` (`--set values`); tests `tests/test_bench_values.py`.
 Decision record: [0036](../../spec/decisions/0036-lang-4-measured-values.md). Directory when approved: `bench/tasks_values/`,
 `bench/reference_values/`. Nothing here is built or run.
 
 ## How the set is used
 
-- **Baseline (now, current reference):** every task labelled `program (1.6)` below is expected `cannot / inexpressible`.
-  Infeasible tasks and plain controls keep the label shown. A false program here is a real finding: a model inventing a
+- **Baseline (now, current reference):** every task except the two plain controls is expected `cannot / inexpressible`.
+  That includes the three infeasible tasks: under 1.5 a reading cannot be written at all, so they become `infeasible`
+  only under 1.6 (`expect_1_6`). A false program here is a real finding: a model inventing a
   reading RoboLang does not have.
 - **Acceptance (after 1.6 is taught):** the 1.6 labels apply. Programs are scored per path, as in set 3, on probe worlds
   that set the measured values. The new check `value_ok` asks: the reading is of the object and kind asked for, with a
   sensor on the robot asked for; the comparison has the asked direction and threshold (any unit of the kind); a
   requested message carries the binding, not a literal.
-- **Worlds:** the baseline uses the existing world 1.1 files. Acceptance uses world 1.2 copies of the same worlds that add
+- **Worlds:** the baseline uses world 1.1 files. Kitchen tasks use `bench/worlds/kitchen_values.json`, the kitchen with
+  `knife_1` put down on prep 1 (so the chef arm can grasp) and `scale_1` available; only `i01_scale_offline` uses the
+  original kitchen. Acceptance uses world 1.2 copies of the same worlds that add
   `measures` and `properties` (0036 V9). Task-specific state goes in `world_patch` (0035 E4).
 
 World facts used: kitchen `probe_temp` on `chef_arm` (available), `scale_1` on `helper_arm` (**unavailable**, never
@@ -22,7 +26,7 @@ not ready; cleanroom `thermo_1` on `arm_x` (available), decoy `thermo1` on `arm_
 
 ## Tasks (26)
 
-### Expressible in 1.6 (14, plus `v15` open)
+### Expressible in 1.6 (15)
 
 | id | world | Request | 1.6 label and paths | Tests |
 |---|---|---|---|---|
@@ -40,7 +44,7 @@ not ready; cleanroom `thermo_1` on `arm_x` (available), decoy `thermo1` on `arm_
 | `v12_fahrenheit` | kitchen | Only move pan 1 to the pass with the chef arm if the probe shows it under 140 °F; otherwise stop. | program; threshold 60 °C (author converts; °F is not a unit) | units in words |
 | `v13_relay_batch` | pharmacy | Have picker1 read insulin 1's batch with its scanner, and have cart1 send that batch to "dispatch". | program | binding used by another robot's step |
 | `v14_two_limits` | kitchen | Probe pan 1. Move it to the pass only if it is between 50 °C and 70 °C; otherwise leave it and stop. | program; probes 45 / 60 / 75 °C | two comparisons with `and` |
-| `v15_reading_in_handler_scope` | kitchen | Probe pan 1 with the chef arm; if that fails, try once more. Then send the reading to "pass". | **inexpressible (recommended) or drop**: after a retry in a handler, no one binding holds the reading on both paths (0036 V3) | binding scope across a retry |
+| `v15_retry_reading` | kitchen | Probe pan 1 with the chef arm; if that fails, try once more. Then send the reading to "pass". | program: the retry in the handler binds the same name (0036 V3, option b); both fail: run fails | binding scope across a retry |
 
 ### Inexpressible in 1.6 (controls, 6)
 
@@ -68,7 +72,7 @@ not ready; cleanroom `thermo_1` on `arm_x` (available), decoy `thermo1` on `arm_
 | `c01_hot_pan_words` | kitchen | Move the hot pan on the stove, pan 1, to the sink with the chef arm. | program, no `measure` |
 | `c02_inspect_not_measure` | kitchen | Look at pan 1 with the chef arm's camera, then move it to the pass. | program, `inspect`, no `measure` |
 
-## Open questions for the owner
+## Decided
 
-1. `v15`: score it as an inexpressible control, or drop it. Recommended: keep it as a control; it is the one request
-   where a model is most likely to write a program that uses a value that may never have been read.
+- `v15`: a program. The owner chose 0036 V3 option (b) on 2026-11-09: a retry in a `measure`'s handler may bind
+  the same name, so the reading is defined on both paths.

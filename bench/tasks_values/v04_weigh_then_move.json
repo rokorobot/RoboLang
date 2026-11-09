@@ -1,0 +1,19 @@
+{
+  "id": "v04_weigh_then_move",
+  "prompt": "Weigh tray B with the helper arm's scale, then have the helper arm put it on the pass.",
+  "world": "bench/worlds/kitchen_values.json",
+  "group": "value",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_6": {
+    "decision": "program",
+    "planned_paths": "goal tray B at pass; a mass reading of tray_b is recorded"
+  },
+  "tags": [
+    "measure",
+    "weighing"
+  ],
+  "why": "RoboLang 1.5 cannot read a value from a sensor: inspect observes presence, location and holder only (decision 0036)."
+}

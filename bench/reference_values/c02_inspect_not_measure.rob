@@ -1,0 +1,13 @@
+// bench/reference_values/c02_inspect_not_measure.rob: hand-written reference
+robolang 1.5;
+
+task look_and_move(robot r, object p, location src, location dst, sensor cam) {
+    goal { object_at p dst; }
+    plan {
+        inspect r p using cam;
+        move r to src;
+        grasp r p;
+        move r to dst;
+        place r p at dst;
+    }
+}

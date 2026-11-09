@@ -1,0 +1,19 @@
+{
+  "id": "v14_two_limits",
+  "prompt": "Probe pan 1. Move it to the pass only if it is between 50 °C and 70 °C; otherwise leave it and stop.",
+  "world": "bench/worlds/kitchen_values.json",
+  "group": "value",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_6": {
+    "decision": "program",
+    "planned_paths": "45 / 60 / 75 °C"
+  },
+  "tags": [
+    "measure",
+    "and"
+  ],
+  "why": "RoboLang 1.5 cannot read a value from a sensor: inspect observes presence, location and holder only (decision 0036)."
+}

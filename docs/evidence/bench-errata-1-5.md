@@ -99,3 +99,9 @@ wait and "do nothing" tasks `d7_wait_or_nothing`, `d3_lane1_right_now`, `u01_if_
 (set 3): 117/117 correct, every program reaching its goal. `d7_wait_or_nothing` 9/9. Freeze v2 regenerated: `808f472526251a73f2c66852feb47eccf8c5a8b8823de8980b05fd995038d0a7` →
 `8d534f687839a41c3310801716170df3e8772b981bd15ddc91e5a77020ddafec`.
 
+
+## Erratum F3 — set 5 added (2026-11-09)
+
+New inputs only: `bench/tasks_values/` (26 tasks), `bench/reference_values/` (2 controls),
+`bench/worlds/kitchen_values.json`, `tests/test_bench_values.py`, and the `values` entry in `bench/lib.py` `SETS`. No
+existing task, label, prompt, reference or scorer changes. Freeze v2 regenerated: `8d534f687839a41c3310801716170df3e8772b981bd15ddc91e5a77020ddafec` → `897e7e0843df2676a0890cd3fbdd9de1a87cfcebd9ecc270fc454b6aff6318ae`.

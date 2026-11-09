@@ -1,0 +1,10 @@
+{
+  "task": "look_and_move",
+  "bindings": {
+    "r": "chef_arm",
+    "p": "pan_1",
+    "src": "stove",
+    "dst": "pass",
+    "cam": "cam_chef"
+  }
+}

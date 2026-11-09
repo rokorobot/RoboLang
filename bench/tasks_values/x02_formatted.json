@@ -1,0 +1,18 @@
+{
+  "id": "x02_formatted",
+  "prompt": "Probe pan 1 with the chef arm and send exactly the message \"Pan 1 is at <reading> °C, ready\" to \"pass\".",
+  "world": "bench/worlds/kitchen_values.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_6": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "tags": [
+    "formatting"
+  ],
+  "why": "No string formatting: a message is a literal string or one value (0036 V8). RoboLang 1.5 also cannot read a value."
+}

@@ -1,0 +1,19 @@
+{
+  "id": "v08_warmer_of_two",
+  "prompt": "With arm_x and thermo_1, measure vial_1 and flask_1. Send \"vial\" to \"lab\" if vial_1 is warmer, otherwise send \"flask\".",
+  "world": "bench/worlds/cleanroom.json",
+  "group": "value",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_6": {
+    "decision": "program",
+    "planned_paths": "both orders; equal within uncertainty: run fails"
+  },
+  "tags": [
+    "measure",
+    "compare_bindings"
+  ],
+  "why": "RoboLang 1.5 cannot read a value from a sensor: inspect observes presence, location and holder only (decision 0036)."
+}

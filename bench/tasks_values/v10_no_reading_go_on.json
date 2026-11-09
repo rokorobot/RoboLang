@@ -1,0 +1,20 @@
+{
+  "id": "v10_no_reading_go_on",
+  "prompt": "Probe pan 2 with the chef arm. If no reading can be taken, tell \"pass\" \"no reading\". Either way, then move bowl 1 to prep 1 with the chef arm.",
+  "world": "bench/worlds/kitchen_values.json",
+  "group": "value",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_6": {
+    "decision": "program",
+    "planned_paths": "probe available / unavailable: bowl 1 at prep_1 on both"
+  },
+  "tags": [
+    "measure",
+    "handler",
+    "carry_on"
+  ],
+  "why": "RoboLang 1.5 cannot read a value from a sensor: inspect observes presence, location and holder only (decision 0036)."
+}

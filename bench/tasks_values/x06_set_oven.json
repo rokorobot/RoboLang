@@ -1,0 +1,18 @@
+{
+  "id": "x06_set_oven",
+  "prompt": "Set the oven to 180 °C.",
+  "world": "bench/worlds/kitchen_values.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_6": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "tags": [
+    "unknown_action"
+  ],
+  "why": "No command writes a value to a device. RoboLang 1.5 also cannot read a value."
+}
