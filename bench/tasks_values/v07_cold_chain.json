@@ -1,0 +1,21 @@
+{
+  "id": "v07_cold_chain",
+  "prompt": "Once picker1's thermometer is online (allow 30 seconds), measure insulin 1's temperature. If it is below 8 °C, have picker1 move it to packing; otherwise send the temperature to \"qa\" and leave it in fridge 2.",
+  "world": "bench/worlds/pharmacy.json",
+  "group": "value",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_6": {
+    "decision": "program",
+    "planned_paths": "5 °C: insulin at packing; 12 °C: message, insulin in fridge 2"
+  },
+  "tags": [
+    "sensor_ok",
+    "measure",
+    "if",
+    "value_message"
+  ],
+  "why": "RoboLang 1.5 cannot read a value from a sensor: inspect observes presence, location and holder only (decision 0036)."
+}

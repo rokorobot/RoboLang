@@ -1,0 +1,20 @@
+{
+  "id": "v13_relay_batch",
+  "prompt": "Have picker1 read insulin 1's batch with its scanner, and have cart1 send that batch to \"dispatch\".",
+  "world": "bench/worlds/pharmacy.json",
+  "group": "value",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_6": {
+    "decision": "program",
+    "planned_paths": "the message from cart1 carries the label"
+  },
+  "tags": [
+    "measure",
+    "label",
+    "two_robot"
+  ],
+  "why": "RoboLang 1.5 cannot read a value from a sensor: inspect observes presence, location and holder only (decision 0036)."
+}

@@ -1,0 +1,19 @@
+{
+  "id": "x03_any_hot_pan",
+  "prompt": "Check every pan on the stove with the chef arm's probe (there may be several by then) and move any above 80 °C to the sink.",
+  "world": "bench/worlds/kitchen_values.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_6": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "tags": [
+    "detect",
+    "iteration"
+  ],
+  "why": "Choosing objects at run time and iterating over them: no detect and no loop. RoboLang 1.5 also cannot read a value."
+}

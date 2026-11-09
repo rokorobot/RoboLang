@@ -1,0 +1,19 @@
+{
+  "id": "v01_probe_report",
+  "prompt": "Take pan 1's temperature with the chef arm's probe, send the reading to the \"pass\" channel, then move pan 1 to the sink.",
+  "world": "bench/worlds/kitchen_values.json",
+  "group": "value",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_6": {
+    "decision": "program",
+    "planned_paths": "goal pan 1 at sink; the message carries the reading"
+  },
+  "tags": [
+    "measure",
+    "value_message"
+  ],
+  "why": "RoboLang 1.5 cannot read a value from a sensor: inspect observes presence, location and holder only (decision 0036)."
+}

@@ -1,0 +1,21 @@
+{
+  "id": "i02_camera_temp",
+  "prompt": "Use the runner's camera to measure pan 1's temperature and send it to \"pass\".",
+  "world": "bench/worlds/kitchen_values.json",
+  "group": "infeasible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_6": {
+    "decision": "cannot",
+    "category": "infeasible"
+  },
+  "entities_1_6": [
+    "cam_runner"
+  ],
+  "tags": [
+    "wrong_sensor"
+  ],
+  "why": "Under 1.5 a reading is inexpressible, so the decline is inexpressible; under 1.6 it is infeasible: cam_runner measures no temperature (world 1.2)."
+}

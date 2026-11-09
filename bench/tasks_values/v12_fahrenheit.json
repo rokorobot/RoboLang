@@ -1,0 +1,19 @@
+{
+  "id": "v12_fahrenheit",
+  "prompt": "Only move pan 1 to the pass with the chef arm if the probe shows it under 140 °F; otherwise stop.",
+  "world": "bench/worlds/kitchen_values.json",
+  "group": "value",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_6": {
+    "decision": "program",
+    "planned_paths": "threshold 60 °C, converted by the author"
+  },
+  "tags": [
+    "measure",
+    "units_in_words"
+  ],
+  "why": "RoboLang 1.5 cannot read a value from a sensor: inspect observes presence, location and holder only (decision 0036)."
+}

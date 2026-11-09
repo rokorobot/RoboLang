@@ -1,0 +1,20 @@
+{
+  "id": "v06_batch_gate",
+  "prompt": "Read insulin 1's batch with picker1's scanner. Only if it is \"LOT-7731\", have picker1 move it to packing; otherwise stop with the reason \"wrong batch\".",
+  "world": "bench/worlds/pharmacy.json",
+  "group": "value",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_6": {
+    "decision": "program",
+    "planned_paths": "LOT-7731: insulin at packing; LOT-0001: fail"
+  },
+  "tags": [
+    "measure",
+    "label",
+    "fail"
+  ],
+  "why": "RoboLang 1.5 cannot read a value from a sensor: inspect observes presence, location and holder only (decision 0036)."
+}

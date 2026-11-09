@@ -1,0 +1,20 @@
+{
+  "id": "v05_heavy_grams",
+  "prompt": "Weigh tray B on the helper arm's scale. If it is heavier than 1500 g, tell \"pass\" it is heavy and stop; otherwise have the helper arm put it on the pass.",
+  "world": "bench/worlds/kitchen_values.json",
+  "group": "value",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_6": {
+    "decision": "program",
+    "planned_paths": "1.2 kg: tray at pass; 2 kg: message and fail; the scale reports kg"
+  },
+  "tags": [
+    "measure",
+    "units",
+    "fail"
+  ],
+  "why": "RoboLang 1.5 cannot read a value from a sensor: inspect observes presence, location and holder only (decision 0036)."
+}

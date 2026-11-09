@@ -1,0 +1,21 @@
+{
+  "id": "v15_retry_reading",
+  "prompt": "Probe pan 1 with the chef arm; if that fails, try once more. Then send the reading to \"pass\".",
+  "world": "bench/worlds/kitchen_values.json",
+  "group": "value",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_6": {
+    "decision": "program",
+    "planned_paths": "first try / second try: the message carries the reading; both fail: run fails (0036 V3, option b)"
+  },
+  "tags": [
+    "measure",
+    "handler",
+    "retry",
+    "binding_scope"
+  ],
+  "why": "RoboLang 1.5 cannot read a value from a sensor: inspect observes presence, location and holder only (decision 0036)."
+}

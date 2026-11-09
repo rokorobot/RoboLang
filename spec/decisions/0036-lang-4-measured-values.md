@@ -1,14 +1,18 @@
 # Decision record 0036: Measured values (LANG-4 and a minimal LANG-5, RoboLang 1.6)
 
 **Date:** 2026-11-09
-**Status:** **PROPOSED.** V1–V13 need the owner, including the paid runs (V12). Nothing is built.
+**Status:** **PROPOSED.** V1–V13 need the owner, including the paid runs (V12). Decided so far by the owner on
+2026-11-09: the set 5 labels, and V3 option (b). No language feature is built; set 5 is.
 **Applies to (when decided):** a new `spec/robolang-v1.6.md` and `grammar-v1.6.ebnf`, Task IR 1.5, world file 1.2,
 `simulation-v1.0.md`, `src/robolang/`, `docs/language-reference.md`, `bench/` (a new set 5, relabels in sets 2, 3 and
 "ask").
 **Evidence:** Five standing benchmark tasks are inexpressible **only** because a program cannot read a value:
 `u05_below_8c`, `u06_cooled_60c` (`numeric_sensing`), `u19_send_batch`, `u20_report_temp` (`value_report`) and
-`i12_scale_down` (`weighing`). Models decline them correctly: this is a **coverage** gap, not a safety failure like the
-half-programs that motivated 1.4 (N4). Three labels are inconsistent with them: `w_scale_precheck` (set 1), `d_serum_tube` (set 2) and `f07` (set
+`i12_scale_down` (`weighing`). Models decline those five correctly. **But the set 5 baseline (2026-11-09,
+[bench-set5-baseline.md](../../docs/evidence/bench-set5-baseline.md)) shows silent substitution:** when a request does
+not use the value ("weigh it, then move it"), models write `inspect` instead, and every such program validates and
+succeeds (20/20 with the full prompt, 42/42 grammar only). That is the same failure kind as the half-programs that
+motivated 1.4 (N4). Three labels are inconsistent with them: `w_scale_precheck` (set 1), `d_serum_tube` (set 2) and `f07` (set
 "ask") accept `inspect … using <scale or thermometer>` as weighing or taking a temperature, which `i12` says it cannot do. Outside the repo,
 URML ships `measure`, `detect` and `report` with values (2026-11-09 comparison). Plan and tasks:
 [`docs/plans/bench-5-values.md`](../../docs/plans/bench-5-values.md).
@@ -19,7 +23,7 @@ URML ships `measure`, `detect` and `report` with values (2026-11-09 comparison).
 |---|---|---|---|
 | V1 | Scope | Read a value from a sensor, compare it, send it. Nothing else: no `detect`, arithmetic, counting, clock readings, structured data (LANG-6), or values in `goal` | Add `detect` (choose an object at run time): goals and Core export name things fixed before the run, so it needs its own decision. Add arithmetic: no task needs it except controls |
 | V2 | Reading | `measure r temperature of pan using probe as t;` takes one reading and binds it to `t`. A `measure` that cannot read (sensor unavailable, value not stated) **fails the step**, so a 1.5 handler can catch it | No binding, and every reading is live (`temperature of pan using probe < 60 degC`). Smaller, but a reported value can differ from the value just compared, and the record cannot say which reading decided |
-| V3 | Bindings (minimal LANG-5) | Set once, never changed. Unique within a task. Visible after its `measure` in the same block and in nested blocks. One made inside a branch or handler is not visible after it (static error). Not visible in the handler of its own `measure`; and if that handler does not end in `fail`, not visible after it either, since on that path nothing was read (static error) | Mutable variables: needs definite-assignment analysis across paths and invites loops |
+| V3 | Bindings (minimal LANG-5) | **Owner, 2026-11-09, option (b):** a `measure` in the handler of a `measure` may bind the **same name**, so a retried reading is defined on both paths ("retry the reading once, then send it"). Otherwise: set once, never changed. Unique within a task. Visible after its `measure` in the same block and in nested blocks. One made inside a branch or handler is not visible after it (static error). Not visible in the handler of its own `measure`; and if that handler does not end in `fail`, not visible after it either, since on that path nothing was read (static error) | Mutable variables: needs definite-assignment analysis across paths and invites loops |
 | V4 | Waiting for a value | Only `wait until` reads live: `wait until temperature of pan using probe < 60 degC timeout 10 min else { … }`, read on every world change, as other wait conditions are | Bindings only: "once it has cooled below 60 °C" (`u06`) stays inexpressible |
 | V5 | Kinds and units | A closed list: `temperature` (`degC`, `K`), `mass` (`g`, `kg`), `distance` (`mm`, `cm`, `m`), and `label` (text: batch numbers, barcodes). Within a kind, units convert exactly in decimal, as durations already do (`500 ms` = `0.5 s`); across kinds is a static error. °F is not a unit: a request in °F is converted by the author, as `30 cm/s` is today | Units declared by each world: open vocabulary, nothing to check statically. No conversion at all: the author must know the sensor's unit before writing |
 | V6 | Comparisons | Quantities: `<`, `<=`, `>`, `>=` only, against a literal or another binding of the same kind. Labels: `==`, `!=` against a string or label. Combine with `and`, `or`, `not` as today. No `==` on quantities: with uncertainty it is almost never decidable | Allow `==` on quantities: invites conditions that are always unknown |

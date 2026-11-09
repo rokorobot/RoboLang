@@ -1,0 +1,9 @@
+{
+  "task": "move_pan",
+  "bindings": {
+    "r": "chef_arm",
+    "p": "pan_1",
+    "src": "stove",
+    "dst": "sink"
+  }
+}

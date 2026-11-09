@@ -36,6 +36,8 @@ ASK_TASKS_DIR = BENCH / "tasks_ask"
 ASK_REFERENCE_DIR = BENCH / "reference_ask"
 FAILURE_TASKS_DIR = BENCH / "tasks_failure"  # set 4: pre-registered against 1.4, labelled for 1.5 (decision 0035)
 FAILURE_REFERENCE_DIR = BENCH / "reference_failure"
+VALUES_TASKS_DIR = BENCH / "tasks_values"  # set 5: measured values, pre-registered against 1.5 (decision 0036)
+VALUES_REFERENCE_DIR = BENCH / "reference_values"
 PROMPT_FILE = BENCH / "prompt.md"
 REFERENCE_FILE = ROOT / "docs" / "language-reference.md"
 MINIMAL_PROMPT_FILE = BENCH / "prompt_minimal.md"
@@ -50,7 +52,8 @@ REFERENCE_MARK = "{{LANGUAGE_REFERENCE}}"  # in prompt.md: replaced by the shipp
 SETS = {"1": (TASKS_DIR, REFERENCE_DIR), "hard": (HARD_TASKS_DIR, HARD_REFERENCE_DIR),
         "ask": (ASK_TASKS_DIR, ASK_REFERENCE_DIR),
         "branch": (BRANCH_TASKS_DIR, BRANCH_REFERENCE_DIR),
-        "failure": (FAILURE_TASKS_DIR, FAILURE_REFERENCE_DIR)}
+        "failure": (FAILURE_TASKS_DIR, FAILURE_REFERENCE_DIR),
+        "values": (VALUES_TASKS_DIR, VALUES_REFERENCE_DIR)}
 PROMPTS = ("full", "minimal")
 
 # $ per million tokens: (input, output, cache read). A cache write (5 minutes) costs 1.25 x input.

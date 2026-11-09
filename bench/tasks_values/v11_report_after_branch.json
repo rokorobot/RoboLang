@@ -1,0 +1,20 @@
+{
+  "id": "v11_report_after_branch",
+  "prompt": "Probe pan 1 with the chef arm. If it is below 60 °C, move it to the pass. Either way, send the reading to \"pass\" at the end.",
+  "world": "bench/worlds/kitchen_values.json",
+  "group": "value",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_6": {
+    "decision": "program",
+    "planned_paths": "45 °C / 80 °C; the message carries the reading on both"
+  },
+  "tags": [
+    "measure",
+    "if",
+    "binding_scope"
+  ],
+  "why": "RoboLang 1.5 cannot read a value from a sensor: inspect observes presence, location and holder only (decision 0036)."
+}

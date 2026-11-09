@@ -1,0 +1,22 @@
+{
+  "id": "i01_scale_offline",
+  "prompt": "Weigh tray B with the helper arm's scale and send the weight to \"pass\".",
+  "world": "bench/worlds/kitchen.json",
+  "group": "infeasible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_6": {
+    "decision": "cannot",
+    "category": "infeasible"
+  },
+  "entities_1_6": [
+    "scale_1"
+  ],
+  "tags": [
+    "weighing",
+    "sensor_unavailable"
+  ],
+  "why": "Under 1.5 a reading is inexpressible, so the decline is inexpressible; under 1.6 it is infeasible: scale_1 is unavailable and never recovers."
+}
