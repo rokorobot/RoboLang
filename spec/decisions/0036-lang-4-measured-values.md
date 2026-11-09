@@ -8,8 +8,11 @@
 "ask").
 **Evidence:** Five standing benchmark tasks are inexpressible **only** because a program cannot read a value:
 `u05_below_8c`, `u06_cooled_60c` (`numeric_sensing`), `u19_send_batch`, `u20_report_temp` (`value_report`) and
-`i12_scale_down` (`weighing`). Models decline them correctly: this is a **coverage** gap, not a safety failure like the
-half-programs that motivated 1.4 (N4). Three labels are inconsistent with them: `w_scale_precheck` (set 1), `d_serum_tube` (set 2) and `f07` (set
+`i12_scale_down` (`weighing`). Models decline those five correctly. **But the set 5 baseline (2026-11-09,
+[bench-set5-baseline.md](../../docs/evidence/bench-set5-baseline.md)) shows silent substitution:** when a request does
+not use the value ("weigh it, then move it"), models write `inspect` instead, and every such program validates and
+succeeds (20/20 with the full prompt, 42/42 grammar only). That is the same failure kind as the half-programs that
+motivated 1.4 (N4). Three labels are inconsistent with them: `w_scale_precheck` (set 1), `d_serum_tube` (set 2) and `f07` (set
 "ask") accept `inspect … using <scale or thermometer>` as weighing or taking a temperature, which `i12` says it cannot do. Outside the repo,
 URML ships `measure`, `detect` and `report` with values (2026-11-09 comparison). Plan and tasks:
 [`docs/plans/bench-5-values.md`](../../docs/plans/bench-5-values.md).
