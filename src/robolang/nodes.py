@@ -1,5 +1,5 @@
 """
-Abstract syntax tree for RoboLang v1.1 to v1.3 (robolang-v1.1.md section 7, v1.2 section 6, v1.3 section 6).
+Abstract syntax tree for RoboLang v1.1 to v1.6 (robolang-v1.1.md section 7, v1.2 section 6, v1.3 section 6).
 
 Nodes are immutable and record the source faithfully: names are unresolved,
 units are kept as written and nothing is normalized. Binding and type checks
@@ -165,7 +165,39 @@ class Not:
     span: Span
 
 
-Condition = Union[RobotReady, RegionClear, ObjectExists, SensorOk, ObjectAt, RobotAt, Holding, And, Or, Not]
+@dataclass(frozen=True)
+class QuantityLit:
+    """RoboLang 1.6: `60 degC`. The unit is kept as written; whether it belongs to the compared kind is static."""
+
+    value: Decimal
+    unit: str
+    span: Span
+
+
+@dataclass(frozen=True)
+class LiveReading:
+    """RoboLang 1.6: `temperature of pan using probe`, read at every evaluation of a `wait until` (decision 0036 V4)."""
+
+    kind: Name
+    obj: Name
+    sensor: Name | StringLit  # a StringLit is E310, as for `inspect`
+    span: Span
+
+
+@dataclass(frozen=True)
+class Compare:
+    """
+    RoboLang 1.6: `t < 60 degC`, `batch == "LOT-7"`, `a <= b`, `temperature of pan using probe < 60 degC`
+    (decision 0036 V6). `left` is a binding or a live reading; `right` a quantity, a string or a binding.
+    """
+
+    left: Name | LiveReading
+    op: str
+    right: Name | QuantityLit | StringLit
+    span: Span
+
+
+Condition = Union[RobotReady, RegionClear, ObjectExists, SensorOk, ObjectAt, RobotAt, Holding, And, Or, Not, Compare]
 
 
 # -------- statements --------
@@ -205,6 +237,19 @@ class Inspect:
 
 
 @dataclass(frozen=True)
+class Measure:
+    """RoboLang 1.6: `measure r temperature of pan using probe as t;`. `kind` is a Name (kinds are not reserved)."""
+
+    robot: Name
+    kind: Name
+    obj: Name
+    sensor: Name | StringLit  # a StringLit is E310, as for `inspect`
+    binding: Name
+    span: Span
+    handler: Branch | None = None
+
+
+@dataclass(frozen=True)
 class WaitFor:
     duration: Duration
     span: Span
@@ -220,9 +265,11 @@ class WaitUntil:
 
 @dataclass(frozen=True)
 class Communicate:
+    """`message` is a Name (a binding) in RoboLang 1.6 when a measured value is sent (decision 0036 V8)."""
+
     robot: Name
     channel: StringLit
-    message: StringLit
+    message: StringLit | Name
     span: Span
 
 
@@ -256,8 +303,8 @@ class If:
     span: Span
 
 
-Statement = Union[Move, Grasp, Place, Inspect, WaitFor, WaitUntil, Communicate, If, Fail]
-HANDLED = (Move, Grasp, Place, Inspect, WaitUntil)  # the statements that may take a failure handler (RoboLang 1.5)
+Statement = Union[Move, Grasp, Place, Inspect, Measure, WaitFor, WaitUntil, Communicate, If, Fail]
+HANDLED = (Move, Grasp, Place, Inspect, Measure, WaitUntil)  # the statements that may take a failure handler (1.5, 1.6)
 
 
 # -------- structure --------

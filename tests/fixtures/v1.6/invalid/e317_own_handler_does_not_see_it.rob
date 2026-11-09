@@ -1,0 +1,15 @@
+// RoboLang v1.6 fixture: invalid
+// expect: error E317 (static) line 11
+// why: a handler does not see the binding of its own measure
+
+robolang 1.6;
+
+task t(robot r, object pan, sensor probe, location bench) {
+    goal { robot_at r bench; }
+    plan {
+        measure r mass of pan using probe as m else {
+            communicate r to "ops" with m;
+            fail "no reading";
+        }
+    }
+}

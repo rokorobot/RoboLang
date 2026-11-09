@@ -1,0 +1,129 @@
+{
+  "ir_schema": "robolang.task-ir",
+  "ir_schema_version": "1.5",
+  "language_version": "1.6",
+  "tasks": [
+    {
+      "name": "weigh_and_compare",
+      "parameters": [
+        {
+          "name": "r",
+          "type": "robot"
+        },
+        {
+          "name": "a",
+          "type": "object"
+        },
+        {
+          "name": "b",
+          "type": "object"
+        },
+        {
+          "name": "scale",
+          "type": "sensor"
+        },
+        {
+          "name": "bench",
+          "type": "location"
+        }
+      ],
+      "safety": [],
+      "preconditions": [],
+      "goal": [
+        {
+          "kind": "robot_at",
+          "robot": "r",
+          "location": "bench"
+        }
+      ],
+      "steps": [
+        {
+          "kind": "move",
+          "robot": "r",
+          "target": "bench"
+        },
+        {
+          "kind": "measure",
+          "robot": "r",
+          "reading": "mass",
+          "object": "a",
+          "sensor": "scale",
+          "binding": "ma"
+        },
+        {
+          "kind": "measure",
+          "robot": "r",
+          "reading": "mass",
+          "object": "b",
+          "sensor": "scale",
+          "binding": "mb"
+        },
+        {
+          "kind": "if",
+          "condition": {
+            "kind": "and",
+            "conditions": [
+              {
+                "kind": "compare",
+                "left": {
+                  "kind": "binding",
+                  "name": "ma"
+                },
+                "op": ">",
+                "right": {
+                  "kind": "quantity",
+                  "value": "1.2",
+                  "unit": "kg"
+                }
+              },
+              {
+                "kind": "compare",
+                "left": {
+                  "kind": "binding",
+                  "name": "ma"
+                },
+                "op": "<",
+                "right": {
+                  "kind": "quantity",
+                  "value": "2000",
+                  "unit": "g"
+                }
+              },
+              {
+                "kind": "not",
+                "condition": {
+                  "kind": "compare",
+                  "left": {
+                    "kind": "binding",
+                    "name": "mb"
+                  },
+                  "op": ">=",
+                  "right": {
+                    "kind": "binding",
+                    "name": "ma"
+                  }
+                }
+              }
+            ]
+          },
+          "then": [
+            {
+              "kind": "communicate",
+              "robot": "r",
+              "channel": "ops",
+              "binding": "ma"
+            }
+          ],
+          "else": [
+            {
+              "kind": "fail",
+              "reason": "unexpected weights"
+            }
+          ],
+          "goal_then": null,
+          "goal_else": null
+        }
+      ]
+    }
+  ]
+}

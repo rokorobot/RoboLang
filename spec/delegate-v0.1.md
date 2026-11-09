@@ -74,8 +74,8 @@ first task for which all of these hold:
 4. `--to`'s entity (`rl:robot:arm1` → `arm1`) is bound to one of the task's robot parameters.
 
 The record lists every task considered with one result: `matched`, `no_goal`, `world_E5xx`,
-`no_core_form`, `goal_differs`, `robot_not_bound` or `robots_unsupported` (v0.2: the task binds two or more other
-robots). Nothing else is compared: safety limits and
+`no_core_form`, `goal_differs`, `robot_not_bound`, `robots_unsupported` (v0.2: the task binds two or more other
+robots) or `measure_unsupported` (RoboLang 1.6: the task contains a `measure`; checked right after `no_goal`). Nothing else is compared: safety limits and
 preconditions are the plan's own business, and a failing precondition is an outcome, not a rejection.
 
 ## 4. The delegate record

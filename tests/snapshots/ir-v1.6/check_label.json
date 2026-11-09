@@ -1,0 +1,106 @@
+{
+  "ir_schema": "robolang.task-ir",
+  "ir_schema_version": "1.5",
+  "language_version": "1.6",
+  "tasks": [
+    {
+      "name": "check_label",
+      "parameters": [
+        {
+          "name": "r",
+          "type": "robot"
+        },
+        {
+          "name": "tube",
+          "type": "object"
+        },
+        {
+          "name": "spare",
+          "type": "object"
+        },
+        {
+          "name": "scanner",
+          "type": "sensor"
+        },
+        {
+          "name": "bench",
+          "type": "location"
+        }
+      ],
+      "safety": [],
+      "preconditions": [],
+      "goal": [
+        {
+          "kind": "robot_at",
+          "robot": "r",
+          "location": "bench"
+        }
+      ],
+      "steps": [
+        {
+          "kind": "measure",
+          "robot": "r",
+          "reading": "label",
+          "object": "tube",
+          "sensor": "scanner",
+          "binding": "lot"
+        },
+        {
+          "kind": "measure",
+          "robot": "r",
+          "reading": "label",
+          "object": "spare",
+          "sensor": "scanner",
+          "binding": "other"
+        },
+        {
+          "kind": "if",
+          "condition": {
+            "kind": "and",
+            "conditions": [
+              {
+                "kind": "compare",
+                "left": {
+                  "kind": "binding",
+                  "name": "lot"
+                },
+                "op": "==",
+                "right": {
+                  "kind": "text",
+                  "value": "LOT-7731"
+                }
+              },
+              {
+                "kind": "compare",
+                "left": {
+                  "kind": "binding",
+                  "name": "lot"
+                },
+                "op": "!=",
+                "right": {
+                  "kind": "binding",
+                  "name": "other"
+                }
+              }
+            ]
+          },
+          "then": [
+            {
+              "kind": "move",
+              "robot": "r",
+              "target": "bench"
+            }
+          ],
+          "else": [
+            {
+              "kind": "fail",
+              "reason": "wrong lot"
+            }
+          ],
+          "goal_then": null,
+          "goal_else": null
+        }
+      ]
+    }
+  ]
+}

@@ -1,9 +1,9 @@
 """
-Lexer for RoboLang v1.1 to v1.4 (spec/robolang-v1.1.md, sections 2 and 3).
+Lexer for RoboLang v1.1 to v1.6 (spec/robolang-v1.1.md, sections 2 and 3).
 
 Tokens are produced on demand. The parser uses this to reject an unsupported
 language version (E213) without interpreting the rest of the file; after the
-version marker it lexes the remainder in one go. A `robolang 1.2;`, `1.3;` or `1.4;` marker
+version marker it lexes the remainder in one go. A `robolang 1.2;` to `1.6;` marker
 switches the reserved words to that version's set before any later word is lexed.
 """
 
@@ -36,14 +36,16 @@ class Lexer:
         self._pos = 0
         self._line = 1
         self._col = 1
-        self.reserved = RESERVED  # RESERVED_BY_VERSION[...] after a `robolang 1.2;` to `1.5;` marker
-        self.verify = False  # `@verify` is an annotation after a `robolang 1.3;`, `1.4;` or `1.5;` marker only
+        self.reserved = RESERVED  # RESERVED_BY_VERSION[...] after a `robolang 1.2;` to `1.6;` marker
+        self.verify = False  # `@verify` is an annotation after a `robolang 1.3;` to `1.6;` marker only
+        self.values = False  # comparison operators are tokens after a `robolang 1.6;` marker only
 
     def set_language(self, version: str):
         """Switch to the words and annotations of language `version` (a `robolang` marker was read)."""
         if version in RESERVED_BY_VERSION:
             self.reserved = RESERVED_BY_VERSION[version]
-        self.verify = version in ("1.3", "1.4", "1.5")
+        self.verify = version in ("1.3", "1.4", "1.5", "1.6")
+        self.values = version == "1.6"
 
     # -------- helpers --------
 
@@ -101,6 +103,8 @@ class Lexer:
             return self._unit_or_word()
         if ch in _PUNCTUATION:
             return self._take(_PUNCTUATION[ch], 1)
+        if self.values and ch in "<>=!":
+            return self._operator()
         if ch == "/" and self._peek(1) == "*":
             self._error("E101", "unexpected character '/': block comments are not supported, use '//'")
         self._error("E101", f"unexpected character {ch!r}")
@@ -144,6 +148,15 @@ class Lexer:
             if self._peek(i) == ".":
                 self._error("E103", "malformed number: more than one decimal point", length=i + 1)
         return self._take(TokenKind.NUMBER, i)
+
+    def _operator(self) -> Token:
+        """`<`, `<=`, `>`, `>=`, `==` or `!=` (RoboLang 1.6, decision 0036 V6); a lone `=` or `!` is an error."""
+        if self._src[self._pos:self._pos + 2] in ("<=", ">=", "==", "!="):
+            return self._take(TokenKind.OPERATOR, 2)
+        if self._peek() in "<>":
+            return self._take(TokenKind.OPERATOR, 1)
+        self._error("E101", f"unexpected character {self._peek()!r}: the comparison operators are "
+                            "'<', '<=', '>', '>=', '==' and '!='")
 
     def _at_safety(self) -> Token:
         for text, kind in ((_AT_SAFETY, TokenKind.AT_SAFETY), (_AT_VERIFY, TokenKind.AT_VERIFY)):

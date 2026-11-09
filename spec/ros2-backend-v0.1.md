@@ -46,6 +46,7 @@ A closed gripper whose object marker no camera sees gives `unknown`. Results fol
 | S506 | Gazebo attachment/detachment failed, or place has no matching grasp |
 | S507 | Site or binding is invalid or incomplete |
 | S508 | Task feature has no observation or is unsupported by this backend |
+| S509 | The task has a `measure` (RoboLang 1.6): this backend has no value sensors; refused before any motion |
 
 S101, S102, S301 and S302 have their [simulation](simulation-v1.0.md) meanings, decided from observations.
 

@@ -1,4 +1,4 @@
-# RoboLang simulation — semantics, world file 1.0 and run record 1.0
+# RoboLang simulation — semantics, world files 1.0 to 1.2 and run records 1.0 to 1.5
 
 **Status:** RL-BASIC-01a specification, **approved by the owner on 2026-10-26**. Every choice
 in it is recorded in [decision record 0004](decisions/0004-rl-basic-01a-simulation-semantics.md)
@@ -11,7 +11,8 @@ separately authorizes implementation.
 **Language:** RoboLang 1.1 ([`robolang-v1.1.md`](robolang-v1.1.md)), unchanged.
 **IR:** Task IR 1.0 ([`ir-schema-v1.0.md`](ir-schema-v1.0.md)), unchanged.
 **Later languages:** RoboLang 1.2 sources are covered by [`robolang-v1.2.md`](robolang-v1.2.md) section 8;
-RoboLang 1.3 sources (goals, typed sensors, run record 1.2) by section 10 of this document.
+RoboLang 1.3 sources (goals, typed sensors, run record 1.2) by section 10 of this document. RoboLang 1.4 (branching), 1.5 (failure handlers) and 1.6 (measured
+values, world file 1.2, run record 1.5) by sections 12, 13 and 14.
 **Fixtures:** [`tests/fixtures/simulation/`](../tests/fixtures/simulation/README.md)
 
 > **Simulation only.** This document defines what a RoboLang 1.1 task does in a symbolic,
@@ -300,6 +301,10 @@ bindings, fault indices and cancellation index depend on it.
 | `E509` | Duplicate entity ID, within a kind or across kinds |
 | `E510` | Inconsistent state (section 3.3): an object's presence and position disagree, an object is held by a robot without a gripper, or a robot holds more than one object |
 | `E511` | Invalid script: a fault or cancellation step outside the selected task's plan (1.4: a fault on an `if`), a repeated fault step, two `max_speed` maxima with the same unit, or an event whose target is of the wrong kind for its fact |
+| `E512` | World file 1.2 (section 14.1): an unknown kind in `measures`, `properties` or a `property` event |
+| `E513` | World file 1.2: a unit that is not a unit of the kind |
+| `E514` | World file 1.2: a label with a unit or an uncertainty |
+| `E515` | World file 1.2: a `property` event whose target is not a declared entity |
 
 ## 4. Execution semantics
 
@@ -565,7 +570,7 @@ run_id            = "sim-" + lowercase hex SHA-256 of preimage
 
 ### 7.1 World-file errors
 
-Section 3.9 (`E501`–`E511`). They stop processing with exit status 3; no run is created.
+Section 3.9 (`E501`–`E515`). They stop processing with exit status 3; no run is created.
 
 ### 7.2 Run failures
 
@@ -579,14 +584,17 @@ Section 3.9 (`E501`–`E511`). They stop processing with exit status 3; no run i
 | `S202` | step | The robot's readiness is unknown |
 | `S211` | step | `grasp`: the robot has no gripper |
 | `S212` | step | `grasp`: the robot already holds an object |
-| `S213` | step | `grasp`: the object is not present |
-| `S214` | step | `grasp`: the object's presence is unknown |
+| `S213` | step | `grasp` or `measure`: the object is not present |
+| `S214` | step | `grasp` or `measure`: the object's presence is unknown |
 | `S215` | step | `grasp`: the object is not at the robot's location |
 | `S221` | step | `place`: the robot does not hold the object |
 | `S222` | step | `place`: the robot is not at the target location |
 | `S231` | step | `inspect`: the sensor is not declared or not mounted on the robot |
 | `S232` | step | `inspect`: the sensor is not available |
 | `S233` | step | `inspect`: the sensor's availability is unknown |
+| `S234` | step | RoboLang 1.6 `measure`: the sensor does not measure the kind (section 14.2) |
+| `S235` | step | RoboLang 1.6 `measure`: a contact reading, and the robot is not at the object |
+| `S236` | step | RoboLang 1.6 `measure`: the object has no value for the kind |
 | `S241` | step | `wait until`: the timeout expired before the condition was true |
 | `S251` | step | A scripted fault |
 | `S261` | step | RoboLang 1.4: the condition of an `if` is unknown; no branch is taken (section 12) |
@@ -760,7 +768,8 @@ authoring error.
 |---|---|
 | `S001`, `S002` | Section 4.3, for **every** `max_speed` limit with a unit and every bound robot. The run stops at the first one; this check lists all of them |
 | `S211` | A `grasp` whose robot has no gripper (4.5) |
-| `S231` | An `inspect` whose sensor is not declared, or not mounted on its robot (4.5) |
+| `S231` | An `inspect` or `measure` whose sensor is not declared, or not mounted on its robot (4.5, 14.2) |
+| `S234` | A `measure` of a kind its sensor does not measure (14.2): a sensor with no `measures` in the world file measures nothing |
 
 Each finding is one diagnostic in source order: limits first, then steps (for a branching task, step by step in the
 order of section 12.1, branches included). A step in a branch is reported **once**, at its own source position (or,
@@ -886,3 +895,104 @@ As in 12.4, with the `ok` and `failed` sides of a handled step as the two sides 
 so its side has the goal of the `ok` side unless it ends in `fail`. Core 0.1 exports a task whose handlers all end
 without `fail`; a handler that ends in `fail` makes the paths differ (`X603`), as a branch that ends in `fail` does.
 Core 0.2 exports one alternative per distinct path goal, at most 16 (decision 0028 Q2).
+
+## 14. RoboLang 1.6: measured values
+
+Decision record [0036](decisions/0036-lang-4-measured-values.md); language in [robolang-v1.6.md](robolang-v1.6.md). A
+task of language 1.1 to 1.5 runs exactly as before, whatever the world file's version.
+
+### 14.1 World file 1.2
+
+`"world_schema_version": "1.2"` is 1.1 plus measured values. Files 1.0 and 1.1 are still accepted and unchanged;
+`measures`, `properties` and the fact `property` are unknown fields or values there (`E503`, `E504`).
+
+**Sensor**, optional `measures`: an object from kind to what the sensor reads of it.
+
+```json
+"probe1": { "robot": "arm1", "available": true, "measures": {
+  "temperature": { "unit": "degC", "uncertainty": "0.5", "contact": true },
+  "label":       { "contact": false } } }
+```
+
+| Field | Content |
+|---|---|
+| kind (the key) | `temperature`, `mass`, `distance` or `label`; any other word is `E512` |
+| `unit` | Required except for `label`: a unit of the kind (`E513` otherwise), the unit the sensor reports in. A label with `unit` is `E514` |
+| `uncertainty` | Required except for `label`: an exact decimal string, zero or more, in the sensor's unit; the reading is `v ± u`. A label with `uncertainty` is `E514` |
+| `contact` | Required: `true` if the robot must be at the object to read it (a probe, a scale), `false` otherwise (a scanner, a camera) |
+
+**Object**, optional `properties`: an object from kind to what a sensor would read.
+
+```json
+"pan1": { "present": true, "location": "bench", "properties": {
+  "temperature": { "value": "72", "unit": "degC" }, "label": { "value": "LOT-7731" } } }
+```
+
+`value` is a decimal string (a leading `-` is allowed: a freezer is `-18 degC`) with a `unit` of the kind (`E513`
+otherwise); a label's `value` is a non-empty string and has no `unit` (`E514`). The property is in any unit of the
+kind: the reading converts it to the sensor's.
+
+**Event**, the new fact `property` (3.6): `{ "at": ..., "fact": "property", "target": "pan1", "property":
+"temperature", "value": { "value": "55", "unit": "degC" } }` sets that property of that object at that time. `target`
+is a declared object: an undeclared target is `E515`, another kind of entity `E511`. `property` is only for this fact
+(`E503` otherwise). The kind may be one the object had no value for: the event gives it one.
+
+### 14.2 `measure`
+
+`measure r KIND of o using s as NAME` (a step; a scripted fault gives `S251`, as for any step). Its requirements are
+checked, in this order, **before any effect**, so a failed `measure` changes nothing and binds nothing:
+
+| Requirement | Failure |
+|---|---|
+| sensor `s` is declared and mounted on `r` | `S231` |
+| `s` is available | `S232` false, `S233` unknown |
+| `s` declares `KIND` in `measures` | `S234` |
+| `o` is present | `S213` false, `S214` unknown |
+| if that `measures` entry has `contact: true`, `r` is at the location of `o`; an object `r` holds counts as at `r` | `S235` |
+| `o` has a value for `KIND` | `S236` |
+
+**Effect:** `NAME` is bound to the reading, and the step records it. The reading is the object's property **now**
+(events up to the clock are applied, 4.2), converted exactly to the sensor's unit, with the sensor's uncertainty; a
+label is the text. Readings take no time. `measure` does not need `robot_ready`, as `inspect` does not. It does not
+move the robot or change the object.
+
+### 14.3 Conditions and live readings
+
+`t OP c`, `a OP b` and `l == "text"` (RoboLang 1.6 section 5) are evaluated against the bindings at that moment,
+with the three-valued rules of 14.4. A **live reading** in a `wait until` is evaluated at every evaluation of the
+wait (when it starts, and after each event up to its timeout, as 4.5 says for `wait until`): the sensor's property is
+read as in 14.2 but with no robot, and for `contact: true` the robot is the one the sensor is mounted on. If the
+reading cannot be taken (any failure of the table in 14.2, or no mounted robot for a contact sensor) the comparison is
+unknown and the wait goes on. A wait whose live comparison is true at 240000 ms (a `property` event at 4 min) succeeds
+at 240000 ms; one that never is fails with `S241` after its timeout, and its handler runs (13.2).
+
+### 14.4 Uncertainty
+
+A reading `v ± u` in unit `U` stands for every value from `v − u` to `v + u`. A comparison `x OP y` of two such
+intervals (a literal is the point `c`, converted exactly) is **true if every pair of values satisfies it, false if
+none does, unknown otherwise**. With `u = 0` this is the ordinary comparison, and never unknown. The table of
+[robolang-v1.6.md](robolang-v1.6.md) section 7 gives the four operators. An unknown condition is as in 4.4: an `if` fails
+the run with `S261`; a `wait until` keeps waiting. A label is compared exactly. Example: `59.8 ± 0.5 degC` against
+`< 60 degC` is unknown (`S261` in an `if`); `1500 g` read as `1.5 kg ± 0.01` is `> 1.2 kg` (true) and `< 2 kg` (true).
+
+### 14.5 Messages and run record 1.5
+
+`communicate r to "ch" with NAME` records a message whose value is the binding. A 1.6 source writes
+`run_record_schema_version` `1.5` and embeds Task IR 1.5. Earlier sources write their records unchanged, byte for byte. The key
+order is that of record 1.4 with:
+
+| Where | Added |
+|---|---|
+| `steps[]` | `reading`, after `observation`: for a `measure`, the reading below; otherwise `null` |
+| `steps[].message` | `value`, after `status`: for a message that sends a binding, the reading below (and `message` is `null`); otherwise `null` |
+| `events_applied[]` | a `property` event is `{ "t_ms", "fact": "property", "target", "property", "value": { "value", "unit" } }` (a label: no `unit`); recorded whatever the task's language |
+
+The reading: `{ "subject": <object ID>, "kind", "value": <exact decimal string, or the text of a label>, "unit",
+"uncertainty": <exact decimal string>, "sensor": <sensor name>, "t_ms": <time of the reading> }`; a label has no `unit`
+and no `uncertainty` key. No string formatting is ever applied to a value. Live readings are not recorded; the
+`condition_result` of the wait is.
+
+### 14.6 Core
+
+`core_outcome` is unchanged: goals have no values (V1). `export-goal` is unchanged. `delegate` and the ROS 2
+backend refuse a task with a `measure` ([robolang-v1.6.md](robolang-v1.6.md) section 10).

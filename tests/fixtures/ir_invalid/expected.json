@@ -134,5 +134,37 @@
   "I217_wait_until_without_handler.json": [
     "I217",
     "/tasks/0/steps/0"
+  ],
+  "I124_unknown_operator.json": [
+    "I124",
+    "/tasks/0/steps/1/condition/op"
+  ],
+  "I125_unknown_kind.json": [
+    "I125",
+    "/tasks/0/steps/0/reading"
+  ],
+  "I218_binding_before_its_measure.json": [
+    "I218",
+    "/tasks/0/steps/0/condition/left"
+  ],
+  "I219_binding_named_like_a_parameter.json": [
+    "I219",
+    "/tasks/0/steps/0/binding"
+  ],
+  "I220_unit_of_another_kind.json": [
+    "I220",
+    "/tasks/0/steps/1/condition/right"
+  ],
+  "I221_equality_on_a_quantity.json": [
+    "I221",
+    "/tasks/0/steps/1/condition"
+  ],
+  "I222_comparison_in_a_goal.json": [
+    "I222",
+    "/tasks/0/goal/0"
+  ],
+  "I223_live_reading_in_an_if.json": [
+    "I223",
+    "/tasks/0/steps/1/condition/left"
   ]
 }

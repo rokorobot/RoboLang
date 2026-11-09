@@ -1,0 +1,18 @@
+// RoboLang v1.6 fixture: valid
+// expect: ok
+// why: a retried reading binds the same name in the handler of the first, so it is defined on both paths (V3 b)
+
+robolang 1.6;
+
+task retry_reading(robot r, object box, sensor scale, location bench) {
+    goal { robot_at r bench; }
+    plan {
+        move r to bench;
+        measure r mass of box using scale as m else {
+            measure r mass of box using scale as m else {
+                fail "scale gave no reading twice";
+            }
+        }
+        communicate r to "ops" with m;
+    }
+}

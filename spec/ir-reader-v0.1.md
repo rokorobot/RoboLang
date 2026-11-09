@@ -2,7 +2,7 @@
 
 **Status:** implemented in `src/robolang/ir_reader.py` (CORE-1); decision record
 [0021](decisions/0021-core-1-ir-reader.md).
-**Reads:** Task IR schemas [1.0](ir-schema-v1.0.md), [1.1](ir-schema-v1.1.md) and [1.2](ir-schema-v1.2.md)
+**Reads:** Task IR schemas [1.0](ir-schema-v1.0.md) to [1.5](ir-schema-v1.5.md)
 **Duties implemented:** 1 and 2 of [ir-schema-v1.0.md](ir-schema-v1.0.md) section 2 (kernel rules K4 and K5
 of the domain contracts)
 
@@ -24,8 +24,8 @@ document the compiler produces; the golden snapshots under `tests/snapshots/` ar
 1. **Bytes.** UTF-8, no byte order mark, valid JSON, no duplicate object key, no number with a
    fraction or exponent, no `NaN` or `Infinity`, not nested too deeply for the JSON parser
    (`robolang.core.read_document`, the strict reading of Core 0.1 section 2.3).
-2. **Header.** `ir_schema` is `robolang.task-ir`; `ir_schema_version` is `1.0`, `1.1`, `1.2` or `1.3`;
-   `language_version` is the language that version is produced from (`1.1`, `1.2`, `1.3`, `1.4`). The version
+2. **Header.** `ir_schema` is `robolang.task-ir`; `ir_schema_version` is `1.0` to `1.5`;
+   `language_version` is the language that version is produced from (`1.1` to `1.6`). The version
    fields are claims: they only select the vocabulary below, and everything after them is checked
    against that vocabulary, so a document cannot claim 1.0 and use `and`. An unknown schema version
    stops the reading: nothing else can be interpreted.
@@ -71,6 +71,8 @@ the whole document; a missing field is reported at the object that lacks it). Th
 | `I121` | Condition nested deeper than 8 levels |
 | `I122` | `and` directly inside `and`, or `or` inside `or` (grouping not flattened) |
 | `I123` | `if` step, or in schema 1.4 a failure handler, nested deeper than 4 levels (E216) |
+| `I124` | Schema 1.5: an unknown comparison operator in a `compare` |
+| `I125` | Schema 1.5: an unknown measured kind (`reading`) |
 | `I201` | Duplicate task name (E301) |
 | `I202` | Duplicate parameter name (E302) |
 | `I203` | Undeclared name (E303) |
@@ -87,6 +89,12 @@ the whole document; a missing field is reported at the object that lacks it). Th
 | `I215` | A `fail` reason longer than 200 characters, or with a control character (E314) |
 | `I216` | A `grasp` of an object a robot parameter still holds, or by a robot parameter that still holds an object (E315); checked only when the task has no other meaning error in its steps |
 | `I217` | Schema 1.4: a `wait_until` step without a failure handler (`else`) (E316) |
+| `I218` | Schema 1.5: a name used as a value that is not a visible binding (E317) |
+| `I219` | Schema 1.5: a binding named like a parameter or another binding, outside the retry exception (E318) |
+| `I220` | Schema 1.5: kinds that do not match: a unit of another kind, a string against a quantity, two bindings of different kinds, a retry of another kind (E319) |
+| `I221` | Schema 1.5: an operator the kind does not take: `==` or `!=` on a quantity, ordering on a label (E320) |
+| `I222` | Schema 1.5: a `compare` in `preconditions`, `goal`, `goal_then` or `goal_else` (E321) |
+| `I223` | Schema 1.5: a `live` operand outside the condition of a `wait_until` (E322) |
 
 `I211` is not used: a repeated `@verify` key (E311) cannot be written in a JSON object, where it is `I103`.
 
@@ -101,6 +109,9 @@ section 4), in the same order and with the same "one error per item" behaviour (
 - at most one `max_speed` per unit; a unitless `max_speed` is alone;
 - channels and messages are not empty; before 1.2 a sensor ID is not empty;
 - in schema 1.2 every task has a non-empty goal, and a sensor in `sensor_ok` or `inspect` names a `sensor` parameter.
+- in schema 1.5 (RoboLang 1.6, [robolang-v1.6.md](robolang-v1.6.md) sections 3 to 6), by the same code the compiler uses
+  (`measured.py`): bindings are visible where they are used, kinds and units match, operators fit the kind, and no
+  comparison stands in a goal or a live reading outside a `wait_until` (`I218` to `I223`).
 
 Not re-checked, because the IR cannot express a violation: the optional `robolang` marker, `;`, block
 structure, the mixing of `and` and `or` without parentheses, the source depth of parentheses.

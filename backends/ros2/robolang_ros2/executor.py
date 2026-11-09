@@ -75,6 +75,8 @@ def execute(task: ir.Task, bindings: dict[str, str], site: Site, ops: Operations
         robot_params = [p.name for p in task.parameters if p.type == "robot"]
         if len(robot_params) != 1 or bindings[robot_params[0]] != site.robot:
             raise BackendFailure("S507", "this site supports exactly its declared robot")
+        if any(isinstance(step, ir.Measure) for _, step in ir.walk(task.steps)):
+            raise BackendFailure("S509", "measure reads values, and this backend has no value sensors")
         for condition in (*task.preconditions, *task.goal):
             kind = observe.unsupported(condition)
             if kind:

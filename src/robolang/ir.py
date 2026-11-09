@@ -1,7 +1,7 @@
 """
 Versioned task IR for RoboLang (spec/ir-schema-v1.0.md; schema 1.1 for RoboLang 1.2: ir-schema-v1.1.md;
 schema 1.2 for RoboLang 1.3: ir-schema-v1.2.md; schema 1.3 for RoboLang 1.4: ir-schema-v1.3.md; schema 1.4 for
-RoboLang 1.5: ir-schema-v1.4.md).
+RoboLang 1.5: ir-schema-v1.4.md; schema 1.5 for RoboLang 1.6: ir-schema-v1.5.md).
 
 The IR is a description of validated tasks with source details removed:
 no spans, comments or formatting. Two sources that differ only in layout
@@ -29,7 +29,7 @@ IR_SCHEMA = "robolang.task-ir"
 IR_SCHEMA_VERSION = "1.0"
 LANGUAGE_VERSION = DEFAULT_VERSION
 # Language version -> the IR schema version it compiles to (ir-schema-v1.1.md section 1).
-IR_SCHEMA_VERSIONS = {"1.1": "1.0", "1.2": "1.1", "1.3": "1.2", "1.4": "1.3", "1.5": "1.4"}
+IR_SCHEMA_VERSIONS = {"1.1": "1.0", "1.2": "1.1", "1.3": "1.2", "1.4": "1.3", "1.5": "1.4", "1.6": "1.5"}
 
 
 def _key(name: str):
@@ -151,7 +151,55 @@ class Not:
     condition: Condition
 
 
-Condition = Union[RobotReady, RegionClear, ObjectExists, SensorOk, ObjectAt, RobotAt, Holding, And, Or, Not]
+@dataclass(frozen=True)
+class BindingRef:
+    """Schema 1.5: a comparison operand naming the binding of an earlier `measure`."""
+
+    KIND: ClassVar[str] = "binding"
+    name: str
+
+
+@dataclass(frozen=True)
+class QuantityLit:
+    """Schema 1.5: a comparison operand `60 degC`: the number and unit as written, never converted."""
+
+    KIND: ClassVar[str] = "quantity"
+    value: Decimal
+    unit: str
+
+
+@dataclass(frozen=True)
+class TextLit:
+    """Schema 1.5: a comparison operand that is a string."""
+
+    KIND: ClassVar[str] = "text"
+    value: str
+
+
+@dataclass(frozen=True)
+class LiveReading:
+    """Schema 1.5: a comparison operand read when the `wait_until` that holds it is evaluated. `reading` is a kind."""
+
+    KIND: ClassVar[str] = "live"
+    reading: str
+    obj: str = _key("object")
+    sensor: str = _key("sensor")
+
+
+Operand = Union[BindingRef, QuantityLit, TextLit, LiveReading]
+
+
+@dataclass(frozen=True)
+class Compare:
+    """Schema 1.5: `left op right`; `left` is a binding or a live reading, `right` a binding, quantity or text."""
+
+    KIND: ClassVar[str] = "compare"
+    left: BindingRef | LiveReading
+    op: str
+    right: BindingRef | QuantityLit | TextLit
+
+
+Condition = Union[RobotReady, RegionClear, ObjectExists, SensorOk, ObjectAt, RobotAt, Holding, And, Or, Not, Compare]
 
 
 # -------- steps --------
@@ -193,6 +241,19 @@ class Inspect:
 
 
 @dataclass(frozen=True)
+class Measure:
+    """Schema 1.5: read `reading` (a kind) of `obj` with `sensor`, bind it to `binding`. A failed read has `orelse`."""
+
+    KIND: ClassVar[str] = "measure"
+    robot: str
+    reading: str
+    obj: str = _key("object")
+    sensor: str = _key("sensor")
+    binding: str = _key("binding")
+    orelse: tuple[Step, ...] | None = _handler()
+
+
+@dataclass(frozen=True)
 class WaitFor:
     KIND: ClassVar[str] = "wait_for"
     duration: Quantity
@@ -208,10 +269,13 @@ class WaitUntil:
 
 @dataclass(frozen=True)
 class Communicate:
+    """Exactly one of `message` (text) and `binding` (schema 1.5: the typed value of a `measure`) is set."""
+
     KIND: ClassVar[str] = "communicate"
     robot: str
     channel: str
-    message: str
+    message: str | None = field(default=None, metadata={"omit_none": True})
+    binding: str | None = field(default=None, kw_only=True, metadata={"omit_none": True})
 
 
 @dataclass(frozen=True)
@@ -237,8 +301,8 @@ class Fail:
     reason: str
 
 
-Step = Union[Move, Grasp, Place, Inspect, WaitFor, WaitUntil, Communicate, If, Fail]
-HANDLED = (Move, Grasp, Place, Inspect, WaitUntil)  # the step kinds that may have a failure handler (schema 1.4)
+Step = Union[Move, Grasp, Place, Inspect, Measure, WaitFor, WaitUntil, Communicate, If, Fail]
+HANDLED = (Move, Grasp, Place, Inspect, Measure, WaitUntil)  # the step kinds that may have a failure handler (1.4, 1.5)
 
 
 def handler_of(step: Step) -> tuple[Step, ...] | None:
@@ -339,7 +403,19 @@ def _condition(node: ast.Condition) -> Condition:
         return RobotAt(node.robot.text, node.location.text)
     if isinstance(node, ast.Holding):
         return Holding(node.robot.text, node.obj.text)
+    if isinstance(node, ast.Compare):
+        return Compare(_operand(node.left), node.op, _operand(node.right))
     return SensorOk(_sensor(node.sensor))
+
+
+def _operand(node) -> Operand:
+    if isinstance(node, ast.Name):
+        return BindingRef(node.text)
+    if isinstance(node, ast.QuantityLit):
+        return QuantityLit(node.value, node.unit)
+    if isinstance(node, ast.LiveReading):
+        return LiveReading(node.kind.text, node.obj.text, _sensor(node.sensor))
+    return TextLit(node.value)
 
 
 def _sensor(node: ast.StringLit | ast.Name) -> str:
@@ -376,10 +452,14 @@ def _plain_step(node: ast.Statement) -> Step:
         return Place(node.robot.text, node.obj.text, node.target.text)
     if isinstance(node, ast.Inspect):
         return Inspect(node.robot.text, node.obj.text, _sensor(node.sensor))
+    if isinstance(node, ast.Measure):
+        return Measure(node.robot.text, node.kind.text, node.obj.text, _sensor(node.sensor), node.binding.text)
     if isinstance(node, ast.WaitFor):
         return WaitFor(_quantity(node.duration))
     if isinstance(node, ast.WaitUntil):
         return WaitUntil(_condition(node.condition), _quantity(node.timeout))
+    if isinstance(node.message, ast.Name):
+        return Communicate(node.robot.text, node.channel.value, binding=node.message.text)
     return Communicate(node.robot.text, node.channel.value, node.message.value)
 
 
@@ -398,7 +478,8 @@ def _task(node: ast.Task, language: str) -> Task:
         parameters=tuple(Parameter(p.name.text, p.type.value) for p in node.params),
         safety=tuple(SafetyLimit(a.key.text, _quantity(a.value)) for a in node.annotations),
         preconditions=tuple(_condition(c) for c in node.pre.conditions) if node.pre else (),
-        goal=() if goal is None and language in ("1.4", "1.5") else goal,  # 1.4 on: no task goal, branches give them
+        # 1.4 on: no task goal, the branches give them
+        goal=() if goal is None and language in ("1.4", "1.5", "1.6") else goal,
         steps=tuple(_step(s) for s in node.plan.statements),
         verify=_verify(node),
     )

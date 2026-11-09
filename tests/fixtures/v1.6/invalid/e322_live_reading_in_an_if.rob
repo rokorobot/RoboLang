@@ -1,0 +1,12 @@
+// RoboLang v1.6 fixture: invalid
+// expect: error E322 (static) line 10
+// why: a live reading is allowed only in a wait until condition
+
+robolang 1.6;
+
+task t(robot r, object pan, sensor probe, location bench) {
+    goal { robot_at r bench; }
+    plan {
+        if temperature of pan using probe < 60 degC { move r to bench; }
+    }
+}

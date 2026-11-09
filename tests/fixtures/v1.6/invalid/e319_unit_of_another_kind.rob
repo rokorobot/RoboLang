@@ -1,0 +1,13 @@
+// RoboLang v1.6 fixture: invalid
+// expect: error E319 (static) line 11
+// why: a mass is not compared with degC
+
+robolang 1.6;
+
+task t(robot r, object pan, sensor probe, location bench) {
+    goal { robot_at r bench; }
+    plan {
+        measure r mass of pan using probe as m;
+        if m < 5 degC { move r to bench; }
+    }
+}

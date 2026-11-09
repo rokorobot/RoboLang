@@ -11,8 +11,9 @@ from dataclasses import dataclass
 from decimal import Decimal
 
 from .. import ir
+from ..measured import LABEL, Interval, compare_intervals, convert, reading_interval, to_base
 from .values import Truth, duration_ms_of
-from .world import World
+from .world import Property, World
 
 
 @dataclass(frozen=True)
@@ -49,11 +50,28 @@ class Observation:
 
 
 @dataclass(frozen=True)
+class Reading:
+    """
+    A measured value (RoboLang 1.6, decision 0036 V8): `value` +- `uncertainty` in `unit` (a Decimal; for a label
+    the text, with no unit and no uncertainty), of `subject` as read by `sensor` at `t_ms`.
+    """
+
+    subject: str
+    kind: str
+    value: Decimal | str
+    unit: str | None
+    uncertainty: Decimal | None
+    sensor: str
+    t_ms: Decimal
+
+
+@dataclass(frozen=True)
 class Message:
     robot: str
     channel: str
-    message: str
+    message: str | None  # None when a measured value is sent
     status: str = "recorded"
+    value: Reading | None = None  # RoboLang 1.6: the typed value sent (decision 0036 V8)
 
 
 @dataclass(frozen=True)
@@ -68,6 +86,7 @@ class StepResult:
     condition_result: Truth | None
     path: str = ""  # the label of the step (ir.walk), e.g. "3.then.1"
     handled: str | None = None  # RoboLang 1.5: the code of a failure its handler took over (decision 0033 F2)
+    reading: Reading | None = None  # RoboLang 1.6: what a `measure` read
 
 
 @dataclass(frozen=True)
@@ -86,7 +105,7 @@ class AppliedEvent:
     t_ms: Decimal
     fact: str
     target: str
-    value: bool
+    value: bool | Property
 
 
 @dataclass(frozen=True)
@@ -170,6 +189,8 @@ class _State:
                 self.holding[holder] = name
         self.clear = {k: v.clear for k, v in world.regions.items()}
         self.available = {k: v.available for k, v in world.sensors.items()}
+        self.props = {k: {p.kind: p for p in v.properties} for k, v in world.objects.items()}  # world file 1.2
+        self.values: dict[str, Reading] = {}  # the bindings of `measure` (RoboLang 1.6)
         self.clock = Decimal(0)
         self.next_event = 0
         self.applied: list[AppliedEvent] = []
@@ -185,6 +206,8 @@ class _State:
                 self.ready[event.target] = event.value
             elif event.fact == "region_clear":
                 self.clear[event.target] = event.value
+            elif event.fact == "property":
+                self.props[event.target][event.value.kind] = event.value
             else:
                 self.available[event.target] = event.value
             self.applied.append(AppliedEvent(event.at_ms, event.fact, event.target, event.value))
@@ -224,7 +247,72 @@ def _sensor_id(task: ir.Task, bound: dict[str, str], name: str) -> str:
     return bound[name] if task.typed_sensors else name
 
 
+def _take(state: _State, sensor_id: str, kind: str, obj: str, robot: str | None) -> Reading:
+    """
+    One reading of `kind` of `obj` by sensor `sensor_id` now (decision 0036 V2, V9), or _StepFailed. Everything is
+    checked before the reading exists, in this order: the sensor is declared (and, for a `measure`, mounted on `robot`:
+    S231), available (S232, S233), declares the kind (S234); the object is present (S213, S214); a contact reading
+    has the robot at the object (S235); the object has a value for the kind (S236). A live reading in a `wait until`
+    has no robot: `robot` is None, and a contact reading uses the robot the sensor is mounted on.
+    """
+    sensor = state.world.sensors.get(sensor_id)
+    if sensor is None or (robot is not None and sensor.robot != robot):
+        raise _StepFailed("S231")
+    available = state.available[sensor_id]
+    if available is not True:
+        raise _StepFailed("S233" if available is None else "S232")
+    measure = sensor.measure(kind)
+    if measure is None:
+        raise _StepFailed("S234")
+    present = state.present[obj]
+    if present is not True:
+        raise _StepFailed("S214" if present is None else "S213")
+    if measure.contact:
+        holder = robot if robot is not None else sensor.robot
+        # an object the robot holds is at the robot; otherwise it must be at the robot's location
+        if holder is None or not (state.held_by[obj] == holder or state.at[obj] == state.location[holder]):
+            raise _StepFailed("S235")
+    prop = state.props[obj].get(kind)
+    if prop is None:
+        raise _StepFailed("S236")
+    if kind == LABEL:
+        return Reading(obj, kind, prop.value, None, None, sensor_id, state.clock)
+    return Reading(obj, kind, convert(prop.value, prop.unit, measure.unit), measure.unit, measure.uncertainty,
+                   sensor_id, state.clock)
+
+
+def _side(task: ir.Task, state: _State, bound: dict[str, str], operand: ir.Operand) -> Interval | str | None:
+    """A comparison operand as an interval (a quantity) or text (a label); None when a live reading cannot be taken."""
+    if isinstance(operand, ir.QuantityLit):
+        point = to_base(operand.value, operand.unit)
+        return Interval(point, point)
+    if isinstance(operand, ir.TextLit):
+        return operand.value
+    if isinstance(operand, ir.LiveReading):
+        try:
+            reading = _take(state, _sensor_id(task, bound, operand.sensor), operand.reading, bound[operand.obj], None)
+        except _StepFailed:
+            return None  # the reading cannot be taken now: this comparison is unknown (decision 0036 V4)
+    else:
+        reading = state.values[operand.name]
+    if isinstance(reading.value, str):
+        return reading.value
+    return reading_interval(reading.value, reading.uncertainty, reading.unit)
+
+
+def _compare(task: ir.Task, state: _State, bound: dict[str, str], condition: ir.Compare) -> Truth:
+    left = _side(task, state, bound, condition.left)
+    right = _side(task, state, bound, condition.right)
+    if left is None or right is None:
+        return Truth.UNKNOWN
+    if isinstance(left, str):  # labels are exact (V7)
+        return Truth.of((left == right) == (condition.op == "=="))
+    return Truth.of(compare_intervals(condition.op, left, right))
+
+
 def _evaluate(task: ir.Task, state: _State, bound: dict[str, str], condition: ir.Condition) -> Truth:
+    if isinstance(condition, ir.Compare):
+        return _compare(task, state, bound, condition)
     if isinstance(condition, ir.Not):
         return _evaluate(task, state, bound, condition.condition).negate()
     if isinstance(condition, ir.And):
@@ -280,7 +368,7 @@ def _authorize(task: ir.Task, world: World, bindings: tuple[tuple[str, str], ...
 
 
 def _execute(task: ir.Task, state: _State, bound: dict[str, str], step: ir.Step):
-    """Perform one step. Returns (observation, message, condition_result). Raises _StepFailed."""
+    """Perform one step. Returns (observation, message, condition_result, reading). Raises _StepFailed."""
     if isinstance(step, ir.Move):
         robot = bound[step.robot]
         _require_ready(state.ready[robot])
@@ -318,7 +406,11 @@ def _execute(task: ir.Task, state: _State, bound: dict[str, str], step: ir.Step)
         available = state.available[sensor_id]
         if available is not True:
             raise _StepFailed("S233" if available is None else "S232")
-        return Observation(obj, state.present[obj], state.at[obj], state.held_by[obj]), None, None
+        return Observation(obj, state.present[obj], state.at[obj], state.held_by[obj]), None, None, None
+    elif isinstance(step, ir.Measure):
+        reading = _take(state, _sensor_id(task, bound, step.sensor), step.reading, bound[step.obj], bound[step.robot])
+        state.values[step.binding] = reading
+        return None, None, None, reading
     elif isinstance(step, ir.WaitFor):
         state.advance(state.clock + duration_ms_of(step.duration))
     elif isinstance(step, ir.WaitUntil):
@@ -332,10 +424,12 @@ def _execute(task: ir.Task, state: _State, bound: dict[str, str], step: ir.Step)
                 raise _StepFailed("S241", value)
             state.advance(pending[0])
             value = _evaluate(task, state, bound, step.condition)
-        return None, None, value
+        return None, None, value, None
     else:
-        return None, Message(bound[step.robot], step.channel, step.message), None
-    return None, None, None
+        if step.binding is not None:  # the typed value of an earlier `measure` (decision 0036 V8)
+            return None, Message(bound[step.robot], step.channel, None, value=state.values[step.binding]), None, None
+        return None, Message(bound[step.robot], step.channel, step.message), None, None
+    return None, None, None, None
 
 
 def _names(node, typed_sensors: bool) -> list[str]:
@@ -347,6 +441,9 @@ def _names(node, typed_sensors: bool) -> list[str]:
         return [name for condition in conditions for name in _names(condition, typed_sensors)]
     if isinstance(node, ir.Fail):
         return []
+    if isinstance(node, ir.Compare):  # only a live reading names parameters: its object and sensor
+        return [name for side in (node.left, node.right) if isinstance(side, ir.LiveReading)
+                for name in (side.obj, side.sensor)]
     if isinstance(node, (ir.WaitUntil, ir.Not)):
         return _names(node.condition, typed_sensors)
     fields = ("robot", "region", "obj", "target", "location") + (("sensor",) if typed_sensors else ())
@@ -471,7 +568,7 @@ def run(task: ir.Task, world: World) -> RunResult:
                         return True
                     i += 1 + size_then + sum(1 for _ in ir.walk(step.orelse))
                     continue
-                observation, message, condition_result = _execute(task, state, bound, step)
+                observation, message, condition_result, reading = _execute(task, state, bound, step)
             except _StepFailed as exc:
                 handler = ir.handler_of(step)
                 if handler is None:
@@ -486,7 +583,8 @@ def run(task: ir.Task, world: World) -> RunResult:
                 i += 1 + sum(1 for _ in ir.walk(handler))
                 continue
             done[i] = StepResult(
-                i, step, "succeeded", start, state.clock, observation, message, condition_result, label
+                i, step, "succeeded", start, state.clock, observation, message, condition_result, label,
+                reading=reading,
             )
             i += 1 + sum(1 for _ in ir.walk(ir.handler_of(step) or ()))  # a handler not needed is not run
         return False

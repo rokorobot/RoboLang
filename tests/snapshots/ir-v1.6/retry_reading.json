@@ -1,0 +1,74 @@
+{
+  "ir_schema": "robolang.task-ir",
+  "ir_schema_version": "1.5",
+  "language_version": "1.6",
+  "tasks": [
+    {
+      "name": "retry_reading",
+      "parameters": [
+        {
+          "name": "r",
+          "type": "robot"
+        },
+        {
+          "name": "box",
+          "type": "object"
+        },
+        {
+          "name": "scale",
+          "type": "sensor"
+        },
+        {
+          "name": "bench",
+          "type": "location"
+        }
+      ],
+      "safety": [],
+      "preconditions": [],
+      "goal": [
+        {
+          "kind": "robot_at",
+          "robot": "r",
+          "location": "bench"
+        }
+      ],
+      "steps": [
+        {
+          "kind": "move",
+          "robot": "r",
+          "target": "bench"
+        },
+        {
+          "kind": "measure",
+          "robot": "r",
+          "reading": "mass",
+          "object": "box",
+          "sensor": "scale",
+          "binding": "m",
+          "else": [
+            {
+              "kind": "measure",
+              "robot": "r",
+              "reading": "mass",
+              "object": "box",
+              "sensor": "scale",
+              "binding": "m",
+              "else": [
+                {
+                  "kind": "fail",
+                  "reason": "scale gave no reading twice"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "kind": "communicate",
+          "robot": "r",
+          "channel": "ops",
+          "binding": "m"
+        }
+      ]
+    }
+  ]
+}

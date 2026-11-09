@@ -1,0 +1,72 @@
+{
+  "ir_schema": "robolang.task-ir",
+  "ir_schema_version": "1.5",
+  "language_version": "1.6",
+  "tasks": [
+    {
+      "name": "wait_until_cool",
+      "parameters": [
+        {
+          "name": "r",
+          "type": "robot"
+        },
+        {
+          "name": "pan",
+          "type": "object"
+        },
+        {
+          "name": "probe",
+          "type": "sensor"
+        },
+        {
+          "name": "bench",
+          "type": "location"
+        }
+      ],
+      "safety": [],
+      "preconditions": [],
+      "goal": [
+        {
+          "kind": "robot_at",
+          "robot": "r",
+          "location": "bench"
+        }
+      ],
+      "steps": [
+        {
+          "kind": "move",
+          "robot": "r",
+          "target": "bench"
+        },
+        {
+          "kind": "wait_until",
+          "condition": {
+            "kind": "compare",
+            "left": {
+              "kind": "live",
+              "reading": "temperature",
+              "object": "pan",
+              "sensor": "probe"
+            },
+            "op": "<",
+            "right": {
+              "kind": "quantity",
+              "value": "60",
+              "unit": "degC"
+            }
+          },
+          "timeout": {
+            "value": "10",
+            "unit": "min"
+          },
+          "else": [
+            {
+              "kind": "fail",
+              "reason": "pan did not cool"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
