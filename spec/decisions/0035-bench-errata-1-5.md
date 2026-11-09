@@ -1,7 +1,7 @@
 # Decision record 0035: Teaching RoboLang 1.5, benchmark set 4 and errata
 
 **Date:** 2026-11-04
-**Status:** **APPROVED by the owner, 2026-11-04** (recommended option for E1–E9). The E8 spend is confirmed before
+**Status:** **APPROVED by the owner, 2026-11-09** (recommended option for E1–E9). The E8 spend is confirmed before
 each paid run.
 **Applies to:** `docs/language-reference.md` and its package copy, `bench/prompt.md`,
 `bench/prompt_minimal.md`, `bench/lib.py` and `score.py`, a new `bench/tasks_failure/` (set 4), labels in sets 2 and
