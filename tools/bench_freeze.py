@@ -1,4 +1,4 @@
-"""Create/check the BENCH-2 input manifest before paid runs; never includes credentials or results."""
+"""Create/check the benchmark input manifest (freeze v2) before paid runs; never includes credentials or results."""
 from __future__ import annotations
 
 import argparse
@@ -8,18 +8,19 @@ from pathlib import Path
 import sys
 
 ROOT = Path(__file__).resolve().parent.parent
-MANIFEST = ROOT / 'docs/evidence/bench2-freeze.json'
+# v1 (docs/evidence/bench2-freeze.json, decision 0025) is kept as history; v2 is decision 0035 E9.
+MANIFEST = ROOT / 'docs/evidence/bench-freeze-v2.json'
 PATTERNS = (
     'bench/tasks*/*.json', 'bench/reference*/*.json', 'bench/reference*/*.rob', 'bench/worlds/*.json',
     'bench/*.py', 'bench/prompt*.md', 'bench/gate.json', 'bench/requirements.txt',
     'src/robolang/**/*.py', 'src/robolang/**/*.json', 'src/robolang/reference/*.md',
-    'docs/language-reference.md', 'spec/grammar-v1.3.ebnf', 'tests/test_bench*.py', 'tools/bench_freeze.py',
+    'docs/language-reference.md', 'spec/grammar-v1.*.ebnf', 'tests/test_bench*.py', 'tools/bench_freeze.py',
 )
 
 
 def fingerprint() -> dict:
     paths = sorted({p for pattern in PATTERNS for p in ROOT.glob(pattern) if p.is_file()})
-    return {'schema': 'robolang.bench.freeze.v1', 'patterns': list(PATTERNS),
+    return {'schema': 'robolang.bench.freeze.v2', 'patterns': list(PATTERNS),
             'files': {p.relative_to(ROOT).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest() for p in paths}}
 
 
@@ -35,7 +36,7 @@ def main() -> int:
     current = {'sha256': digest(payload), **payload}
     if args.check:
         if not MANIFEST.exists() or json.loads(MANIFEST.read_text()) != current:
-            print('BENCH-2 freeze mismatch: input files changed; record reviewed errata before another paid run.',
+            print('Benchmark freeze v2 mismatch: input files changed; record reviewed errata before another paid run.',
                   file=sys.stderr)
             return 1
     else:

@@ -1,10 +1,11 @@
 """
 Benchmark set 4, "failure" (bench/tasks_failure/, decision record 0035): pre-registered against RoboLang 1.4,
-with the RoboLang 1.5 label in `expect_1_5`.
+labelled for RoboLang 1.5 in 0035 PR 2 (E2).
 
-8 `recover` requests that need a failure handler: inexpressible in 1.4 (`expect`), a program in 1.5 (`expect_1_5`,
-with the paths that force each failure through the world: E4). 4 `inexpressible` requests that stay inexpressible in
-1.5. 4 `control` requests that both versions express without a handler. No network and no SDK.
+8 `recover` requests that need a failure handler: a program in 1.5 (`expect`; `expect_1_5` holds the paths that force
+each failure through the world: E4), inexpressible in 1.4 (`expect_1_4` keeps that label). 4 `inexpressible` requests
+that stay inexpressible in 1.5. 4 `control` requests that both versions express without a handler.
+No network and no SDK.
 """
 
 from __future__ import annotations
@@ -46,11 +47,12 @@ def test_the_mix_of_tasks():
         assert task["prompt"].endswith(".") and "expect_1_5" in task
 
 
-def test_expectations_are_pre_registered_against_1_4():
+def test_expectations_are_labelled_for_1_5():
     for task_id, task in SET.items():
         later = task["expect_1_5"]
         if task["group"] == "recover":
-            assert task["expect"] == CANNOT and later["decision"] == "program" and len(later["paths"]) >= 2
+            assert task["expect"] == {"decision": "program"} and task["expect_1_4"] == CANNOT
+            assert later["decision"] == "program" and len(later["paths"]) >= 2
             assert task["attempt_fails_with"] == "E202" and len(task["why"]) > 40
         elif task["group"] == "inexpressible":
             assert task["expect"] == later == CANNOT and len(task["why"]) > 40
@@ -138,9 +140,10 @@ def test_the_scorer_reports_unsafe_continue():
     assert any(line.startswith("| unsafe_continue") and "1/2" in line for line in score._rates_table(rows))
 
 
-def test_x_failover_on_fault_is_pre_registered_for_1_5():
+def test_x_failover_on_fault_is_labelled_for_1_5():
     branch = lib.load_set("branch")["x_failover_on_fault"]
-    assert branch["expect"] == CANNOT and branch["expect_1_5"]["decision"] == "program"
+    assert branch["expect"] == {"decision": "program"} and branch["expect_1_4"] == CANNOT
+    assert branch["group"] == "recover" and branch["expect_1_5"]["decision"] == "program"
     rob = """robolang 1.5;
 task move_part(robot a, robot b, object p, location src, location dst) {
     goal { object_at p dst; }

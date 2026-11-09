@@ -1,0 +1,10 @@
+{
+  "task": "move_part",
+  "bindings": {
+    "a": "arm_a",
+    "b": "arm_b",
+    "p": "p1",
+    "src": "conveyor_in",
+    "dst": "station1"
+  }
+}

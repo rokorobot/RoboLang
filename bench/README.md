@@ -121,7 +121,9 @@ design [docs/plans/bench-2.md](../docs/plans/bench-2.md). After the independent 
 The owner approved the replacement plan, freeze, paid validation and merge. See the
 [review response](../docs/evidence/bench2-label-review-response.md),
 [original packet](../docs/plans/bench-2-label-review-baseline.md) and the freeze hash in decision 0025.
-Run `python tools/bench_freeze.py --check` to verify the recorded inputs. Changes after the freeze require errata.
+Run `python tools/bench_freeze.py --check` to verify the recorded inputs against freeze v2
+(`docs/evidence/bench-freeze-v2.json`, decision 0035 E9; v1 is kept as history). Changes after the freeze require errata
+([errata for 1.5](../docs/evidence/bench-errata-1-5.md)).
 A `decoy` looks impossible or unclear but is feasible. A `clarify` task
 expects `"decision": "clarify"`: the request could mean several entities (`candidates`) or omits a value, and the world
 does not decide. A request that leaves the choice to the model ("a shelf", "one of the vials", set 2's `ambiguous`
@@ -201,8 +203,9 @@ section 3: set 3 goal correctness >= 90% for Sonnet, false programs on the contr
 read from these numbers.
 
 Set 2 has the same for its three branching tasks (`x_route_by_cell`, `x_whichever_free`, `x_missing_box_branch`),
-group `branching`. The grammar-only prompt pastes `spec/grammar-v1.3.ebnf` and then `spec/grammar-v1.4.ebnf`, which is a
-delta over it.
+group `branching`. The grammar-only prompt pastes `spec/grammar-v1.3.ebnf`, `spec/grammar-v1.4.ebnf` and
+`spec/grammar-v1.5.ebnf`, each a delta over the one before. Since 0035 PR 2 the prompts teach RoboLang 1.5. In set 3,
+`x_failover_on_fault` is now a program judged per path (group `recover`; `expect_1_4` keeps the old label).
 
 Run it on demand from GitHub Actions: `Benchmark`, `set3: true`. That runs full and grammar-only prompts with 3
 repeats, for information only and not gated (~$3-4). Locally: `python bench/run.py --set branch --repeats 3`.
@@ -210,8 +213,9 @@ repeats, for information only and not gated (~$3-4). Locally: `python bench/run.
 ## Set 4: failure handling (`--set failure`)
 
 16 tasks in `tasks_failure/`, references in `reference_failure/`, decision record
-[0035](../spec/decisions/0035-bench-errata-1-5.md). Pre-registered against RoboLang 1.4 (`expect`), with the 1.5 label
-in `expect_1_5`. Groups: `recover` (8: retry once, three and ten attempts, report and stop after a wait, wait longer,
+[0035](../spec/decisions/0035-bench-errata-1-5.md). Pre-registered against RoboLang 1.4 and labelled for 1.5 in 0035 PR 2:
+`expect` is the 1.5 label, `expect_1_4` keeps the 1.4 one, `expect_1_5` holds the paths. Baseline:
+[bench-set4-baseline.md](../docs/evidence/bench-set4-baseline.md). Groups: `recover` (8: retry once, three and ten attempts, report and stop after a wait, wait longer,
 clean up then abort, skip an inspection, report any failure; inexpressible in 1.4, a program in 1.5), `inexpressible`
 (4: retry until it works, a fallback outcome, message delivery, retry every minute) and `control` (4: no handler
 needed). A `recover` task's attempt is its 1.5 answer marked 1.4 (`E202`).
