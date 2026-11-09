@@ -1,0 +1,19 @@
+// RoboLang v1.6 fixture: valid
+// expect: ok
+// why: units convert within a kind; a binding is compared with a literal and with another binding (V5, V6, V7)
+
+robolang 1.6;
+
+task weigh_and_compare(robot r, object a, object b, sensor scale, location bench) {
+    goal { robot_at r bench; }
+    plan {
+        move r to bench;
+        measure r mass of a using scale as ma;
+        measure r mass of b using scale as mb;
+        if ma > 1.2 kg and ma < 2000 g and not mb >= ma {
+            communicate r to "ops" with ma;
+        } else {
+            fail "unexpected weights";
+        }
+    }
+}

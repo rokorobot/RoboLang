@@ -1,0 +1,92 @@
+{
+  "ir_schema": "robolang.task-ir",
+  "ir_schema_version": "1.5",
+  "language_version": "1.6",
+  "tasks": [
+    {
+      "name": "report_temperature",
+      "parameters": [
+        {
+          "name": "r",
+          "type": "robot"
+        },
+        {
+          "name": "pan",
+          "type": "object"
+        },
+        {
+          "name": "probe",
+          "type": "sensor"
+        },
+        {
+          "name": "bench",
+          "type": "location"
+        }
+      ],
+      "safety": [],
+      "preconditions": [],
+      "goal": [
+        {
+          "kind": "robot_at",
+          "robot": "r",
+          "location": "bench"
+        }
+      ],
+      "steps": [
+        {
+          "kind": "move",
+          "robot": "r",
+          "target": "bench"
+        },
+        {
+          "kind": "measure",
+          "robot": "r",
+          "reading": "temperature",
+          "object": "pan",
+          "sensor": "probe",
+          "binding": "t",
+          "else": [
+            {
+              "kind": "fail",
+              "reason": "no temperature reading"
+            }
+          ]
+        },
+        {
+          "kind": "if",
+          "condition": {
+            "kind": "compare",
+            "left": {
+              "kind": "binding",
+              "name": "t"
+            },
+            "op": "<",
+            "right": {
+              "kind": "quantity",
+              "value": "60",
+              "unit": "degC"
+            }
+          },
+          "then": [
+            {
+              "kind": "communicate",
+              "robot": "r",
+              "channel": "ops",
+              "binding": "t"
+            }
+          ],
+          "else": [
+            {
+              "kind": "communicate",
+              "robot": "r",
+              "channel": "ops",
+              "message": "pan still hot"
+            }
+          ],
+          "goal_then": null,
+          "goal_else": null
+        }
+      ]
+    }
+  ]
+}

@@ -105,3 +105,9 @@ wait and "do nothing" tasks `d7_wait_or_nothing`, `d3_lane1_right_now`, `u01_if_
 New inputs only: `bench/tasks_values/` (26 tasks), `bench/reference_values/` (2 controls),
 `bench/worlds/kitchen_values.json`, `tests/test_bench_values.py`, and the `values` entry in `bench/lib.py` `SETS`. No
 existing task, label, prompt, reference or scorer changes. Freeze v2 regenerated: `8d534f687839a41c3310801716170df3e8772b981bd15ddc91e5a77020ddafec` → `897e7e0843df2676a0890cd3fbdd9de1a87cfcebd9ecc270fc454b6aff6318ae`.
+
+## Erratum F4 — RoboLang 1.6 implementation (2026-11-09)
+
+Decision 0036 PR 1 changes `src/robolang/` (front end, IR 1.5, world 1.2, simulator) and adds no benchmark input. Files
+marked 1.1–1.5 keep their exact IR and run records, and the reference and prompts still teach 1.5, so no benchmark label
+or score changes. Freeze v2 regenerated: `897e7e0843df2676a0890cd3fbdd9de1a87cfcebd9ecc270fc454b6aff6318ae` → `3a5383fbab6053ed09641dd3764cc17baac3f788517e8d6c7e8f3c9ac88b1512` (760 files).

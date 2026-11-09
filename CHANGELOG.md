@@ -3,6 +3,26 @@
 The distribution version (this file) is independent of the language versions (1.1 to 1.4) and the Task IR schema
 versions (1.0 to 1.3). Decision records are in [`spec/decisions/`](https://github.com/rokorobot/RoboLang/tree/main/spec/decisions).
 
+## Unreleased
+
+**Language**
+- RoboLang 1.6: measured values (decision 0036). `measure r KIND of o using s as NAME;` reads a temperature, mass,
+  distance or label into a binding; bindings compare (`<`, `<=`, `>`, `>=`; `==`, `!=` on labels) in `if` and
+  `wait until`, with exact unit conversion and the sensor's uncertainty (an overlapping reading is unknown, `S261`);
+  `wait until temperature of pan using probe < 60 degC ...` reads live; `communicate r to "ch" with NAME;` sends the
+  typed value. New reserved words `measure` and `as` in 1.6 files only; files 1.1 to 1.5 are unchanged byte for byte.
+  New codes `E217`, `E317` to `E322`.
+- Task IR 1.5 (`measure` step, `compare` condition, `communicate` with a binding); the IR reader checks bindings and
+  kinds (`I124`, `I125`, `I218` to `I223`).
+- The language reference and the benchmark prompts still teach 1.5.
+
+**Execution (symbolic simulation)**
+- World file 1.2: sensor `measures` (unit, uncertainty, contact) and object `properties`, and the event fact
+  `property` (a pan cooling). New codes `E512` to `E515`. Run record 1.5 records every reading and typed message.
+  `measure` fails with `S231` to `S236`, `S213` or `S214` and changes nothing.
+- `validate --world` reports a sensor that does not measure the kind asked for (`S234`).
+- `delegate` refuses a task with a `measure` (`measure_unsupported`); the ROS 2 backend refuses it with `S509`.
+
 ## 0.2.0 (2026-10-30): first PyPI release
 
 Everything below is simulation only. No command drives a robot, loads an adapter or uses ROS 2.

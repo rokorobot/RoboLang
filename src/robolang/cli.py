@@ -1,5 +1,5 @@
 """
-Developer commands for RoboLang 1.1 to 1.5.
+Developer commands for RoboLang 1.1 to 1.6.
 
     reference              print the shipped RoboLang 1.5 language reference
     validate FILE          check a .rob file against the language contract
@@ -79,7 +79,7 @@ NOT_A_SAFETY_CHECK_IR = (
 NOTHING_EXECUTED = "This is a description only. Nothing was executed."
 
 _DESCRIPTION = f"""\
-Tools for RoboLang 1.1 to 1.5 task files.
+Tools for RoboLang 1.1 to 1.6 task files.
 
 reference prints the shipped 1.5 language reference. validate and inspect check and describe .rob
 files; they never execute anything.
@@ -324,6 +324,17 @@ def _sensor(name: str, typed: bool) -> str:
     return name if typed else _quoted(name)
 
 
+def _value(operand: task_ir.Operand, typed: bool) -> str:
+    """One side of a RoboLang 1.6 comparison, as written in source."""
+    if isinstance(operand, task_ir.BindingRef):
+        return operand.name
+    if isinstance(operand, task_ir.QuantityLit):
+        return f"{task_ir.decimal_text(operand.value)} {operand.unit}"
+    if isinstance(operand, task_ir.TextLit):
+        return _quoted(operand.value)
+    return f"{operand.reading} of {operand.obj} using {_sensor(operand.sensor, typed)}"
+
+
 def _condition(condition: task_ir.Condition, typed: bool = False) -> str:
     """`typed`: the condition belongs to a RoboLang 1.3 task, where a sensor is a parameter."""
     if isinstance(condition, task_ir.And):
@@ -346,6 +357,8 @@ def _condition(condition: task_ir.Condition, typed: bool = False) -> str:
         return f"robot_at {condition.robot} {condition.location}"
     if isinstance(condition, task_ir.Holding):
         return f"holding {condition.robot} {condition.obj}"
+    if isinstance(condition, task_ir.Compare):
+        return f"{_value(condition.left, typed)} {condition.op} {_value(condition.right, typed)}"
     # A new condition kind must be rendered here explicitly, never shown as another kind.
     raise TypeError(f"not a condition: {type(condition).__name__}")
 
@@ -359,6 +372,9 @@ def _step(step: task_ir.Step, typed: bool = False) -> str:
         return f"place {step.robot} {step.obj} at {step.target}"
     if isinstance(step, task_ir.Inspect):
         return f"inspect {step.robot} {step.obj} using {_sensor(step.sensor, typed)}"
+    if isinstance(step, task_ir.Measure):
+        return (f"measure {step.robot} {step.reading} of {step.obj} using {_sensor(step.sensor, typed)} "
+                f"as {step.binding}")
     if isinstance(step, task_ir.WaitFor):
         return f"wait for {_quantity(step.duration)}"
     if isinstance(step, task_ir.WaitUntil):
@@ -367,6 +383,8 @@ def _step(step: task_ir.Step, typed: bool = False) -> str:
         return f"if {_condition(step.condition, typed)}"
     if isinstance(step, task_ir.Fail):
         return f"fail {_quoted(step.reason)}"
+    if step.binding is not None:  # RoboLang 1.6: the typed value of a `measure`
+        return f"communicate {step.robot} to {_quoted(step.channel)} with {step.binding}"
     return f"communicate {step.robot} to {_quoted(step.channel)} with {_quoted(step.message)}"
 
 

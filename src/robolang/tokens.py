@@ -1,4 +1,4 @@
-"""Token definitions and word sets for RoboLang v1.1 to v1.4 (robolang-v1.1.md section 3, v1.2 2.2, v1.3 2.2)."""
+"""Token definitions and word sets for RoboLang v1.1 to v1.6 (robolang-v1.1.md section 3, v1.2 2.2, v1.3 2.2)."""
 
 from __future__ import annotations
 from dataclasses import dataclass
@@ -13,6 +13,7 @@ class TokenKind(Enum):
     NUMBER = "number"
     STRING = "string"
     SPEED_UNIT = "speed unit"
+    OPERATOR = "comparison operator"  # RoboLang 1.6 files only
     AT_SAFETY = "@safety"
     AT_VERIFY = "@verify"  # RoboLang 1.3 files only
     LPAREN = "("
@@ -34,6 +35,7 @@ class Token:
 
 PARAM_TYPES = ("robot", "object", "location", "region")
 STATEMENTS = ("move", "grasp", "place", "inspect", "wait", "communicate")
+STATEMENTS_V1_6 = STATEMENTS + ("measure",)
 CONDITIONS = ("robot_ready", "region_clear", "object_exists", "sensor_ok")
 
 KEYWORDS = frozenset(
@@ -62,13 +64,22 @@ RESERVED_V1_3 = RESERVED_V1_2 | frozenset(("goal", "sensor", "object_at", "robot
 RESERVED_V1_4 = RESERVED_V1_3 | frozenset(("if", "else", "fail"))
 
 # RoboLang 1.5 adds step failure handlers (`<step> else { ... }`, decision 0033) and no new words.
+# RoboLang 1.6 adds measured values (decision 0036 V10): `measure` and `as` are reserved. Kind names, `of` and units
+# are recognised by position and are not reserved.
+RESERVED_V1_6 = RESERVED_V1_4 | frozenset(("measure", "as"))
 # Language version -> its reserved words. Versions not listed read as 1.1.
-RESERVED_BY_VERSION = {"1.2": RESERVED_V1_2, "1.3": RESERVED_V1_3, "1.4": RESERVED_V1_4, "1.5": RESERVED_V1_4}
+RESERVED_BY_VERSION = {
+    "1.2": RESERVED_V1_2, "1.3": RESERVED_V1_3, "1.4": RESERVED_V1_4, "1.5": RESERVED_V1_4, "1.6": RESERVED_V1_6,
+}
 
 # Recognized only in their grammatical position; not reserved.
 SAFETY_KEYS = ("max_speed",)
 VERIFY_KEYS = ("min_confidence", "max_age")  # RoboLang 1.3
 SPEED_UNITS = ("m/s", "rad/s")
 DURATION_UNITS = ("ms", "s", "min")
+
+# RoboLang 1.6 measured values (decision 0036 V5): kind -> its units, in the order the spec lists them.
+KIND_UNITS = {"temperature": ("degC", "K"), "mass": ("g", "kg"), "distance": ("mm", "cm", "m"), "label": ()}
+COMPARISON_OPERATORS = ("<", "<=", ">", ">=", "==", "!=")
 
 ESCAPES = {'"': '"', "\\": "\\", "n": "\n", "t": "\t"}

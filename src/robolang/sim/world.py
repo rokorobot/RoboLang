@@ -1,8 +1,8 @@
 """
-World file, schemas 1.0 and 1.1 (spec/simulation-v1.0.md section 3).
+World file, schemas 1.0, 1.1 and 1.2 (spec/simulation-v1.0.md section 3 and section 14).
 
 `load_world` reads the bytes of a world file and returns a validated, immutable `World`,
-or raises `WorldError` for the first error found (codes E501 to E511, section 3.9).
+or raises `WorldError` for the first error found (codes E501 to E515, section 3.9 and 14.1).
 Validation runs after the task is selected (3.8). Nothing here executes a task.
 """
 
@@ -15,15 +15,18 @@ from decimal import Decimal
 from types import MappingProxyType
 
 from .. import ir
+from ..measured import KINDS, LABEL
+from ..tokens import KIND_UNITS
 from .values import DURATION_UNITS, SPEED_UNITS, Speed, duration_ms, parse_decimal
 
 WORLD_SCHEMA = "robolang.sim.world"
 WORLD_SCHEMA_VERSION = "1.0"
-WORLD_SCHEMA_VERSIONS = ("1.0", "1.1")  # 1.1 adds `class` and `mass` to objects (section 3.3)
+WORLD_SCHEMA_VERSIONS = ("1.0", "1.1", "1.2")  # 1.1 adds `class` and `mass` to objects (3.3); 1.2 measured values (14)
 CLI_BINDINGS_SOURCE = "--bind"
 
 _ID = re.compile(r"[A-Za-z][A-Za-z0-9_]*")
 _CLASS = re.compile(r"[a-z][a-z_]{0,63}")  # a Core 0.1 thing class (core-v0.1.md section 5.5)
+_SIGNED_DECIMAL = re.compile(r"-?[0-9]+(\.[0-9]+)?")  # a property value may be below zero (a freezer: -18 degC)
 _FACT_KIND = {"robot_ready": "robot", "region_clear": "region", "sensor_available": "sensor"}
 _BOM = b"\xef\xbb\xbf"
 
@@ -68,6 +71,15 @@ class Mass:
 
 
 @dataclass(frozen=True)
+class Property:
+    """World file 1.2: what a sensor would read of an object: a Decimal with a `unit`, or for a label, text."""
+
+    kind: str
+    value: Decimal | str
+    unit: str | None
+
+
+@dataclass(frozen=True)
 class WorldObject:
     id: str
     present: bool | None
@@ -75,6 +87,17 @@ class WorldObject:
     held_by: str | None
     object_class: str | None = None  # world file 1.1
     mass: Mass | None = None  # world file 1.1
+    properties: tuple[Property, ...] = ()  # world file 1.2, in file order
+
+
+@dataclass(frozen=True)
+class Measures:
+    """World file 1.2: a kind a sensor can read. `unit` and `uncertainty` are None for a label."""
+
+    kind: str
+    unit: str | None
+    uncertainty: Decimal | None
+    contact: bool  # a contact reading needs the robot at the object's location
 
 
 @dataclass(frozen=True)
@@ -82,14 +105,20 @@ class Sensor:
     name: str
     robot: str | None
     available: bool | None
+    measures: tuple[Measures, ...] = ()  # world file 1.2, in file order
+
+    def measure(self, kind: str) -> Measures | None:
+        return next((m for m in self.measures if m.kind == kind), None)
 
 
 @dataclass(frozen=True)
 class Event:
+    """`value` is a Property for the fact `property` (world file 1.2, `target` an object), else a flag."""
+
     at_ms: Decimal
     fact: str
     target: str
-    value: bool
+    value: bool | Property
 
 
 @dataclass(frozen=True)
@@ -364,6 +393,7 @@ class _Loader:
     def object(self, name, value):
         p = _pointer("objects", name)
         allowed = ("present", "location", "held_by") + (("class", "mass") if self.version != "1.0" else ())
+        allowed += ("properties",) if self.version == "1.2" else ()
         self.obj(value, p, allowed, "an object")
         present = self.optional_bool(value, p, "present")
         refs = []
@@ -371,7 +401,52 @@ class _Loader:
             if field in value:
                 self.entity_id(value[field], p + _pointer(field))
             refs.append(value.get(field))
-        return WorldObject(name, present, refs[0], refs[1], self.object_class(value, p), self.mass(value, p))
+        return WorldObject(name, present, refs[0], refs[1], self.object_class(value, p), self.mass(value, p),
+                           self.properties(value, p))
+
+    def kind(self, kind, pointer):
+        """A measured kind (E512)."""
+        if not isinstance(kind, str):
+            self.fail("E504", pointer, "a kind must be a string")
+        if kind not in KINDS:
+            self.fail("E512", pointer, f"unknown kind '{kind}'; the kinds are {', '.join(KINDS)}")
+        return kind
+
+    def unit(self, kind, unit, pointer):
+        """The unit of a quantity of `kind` (E504 if not text, E513 if of another kind)."""
+        if not isinstance(unit, str):
+            self.fail("E504", pointer, "a unit must be a string")
+        if unit not in KIND_UNITS[kind]:
+            self.fail("E513", pointer, f"'{unit}' is not a unit of {kind}; the units of {kind} are "
+                                       f"{', '.join(KIND_UNITS[kind])}")
+        return unit
+
+    def properties(self, value, p):
+        if "properties" not in value:
+            return ()
+        pp = p + _pointer("properties")
+        raw = value["properties"]
+        if not isinstance(raw, dict):
+            self.fail("E504", pp, "'properties' must be an object")
+        return tuple(self.property_value(self.kind(kind, pp + _pointer(kind)), item, pp + _pointer(kind))
+                     for kind, item in raw.items())
+
+    def property_value(self, kind, raw, pointer):
+        """`{ "value": "72", "unit": "degC" }`, or for a label `{ "value": "LOT-7731" }` (decision 0036 V9)."""
+        if kind == LABEL:
+            if isinstance(raw, dict) and "unit" in raw:
+                self.fail("E514", pointer + _pointer("unit"), "a label has no unit")
+            item = self.obj(raw, pointer, ("value",), "a property")
+            text = self.string(self.need(item, pointer, "value"), pointer + _pointer("value"), "a label")
+            if text == "":
+                self.fail("E504", pointer + _pointer("value"), "a label must not be empty")
+            return Property(kind, text, None)
+        item = self.obj(raw, pointer, ("value", "unit"), "a property")
+        text = self.need(item, pointer, "value")
+        if not isinstance(text, str) or _SIGNED_DECIMAL.fullmatch(text) is None:
+            self.fail("E504", pointer + _pointer("value"), "must be a decimal string such as \"72\" or \"-18\"")
+        unit = self.unit(kind, self.need(item, pointer, "unit"), pointer + _pointer("unit"))
+        return Property(kind, Decimal(text), unit)
 
     def object_class(self, value, p):
         if "class" not in value:
@@ -397,23 +472,63 @@ class _Loader:
         p = _pointer("sensors", name)
         if name == "":
             self.fail("E504", p, "a sensor name must not be empty")
-        self.obj(value, p, ("robot", "available"), "a sensor")
+        self.obj(value, p, ("robot", "available") + (("measures",) if self.version == "1.2" else ()), "a sensor")
         robot = None
         if "robot" in value:
             robot = self.entity_id(value["robot"], p + _pointer("robot"))
-        return Sensor(name, robot, self.optional_bool(value, p, "available"))
+        return Sensor(name, robot, self.optional_bool(value, p, "available"), self.measures(value, p))
+
+    def measures(self, value, p):
+        """`measures: { KIND: { "unit": "degC", "uncertainty": "0.5", "contact": true } }`; a label: `contact` only."""
+        if "measures" not in value:
+            return ()
+        mp = p + _pointer("measures")
+        raw = value["measures"]
+        if not isinstance(raw, dict):
+            self.fail("E504", mp, "'measures' must be an object")
+        out = []
+        for kind, item in raw.items():
+            kp = mp + _pointer(kind)
+            self.kind(kind, kp)
+            if kind == LABEL:
+                for field in ("unit", "uncertainty"):
+                    if isinstance(item, dict) and field in item:
+                        self.fail("E514", kp + _pointer(field), f"a label has no {field}")
+                fields = ("contact",)
+            else:
+                fields = ("unit", "uncertainty", "contact")
+            m = self.obj(item, kp, fields, "a measure")
+            unit = uncertainty = None
+            if kind != LABEL:
+                unit = self.unit(kind, self.need(m, kp, "unit"), kp + _pointer("unit"))
+                try:
+                    uncertainty = parse_decimal(self.need(m, kp, "uncertainty"))
+                except ValueError:
+                    self.fail("E504", kp + _pointer("uncertainty"),
+                              "must be a decimal string such as \"0.5\" (zero allowed)")
+            contact = self.boolean(self.need(m, kp, "contact"), kp + _pointer("contact"))
+            out.append(Measures(kind, unit, uncertainty, contact))
+        return tuple(out)
 
     def event(self, index, value):
         p = _pointer("events", index)
-        self.obj(value, p, ("at", "fact", "target", "value"), "an event")
+        allowed = ("at", "fact", "target", "value") + (("property",) if self.version == "1.2" else ())
+        self.obj(value, p, allowed, "an event")
         at = self.need(value, p, "at")
         fact = self.need(value, p, "fact")
         target = self.need(value, p, "target")
         flag = self.need(value, p, "value")
         number, unit = self.quantity(at, p + _pointer("at"), tuple(DURATION_UNITS), "an event time")
-        if not isinstance(fact, str) or fact not in _FACT_KIND:
-            self.fail("E504", p + _pointer("fact"), f"fact must be one of {', '.join(_FACT_KIND)}")
+        facts = (*_FACT_KIND, *(("property",) if self.version == "1.2" else ()))
+        if not isinstance(fact, str) or fact not in facts:
+            self.fail("E504", p + _pointer("fact"), f"fact must be one of {', '.join(facts)}")
         self.string(target, p + _pointer("target"), "target")
+        if fact == "property":  # world file 1.2: an object's property takes a new value
+            kind = self.kind(self.need(value, p, "property"), p + _pointer("property"))
+            return Event(duration_ms(number, unit), fact, target,
+                         self.property_value(kind, flag, p + _pointer("value")))
+        if "property" in value:
+            self.fail("E503", p + _pointer("property"), "unknown field 'property': only the fact 'property' has one")
         self.boolean(flag, p + _pointer("value"))
         return Event(duration_ms(number, unit), fact, target, flag)
 
@@ -487,6 +602,12 @@ class _Loader:
     def check_events(self, world, events):
         for i, event in enumerate(events):
             p = _pointer("events", i, "target")
+            if event.fact == "property":  # the target is a declared object (E515 if it is not declared at all)
+                if event.target not in world.objects:
+                    if world.kind_of(event.target) is None and event.target not in world.sensors:
+                        self.fail("E515", p, f"'{event.target}' is not a declared object")
+                    self.fail("E511", p, f"'property' needs an object, not '{event.target}'")
+                continue
             expected = _FACT_KIND[event.fact]
             kind = world.kind_of(event.target)
             is_sensor = event.target in world.sensors  # sensors are named, not entities (3.2)

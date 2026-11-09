@@ -1,0 +1,35 @@
+(* RoboLang v1.6 grammar, implemented in src/robolang/parser.py.
+   RoboLang 1.5 plus measured values (decision 0036). Differences from grammar-v1.5.ebnf are marked [1.6].
+   Everything not shown here is as in grammar-v1.5.ebnf (and grammar-v1.4.ebnf, grammar-v1.3.ebnf below it).
+   Normative text, diagnostics and static rules: spec/robolang-v1.6.md *)
+
+version_decl  = "robolang" , NUMBER , ";" ;                (* [1.6] NUMBER written exactly 1.6 *)
+
+statement     = ( move | grasp | place | inspect | measure | wait_until ) , ( ";" | handler )   (* [1.6] measure *)
+              | ( wait_for | communicate | fail ) , ";"
+              | if ;
+
+measure       = "measure" , NAME , kind , "of" , NAME , "using" , NAME , "as" , NAME ;        (* [1.6] robot, object, sensor, binding *)
+communicate   = "communicate" , NAME , "to" , STRING , "with" , ( STRING | NAME ) ;          (* [1.6] a NAME is a binding *)
+
+atom          = ... (* as before *)
+              | comparison ;                                                                  (* [1.6] *)
+comparison    = ( NAME | live ) , OP , ( quantity | STRING | NAME ) ;                         (* [1.6] *)
+live          = kind , "of" , NAME , "using" , NAME ;                                         (* [1.6] object, sensor *)
+quantity      = NUMBER , unit ;                                                               (* [1.6] unsigned decimal *)
+
+OP            = "<" | "<=" | ">" | ">=" | "==" | "!=" ;                                       (* [1.6] tokens in 1.6 files only *)
+kind          = "temperature" | "mass" | "distance" | "label" ;                               (* [1.6] names, not reserved *)
+unit          = "degC" | "K" | "g" | "kg" | "mm" | "cm" | "m" ;                                (* [1.6] names, not reserved *)
+
+(* [1.6] "of" is a name recognised by position, as the kinds and the units are: not reserved.
+   [1.6] Static rules the grammar does not express (E317 to E322, spec/robolang-v1.6.md sections 3 to 6):
+   - a NAME in a comparison or after "with" is a binding made by an earlier "measure" and visible there (E317);
+     "as" binds a name that is no parameter and no other binding, except a retry in the handler of the same
+     "measure" (E318); the retry reads the same kind (E319).
+   - both sides of a comparison are the same kind, and a unit is a unit of that kind (E319).
+   - quantities take "<", "<=", ">", ">=" only, labels "==" and "!=" only (E320).
+   - a comparison is not allowed in a pre or goal block (E321); a live reading only in a wait until condition (E322).
+   - a measure takes a handler as move, grasp, place, inspect and wait until do (grammar-v1.5.ebnf). *)
+
+(* Reserved words in a 1.6 file: those of grammar-v1.4.ebnf plus "measure" and "as". *)

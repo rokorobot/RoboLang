@@ -1,0 +1,13 @@
+// RoboLang v1.6 fixture: invalid
+// expect: error E206 (syntax) line 11
+// why: degF is not a unit: the author converts
+
+robolang 1.6;
+
+task t(robot r, object pan, sensor probe, location bench) {
+    goal { robot_at r bench; }
+    plan {
+        measure r temperature of pan using probe as t;
+        if t < 140 degF { move r to bench; }
+    }
+}

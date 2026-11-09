@@ -132,6 +132,8 @@ def _consider(plan: Plan, task: ir.Task, robot_world: bytes, world_name: str, ro
     """How one library task relates to the proposed goal, and the match if it is one."""
     if task.goal is None:
         return "no_goal", None
+    if any(isinstance(step, ir.Measure) for _, step in ir.walk(task.steps)):
+        return "measure_unsupported", None  # RoboLang 1.6 values are not delegated yet (spec/robolang-v1.6.md)
     try:
         world = load_world(robot_world, world_name, task)
     except WorldError as error:

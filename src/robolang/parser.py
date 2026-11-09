@@ -1,6 +1,6 @@
 """
 Recursive-descent parser for RoboLang v1.1 (spec/grammar.ebnf), v1.2 (spec/grammar-v1.2.ebnf) and
-v1.3 (spec/grammar-v1.3.ebnf) and v1.4 (spec/grammar-v1.4.ebnf).
+v1.3 (spec/grammar-v1.3.ebnf), v1.4 (spec/grammar-v1.4.ebnf), v1.5 (grammar-v1.5.ebnf) and v1.6 (grammar-v1.6.ebnf).
 
 Produces the AST of `nodes.py` or raises RoboLangError carrying every syntax error found.
 After a syntax error the parser resynchronises (see `_resync`) and carries on, so independent
@@ -28,18 +28,20 @@ from .tokens import (
     CONDITIONS,
     CONDITIONS_V1_3,
     DURATION_UNITS,
+    KIND_UNITS,
     PARAM_TYPES,
     PARAM_TYPES_V1_3,
     SAFETY_KEYS,
     SPEED_UNITS,
     STATEMENTS,
+    STATEMENTS_V1_6,
     VERIFY_KEYS,
     Token,
     TokenKind,
 )
 
 DEFAULT_VERSION = "1.1"  # the version of a file without a marker
-SUPPORTED_VERSIONS = ("1.1", "1.2", "1.3", "1.4", "1.5")
+SUPPORTED_VERSIONS = ("1.1", "1.2", "1.3", "1.4", "1.5", "1.6")
 SUPPORTED_VERSION = DEFAULT_VERSION  # kept for existing imports
 MAX_CONDITION_DEPTH = 8  # spec/robolang-v1.2.md section 3.3
 MAX_IF_DEPTH = 4  # spec/robolang-v1.4.md section 3.3 (E216)
@@ -105,13 +107,31 @@ class _Parser:
 
     @property
     def _typed(self) -> bool:
-        """True in 1.3 to 1.5 files: goal blocks, outcome atoms and sensor parameters."""
-        return self._language in ("1.3", "1.4", "1.5")
+        """True in 1.3 to 1.6 files: goal blocks, outcome atoms and sensor parameters."""
+        return self._language in ("1.3", "1.4", "1.5", "1.6")
 
     @property
     def _branching(self) -> bool:
-        """True in 1.4 and 1.5 files: `if`, `else` and `fail`."""
-        return self._language in ("1.4", "1.5")
+        """True in 1.4 to 1.6 files: `if`, `else` and `fail`."""
+        return self._language in ("1.4", "1.5", "1.6")
+
+    @property
+    def _handlers(self) -> bool:
+        """True in 1.5 and 1.6 files: a step may end with a failure handler `else { ... }`."""
+        return self._language in ("1.5", "1.6")
+
+    @property
+    def _values(self) -> bool:
+        """True in 1.6 files: `measure`, comparisons, live readings and sending a binding (decision 0036)."""
+        return self._language == "1.6"
+
+    @property
+    def _statements(self) -> tuple[str, ...]:
+        return STATEMENTS_V1_6 if self._values else STATEMENTS
+
+    def _peek(self) -> Token | None:
+        """The token after the current one (the rest of the file is lexed before any task is parsed)."""
+        return self._buffer[0] if self._buffer else None
 
     def _error(self, code: str, message: str, span: Span | None = None) -> NoReturn:
         raise RoboLangError(Diagnostic(code, message, span or self._tok.span, filename=self._filename))
@@ -130,7 +150,7 @@ class _Parser:
         self._record(error.diagnostic)
         starts = self._at(TokenKind.RBRACE) or self._at(TokenKind.LPAREN)
         starts = starts or self._at(TokenKind.AT_SAFETY) or self._at(TokenKind.AT_VERIFY)
-        starts = starts or self._at_keyword(*STATEMENTS, *CONDITIONS, "not", "pre", "plan")
+        starts = starts or self._at_keyword(*self._statements, *CONDITIONS, "not", "pre", "plan")
         starts = starts or (self._branching and self._at_keyword("if", "fail"))
         skip = not (error.code == "E202" and starts)
         while skip and not self._at_boundary():
@@ -487,6 +507,8 @@ class _Parser:
         atoms = CONDITIONS_V1_3 if self._typed else CONDITIONS
         if self._at_keyword("message_received"):
             self._error("E211", f"'message_received' {_NOT_IN_V1_1}")
+        if self._values and self._at(TokenKind.IDENT):
+            return self._compare(atoms)
         if self._at(TokenKind.IDENT):
             self._error("E204", f"unknown condition '{token.text}'; expected one of {_listed(atoms)}")
         if not self._at_keyword(*atoms):
@@ -505,6 +527,73 @@ class _Parser:
         node = {"robot_ready": ast.RobotReady, "region_clear": ast.RegionClear, "object_exists": ast.ObjectExists}
         return node[token.text](name, token.span.to(name.span))
 
+    def _compare(self, atoms: tuple[str, ...]) -> ast.Compare:
+        """
+        `NAME OP operand` or `KIND of NAME using NAME OP operand` (RoboLang 1.6, decision 0036 V6 and V4). The left
+        side is a binding or a live reading; the right side a quantity, a string or a binding.
+        """
+        token, after = self._tok, self._peek()
+        live = token.text in KIND_UNITS and after is not None and after.kind is TokenKind.IDENT and after.text == "of"
+        if live:
+            left = self._live()
+        elif after is not None and after.kind is TokenKind.OPERATOR:
+            left = self._name("a binding name")
+        else:
+            self._error("E204", f"unknown condition '{token.text}'; expected one of {_listed(atoms)}, or a comparison "
+                                "such as 't < 60 degC' (a binding name, an operator, a value)")
+        if not self._at(TokenKind.OPERATOR):
+            self._error("E201", f"expected a comparison operator ('<', '<=', '>', '>=', '==' or '!=') after "
+                                f"the live reading, found {self._found()}")
+        op = self._advance()
+        if self._at(TokenKind.NUMBER):
+            right = self._quantity()
+        elif self._at(TokenKind.STRING):
+            right = self._string("a string")
+        elif self._at(TokenKind.IDENT):
+            right = self._name("a binding name")
+        else:
+            self._error("E201", f"expected a quantity such as '60 degC', a string or a binding name after "
+                                f"'{op.text}', found {self._found()}")
+        return ast.Compare(left, op.text, right, left.span.to(right.span))
+
+    def _live(self) -> ast.LiveReading:
+        """`KIND of OBJECT using SENSOR`: a reading taken whenever the enclosing `wait until` is evaluated."""
+        kind = self._kind()
+        self._expect_word("of", "after the kind")
+        obj = self._name("an object name after 'of'")
+        self._expect_keyword("using", "after the object name")
+        sensor = self._sensor("using")
+        return ast.LiveReading(kind, obj, sensor, kind.span.to(sensor.span))
+
+    def _kind(self) -> ast.Name:
+        """A measured kind: `temperature`, `mass`, `distance` or `label`. Kinds are names, recognised here only."""
+        token = self._tok
+        if self._at(TokenKind.IDENT) and token.text not in KIND_UNITS:
+            self._error("E217", f"unknown measured kind '{token.text}'; expected one of {_listed(KIND_UNITS)}")
+        if not self._at(TokenKind.IDENT):
+            self._error("E201", f"expected a measured kind ({_listed(KIND_UNITS)}), found {self._found()}")
+        self._advance()
+        return ast.Name(token.text, token.span)
+
+    def _expect_word(self, word: str, context: str) -> Token:
+        """A word that is not reserved (`of`), recognised by its position."""
+        if not (self._at(TokenKind.IDENT) and self._tok.text == word):
+            self._error("E201", f"expected '{word}' {context}, found {self._found()}")
+        return self._advance()
+
+    def _quantity(self) -> ast.QuantityLit:
+        """`NUMBER UNIT` with a unit of any kind; whether it fits the compared kind is a static rule (E319)."""
+        number = self._advance()
+        units = [unit for each in KIND_UNITS.values() for unit in each]
+        if self._at(TokenKind.IDENT) and self._tok.text in units:
+            unit = self._advance()
+            return ast.QuantityLit(Decimal(number.text), unit.text, number.span.to(unit.span))
+        if self._at(TokenKind.IDENT) or self._at(TokenKind.SPEED_UNIT):
+            self._error("E206", f"unknown unit '{self._tok.text}'; expected one of {_listed(units)}")
+        end = number.span
+        self._error("E206", f"quantity '{number.text}' has no unit; expected one of {_listed(units)}",
+                    Span(end.end_line, end.end_column, end.end_line, end.end_column))
+
     def _sensor(self, after: str) -> ast.StringLit | ast.Name:
         """A quoted sensor name in 1.1 and 1.2; a sensor parameter in 1.3 and 1.4 (a string is read, then E310)."""
         if not self._typed:
@@ -520,11 +609,11 @@ class _Parser:
         if self._at(TokenKind.AT_SAFETY):
             self._error("E211", f"'@safety' between statements {_NOT_IN_V1_1}; annotate the task instead")
         if self._at(TokenKind.IDENT):
-            self._error("E203", f"unknown statement '{token.text}'; expected one of {_listed(STATEMENTS)}")
+            self._error("E203", f"unknown statement '{token.text}'; expected one of {_listed(self._statements)}")
         if self._branching and self._at_keyword("if", "fail"):
             self._advance()
             return self._if(token) if token.text == "if" else self._fail(token)
-        if not self._at_keyword(*STATEMENTS):
+        if not self._at_keyword(*self._statements):
             self._error("E201", f"expected a statement or '}}', found {self._found()}")
         self._advance()
         return getattr(self, f"_{token.text}")(token)
@@ -590,10 +679,10 @@ class _Parser:
 
     def _end(self, after: str):
         """
-        `;`, or in 1.5 a failure handler `else { ... }` (decision 0033). Returns (handler or None, the last token or
-        branch, for the span). A handler counts as a nesting level, as an `if` does (E216).
+        `;`, or in 1.5 and 1.6 a failure handler `else { ... }` (decision 0033). Returns (handler or None, the last
+        token or branch, for the span). A handler counts as a nesting level, as an `if` does (E216).
         """
-        if not (self._language == "1.5" and self._at_keyword("else")):
+        if not (self._handlers and self._at_keyword("else")):
             return None, self._semicolon(after)
         start = self._advance()
         if self._ifs == MAX_IF_DEPTH:  # recorded, not raised, as for `if`
@@ -608,8 +697,8 @@ class _Parser:
         return handler, handler
 
     def _plain_end(self, what: str, after: str):
-        """`;` after a statement that takes no failure handler. In 1.5 an `else { ... }` there is read and reported."""
-        if not (self._language == "1.5" and self._at_keyword("else")):
+        """`;` after a statement that takes no failure handler. In 1.5 and 1.6 an `else { ... }` there is reported."""
+        if not (self._handlers and self._at_keyword("else")):
             return self._semicolon(after)
         start = self._advance()
         self._record(Diagnostic("E201", f"'{what}' takes no failure handler; only move, grasp, place, inspect and "
@@ -652,6 +741,21 @@ class _Parser:
         handler, end = self._end("the inspect statement")
         return ast.Inspect(robot, obj, sensor, start.span.to(end.span), handler)
 
+    def _measure(self, start: Token) -> ast.Measure:
+        """`measure r KIND of o using s as NAME;`, or with a failure handler (RoboLang 1.6, decision 0036 V2)."""
+        robot = self._name("a robot name after 'measure'")
+        kind = self._kind()
+        self._expect_word("of", "after the kind")
+        obj = self._name("an object name after 'of'")
+        if not self._at_keyword("using"):
+            self._error("E209", f"measure must name its sensor: expected 'using <sensor>', found {self._found()}")
+        self._advance()
+        sensor = self._sensor("using")
+        self._expect_keyword("as", "after the sensor: a measurement is bound to a name")
+        binding = self._name("a binding name after 'as'")
+        handler, end = self._end("the measure statement")
+        return ast.Measure(robot, kind, obj, sensor, binding, start.span.to(end.span), handler)
+
     def _wait(self, start: Token) -> ast.WaitFor | ast.WaitUntil:
         if self._at_keyword("for"):
             self._advance()
@@ -677,7 +781,11 @@ class _Parser:
         self._expect_keyword("to", "after the robot name")
         channel = self._string("a channel name in quotes after 'to'")
         self._expect_keyword("with", "after the channel")
-        message = self._string("a message in quotes after 'with'")
+        if self._values and self._at(TokenKind.IDENT):
+            message = self._name("a binding name")  # the typed value of a `measure` (decision 0036 V8)
+        else:
+            what = "a message in quotes or a binding name" if self._values else "a message in quotes"
+            message = self._string(f"{what} after 'with'")
         end = self._plain_end("communicate", "the communicate statement")
         return ast.Communicate(robot, channel, message, start.span.to(end.span))
 
@@ -707,7 +815,7 @@ def parse_recovering(source: str, filename: str = "<string>") -> Parsed:
 
 
 def parse(source: str, filename: str = "<string>") -> ParseResult:
-    """Parse RoboLang v1.1, v1.2, v1.3 or v1.4 source. Raises RoboLangError with every lexical or syntax error found."""
+    """Parse RoboLang v1.1 to v1.6 source. Raises RoboLangError with every lexical or syntax error found."""
     parsed = parse_recovering(source, filename)
     if parsed.errors:
         raise RoboLangError(parsed.errors, warnings=parsed.warnings)

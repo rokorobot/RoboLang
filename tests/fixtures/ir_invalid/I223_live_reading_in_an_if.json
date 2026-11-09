@@ -1,0 +1,109 @@
+{
+  "ir_schema": "robolang.task-ir",
+  "ir_schema_version": "1.5",
+  "language_version": "1.6",
+  "tasks": [
+    {
+      "name": "t",
+      "parameters": [
+        {
+          "name": "r",
+          "type": "robot"
+        },
+        {
+          "name": "pan",
+          "type": "object"
+        },
+        {
+          "name": "probe",
+          "type": "sensor"
+        },
+        {
+          "name": "bench",
+          "type": "location"
+        }
+      ],
+      "safety": [],
+      "preconditions": [],
+      "goal": [
+        {
+          "kind": "robot_at",
+          "robot": "r",
+          "location": "bench"
+        }
+      ],
+      "steps": [
+        {
+          "kind": "measure",
+          "robot": "r",
+          "reading": "temperature",
+          "object": "pan",
+          "sensor": "probe",
+          "binding": "t"
+        },
+        {
+          "kind": "if",
+          "condition": {
+            "kind": "compare",
+            "left": {
+              "kind": "live",
+              "reading": "temperature",
+              "object": "pan",
+              "sensor": "probe"
+            },
+            "op": "<",
+            "right": {
+              "kind": "quantity",
+              "value": "60",
+              "unit": "degC"
+            }
+          },
+          "then": [
+            {
+              "kind": "move",
+              "robot": "r",
+              "target": "bench"
+            }
+          ],
+          "else": [],
+          "goal_then": null,
+          "goal_else": null
+        },
+        {
+          "kind": "wait_until",
+          "condition": {
+            "kind": "compare",
+            "left": {
+              "kind": "live",
+              "reading": "temperature",
+              "object": "pan",
+              "sensor": "probe"
+            },
+            "op": "<",
+            "right": {
+              "kind": "quantity",
+              "value": "60",
+              "unit": "degC"
+            }
+          },
+          "timeout": {
+            "value": "1",
+            "unit": "min"
+          },
+          "else": [
+            {
+              "kind": "fail",
+              "reason": "hot"
+            }
+          ]
+        },
+        {
+          "kind": "communicate",
+          "robot": "r",
+          "channel": "ops",
+          "binding": "t"
+        }
+      ]
+    }
+  ]
+}

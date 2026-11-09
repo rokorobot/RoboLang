@@ -192,6 +192,7 @@ See
 | Language 1.1, 1.2 and 1.3 (goals, typed sensors), validator, Task IR | Delivered |
 | Language 1.4 (bounded `if`/`else`, `fail`; [0027](https://github.com/rokorobot/RoboLang/blob/main/spec/decisions/0027-bounded-branching.md)): `validate`, `inspect`, Task IR 1.3 | Complete in code: front end, `simulate`, `export-goal` and `delegate` run branching tasks (record 1.3, [simulation 12](https://github.com/rokorobot/RoboLang/blob/main/spec/simulation-v1.0.md)), `validate --world` checks every path, language reference and benchmark scoring per path. Acceptance run (set 3 under 1.4) pending |
 | Language 1.5 (failure handlers `<step> else { ... }`; [0033](https://github.com/rokorobot/RoboLang/blob/main/spec/decisions/0033-step-failure-handlers.md)): `validate`, `inspect`, Task IR 1.4 | Front end and simulation complete in code (record 1.4, [simulation 13](https://github.com/rokorobot/RoboLang/blob/main/spec/simulation-v1.0.md)). The language reference and benchmark prompts still teach 1.4 |
+| Language 1.6 (measured values: `measure`, comparisons, live readings in `wait until`, typed `communicate`; [0036](https://github.com/rokorobot/RoboLang/blob/main/spec/decisions/0036-lang-4-measured-values.md)): `validate`, `inspect`, Task IR 1.5, world file 1.2 | Front end, IR reader, `simulate` (record 1.5, [simulation 14](https://github.com/rokorobot/RoboLang/blob/main/spec/simulation-v1.0.md)) and `validate --world` complete in code. `delegate` and the ROS 2 backend refuse a `measure`. The language reference and benchmark prompts still teach 1.5 |
 | Simulation-only execution (`simulate`) | Delivered, signed off 2026-10-27 ([evidence](https://github.com/rokorobot/RoboLang/blob/main/docs/evidence/rl-basic-01-exit-gate.md)) |
 | Core 0.1 reference simulation (`arch02`) | Implemented, gate 1 signed off 2026-10-27 ([evidence](https://github.com/rokorobot/RoboLang/blob/main/docs/evidence/rl-arch-02-exit-gate.md)) |
 | Core 0.2 (alternatives, `met_alternative`, `declared`; [0028](https://github.com/rokorobot/RoboLang/blob/main/spec/decisions/0028-core-0-2-scope.md), [spec](https://github.com/rokorobot/RoboLang/blob/main/spec/core-v0.2.md)) | **Frozen 2026-10-30**: schema, `robolang.core` checks, fixtures, and opt-in `--core 0.2` on `simulate`, `export-goal` and `delegate`. Core 0.1 output is unchanged and the default |
@@ -203,7 +204,7 @@ Every implementation item needs owner approval. The full plan and history are in
 [development plan](https://github.com/rokorobot/RoboLang/blob/main/docs/DEVELOPMENT_PLAN.md); decisions are in [`spec/decisions/`](https://github.com/rokorobot/RoboLang/blob/main/spec/decisions/).
 
 `robolang --version` prints three independent versions: the Python package (`0.2.0`, alpha),
-the language (`1.1` to `1.5`) and the Task IR schema (`1.0` to `1.4`, one for each language version).
+the language (`1.1` to `1.6`) and the Task IR schema (`1.0` to `1.5`, one for each language version).
 
 ## Contributing
 

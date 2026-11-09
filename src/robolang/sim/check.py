@@ -74,7 +74,7 @@ def _step_problem(task: ir.Task, world: World, bound: dict[str, str], step: ir.S
     """(code, message) if `step` certainly fails in this world, else None."""
     if isinstance(step, ir.Grasp) and not world.robots[bound[step.robot]].gripper:
         return "S211", f"robot '{bound[step.robot]}' has no gripper"
-    if isinstance(step, ir.Inspect):
+    if isinstance(step, (ir.Inspect, ir.Measure)):
         robot, sensor_id = bound[step.robot], _sensor_id(task, bound, step.sensor)
         sensor = world.sensors.get(sensor_id)
         if sensor is None:
@@ -82,4 +82,6 @@ def _step_problem(task: ir.Task, world: World, bound: dict[str, str], step: ir.S
         if sensor.robot != robot:
             mounted = f"mounted on '{sensor.robot}'" if sensor.robot else "not mounted on any robot"
             return "S231", f"sensor '{sensor_id}' is {mounted}, not on robot '{robot}'"
+        if isinstance(step, ir.Measure) and sensor.measure(step.reading) is None:
+            return "S234", f"sensor '{sensor_id}' does not measure {step.reading} (world file 1.2 'measures')"
     return None

@@ -1,6 +1,6 @@
 """
-Static validation for RoboLang v1.1 to v1.4 (spec/robolang-v1.1.md, section 5; spec/robolang-v1.3.md, section 4;
-spec/robolang-v1.4.md, section 4).
+Static validation for RoboLang v1.1 to v1.6 (spec/robolang-v1.1.md, section 5; spec/robolang-v1.3.md, section 4;
+spec/robolang-v1.4.md, section 4; spec/robolang-v1.6.md, section 6 for bindings and kinds).
 
 Checks a parsed program for errors that the grammar cannot express: duplicate
 and undeclared names, names used with the wrong type, out-of-range values,
@@ -21,6 +21,7 @@ from pathlib import Path
 
 from . import nodes as ast
 from .diagnostics import MAX_ERRORS, Diagnostic, RoboLangError
+from .measured import Atom, Operand, Scopes, View
 from .nodes import ParamType, Span
 from .paths import double_grasps, goalless_path
 from .parser import ParseResult, parse_recovering
@@ -70,6 +71,50 @@ def _holding_test(condition, positive: bool = True):
     return None
 
 
+_VALUE_CODES = {"scope": "E317", "clash": "E318", "kind": "E319", "operator": "E320", "goal": "E321", "live": "E322"}
+
+
+def _operand(node) -> Operand:
+    """One side of an AST comparison, as `measured.Scopes` reads it."""
+    if isinstance(node, ast.Name):
+        return Operand("binding", node.span, name=node.text)
+    if isinstance(node, ast.QuantityLit):
+        return Operand("quantity", node.span, unit=node.unit)
+    if isinstance(node, ast.LiveReading):
+        return Operand("live", node.span, kind=node.kind.text)
+    return Operand("text", node.span)
+
+
+def _atoms(condition: ast.Condition):
+    """The comparisons in a condition, in source order."""
+    if isinstance(condition, (ast.And, ast.Or)):
+        for operand in condition.operands:
+            yield from _atoms(operand)
+    elif isinstance(condition, ast.Not):
+        yield from _atoms(condition.operand)
+    elif isinstance(condition, ast.Compare):
+        yield Atom(_operand(condition.left), condition.op, _operand(condition.right), condition.span)
+
+
+def _view(statement: ast.Statement) -> View:
+    """The shape `measured.Scopes` reads from a statement."""
+    if isinstance(statement, ast.Fail):
+        return View("fail")
+    if isinstance(statement, ast.If):
+        goals = tuple(c for branch in (statement.then, statement.orelse) if branch is not None and branch.goal
+                      for c in branch.goal.conditions)
+        return View("if", statement.condition, goals=goals, then=statement.then.statements,
+                    orelse=statement.orelse.statements if statement.orelse else ())
+    handler = statement.handler.statements if getattr(statement, "handler", None) is not None else None
+    if isinstance(statement, ast.Measure):
+        return View(handler=handler, measure=(statement.binding.text, statement.kind.text, statement.binding.span))
+    if isinstance(statement, ast.WaitUntil):
+        return View(condition=statement.condition, live_ok=True, handler=handler)
+    if isinstance(statement, ast.Communicate) and isinstance(statement.message, ast.Name):
+        return View(send=_operand(statement.message))
+    return View(handler=handler)
+
+
 def double_grasp_message(robot: str, obj: str, holder: str, held: str, earlier: str) -> str:
     """E315 and its IR form I216 (decision 0032)."""
     if holder == robot:
@@ -94,9 +139,11 @@ class _Validator:
         self._filename = filename
         self._params: dict[str, ParamType] = {}
         self.errors: list[Diagnostic] = []
-        self._typed_sensors = False  # RoboLang 1.3 to 1.5: sensors are parameters
-        self._branching = False  # RoboLang 1.4 and 1.5
-        self._handlers = False  # RoboLang 1.5
+        self._typed_sensors = False  # RoboLang 1.3 to 1.6: sensors are parameters
+        self._branching = False  # RoboLang 1.4 to 1.6
+        self._handlers = False  # RoboLang 1.5 and 1.6
+        self._values = False  # RoboLang 1.6
+        self._language = None
 
     def _report(self, code: str, message: str, span: Span):
         self.errors.append(Diagnostic(code, message, span, filename=self._filename))
@@ -128,9 +175,11 @@ class _Validator:
 
     def _program(self, program: ast.Program):
         language = program.version.version if program.version is not None else None
-        self._typed_sensors = language in ("1.3", "1.4", "1.5")
-        self._branching = language in ("1.4", "1.5")
-        self._handlers = language == "1.5"
+        self._language = language
+        self._typed_sensors = language in ("1.3", "1.4", "1.5", "1.6")
+        self._branching = language in ("1.4", "1.5", "1.6")
+        self._handlers = language in ("1.5", "1.6")
+        self._values = language == "1.6"
         seen: dict[str, ast.Name] = {}
         for task in program.tasks:
             first = seen.setdefault(task.name.text, task.name)
@@ -162,8 +211,18 @@ class _Validator:
         self._goal(task)
         before = len(self.errors)
         self._statements(task.plan.statements, branch=False)
+        if self._values:
+            self._bindings(task)
         if len(self.errors) == before:  # names and types are right, so the plan's grasps can be followed
             self._holders(task.plan.statements)
+
+    def _bindings(self, task: ast.Task):
+        """RoboLang 1.6 (decision 0036): bindings, kinds, units and where a comparison may stand."""
+        scopes = Scopes({p: t.value for p, t in self._params.items()}, _view, _atoms,
+                        lambda rule, message, at: self._report(_VALUE_CODES[rule], message, at))
+        scopes.forbid((c for block in (task.pre, task.goal) if block is not None for c in block.conditions),
+                      "a 'pre' or 'goal' block")
+        scopes.plan(task.plan.statements)
 
     def _holders(self, statements: tuple[ast.Statement, ...]):
         """E315 (decision 0032): a grasp that fails whenever its path is taken, as the object or robot is held."""
@@ -184,8 +243,8 @@ class _Validator:
         """RoboLang 1.5 (decision 0033): a `wait until` needs a failure handler (E316); a handler is a branch."""
         handler = getattr(statement, "handler", None)
         if self._handlers and isinstance(statement, ast.WaitUntil) and handler is None:
-            self._report("E316", "in RoboLang 1.5 a 'wait until' needs a failure handler: add 'else { ... }' to say "
-                                 "what happens when it times out", statement.span)
+            self._report("E316", f"in RoboLang {self._language} a 'wait until' needs a failure handler: add "
+                                 "'else { ... }' to say what happens when it times out", statement.span)
         if handler is not None:  # a branch without a goal block (decision 0034)
             self._statements(handler.statements, branch=True)
 
@@ -291,6 +350,9 @@ class _Validator:
         elif isinstance(condition, ast.Holding):
             self._use(condition.robot, ParamType.ROBOT, "holding")
             self._use(condition.obj, ParamType.OBJECT, "holding")
+        elif isinstance(condition, ast.Compare):
+            if isinstance(condition.left, ast.LiveReading):  # a binding is checked by `_bindings`
+                self._live(condition.left)
         else:
             self._sensor(condition.sensor, "sensor_ok")
 
@@ -309,6 +371,10 @@ class _Validator:
             self._use(statement.robot, ParamType.ROBOT, "inspect")
             self._use(statement.obj, ParamType.OBJECT, "inspect")
             self._sensor(statement.sensor, "inspect ... using")
+        elif isinstance(statement, ast.Measure):
+            self._use(statement.robot, ParamType.ROBOT, "measure")
+            self._use(statement.obj, ParamType.OBJECT, "measure")
+            self._sensor(statement.sensor, "measure ... using")
         elif isinstance(statement, ast.WaitFor):
             self._positive(statement.duration.value, "duration", statement.duration.span)
         elif isinstance(statement, ast.WaitUntil):
@@ -330,9 +396,14 @@ class _Validator:
         else:
             self._use(statement.robot, ParamType.ROBOT, "communicate")
             self._not_empty(statement.channel, "channel name")
-            self._not_empty(statement.message, "message")
+            if isinstance(statement.message, ast.StringLit):  # a Name is a binding, checked by `_bindings`
+                self._not_empty(statement.message, "message")
 
     # -------- individual rules --------
+
+    def _live(self, reading: ast.LiveReading):
+        self._use(reading.obj, ParamType.OBJECT, "a live reading")
+        self._sensor(reading.sensor, "a live reading ... using")
 
     def _sensor(self, sensor: ast.StringLit | ast.Name, context: str):
         if isinstance(sensor, ast.Name):
