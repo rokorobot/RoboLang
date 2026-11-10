@@ -67,7 +67,7 @@ wrappers (a request about entities that may appear after the job starts cannot b
 
 ## Follow-ups (not blocking)
 
-1. **`v08_warmer_of_two`.** In acc16c Sonnet declined it in 3 of 3 full-prompt answers (in acc16 it wrote it 3 of 3).
+1. **`v08_warmer_of_two`.** Fixed: [erratum G2](bench-errata-1-6.md#erratum-g2--a-possible-unknown-is-not-a-reason-to-decline-2026-11-10). In acc16c Sonnet declined it in 3 of 3 full-prompt answers (in acc16 it wrote it 3 of 3).
    Its reasons say that comparing two readings "could be unknown", so the outcome "cannot be guaranteed". The reference
    could state that comparing two readings is allowed and that an overlap failing the run is the intended outcome. A
    reference change needs a set 5 re-run (about $1.50).

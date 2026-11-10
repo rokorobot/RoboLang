@@ -128,3 +128,10 @@ def test_both_prompts_say_a_request_about_entities_not_listed_now_cannot_be_repr
     for name in ("full", "minimal"):
         text = " ".join(bench.load_prompt(name).split())
         assert "may appear or change after the job starts" in text and "cannot be represented" in text, name
+
+
+def test_reference_says_a_possible_unknown_is_not_a_reason_to_decline():
+    """0036 follow-up (2026-11-10): Sonnet declined v08_warmer_of_two 3/3 because the comparison "could be unknown"."""
+    text = " ".join(reference().split())
+    assert "The chance of an unknown is never a reason to decline." in text and "which is the intended outcome" in text
+

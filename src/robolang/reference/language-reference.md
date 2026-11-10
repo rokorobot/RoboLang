@@ -194,6 +194,9 @@ program uses the value afterwards.
   `59.8 degC +/- 0.5` against `< 60 degC` is unknown. An unknown condition fails the run in an `if` (`S261`) and keeps
   a `wait until` waiting. This is deliberate. Write the comparison the request asks for; do not move the limit to
   avoid it. Two names are compared the same way, range against range. Labels are exact and never unknown.
+  **The chance of an unknown is never a reason to decline.** "Which of the two is warmer", "if it is below 8 degC"
+  are programs: compare the two names (or the name and the limit) in an `if`. If the readings are too close to
+  tell, the run fails with `S261` instead of guessing, which is the intended outcome.
 - **Bindings.** `NAME` is set once and never changed. It must not be the name of a parameter or of another binding in the
   task (`E318`). It is visible after its `measure`, in the same block and in blocks nested in it; using it elsewhere
   is `E317`. A binding made inside an `if` branch or a handler is not visible after that branch or handler. It is not visible
