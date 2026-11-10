@@ -181,3 +181,17 @@ rule to both prompt wrappers, then re-run set 5 with both prompts.
 
 Test: `tests/test_reference.py::test_both_prompts_say_a_request_about_entities_not_listed_now_cannot_be_represented`.
 Freeze v2 regenerated: `f740b232e52a939b3a8065c50a8671d1240a4e2a7aa784d37f408795bfecf234` → `ad10351968706dd2d1555ada954fc6607e5567b95efec00f955eca3c91eac37e` (800 files).
+
+## Erratum G2 — a possible unknown is not a reason to decline (2026-11-10)
+
+Follow-up 1 of [bench-1-6-acceptance.md](bench-1-6-acceptance.md): after erratum G1, Sonnet declined
+`v08_warmer_of_two` in 3 of 3 full-prompt answers, saying that comparing two readings "could be unknown".
+
+| | Before | After |
+|---|---|---|
+| Reference, "Measured values", uncertainty bullet | ends "Labels are exact and never unknown." | adds: "**The chance of an unknown is never a reason to decline.** \"Which of the two is warmer\", \"if it is below 8 degC\" are programs: compare the two names (or the name and the limit) in an `if`. If the readings are too close to tell, the run fails with `S261` instead of guessing, which is the intended outcome." |
+
+Confirming run (set 5, full prompt, 3 models × 3 repeats, $1.69): Sonnet value tasks 45/45 (was 41/45), `v08` written
+3 of 3; Opus 42/45, Haiku 44/45 (one `v08` decline); 0 false programs on inexpressible and infeasible tasks;
+0 `silent_substitution`. Test: `tests/test_reference.py::test_reference_says_a_possible_unknown_is_not_a_reason_to_decline`.
+Freeze v2 regenerated: `ad10351968706dd2d1555ada954fc6607e5567b95efec00f955eca3c91eac37e` → `272da035ed05c09f12c5e16ce7c70b3f55d9e6bac11256689a79ec736911ebfb` (800 files).
