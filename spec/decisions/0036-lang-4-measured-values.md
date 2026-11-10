@@ -72,3 +72,8 @@ above; the scorer measures `value_ok` and `silent_substitution` (V13). Every cha
   not a path (a world patch cannot force it).
 - Freeze v2 regenerated: 800 files, digest `f740b232e52a939b3a8065c50a8671d1240a4e2a7aa784d37f408795bfecf234`.
 
+## Acceptance (2026-11-10)
+
+The acceptance run passed V13 after the owner's option C (one rule added to both prompt wrappers, [erratum
+G1](../../docs/evidence/bench-errata-1-6.md)). 1.6 is accepted and taught: [bench-1-6-acceptance.md](../../docs/evidence/bench-1-6-acceptance.md).
+
