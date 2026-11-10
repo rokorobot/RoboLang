@@ -109,3 +109,22 @@ run against the reference) is a separate step you authorize.
 **Deviations from the protocol, for the owner to accept or reject:** the network is closed by the agent's sandbox, not
 by a firewall rule you wrote (step 3 shows the effect, not the rule set); the model may not be GPT-6 family. Launch
 also needs your authorization, written in the thread or here.
+
+## 8. Owner's choice on 2026-11-10: option A (Cloudroom Codex, search audited)
+
+The first check in a Cloudroom Codex Cloud thread showed every URL `OPEN`, no `iptables`, and a web search tool;
+Cloudroom's Codex settings have no switch to turn web search off. The owner chose option A over a self-provisioned
+container (B):
+
+- **Codex memory off** (Settings → Codex) before the author thread starts; the old test thread is archived.
+- **Shell network closed by a firewall** in the author's sandbox: the first message installs `iptables`, runs the
+  section 3 checks, then sets `OUTPUT DROP` (loopback and established connections allowed) for IPv4 and IPv6, and
+  re-tests the four URLs, which must all be `BLOCKED`.
+- **External search is not technically blocked** (deviation from protocol 2.3). The environment paragraph says that
+  web search, browsing and any network access are not permitted and that any use voids the work.
+- **Audit** after the author declares ready: the full transcript is checked for any web search or browsing call and
+  any command that changes the firewall or reaches the network (`iptables`, `curl`, `wget`, `git`, `pip`, registry
+  `npm install`). Any hit voids the run.
+- **Label** in the gate 2 record: "clean-room AI (Codex via Cloudroom); shell network blocked by firewall; external
+  search not technically blocked, verified by transcript audit". A protocol-compliant run (B, or a human team) is
+  stronger evidence and may follow.
