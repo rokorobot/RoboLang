@@ -5,17 +5,21 @@
   "group": "infeasible",
   "expect": {
     "decision": "cannot",
+    "category": "infeasible"
+  },
+  "expect_1_5": {
+    "decision": "cannot",
     "category": "inexpressible"
   },
   "expect_1_6": {
     "decision": "cannot",
     "category": "infeasible"
   },
-  "entities_1_6": [
-    "probe_temp"
-  ],
   "tags": [
     "sensor_elsewhere"
   ],
-  "why": "Under 1.5 a reading is inexpressible, so the decline is inexpressible; under 1.6 it is infeasible: probe_temp is mounted on chef_arm, not helper_arm."
+  "why": "Infeasible: probe_temp is mounted on chef_arm, not helper_arm (S231). Under 1.5 the decline was inexpressible.",
+  "blockers": [
+    "probe_temp"
+  ]
 }

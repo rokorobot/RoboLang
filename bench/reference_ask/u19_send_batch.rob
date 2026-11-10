@@ -1,0 +1,10 @@
+// bench/bench/reference_ask/u19_send_batch.rob: hand-written
+robolang 1.6;
+
+task send_batch(robot r, object vial, sensor scanner, location home) {
+    goal { robot_at r home; }
+    plan {
+        measure r label of vial using scanner as lot;
+        communicate r to "dispatch" with lot;
+    }
+}

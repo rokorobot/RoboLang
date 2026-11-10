@@ -103,9 +103,12 @@ def test_reference_is_valid_exports_an_accepted_goal_and_succeeds(task_id):
     answer = hard_reference(task_id)
     checked = lib.check_answer(task, answer)
     assert checked.valid, checked.report
-    assert checked.language_version == "1.3"
+    # 0036: taking a temperature is a `measure`, which only 1.6 has
+    assert checked.language_version == ("1.6" if task_id == "d_serum_tube" else "1.3")
     judgement = lib.judge(task, checked, answer["bindings"])
-    assert judgement.goal_correct and judgement.goal_exact
+    assert judgement.goal_correct
+    # a `wait until` has a handler since 1.5: its `fail` path has no goal, so Core 0.1 cannot export this plan
+    assert judgement.goal_exact or task_id == "d_serum_tube"
     assert judgement.plan_succeeds, (judgement.state, judgement.failure_code)
     has_checks = any(k in task for k in ("expected_safety", "expected_messages", "expected_message_counts",
                                          "expected_end_ms", "probes", "expected_action_sequences"))
@@ -199,7 +202,7 @@ def test_the_language_has_no_construct_for_what_the_inexpressible_tasks_ask():
     assert re.search(r'"wait"\s*,\s*"until"\s*,\s*condition\s*,\s*"timeout"\s*,\s*duration', grammar)  # always bounded
     assert re.search(r'"communicate"\s*,\s*IDENT\s*,\s*"to"\s*,\s*STRING\s*,\s*"with"\s*,\s*STRING', grammar)
     # 1.4 adds `if`, `else` and `fail` and nothing else: the loop and retry words are still not in the grammar
-    grammar14 = lib.GRAMMAR_FILE.read_text(encoding="utf-8")
+    grammar14 = (lib.ROOT / "spec" / "grammar-v1.4.ebnf").read_text(encoding="utf-8")
     for word in ("if", "else", "fail"):
         assert f'"{word}"' in grammar14
     for word in ("while", "loop", "every", "retry", "repeat", "for_each", "message_received"):

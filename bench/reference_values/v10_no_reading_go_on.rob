@@ -1,0 +1,16 @@
+// bench/reference_values/v10_no_reading_go_on.rob: hand-written reference
+robolang 1.6;
+
+task probe_then_bowl(robot r, object pan, object bowl, sensor probe, location pan_at, location bowl_at, location dst) {
+    goal { object_at bowl dst; }
+    plan {
+        move r to pan_at;
+        measure r temperature of pan using probe as t else {
+            communicate r to "pass" with "no reading";
+        }
+        move r to bowl_at;
+        grasp r bowl;
+        move r to dst;
+        place r bowl at dst;
+    }
+}

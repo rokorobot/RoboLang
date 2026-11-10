@@ -6,6 +6,9 @@
   "expect": {
     "decision": "program"
   },
+  "expect_1_5": {
+    "decision": "program"
+  },
   "expect_1_6": {
     "decision": "program"
   },

@@ -1,0 +1,10 @@
+{
+  "task": "under_140_f",
+  "bindings": {
+    "r": "chef_arm",
+    "pan": "pan_1",
+    "probe": "probe_temp",
+    "src": "stove",
+    "dst": "pass"
+  }
+}

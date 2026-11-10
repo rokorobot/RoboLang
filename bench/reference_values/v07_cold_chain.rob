@@ -1,0 +1,21 @@
+// bench/reference_values/v07_cold_chain.rob: hand-written reference
+robolang 1.6;
+
+task cold_chain(robot r, object vial, sensor thermo, location src, location dst) {
+    plan {
+        wait until sensor_ok thermo timeout 30 s else {
+            fail "the thermometer did not come online";
+        }
+        move r to src;
+        measure r temperature of vial using thermo as t;
+        if t < 8 degC {
+            goal { object_at vial dst; }
+            grasp r vial;
+            move r to dst;
+            place r vial at dst;
+        } else {
+            goal { object_at vial src; }
+            communicate r to "qa" with t;
+        }
+    }
+}

@@ -1,0 +1,12 @@
+{
+  "task": "probe_then_bowl",
+  "bindings": {
+    "r": "chef_arm",
+    "pan": "pan_2",
+    "bowl": "bowl_1",
+    "probe": "probe_temp",
+    "pan_at": "sink",
+    "bowl_at": "pantry",
+    "dst": "prep_1"
+  }
+}

@@ -1,0 +1,13 @@
+// bench/bench/reference_ask/i12_scale_down.attempt.rob: hand-written
+robolang 1.6;
+
+task weigh_then_move(robot r, object tray, sensor scale, location src, location dst) {
+    goal { object_at tray dst; }
+    plan {
+        move r to src;
+        measure r mass of tray using scale as m;
+        grasp r tray;
+        move r to dst;
+        place r tray at dst;
+    }
+}

@@ -4,17 +4,63 @@
   "world": "bench/worlds/kitchen_values.json",
   "group": "value",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_5": {
     "decision": "cannot",
     "category": "inexpressible"
   },
   "expect_1_6": {
     "decision": "program",
-    "planned_paths": "probe available / unavailable: bowl 1 at prep_1 on both"
+    "paths": [
+      {
+        "when": "probe available",
+        "goal": [
+          [
+            "rl:thing:bowl_1",
+            "located_in",
+            "rl:place:prep_1"
+          ]
+        ],
+        "world_patch": {}
+      },
+      {
+        "when": "probe unavailable: no reading, the message is sent, bowl 1 moves anyway",
+        "goal": [
+          [
+            "rl:thing:bowl_1",
+            "located_in",
+            "rl:place:prep_1"
+          ]
+        ],
+        "messages": [
+          [
+            "pass",
+            "no reading"
+          ]
+        ],
+        "expected_readings": [],
+        "world_patch": {
+          "sensors": {
+            "probe_temp": {
+              "available": false
+            }
+          }
+        }
+      }
+    ]
   },
   "tags": [
     "measure",
     "handler",
     "carry_on"
   ],
-  "why": "RoboLang 1.5 cannot read a value from a sensor: inspect observes presence, location and holder only (decision 0036)."
+  "why": "A handler on a `measure` that does not end in `fail`: nothing was read on that path, and the plan goes on (0036 V3, 0033).",
+  "expected_readings": [
+    [
+      "chef_arm",
+      "temperature",
+      "pan_2"
+    ]
+  ]
 }

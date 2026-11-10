@@ -1,11 +1,11 @@
-// bench/reference/w_scale_precheck.rob: hand-written reference solution
-robolang 1.3;
+// bench/bench/reference/w_scale_precheck.rob: hand-written
+robolang 1.6;
 
 task weigh_part(robot r, object item, sensor scale, location park) {
     pre { sensor_ok scale; }
     goal { robot_at r park; }
     plan {
-        inspect r item using scale;
+        measure r mass of item using scale as m;
         move r to park;
     }
 }

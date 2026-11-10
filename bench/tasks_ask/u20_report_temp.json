@@ -2,13 +2,50 @@
   "id": "u20_report_temp",
   "prompt": "Probe pan 1's temperature and tell the \"pass\" channel the value you measured.",
   "world": "bench/worlds/kitchen.json",
-  "group": "inexpressible",
+  "group": "value",
   "expect": {
+    "decision": "program",
+    "category": "none"
+  },
+  "expect_1_5": {
     "decision": "cannot",
     "category": "inexpressible"
   },
+  "expect_1_6": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "pan 1 at 55 degC",
+        "goal": [],
+        "world_patch": {}
+      }
+    ]
+  },
   "tags": [
-    "value_report"
+    "measure",
+    "value_message",
+    "contact"
   ],
-  "why": "communicate sends a literal string; a measured value cannot be put in it."
+  "why": "A temperature reading sent as a value (0036 V2, V8); the probe is a contact sensor, so the arm goes to the pan. The request names no end state. Inexpressible in 1.5: `communicate` sent a literal.",
+  "expected_readings": [
+    [
+      "chef_arm",
+      "temperature",
+      "pan_1"
+    ]
+  ],
+  "expected_messages": [
+    {
+      "channel": "pass",
+      "value_of": [
+        "pan_1",
+        "temperature"
+      ]
+    }
+  ],
+  "required_entities": [
+    "chef_arm",
+    "probe_temp"
+  ],
+  "goal_free": true
 }

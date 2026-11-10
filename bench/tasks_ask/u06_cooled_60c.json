@@ -1,14 +1,52 @@
 {
   "id": "u06_cooled_60c",
   "prompt": "Probe pan 1 with the temperature probe and move it to the pass only once it has cooled below 60 °C.",
-  "world": "bench/worlds/kitchen.json",
-  "group": "inexpressible",
+  "world": "bench/worlds/kitchen_values.json",
+  "group": "value",
   "expect": {
+    "decision": "program",
+    "category": "none"
+  },
+  "expect_1_5": {
     "decision": "cannot",
     "category": "inexpressible"
   },
+  "expect_1_6": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "pan 1 already at 55 degC: any timeout passes",
+        "goal": [
+          [
+            "rl:thing:pan_1",
+            "located_in",
+            "rl:place:pass"
+          ]
+        ],
+        "world_patch": {}
+      },
+      {
+        "when": "pan 1 at 80 degC and never cools",
+        "fails": true,
+        "world_patch": {
+          "objects": {
+            "pan_1": {
+              "properties": {
+                "temperature": {
+                  "value": "80",
+                  "unit": "degC"
+                }
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
   "tags": [
-    "numeric_sensing"
+    "live_reading",
+    "wait_until",
+    "handler"
   ],
-  "why": "RoboLang 1.3 has no numeric reading and no comparison atom."
+  "why": "A live reading in `wait until` (0036 V4). No bound is given, so any timeout is accepted, as for a19_until_corridor: pan 1 is already below 60 degC in this world; the second path never cools and must fail. Inexpressible in 1.5."
 }

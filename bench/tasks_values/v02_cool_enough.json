@@ -4,17 +4,103 @@
   "world": "bench/worlds/kitchen_values.json",
   "group": "value",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_5": {
     "decision": "cannot",
     "category": "inexpressible"
   },
   "expect_1_6": {
     "decision": "program",
-    "planned_paths": "45 °C: pan at pass; 80 °C: pan at stove and message; 59.8 ± 0.5 °C: run fails (S261)"
+    "paths": [
+      {
+        "when": "pan 1 at 45 degC",
+        "goal": [
+          [
+            "rl:thing:pan_1",
+            "located_in",
+            "rl:place:pass"
+          ]
+        ],
+        "world_patch": {
+          "objects": {
+            "pan_1": {
+              "properties": {
+                "temperature": {
+                  "value": "45",
+                  "unit": "degC"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "when": "pan 1 at 80 degC: left on the stove, message sent",
+        "goals": [
+          [
+            [
+              "rl:thing:pan_1",
+              "located_in",
+              "rl:place:stove"
+            ]
+          ],
+          [
+            [
+              "rl:robot:chef_arm",
+              "located_in",
+              "rl:place:stove"
+            ]
+          ]
+        ],
+        "messages": [
+          [
+            "pass",
+            null
+          ]
+        ],
+        "world_patch": {
+          "objects": {
+            "pan_1": {
+              "properties": {
+                "temperature": {
+                  "value": "80",
+                  "unit": "degC"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "when": "59.8 +/- 0.5 degC is unknown against 60 degC: the run fails (S261)",
+        "fails": true,
+        "world_patch": {
+          "objects": {
+            "pan_1": {
+              "properties": {
+                "temperature": {
+                  "value": "59.8",
+                  "unit": "degC"
+                }
+              }
+            }
+          }
+        }
+      }
+    ]
   },
   "tags": [
     "measure",
     "if",
     "uncertainty"
   ],
-  "why": "RoboLang 1.5 cannot read a value from a sensor: inspect observes presence, location and holder only (decision 0036)."
+  "why": "A comparison on a `measure` binding, with the sensor's uncertainty: a reading of 59.8 +/- 0.5 degC against 60 degC is unknown, and an unknown `if` fails the run (0036 V7).",
+  "expected_readings": [
+    [
+      "chef_arm",
+      "temperature",
+      "pan_1"
+    ]
+  ]
 }

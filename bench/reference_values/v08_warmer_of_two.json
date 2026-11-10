@@ -1,0 +1,11 @@
+{
+  "task": "warmer",
+  "bindings": {
+    "r": "arm_x",
+    "a": "vial_1",
+    "b": "flask_1",
+    "probe": "thermo_1",
+    "la": "rack_L",
+    "lb": "hood_a"
+  }
+}

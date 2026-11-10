@@ -1,0 +1,11 @@
+// bench/reference_values/v09_online_thermometer.rob: hand-written reference
+robolang 1.6;
+
+task report_temperature(robot r, object vial, sensor thermo, location src) {
+    goal { robot_at r src; }
+    plan {
+        move r to src;
+        measure r temperature of vial using thermo as t;
+        communicate r to "lab" with t;
+    }
+}

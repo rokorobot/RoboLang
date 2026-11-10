@@ -1,0 +1,9 @@
+{
+  "task": "retry_probe",
+  "bindings": {
+    "r": "chef_arm",
+    "pan": "pan_1",
+    "probe": "probe_temp",
+    "src": "stove"
+  }
+}

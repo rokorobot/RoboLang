@@ -2,14 +2,29 @@
   "id": "i12_scale_down",
   "prompt": "Weigh tray B with the helper arm's scale, then have the helper arm put it on the pass.",
   "world": "bench/worlds/kitchen.json",
-  "group": "inexpressible",
+  "group": "infeasible",
   "expect": {
+    "decision": "cannot",
+    "category": "infeasible"
+  },
+  "expect_1_5": {
     "decision": "cannot",
     "category": "inexpressible"
   },
   "tags": [
-    "numeric_reading",
-    "weighing"
+    "weighing",
+    "sensor_unavailable"
   ],
-  "why": "RoboLang 1.3 inspect observes presence, location and holder only; it cannot weigh an object or produce a mass reading, even with an available scale."
+  "why": "Infeasible: scale_1 is unavailable and never recovers (S232). Under 1.5 the decline was inexpressible; the scale measures mass in the 1.2 world, so enabling it would let a `measure` weigh the tray.",
+  "blockers": [
+    "scale_1"
+  ],
+  "fix_patch": {
+    "sensors": {
+      "scale_1": {
+        "available": true
+      }
+    }
+  },
+  "attempt_fails_with": "S232"
 }

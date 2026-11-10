@@ -2,13 +2,79 @@
   "id": "u05_below_8c",
   "prompt": "Only if the insulin reads below 8 °C on picker1's thermometer, move it to packing.",
   "world": "bench/worlds/pharmacy.json",
-  "group": "inexpressible",
+  "group": "value",
   "expect": {
+    "decision": "program",
+    "category": "none"
+  },
+  "expect_1_5": {
     "decision": "cannot",
     "category": "inexpressible"
   },
+  "expect_1_6": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "insulin 1 at 5 degC",
+        "goal": [
+          [
+            "rl:thing:insulin_1",
+            "located_in",
+            "rl:place:packing"
+          ]
+        ],
+        "world_patch": {}
+      },
+      {
+        "when": "insulin 1 at 12 degC: not below 8 degC, so it stays in fridge 2",
+        "goals": [
+          [
+            [
+              "rl:thing:insulin_1",
+              "located_in",
+              "rl:place:fridge_2"
+            ]
+          ],
+          [
+            [
+              "rl:robot:picker1",
+              "located_in",
+              "rl:place:fridge_2"
+            ]
+          ]
+        ],
+        "fails": true,
+        "world_patch": {
+          "objects": {
+            "insulin_1": {
+              "properties": {
+                "temperature": {
+                  "value": "12",
+                  "unit": "degC"
+                }
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
   "tags": [
-    "numeric_sensing"
+    "measure",
+    "sensor_ok",
+    "if",
+    "contact"
   ],
-  "why": "RoboLang 1.3 has no numeric reading and no comparison atom."
+  "why": "The thermometer comes online at 5 s, so the program waits for `sensor_ok` first, then measures and compares (0036, relabels). Inexpressible in 1.5: no value could be read.",
+  "expected_readings": [
+    [
+      "picker1",
+      "temperature",
+      "insulin_1"
+    ]
+  ],
+  "required_entities": [
+    "picker1",
+    "thermo_p1"
+  ]
 }

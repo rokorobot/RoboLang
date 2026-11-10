@@ -1,0 +1,17 @@
+// bench/reference_values/v06_batch_gate.rob: hand-written reference
+robolang 1.6;
+
+task batch_gate(robot r, object vial, sensor scanner, location src, location dst) {
+    plan {
+        measure r label of vial using scanner as lot;
+        if lot == "LOT-7731" {
+            goal { object_at vial dst; }
+            move r to src;
+            grasp r vial;
+            move r to dst;
+            place r vial at dst;
+        } else {
+            fail "wrong batch";
+        }
+    }
+}

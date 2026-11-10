@@ -1,0 +1,18 @@
+// bench/reference_values/v02_cool_enough.rob: hand-written reference
+robolang 1.6;
+
+task cool_or_leave(robot r, object pan, sensor probe, location src, location dst) {
+    plan {
+        move r to src;
+        measure r temperature of pan using probe as t;
+        if t < 60 degC {
+            goal { object_at pan dst; }
+            grasp r pan;
+            move r to dst;
+            place r pan at dst;
+        } else {
+            goal { object_at pan src; }
+            communicate r to "pass" with "too hot";
+        }
+    }
+}

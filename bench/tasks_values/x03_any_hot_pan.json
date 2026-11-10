@@ -7,6 +7,10 @@
     "decision": "cannot",
     "category": "inexpressible"
   },
+  "expect_1_5": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
   "expect_1_6": {
     "decision": "cannot",
     "category": "inexpressible"
@@ -15,5 +19,5 @@
     "detect",
     "iteration"
   ],
-  "why": "Choosing objects at run time and iterating over them: no detect and no loop. RoboLang 1.5 also cannot read a value."
+  "why": "Choosing objects at run time and iterating over them: no detect and no loop, though RoboLang 1.6 can read a value."
 }

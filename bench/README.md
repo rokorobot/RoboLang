@@ -117,13 +117,13 @@ python bench/run.py --set ask --yes --max-usd 10              # with a hard cap 
 
 80 tasks in three new worlds (`pharmacy`, `yard`, `kitchen`), decision record [0025](../spec/decisions/0025-bench-2.md),
 design [docs/plans/bench-2.md](../docs/plans/bench-2.md). After the independent review, five kinds (`group`):
-`feasible` (12), `decoy` (11), `infeasible` (19), `inexpressible` (20) and `clarify` (18).
+`feasible` (12), `decoy` (11), `value` (4: `u05`, `u06`, `u19`, `u20`, programs that read a value since 0036 PR 2), `infeasible` (20, now with `i12_scale_down`), `inexpressible` (15) and `clarify` (18).
 The owner approved the replacement plan, freeze, paid validation and merge. See the
 [review response](../docs/evidence/bench2-label-review-response.md),
 [original packet](../docs/plans/bench-2-label-review-baseline.md) and the freeze hash in decision 0025.
 Run `python tools/bench_freeze.py --check` to verify the recorded inputs against freeze v2
 (`docs/evidence/bench-freeze-v2.json`, decision 0035 E9; v1 is kept as history). Changes after the freeze require errata
-([errata for 1.5](../docs/evidence/bench-errata-1-5.md)).
+([errata for 1.5](../docs/evidence/bench-errata-1-5.md), [errata for 1.6](../docs/evidence/bench-errata-1-6.md)).
 A `decoy` looks impossible or unclear but is feasible. A `clarify` task
 expects `"decision": "clarify"`: the request could mean several entities (`candidates`) or omits a value, and the world
 does not decide. A request that leaves the choice to the model ("a shelf", "one of the vials", set 2's `ambiguous`
@@ -203,8 +203,9 @@ section 3: set 3 goal correctness >= 90% for Sonnet, false programs on the contr
 read from these numbers.
 
 Set 2 has the same for its three branching tasks (`x_route_by_cell`, `x_whichever_free`, `x_missing_box_branch`),
-group `branching`. The grammar-only prompt pastes `spec/grammar-v1.3.ebnf`, `spec/grammar-v1.4.ebnf` and
-`spec/grammar-v1.5.ebnf`, each a delta over the one before. Since 0035 PR 2 the prompts teach RoboLang 1.5. In set 3,
+group `branching`. The grammar-only prompt pastes `spec/grammar-v1.3.ebnf`, `spec/grammar-v1.4.ebnf`,
+`spec/grammar-v1.5.ebnf` and `spec/grammar-v1.6.ebnf`, each a delta over the one before. Since 0036 PR 2 the prompts teach
+RoboLang 1.6 (0035 PR 2 taught 1.5). In set 3,
 `x_failover_on_fault` is now a program judged per path (group `recover`; `expect_1_4` keeps the old label).
 
 Run it on demand from GitHub Actions: `Benchmark`, `set3: true`. That runs full and grammar-only prompts with 3
@@ -235,9 +236,23 @@ each capped at $10. Locally: `python bench/run.py --set failure --repeats 3`.
 
 ## Set 5: measured values (`--set values`)
 
-26 tasks in `tasks_values/`, decision record [0036](../spec/decisions/0036-lang-4-measured-values.md), plan and
-approved labels in [bench-5-values.md](../docs/plans/bench-5-values.md). Pre-registered against RoboLang 1.5: every
-task except two plain controls expects `cannot / inexpressible` now; `expect_1_6` holds the label for 1.6 (15 programs,
-6 still inexpressible, 3 infeasible). Kitchen tasks use `worlds/kitchen_values.json`. Locally:
-`python bench/run.py --set values --repeats 3`.
+26 tasks in `tasks_values/`, references in `reference_values/` (17 programs), decision record
+[0036](../spec/decisions/0036-lang-4-measured-values.md), plan and approved labels in
+[bench-5-values.md](../docs/plans/bench-5-values.md), baseline under 1.5 in
+[bench-set5-baseline.md](../docs/evidence/bench-set5-baseline.md). Pre-registered against RoboLang 1.5 and labelled for 1.6 in
+0036 PR 2 ([errata](../docs/evidence/bench-errata-1-6.md)): `expect` is the 1.6 label, `expect_1_5` keeps the 1.5 one
+(`cannot / inexpressible` for all but the two controls) and `expect_1_6.paths` holds the world patches that force each
+path (15 `value` programs, 6 `inexpressible`, 3 `infeasible`, 2 `control`). Kitchen tasks use `worlds/kitchen_values.json`.
+The worlds that serve it are world file 1.2: sensors have `measures`, objects have `properties`, and a `property` event
+changes one over time. What a sensor measures is shown to the model; **what an object reads never is**: the program must
+measure it.
 
+Two measures on top of the usual ones (0036 V13), in `report.md` and `scores.json`: `value_ok` (a task with
+`expected_readings: [[robot, kind, object], ...]` or a `{"channel", "value_of": [object, kind]}` message in
+`expected_messages` or in a path's `messages`: on every path that is not a stop, each reading was taken by a `measure`
+of that robot and each such message was sent as a value, not a text) and `silent_substitution` (a valid program with
+an `inspect` of the object and no `measure` of an expected kind of it: `inspect` never reads a value). A path may carry
+`expected_readings` of its own (a path where the probe is down reads nothing), `goals` (several acceptable end states)
+and `fails: true` together with `goals` ("stop" may also be "leave it"). A task with `goal_free: true` names no end
+state ("send the batch number"): any goal that the run reaches is right.
+Locally: `python bench/run.py --set values --repeats 3` (a paid run: confirm it first, 0036 V12).

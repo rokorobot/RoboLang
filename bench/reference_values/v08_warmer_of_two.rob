@@ -1,0 +1,17 @@
+// bench/reference_values/v08_warmer_of_two.rob: hand-written reference
+robolang 1.6;
+
+task warmer(robot r, object a, object b, sensor probe, location la, location lb) {
+    goal { robot_at r lb; }
+    plan {
+        move r to la;
+        measure r temperature of a using probe as ta;
+        move r to lb;
+        measure r temperature of b using probe as tb;
+        if ta > tb {
+            communicate r to "lab" with "vial";
+        } else {
+            communicate r to "lab" with "flask";
+        }
+    }
+}

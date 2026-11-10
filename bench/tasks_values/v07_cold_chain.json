@@ -4,12 +4,67 @@
   "world": "bench/worlds/pharmacy.json",
   "group": "value",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_5": {
     "decision": "cannot",
     "category": "inexpressible"
   },
   "expect_1_6": {
     "decision": "program",
-    "planned_paths": "5 °C: insulin at packing; 12 °C: message, insulin in fridge 2"
+    "paths": [
+      {
+        "when": "insulin 1 at 5 degC",
+        "goal": [
+          [
+            "rl:thing:insulin_1",
+            "located_in",
+            "rl:place:packing"
+          ]
+        ],
+        "world_patch": {}
+      },
+      {
+        "when": "insulin 1 at 12 degC: left in fridge 2, the temperature sent to qa",
+        "goals": [
+          [
+            [
+              "rl:thing:insulin_1",
+              "located_in",
+              "rl:place:fridge_2"
+            ]
+          ],
+          [
+            [
+              "rl:robot:picker1",
+              "located_in",
+              "rl:place:fridge_2"
+            ]
+          ]
+        ],
+        "messages": [
+          {
+            "channel": "qa",
+            "value_of": [
+              "insulin_1",
+              "temperature"
+            ]
+          }
+        ],
+        "world_patch": {
+          "objects": {
+            "insulin_1": {
+              "properties": {
+                "temperature": {
+                  "value": "12",
+                  "unit": "degC"
+                }
+              }
+            }
+          }
+        }
+      }
+    ]
   },
   "tags": [
     "sensor_ok",
@@ -17,5 +72,12 @@
     "if",
     "value_message"
   ],
-  "why": "RoboLang 1.5 cannot read a value from a sensor: inspect observes presence, location and holder only (decision 0036)."
+  "why": "`wait until sensor_ok` for a sensor that comes online (here at 5 s), a contact reading (the picker goes to the fridge first) and a measured value sent on one path only.",
+  "expected_readings": [
+    [
+      "picker1",
+      "temperature",
+      "insulin_1"
+    ]
+  ]
 }

@@ -1,0 +1,10 @@
+{
+  "task": "cold_chain",
+  "bindings": {
+    "r": "picker1",
+    "vial": "insulin_1",
+    "thermo": "thermo_p1",
+    "src": "fridge_2",
+    "dst": "packing"
+  }
+}

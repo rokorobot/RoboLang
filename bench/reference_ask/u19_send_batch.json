@@ -1,0 +1,9 @@
+{
+  "task": "send_batch",
+  "bindings": {
+    "r": "picker1",
+    "vial": "insulin_1",
+    "scanner": "scan_p1",
+    "home": "charger"
+  }
+}

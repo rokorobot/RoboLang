@@ -1,0 +1,10 @@
+// bench/reference_values/v13_relay_batch.rob: hand-written reference
+robolang 1.6;
+
+task relay_batch(robot reader, robot courier, object vial, sensor scanner, location home) {
+    goal { robot_at reader home; }
+    plan {
+        measure reader label of vial using scanner as lot;
+        communicate courier to "dispatch" with lot;
+    }
+}

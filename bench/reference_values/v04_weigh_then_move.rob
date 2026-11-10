@@ -1,0 +1,13 @@
+// bench/reference_values/v04_weigh_then_move.rob: hand-written reference
+robolang 1.6;
+
+task weigh_and_move(robot r, object tray, sensor scale, location src, location dst) {
+    goal { object_at tray dst; }
+    plan {
+        move r to src;
+        measure r mass of tray using scale as m;
+        grasp r tray;
+        move r to dst;
+        place r tray at dst;
+    }
+}

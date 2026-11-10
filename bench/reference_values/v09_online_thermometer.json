@@ -1,0 +1,9 @@
+{
+  "task": "report_temperature",
+  "bindings": {
+    "r": "arm_x",
+    "vial": "vial_1",
+    "thermo": "thermo_1",
+    "src": "rack_L"
+  }
+}

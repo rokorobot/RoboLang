@@ -4,17 +4,83 @@
   "world": "bench/worlds/kitchen_values.json",
   "group": "value",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_5": {
     "decision": "cannot",
     "category": "inexpressible"
   },
   "expect_1_6": {
     "decision": "program",
-    "planned_paths": "cools to 55 °C at 4 min: pan at pass; never cools: fail"
+    "paths": [
+      {
+        "when": "pan 1 hot (80 degC), cools to 55 degC at 240 s",
+        "goal": [
+          [
+            "rl:thing:pan_1",
+            "located_in",
+            "rl:place:pass"
+          ]
+        ],
+        "world_patch": {
+          "objects": {
+            "pan_1": {
+              "properties": {
+                "temperature": {
+                  "value": "80",
+                  "unit": "degC"
+                }
+              }
+            }
+          },
+          "events": [
+            {
+              "at": {
+                "value": "30",
+                "unit": "s"
+              },
+              "fact": "region_clear",
+              "target": "hot_zone",
+              "value": true
+            },
+            {
+              "at": {
+                "value": "240",
+                "unit": "s"
+              },
+              "fact": "property",
+              "target": "pan_1",
+              "property": "temperature",
+              "value": {
+                "value": "55",
+                "unit": "degC"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "when": "pan 1 hot (80 degC) and never cools",
+        "fails": true,
+        "world_patch": {
+          "objects": {
+            "pan_1": {
+              "properties": {
+                "temperature": {
+                  "value": "80",
+                  "unit": "degC"
+                }
+              }
+            }
+          }
+        }
+      }
+    ]
   },
   "tags": [
     "live_reading",
     "wait_until",
     "handler"
   ],
-  "why": "RoboLang 1.5 cannot read a value from a sensor: inspect observes presence, location and holder only (decision 0036)."
+  "why": "A live reading in `wait until` (0036 V4): the wait reads the probe at every world change, so it ends when a `property` event cools the pan."
 }

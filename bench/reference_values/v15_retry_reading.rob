@@ -1,0 +1,13 @@
+// bench/reference_values/v15_retry_reading.rob: hand-written reference
+robolang 1.6;
+
+task retry_probe(robot r, object pan, sensor probe, location src) {
+    goal { robot_at r src; }
+    plan {
+        move r to src;
+        measure r temperature of pan using probe as t else {
+            measure r temperature of pan using probe as t;
+        }
+        communicate r to "pass" with t;
+    }
+}

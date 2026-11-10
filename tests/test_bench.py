@@ -60,7 +60,8 @@ def test_reference_is_valid_exports_the_expected_goal_and_succeeds(task_id):
     answer = reference_answer(task_id)
     checked = lib.check_answer(task, answer)
     assert checked.valid, checked.report
-    assert checked.language_version == "1.3"
+    # 0036: weighing is a `measure`, which only 1.6 has
+    assert checked.language_version == ("1.6" if task_id == "w_scale_precheck" else "1.3")
     judgement = lib.judge(task, checked, answer["bindings"])
     assert judgement.goal_correct and judgement.goal_exact
     assert judgement.plan_succeeds, (judgement.state, judgement.failure_code)
@@ -120,7 +121,7 @@ def test_the_prompts_example_is_valid_and_runs():
     assert checked.valid, checked.report
     from robolang.sim import run as simulate
     assert simulate(checked.task, checked.world).state == "SUCCEEDED"
-    assert text.startswith("You write RoboLang 1.5 programs.")
+    assert text.startswith("You write RoboLang 1.6 programs.")
 
 
 # -------- the fake client --------

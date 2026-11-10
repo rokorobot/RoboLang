@@ -1,0 +1,17 @@
+// bench/reference_values/v12_fahrenheit.rob: hand-written reference
+robolang 1.6;
+
+task under_140_f(robot r, object pan, sensor probe, location src, location dst) {
+    plan {
+        move r to src;
+        measure r temperature of pan using probe as t;
+        if t < 60 degC {
+            goal { object_at pan dst; }
+            grasp r pan;
+            move r to dst;
+            place r pan at dst;
+        } else {
+            fail "pan 1 is not under 140 F";
+        }
+    }
+}

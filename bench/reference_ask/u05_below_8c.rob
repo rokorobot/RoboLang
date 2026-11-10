@@ -1,0 +1,20 @@
+// bench/bench/reference_ask/u05_below_8c.rob: hand-written
+robolang 1.6;
+
+task cold_move(robot r, object vial, sensor thermo, location src, location dst) {
+    plan {
+        wait until sensor_ok thermo timeout 30 s else {
+            fail "the thermometer did not come online";
+        }
+        move r to src;
+        measure r temperature of vial using thermo as t;
+        if t < 8 degC {
+            goal { object_at vial dst; }
+            grasp r vial;
+            move r to dst;
+            place r vial at dst;
+        } else {
+            fail "insulin 1 is not below 8 degC";
+        }
+    }
+}

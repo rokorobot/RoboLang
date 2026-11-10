@@ -4,6 +4,7 @@
     "r": "picker1",
     "o": "insulin_1",
     "s": "thermo_p1",
+    "src": "fridge_2",
     "dst": "dispatch"
   }
 }

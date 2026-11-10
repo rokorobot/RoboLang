@@ -1,6 +1,6 @@
 {
   "world_schema": "robolang.sim.world",
-  "world_schema_version": "1.1",
+  "world_schema_version": "1.2",
   "locations": ["pantry", "fridge", "prep_1", "prep_2", "stove", "oven", "pass", "sink", "bin"],
   "regions": {
     "hot_zone": { "clear": false },
@@ -12,10 +12,10 @@
     "runner": { "ready": true, "location": "pass", "gripper": false, "max_speed": [{ "value": "1", "unit": "m/s" }] }
   },
   "objects": {
-    "pan_1": { "present": true, "location": "stove", "class": "pan" },
-    "pan_2": { "present": true, "location": "sink", "class": "pan" },
-    "tray_a": { "present": true, "location": "oven", "class": "tray" },
-    "tray_b": { "present": true, "location": "prep_2", "class": "tray" },
+    "pan_1": { "present": true, "location": "stove", "class": "pan", "properties": { "temperature": { "value": "55", "unit": "degC" } } },
+    "pan_2": { "present": true, "location": "sink", "class": "pan", "properties": { "temperature": { "value": "30", "unit": "degC" } } },
+    "tray_a": { "present": true, "location": "oven", "class": "tray", "properties": { "mass": { "value": "0.9", "unit": "kg" } } },
+    "tray_b": { "present": true, "location": "prep_2", "class": "tray", "properties": { "mass": { "value": "1.2", "unit": "kg" } } },
     "bowl_1": { "present": true, "location": "pantry", "class": "bowl" },
     "bowl_2": { "present": true, "location": "fridge", "class": "bowl" },
     "knife_1": { "present": true, "held_by": "chef_arm", "class": "knife" },
@@ -24,8 +24,8 @@
   },
   "sensors": {
     "cam_chef": { "robot": "chef_arm", "available": true },
-    "probe_temp": { "robot": "chef_arm", "available": true },
-    "scale_1": { "robot": "helper_arm", "available": false },
+    "probe_temp": { "robot": "chef_arm", "available": true, "measures": { "temperature": { "unit": "degC", "uncertainty": "0.5", "contact": true } } },
+    "scale_1": { "robot": "helper_arm", "available": false, "measures": { "mass": { "unit": "kg", "uncertainty": "0.01", "contact": true } } },
     "cam_runner": { "robot": "runner", "available": true }
   },
   "events": [
