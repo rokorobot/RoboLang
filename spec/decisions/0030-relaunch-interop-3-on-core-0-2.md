@@ -44,3 +44,12 @@ was frozen on 2026-10-30 ([0028](0028-core-0-2-scope.md)).
 
 Core 0.2 itself, the reference simulation, `robolang-sim-stdio` 0.1, the gate 2 success criteria, and the run-record
 schema. Physical execution stays unauthorized.
+
+## Outcome (2026-11-10)
+
+J6 steps 5 and 6 done. INTEROP-3: clean-room AI author OpenAI `gpt-6-astra` via Codex in Cloudroom (owner's option
+A′: network and search not technically blocked, full transcript audit found neither used). INTEROP-4: run 1 24/25 with
+one specification gap (F1), resolved with F2 by [0037](0037-gate-2-errata-f1-f2.md) and a re-frozen bundle; run 2 25/25,
+442/442 messages JCS-identical to the reference. **Gate 2 passed, signed off by the owner on 2026-11-10**
+([run 1](../../docs/interop/interop-4-run-1.md), [run 2](../../docs/interop/interop-4-run-2.md)).
+

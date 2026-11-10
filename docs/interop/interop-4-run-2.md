@@ -3,7 +3,8 @@
 Follows [run 1](interop-4-run-1.md). Decision record [0037](../../spec/decisions/0037-gate-2-errata-f1-f2.md) (F1, F2,
 approved by the owner 2026-11-10) resolved run 1's findings; the bundle was re-frozen
 ([freeze record](gate2-bundle-freeze-erratum-0037.md)) and delivered to the author session as an erratum.
-**Result: every gate 2 criterion of section 9.1 is met for every case. Gate 2 passes on the owner's sign-off (9.4).**
+**Result: every gate 2 criterion of section 9.1 is met for every case. GATE 2 PASSED: signed off by the owner on
+2026-11-10 (9.4).**
 
 ## 1. Identity
 
@@ -54,8 +55,8 @@ No new finding.
 | At the independence level of I1 | **Met, with the recorded deviation:** clean-room AI; network and external search not technically blocked; full transcript audit found neither used (runbook section 8) |
 | Every finding resolved and recorded | **Met** (F1, F2: decision 0037), once PR #120 is merged |
 | Evidence complete (section 11) | **Met:** findings log, Q&A log, both runs, audits, deliverable hashes |
-| Owner sign-off | **Pending** |
+| Owner sign-off | **Given, 2026-11-10** |
 
-With the owner's sign-off, gate 2 passes and STRATEGY H3's second exit criterion ("independent Core 0.2 implementation
-interoperates") is met. A protocol-compliant run (technically isolated, or a human team) remains possible later and
+With the owner's sign-off (2026-11-10), gate 2 passes and STRATEGY H3's second exit criterion ("independent Core 0.2 implementation
+interoperates") is met. **H3 is complete.** A protocol-compliant run (technically isolated, or a human team) remains possible later and
 would be stronger evidence of the same claim.
