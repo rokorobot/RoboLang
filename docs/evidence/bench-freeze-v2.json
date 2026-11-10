@@ -1,5 +1,5 @@
 {
-  "sha256": "ad10351968706dd2d1555ada954fc6607e5567b95efec00f955eca3c91eac37e",
+  "sha256": "272da035ed05c09f12c5e16ce7c70b3f55d9e6bac11256689a79ec736911ebfb",
   "schema": "robolang.bench.freeze.v2",
   "patterns": [
     "bench/tasks*/*.json",
@@ -759,7 +759,7 @@
     "bench/worlds/pharmacy.json": "4d1c22374042acee5e4dc977710477aed62978974b3f034a7ae6526bbd16d5a1",
     "bench/worlds/warehouse.json": "41f64e741f122b989ecf049a9a09e735c545316df06f14b66654dbf9b64381a6",
     "bench/worlds/yard.json": "bb74c308f23b1384d057fef984ec392cf50bc1dbc0a09ed0a3b872350656d69d",
-    "docs/language-reference.md": "07991625ae73a5cc923eeb17a6c9f62de3741b8d87194fb866b84f238d70902a",
+    "docs/language-reference.md": "51f96cf85403ef7c85795bdba9b024707b9a026c7c932c9c386a3861a5ef8655",
     "spec/grammar-v1.2.ebnf": "51228fb83d5cc428609bde6d07e6ac26f00775c95e7b20c613ed40ece35e484c",
     "spec/grammar-v1.3.ebnf": "06e9950d7ef94505ee52d9c34e75569b095c4bfbac926853e15232486dfc3456",
     "spec/grammar-v1.4.ebnf": "6c78a91290aa9cac9a0d428877510dacaa802d00d27aede81f63476b50050e4d",
@@ -800,7 +800,7 @@
     "src/robolang/nodes.py": "bb184c8a0a086b133161d2197694b2d14ac7e62fd94112ab2d9241ed6f110945",
     "src/robolang/parser.py": "b57b59505ab96b3804466af4779447ca7a799123848a50cca73f1b6a49d51a3a",
     "src/robolang/paths.py": "1bf9f807e96d18cd1c8f23c9751518ab4c0aea7327d034ac62cc4aad862d1670",
-    "src/robolang/reference/language-reference.md": "07991625ae73a5cc923eeb17a6c9f62de3741b8d87194fb866b84f238d70902a",
+    "src/robolang/reference/language-reference.md": "51f96cf85403ef7c85795bdba9b024707b9a026c7c932c9c386a3861a5ef8655",
     "src/robolang/sim/__init__.py": "0a925c18b66218e94e72a94b565a7aa5d743287a7cadd0812867f42ee4dc1583",
     "src/robolang/sim/check.py": "11dbba41660793d83e6998ba4f1ec06bc02a1e51ae9b90a8f07d1b47c3e72660",
     "src/robolang/sim/executor.py": "e3a9cafa389227bf2ed47e973fe6fee923e54450b8f46cc38232505d10dfa98c",
