@@ -242,7 +242,7 @@ class ROSOperations:
         if not self._until(lambda: self.now_ms() >= target, max(10, duration / 1000 * 3)):
             raise BackendFailure("S504", "simulation clock stopped during wait")
 
-    def observe(self, marker_ids: list[int]) -> observe.Snapshot:
+    def observe(self, marker_ids: list[int], ready: bool = False) -> observe.Snapshot:
         """Fuse FRAMES frames per camera, the latest tool0 transform and the gripper joint state."""
         from functools import partial
 
@@ -293,7 +293,25 @@ class ROSOperations:
         if joint in self.joints and self.joint_stamp_ms is not None:
             gripper = observe.Reading("joint_states", "gripper_joint_state", (self.joints[joint],), None, 1.0,
                                       self.joint_stamp_ms)
-        return observe.Snapshot(self.now_ms(), markers, tool, gripper)
+        return observe.Snapshot(self.now_ms(), markers, tool, gripper, self._ready() if ready else None)
+
+    def _ready(self) -> observe.Reading | None:
+        """robot_ready (0031 R1) from the controller manager, stamped with the latest joint states; None if unknown."""
+        try:
+            hardware = subprocess.run(["ros2", "control", "list_hardware_components", "-c", "/controller_manager"],
+                                      check=True, capture_output=True, text=True, timeout=20).stdout
+            controllers = subprocess.run(["ros2", "control", "list_controllers", "-c", "/controller_manager"],
+                                         check=True, capture_output=True, text=True, timeout=20).stdout
+        except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired):
+            return None
+        self._until(lambda: False, 0.2)  # take the freshest joint state
+        if self.joint_stamp_ms is None:
+            return None
+        value = robot_ready_from(hardware, controllers, self.description, self.model)
+        if value is None:
+            return None
+        return observe.Reading("controller_manager", "ros2_control_state", (1.0 if value else 0.0,), None, 1.0,
+                               self.joint_stamp_ms)
 
     def versions(self) -> dict[str, str]:
         packages = {"ros": "lyrical"}
@@ -334,6 +352,35 @@ def detect_markers(message, camera: dict) -> dict[int, tuple[float, float, float
         if ok and int(marker) not in result:
             result[int(marker)] = tuple(float(v) for v in tvec.flatten())
     return result
+
+
+READY_CONTROLLERS = ("joint_state_broadcaster", "joint_trajectory_controller", "gripper_trajectory_controller")
+
+
+def robot_ready_from(hardware: str, controllers: str, description: str | None, model: str | None) -> bool | None:
+    """0031 R1 from `ros2 control` output: every declared hardware component and the arm, gripper and state
+    controllers active (True); one of them listed but not active (False); missing or unparsable output (None)."""
+    if not description or not model:
+        return None
+    try:
+        declared = {c.attrib["name"] for c in ET.fromstring(description).findall("ros2_control")}
+    except (ET.ParseError, KeyError):
+        return None
+    blocks = re.findall(r"Hardware Component \d+\n(.*?)(?=Hardware Component \d+\n|\Z)", hardware, re.DOTALL)
+    states = {}
+    for block in blocks:
+        name = re.search(r"^\s*name:\s*(\S+)", block, re.MULTILINE)
+        if name:
+            states[name.group(1)] = "label=active" in block
+    listed = {}
+    for line in controllers.splitlines():
+        fields = line.split()
+        if fields and fields[0] in READY_CONTROLLERS:
+            listed[fields[0]] = fields[-1] == "active"
+    if not declared or set(states) != declared or set(listed) != set(READY_CONTROLLERS):
+        # A component or controller that is not listed at all: inactive if the output parsed, else unknown.
+        return False if states or listed else None
+    return all(states.values()) and all(listed.values())
 
 
 def _stamp_ms(message) -> int:

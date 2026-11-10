@@ -30,7 +30,7 @@ GAZEBO_KEY_REF = GAZEBO + "#sim-1"
 # Like the symbolic simulator's key: FIXED, PUBLISHED, SIMULATION-ONLY. Signatures show the documented procedure ran.
 GAZEBO_KEY = Key(GAZEBO, SIM_HMAC, b"robolang-gazebo-simulation-only-key-not-a-secret")
 
-SUPPORTED = (ir.ObjectAt, ir.RobotAt, ir.Holding, ir.And, ir.Or, ir.Not)
+SUPPORTED = (ir.ObjectAt, ir.RobotAt, ir.Holding, ir.RobotReady, ir.And, ir.Or, ir.Not)
 
 
 @dataclass(frozen=True)
@@ -53,6 +53,7 @@ class Snapshot:
     markers: dict[int, Reading]
     tool: Reading | None
     gripper: Reading | None
+    ready: Reading | None = None  # robot_ready (0031 R1): position (1.0,) ready, (0.0,) not; taken only when needed
 
 
 @dataclass(frozen=True)
@@ -137,6 +138,11 @@ def atom(condition, bound: dict[str, str], site, snap: Snapshot, policy: Policy)
                         min(marker.confidence, grip.confidence, snap.tool.confidence),
                         min(marker.stamp_ms, grip.stamp_ms, snap.tool.stamp_ms))
         return Verdict("true", Triple(core_id("object", obj), "carried_by", core_id("robot", robot)), fused)
+    if isinstance(condition, ir.RobotReady):
+        # 0031 R1: the robot's own controller and hardware state. Stamped with its joint states, so stale is unknown.
+        if not usable(snap.ready):
+            return Verdict("unknown", None, snap.ready)
+        return Verdict("true" if snap.ready.position[0] == 1.0 else "false", None, snap.ready)
     raise ValueError(f"no observation for {condition.KIND}")
 
 
@@ -156,6 +162,17 @@ def _usable(reading: Reading | None, snap: Snapshot, policy: Policy) -> bool:
 def under(point, tool) -> bool:
     drop = tool[2] - point[2]
     return math.dist(point[:2], tool[:2]) <= UNDER_XY_M and UNDER_Z_M[0] <= drop <= UNDER_Z_M[1]
+
+
+def uses_ready(conditions) -> bool:
+    """Whether any of the conditions contains `robot_ready` (its observation queries the controller manager)."""
+    def walk(condition):
+        if isinstance(condition, (ir.And, ir.Or)):
+            return any(walk(c) for c in condition.conditions)
+        if isinstance(condition, ir.Not):
+            return walk(condition.condition)
+        return isinstance(condition, ir.RobotReady)
+    return any(walk(c) for c in conditions)
 
 
 def _first(target: str, places: dict, test) -> str | None:

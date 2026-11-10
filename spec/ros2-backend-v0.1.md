@@ -16,13 +16,14 @@ The detachable joint is a simulation expedient: one per object, with topics `/mo
 
 ## Observations and verdicts
 
-Preconditions are evaluated from one observation snapshot before the first step; the goal from one snapshot after the last step succeeds. Conditions are `object_at`, `robot_at` and `holding`, combined with `and`, `or` and `not` in three-valued logic as in the symbolic simulator. Any other condition, or an atom naming an object without a marker or an `object_at` location without a region, fails with S508 or S507 before the first motion. Gazebo ground truth is never read.
+Preconditions are evaluated from one observation snapshot before the first step; the goal from one snapshot after the last step succeeds. Conditions are `object_at`, `robot_at`, `holding` and `robot_ready` ([0031](decisions/0031-observing-region-clear-and-robot-ready.md) R1), combined with `and`, `or` and `not` in three-valued logic as in the symbolic simulator. Any other condition, or an atom naming an object without a marker or an `object_at` location without a region, fails with S508 or S507 before the first motion. Gazebo ground truth is never read.
 
 | Reading | Source | Confidence |
 |---|---|---|
 | Marker position | for each site camera, ten frames stamped at least 500 ms of simulation time after the request; each detected marker's pose from `solvePnP` (subpixel corners) with ideal pinhole intrinsics from the site camera | per camera, the median position with confidence = the fraction of the ten frames whose detection lies within 1 cm of the median; the reading kept is the most confident camera's, the earlier camera in the site on a tie |
 | Tool pose | latest `base_link` to `tool0` transform | 1 |
 | Gripper | latest `robotiq_85_left_knuckle_joint` position | 1 |
+| Robot readiness | `ros2 control list_hardware_components` and `list_controllers`, queried only when a condition uses `robot_ready`; stamped with the latest joint states | 1 |
 
 A reading is usable only when its confidence is at least `min_confidence` and its age (snapshot time minus reading stamp, in simulation time) is at most `max_age`, from `@verify` or the RoboLang 1.3 defaults 0.9 and 10 s. An atom with an unusable reading is `unknown`.
 
@@ -31,8 +32,9 @@ A reading is usable only when its confidence is at least `min_confidence` and it
 | `object_at o l` | the marker of `o` is inside the region of `l` | the marker is seen anywhere else |
 | `robot_at r l` | `tool0` is within 2 cm and 0.05 rad of the site pose of `l` | it is not |
 | `holding r o` | the gripper is closed (within 0.05 rad of 0.8) and the marker of `o` is under `tool0`: within 10 cm horizontally and 5 to 35 cm below it | the gripper is open, or the marker is seen elsewhere |
+| `robot_ready r` | every hardware component the robot description declares, and `joint_state_broadcaster`, `joint_trajectory_controller` and `gripper_trajectory_controller`, are listed `active` | one of them is listed but not active, or not listed at all |
 
-A closed gripper whose object marker no camera sees gives `unknown`. Results follow the symbolic simulator: a false precondition is S101, an unknown one S102; a false goal condition is S301, an unknown one S302, each with `step: null`.
+A closed gripper whose object marker no camera sees gives `unknown`; so does `robot_ready` when the controller manager does not answer or the joint states are older than `max_age`. `robot_ready` has no Core form, so a goal using it has `core_outcome: null`. Results follow the symbolic simulator: a false precondition is S101, an unknown one S102; a false goal condition is S301, an unknown one S302, each with `step: null`.
 
 ## Failure codes
 

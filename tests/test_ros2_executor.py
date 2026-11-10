@@ -35,10 +35,13 @@ def reading(position, confidence=1.0, stamp=1000, orientation=None):
     return observe.Reading("overhead_camera", "aruco_fiducial", position, orientation, confidence, stamp)
 
 
-def snapshot(marker=IN_DST, confidence=1.0, stamp=1000, t=1500, tool=(0.0, 0.4, 0.5), grip=0.0):
+def snapshot(marker=IN_DST, confidence=1.0, stamp=1000, t=1500, tool=(0.0, 0.4, 0.5), grip=0.0, ready=1.0,
+             ready_stamp=None):
     markers = {} if marker is None else {7: reading(marker, confidence, stamp)}
+    ready_reading = None if ready is None else observe.Reading(
+        "controller_manager", "ros2_control_state", (ready,), None, 1.0, t if ready_stamp is None else ready_stamp)
     return observe.Snapshot(t, markers, observe.Reading("tf", "tf_tool0", tool, DOWN, 1.0, t),
-                            observe.Reading("joint_states", "gripper", (grip,), None, 1.0, t))
+                            observe.Reading("joint_states", "gripper", (grip,), None, 1.0, t), ready_reading)
 
 
 class FakeOps:
@@ -66,9 +69,9 @@ class FakeOps:
     def detach(self, model): self._call("detach", model)
     def wait_ms(self, duration): self._call("wait", duration)
     def versions(self): return {"ros": "lyrical"}
-    def observe(self, marker_ids):
+    def observe(self, marker_ids, ready=False):
         after_move = self.calls[-1][0] == "move"
-        self.calls.append(("observe", tuple(marker_ids)))
+        self.calls.append(("observe", tuple(marker_ids), ready))
         return self.grasp_snap if after_move else self.snap
 
 
@@ -422,3 +425,69 @@ def test_gazebo_joint_fails_after_bounded_retries(monkeypatch):
     with pytest.raises(BackendFailure, match="five requests") as exc:
         gazebo_joint_command("ur", "box", "attach")
     assert exc.value.code == "S506"
+
+
+# -------- robot_ready (decision 0031 R1) --------
+
+CONTROLLERS = """joint_state_broadcaster       joint_state_broadcaster/JointStateBroadcaster          active
+joint_trajectory_controller   joint_trajectory_controller/JointTrajectoryController  active
+gripper_trajectory_controller joint_trajectory_controller/JointTrajectoryController  active
+"""
+HARDWARE = """[INFO] [1793461358.000079384] [_ros2cli_410]: waiting for service ...
+Hardware Component 1
+\tname: RobotiqGazeboSimSystem
+\tstate: id=3 label=active
+Hardware Component 2
+\tname: ur
+\tstate: id=3 label=active
+"""
+DESCRIPTION = '<robot name="ur"><ros2_control name="ur"/><ros2_control name="RobotiqGazeboSimSystem"/></robot>'
+
+
+def test_robot_ready_from_ros2_control_output():
+    """Output captured from the phase 3 CI run (controllers.txt, hardware.txt)."""
+    from robolang_ros2.ros import robot_ready_from
+
+    assert robot_ready_from(HARDWARE, CONTROLLERS, DESCRIPTION, "ur") is True
+    assert robot_ready_from(HARDWARE.replace("id=3 label=active", "id=2 label=inactive", 1), CONTROLLERS,
+                            DESCRIPTION, "ur") is False
+    assert robot_ready_from(HARDWARE, CONTROLLERS.replace("  active\ngripper", "  inactive\ngripper"),
+                            DESCRIPTION, "ur") is False
+    stopped = "\n".join(line for line in CONTROLLERS.splitlines() if not line.startswith("gripper"))
+    assert robot_ready_from(HARDWARE, stopped, DESCRIPTION, "ur") is False  # an unloaded controller is not ready
+    assert robot_ready_from("", "", DESCRIPTION, "ur") is None  # no answer: unknown
+    assert robot_ready_from(HARDWARE, CONTROLLERS, None, "ur") is None
+
+
+@pytest.mark.parametrize("snap, result", [
+    (snapshot(ready=1.0), "true"),
+    (snapshot(ready=0.0), "false"),
+    (snapshot(ready=None), "unknown"),  # the controller manager did not answer
+    (snapshot(ready=1.0, ready_stamp=0, t=10_001), "unknown"),  # joint states older than max_age
+], ids=["ready", "not_ready", "no_answer", "stale"])
+def test_robot_ready_verdict(snap, result):
+    _, bindings, site = fixture()
+    policy = observe.Policy(observe.DEFAULT_MIN_CONFIDENCE, observe.DEFAULT_MAX_AGE_MS)
+    condition = compile_task(SOURCE.replace("  goal {", "  pre { robot_ready r; }\n  goal {")).preconditions[0]
+    assert observe.evaluate(condition, bindings, site, snap, policy) == result
+
+
+def test_robot_ready_precondition_gates_motion_and_is_queried_only_when_used():
+    task = compile_task(SOURCE.replace("  goal {", "  pre { robot_ready r; }\n  goal {"))
+    _, bindings, site = fixture()
+    ops = FakeOps(snap=snapshot(ready=0.0))
+    record = execute(task, bindings, site, ops)
+    assert record["failure"]["code"] == "S101" and [c[0] for c in ops.calls] == ["guard", "observe"]
+    assert ops.calls[1][2] is True and record["observations"][0]["ready"]["position"] == [0.0]
+    ops = FakeOps()
+    assert execute(task, bindings, site, ops)["state"] == "SUCCEEDED"
+    assert [c[2] for c in ops.calls if c[0] == "observe"] == [True, False, False]  # pre, grasp check, goal
+
+
+def test_robot_ready_of_another_robot_is_rejected_before_motion():
+    task = compile_task(SOURCE.replace("robot r,", "robot r, robot other,").replace(
+        "  goal {", "  pre { robot_ready other; }\n  goal {"))
+    _, bindings, site = fixture()
+    ops = FakeOps()
+    record = execute(task, {**bindings, "other": "arm9"}, site, ops)
+    assert record["failure"]["code"] == "S507" and ops.calls == [("guard", "ur")]
