@@ -1,0 +1,324 @@
+{
+  "command": [
+    "node",
+    "/tmp/i5/impl/impl/dist/src/main.js",
+    "run"
+  ],
+  "summary": {
+    "G-T1": "2/2",
+    "G-T2": "10/10",
+    "G-T3": "9/9",
+    "G-T4": "4/4",
+    "G-T5 deterministic": "25/25"
+  },
+  "results": {
+    "G-T1": [
+      {
+        "case": "happy_path",
+        "expectations_ok": true,
+        "expectation_failures": {},
+        "receipts_ok": true,
+        "receipt_difference": null,
+        "sends_ok": true,
+        "send_difference": null,
+        "deterministic": true,
+        "jcs_identical": "20/20",
+        "passed": true
+      },
+      {
+        "case": "happy_path_seed_1",
+        "expectations_ok": true,
+        "expectation_failures": {},
+        "receipts_ok": true,
+        "receipt_difference": null,
+        "sends_ok": true,
+        "send_difference": null,
+        "deterministic": true,
+        "jcs_identical": "20/20",
+        "passed": true
+      }
+    ],
+    "G-T2": [
+      {
+        "case": "v01_declines",
+        "expectations_ok": true,
+        "expectation_failures": {},
+        "receipts_ok": true,
+        "receipt_difference": null,
+        "sends_ok": true,
+        "send_difference": null,
+        "deterministic": true,
+        "jcs_identical": "6/6",
+        "passed": true
+      },
+      {
+        "case": "v02_duplicate_commit",
+        "expectations_ok": true,
+        "expectation_failures": {},
+        "receipts_ok": true,
+        "receipt_difference": null,
+        "sends_ok": true,
+        "send_difference": null,
+        "deterministic": true,
+        "jcs_identical": "20/20",
+        "passed": true
+      },
+      {
+        "case": "v03_replayed_commit",
+        "expectations_ok": true,
+        "expectation_failures": {},
+        "receipts_ok": true,
+        "receipt_difference": null,
+        "sends_ok": true,
+        "send_difference": null,
+        "deterministic": true,
+        "jcs_identical": "20/20",
+        "passed": true
+      },
+      {
+        "case": "v05_stale_confirmation",
+        "expectations_ok": true,
+        "expectation_failures": {},
+        "receipts_ok": true,
+        "receipt_difference": null,
+        "sends_ok": true,
+        "send_difference": null,
+        "deterministic": true,
+        "jcs_identical": "18/18",
+        "passed": true
+      },
+      {
+        "case": "v06_partition_before_release",
+        "expectations_ok": true,
+        "expectation_failures": {},
+        "receipts_ok": true,
+        "receipt_difference": null,
+        "sends_ok": true,
+        "send_difference": null,
+        "deterministic": true,
+        "jcs_identical": "40/40",
+        "passed": true
+      },
+      {
+        "case": "v07_release_ack_lost",
+        "expectations_ok": true,
+        "expectation_failures": {},
+        "receipts_ok": true,
+        "receipt_difference": null,
+        "sends_ok": true,
+        "send_difference": null,
+        "deterministic": true,
+        "jcs_identical": "22/22",
+        "passed": true
+      },
+      {
+        "case": "v08_arrived_without_evidence",
+        "expectations_ok": true,
+        "expectation_failures": {},
+        "receipts_ok": true,
+        "receipt_difference": null,
+        "sends_ok": true,
+        "send_difference": null,
+        "deterministic": true,
+        "jcs_identical": "20/20",
+        "passed": true
+      },
+      {
+        "case": "v11_payload_beyond_standing_authorization",
+        "expectations_ok": true,
+        "expectation_failures": {},
+        "receipts_ok": true,
+        "receipt_difference": null,
+        "sends_ok": true,
+        "send_difference": null,
+        "deterministic": true,
+        "jcs_identical": "10/10",
+        "passed": true
+      },
+      {
+        "case": "v12a_unsigned_commit",
+        "expectations_ok": true,
+        "expectation_failures": {},
+        "receipts_ok": true,
+        "receipt_difference": null,
+        "sends_ok": true,
+        "send_difference": null,
+        "deterministic": true,
+        "jcs_identical": "7/7",
+        "passed": true
+      },
+      {
+        "case": "v12b_wrongly_signed_commit",
+        "expectations_ok": true,
+        "expectation_failures": {},
+        "receipts_ok": true,
+        "receipt_difference": null,
+        "sends_ok": true,
+        "send_difference": null,
+        "deterministic": true,
+        "jcs_identical": "7/7",
+        "passed": true
+      }
+    ],
+    "G-T3": [
+      {
+        "case": "seq_duplicate_while_held",
+        "expectations_ok": true,
+        "expectation_failures": {},
+        "receipts_ok": true,
+        "receipt_difference": null,
+        "sends_ok": true,
+        "send_difference": null,
+        "deterministic": true,
+        "jcs_identical": "20/20",
+        "passed": true
+      },
+      {
+        "case": "seq_gap_abandoned",
+        "expectations_ok": true,
+        "expectation_failures": {},
+        "receipts_ok": true,
+        "receipt_difference": null,
+        "sends_ok": true,
+        "send_difference": null,
+        "deterministic": true,
+        "jcs_identical": "20/20",
+        "passed": true
+      },
+      {
+        "case": "seq_gap_filled",
+        "expectations_ok": true,
+        "expectation_failures": {},
+        "receipts_ok": true,
+        "receipt_difference": null,
+        "sends_ok": true,
+        "send_difference": null,
+        "deterministic": true,
+        "jcs_identical": "20/20",
+        "passed": true
+      },
+      {
+        "case": "seq_held_message_expires",
+        "expectations_ok": true,
+        "expectation_failures": {},
+        "receipts_ok": true,
+        "receipt_difference": null,
+        "sends_ok": true,
+        "send_difference": null,
+        "deterministic": true,
+        "jcs_identical": "20/20",
+        "passed": true
+      },
+      {
+        "case": "seq_lost_ack_holds_next",
+        "expectations_ok": true,
+        "expectation_failures": {},
+        "receipts_ok": true,
+        "receipt_difference": null,
+        "sends_ok": true,
+        "send_difference": null,
+        "deterministic": true,
+        "jcs_identical": "22/22",
+        "passed": true
+      },
+      {
+        "case": "seq_replay_while_fresh",
+        "expectations_ok": true,
+        "expectation_failures": {},
+        "receipts_ok": true,
+        "receipt_difference": null,
+        "sends_ok": true,
+        "send_difference": null,
+        "deterministic": true,
+        "jcs_identical": "20/20",
+        "passed": true
+      },
+      {
+        "case": "seq_silent_while_held",
+        "expectations_ok": true,
+        "expectation_failures": {},
+        "receipts_ok": true,
+        "receipt_difference": null,
+        "sends_ok": true,
+        "send_difference": null,
+        "deterministic": true,
+        "jcs_identical": "14/14",
+        "passed": true
+      },
+      {
+        "case": "seq_stale_nonduplicate",
+        "expectations_ok": true,
+        "expectation_failures": {},
+        "receipts_ok": true,
+        "receipt_difference": null,
+        "sends_ok": true,
+        "send_difference": null,
+        "deterministic": true,
+        "jcs_identical": "21/21",
+        "passed": true
+      },
+      {
+        "case": "seq_unsigned_not_held",
+        "expectations_ok": true,
+        "expectation_failures": {},
+        "receipts_ok": true,
+        "receipt_difference": null,
+        "sends_ok": true,
+        "send_difference": null,
+        "deterministic": true,
+        "jcs_identical": "20/20",
+        "passed": true
+      }
+    ],
+    "G-T4": [
+      {
+        "case": "v04_assistant_silent",
+        "expectations_ok": true,
+        "expectation_failures": {},
+        "receipts_ok": true,
+        "receipt_difference": null,
+        "sends_ok": true,
+        "send_difference": null,
+        "deterministic": true,
+        "jcs_identical": "11/11",
+        "passed": true
+      },
+      {
+        "case": "v09_stale_reverification",
+        "expectations_ok": true,
+        "expectation_failures": {},
+        "receipts_ok": true,
+        "receipt_difference": null,
+        "sends_ok": true,
+        "send_difference": null,
+        "deterministic": true,
+        "jcs_identical": "20/20",
+        "passed": true
+      },
+      {
+        "case": "v10_requester_authorizes",
+        "expectations_ok": true,
+        "expectation_failures": {},
+        "receipts_ok": true,
+        "receipt_difference": null,
+        "sends_ok": true,
+        "send_difference": null,
+        "deterministic": true,
+        "jcs_identical": "21/21",
+        "passed": true
+      },
+      {
+        "case": "v13_no_grasp",
+        "expectations_ok": true,
+        "expectation_failures": {},
+        "receipts_ok": true,
+        "receipt_difference": null,
+        "sends_ok": true,
+        "send_difference": null,
+        "deterministic": true,
+        "jcs_identical": "3/3",
+        "passed": true
+      }
+    ]
+  }
+}
