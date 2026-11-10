@@ -317,6 +317,73 @@ def test_live_hardware_guard_matches_active_gazebo_components():
     assert not _gazebo_hardware_matches(hardware, description.replace("GazeboSimSystem", "RealSystem"), "ur")
 
 
+class FakeGz:
+    """`gz topic -i` lists `listed` subscribers (none before ours starts, then ours); other calls are publishes."""
+
+    def __init__(self, sends, listed=(0, 1), info=True):
+        self.sends, self.listed, self.info, self.queries = sends, list(listed), info, 0
+
+    def __call__(self, args, **kwargs):
+        if "-i" in args:
+            count = self.listed[min(self.queries, len(self.listed) - 1)]
+            self.queries += 1
+            # As Jetty prints it: no Subscribers section at all while there are none.
+            subscribers = "".join(f"  tcp://127.0.0.1:{4000 + i}, google.protobuf.Message\n" for i in range(count))
+            section = f"Subscribers [Address, Message Type]:\n{subscribers}" if count else ""
+            text = f"Publishers [Address, Message Type]:\n  tcp://127.0.0.1:1, gz.msgs.StringMsg\n{section}" \
+                if self.info else "No publishers\n"
+            return subprocess.CompletedProcess(args, 0, text, "")
+        self.sends.append(args)
+        return subprocess.CompletedProcess(args, 0, "", "")
+
+
+def test_subscriber_count_reads_gz_topic_info(monkeypatch):
+    from robolang_ros2.ros import _subscriber_count
+
+    monkeypatch.setattr(subprocess, "run", FakeGz([], listed=(2,)))
+    assert _subscriber_count("/t") == 2
+    monkeypatch.setattr(subprocess, "run", FakeGz([], listed=(0,)))
+    assert _subscriber_count("/t") == 0  # a Publishers section without a Subscribers section
+    monkeypatch.setattr(subprocess, "run", FakeGz([], info=False))
+    assert _subscriber_count("/t") is None  # unknown format: fall back to the fixed wait
+
+
+def test_gazebo_joint_publishes_only_after_its_subscriber_is_listed(monkeypatch):
+    class Subscriber:
+        def communicate(self, timeout):
+            return 'data: "detached"\n', ""
+
+        def poll(self):
+            return 0
+
+    sends = []
+    gz = FakeGz(sends, listed=(0, 0, 0, 1))
+    monkeypatch.setattr(subprocess, "Popen", lambda *args, **kwargs: Subscriber())
+    monkeypatch.setattr(subprocess, "run", gz)
+    monkeypatch.setattr("robolang_ros2.ros.time.sleep", lambda _: None)
+    gazebo_joint_command("ur", "box", "detach")
+    assert gz.queries == 4 and len(sends) == 1  # three polls saw no new subscriber, the fourth did
+
+
+def test_gazebo_joint_fails_closed_when_its_subscriber_never_appears(monkeypatch):
+    class Subscriber:
+        def communicate(self, timeout):
+            return "", ""
+
+        def poll(self):
+            return 0
+
+    clock = iter(range(0, 1000))
+    sends = []
+    monkeypatch.setattr(subprocess, "Popen", lambda *args, **kwargs: Subscriber())
+    monkeypatch.setattr(subprocess, "run", FakeGz(sends, listed=(0,)))
+    monkeypatch.setattr("robolang_ros2.ros.time.sleep", lambda _: None)
+    monkeypatch.setattr("robolang_ros2.ros.time.monotonic", lambda: next(clock))
+    with pytest.raises(BackendFailure, match="did not list a subscriber") as exc:
+        gazebo_joint_command("ur", "box", "attach")
+    assert exc.value.code == "S506" and sends == []  # nothing published that could go unconfirmed
+
+
 def test_gazebo_joint_retries_a_lost_transport_publication(monkeypatch):
     sends = []
 
@@ -334,7 +401,7 @@ def test_gazebo_joint_retries_a_lost_transport_publication(monkeypatch):
 
     subscriber = Subscriber()
     monkeypatch.setattr(subprocess, "Popen", lambda *args, **kwargs: subscriber)
-    monkeypatch.setattr(subprocess, "run", lambda args, **kwargs: sends.append(args))
+    monkeypatch.setattr(subprocess, "run", FakeGz(sends))
     monkeypatch.setattr("robolang_ros2.ros.time.sleep", lambda _: None)
     gazebo_joint_command("ur", "box", "attach")
     assert len(sends) == 2
@@ -350,7 +417,7 @@ def test_gazebo_joint_fails_after_bounded_retries(monkeypatch):
             return 0
 
     monkeypatch.setattr(subprocess, "Popen", lambda *args, **kwargs: Subscriber())
-    monkeypatch.setattr(subprocess, "run", lambda *args, **kwargs: None)
+    monkeypatch.setattr(subprocess, "run", FakeGz([]))
     monkeypatch.setattr("robolang_ros2.ros.time.sleep", lambda _: None)
     with pytest.raises(BackendFailure, match="five requests") as exc:
         gazebo_joint_command("ur", "box", "attach")
