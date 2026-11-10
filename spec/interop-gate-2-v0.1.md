@@ -13,7 +13,8 @@ decision records [0007](decisions/0007-rl-arch-02-core-and-reference-simulation.
 **Errata:** [decision record 0010](decisions/0010-binding-errata-lease-expired-commitment-state.md)
 (B1, B2, approved 2026-10-27) and [decision record 0011](decisions/0011-interop-2a-bundle-errata.md) (N1–N14, approved 2026-10-28) amend sections 3, 6.2–6.5,
 9.1.1 and 9.2. [Decision record 0030](decisions/0030-relaunch-interop-3-on-core-0-2.md) (J3, approved 2026-11-02)
-amends sections 1, 4.1, 6.4, 7, 8 and 13 for the relaunch on Core 0.2. The amended text is marked. Where the reference or the INTEROP-1 harness does
+amends sections 1, 4.1, 6.4, 7, 8 and 13 for the relaunch on Core 0.2. [Decision record 0037](decisions/0037-gate-2-errata-f1-f2.md)
+(F1, approved 2026-11-10) amends section 6.3. The amended text is marked. Where the reference or the INTEROP-1 harness does
 not yet follow it, the [discrepancy register](../docs/interop/spec-implementation-discrepancies.md) lists the difference.
 
 ## 1. What gate 2 proves, and what it does not
@@ -175,7 +176,7 @@ It is not a transport for real deployments and does not answer RFC-001 open ques
 | `start` | `now_ms`, `participant`, `view` (6.4) | Begin a run. The frame does not name the case |
 | `deliver` | `now_ms`, `data` (the message text exactly as delivered, which may be altered) | A message arrives; the participant applies Core 8 and its rules |
 | `timer` | `now_ms`, `timer` | A timer the participant set has fired |
-| `sensed` | `now_ms`, `request`, `value` (or `null`), `observed_at_ms` | Answer to `sense`: the sensor's reading, already lagged; `null` if the sensor is unavailable or cannot see the thing |
+| `sensed` | `now_ms`, `request`, `value` (or `null`), `observed_at_ms` (or `null`) | Answer to `sense`: the sensor's reading, already lagged; `null` if the sensor is unavailable or cannot see the thing. *(Erratum 0037, F1:)* `observed_at_ms` is `null` exactly when `value` is `null`: no reading, no reading time |
 | `action_done` | `now_ms`, `action` | An action the participant started has completed |
 | `end` | — | The run is over; the participant exits |
 
