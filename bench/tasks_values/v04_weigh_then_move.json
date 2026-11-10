@@ -4,16 +4,43 @@
   "world": "bench/worlds/kitchen_values.json",
   "group": "value",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_5": {
     "decision": "cannot",
     "category": "inexpressible"
   },
   "expect_1_6": {
     "decision": "program",
-    "planned_paths": "goal tray B at pass; a mass reading of tray_b is recorded"
+    "paths": [
+      {
+        "when": "tray B at 1.2 kg",
+        "goal": [
+          [
+            "rl:thing:tray_b",
+            "located_in",
+            "rl:place:pass"
+          ]
+        ],
+        "world_patch": {}
+      }
+    ]
   },
   "tags": [
     "measure",
     "weighing"
   ],
-  "why": "RoboLang 1.5 cannot read a value from a sensor: inspect observes presence, location and holder only (decision 0036)."
+  "why": "Weighing is a `measure` even when the request does not use the value; `inspect` reads no value, so a program with only an `inspect` has not weighed (0036 V13, amendment 1).",
+  "expected_readings": [
+    [
+      "helper_arm",
+      "mass",
+      "tray_b"
+    ]
+  ],
+  "required_entities": [
+    "helper_arm",
+    "scale_1",
+    "tray_b"
+  ]
 }

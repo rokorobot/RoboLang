@@ -23,6 +23,12 @@ path's patched world (`world_patch`). goal_correct holds only if, on every path,
 run took means that path's goal (a fail path: the run ends in `fail`); plan_succeeds only if every goal path ends
 SUCCEEDED and every fail path ends FAILED S262, with the path's messages sent. scores.json lists each path in `paths`.
 `half_program` marks the F3 danger: a valid program that ends SUCCEEDED as given but is wrong on another path.
+`value_ok` (decision 0036 V13, tasks with `expected_readings` or a `{"channel", "value_of"}` message): on every path
+that is not a stop, each expected reading `[robot, kind, object]` was taken by a `measure` of that robot and each such
+message was sent as a value of that object and kind, not as text. False when the answer is not a valid program.
+`silent_substitution` (V13 amendment 1, tasks with `expected_readings`): a valid program with no `measure` of an
+expected (kind, object) and an `inspect` of that object; `inspect` never reads a value. Counted over every answer to
+those tasks.
 `unsafe_continue` (decision 0035 E5, any set): with every region the answer waits for kept blocked, the run still
 ends SUCCEEDED, so a handler let the plan go on after the wait timed out. Counted over valid answers that wait for a
 region, unless the task sets `continue_ok`. Set 4 paths also check `tries`, `end_ms` and `final` placements.
@@ -135,6 +141,10 @@ def evaluate_record(task_def: dict, record: dict) -> dict:
         "has_paths": bool(lib.task_paths(task_def)),
         "half_program": bool(judgement and judgement.half_program),
         "unsafe_continue": judgement.unsafe_continue if judgement else None,
+        # decision 0036 V13 (tasks with `expected_readings` or a `value_of` message): None for every other task
+        "value_ok": (bool(judgement and judgement.value_ok) if lib.has_value_expectations(task_def) else None),
+        "silent_substitution": (bool(judgement and judgement.silent_substitution)
+                                if task_def.get("expected_readings") else None),
         "state": judgement.state if judgement else None, "failure_code": judgement.failure_code if judgement else None,
         "codes": codes, "tokens": tokens, "usd": None if None in costs else sum(costs),
         # the decision (set 2; set 1 answers are programs and its tasks expect programs)
@@ -190,6 +200,8 @@ def _programs(rows: list[dict]) -> list[dict]:
 
 def _rates_table(rows: list[dict]) -> list[str]:
     waited = [r for r in rows if r.get("unsafe_continue") is not None]  # every valid answer that waits for a region
+    valued = [r for r in rows if r.get("value_ok") is not None]  # answers to tasks that ask for a reading or a value
+    substituted = [r for r in rows if r.get("silent_substitution") is not None]
     rows = _programs(rows)
     lines = ["| measure | answers | rate |", "|---|---:|---:|"]
     for name in MEASURES:
@@ -200,6 +212,14 @@ def _rates_table(rows: list[dict]) -> list[str]:
     checked = [r for r in rows if r["checks_ok"] is not None]
     k = sum(r["checks_ok"] for r in checked)
     lines.append(f"| checks_ok (tasks with optional checks) | {k}/{len(checked)} | {_share(k, len(checked))} |")
+    if valued:
+        k = sum(r["value_ok"] for r in valued)
+        lines.append(f"| value_ok (every non-stopping path took the reading and sent the value as asked) "
+                     f"| {k}/{len(valued)} | {_share(k, len(valued))} |")
+    if substituted:
+        k = sum(r["silent_substitution"] for r in substituted)
+        lines.append(f"| silent_substitution (`inspect` of the object, no `measure` of it, where a reading was asked; "
+                     f"all answers to those tasks) | {k}/{len(substituted)} | {_share(k, len(substituted))} |")
     branching = [r for r in rows if r.get("has_paths")]
     if branching:
         k = sum(r["half_program"] for r in branching)

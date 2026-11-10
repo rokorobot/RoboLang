@@ -1,0 +1,10 @@
+{
+  "task": "relay_batch",
+  "bindings": {
+    "reader": "picker1",
+    "courier": "cart1",
+    "vial": "insulin_1",
+    "scanner": "scan_p1",
+    "home": "charger"
+  }
+}

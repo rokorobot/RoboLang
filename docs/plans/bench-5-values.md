@@ -2,8 +2,8 @@
 
 **Status:** labels **APPROVED by the owner, 2026-11-09**, with `v15` as a program (0036 V3, option b). Built in
 `bench/tasks_values/` (`--set values`); tests `tests/test_bench_values.py`.
-Decision record: [0036](../../spec/decisions/0036-lang-4-measured-values.md). Directory when approved: `bench/tasks_values/`,
-`bench/reference_values/`. Nothing here is built or run.
+Decision record: [0036](../../spec/decisions/0036-lang-4-measured-values.md). Directory: `bench/tasks_values/`,
+`bench/reference_values/`. Labelled for 1.6 in 0036 PR 2: [bench-errata-1-6.md](../evidence/bench-errata-1-6.md). The acceptance run has not been made.
 
 ## How the set is used
 

@@ -1,0 +1,15 @@
+// bench/reference_values/v03_wait_to_cool.rob: hand-written reference
+robolang 1.6;
+
+task wait_to_cool(robot r, object pan, sensor probe, location src, location dst) {
+    goal { object_at pan dst; }
+    plan {
+        move r to src;
+        wait until temperature of pan using probe < 60 degC timeout 10 min else {
+            fail "pan 1 did not cool in time";
+        }
+        grasp r pan;
+        move r to dst;
+        place r pan at dst;
+    }
+}

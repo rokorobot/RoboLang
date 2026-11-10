@@ -1397,7 +1397,8 @@ def test_v10_no_reading_go_on():
     assert offline["state"] == "SUCCEEDED" and where(offline, "bowl_1") == "prep_1"
     assert offline["steps"][1]["handled"] == "S232"
     assert [s["message"]["message"] for s in offline["steps"] if s["message"]] == ["no reading"]
-    _, empty = bench_run(V10, kitchen(), bindings)  # the pan has no temperature stated: nothing to read, carry on
+    # the pan has no temperature stated (the benchmark world does state one): nothing to read, carry on
+    _, empty = bench_run(V10, kitchen(lambda w: w["objects"]["pan_2"].pop("properties")), bindings)
     assert empty["state"] == "SUCCEEDED" and empty["steps"][1]["handled"] == "S236"
 
 

@@ -2,13 +2,50 @@
   "id": "u19_send_batch",
   "prompt": "Scan the insulin with picker1's scanner and send the batch number you read to the \"dispatch\" channel.",
   "world": "bench/worlds/pharmacy.json",
-  "group": "inexpressible",
+  "group": "value",
   "expect": {
+    "decision": "program",
+    "category": "none"
+  },
+  "expect_1_5": {
     "decision": "cannot",
     "category": "inexpressible"
   },
+  "expect_1_6": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "insulin 1 labelled LOT-7731",
+        "goal": [],
+        "world_patch": {}
+      }
+    ]
+  },
   "tags": [
-    "value_report"
+    "measure",
+    "label",
+    "value_message"
   ],
-  "why": "communicate sends a literal string; a measured value cannot be put in it."
+  "why": "The batch number is a `label` reading, sent as a value (0036 V5, V8). The request names no end state. Inexpressible in 1.5: `communicate` sent a literal.",
+  "expected_readings": [
+    [
+      "picker1",
+      "label",
+      "insulin_1"
+    ]
+  ],
+  "expected_messages": [
+    {
+      "channel": "dispatch",
+      "value_of": [
+        "insulin_1",
+        "label"
+      ]
+    }
+  ],
+  "required_entities": [
+    "picker1",
+    "scan_p1"
+  ],
+  "goal_free": true
 }

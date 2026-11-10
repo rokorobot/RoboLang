@@ -53,3 +53,22 @@ inexpressible.
 ## Needs the owner
 
 Nothing for the design: V1–V13 approved on 2026-11-09. Each paid run of V12 is confirmed before it starts.
+
+## Implementation notes (PR 2)
+
+Status unchanged (APPROVED). Built: the reference, its package copy and both prompts teach 1.6 (grammars 1.3 to 1.6 in
+the grammar-only prompt); world files 1.2 for the kitchen, pharmacy, cleanroom and warehouse benchmark worlds; the relabels
+above; the scorer measures `value_ok` and `silent_substitution` (V13). Every change, before and after, is in
+[bench-errata-1-6.md](../../docs/evidence/bench-errata-1-6.md). No paid run was made.
+
+- **Relabels as built:** the 15 set 5 `value` tasks and `u05`, `u06`, `u19`, `u20` are programs with paths (`u06` moves to
+  `kitchen_values.json`, where the chef arm is free to grasp); `i12_scale_down` is infeasible; `w_scale_precheck`,
+  `d_serum_tube` and `f07` stay programs and now require a reading. There was no set 2 twin.
+- **Rules chosen where this record is silent:** (1) a request that names no end state (send a batch number, report a
+  temperature) has `goal_free: true`: any goal that the run reaches is right, since the language needs a goal and the
+  request gives none; (2) "otherwise stop" and "only if" accept either a `fail` or leaving things as they are
+  (`goals` on a `fails` path); (3) a contact reading means the program moves the robot to the object first, so the
+  references do, and the reference says so; (4) `v15`'s "first try fails, second works" is a test with a scripted fault,
+  not a path (a world patch cannot force it).
+- Freeze v2 regenerated: 800 files, digest `f740b232e52a939b3a8065c50a8671d1240a4e2a7aa784d37f408795bfecf234`.
+

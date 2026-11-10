@@ -1,5 +1,5 @@
 // bench/reference_values/c01_hot_pan_words.rob: hand-written reference
-robolang 1.5;
+robolang 1.6;
 
 task move_pan(robot r, object p, location src, location dst) {
     goal { object_at p dst; }

@@ -1,12 +1,14 @@
-// bench/reference_hard/d_serum_tube.rob: hand-written reference solution
-robolang 1.3;
+// bench/bench/reference_hard/d_serum_tube.rob: hand-written
+robolang 1.6;
 
 task spin(robot r, object box, location src, location dst, sensor therm) {
     goal { object_at box dst; }
     plan {
-        wait until sensor_ok therm timeout 15 s;
+        wait until sensor_ok therm timeout 15 s else {
+            fail "the thermometer did not come online";
+        }
         move r to src;
-        inspect r box using therm;
+        measure r temperature of box using therm as t;
         grasp r box;
         move r to dst;
         place r box at dst;

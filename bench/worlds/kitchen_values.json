@@ -1,6 +1,6 @@
 {
   "world_schema": "robolang.sim.world",
-  "world_schema_version": "1.1",
+  "world_schema_version": "1.2",
   "locations": [
     "pantry",
     "fridge",
@@ -63,22 +63,46 @@
     "pan_1": {
       "present": true,
       "location": "stove",
-      "class": "pan"
+      "class": "pan",
+      "properties": {
+        "temperature": {
+          "value": "55",
+          "unit": "degC"
+        }
+      }
     },
     "pan_2": {
       "present": true,
       "location": "sink",
-      "class": "pan"
+      "class": "pan",
+      "properties": {
+        "temperature": {
+          "value": "30",
+          "unit": "degC"
+        }
+      }
     },
     "tray_a": {
       "present": true,
       "location": "oven",
-      "class": "tray"
+      "class": "tray",
+      "properties": {
+        "mass": {
+          "value": "0.9",
+          "unit": "kg"
+        }
+      }
     },
     "tray_b": {
       "present": true,
       "location": "prep_2",
-      "class": "tray"
+      "class": "tray",
+      "properties": {
+        "mass": {
+          "value": "1.2",
+          "unit": "kg"
+        }
+      }
     },
     "bowl_1": {
       "present": true,
@@ -113,11 +137,25 @@
     },
     "probe_temp": {
       "robot": "chef_arm",
-      "available": true
+      "available": true,
+      "measures": {
+        "temperature": {
+          "unit": "degC",
+          "uncertainty": "0.5",
+          "contact": true
+        }
+      }
     },
     "scale_1": {
       "robot": "helper_arm",
-      "available": true
+      "available": true,
+      "measures": {
+        "mass": {
+          "unit": "kg",
+          "uncertainty": "0.01",
+          "contact": true
+        }
+      }
     },
     "cam_runner": {
       "robot": "runner",

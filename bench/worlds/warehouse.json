@@ -1,6 +1,6 @@
 {
   "world_schema": "robolang.sim.world",
-  "world_schema_version": "1.1",
+  "world_schema_version": "1.2",
   "locations": ["charging", "conveyor", "dock", "handoff", "inspection_bay", "shelf_a", "shelf_b", "table"],
   "regions": {
     "aisle": { "clear": false },
@@ -13,15 +13,15 @@
     "amr2": { "ready": false, "location": "charging", "gripper": true, "max_speed": [{ "value": "1.5", "unit": "m/s" }] }
   },
   "objects": {
-    "box1": { "present": true, "location": "shelf_a", "class": "box", "mass": { "value": "2", "unit": "kg", "uncertainty": "0.1" } },
-    "box2": { "present": true, "location": "shelf_b", "class": "box", "mass": { "value": "3", "unit": "kg", "uncertainty": "0.1" } },
-    "crate1": { "present": true, "location": "dock", "class": "crate", "mass": { "value": "10", "unit": "kg", "uncertainty": "0.5" } },
-    "part7": { "present": true, "location": "table", "class": "part", "mass": { "value": "0.5", "unit": "kg", "uncertainty": "0.05" } }
+    "box1": { "present": true, "location": "shelf_a", "class": "box", "mass": { "value": "2", "unit": "kg", "uncertainty": "0.1" }, "properties": { "mass": { "value": "2", "unit": "kg" } } },
+    "box2": { "present": true, "location": "shelf_b", "class": "box", "mass": { "value": "3", "unit": "kg", "uncertainty": "0.1" }, "properties": { "mass": { "value": "3", "unit": "kg" } } },
+    "crate1": { "present": true, "location": "dock", "class": "crate", "mass": { "value": "10", "unit": "kg", "uncertainty": "0.5" }, "properties": { "mass": { "value": "10", "unit": "kg" } } },
+    "part7": { "present": true, "location": "table", "class": "part", "mass": { "value": "0.5", "unit": "kg", "uncertainty": "0.05" }, "properties": { "mass": { "value": "0.5", "unit": "kg" } } }
   },
   "sensors": {
     "camera_dock": { "robot": "amr1", "available": true },
     "camera_top": { "robot": "arm1", "available": true },
-    "scale1": { "robot": "arm2", "available": true }
+    "scale1": { "robot": "arm2", "available": true, "measures": { "mass": { "unit": "kg", "uncertainty": "0.01", "contact": true } } }
   },
   "events": [
     { "at": { "value": "8", "unit": "s" }, "fact": "region_clear", "target": "aisle", "value": true }

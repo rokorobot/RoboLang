@@ -1,0 +1,14 @@
+// bench/reference_values/v01_probe_report.rob: hand-written reference
+robolang 1.6;
+
+task probe_and_move(robot r, object pan, sensor probe, location src, location dst) {
+    goal { object_at pan dst; }
+    plan {
+        move r to src;
+        measure r temperature of pan using probe as t;
+        communicate r to "pass" with t;
+        grasp r pan;
+        move r to dst;
+        place r pan at dst;
+    }
+}

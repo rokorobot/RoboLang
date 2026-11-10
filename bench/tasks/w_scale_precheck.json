@@ -5,7 +5,8 @@
   "expected_goal": [
     ["rl:robot:arm2", "located_in", "rl:place:conveyor"]
   ],
-  "tags": ["inspect", "sensor_param", "precondition", "sensor_ok", "robot_at"],
+  "expected_readings": [["arm2", "mass", "part7"]],
+  "tags": ["measure", "sensor_param", "precondition", "sensor_ok", "robot_at"],
   "probes": [
     {
       "name": "scale_broken",

@@ -4,17 +4,48 @@
   "world": "bench/worlds/pharmacy.json",
   "group": "value",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_5": {
     "decision": "cannot",
     "category": "inexpressible"
   },
   "expect_1_6": {
     "decision": "program",
-    "planned_paths": "the message from cart1 carries the label"
+    "paths": [
+      {
+        "when": "insulin 1 labelled LOT-7731",
+        "goal": [],
+        "world_patch": {}
+      }
+    ]
   },
   "tags": [
     "measure",
     "label",
     "two_robot"
   ],
-  "why": "RoboLang 1.5 cannot read a value from a sensor: inspect observes presence, location and holder only (decision 0036)."
+  "why": "A binding made by one robot and used by another robot's step: cart1 sends what picker1 read (0036 V3, V8). The request names no end state.",
+  "expected_readings": [
+    [
+      "picker1",
+      "label",
+      "insulin_1"
+    ]
+  ],
+  "expected_messages": [
+    {
+      "channel": "dispatch",
+      "value_of": [
+        "insulin_1",
+        "label"
+      ]
+    }
+  ],
+  "required_entities": [
+    "picker1",
+    "cart1",
+    "scan_p1"
+  ],
+  "goal_free": true
 }

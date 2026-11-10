@@ -18,14 +18,14 @@
   "tags": [
     "wait_until",
     "sensor_ok",
-    "inspect",
+    "measure",
     "robot_at"
   ],
   "expected_action_sequences": [
     {
       "steps": [
         {
-          "kind": "inspect",
+          "kind": "measure",
           "robot": "picker1",
           "obj": "insulin_1",
           "sensor": "thermo_p1"
@@ -37,5 +37,12 @@
         }
       ]
     }
+  ],
+  "expected_readings": [
+    [
+      "picker1",
+      "temperature",
+      "insulin_1"
+    ]
   ]
 }

@@ -1,0 +1,11 @@
+// bench/bench/reference_ask/u20_report_temp.rob: hand-written
+robolang 1.6;
+
+task report_temp(robot r, object pan, sensor probe, location src) {
+    goal { robot_at r src; }
+    plan {
+        move r to src;
+        measure r temperature of pan using probe as t;
+        communicate r to "pass" with t;
+    }
+}

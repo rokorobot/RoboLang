@@ -1,0 +1,18 @@
+// bench/reference_values/v05_heavy_grams.rob: hand-written reference
+robolang 1.6;
+
+task weigh_gate(robot r, object tray, sensor scale, location src, location dst) {
+    plan {
+        move r to src;
+        measure r mass of tray using scale as m;
+        if m > 1500 g {
+            communicate r to "pass" with "tray B is heavy";
+            fail "tray B is heavy";
+        } else {
+            goal { object_at tray dst; }
+            grasp r tray;
+            move r to dst;
+            place r tray at dst;
+        }
+    }
+}

@@ -4,16 +4,47 @@
   "world": "bench/worlds/kitchen_values.json",
   "group": "value",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_5": {
     "decision": "cannot",
     "category": "inexpressible"
   },
   "expect_1_6": {
     "decision": "program",
-    "planned_paths": "goal pan 1 at sink; the message carries the reading"
+    "paths": [
+      {
+        "when": "pan 1 at 55 degC",
+        "goal": [
+          [
+            "rl:thing:pan_1",
+            "located_in",
+            "rl:place:sink"
+          ]
+        ],
+        "world_patch": {}
+      }
+    ]
   },
   "tags": [
     "measure",
     "value_message"
   ],
-  "why": "RoboLang 1.5 cannot read a value from a sensor: inspect observes presence, location and holder only (decision 0036)."
+  "why": "Taking a temperature is a `measure`, and the reading is sent as a value with `communicate ... with t` (0036 V2, V8).",
+  "expected_readings": [
+    [
+      "chef_arm",
+      "temperature",
+      "pan_1"
+    ]
+  ],
+  "expected_messages": [
+    {
+      "channel": "pass",
+      "value_of": [
+        "pan_1",
+        "temperature"
+      ]
+    }
+  ]
 }

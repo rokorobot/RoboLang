@@ -41,10 +41,11 @@ VALUES_REFERENCE_DIR = BENCH / "reference_values"
 PROMPT_FILE = BENCH / "prompt.md"
 REFERENCE_FILE = ROOT / "docs" / "language-reference.md"
 MINIMAL_PROMPT_FILE = BENCH / "prompt_minimal.md"
-# 1.5 is a delta over 1.4, itself a delta over 1.3: the grammar-only prompt pastes all three
-GRAMMAR_FILE = ROOT / "spec" / "grammar-v1.5.ebnf"
+# 1.6 is a delta over 1.5, over 1.4, over 1.3: the grammar-only prompt pastes all four, the base first
+GRAMMAR_FILE = ROOT / "spec" / "grammar-v1.6.ebnf"
 BASE_GRAMMAR_FILE = ROOT / "spec" / "grammar-v1.3.ebnf"
-GRAMMAR_FILES = (BASE_GRAMMAR_FILE, ROOT / "spec" / "grammar-v1.4.ebnf", GRAMMAR_FILE)
+GRAMMAR_FILES = (BASE_GRAMMAR_FILE, ROOT / "spec" / "grammar-v1.4.ebnf", ROOT / "spec" / "grammar-v1.5.ebnf",
+                 GRAMMAR_FILE)
 GRAMMAR_MARK = "{{GRAMMAR}}"  # in prompt_minimal.md: replaced by the text of the grammar file
 REFERENCE_MARK = "{{LANGUAGE_REFERENCE}}"  # in prompt.md: replaced by the shipped, tested reference
 
@@ -90,7 +91,7 @@ ANSWER_SCHEMA = {
         "entities": {"type": "array", "items": {"type": "string"},
                      "description": "World entity IDs: for cannot, the ones that block the request; for clarify, every "
                                     "candidate the request could mean. Empty for a program."},
-        "rob": {"type": "string", "description": "The complete RoboLang 1.4 source. Empty when decision is cannot."},
+        "rob": {"type": "string", "description": "The complete RoboLang 1.6 source. Empty when decision is cannot."},
         "task": {"type": "string", "description": "The name of the task in the source to run. Empty when cannot."},
         "bindings": {  # a list of pairs: structured outputs require additionalProperties false on objects
             "type": "array",
@@ -164,6 +165,16 @@ def _locations(world: dict) -> list[str]:
     return [f"locations: {', '.join(world['locations'])}"]
 
 
+def _measures(sensor: dict) -> str:
+    """World file 1.2: what a sensor measures, e.g. `; measures temperature in degC +/- 0.5, contact`. What the
+    object properties read is never shown: the program must measure it, not decide from the description (0036)."""
+    kinds = []
+    for kind, m in sensor.get("measures", {}).items():
+        shown = kind + (f" in {m['unit']} +/- {m['uncertainty']}" if "unit" in m else "")
+        kinds.append(shown + (", contact" if m.get("contact") else ""))
+    return f"; measures {'; '.join(kinds)}" if kinds else ""
+
+
 def _facts(world: dict) -> list[str]:
     lines = []
     regions = world.get("regions", {})
@@ -190,11 +201,13 @@ def _facts(world: dict) -> list[str]:
         objects.append(f"{name} ({o.get('class', 'object')}, {where})")
     if objects:
         lines.append(f"objects: {'; '.join(objects)}")
-    sensors = [f"{n} (on {s['robot']}, {'available' if s.get('available') else 'not available'})"
+    sensors = [f"{n} (on {s['robot']}, {'available' if s.get('available') else 'not available'}{_measures(s)})"
                for n, s in world.get("sensors", {}).items()]
     if sensors:
         lines.append(f"sensors: {'; '.join(sensors)}")
     for event in world.get("events", []):
+        if event["fact"] == "property":  # what an object reads is what the program must measure: never shown (0036)
+            continue
         at = event["at"]
         state = "true" if event["value"] else "false"
         when = f"{at['value']} {at['unit']}"
@@ -336,6 +349,8 @@ class Judgement:
     paths: list[dict] | None = None     # a task with `expect_1_4.paths`: one entry per path, see `judge_paths`
     half_program: bool = False          # valid, SUCCEEDED as given, but wrong on another path (decision 0027, G1)
     unsafe_continue: bool | None = None  # a forced wait timeout still ends SUCCEEDED (decision 0035 E5); None: no wait
+    value_ok: bool | None = None        # decision 0036 V13: the expected readings were taken and sent; None: none asked
+    silent_substitution: bool | None = None  # 0036 V13, amendment 1: `inspect` for a reading; None: not asked
 
 
 def _merge(base: dict, patch: dict) -> dict:
@@ -371,9 +386,9 @@ def _check_probe(task_def: dict, checked: Checked, probe: dict, bindings: dict[s
 def task_paths(task_def: dict) -> list[dict] | None:
     """
     The paths of a branching task (set 2 and 3, `expect_1_4.paths`; set 4 and pre-registered 1.5 labels,
-    `expect_1_5.paths`), each with the world that forces it, or None.
+    `expect_1_5.paths`; sets that teach 1.6, `expect_1_6.paths`), each with the world that forces it, or None.
     """
-    for key in ("expect_1_5", "expect_1_4"):
+    for key in ("expect_1_6", "expect_1_5", "expect_1_4"):
         paths = (task_def.get(key) or {}).get("paths")
         if paths:
             return paths
@@ -400,6 +415,40 @@ def _path_checks(path: dict, result) -> bool:
     return all(_located(result.final_world, subject) == place for subject, _, place in path.get("final", []))
 
 
+def _value_ok(task_def: dict, bindings: dict[str, str], result, readings: list, messages: list) -> bool:
+    """
+    Decision 0036 V13. Every expected reading `[robot, kind, object]` was taken (a `measure` that succeeded, by that
+    robot: its sensor is on it) and every expected value message `{"channel", "value_of": [object, kind]}` was sent
+    on that channel with a reading of that object and kind, not a text. `messages` adds to the task's own.
+    """
+    taken = {(bindings.get(s.step.robot, s.step.robot), s.reading.kind, s.reading.subject)
+             for s in result.steps if s.reading is not None and s.status == "succeeded"}
+    sent = {(s.message.channel, s.message.value.subject, s.message.value.kind)
+            for s in result.steps if s.message and s.message.value is not None and s.status == "succeeded"}
+    wanted = [m for m in task_def.get("expected_messages", []) if isinstance(m, dict)] + list(messages)
+    return all(tuple(r) in taken for r in readings) and all((m["channel"], *m["value_of"]) in sent for m in wanted)
+
+
+def has_value_expectations(task_def: dict) -> bool:
+    messages = task_def.get("expected_messages", [])
+    return bool(task_def.get("expected_readings")) or any(isinstance(m, dict) for m in messages)
+
+
+def silent_substitution(task_def: dict, checked: Checked, bindings: dict[str, str]) -> bool | None:
+    """
+    Decision 0036 V13, amendment 1. A valid program that has no `measure` of an expected (kind, object) but has an
+    `inspect` of that object did less than was asked: `inspect` never reads a value. None when the task expects no
+    reading. Judged on the source (any branch or handler), not on a run.
+    """
+    expected = task_def.get("expected_readings")
+    if not expected:
+        return None
+    steps = [s for _, s in task_ir.walk(checked.task.steps)]
+    measured = {(s.reading, bindings.get(s.obj, s.obj)) for s in steps if isinstance(s, task_ir.Measure)}
+    inspected = {bindings.get(s.obj, s.obj) for s in steps if isinstance(s, task_ir.Inspect)}
+    return any((kind, obj) not in measured and obj in inspected for _, kind, obj in expected)
+
+
 def judge_paths(task_def: dict, checked: Checked, bindings: dict[str, str]) -> list[dict]:
     """
     Run the answer once per expected path, in that path's patched world (decision 0027 B6, N4 PR 3).
@@ -412,7 +461,8 @@ def judge_paths(task_def: dict, checked: Checked, bindings: dict[str, str]) -> l
     """
     results = []
     for path in task_paths(task_def):
-        entry = {"when": path["when"], "goal_ok": False, "plan_ok": False, "state": None, "failure_code": None}
+        entry = {"when": path["when"], "goal_ok": False, "plan_ok": False, "state": None, "failure_code": None,
+                 "value_ok": None}
         patched = _merge(json.loads(world_bytes(task_def)), path["world_patch"])
         try:
             world = load_world(json.dumps(patched).encode("utf-8"), "world.json", checked.task, bindings)
@@ -423,20 +473,36 @@ def judge_paths(task_def: dict, checked: Checked, bindings: dict[str, str]) -> l
             continue
         entry["state"], entry["failure_code"] = result.state, result.failure.code if result.failure else None
         sent = {(s.message.channel, s.message.message) for s in result.steps if s.message and s.status == "succeeded"}
-        # [channel, text]; a null text accepts any message on that channel (the request did not fix the wording)
-        messages_ok = all(any(c == channel and text in (None, m) for c, m in sent)
-                          for channel, text in path.get("messages", []))
+        # [channel, text]; a null text accepts any message on that channel (the request did not fix the wording).
+        # A {"channel", "value_of"} entry is a reading sent as a value: judged by value_ok, not here (0036 V13)
+        texts = [m for m in path.get("messages", []) if not isinstance(m, dict)]
+        messages_ok = all(any(c == channel and text in (None, m) for c, m in sent) for channel, text in texts)
         checks_ok = _path_checks(path, result)
+        failing_path = "fail" in path or bool(path.get("fails"))
+        if has_value_expectations(task_def) and not failing_path:
+            entry["value_ok"] = _value_ok(task_def, bindings, result,
+                                          path.get("expected_readings", task_def.get("expected_readings", [])),
+                                          [m for m in path.get("messages", []) if isinstance(m, dict)])
         if "fail" in path:
             entry["goal_ok"] = entry["failure_code"] == "S262"
             entry["plan_ok"] = entry["goal_ok"] and messages_ok and checks_ok
         elif path.get("fails"):  # set 4: the run must stop as failed, by `fail` or by the failing step itself
             entry["goal_ok"] = result.state == "FAILED"
             entry["plan_ok"] = entry["goal_ok"] and messages_ok and checks_ok
+            if "goals" in path and result.state == "SUCCEEDED":  # "stop" may also be "leave it as it is" (0036)
+                effective = replace(checked.task, goal=tuple(g.condition for g in result.goal))
+                readings = [{tuple(t) for t in g} for g in path["goals"]]
+                entry["goal_ok"] = bool(goal_means(effective, bindings, readings))
+                entry["plan_ok"] = entry["goal_ok"] and messages_ok and checks_ok
+        elif task_def.get("goal_free"):  # the request names no end state: any goal the run reaches is right
+            entry["goal_ok"] = result.state == "SUCCEEDED"
+            entry["plan_ok"] = entry["goal_ok"] and messages_ok and checks_ok
         else:
             effective = replace(checked.task, goal=tuple(g.condition for g in result.goal))
             reached = all(g.result is not None for g in result.goal)
-            entry["goal_ok"] = reached and bool(goal_means(effective, bindings, [{tuple(t) for t in path["goal"]}]))
+            alternatives = path["goals"] if "goals" in path else [path["goal"]]
+            readings = [{tuple(t) for t in g} for g in alternatives]
+            entry["goal_ok"] = reached and bool(goal_means(effective, bindings, readings))
             entry["plan_ok"] = result.state == "SUCCEEDED" and messages_ok and checks_ok
         results.append(entry)
     return results
@@ -606,9 +672,10 @@ def judge(task_def: dict, checked: Checked, bindings: dict[str, str]) -> Judgeme
         checks["entities"] = set(task_def["required_entities"]) <= used
     if "expected_action_sequences" in task_def:
         checks["actions"] = all(_sequence_matches(actions, s) for s in task_def["expected_action_sequences"])
-    if "expected_messages" in task_def:
+    texts = [m for m in task_def.get("expected_messages", []) if not isinstance(m, dict)]
+    if texts:
         sent = {(s.message.channel, s.message.message) for s in result.steps if s.message}
-        checks["messages"] = {tuple(m) for m in task_def["expected_messages"]} <= sent
+        checks["messages"] = {tuple(m) for m in texts} <= sent
     if "expected_message_counts" in task_def:  # [channel, message, how many times]: a repeated action really repeats
         sent_n = Counter((s.message.channel, s.message.message) for s in result.steps if s.message)
         checks["message_counts"] = all(sent_n[(c, m)] == n for c, m, n in task_def["expected_message_counts"])
@@ -624,13 +691,21 @@ def judge(task_def: dict, checked: Checked, bindings: dict[str, str]) -> Judgeme
     meaning = goal_means(judged, bindings, expected_goals(task_def))
     judgement = Judgement(goal_exact if meaning is None else meaning, result.state == "SUCCEEDED",
                           result.state, result.failure.code if result.failure else None, checks, goal_exact)
+    if task_def.get("goal_free"):
+        judgement.goal_correct = result.state == "SUCCEEDED"
+    if has_value_expectations(task_def):
+        judgement.value_ok = _value_ok(task_def, bindings, result, task_def.get("expected_readings", []), [])
     if task_paths(task_def):  # a task with paths: right only if every path is (the state above is the unpatched run)
         judgement.paths = judge_paths(task_def, checked, bindings)
         judgement.goal_correct = all(p["goal_ok"] for p in judgement.paths)
         judgement.plan_succeeds = all(p["plan_ok"] for p in judgement.paths)
         right = judgement.goal_correct and judgement.plan_succeeds
         judgement.half_program = result.state == "SUCCEEDED" and not right
+        if has_value_expectations(task_def):  # every path that is not a stop must have read and sent as asked
+            judged = [p["value_ok"] for p in judgement.paths if p["value_ok"] is not None]
+            judgement.value_ok = bool(judged) and all(judged)
     judgement.unsafe_continue = unsafe_continue(task_def, checked, bindings)
+    judgement.silent_substitution = silent_substitution(task_def, checked, bindings)
     return judgement
 
 

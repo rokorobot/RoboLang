@@ -4,17 +4,54 @@
   "world": "bench/worlds/pharmacy.json",
   "group": "value",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_5": {
     "decision": "cannot",
     "category": "inexpressible"
   },
   "expect_1_6": {
     "decision": "program",
-    "planned_paths": "LOT-7731: insulin at packing; LOT-0001: fail"
+    "paths": [
+      {
+        "when": "insulin 1 labelled LOT-7731",
+        "goal": [
+          [
+            "rl:thing:insulin_1",
+            "located_in",
+            "rl:place:packing"
+          ]
+        ],
+        "world_patch": {}
+      },
+      {
+        "when": "insulin 1 labelled LOT-0001",
+        "fails": true,
+        "world_patch": {
+          "objects": {
+            "insulin_1": {
+              "properties": {
+                "label": {
+                  "value": "LOT-0001"
+                }
+              }
+            }
+          }
+        }
+      }
+    ]
   },
   "tags": [
     "measure",
     "label",
     "fail"
   ],
-  "why": "RoboLang 1.5 cannot read a value from a sensor: inspect observes presence, location and holder only (decision 0036)."
+  "why": "A label is text, compared with `==` (0036 V5, V6); a non-contact scanner reads from where the robot is.",
+  "expected_readings": [
+    [
+      "picker1",
+      "label",
+      "insulin_1"
+    ]
+  ]
 }

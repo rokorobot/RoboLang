@@ -1,0 +1,10 @@
+{
+  "task": "weigh_and_move",
+  "bindings": {
+    "r": "helper_arm",
+    "tray": "tray_b",
+    "scale": "scale_1",
+    "src": "prep_2",
+    "dst": "pass"
+  }
+}

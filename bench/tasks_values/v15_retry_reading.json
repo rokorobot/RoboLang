@@ -4,12 +4,33 @@
   "world": "bench/worlds/kitchen_values.json",
   "group": "value",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_5": {
     "decision": "cannot",
     "category": "inexpressible"
   },
   "expect_1_6": {
     "decision": "program",
-    "planned_paths": "first try / second try: the message carries the reading; both fail: run fails (0036 V3, option b)"
+    "paths": [
+      {
+        "when": "the probe works",
+        "goal": [],
+        "world_patch": {}
+      },
+      {
+        "when": "the probe never works: both readings fail",
+        "fails": true,
+        "expected_readings": [],
+        "world_patch": {
+          "sensors": {
+            "probe_temp": {
+              "available": false
+            }
+          }
+        }
+      }
+    ]
   },
   "tags": [
     "measure",
@@ -17,5 +38,22 @@
     "retry",
     "binding_scope"
   ],
-  "why": "RoboLang 1.5 cannot read a value from a sensor: inspect observes presence, location and holder only (decision 0036)."
+  "why": "The retry in a `measure`'s handler binds the same name again, so the reading is defined on both paths (0036 V3, option b). A first try that fails and a second that works cannot be forced by a world patch; `tests/test_bench_values.py` forces it with a scripted fault. The request names no end state.",
+  "expected_readings": [
+    [
+      "chef_arm",
+      "temperature",
+      "pan_1"
+    ]
+  ],
+  "expected_messages": [
+    {
+      "channel": "pass",
+      "value_of": [
+        "pan_1",
+        "temperature"
+      ]
+    }
+  ],
+  "goal_free": true
 }

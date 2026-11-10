@@ -4,17 +4,48 @@
   "world": "bench/worlds/cleanroom.json",
   "group": "value",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_5": {
     "decision": "cannot",
     "category": "inexpressible"
   },
   "expect_1_6": {
     "decision": "program",
-    "planned_paths": "arm_x with thermo_1 (decoys arm_X, thermo1)"
+    "paths": [
+      {
+        "when": "arm_x with thermo_1 online; arm_X with thermo1 offline until 8 s",
+        "goal": [],
+        "world_patch": {}
+      }
+    ]
   },
   "tags": [
     "decoy_names",
     "measure",
     "value_message"
   ],
-  "why": "RoboLang 1.5 cannot read a value from a sensor: inspect observes presence, location and holder only (decision 0036)."
+  "why": "Decoy names (arm_x and arm_X, thermo_1 and thermo1) with a reading: only arm_x's thermometer is online now, and a reading through the other one fails (S232). The request names no end state.",
+  "expected_readings": [
+    [
+      "arm_x",
+      "temperature",
+      "vial_1"
+    ]
+  ],
+  "expected_messages": [
+    {
+      "channel": "lab",
+      "value_of": [
+        "vial_1",
+        "temperature"
+      ]
+    }
+  ],
+  "required_entities": [
+    "arm_x",
+    "thermo_1",
+    "vial_1"
+  ],
+  "goal_free": true
 }

@@ -1,6 +1,6 @@
 {
   "world_schema": "robolang.sim.world",
-  "world_schema_version": "1.1",
+  "world_schema_version": "1.2",
   "locations": ["intake", "shelf_a", "shelf_b", "fridge_1", "fridge_2", "packing", "dispatch", "charger", "waste"],
   "regions": {
     "clean_room": { "clear": true },
@@ -14,19 +14,19 @@
     "cart2": { "ready": true, "location": "intake", "gripper": false, "max_speed": [{ "value": "1.2", "unit": "m/s" }] }
   },
   "objects": {
-    "vial_a1": { "present": true, "location": "shelf_a", "class": "vial" },
-    "vial_a2": { "present": true, "location": "shelf_a", "class": "vial" },
+    "vial_a1": { "present": true, "location": "shelf_a", "class": "vial", "properties": { "label": { "value": "LOT-0001" } } },
+    "vial_a2": { "present": true, "location": "shelf_a", "class": "vial", "properties": { "label": { "value": "LOT-0002" } } },
     "vial_b1": { "present": true, "location": "fridge_1", "class": "vial" },
-    "insulin_1": { "present": true, "location": "fridge_2", "class": "vial" },
+    "insulin_1": { "present": true, "location": "fridge_2", "class": "vial", "properties": { "temperature": { "value": "5", "unit": "degC" }, "label": { "value": "LOT-7731" } } },
     "tray_1": { "present": true, "location": "packing", "class": "tray" },
     "tray_2": { "present": true, "location": "packing", "class": "tray" },
     "bag_1": { "present": false, "class": "bag" },
     "box_d1": { "present": true, "location": "dispatch", "class": "box" }
   },
   "sensors": {
-    "scan_p1": { "robot": "picker1", "available": true },
-    "thermo_p1": { "robot": "picker1", "available": false },
-    "scan_p2": { "robot": "picker2", "available": true },
+    "scan_p1": { "robot": "picker1", "available": true, "measures": { "label": { "contact": false } } },
+    "thermo_p1": { "robot": "picker1", "available": false, "measures": { "temperature": { "unit": "degC", "uncertainty": "0.2", "contact": true } } },
+    "scan_p2": { "robot": "picker2", "available": true, "measures": { "label": { "contact": false } } },
     "cam_cart1": { "robot": "cart1", "available": true }
   },
   "events": [

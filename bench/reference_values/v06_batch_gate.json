@@ -1,0 +1,10 @@
+{
+  "task": "batch_gate",
+  "bindings": {
+    "r": "picker1",
+    "vial": "insulin_1",
+    "scanner": "scan_p1",
+    "src": "fridge_2",
+    "dst": "packing"
+  }
+}

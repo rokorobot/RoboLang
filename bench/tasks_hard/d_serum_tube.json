@@ -17,11 +17,18 @@
   "tags": [
     "decoy_names",
     "description",
-    "inspect",
+    "measure",
     "wait_until",
     "timeout",
     "sensor_ok",
     "pick_place"
+  ],
+  "expected_readings": [
+    [
+      "arm_X",
+      "temperature",
+      "tube_A"
+    ]
   ],
   "probes": [
     {

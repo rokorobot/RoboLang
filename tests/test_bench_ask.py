@@ -1,6 +1,8 @@
 """
 Benchmark set "ask" (bench/tasks_ask/, decision record 0025): 80 tasks in three worlds that add the third answer,
-"clarify". Every expected answer is checked mechanically where it can be (design docs/plans/bench-2.md, section 5):
+"clarify". Since 0036 PR 2 four of them (u05, u06, u19, u20) are programs that read a value (group `value`, with
+paths) and `i12_scale_down` is infeasible. Every expected answer is checked mechanically where it can be (design
+docs/plans/bench-2.md, section 5):
 
 - a feasible task's reference is valid, exports its goal, succeeds and passes its checks;
 - an infeasible task's faithful attempt fails for the recorded reason, and (unless the task explains why no world
@@ -25,7 +27,7 @@ from bench import lib, run, score
 SET3 = lib.load_set("ask")
 REFS = lib.ASK_REFERENCE_DIR
 BY_GROUP = {g: sorted(t for t, d in SET3.items() if d["group"] == g)
-            for g in ("feasible", "decoy", "infeasible", "inexpressible", "clarify")}
+            for g in ("feasible", "decoy", "value", "infeasible", "inexpressible", "clarify")}
 
 
 def answer(stem: str, decision="program") -> dict:
@@ -46,14 +48,15 @@ def run_in(task: dict, ans: dict, patch: dict | None = None):
 
 
 def test_the_mix_of_tasks():
-    assert Counter(d["group"] for d in SET3.values()) == {"feasible": 12, "decoy": 11, "infeasible": 19,
-                                                          "inexpressible": 20, "clarify": 18}
+    assert Counter(d["group"] for d in SET3.values()) == {"feasible": 12, "decoy": 11, "value": 4, "infeasible": 20,
+                                                          "inexpressible": 15, "clarify": 18}
     for task in SET3.values():
-        assert task["world"] in {"bench/worlds/pharmacy.json", "bench/worlds/yard.json", "bench/worlds/kitchen.json"}
+        assert task["world"] in {"bench/worlds/pharmacy.json", "bench/worlds/yard.json", "bench/worlds/kitchen.json",
+                                 "bench/worlds/kitchen_values.json"}  # u06: knife_1 put down, so the arm can grasp
         assert task["prompt"].endswith(".") and task["tags"]
         decision, category = lib.expectation(task)
         assert (decision, category) == {"feasible": ("program", "none"), "decoy": ("program", "none"),
-                                        "infeasible": ("cannot", "infeasible"),
+                                        "value": ("program", "none"), "infeasible": ("cannot", "infeasible"),
                                         "inexpressible": ("cannot", "inexpressible"),
                                         "clarify": ("clarify", "none")}[task["group"]]
 
@@ -64,7 +67,7 @@ def test_the_worlds_are_large(name):
     assert len(world["locations"]) + sum(len(world[k]) for k in ("regions", "robots", "objects", "sensors")) >= 25
 
 
-@pytest.mark.parametrize("task_id", BY_GROUP["feasible"] + BY_GROUP["decoy"])
+@pytest.mark.parametrize("task_id", BY_GROUP["feasible"] + BY_GROUP["decoy"] + BY_GROUP["value"])
 def test_feasible_reference_is_valid_reaches_its_goal_and_passes_its_checks(task_id):
     task = SET3[task_id]
     checked = lib.check_answer(task, answer(task_id))
@@ -213,14 +216,20 @@ def test_timeout_failure_is_not_a_successful_no_op():
     assert lib.expectation(task) == ("program", "none")  # feasible in the supplied, clearing world only
 
 
-def test_enabling_the_scale_does_not_add_a_mass_reading():
+def test_inspect_with_the_scale_reads_no_value_but_measure_does():
+    """0036: `i12_scale_down` is infeasible (the scale is offline). With the scale enabled, `inspect` still observes
+    presence, location and holder only; a `measure` is what reads the mass."""
     task = SET3["i12_scale_down"]
-    _, result = run_in(task, answer("i12_scale_down.sensor_only"),
-                       {"sensors": {"scale_1": {"available": True}}})
+    patch = {"sensors": {"scale_1": {"available": True}}}
+    _, result = run_in(task, answer("i12_scale_down.sensor_only"), patch)
     assert result.state == "SUCCEEDED"
     observation = next(s.observation for s in result.steps if s.observation)
     assert set(vars(observation)) == {"object", "present", "location", "held_by"}
-    assert lib.expectation(task) == ("cannot", "inexpressible")
+    assert all(s.reading is None for s in result.steps)
+    _, weighed = run_in(task, answer("i12_scale_down.attempt"), patch)
+    reading = next(s.reading for s in weighed.steps if s.reading)
+    assert (reading.kind, reading.subject, str(reading.value), reading.unit) == ("mass", "tray_b", "1.2", "kg")
+    assert lib.expectation(task) == ("cannot", "infeasible") and task["expect_1_5"]["category"] == "inexpressible"
 
 
 @pytest.mark.parametrize("speed, accepted", [("0.1", True), ("0.3", True), ("0.5", False)])

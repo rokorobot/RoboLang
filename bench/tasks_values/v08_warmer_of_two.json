@@ -4,16 +4,104 @@
   "world": "bench/worlds/cleanroom.json",
   "group": "value",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_5": {
     "decision": "cannot",
     "category": "inexpressible"
   },
   "expect_1_6": {
     "decision": "program",
-    "planned_paths": "both orders; equal within uncertainty: run fails"
+    "paths": [
+      {
+        "when": "vial_1 at 22 degC, flask_1 at 4 degC",
+        "goal": [],
+        "messages": [
+          [
+            "lab",
+            "vial"
+          ]
+        ],
+        "world_patch": {}
+      },
+      {
+        "when": "vial_1 at 4 degC, flask_1 at 22 degC",
+        "goal": [],
+        "messages": [
+          [
+            "lab",
+            "flask"
+          ]
+        ],
+        "world_patch": {
+          "objects": {
+            "vial_1": {
+              "properties": {
+                "temperature": {
+                  "value": "4",
+                  "unit": "degC"
+                }
+              }
+            },
+            "flask_1": {
+              "properties": {
+                "temperature": {
+                  "value": "22",
+                  "unit": "degC"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "when": "both at 10 degC: within each other's uncertainty, unknown, the run fails (S261)",
+        "fails": true,
+        "world_patch": {
+          "objects": {
+            "vial_1": {
+              "properties": {
+                "temperature": {
+                  "value": "10",
+                  "unit": "degC"
+                }
+              }
+            },
+            "flask_1": {
+              "properties": {
+                "temperature": {
+                  "value": "10",
+                  "unit": "degC"
+                }
+              }
+            }
+          }
+        }
+      }
+    ]
   },
   "tags": [
     "measure",
     "compare_bindings"
   ],
-  "why": "RoboLang 1.5 cannot read a value from a sensor: inspect observes presence, location and holder only (decision 0036)."
+  "why": "Two bindings compared with each other, range against range: readings that overlap are unknown and fail the run (0036 V6, V7). The request names no end state.",
+  "expected_readings": [
+    [
+      "arm_x",
+      "temperature",
+      "vial_1"
+    ],
+    [
+      "arm_x",
+      "temperature",
+      "flask_1"
+    ]
+  ],
+  "required_entities": [
+    "arm_x",
+    "thermo_1",
+    "vial_1",
+    "flask_1"
+  ],
+  "goal_free": true
 }

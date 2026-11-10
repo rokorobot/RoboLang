@@ -1,6 +1,6 @@
 {
   "world_schema": "robolang.sim.world",
-  "world_schema_version": "1.1",
+  "world_schema_version": "1.2",
   "locations": [
     "rack_L",
     "rack_l",
@@ -94,6 +94,12 @@
         "value": "0.05",
         "unit": "kg",
         "uncertainty": "0.1"
+      },
+      "properties": {
+        "temperature": {
+          "value": "22",
+          "unit": "degC"
+        }
       }
     },
     "vial1": {
@@ -104,6 +110,12 @@
         "value": "0.05",
         "unit": "kg",
         "uncertainty": "0.1"
+      },
+      "properties": {
+        "temperature": {
+          "value": "4",
+          "unit": "degC"
+        }
       }
     },
     "vial_01": {
@@ -174,6 +186,12 @@
         "value": "0.03",
         "unit": "kg",
         "uncertainty": "0.1"
+      },
+      "properties": {
+        "temperature": {
+          "value": "6",
+          "unit": "degC"
+        }
       }
     },
     "tube_A": {
@@ -184,6 +202,12 @@
         "value": "0.03",
         "unit": "kg",
         "uncertainty": "0.1"
+      },
+      "properties": {
+        "temperature": {
+          "value": "4",
+          "unit": "degC"
+        }
       }
     },
     "slide_1": {
@@ -214,6 +238,12 @@
         "value": "0.4",
         "unit": "kg",
         "uncertainty": "0.1"
+      },
+      "properties": {
+        "temperature": {
+          "value": "4",
+          "unit": "degC"
+        }
       }
     },
     "flask1": {
@@ -224,6 +254,12 @@
         "value": "0.4",
         "unit": "kg",
         "uncertainty": "0.1"
+      },
+      "properties": {
+        "temperature": {
+          "value": "30",
+          "unit": "degC"
+        }
       }
     },
     "flask_9": {
@@ -242,11 +278,25 @@
     },
     "thermo_1": {
       "robot": "arm_x",
-      "available": true
+      "available": true,
+      "measures": {
+        "temperature": {
+          "unit": "degC",
+          "uncertainty": "0.2",
+          "contact": true
+        }
+      }
     },
     "thermo1": {
       "robot": "arm_X",
-      "available": false
+      "available": false,
+      "measures": {
+        "temperature": {
+          "unit": "degC",
+          "uncertainty": "0.2",
+          "contact": true
+        }
+      }
     },
     "cam_r": {
       "robot": "rover_1",

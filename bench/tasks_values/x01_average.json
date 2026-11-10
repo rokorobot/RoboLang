@@ -7,6 +7,10 @@
     "decision": "cannot",
     "category": "inexpressible"
   },
+  "expect_1_5": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
   "expect_1_6": {
     "decision": "cannot",
     "category": "inexpressible"
@@ -14,5 +18,5 @@
   "tags": [
     "arithmetic"
   ],
-  "why": "Arithmetic: there is no way to compute an average. RoboLang 1.5 also cannot read a value."
+  "why": "Arithmetic: there is no way to compute an average, though RoboLang 1.6 can read both values."
 }
