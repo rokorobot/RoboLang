@@ -120,3 +120,11 @@ def test_the_prompts_are_for_1_6():
     texts = [f.read_text(encoding="utf-8").strip() for f in bench.GRAMMAR_FILES]
     assert all(t in minimal for t in texts)
     assert [minimal.index(t) for t in texts] == sorted(minimal.index(t) for t in texts)
+
+
+def test_both_prompts_say_a_request_about_entities_not_listed_now_cannot_be_represented():
+    """Decision 0036, acceptance option C (2026-11-10): the grammar-only answers to x03_any_hot_pan measured the one pan
+    the world listed, although the request was about pans that may arrive. Both wrappers carry the general rule."""
+    for name in ("full", "minimal"):
+        text = " ".join(bench.load_prompt(name).split())
+        assert "may appear or change after the job starts" in text and "cannot be represented" in text, name

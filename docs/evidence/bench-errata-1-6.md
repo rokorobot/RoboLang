@@ -166,3 +166,18 @@ The acceptance run, confirmed by the owner before it starts: set 5 under 1.6 wit
 `value_ok` ≥ 90% (Sonnet, full prompt); `silent_substitution` ≤ 5% (full prompt); inexpressible controls: false programs ≤
 5%, even grammar-only; other sets: `gate.json` passes and `decision_correct` drops no more than 2 points or one answer.
 If it fails, 1.6 stays in code only and is not taught (the reference and prompts go back to 1.5).
+
+## Erratum G1 — entities that may appear after the job starts (2026-11-10)
+
+Found in the 1.6 acceptance run (`acc16`, $7.53): with the grammar-only prompt, Sonnet (3/9) and Haiku (2/9) wrote a
+program for `x03_any_hot_pan` ("check every pan on the stove (there may be several by then) and move any above
+80 °C") that measures the one pan the world lists. With the full prompt every model declined (0/27). The grammar-only
+baseline under 1.5 was 0/18, because no reading could be written. Owner decision, 2026-11-10 (option C): add one general
+rule to both prompt wrappers, then re-run set 5 with both prompts.
+
+| | Before | After |
+|---|---|---|
+| `bench/prompt.md`, `bench/prompt_minimal.md`, before "Decline only when the request cannot be met;" | (no sentence) | "A request about things that may appear or change after the job starts (more objects than the world lists, \"any that arrive\", \"several by then\") cannot be represented: the program can only name entities that the world lists now, so do not write a program for the ones listed and call it done." |
+
+Test: `tests/test_reference.py::test_both_prompts_say_a_request_about_entities_not_listed_now_cannot_be_represented`.
+Freeze v2 regenerated: `f740b232e52a939b3a8065c50a8671d1240a4e2a7aa784d37f408795bfecf234` → `ad10351968706dd2d1555ada954fc6607e5567b95efec00f955eca3c91eac37e` (800 files).
