@@ -123,6 +123,8 @@ Rules:
   `delegate` already does (delegate-v0.1 section 3 and decision 0020 D6). Two alternatives holding together is not an
   error: the claim names one.
 - Evidence rules (0.1 5.6, 8.3) are unchanged. Every cited observation is in the `outcome` message's `evidence` list.
+  *(Erratum [0037](decisions/0037-gate-2-errata-f1-f2.md), F2:)* a cited observation missing from that list is not
+  a rejection; it is handled at re-evaluation, as 0.1 5.9 states.
 
 ```json
 {

@@ -49,6 +49,9 @@ INFORMATIVE = {
     "spec/decisions/0020-delegate.md", "spec/decisions/0023-keep-interop-3-deferred.md",
     "spec/decisions/0027-bounded-branching.md", "spec/decisions/0030-relaunch-interop-3-on-core-0-2.md",
     "spec/delegate-core-0.2.md", "spec/delegate-v0.1.md", "spec/export-goal-v0.1.md",
+    # 0037: the record of errata F1 and F2. Both rules are stated in the bundled texts (gate 2 6.3, Core 0.1 5.9,
+    # Core 0.2 3); the record cites reference files, so it stays outside the bundle.
+    "spec/decisions/0037-gate-2-errata-f1-f2.md",
 }
 
 

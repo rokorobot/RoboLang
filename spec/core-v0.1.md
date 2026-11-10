@@ -258,7 +258,10 @@ Verification: `{ "verified_by", "method", "evaluated_at", "criteria_results" }`.
 
 `succeeded` requires a verification in which every criterion is met (`C402`). Every
 observation ID a verification cites is carried in the `outcome` message's `evidence` list,
-so the receiver can re-evaluate it.
+so the receiver can re-evaluate it. *(Erratum [0037](decisions/0037-gate-2-errata-f1-f2.md), F2:)* A cited ID that
+is missing from the `evidence` list is not a rejection: no check of section 8 tests it and no code names it. A
+receiver that re-evaluates finds that criterion without evidence (`evidence_missing`), so its re-evaluation fails
+and it treats the outcome as `unknown`, not `succeeded` (RFC-001 11.3).
 
 ### 5.10 Standing authorization and participant
 
