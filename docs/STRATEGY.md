@@ -1,6 +1,7 @@
 # RoboLang strategy
 
-**Status:** PROPOSED, 2026-10-29; revision proposed 2026-11-10 (state as of that day). Owner approval pending.
+**Status:** **APPROVED by the owner, 2026-11-11**, with decisions D1–D4 and rule 6 as below. First proposed 2026-10-29;
+revised 2026-11-10/11 (state as of 2026-11-11).
 **Reviewed:** every month (section 5). The [development plan](DEVELOPMENT_PLAN.md) holds the detail;
 this page holds the direction.
 
@@ -37,16 +38,20 @@ A horizon ends when its exit criteria hold, not on a date. Dates are targets.
 | **H3 Leave the symbolic world** | ~Q2 2027 | ROS 2 backend in a physics simulator (Gazebo or Isaac): same `.rob`, same goals, verified through sensor observations, not ground truth. INTEROP-3 relaunch on Core 0.2 | One benchmark task family passes end to end in physics simulation. Independent Core 0.2 implementation interoperates (gate 2) | **Met 2026-11-10.** Criterion 1 met 2026-11-01. Criterion 2: gate 2 passed, signed off by the owner 2026-11-10 (independent amr-07 by `gpt-6-astra`, 25/25 cases after erratum [0037](../spec/decisions/0037-gate-2-errata-f1-f2.md); [evidence](interop/interop-4-run-2.md)). Caveat recorded: network and search not technically blocked, audit found neither used |
 | **H4 Earn hardware** | ~H2 2027 | Safety case, a hardware pilot with an external partner, physical-mode authorization design | Owner authorization for physical mode, given on a written safety case. Never before H3 is met | Not started |
 
-**Proposed with this revision (owner decides):**
+**Decided with this revision (owner, 2026-11-11):**
 
-- **D1. Dates.** H1 closes on the 2026-11-16 weekly run (target kept). H2 is done. H3 is met (2026-11-10). H4 keeps ~H2 2027. A human team's gate 2 run later
-  would be stronger evidence (gate 2 spec section 2).
-- **D2. Preparation for H4 while H3 waits.** Allow paperwork that moves nothing to start now: a draft safety case and
-  the physical-mode authorization design. Authorization itself still waits for H3 (unchanged). It moves nothing and
-  shortens H4 once H3 is met.
-- **D3. Release 0.3.0** with languages 1.5 and 1.6, so P5's "installs it from PyPI" covers the current language.
-- **D4. Next language decision:** `detect` (choosing objects at run time; set 5 `x03` is its first evidence). Not
-  started until its own record, per rule 1.
+- **D1. Dates.** H1 closes with the 2026-11-16 weekly run (target kept). H2 and H3 are done. H4 keeps ~H2 2027,
+  with an intermediate target: a draft safety case by Q1 2027.
+- **D2. H4 starts.** H4 is the current horizon. Work that moves nothing starts now: a robot-independent draft safety
+  case, a hazard list (including the 0.05 rad MoveIt start tolerance of the Gazebo backend, #99) and the
+  physical-mode authorization design. Physical execution stays unauthorized until the owner signs a written safety
+  case (unchanged).
+- **D3. Release 0.3.0** with languages 1.5 and 1.6, first: P5's "installs it from PyPI" covers the current language.
+  The owner publishes the GitHub release, which runs the PyPI workflow.
+- **D4. No new language work until H4 needs it.** The `detect` evidence set (set 5 `x03` is its first evidence) is
+  deferred: it lies outside the current horizon (rule 3) and its evidence is thin.
+- **Follow-up, off the critical path:** a stronger gate 2 run, technically isolated or by a human team, would remove
+  the recorded caveat of the 2026-11-10 pass (gate 2 spec section 2).
 
 ## 4. How decisions get made
 
@@ -60,7 +65,7 @@ A horizon ends when its exit criteria hold, not on a date. Dates are targets.
    a safety risk needs it.
 5. **Saturated measures get replaced.** When every model scores ≥ 98% on a set, it becomes a regression
    set, and a harder set takes its place.
-6. **Acceptance bounds are set with the baseline in hand** (proposed; learned in 0035 and 0036). A bound the baseline
+6. **Acceptance bounds are set with the baseline in hand** (approved 2026-11-11; learned in 0035 and 0036). A bound the baseline
    already misses, or one finer than a single answer of a small set, decides nothing; write it as "no worse than the
    baseline" or "N points or one answer, whichever is larger" before the run.
 
@@ -93,5 +98,6 @@ is skipped and nothing is spent.
 | 2026-10-29 | First version. Basis: benchmark sets 1 and 2 ([analysis](evidence/bench-set2-analysis.md)). H1 started |
 | 2026-10-30 | **H2 exit criteria met:** RoboLang 1.4 accepted (set 3 goal correctness 100%/95% Sonnet full/grammar-only; false programs on inexpressible tasks 2.8% grammar-only; [evidence](evidence/bench-set3-acceptance.md)), `validate --world` shipped, Core 0.2 frozen ([core-v0.2.md](../spec/core-v0.2.md)). H1 still open: `pip install robolang` (0.2.0 publish, owner) and decision accuracy ≥ 97% for every model (Haiku 38/40 on set 2 in single PR runs; the weekly three-repeat run decides). H3 started: [0029](../spec/decisions/0029-physics-simulation-backend.md) approved. Per-PR benchmark without Opus, plus an offline Haiku→Sonnet cascade |
 | 2026-11-01 | **H3 criterion 1 met:** one benchmark task family passes end to end in physics simulation. 11 single-arm tasks of set 1 × 3 runs in Gazebo all `SUCCEEDED`, verified from camera, TF and gripper observations; 51/51 goal checks agree with the ground-truth oracle, no false success, 4/4 scripted failure cases fail with their codes ([evidence](evidence/h3-phase4-acceptance.md), scope in [0029](../spec/decisions/0029-physics-simulation-backend.md) section 7). H3 still open: an independent Core 0.2 implementation interoperating (gate 2, INTEROP-3 relaunch; [0023](../spec/decisions/0023-keep-interop-3-deferred.md) K2 now holds) |
-| 2026-11-10 | **Proposed revision** (this page; owner approval pending). Since 11-01: RoboLang 1.5 (failure handlers) and 1.6 (measured values) built, taught and accepted on pre-registered benchmark sets 4 and 5 ([1.5](evidence/bench-1-5-acceptance.md), [1.6](evidence/bench-1-6-acceptance.md)); the 1.6 baseline showed models silently substituting `inspect` for a reading, now 0. Weekly run adds set 5. Benchmark spend 2026-11-09/10: about $24 in local runs plus about $4 of PR checks. H1 decided by the 11-16 weekly run; H3 met 2026-11-10 (gate 2 passed); D1–D4 above for the owner |
+| 2026-11-10 | **Revision proposed** (approved 2026-11-11, row below). Since 11-01: RoboLang 1.5 (failure handlers) and 1.6 (measured values) built, taught and accepted on pre-registered benchmark sets 4 and 5 ([1.5](evidence/bench-1-5-acceptance.md), [1.6](evidence/bench-1-6-acceptance.md)); the 1.6 baseline showed models silently substituting `inspect` for a reading, now 0. Weekly run adds set 5. Benchmark spend 2026-11-09/10: about $24 in local runs plus about $4 of PR checks. H1 decided by the 11-16 weekly run; H3 met 2026-11-10 (gate 2 passed); D1–D4 above for the owner |
 | 2026-11-10 | **H3 met.** Gate 2 passed and signed off by the owner: an independent Core 0.2 amr-07, written in TypeScript by a clean-room `gpt-6-astra` session from the frozen bundle alone, passes all 25 gate 2 cases with 442/442 messages identical to the reference, after erratum [0037](../spec/decisions/0037-gate-2-errata-f1-f2.md) ([run 1](interop/interop-4-run-1.md), [run 2](interop/interop-4-run-2.md)). Caveat: network and search were not technically blocked; the transcript audit found neither used. H4 is next; it still needs a written safety case and the owner's authorization |
+| 2026-11-11 | **Approved by the owner** with D1–D4 and rule 6 as amended after H3: H4 is the current horizon; order: release 0.3.0, start H4 (safety case draft, hazard list, authorization design), confirm H1 on 2026-11-16 |
