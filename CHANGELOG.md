@@ -1,27 +1,47 @@
 # Changelog
 
-The distribution version (this file) is independent of the language versions (1.1 to 1.4) and the Task IR schema
-versions (1.0 to 1.3). Decision records are in [`spec/decisions/`](https://github.com/rokorobot/RoboLang/tree/main/spec/decisions).
+The distribution version (this file) is independent of the language versions (1.1 to 1.6) and the Task IR schema
+versions (1.0 to 1.5). Decision records are in [`spec/decisions/`](https://github.com/rokorobot/RoboLang/tree/main/spec/decisions).
 
-## Unreleased
+## 0.3.0 (2026-11-11)
+
+Everything below is simulation only. No command drives a robot. Files of every earlier language version keep their
+meaning, IR and run records byte for byte.
 
 **Language**
-- RoboLang 1.6: measured values (decision 0036). `measure r KIND of o using s as NAME;` reads a temperature, mass,
-  distance or label into a binding; bindings compare (`<`, `<=`, `>`, `>=`; `==`, `!=` on labels) in `if` and
-  `wait until`, with exact unit conversion and the sensor's uncertainty (an overlapping reading is unknown, `S261`);
-  `wait until temperature of pan using probe < 60 degC ...` reads live; `communicate r to "ch" with NAME;` sends the
-  typed value. New reserved words `measure` and `as` in 1.6 files only; files 1.1 to 1.5 are unchanged byte for byte.
-  New codes `E217`, `E317` to `E322`.
-- Task IR 1.5 (`measure` step, `compare` condition, `communicate` with a binding); the IR reader checks bindings and
-  kinds (`I124`, `I125`, `I218` to `I223`).
-- The language reference and the benchmark prompts still teach 1.5.
+- RoboLang 1.5: step failure handlers (0033, 0034). `move`, `grasp`, `place`, `inspect` and `wait until` may end with
+  `else { ... }`, run only when that step fails; a handler has no goal; a fixed number of retries is written by nesting;
+  every `wait until` needs a handler (`E316`). Task IR 1.4 (`I217`).
+- RoboLang 1.6: measured values (0036). `measure r KIND of o using s as NAME;` reads a temperature, mass, distance or
+  label; bindings compare (`<`, `<=`, `>`, `>=`; `==`, `!=` on labels) in `if` and `wait until`, with exact unit
+  conversion and the sensor's uncertainty (an overlapping reading is unknown, `S261`); `wait until` can read live;
+  `communicate ... with NAME` sends the typed value. Reserved words `measure` and `as` in 1.6 files only. New codes
+  `E217`, `E317` to `E322`. Task IR 1.5 (`I124`, `I125`, `I218` to `I223`).
+- Holder check (0032): grasping something a robot still holds is `E315` (IR `I216`); a branch the known facts
+  contradict is skipped.
+- `robolang reference` prints the RoboLang 1.6 reference (`inspect` never reads a value; failure handlers; measured
+  values), tested against the grammar and examples. The CLI help names 1.1 to 1.6.
 
 **Execution (symbolic simulation)**
-- World file 1.2: sensor `measures` (unit, uncertainty, contact) and object `properties`, and the event fact
-  `property` (a pan cooling). New codes `E512` to `E515`. Run record 1.5 records every reading and typed message.
-  `measure` fails with `S231` to `S236`, `S213` or `S214` and changes nothing.
-- `validate --world` reports a sensor that does not measure the kind asked for (`S234`).
-- `delegate` refuses a task with a `measure` (`measure_unsupported`); the ROS 2 backend refuses it with `S509`.
+- 1.5 runs record which step's failure a handler took over (run record 1.4).
+- World file 1.2: sensor `measures` (unit, uncertainty, contact), object `properties`, and the `property` event (a value
+  that changes over time). New codes `E512` to `E515`. `measure` fails with `S231` to `S236`, `S213` or `S214` and
+  changes nothing. Run record 1.5 records every reading and typed message.
+- `validate --world` checks handler steps and reports a sensor that cannot measure the kind asked for (`S234`).
+- `delegate` refuses a task with a `measure` (`measure_unsupported`).
+- The IR reader reports `I209` for a schema 1.3+ task with no `goal` (it raised an error before).
+
+**RoboLang Core 0.2** (frozen by the owner on 2026-10-30)
+- Schema, receiver checks and conformance fixtures for Core 0.2 ("any of" goal alternatives, declared failure reasons,
+  `met_alternative`); producers: `export-goal --core 0.2`, Core-shaped outcomes from `simulate`, `delegate --core 0.2`.
+- Gate 2 passed on 2026-11-10: an independent Core 0.2 implementation, written from the frozen documents alone,
+  interoperates with the reference on all 25 cases (docs/interop/interop-4-run-2.md). Errata 0037 clarify two points of
+  Core 0.1/0.2 and the test binding; no message, schema, code or receipt changed.
+
+**Benchmark** (`bench/`, not installed)
+- Set 4 (failure handling) and set 5 (measured values), each pre-registered with a baseline; the reference teaches 1.6;
+  new measures `unsafe_continue`, `value_ok` and `silent_substitution`; acceptance evidence for 1.5 and 1.6 in
+  `docs/evidence/`.
 
 ## 0.2.0 (2026-10-30): first PyPI release
 
