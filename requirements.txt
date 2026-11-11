@@ -1,0 +1,2 @@
+# Intentionally empty: RoboLang has no runtime dependencies (see pyproject.toml).
+# Development tools are in requirements-dev.txt; the benchmark has its own bench/requirements.txt.
