@@ -31,6 +31,8 @@ These define what the implemented tooling does. They live in the repository's `s
 - [Development plan](DEVELOPMENT_PLAN.md): milestones and development tracks; listing an item
   authorizes nothing
 - [Development steps](development-steps.md): a timeline of what has been delivered so far
+- Safety (H4, drafts): [hazard log](safety/hazard-log.md), [safety case](safety/safety-case-draft.md),
+  [physical-mode authorization design](safety/physical-mode-authorization.md). Physical execution is not authorized
 - [Foundation 1 exit-gate evidence](evidence/rl-basic-01-exit-gate.md)
 
 ## Current limitations
