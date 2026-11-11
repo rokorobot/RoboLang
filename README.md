@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://img.shields.io/badge/version-v0.2.0-blue?style=for-the-badge" alt="version"/>
+  <img src="https://img.shields.io/badge/version-v0.3.0-blue?style=for-the-badge" alt="version"/>
   <img src="https://img.shields.io/badge/python-3.11%2B-brightgreen?style=for-the-badge" alt="python"/>
   <img src="https://img.shields.io/github/license/rokorobot/RoboLang?style=for-the-badge" alt="license"/>
   <img src="https://img.shields.io/github/stars/rokorobot/RoboLang?style=for-the-badge" alt="stars"/>
@@ -203,7 +203,7 @@ See
 Every implementation item needs owner approval. The full plan and history are in the
 [development plan](https://github.com/rokorobot/RoboLang/blob/main/docs/DEVELOPMENT_PLAN.md); decisions are in [`spec/decisions/`](https://github.com/rokorobot/RoboLang/blob/main/spec/decisions/).
 
-`robolang --version` prints three independent versions: the Python package (`0.2.0`, alpha),
+`robolang --version` prints three independent versions: the Python package (`0.3.0`, alpha),
 the language (`1.1` to `1.6`) and the Task IR schema (`1.0` to `1.5`, one for each language version).
 
 ## Contributing

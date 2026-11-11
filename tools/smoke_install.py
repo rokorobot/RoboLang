@@ -80,7 +80,7 @@ def build(dist: Path) -> tuple[Path, Path]:
     expect(f"Version: {VERSION}" in headers, f"wheel version is {VERSION}")
     expect("Requires-Python: >=3.11" in headers, "wheel requires Python 3.11 or newer")
     expect("robolang/cli.py" in names and "robolang/ir.py" in names, "wheel contains the robolang package")
-    expect("robolang/reference/language-reference.md" in names, "wheel contains the RoboLang 1.3 reference")
+    expect("robolang/reference/language-reference.md" in names, "wheel contains the RoboLang reference")
     expect(not any(f"{m}.py" in names for m in LEGACY), "wheel contains none of the four legacy modules")
     code = sorted(n for n in names if ".dist-info/" not in n)
     expect(all(n.startswith("robolang/") for n in code), f"wheel code is only the robolang package ({len(code)} files)")

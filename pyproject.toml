@@ -4,11 +4,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "robolang"
-# Distribution version: the maturity of this package (0.2.0 is the first PyPI release, still alpha).
-# It is independent of the language versions (1.1 to 1.4) and the IR schema
-# versions (1.0 to 1.3), which are defined in src/robolang/.
-version = "0.2.0"
-description = "RoboLang: a checked robot task language (1.1 to 1.4) with a validator, symbolic simulation and RoboLang Core outcomes."
+# Distribution version: the maturity of this package (0.2.0 was the first PyPI release; still alpha).
+# It is independent of the language versions (1.1 to 1.6) and the IR schema
+# versions (1.0 to 1.5), which are defined in src/robolang/.
+version = "0.3.0"
+description = "RoboLang: a checked robot task language (1.1 to 1.6) with a validator, symbolic simulation and RoboLang Core outcomes."
 readme = "README.md"
 requires-python = ">=3.11"
 license = "Apache-2.0"
@@ -58,13 +58,17 @@ package-dir = { "" = "src" }
 # repository. It is deliberately NOT installed: it can drive ROS 2 without
 # passing through the validator. Do not add `py-modules` here without an
 # explicit owner decision.
-packages = ["robolang", "robolang.sim", "robolang.core", "robolang.arch02"]
+# `robolang.core.schemas` and `robolang.reference` hold data files only; they are declared so setuptools ships
+# them as packages instead of warning about undeclared importable directories.
+packages = [
+    "robolang", "robolang.sim", "robolang.core", "robolang.arch02", "robolang.core.schemas", "robolang.reference",
+]
 
 [tool.setuptools.package-data]
 # Copies of spec/core/*.schema.json; tests/test_core.py checks they are identical.
-"robolang.core" = ["schemas/*.json"]
+"robolang.core.schemas" = ["*.json"]
 # A byte-identical copy of docs/language-reference.md; tests/test_reference.py prevents drift.
-"robolang" = ["reference/*.md"]
+"robolang.reference" = ["*.md"]
 
 [tool.ruff]
 line-length = 120
