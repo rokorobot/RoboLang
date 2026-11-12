@@ -96,17 +96,9 @@ class ROSOperations:
         available_topics = set(self._command(["gz", "topic", "-l"]).splitlines())
         if not required_topics <= available_topics:
             raise BackendFailure("S501", "declared Gazebo detachable joint is unavailable")
-        # The plugin may start attached, and a one-shot transport publication can be lost.
-        # Force a known detached state before any motion. The first detach may be a no-op;
-        # the attach and final detach must each be confirmed by a state transition.
         for obj in objects:
-            for _ in range(3):
-                self._command(["gz", "topic", "-t", joint_topic(model, obj, "detach"),
-                               "-m", "gz.msgs.Empty", "-p", ""])
-                time.sleep(0.2)
             try:
-                gazebo_joint_command(model, obj, "attach")
-                gazebo_joint_command(model, obj, "detach")
+                force_detached(model, obj)
             except BackendFailure as exc:
                 raise BackendFailure("S501", f"could not initialize detached joint of {obj}: {exc.message}") from exc
         self.model = model
@@ -471,6 +463,30 @@ def gazebo_joint_command(model: str, obj: str, action: str) -> None:
             except subprocess.TimeoutExpired:
                 subscriber.kill()
                 subscriber.communicate()
+
+
+def force_detached(model: str, obj: str, rounds: int = 3) -> None:
+    """Leave the joint detached, confirmed, whatever state it starts in.
+
+    The plugin may start attached or detached, and a one-shot publication can be lost. A detach of a joint that is
+    already detached changes nothing, so Gazebo sends no state to confirm it. Each round therefore sends a few
+    unconfirmed detaches, then an attach and a detach that must each be confirmed by a state change: from either
+    starting state that ends detached, and a lost publication only costs a round.
+    """
+    detach = joint_topic(model, obj, "detach")
+    failure = None
+    for _ in range(rounds):
+        for _ in range(3):
+            subprocess.run(["gz", "topic", "-t", detach, "-m", "gz.msgs.Empty", "-p", ""],
+                           capture_output=True, text=True, timeout=10)
+            time.sleep(0.2)
+        try:
+            gazebo_joint_command(model, obj, "attach")
+            gazebo_joint_command(model, obj, "detach")
+            return
+        except BackendFailure as exc:
+            failure = exc
+    raise failure
 
 
 def moveit_parameters(description: str) -> dict:

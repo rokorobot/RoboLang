@@ -13,6 +13,7 @@ from robolang import ir  # noqa: E402
 from robolang.core import verify_sim  # noqa: E402
 from robolang_ros2 import observe  # noqa: E402
 from robolang_ros2.executor import BackendFailure, Site, execute  # noqa: E402
+from robolang_ros2 import ros  # noqa: E402
 from robolang_ros2.ros import _gazebo_hardware_matches, gazebo_joint_command  # noqa: E402
 
 
@@ -491,3 +492,38 @@ def test_robot_ready_of_another_robot_is_rejected_before_motion():
     ops = FakeOps()
     record = execute(task, {**bindings, "other": "arm9"}, site, ops)
     assert record["failure"]["code"] == "S507" and ops.calls == [("guard", "ur")]
+
+
+# -------- initial detach (harness and guard) --------
+
+def _fake_joint(monkeypatch, outcomes):
+    """gazebo_joint_command answers from `outcomes` in order: True confirms, False is an unconfirmed request."""
+    calls = []
+
+    def command(model, obj, action):
+        calls.append(action)
+        if not outcomes.pop(0):
+            raise BackendFailure("S506", f"Gazebo {action} did not confirm")
+
+    monkeypatch.setattr(ros, "gazebo_joint_command", command)
+    monkeypatch.setattr(ros.subprocess, "run", lambda *a, **k: calls.append("blind"))
+    monkeypatch.setattr(ros.time, "sleep", lambda s: None)
+    return calls
+
+
+def test_force_detached_ends_with_a_confirmed_detach(monkeypatch):
+    calls = _fake_joint(monkeypatch, [True, True])
+    ros.force_detached("ur", "box1")
+    assert calls == ["blind"] * 3 + ["attach", "detach"]
+
+
+def test_force_detached_retries_a_lost_confirmation(monkeypatch):
+    calls = _fake_joint(monkeypatch, [False, True, True])  # the first attach is lost
+    ros.force_detached("ur", "box1")
+    assert calls[-2:] == ["attach", "detach"] and calls.count("blind") == 6
+
+
+def test_force_detached_gives_up_after_its_rounds(monkeypatch):
+    _fake_joint(monkeypatch, [False, False, False])
+    with pytest.raises(BackendFailure, match="attach did not confirm"):
+        ros.force_detached("ur", "box1")
