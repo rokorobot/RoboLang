@@ -1,6 +1,7 @@
 # Safety case draft and hazard list (H4)
 
-**Status:** draft 0.1, 2026-11-12. Robot-independent (STRATEGY D2). Not a safety case yet: nothing here authorizes
+**Status:** draft 0.1, 2026-11-12. H18 and H19 come from the earlier drafts of PR #122 (HZ6 and HZ15), closed in
+favour of this one. Robot-independent (STRATEGY D2). Not a safety case yet: nothing here authorizes
 physical execution. Physical mode stays unauthorized until the owner signs a written safety case for a named robot
 and cell.
 
@@ -55,7 +56,7 @@ evidence that exists on `main`; "gap" items are collected and ranked in section 
 | H12 | A goal runs twice or out of date | Replay, duplicate delivery | Per-recipient sequencing (0008), leases (0022) | No transport exists yet; covered once G4 is built |
 | H13 | Handover between two robots drops the object | Custody conflict | Custody transfer with leases in `delegate` (0022) | Physical timing of a handover is not modelled; out of scope for a single-robot pilot |
 | H14 | Communication lost mid-task | Network, crash | Leases expire in Core | What the robot does when a lease expires is not defined for hardware (G3) |
-| H15 | The operator cannot stop the robot | Software holds the motion | Cancellation exists only as a simulation script | E-stop is hardware and must never pass through RoboLang; RoboLang's cancel must map to a protective stop (G3) |
+| H15 | The operator cannot stop the robot | Software holds the motion | Gazebo backend: cancel, deadline and revoke stop a run even during a motion and hold the arm (0038 step 3) | E-stop is hardware and must never pass through RoboLang; RoboLang's cancel must map to a protective stop (G3) |
 
 ### Mode and tooling
 
@@ -63,6 +64,8 @@ evidence that exists on `main`; "gap" items are collected and ranked in section 
 |---|---|---|---|---|
 | H16 | A simulation result is taken as proof of safety, or a task meant for simulation reaches hardware | Mode confusion | "Simulation only" in every output; no physical-mode option or key is accepted; the ROS 2 backend refuses to start without simulated time and the Gazebo model (`S501`) | A physical mode that can only be entered by an explicit, recorded authorization (G1) |
 | H17 | A bug in the validator or executor | Software defect | ~3,400 tests on Linux and Windows; deterministic, byte-identical run records | Not qualified as safety software. Acceptable only while section 1 holds: RoboLang never carries a safety function |
+| H18 | A stop is recorded as done while the robot is still moving | The hold is sent but not confirmed: the record says `hold: sent`, not that the arm stopped | In Gazebo the test oracle measured 0.0 m of drift after each stop; the backend itself does not check | Confirm a stop from the controller's joint states and record it, before physical mode (G3) |
+| H19 | Unvalidated code drives a robot | The v1 prototype in `legacy/` can drive ROS 2 without the validator | Never installed (a packaging test guards it); README warning | Remove or quarantine `legacy/` before any physical pilot (G8) |
 
 ## 3. Safety case outline
 
@@ -88,7 +91,8 @@ Ranked by how much of the safety case each one unblocks. Each is a design item; 
    motion, any task that asks for more. `max_speed` moves from "recorded" to "checked against the controller".
    Unblocks C2, H05, H06, H08.
 3. **G3 Stop and safe state.** Map RoboLang cancel, step failure and lease expiry to a protective stop and a defined
-   safe state; state that e-stop never passes through RoboLang. Unblocks C3, H09, H14, H15.
+   safe state; state that e-stop never passes through RoboLang. Unblocks C3, H09, H14, H15, H18. Built for the
+   Gazebo backend (0038 step 3); confirming a stop from the controller (H18) is still open.
 4. **G4 Real identity in Core.** Replace the simulation-only keys: key provisioning, rotation, revocation. Needed
    once a planner and a robot are separate machines. Unblocks H11, H12.
 5. **G5 Commissioning checks.** A procedure, run per cell, that checks the site file, camera calibration and start
@@ -97,6 +101,8 @@ Ranked by how much of the safety case each one unblocks. Each is a design item; 
    Unblocks H01, H02; part of C4.
 7. **G7 External partner and cell risk assessment.** Owner action: choose the pilot partner and robot, whose risk
    assessment C1 rests on.
+8. **G8 Quarantine `legacy/`.** Remove the v1 prototype, or move it where no installed or documented path can run
+   it, before any physical pilot. Small; unblocks H19.
 
 **Recommendation:** design G1, G3 and G6 together first (proposed in decision
 [0038](../spec/decisions/0038-physical-mode-authorization-stop-approval.md)). They are robot-independent, small, and are what an
