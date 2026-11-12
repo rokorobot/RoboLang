@@ -57,6 +57,14 @@ CASES = {  # scene: (what is wrong, the failure code the run must end with)
     "fail_object_moved": ("the box is in slot E, not at the source the site declares", "S506"),
     "fail_out_of_reach": ("the destination pose is 1.3 m from the arm base", "S502"),
     "fail_cameras_covered": ("an opaque plate covers each camera lens", "S506"),
+    # Decision 0038 P7 and P8: RoboLang's own stop. The arm must hold where it is; the gripper is never commanded.
+    "fail_stop_cancel_holding": ("cancelled through the stop file as soon as the gripper has closed on the box",
+                                 "S511"),
+    "fail_stop_deadline": ("a 3 s deadline (simulation time) passes early in the run", "S512"),
+}
+STOPS = {  # scene: how run_task.sh stops it, and what the safe state must show afterwards
+    "fail_stop_cancel_holding": {"stop_file_when_gripped": True, "holding": True},
+    "fail_stop_deadline": {"deadline_s": 3, "holding": False},
 }
 FEED = [(-0.12, 0.38), (0.0, 0.38), (0.12, 0.38)]  # three boxes in a row, between slots A and E
 
@@ -112,7 +120,8 @@ def build(scene: str) -> dict:
     return {"scene": scene, "task_id": task_id, "task": reference["task"], "bindings": bindings,
             "source": str(REFERENCE / f"{task_id}.rob"), "expect": "FAILED" if scene in CASES else "SUCCEEDED",
             "case": CASES[scene][0] if scene in CASES else None,
-            "expect_code": CASES[scene][1] if scene in CASES else None, "site": site, "boxes": boxes}
+            "expect_code": CASES[scene][1] if scene in CASES else None, "stop": STOPS.get(scene), "site": site,
+            "boxes": boxes}
 
 
 def _robot_params(task_id: str) -> set[str]:

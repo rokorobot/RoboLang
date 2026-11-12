@@ -1,15 +1,19 @@
 """Test-only ground-truth oracle (decision 0029 X6): compare observed goal verdicts with Gazebo's true state.
 
-Never imported by the backend. Usage: oracle.py RECORD SITE OUT. Reads box and wrist poses from Gazebo and the
-gripper joint from /joint_states (the simulator's own joint state). Exit 1 on a false success or any disagreement.
+Never imported by the backend. Usage: oracle.py RECORD SITE OUT [SCENE]. Reads box and wrist poses from Gazebo and
+the gripper joint from /joint_states (the simulator's own joint state). Exit 1 on a false success or any disagreement.
+For a stop case (SCENE has `stop`, decision 0038 P8) it also checks the safe state: the arm holds still, and when
+the box was held, the gripper is still closed with the box under it.
 """
 import json
 import math
 import re
 import subprocess
 import sys
+import time
 
 POSITION_TOLERANCE_M = 0.02  # as robot_at in robolang_ros2.observe
+HOLD_DRIFT_M, HOLD_WATCH_S = 0.01, 3.0  # a held arm moves less than 1 cm in 3 s
 GRIPPER_CLOSED_RAD = 0.75
 UNDER_XY_M, UNDER_Z_M = 0.1, (0.05, 0.4)  # the box centre under tool0 (tool0 sits on wrist_3_link's origin)
 
@@ -69,8 +73,26 @@ def truth(condition, bound, site, cache):
     raise SystemExit(f"the oracle has no ground truth for {kind}")
 
 
+def safe_state(record, site, stop) -> dict:
+    """0038 P8 after a stop: the hold was sent, the arm stays where it stopped, and a held box was not dropped."""
+    wrist = _pose(["-m", site["gazebo_model"], "--link", "wrist_3_link"])
+    time.sleep(HOLD_WATCH_S)
+    later = _pose(["-m", site["gazebo_model"], "--link", "wrist_3_link"])
+    out = {"hold_sent": (record.get("stop") or {}).get("hold") == "sent",
+           "arm_drift_m": round(math.dist(wrist, later), 4)}
+    out["arm_holds"] = out["arm_drift_m"] < HOLD_DRIFT_M
+    if stop["holding"]:
+        box = _pose(["-m", next(iter(site["objects"].values())), "-p"])
+        out["gripper"] = _gripper()
+        out["box_held"] = (out["gripper"] >= GRIPPER_CLOSED_RAD and math.dist(box[:2], later[:2]) <= UNDER_XY_M and
+                           UNDER_Z_M[0] <= later[2] - box[2] <= UNDER_Z_M[1])
+    out["ok"] = out["hold_sent"] and out["arm_holds"] and out.get("box_held", True)
+    return out
+
+
 def main():
     record, site = json.load(open(sys.argv[1])), json.load(open(sys.argv[2]))
+    scene = json.load(open(sys.argv[4])) if len(sys.argv) > 4 else {}
     bound, cache = record["bindings"], {}
     result = {"state": record["state"], "failure": record["failure"], "goal": [], "false_success": False,
               "agree": True}
@@ -84,6 +106,9 @@ def main():
         result["agree"] &= agree
         result["false_success"] |= entry["result"] == "true" and not actual
     result["false_success"] |= record["state"] == "SUCCEEDED" and not all(g["oracle"] for g in result["goal"])
+    if scene.get("stop"):
+        result["safe_state"] = safe_state(record, site, scene["stop"])
+        result["agree"] &= result["safe_state"]["ok"]
     result["ground_truth"] = cache
     json.dump(result, open(sys.argv[3], "w"), indent=2)
     print(json.dumps(result, indent=2))

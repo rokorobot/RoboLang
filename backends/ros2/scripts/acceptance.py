@@ -8,6 +8,7 @@ import sys
 from pathlib import Path
 
 SUCCESS_RATE, AGREEMENT = 0.9, 0.98
+CASE_COUNT = 6  # four scripted failures (0029) and two stop cases (0038)
 
 
 def load(path: Path, name: str):
@@ -34,6 +35,9 @@ def main():
             "oracle_error": bool(record and record["goal"] and any(g["result"] != "not_evaluated"
                                                                    for g in record["goal"]) and oracle is None),
             "false_success": bool(oracle and oracle["false_success"]),
+            # A stop case (0038 P8) also needs its safe state confirmed by the oracle.
+            "safe_state_ok": None if not scene.get("stop") else bool(oracle and (oracle.get("safe_state") or {}).get(
+                "ok")),
         })
     family = [r for r in runs if r["expect"] == "SUCCEEDED"]
     cases = [r for r in runs if r["expect"] == "FAILED"]
@@ -42,11 +46,12 @@ def main():
     agreed = sum(c["agree"] for c in checks)
     false_successes = sum(r["false_success"] for r in runs)
     oracle_errors = sum(r["oracle_error"] for r in runs)
-    cases_ok = all(r["state"] == "FAILED" and r["code"] == r["expect_code"] for r in cases)
+    cases_ok = all(r["state"] == "FAILED" and r["code"] == r["expect_code"] and r["safe_state_ok"] is not False
+                   for r in cases)
     rate = succeeded / len(family) if family else 0.0
     agreement = agreed / len(checks) if checks else 0.0
     passed = bool(family) and rate >= SUCCESS_RATE and agreement >= AGREEMENT and false_successes == 0 and cases_ok \
-        and len(cases) == 4 and oracle_errors == 0
+        and len(cases) == CASE_COUNT and oracle_errors == 0
     summary = {"passed": passed, "family_runs": len(family), "succeeded": succeeded, "success_rate": round(rate, 4),
                "goal_checks": len(checks), "agreed": agreed, "agreement": round(agreement, 4),
                "false_successes": false_successes, "oracle_errors": oracle_errors, "failure_cases": len(cases),
@@ -59,8 +64,10 @@ def main():
     print(f"| Goal checks agreeing with the oracle | {agreed}/{len(checks)} ({agreement:.1%}) | ≥ {AGREEMENT:.0%} |")
     print(f"| False successes | {false_successes} | 0 |")
     print(f"| Runs the oracle could not check | {oracle_errors} | 0 |")
-    failed_as_expected = sum(r["state"] == "FAILED" and r["code"] == r["expect_code"] for r in cases)
-    print(f"| Failure cases ending FAILED with their expected code | {failed_as_expected}/{len(cases)} | 4/4 |\n")
+    failed_as_expected = sum(r["state"] == "FAILED" and r["code"] == r["expect_code"] and r["safe_state_ok"]
+                             is not False for r in cases)
+    print(f"| Failure cases ending FAILED with their expected code (stop cases: and in the safe state) | "
+          f"{failed_as_expected}/{len(cases)} | {CASE_COUNT}/{CASE_COUNT} |\n")
     print("| Run | Expected | State | Code | Goal checks (observed/oracle) |\n|---|---|---|---|---|")
     for r in runs:
         goal = ", ".join(f"{c['observed']}/{str(c['oracle']).lower()}" for c in r["checks"]) or (

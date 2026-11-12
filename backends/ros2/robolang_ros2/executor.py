@@ -4,6 +4,7 @@ from __future__ import annotations
 import hashlib
 import json
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Protocol
 
 from robolang import ir
@@ -18,6 +19,54 @@ class BackendFailure(Exception):
         self.message = message
 
 
+# Decision 0038 P7 and P8: RoboLang's own stop. The executor sends no further motion, the arm holds where it is
+# (a controlled stop, power kept) and the gripper is never commanded again, so a held object is not dropped.
+STOP_CODES = {"cancelled": "S511", "expired": "S512", "revoked": "S513"}
+STOP_MESSAGES = {"cancelled": "the run was cancelled", "expired": "the run's deadline passed",
+                 "revoked": "the run's authorization was revoked"}
+SAFE_STATE = {"position": "hold", "gripper": "unchanged"}
+
+
+class Stop:
+    """When the run must stop: a deadline on the simulation clock, or a request written to a stop file.
+
+    The stop file holds `cancel` or `revoke`. It is read from any thread, so a watchdog can stop a motion that
+    is in progress while the executor waits for it.
+    """
+
+    def __init__(self, deadline_ms: int | None = None, stop_file: str | None = None, after_ms: int | None = None):
+        """`deadline_ms` is absolute simulation time; `after_ms` counts from `start`, which the executor calls."""
+        self.deadline_ms = deadline_ms
+        self.after_ms = after_ms
+        self.stop_file = Path(stop_file) if stop_file else None
+        self._requested: str | None = None
+
+    def start(self, now_ms: int) -> None:
+        if self.after_ms is not None and self.deadline_ms is None:
+            self.deadline_ms = now_ms + self.after_ms
+
+    def request(self, reason: str) -> None:
+        if reason not in STOP_CODES:
+            raise ValueError(reason)
+        self._requested = self._requested or reason
+
+    def due(self, now_ms: int) -> str | None:
+        """The reason to stop now, or None. A request wins over the deadline; the first reason sticks."""
+        if self._requested is None and self.stop_file is not None:
+            try:
+                word = self.stop_file.read_text(encoding="utf-8").strip()
+            except OSError:
+                word = ""
+            if word in ("cancel", "revoke"):
+                self._requested = "cancelled" if word == "cancel" else "revoked"
+        if self._requested is not None:
+            return self._requested
+        if self.deadline_ms is not None and now_ms >= self.deadline_ms:
+            self._requested = "expired"
+            return self._requested
+        return None
+
+
 class Operations(Protocol):
     def guard(self, model: str) -> None: ...
     def now_ms(self) -> int: ...
@@ -28,6 +77,7 @@ class Operations(Protocol):
     def wait_ms(self, duration: int) -> None: ...
     def versions(self) -> dict[str, str]: ...
     def observe(self, marker_ids: list[int], ready: bool = False) -> observe.Snapshot: ...
+    def hold(self) -> None: ...  # stop the arm where it is (controlled stop); never touches the gripper
 
 
 @dataclass(frozen=True)
@@ -44,12 +94,45 @@ class Site:
     approach_height: float = 0.0  # grasp and place come straight down from this far above their poses
 
 
-def execute(task: ir.Task, bindings: dict[str, str], site: Site, ops: Operations) -> dict:
-    """Run a validated single-arm task. The goal is verified from sensor readings only, never from ground truth."""
+class _Guarded:
+    """Operations that check the stop before and after every command that can move something."""
+
+    def __init__(self, ops: Operations, stop: Stop | None):
+        self._ops, self._stop = ops, stop
+
+    def check(self) -> None:
+        if self._stop is not None:
+            reason = self._stop.due(self._ops.now_ms())
+            if reason is not None:
+                raise BackendFailure(STOP_CODES[reason], STOP_MESSAGES[reason])
+
+    def _guarded(self, name, *args):
+        self.check()
+        result = getattr(self._ops, name)(*args)
+        self.check()
+        return result
+
+    def move(self, pose): return self._guarded("move", pose)
+    def grip(self, closed): return self._guarded("grip", closed)
+    def attach(self, model): return self._guarded("attach", model)
+    def detach(self, model): return self._guarded("detach", model)
+    def wait_ms(self, duration): return self._guarded("wait_ms", duration)
+
+    def __getattr__(self, name):
+        return getattr(self._ops, name)
+
+
+def execute(task: ir.Task, bindings: dict[str, str], site: Site, ops: Operations, stop: Stop | None = None) -> dict:
+    """Run a validated single-arm task. The goal is verified from sensor readings only, never from ground truth.
+
+    `stop` ends the run early (cancel, deadline, revocation; decision 0038 P7). After any stop or failed step the
+    arm is held where it is and nothing else is commanded: the record's `stop` says why and what was done.
+    """
     policy = observe.Policy.of(task)
+    raw_ops, ops = ops, _Guarded(ops, stop)
     record = {
         "run_record_schema": "robolang.ros2.run",
-        "run_record_schema_version": "0.2",
+        "run_record_schema_version": "0.3",
         "mode": "simulation",
         "backend": {"kind": "ros2-gazebo", "versions": ops.versions(),
                     "grasp_model": "detachable_joint_after_gripper_close"},
@@ -64,12 +147,15 @@ def execute(task: ir.Task, bindings: dict[str, str], site: Site, ops: Operations
         "goal": [{"index": index, "condition": ir.to_dict(condition), "result": "not_evaluated"}
                  for index, condition in enumerate(task.goal, 1)],
         "observations": [],
+        "stop": None,
         "core_outcome": None,
     }
     snap = None
     try:
         # The guard is the first operation that may inspect the graph. No controller is contacted before it.
         ops.guard(site.model)
+        if stop is not None:
+            stop.start(raw_ops.now_ms())
         if {p.name for p in task.parameters} != bindings.keys():
             raise BackendFailure("S507", "bindings must name every task parameter exactly once")
         robot_params = [p.name for p in task.parameters if p.type == "robot"]
@@ -108,6 +194,7 @@ def execute(task: ir.Task, bindings: dict[str, str], site: Site, ops: Operations
                 raise BackendFailure("S102", "a precondition is unknown from the observations")
         held = None
         for index, step in enumerate(task.steps, 1):
+            ops.check()
             start = ops.now_ms()
             entry = {"index": index, "kind": step.KIND, "status": "running", "t_start_ms": start}
             record["steps"].append(entry)
@@ -165,6 +252,8 @@ def execute(task: ir.Task, bindings: dict[str, str], site: Site, ops: Operations
         record["state"] = "FAILED"
         step = record["steps"][-1]["index"] if record["steps"] and exc.code not in ("S301", "S302") else None
         record["failure"] = {"code": exc.code, "message": exc.message, "step": step}
+        if record["steps"] and exc.code not in ("S301", "S302"):
+            record["stop"] = _hold(raw_ops, exc.code)
     goal_snap = snap if record["state"] == "SUCCEEDED" or (record["failure"] or {}).get("code") in (
         "S301", "S302") else None
     run_id = hashlib.sha256(json.dumps([record["task"], record["bindings"], record["steps"][:1]],
@@ -172,6 +261,18 @@ def execute(task: ir.Task, bindings: dict[str, str], site: Site, ops: Operations
     record["core_outcome"] = observe.core_outcome(task, bindings, site, goal_snap, policy, record["state"],
                                                   (record["failure"] or {}).get("code"), run_id)
     return record
+
+
+def _hold(ops: Operations, code: str) -> dict:
+    """The safe state of 0038 P8 after a stop or a failed step: hold the arm, leave the gripper as it is."""
+    reason = next((r for r, c in STOP_CODES.items() if c == code), "step_failed")
+    entry = {"reason": reason, "code": code, "kind": "controlled_hold", "safe_state": dict(SAFE_STATE)}
+    try:
+        ops.hold()
+        entry["hold"] = "sent"
+    except Exception as exc:  # the record must still be written; the cell's own stops remain the safety function
+        entry["hold"] = f"failed: {exc}"
+    return entry
 
 
 def _observe(task: ir.Task, bindings: dict[str, str], site: Site, ops: Operations, record: dict,

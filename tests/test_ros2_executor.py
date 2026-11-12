@@ -12,7 +12,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "backends" / "ros2"
 from robolang import ir  # noqa: E402
 from robolang.core import verify_sim  # noqa: E402
 from robolang_ros2 import observe  # noqa: E402
-from robolang_ros2.executor import BackendFailure, Site, execute  # noqa: E402
+from robolang_ros2.executor import SAFE_STATE, BackendFailure, Site, Stop, execute  # noqa: E402
 from robolang_ros2 import ros  # noqa: E402
 from robolang_ros2.ros import _gazebo_hardware_matches, gazebo_joint_command  # noqa: E402
 
@@ -69,6 +69,7 @@ class FakeOps:
     def attach(self, model): self._call("attach", model)
     def detach(self, model): self._call("detach", model)
     def wait_ms(self, duration): self._call("wait", duration)
+    def hold(self): self.calls.append(("hold",))
     def versions(self): return {"ros": "lyrical"}
     def observe(self, marker_ids, ready=False):
         after_move = self.calls[-1][0] == "move"
@@ -199,7 +200,7 @@ def test_grasp_needs_the_object_seen_under_the_gripper(snap):
     ops = FakeOps(grasp_snap=snap)
     record = execute(task, bindings, site, ops)
     assert record["failure"]["code"] == "S506" and record["failure"]["step"] == 2
-    assert [call[0] for call in ops.calls][-2:] == ["move", "observe"]  # never closed or attached
+    assert [call[0] for call in ops.calls][-3:] == ["move", "observe", "hold"]  # never closed or attached
 
 
 def test_approach_height_adds_straight_moves():
@@ -260,7 +261,7 @@ def test_failed_move_stops_before_gripper():
     assert record["state"] == "FAILED"
     assert record["failure"]["code"] == "S502"
     assert record["failure"]["step"] == 1
-    assert [call[0] for call in ops.calls] == ["guard", "move"]
+    assert [call[0] for call in ops.calls] == ["guard", "move", "hold"]
 
 
 def test_missing_pose_fails_closed():
@@ -494,6 +495,98 @@ def test_robot_ready_of_another_robot_is_rejected_before_motion():
     assert record["failure"]["code"] == "S507" and ops.calls == [("guard", "ur")]
 
 
+# -------- stop and safe state (decision 0038 P7, P8) --------
+
+class StopAfter(FakeOps):
+    """Requests a stop right after the n-th call of `name` returns."""
+
+    def __init__(self, stop, name, n, reason="cancelled"):
+        super().__init__()
+        self.stop, self.name, self.n, self.reason = stop, name, n, reason
+
+    def _call(self, name, *args):
+        super()._call(name, *args)
+        if name == self.name and sum(c[0] == name for c in self.calls) == self.n:
+            self.stop.request(self.reason)
+
+
+def kinds(ops):
+    return [call[0] for call in ops.calls]
+
+
+@pytest.mark.parametrize("reason, code", [("cancelled", "S511"), ("revoked", "S513")])
+def test_a_stop_during_a_motion_holds_and_never_touches_the_gripper_again(reason, code):
+    task, bindings, site = fixture()
+    stop = Stop()
+    ops = StopAfter(stop, "attach", 1, reason)  # holding the box
+    record = execute(task, bindings, site, ops, stop)
+    assert (record["state"], record["failure"]["code"], record["failure"]["step"]) == ("FAILED", code, 2)
+    assert kinds(ops)[-1] == "hold" and kinds(ops).count("grip") == 1  # closed once, never opened
+    assert "detach" not in kinds(ops)
+    assert record["stop"] == {"reason": reason, "code": code, "kind": "controlled_hold", "safe_state": SAFE_STATE,
+                              "hold": "sent"}
+    assert record["run_record_schema_version"] == "0.3"
+    assert check_core(record["core_outcome"])["status"] == "failed"
+
+
+def test_a_stop_between_steps_starts_no_further_step():
+    task, bindings, site = fixture()
+    stop = Stop()
+    ops = StopAfter(stop, "move", 1)
+    record = execute(task, bindings, site, ops, stop)
+    assert kinds(ops) == ["guard", "move", "hold"]
+    assert [s["status"] for s in record["steps"]] == ["failed"]
+
+
+def test_the_deadline_counts_from_the_guard_on_simulation_time():
+    task, bindings, site = fixture()
+    stop = Stop(after_ms=5)  # FakeOps' clock advances 1 ms per reading
+    ops = FakeOps()
+    record = execute(task, bindings, site, ops, stop)
+    assert record["failure"]["code"] == "S512" and record["stop"]["reason"] == "expired"
+    assert stop.deadline_ms == 6 and kinds(ops)[-1] == "hold"
+
+
+def test_stop_file(tmp_path):
+    path = tmp_path / "stop"
+    stop = Stop(stop_file=str(path))
+    assert stop.due(0) is None
+    path.write_text("nonsense")
+    assert stop.due(0) is None
+    path.write_text("revoke\n")
+    assert stop.due(0) == "revoked"
+    path.write_text("cancel")
+    assert stop.due(0) == "revoked"  # the first reason sticks
+    with pytest.raises(ValueError):
+        Stop().request("pause")
+
+
+def test_a_failed_step_also_ends_in_the_safe_state():
+    task, bindings, site = fixture()
+    ops = FakeOps(fail="grip")
+    record = execute(task, bindings, site, ops)
+    assert record["failure"]["code"] == "S505" and kinds(ops)[-1] == "hold"
+    assert record["stop"]["reason"] == "step_failed" and record["stop"]["safe_state"] == SAFE_STATE
+
+
+def test_no_hold_when_nothing_moved_or_the_plan_finished():
+    task, bindings, site = fixture()
+    ops = FakeOps(fail="guard")
+    assert execute(task, bindings, site, ops)["stop"] is None and "hold" not in kinds(ops)
+    ops = FakeOps(snap=snapshot(marker=IN_SRC))  # every step succeeded; the goal is false (S301)
+    record = execute(task, bindings, site, ops)
+    assert record["failure"]["code"] == "S301" and record["stop"] is None and "hold" not in kinds(ops)
+
+
+def test_a_failing_hold_is_recorded_not_raised():
+    task, bindings, site = fixture()
+
+    class BrokenHold(FakeOps):
+        def hold(self):
+            raise RuntimeError("no publisher")
+
+    record = execute(task, bindings, site, BrokenHold(fail="move"))
+    assert record["stop"]["hold"] == "failed: no publisher"
 # -------- initial detach (harness and guard) --------
 
 def _fake_joint(monkeypatch, outcomes):

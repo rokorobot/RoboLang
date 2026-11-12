@@ -59,6 +59,12 @@ happens when something stops the robot, and how a person's review of an AI-writt
    its own document, `robolang.run_grant`, not a Core `authorization_decision`: that payload has no field for the
    approval's hash, and Core 0.1 and 0.2 are frozen. A later Core version can carry it.
 3. Stop and safe-state behaviour in the Gazebo backend: cancel, expiry and revocation tested in simulation.
+   **Done 2026-11-12:** [ros2-backend-v0.1.md](../ros2-backend-v0.1.md) "Stop and safe state" (`S511`–`S513`,
+   record 0.3). Gazebo run [43252018976](https://github.com/rokorobot/RoboLang/actions/runs/43252018976) passed the
+   full acceptance bar with two new stop cases: cancelled right after the gripper closed on the box (`S511`), and a
+   3 s deadline that passed during the grasp (`S512`). In both the oracle measured 0.0 m of arm drift over 3 s after
+   the stop; in the first the gripper stayed closed (0.80 rad) with the box under it. Revocation shares the stop-file
+   path with cancel and is covered by unit tests, not by its own Gazebo case.
 4. Physical mode itself: only with G2, G5, G7 and the owner's signature on the safety case.
 
 ## 5. Needs the owner
