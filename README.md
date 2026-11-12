@@ -84,6 +84,9 @@ robolang simulate fetch.rob --world world.json    # stderr: simulation only: run
 Delete the `place` line and run `simulate` again: every step still succeeds, but the run ends
 `FAILED (S301): a goal condition is false after the last step`.
 
+**Tried it?** If the quickstart took you more than ten minutes, or you got stuck anywhere,
+[open an issue](https://github.com/rokorobot/RoboLang/issues/new) and say where. First-run friction is a bug here.
+
 ### More examples
 
 The examples and test worlds live in the repository:
@@ -271,10 +274,7 @@ python tools/smoke_install.py   # builds and installs the wheel and sdist into f
 ```
 
 Tests marked `xfail` describe planned behaviour. Report problems in
-[Issues](https://github.com/rokorobot/RoboLang/issues).
-
-**Tried it?** If the quickstart took you more than ten minutes, or you got stuck anywhere,
-[open an issue](https://github.com/rokorobot/RoboLang/issues/new) and say where. First-run friction is a bug here. Documentation site:
+[Issues](https://github.com/rokorobot/RoboLang/issues). Documentation site:
 [rokorobot.github.io/RoboLang](https://rokorobot.github.io/RoboLang/).
 
 ## License
