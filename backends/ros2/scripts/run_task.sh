@@ -38,9 +38,9 @@ wait "$GRIPPER_SPAWNER" || { cat "$OUT/gripper_spawner.log" >&2; stop; exit 1; }
 # This Jetty build starts every detachable joint attached. Release each box before anything moves.
 python3 - "$S/scene.json" >"$OUT/initial_detach.log" 2>&1 <<'PY' || { cat "$OUT/initial_detach.log" >&2; stop; exit 1; }
 import json, sys
-from robolang_ros2.ros import gazebo_joint_command
+from robolang_ros2.ros import force_detached
 for model in json.load(open(sys.argv[1]))["box_models"]:
-    gazebo_joint_command("ur", model, "detach")
+    force_detached("ur", model)
 PY
 python3 /opt/h3/scripts/ready.py >"$OUT/ready.log" 2>&1 || { cat "$OUT/ready.log" >&2; stop; exit 1; }
 
