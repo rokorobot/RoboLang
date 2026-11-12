@@ -31,6 +31,8 @@ dependencies = []
 
 [project.optional-dependencies]
 dev = ["pytest>=8", "ruff>=0.6", "build>=1.2", "jsonschema>=4.18"]
+# Real ed25519 signatures for Core (decision 0038). Optional: the core wheel has no runtime dependencies.
+ed25519 = ["cryptography>=42"]
 
 [project.urls]
 Repository = "https://github.com/rokorobot/RoboLang"

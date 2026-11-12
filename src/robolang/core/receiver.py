@@ -18,7 +18,7 @@ from typing import Mapping
 
 from .reader import ReadError, read_document
 from .schema import DESCRIPTOR_SCHEMA, MESSAGE_SCHEMA, MESSAGE_SCHEMAS, load_schema, validate
-from .signatures import SIM_HMAC, Key, verify_sim
+from .signatures import ED25519, SIM_HMAC, Key, ed25519_available, verify_ed25519, verify_sim
 
 MESSAGE = ("robolang.core.message", "0.1")
 MESSAGE_VERSIONS = ("0.1", "0.2")
@@ -64,6 +64,9 @@ class Context:
     # Message versions this receiver is configured for (0.2 draft section 1: no negotiation).
     # The default is 0.1 only, so a receiver built for Core 0.1 behaves exactly as before.
     versions: frozenset[str] = frozenset({"0.1"})
+    # Signature algorithms this receiver accepts. The default is sim-hmac-sha256 only, as before;
+    # adding "ed25519" needs the optional extra robolang[ed25519] (decision 0038).
+    algorithms: frozenset[str] = frozenset({SIM_HMAC})
 
 
 def time_ms(text: str) -> int:
@@ -206,12 +209,15 @@ def _signed_objects(document, signer_field: str) -> list[tuple[dict, str, str]]:
 def _signature(document, signer_field: str, context: Context) -> Receipt | None:
     for obj, signer, pointer in _signed_objects(document, signer_field):
         signature = obj["signature"]
-        if signature["alg"] != SIM_HMAC or context.mode != "simulation":
+        alg = signature["alg"]
+        if alg not in context.algorithms or context.mode != "simulation":
+            return _reject("C204", "signature", f"{pointer}/signature/alg")
+        if alg == ED25519 and not ed25519_available():
             return _reject("C204", "signature", f"{pointer}/signature/alg")
         key = context.keys.get(signature["key"])
-        if key is None or key.participant != signer or key.alg != SIM_HMAC:
+        if key is None or key.participant != signer or key.alg != alg:
             return _reject("C203", "signature", f"{pointer}/signature/key")
-        if not verify_sim(obj, key):
+        if not (verify_ed25519(obj, key) if alg == ED25519 else verify_sim(obj, key)):
             return _reject("C202", "signature", f"{pointer}/signature/value")
     return None
 

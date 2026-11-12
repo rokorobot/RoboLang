@@ -36,7 +36,10 @@ from .schema import (
     load_schema,
     validate,
 )
-from .signatures import ED25519, SIM_HMAC, Key, sign_sim, signed_bytes, verify_sim
+from .signatures import (
+    ED25519, SIM_HMAC, Key, ed25519_available, generate_ed25519, sign_ed25519, sign_sim, signed_bytes,
+    verify_ed25519, verify_sim,
+)
 
 __all__ = [
     "ACCEPTED",
@@ -60,11 +63,15 @@ __all__ = [
     "check_meaning",
     "check_message",
     "descriptor_is_current",
+    "ed25519_available",
+    "generate_ed25519",
     "load_schema",
     "read_document",
+    "sign_ed25519",
     "sign_sim",
     "signed_bytes",
     "time_ms",
     "validate",
+    "verify_ed25519",
     "verify_sim",
 ]

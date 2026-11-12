@@ -3,3 +3,5 @@ ruff>=0.6
 build>=1.2
 # Test only: checks the Core 0.1 schema files and fixtures (decision R12). Not a runtime dependency.
 jsonschema>=4.18
+# The optional extra robolang[ed25519] (decision 0038), so CI tests real signatures. Not a core runtime dependency.
+cryptography>=42
