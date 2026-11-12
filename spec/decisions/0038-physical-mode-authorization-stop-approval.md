@@ -48,6 +48,10 @@ happens when something stops the robot, and how a person's review of an AI-writt
 
 1. `ed25519` signing and verification in an optional extra or the backend package (not the core wheel), with key
    references in the cell configuration and tests. Simulation only.
+   **Done 2026-11-12:** extra `robolang[ed25519]` (`cryptography>=42`). A receiver accepts `ed25519` only when its
+   context lists it; the default receiver, every fixture and the frozen gate 2 cases are unchanged (`C204`). Physical
+   mode still rejects every algorithm. The Core 0.1 and 0.2 texts are frozen and keep "not implemented by the reference
+   simulation", which remains true of the default install.
 2. Cell configuration, task approval and grant documents: schemas, a reader, and checks, all exercised in the
    symbolic simulator with `mode: physical` still rejected.
 3. Stop and safe-state behaviour in the Gazebo backend: cancel, expiry and revocation tested in simulation.

@@ -3,6 +3,13 @@
 The distribution version (this file) is independent of the language versions (1.1 to 1.6) and the Task IR schema
 versions (1.0 to 1.5). Decision records are in [`spec/decisions/`](https://github.com/rokorobot/RoboLang/tree/main/spec/decisions).
 
+## Unreleased
+
+- Optional extra `robolang[ed25519]` (installs `cryptography`): real Ed25519 signatures for Core documents
+  (`sign_ed25519`, `verify_ed25519`, `generate_ed25519`), the first build step of decision 0038. A receiver accepts
+  them only when its `Context.algorithms` lists `ed25519`; by default nothing changes. Simulation only: physical mode
+  is still rejected. The base install still has no runtime dependencies.
+
 ## 0.3.1 (2026-11-12)
 
 **First run from PyPI alone**
