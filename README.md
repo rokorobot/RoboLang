@@ -235,7 +235,7 @@ See
 - **Speed limits are recorded, not enforced.**
 - **No hardware, no ROS 2 runtime, no network transport.** Core signatures are
   simulation-only.
-- **No branching, loops or local bindings yet** (planned language extensions).
+- **No loops:** branching is bounded (`if`, 1.4) and a retry is written by nesting (1.5); unbounded loops and schedules stay with the orchestrator.
 - The original v1 interpreter and ROS 2 adapter live in [`legacy/`](https://github.com/rokorobot/RoboLang/blob/main/legacy/). They bypass the
   validator, are never installed and were never validated against ROS 2
   ([details](https://github.com/rokorobot/RoboLang/blob/main/docs/legacy-v1.md)).
