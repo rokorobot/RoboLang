@@ -68,7 +68,7 @@ packages = [
 # Copies of spec/core/*.schema.json; tests/test_core.py checks they are identical.
 "robolang.core.schemas" = ["*.json"]
 # A byte-identical copy of docs/language-reference.md; tests/test_reference.py prevents drift.
-"robolang.reference" = ["*.md"]
+"robolang.reference" = ["*.md", "*.rob", "*.json"]
 
 [tool.ruff]
 line-length = 120

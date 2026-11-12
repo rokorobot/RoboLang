@@ -3,6 +3,17 @@
 The distribution version (this file) is independent of the language versions (1.1 to 1.6) and the Task IR schema
 versions (1.0 to 1.5). Decision records are in [`spec/decisions/`](https://github.com/rokorobot/RoboLang/tree/main/spec/decisions).
 
+## Unreleased
+
+**First run from PyPI alone**
+- `robolang example [DIR]` writes a sample task (`fetch.rob`) and a world for it (`world.json`), so a pip user can
+  reach a verified simulation without cloning the repository. It never overwrites a file.
+- A world file that lacks several required fields now names all of them in one error, and a missing `world_schema`
+  or `world_schema_version` names the accepted values. Codes, exit statuses and the first-error rule are unchanged.
+- The `simulation only:` summary line says what a failure means and at which step, after the code:
+  `FAILED (S301): a goal condition is false after the last step`. The run record is unchanged.
+- README quickstart with a task and world that need only the installed package.
+
 ## 0.3.0 (2026-11-11)
 
 Everything below is simulation only. No command drives a robot. Files of every earlier language version keep their

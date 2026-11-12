@@ -190,6 +190,12 @@ def _article(word: str) -> str:
     return f"an {word}" if word[0] in "aeiou" else f"a {word}"
 
 
+def _missing(names) -> str:
+    """"missing required field 'a'" or "missing required fields 'a', 'b'"."""
+    quoted = ", ".join(f"'{n}'" for n in names)
+    return f"missing required field{'s' if len(names) > 1 else ''} {quoted}"
+
+
 def _pointer(*parts) -> str:
     return "".join("/" + str(p).replace("~", "~0").replace("/", "~1") for p in parts)
 
@@ -233,6 +239,12 @@ class _Loader:
                 self.fail("E503", pointer + _pointer(key), f"unknown field '{key}'")
         return value
 
+    def require(self, value, pointer, *names, code="E504"):
+        """Report every missing field of `names` in one error, so a writer can fix them all at once."""
+        missing = [n for n in names if n not in value]
+        if missing:
+            self.fail(code, pointer, _missing(missing))
+
     def need(self, value, pointer, name):
         if name not in value:
             self.fail("E504", pointer, f"missing required field '{name}'")
@@ -267,6 +279,7 @@ class _Loader:
 
     def quantity(self, value, pointer, units, what):
         q = self.obj(value, pointer, ("value", "unit"), what)
+        self.require(q, pointer, "value", "unit")
         text = self.need(q, pointer, "value")
         unit = self.need(q, pointer, "unit")
         try:
@@ -297,9 +310,12 @@ class _Loader:
         doc = self.read(data)
         if not isinstance(doc, dict):
             self.fail("E504", "", "the world file must be a JSON object")
+        if "world_schema" not in doc or "world_schema_version" not in doc:
+            missing = [n for n in ("world_schema", "world_schema_version", "locations", "tasks") if n not in doc]
+            versions = ", ".join(repr(v) for v in WORLD_SCHEMA_VERSIONS)
+            self.fail("E502", "", f"{_missing(missing)}; 'world_schema' is {WORLD_SCHEMA!r} and "
+                                  f"'world_schema_version' one of {versions}")
         for name, accepted in (("world_schema", (WORLD_SCHEMA,)), ("world_schema_version", WORLD_SCHEMA_VERSIONS)):
-            if name not in doc:
-                self.fail("E502", "", f"missing '{name}'")
             if not isinstance(doc[name], str) or doc[name] not in accepted:
                 expected = " or ".join(repr(a) for a in accepted)
                 self.fail("E502", _pointer(name), f"unsupported {name}: expected {expected}")
@@ -309,6 +325,7 @@ class _Loader:
             "objects", "sensors", "events", "tasks",
         )
         self.obj(doc, "", top, "the world file")
+        self.require(doc, "", "locations", "tasks")
         locations = self.locations(self.need(doc, "", "locations"))
         regions_raw = self.mapping(doc, "regions")
         robots_raw = self.mapping(doc, "robots")
@@ -377,6 +394,7 @@ class _Loader:
     def robot(self, name, value):
         p = _pointer("robots", name)
         self.obj(value, p, ("ready", "location", "gripper", "max_speed"), "a robot")
+        self.require(value, p, "location", "gripper")
         ready = self.optional_bool(value, p, "ready")
         location = self.entity_id(self.need(value, p, "location"), p + _pointer("location"))
         gripper = self.boolean(self.need(value, p, "gripper"), p + _pointer("gripper"))
@@ -442,6 +460,7 @@ class _Loader:
                 self.fail("E504", pointer + _pointer("value"), "a label must not be empty")
             return Property(kind, text, None)
         item = self.obj(raw, pointer, ("value", "unit"), "a property")
+        self.require(item, pointer, "value", "unit")
         text = self.need(item, pointer, "value")
         if not isinstance(text, str) or _SIGNED_DECIMAL.fullmatch(text) is None:
             self.fail("E504", pointer + _pointer("value"), "must be a decimal string such as \"72\" or \"-18\"")
@@ -461,6 +480,7 @@ class _Loader:
             return None
         mp = p + _pointer("mass")
         m = self.obj(value["mass"], mp, ("value", "unit", "uncertainty"), "a mass")
+        self.require(m, mp, "value", "unit", "uncertainty")
         number, _ = self.quantity({k: m[k] for k in ("value", "unit") if k in m}, mp, ("kg",), "a mass")
         try:
             uncertainty = parse_decimal(self.need(m, mp, "uncertainty"))
@@ -498,6 +518,7 @@ class _Loader:
             else:
                 fields = ("unit", "uncertainty", "contact")
             m = self.obj(item, kp, fields, "a measure")
+            self.require(m, kp, *fields)
             unit = uncertainty = None
             if kind != LABEL:
                 unit = self.unit(kind, self.need(m, kp, "unit"), kp + _pointer("unit"))
@@ -514,6 +535,7 @@ class _Loader:
         p = _pointer("events", index)
         allowed = ("at", "fact", "target", "value") + (("property",) if self.version == "1.2" else ())
         self.obj(value, p, allowed, "an event")
+        self.require(value, p, "at", "fact", "target", "value")
         at = self.need(value, p, "at")
         fact = self.need(value, p, "fact")
         target = self.need(value, p, "target")

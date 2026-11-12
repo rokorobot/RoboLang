@@ -90,7 +90,8 @@ Statuses 0, 1 and 2 keep the meaning they have for `validate` and `inspect`.
 - **stdout:** the run record (section 5), only for statuses 0, 4 and 5.
 - **stderr:** front-end warnings and diagnostics, world-file diagnostics, and for a run one
   summary line that begins with `simulation only:` and names the run ID, the final state and
-  the failure code if there is one.
+  the failure code if there is one, followed by the step and a short meaning of the code
+  (section 7.2), for example `FAILED (S301): a goal condition is false after the last step`.
 
 World-file diagnostics have the form
 
@@ -99,7 +100,8 @@ World-file diagnostics have the form
 ```
 
 where the location is a JSON Pointer (RFC 6901) into the world document. A validator may stop
-at the first error. Each invalid world fixture contains exactly one error.
+at the first error; when one object lacks several required fields, the error names all of them.
+Each invalid world fixture contains exactly one error.
 
 ### 2.5 Bindings on the command line
 

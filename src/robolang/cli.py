@@ -2,6 +2,7 @@
 Developer commands for RoboLang 1.1 to 1.6.
 
     reference              print the shipped RoboLang 1.6 language reference
+    example [DIR]          write a sample task (fetch.rob) and world (world.json) to start from
     validate FILE          check a .rob file against the language contract
     inspect  FILE          show what a validated file describes (text or JSON IR)
     simulate FILE --world WORLD
@@ -478,6 +479,35 @@ def _inspect(args, out, err) -> int:
 
 # -------- simulate --------
 
+# What each failure code means, for the summary line (spec/simulation-v1.0.md section 7.2).
+_FAILURE_MEANING = {
+    "S001": "a max_speed limit is above a bound robot's declared maximum",
+    "S002": "a bound robot declares no maximum speed in the unit of a max_speed limit",
+    "S101": "a pre condition is false",
+    "S102": "a pre condition is unknown in the world",
+    "S201": "the robot is not ready",
+    "S202": "the robot's readiness is unknown",
+    "S211": "grasp: the robot has no gripper",
+    "S212": "grasp: the robot already holds an object",
+    "S213": "the object is not present",
+    "S214": "the object's presence is unknown",
+    "S215": "grasp: the object is not at the robot's location",
+    "S221": "place: the robot does not hold the object",
+    "S222": "place: the robot is not at the target location",
+    "S231": "the sensor is not declared, or not mounted on the robot",
+    "S232": "the sensor is not available",
+    "S233": "the sensor's availability is unknown",
+    "S234": "measure: the sensor does not measure that kind",
+    "S235": "measure: a contact reading, and the robot is not at the object",
+    "S236": "measure: the object has no value for that kind",
+    "S241": "wait until: the timeout expired before the condition was true",
+    "S251": "a scripted fault from the world file",
+    "S261": "the condition of an if is unknown; no branch was taken",
+    "S262": "a fail statement was reached",
+    "S301": "a goal condition is false after the last step",
+    "S302": "a goal condition is unknown after the last step",
+}
+
 _SIMULATE_EXIT = {"SUCCEEDED": EXIT_OK, "FAILED": EXIT_FAILED, "CANCELLED": EXIT_CANCELLED}
 
 
@@ -568,8 +598,12 @@ def _simulate(args, out, err) -> int:
     )
     out.write(to_json(record))
     summary = f"simulation only: run {identifier}: {run_result.state}"
-    if run_result.failure is not None:
-        summary += f" ({run_result.failure.code})"
+    failure = run_result.failure
+    if failure is not None:
+        where = f"step {failure.step}: " if failure.step is not None else ""
+        meaning = _FAILURE_MEANING.get(failure.code, "see the simulation spec, section 7.2")
+        reason = f' "{failure.reason}"' if failure.reason else ""
+        summary += f" ({failure.code}): {where}{meaning}{reason}"
     print(summary, file=err)
     return _SIMULATE_EXIT[run_result.state]
 
@@ -737,6 +771,32 @@ def _reference(args, out, err) -> int:
     out.write(text)
     return EXIT_OK
 
+_EXAMPLE_FILES = ("fetch.rob", "world.json")
+
+
+def _example(args, out, err) -> int:
+    """Write the shipped sample task and world into DIR; never overwrite a file."""
+    del out
+    target = Path(args.dir)
+    existing = [name for name in _EXAMPLE_FILES if (target / name).exists()]
+    if existing:
+        print(f"robolang example: not overwriting {', '.join(str(target / n) for n in existing)}", file=err)
+        return EXIT_USAGE
+    try:
+        target.mkdir(parents=True, exist_ok=True)
+        for name in _EXAMPLE_FILES:
+            data = resources.files("robolang").joinpath(f"reference/{name}").read_bytes()
+            (target / name).write_bytes(data)
+    except OSError as exc:
+        print(f"robolang example: {exc}", file=err)
+        return EXIT_USAGE
+    rob, world = (str(target / n) for n in _EXAMPLE_FILES)
+    print(f"wrote {rob} and {world}. Next:\n"
+          f"  robolang validate {rob} --world {world}\n"
+          f"  robolang simulate {rob} --world {world}", file=err)
+    return EXIT_OK
+
+
 def _input_arguments(command: argparse.ArgumentParser, what: str, note: str = ""):
     """The input of a command: FILE, or `--ir` for a Task IR document (exactly one of them)."""
     command.add_argument("file", metavar="FILE", nargs="?", help=f"path to {what}")
@@ -771,6 +831,18 @@ def _parser(prog: str) -> argparse.ArgumentParser:
         description="Print the exact RoboLang 1.6 reference shipped with this installation. Nothing is executed.",
     )
     reference.set_defaults(run=_reference)
+
+    example = commands.add_parser(
+        "example",
+        help="write a sample task and world file to start from",
+        description=(
+            "Write fetch.rob (a task) and world.json (a world for it) into DIR, the current directory if\n"
+            "omitted. Existing files are never overwritten. Nothing is executed."
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    example.add_argument("dir", metavar="DIR", nargs="?", default=".", help="where to write the files")
+    example.set_defaults(run=_example)
 
     validate = commands.add_parser(
         "validate",

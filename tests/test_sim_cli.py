@@ -126,7 +126,7 @@ def test_case(case, source):
     assert record["mode"] == "simulation"
     assert lines[-1].startswith(f"simulation only: run {record['run_id']}: {record['state']}")
     if record["failure"] is not None:
-        assert lines[-1].endswith(f"({record['failure']['code']})")
+        assert f"{record['state']} ({record['failure']['code']}): " in lines[-1]
     assert all(entry["status"] in LIMIT_STATUSES for entry in record["safety_limits"])
 
     for key in ("run_id", "states", "state", "failure", "cancelled_before_step", "end_t_ms", "events_applied"):
