@@ -98,5 +98,6 @@ Ranked by how much of the safety case each one unblocks. Each is a design item; 
 7. **G7 External partner and cell risk assessment.** Owner action: choose the pilot partner and robot, whose risk
    assessment C1 rests on.
 
-**Recommendation:** design G1, G3 and G6 together first. They are robot-independent, small, and are what an
+**Recommendation:** design G1, G3 and G6 together first (proposed in decision
+[0038](../spec/decisions/0038-physical-mode-authorization-stop-approval.md)). They are robot-independent, small, and are what an
 external partner will ask about first. G2 and G5 need a named robot (G7).
