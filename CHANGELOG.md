@@ -9,6 +9,10 @@ versions (1.0 to 1.5). Decision records are in [`spec/decisions/`](https://githu
   (`sign_ed25519`, `verify_ed25519`, `generate_ed25519`), the first build step of decision 0038. A receiver accepts
   them only when its `Context.algorithms` lists `ed25519`; by default nothing changes. Simulation only: physical mode
   is still rejected. The base install still has no runtime dependencies.
+- Physical-run authorization documents (decision 0038 step 2, `spec/authorization-v0.1.md`): an owner-signed cell
+  configuration, a reviewer-signed task approval bound to the Task IR hash, and an operator-signed run grant.
+  `robolang.authorization.check_chain` checks every link (`A701` to `A726`). A valid chain still ends in `A731`:
+  physical mode is not enabled.
 
 ## 0.3.1 (2026-11-12)
 
