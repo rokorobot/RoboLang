@@ -54,6 +54,10 @@ happens when something stops the robot, and how a person's review of an AI-writt
    simulation", which remains true of the default install.
 2. Cell configuration, task approval and grant documents: schemas, a reader, and checks, all exercised in the
    symbolic simulator with `mode: physical` still rejected.
+   **Done 2026-11-12:** [authorization-v0.1.md](../authorization-v0.1.md) and `robolang.authorization`: the three
+   documents, a strict reader and the chain check (`A701`–`A726`); a valid chain still ends in `A731`. The grant is
+   its own document, `robolang.run_grant`, not a Core `authorization_decision`: that payload has no field for the
+   approval's hash, and Core 0.1 and 0.2 are frozen. A later Core version can carry it.
 3. Stop and safe-state behaviour in the Gazebo backend: cancel, expiry and revocation tested in simulation.
 4. Physical mode itself: only with G2, G5, G7 and the owner's signature on the safety case.
 
