@@ -13,6 +13,9 @@ versions (1.0 to 1.5). Decision records are in [`spec/decisions/`](https://githu
   configuration, a reviewer-signed task approval bound to the Task IR hash, and an operator-signed run grant.
   `robolang.authorization.check_chain` checks every link (`A701` to `A726`). A valid chain still ends in `A731`:
   physical mode is not enabled.
+- Gazebo backend (decision 0038 step 3): `--stop-file` (`cancel`, `revoke`) and `--deadline-s` stop a run, even during
+  a motion (`S511`–`S513`). After any stop or failed step the arm holds where it is and the gripper is never
+  commanded again. Run record `robolang.ros2.run` 0.3 adds `stop`. Two stop cases join the Gazebo acceptance run.
 
 ## 0.3.1 (2026-11-12)
 

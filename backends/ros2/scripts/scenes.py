@@ -60,7 +60,7 @@ CASES = {  # scene: (what is wrong, the failure code the run must end with)
     # Decision 0038 P7 and P8: RoboLang's own stop. The arm must hold where it is; the gripper is never commanded.
     "fail_stop_cancel_holding": ("cancelled through the stop file as soon as the gripper has closed on the box",
                                  "S511"),
-    "fail_stop_deadline": ("a 3 s deadline (simulation time) passes during the first motion", "S512"),
+    "fail_stop_deadline": ("a 3 s deadline (simulation time) passes early in the run", "S512"),
 }
 STOPS = {  # scene: how run_task.sh stops it, and what the safe state must show afterwards
     "fail_stop_cancel_holding": {"stop_file_when_gripped": True, "holding": True},
