@@ -26,6 +26,8 @@ These define what the implemented tooling does. They live in the repository's `s
   the [gate 2 interoperability test](https://github.com/rokorobot/RoboLang/blob/main/spec/interop-gate-2-v0.1.md)
 - [`export-goal`](https://github.com/rokorobot/RoboLang/blob/main/spec/export-goal-v0.1.md), [`delegate` 0.1](https://github.com/rokorobot/RoboLang/blob/main/spec/delegate-v0.1.md),
   [0.2](https://github.com/rokorobot/RoboLang/blob/main/spec/delegate-v0.2.md) and [Core 0.2 delegate](https://github.com/rokorobot/RoboLang/blob/main/spec/delegate-core-0.2.md)
+- [Physical-run authorization 0.1](https://github.com/rokorobot/RoboLang/blob/main/spec/authorization-v0.1.md): signed cell configuration,
+  task approval and run grant; a valid chain still ends in `A731` (physical mode not enabled)
 - [ROS 2 / Gazebo backend 0.1](https://github.com/rokorobot/RoboLang/blob/main/spec/ros2-backend-v0.1.md): optional, repository only,
   simulation only
 
@@ -63,7 +65,8 @@ These define what the implemented tooling does. They live in the repository's `s
   never enforced.
 - No hardware: nothing is sent to a robot. The installed package loads no adapter and does not
   use ROS 2; the optional Gazebo backend in the repository drives a simulated arm only.
-- Core signatures are simulation-only, and there is no network transport.
+- No network transport. Core signatures are simulation-only by default; optional Ed25519
+  signatures (`robolang[ed25519]`) are on `main`, unreleased.
 
 ## Legacy v1
 

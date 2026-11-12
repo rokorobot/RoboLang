@@ -10,8 +10,9 @@ merely because the steps ran.
   Task IR 1.0 to 1.5, a symbolic simulator with reproducible run records, and RoboLang Core 0.1
   and 0.2 messages: `export-goal` sends a task's goal, and `delegate` hands it to a robot and
   accepts success only after checking the signed evidence. All of it runs in simulation.
-- **Not available:** physical robot execution, network transport, and real (non-simulation)
-  signatures.
+- **Not available:** physical robot execution and network transport. Unreleased work on `main`
+  adds optional Ed25519 signatures (`robolang[ed25519]`) and a signed authorization chain for
+  physical runs, which still always refuses (`A731`).
 
 > ⚠️ **Simulation only.** Physical robot execution is not implemented or authorized. RoboLang
 > does not replace ROS 2, MoveIt 2, Nav2 or hardware safety controllers. Do not run it against
@@ -72,7 +73,7 @@ simulation result is not evidence that a task is safe on hardware.
 | Gate 2 independent interoperability | Passed 2026-11-10: an independent Core 0.2 implementation passes 25/25 cases |
 | `.rob` → Core bridge (`export-goal`, `delegate`) | Delivered in simulation |
 | ROS 2 / Gazebo backend | Optional, repository only, simulation only; not part of the installed package |
-| Physical execution | Not implemented or authorized; a robot-independent safety case is in draft |
+| Physical execution | Not implemented or authorized. Safety case in draft; authorization documents and chain check on `main`, unreleased, always refusing |
 
 ## Where to go next
 
@@ -82,6 +83,7 @@ simulation result is not evidence that a task is safe on hardware.
 - [Core 0.2](https://github.com/rokorobot/RoboLang/blob/main/spec/core-v0.2.md) and
   [`delegate`](https://github.com/rokorobot/RoboLang/blob/main/spec/delegate-v0.2.md)
 - [Strategy](STRATEGY.md) and [development plan](DEVELOPMENT_PLAN.md)
-- [Safety case draft](safety-case-draft.md)
+- [Safety case draft](safety-case-draft.md) and
+  [physical-run authorization](https://github.com/rokorobot/RoboLang/blob/main/spec/authorization-v0.1.md)
 - [Legacy RoboLang v1](legacy-v1.md): the original interpreter, the experimental ROS 2 adapter
   and the v1 PDF guides, kept as history
