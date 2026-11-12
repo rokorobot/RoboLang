@@ -38,11 +38,13 @@ You need Python 3.11 or newer. No ROS 2, no robot, no other packages.
 python -m pip install robolang
 robolang reference          # the language reference: everything a task author needs
 robolang validate FILE.rob
+robolang example            # writes fetch.rob and world.json, the two files below
 ```
 
 ### A verified run in two files
 
-Nothing but the installed package is needed. Save this task as `fetch.rob`:
+Nothing but the installed package is needed. `robolang example` writes both files into the current
+directory (or `robolang example DIR`); or save this task as `fetch.rob`:
 
 ```rob
 robolang 1.6;
@@ -80,7 +82,7 @@ robolang simulate fetch.rob --world world.json    # stderr: simulation only: run
 ```
 
 Delete the `place` line and run `simulate` again: every step still succeeds, but the run ends
-`FAILED (S301)`, because the goal is not true in the final world.
+`FAILED (S301): a goal condition is false after the last step`.
 
 ### More examples
 
@@ -111,6 +113,7 @@ robolang simulate examples/handover.rob --world examples/world.json \
 | Command | What it does | Exit status |
 |---|---|---|
 | `reference` | Prints the tested RoboLang 1.6 language reference shipped in the package | 0 |
+| `example [DIR]` | Writes the sample task `fetch.rob` and world `world.json`; never overwrites a file | 0 written, 2 a file exists |
 | `validate FILE` | Checks the file and prints **every** diagnostic (up to 50) as `file:line:column: error[CODE]: …` | 0 valid, 1 invalid, 2 usage error |
 | `inspect FILE [--json] [--task NAME]` | Validates, then shows the tasks as text or as Task IR JSON | as `validate` |
 | `simulate FILE --world W [--task NAME] [--bind P=ID …]` | Runs one task against a world file in a symbolic simulation; the same inputs give a byte-identical run record | 0 succeeded, 1 invalid source, 2 usage, 3 invalid world, 4 failed, 5 cancelled |
