@@ -40,6 +40,50 @@ robolang reference          # the language reference: everything a task author n
 robolang validate FILE.rob
 ```
 
+### A verified run in two files
+
+Nothing but the installed package is needed. Save this task as `fetch.rob`:
+
+```rob
+robolang 1.6;
+
+task fetch(robot r, object box, location src, location dst) {
+    pre { robot_ready r; }
+    goal { object_at box dst; }
+    plan {
+        move r to src;
+        grasp r box;
+        move r to dst;
+        place r box at dst;
+    }
+}
+```
+
+and this world as `world.json`. A world file lists the locations, robots and objects, and binds each
+task parameter to one of them
+([format](https://github.com/rokorobot/RoboLang/blob/main/spec/simulation-v1.0.md#3-world-file-schemas-10-and-11)):
+
+```json
+{
+  "world_schema": "robolang.sim.world",
+  "world_schema_version": "1.2",
+  "locations": ["home", "shelf", "table"],
+  "robots": { "arm1": { "ready": true, "location": "home", "gripper": true } },
+  "objects": { "box1": { "present": true, "location": "shelf" } },
+  "tasks": { "fetch": { "bindings": { "r": "arm1", "box": "box1", "src": "shelf", "dst": "table" } } }
+}
+```
+
+```bash
+robolang validate fetch.rob --world world.json
+robolang simulate fetch.rob --world world.json    # stderr: simulation only: run sim-…: SUCCEEDED
+```
+
+Delete the `place` line and run `simulate` again: every step still succeeds, but the run ends
+`FAILED (S301)`, because the goal is not true in the final world.
+
+### More examples
+
 The examples and test worlds live in the repository:
 
 ```bash
@@ -123,13 +167,18 @@ task handover(robot arm, robot mobile, object box, location src, location handof
   `communicate`. Plans are sequential.
 - **Versions:** unmarked files are 1.1. `robolang 1.2;` adds `and`, `or`, `not`.
   `robolang 1.3;` adds the required `goal` block, the outcome conditions and `sensor`
-  parameters.
+  parameters. `robolang 1.4;` adds bounded `if`/`else` and `fail`; `robolang 1.5;` adds step failure
+  handlers (`<step> else { ... }`); `robolang 1.6;` adds measured values (`measure`, comparisons).
+  `robolang reference` teaches 1.6.
 - **`@safety max_speed`** is checked against the robot's profile and recorded, never enforced.
 
 Specifications: [1.1](https://github.com/rokorobot/RoboLang/blob/main/spec/robolang-v1.1.md) ([grammar](https://github.com/rokorobot/RoboLang/blob/main/spec/grammar.ebnf)),
 [1.2](https://github.com/rokorobot/RoboLang/blob/main/spec/robolang-v1.2.md) ([grammar](https://github.com/rokorobot/RoboLang/blob/main/spec/grammar-v1.2.ebnf)),
 [1.3](https://github.com/rokorobot/RoboLang/blob/main/spec/robolang-v1.3.md) ([grammar](https://github.com/rokorobot/RoboLang/blob/main/spec/grammar-v1.3.ebnf)),
-[Task IR](https://github.com/rokorobot/RoboLang/blob/main/spec/ir-schema-v1.2.md), [simulation, world file and run record](https://github.com/rokorobot/RoboLang/blob/main/spec/simulation-v1.0.md).
+[1.4](https://github.com/rokorobot/RoboLang/blob/main/spec/robolang-v1.4.md) ([grammar](https://github.com/rokorobot/RoboLang/blob/main/spec/grammar-v1.4.ebnf)),
+[1.5](https://github.com/rokorobot/RoboLang/blob/main/spec/robolang-v1.5.md) ([grammar](https://github.com/rokorobot/RoboLang/blob/main/spec/grammar-v1.5.ebnf)),
+[1.6](https://github.com/rokorobot/RoboLang/blob/main/spec/robolang-v1.6.md) ([grammar](https://github.com/rokorobot/RoboLang/blob/main/spec/grammar-v1.6.ebnf)),
+[Task IR](https://github.com/rokorobot/RoboLang/blob/main/spec/ir-schema-v1.5.md), [simulation, world file and run record](https://github.com/rokorobot/RoboLang/blob/main/spec/simulation-v1.0.md).
 
 ## How it fits together
 

@@ -12,7 +12,7 @@ Developer commands for RoboLang 1.1 to 1.6.
                            send the task's goal to a robot that runs its own plan; print the delegate record
 
 validate, inspect, simulate, export-goal and delegate take `--ir IR` instead of FILE: a Task IR JSON
-document (schema 1.0 to 1.2), read strictly and re-validated in full (spec/ir-reader-v0.1.md).
+document (schema 1.0 to 1.5), read strictly and re-validated in full (spec/ir-reader-v0.1.md).
     arch02 --scenario SCENARIO --cases CASES --case ID
                            run one case of the RFC-001 reference scenario in simulation
 
@@ -744,7 +744,7 @@ def _input_arguments(command: argparse.ArgumentParser, what: str, note: str = ""
         "--ir",
         metavar="IR",
         help=(
-            "path to a Task IR JSON file (schema 1.0 to 1.2) instead of FILE. It is read strictly and "
+            "path to a Task IR JSON file (schema 1.0 to 1.5) instead of FILE. It is read strictly and "
             f"re-validated in full, whatever versions it claims (spec/ir-reader-v0.1.md){note}"
         ),
     )
@@ -838,7 +838,7 @@ def _parser(prog: str) -> argparse.ArgumentParser:
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     _input_arguments(simulate, "a .rob file")
-    simulate.add_argument("--world", metavar="WORLD", required=True, help="path to a world file (schema 1.0)")
+    simulate.add_argument("--world", metavar="WORLD", required=True, help="path to a world file (schema 1.0 to 1.2)")
     simulate.add_argument("--task", metavar="NAME", help="the task to run (required when FILE has several tasks)")
     simulate.add_argument(
         "--seed",
