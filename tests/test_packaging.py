@@ -15,7 +15,7 @@ PROJECT = PYPROJECT["project"]
 
 
 def test_distribution_version_is_the_approved_pre_release():
-    assert PROJECT["version"] == "0.3.0"
+    assert PROJECT["version"] == "0.3.1"
 
 
 def test_distribution_version_is_not_the_language_or_schema_version():
