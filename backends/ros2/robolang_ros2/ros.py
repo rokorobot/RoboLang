@@ -4,19 +4,23 @@ from __future__ import annotations
 import re
 import subprocess
 import sys
+import threading
 import time
 import xml.etree.ElementTree as ET
 
 from . import observe
-from .executor import BackendFailure
+from .executor import STOP_CODES, STOP_MESSAGES, BackendFailure, Stop
 
 PLAN_ATTEMPTS = 3
 FRAMES = 10  # camera frames fused per observation (10 Hz camera: one simulated second)
 SETTLE_MS = 500  # let a released object come to rest before the first fused frame
+ARM_JOINTS = ["shoulder_pan_joint", "shoulder_lift_joint", "elbow_joint", "wrist_1_joint", "wrist_2_joint",
+              "wrist_3_joint"]  # config/controllers.yaml, joint_trajectory_controller
+HOLD_TOPIC = "/joint_trajectory_controller/joint_trajectory"
 
 
 class ROSOperations:
-    def __init__(self, site):
+    def __init__(self, site, stop: Stop | None = None):
         import rclpy
         from rosgraph_msgs.msg import Clock
         from sensor_msgs.msg import JointState
@@ -44,6 +48,57 @@ class ROSOperations:
         self.gripper = None
         self.model = None
         self.site = site
+        self.stop = stop
+        self.held = threading.Event()
+        from trajectory_msgs.msg import JointTrajectory
+        self._hold_message = JointTrajectory(joint_names=ARM_JOINTS)  # no points: the controller holds (0038 P7)
+        if stop is not None:
+            self._start_watchdog()
+
+    def _start_watchdog(self) -> None:
+        """A second node on its own thread: while the main thread waits inside MoveIt, it still sees the stop."""
+        from rclpy.executors import SingleThreadedExecutor
+        from rosgraph_msgs.msg import Clock
+        from trajectory_msgs.msg import JointTrajectory
+
+        node = self.rclpy.create_node("robolang_ros2_stop", parameter_overrides=[
+            self.rclpy.parameter.Parameter("use_sim_time", value=True)])
+        self._hold_publisher = node.create_publisher(JointTrajectory, HOLD_TOPIC, 10)
+        clock = {"ms": 0}
+
+        def on_clock(msg):
+            clock["ms"] = max(clock["ms"], msg.clock.sec * 1000 + msg.clock.nanosec // 1_000_000)
+
+        node.create_subscription(Clock, "/clock", on_clock, 10)
+        executor = SingleThreadedExecutor()
+        executor.add_node(node)
+
+        def watch():
+            last = 0.0
+            while self.rclpy.ok():
+                executor.spin_once(timeout_sec=0.05)
+                # Once stopped, keep holding: a trajectory sent after the first hold (planning was already under
+                # way) is overridden within half a second.
+                if self.stop.due(clock["ms"]) is not None and time.monotonic() - last >= 0.5:
+                    self.hold()
+                    last = time.monotonic()
+
+        threading.Thread(target=watch, name="robolang-stop-watchdog", daemon=True).start()
+
+    def hold(self) -> None:
+        """Stop the arm where it is: an empty trajectory makes joint_trajectory_controller hold position.
+
+        The gripper is not commanded. Repeated calls are harmless.
+        """
+        if getattr(self, "_hold_publisher", None) is None:
+            from trajectory_msgs.msg import JointTrajectory
+            self._hold_publisher = self.node.create_publisher(JointTrajectory, HOLD_TOPIC, 10)
+        self._hold_publisher.publish(self._hold_message)
+        self.held.set()
+
+    def _stopped(self) -> BackendFailure | None:
+        reason = self.stop.due(self.clock_values[-1] // 1_000_000) if self.stop and self.clock_values else None
+        return BackendFailure(STOP_CODES[reason], STOP_MESSAGES[reason]) if reason else None
 
     def _on_clock(self, msg):
         value = msg.clock.sec * 1_000_000_000 + msg.clock.nanosec
@@ -174,6 +229,9 @@ class ROSOperations:
         # of times.
         failure = None
         for _ in range(PLAN_ATTEMPTS):
+            stopped = self._stopped()
+            if stopped is not None:
+                raise stopped
             try:
                 self.arm.set_start_state_to_current_state()
                 if not self.arm.set_goal_state(pose_stamped_msg=target, pose_link="tool0"):
@@ -182,9 +240,15 @@ class ROSOperations:
                 if not plan:
                     failure = BackendFailure("S502", "MoveIt found no motion plan")
                     continue
+                stopped = self._stopped()
+                if stopped is not None:  # the stop came while planning: never send the plan
+                    raise stopped
                 status = self.planner.execute(plan.trajectory, controllers=["joint_trajectory_controller"])
                 if status.status == "SUCCEEDED":
                     return
+                stopped = self._stopped()
+                if stopped is not None:  # a stopped motion is never planned again
+                    raise stopped
                 code = "S504" if status.status == "TIMED_OUT" else "S503"
                 failure = BackendFailure(code, f"MoveIt execution ended {status.status}")
                 self._until(lambda: False, 0.5)  # let the joint states settle before planning again

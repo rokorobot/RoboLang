@@ -30,7 +30,7 @@ jobs:
       matrix:
         scene: [a_scrap_part, a_sort_three, e_box_then_dock, e_hold_box, e_pause_home, e_pick_place, l_vial_hold,
                 l_vial_to_fridge, w_part_precheck, w_pick_from_table, w_split_boxes, fail_object_absent,
-                fail_object_moved, fail_out_of_reach, fail_cameras_covered]
+                fail_object_moved, fail_out_of_reach, fail_cameras_covered, fail_stop_cancel_holding, fail_stop_deadline]
     steps:
       - uses: actions/checkout@v5
       - uses: docker/setup-buildx-action@v4

@@ -46,14 +46,26 @@ python3 /opt/h3/scripts/ready.py >"$OUT/ready.log" 2>&1 || { cat "$OUT/ready.log
 
 mapfile -t ARGS < <(python3 -c 'import json,sys; s=json.load(open(sys.argv[1]))
 print(s["source"]); print("--task"); print(s["task"])
-for k, v in s["bindings"].items(): print("--bind"); print(f"{k}={v}")' "$S/scene.json")
+for k, v in s["bindings"].items(): print("--bind"); print(f"{k}={v}")
+stop = s.get("stop") or {}
+if "deadline_s" in stop: print("--deadline-s"); print(stop["deadline_s"])
+if stop.get("stop_file_when_gripped"): print("--stop-file"); print("/tmp/stop")' "$S/scene.json")
+rm -f /tmp/stop
+# A stop case (0038 P7): write "cancel" to the stop file as soon as the gripper has closed on the box.
+WATCHER=
+if grep -q '"stop_file_when_gripped": true' "$S/scene.json"; then
+    python3 /opt/h3/scripts/stop_when_gripped.py /tmp/stop >"$OUT/stop_watcher.log" 2>&1 &
+    WATCHER=$!
+fi
 start=$(date +%s)
 timeout 900 python3 -m robolang_ros2.cli "${ARGS[@]}" --site "$S/site.json" --out "$OUT/executor.json" \
     >"$OUT/executor.log" 2>&1
 echo "$?" >"$OUT/exit_code"
 echo "$(( $(date +%s) - start ))" >"$OUT/wall_seconds"
+[ -n "$WATCHER" ] && kill "$WATCHER" 2>/dev/null
 if [ -f "$OUT/executor.json" ]; then
-    python3 /opt/h3/scripts/oracle.py "$OUT/executor.json" "$S/site.json" "$OUT/oracle.json" >"$OUT/oracle.log" 2>&1
+    python3 /opt/h3/scripts/oracle.py "$OUT/executor.json" "$S/site.json" "$OUT/oracle.json" "$S/scene.json" \
+        >"$OUT/oracle.log" 2>&1
     echo "$?" >"$OUT/oracle_exit_code"
 fi
 # One frame per camera, for the evidence document.

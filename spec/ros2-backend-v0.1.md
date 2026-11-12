@@ -14,6 +14,23 @@ The site file maps IDs in `.rob` bindings to a Gazebo model and `base_link` pose
 
 The detachable joint is a simulation expedient: one per object, with topics `/model/<robot model>/detachable_joint/<object model>/{attach,detach,state}`. The installed Jetty build starts each attached despite an `initial_attach=false` request, so the harness detaches every object before anything moves and the executor repeats the release during its guard. In the acceptance scenes the 0.1 m boxes are wider than the gripper's 85 mm opening, so the grasp pose keeps the fingertips above the box and the joint carries it; the fingers never touch it. A record says `grasp_model: detachable_joint_after_gripper_close`; it does not claim friction or contact physics has been validated.
 
+## Stop and safe state
+
+Decision [0038](decisions/0038-physical-mode-authorization-stop-approval.md) P7 and P8. A run stops early when it is
+cancelled (`--stop-file PATH` holds `cancel`: `S511`), its deadline passes (`--deadline-s S`, simulation seconds from
+the end of the guard: `S512`) or its authorization is revoked (the stop file holds `revoke`: `S513`). The stop is
+checked before and after every command that can move something, and a watchdog thread with its own node checks it
+while a motion runs. On a stop the backend sends no further motion and holds the arm where it is: an empty
+`joint_trajectory_controller` trajectory (a controlled stop, power kept), repeated every 0.5 s while stopped, so a
+plan sent after the first hold is overridden. A plan computed when the stop came is never executed, and a stopped
+motion is never planned again. **The gripper is never commanded after a stop**, so a held object is not dropped; a
+gripper motion already under way finishes. A failed step ends in the same safe state.
+
+The record's `stop` is `null`, or `{reason, code, kind: "controlled_hold", safe_state: {position: "hold", gripper:
+"unchanged"}, hold}`, where `reason` is `cancelled`, `expired`, `revoked` or `step_failed` and `hold` is `sent` or
+`failed: …`. A failure before any step (guard, site, preconditions) or of the goal has no stop: nothing is moving.
+This stop is RoboLang's own. It is not a safety function: e-stop and protective stops belong to the cell (0038 P6).
+
 ## Observations and verdicts
 
 Preconditions are evaluated from one observation snapshot before the first step; the goal from one snapshot after the last step succeeds. Conditions are `object_at`, `robot_at`, `holding` and `robot_ready` ([0031](decisions/0031-observing-region-clear-and-robot-ready.md) R1), combined with `and`, `or` and `not` in three-valued logic as in the symbolic simulator. Any other condition, or an atom naming an object without a marker or an `object_at` location without a region, fails with S508 or S507 before the first motion. Gazebo ground truth is never read.
@@ -49,12 +66,15 @@ A closed gripper whose object marker no camera sees gives `unknown`; so does `ro
 | S507 | Site or binding is invalid or incomplete |
 | S508 | Task feature has no observation or is unsupported by this backend |
 | S509 | The task has a `measure` (RoboLang 1.6): this backend has no value sensors; refused before any motion |
+| S511 | The run was cancelled (stop file) |
+| S512 | The run's deadline passed |
+| S513 | The run's authorization was revoked (stop file) |
 
 S101, S102, S301 and S302 have their [simulation](simulation-v1.0.md) meanings, decided from observations.
 
 ## Record
 
-Each attempt writes a JSON record, schema `robolang.ros2.run` 0.2, with `mode: simulation`, `backend.kind: ros2-gazebo`, resolved package versions, Task IR, bindings, the `verify` thresholds used, each precondition, ordered step results, each goal condition (`true`, `false`, `unknown` or `not_evaluated`), every observation snapshot with its readings, and `core_outcome`. `state` is `SUCCEEDED` only when every goal condition is `true`; otherwise `FAILED` with a code. The CLI exits 0 for `SUCCEEDED`, 3 for S302 and 1 otherwise.
+Each attempt writes a JSON record, schema `robolang.ros2.run` 0.3 (0.3 adds `stop`), with `mode: simulation`, `backend.kind: ros2-gazebo`, resolved package versions, Task IR, bindings, the `verify` thresholds used, each precondition, ordered step results, each goal condition (`true`, `false`, `unknown` or `not_evaluated`), every observation snapshot with its readings, and `core_outcome`. `state` is `SUCCEEDED` only when every goal condition is `true`; otherwise `FAILED` with a code. The CLI exits 0 for `SUCCEEDED`, 3 for S302 and 1 otherwise.
 
 `core_outcome` is the Core 0.1 `outcome` payload, or `null` when the goal has no Core form. The verifier and reporter are `rl:sim:gazebo`. Each evidence observation states what the readings support (for example `located_in` the location whose region holds the marker), with the reading's stamp, `valid_for` equal to `max_age`, its confidence rounded down to two places, and the sensor and method. Observations are signed with a fixed, published, simulation-only key, like the symbolic simulator's. A criterion is met only when its verdict is `true`. The symbolic simulator's records remain byte-identical.
 
@@ -62,4 +82,4 @@ The Lyrical MoveItPy 2.15.2 binding can crash during Python interpreter teardown
 
 ## Verification
 
-Unit tests use fake operations and snapshots to check guard ordering, failure propagation, thresholds, the grasp check and verdicts, and validate every generated scene's site. The on-demand/nightly ROS 2 workflow is the acceptance run of 0029 sections 3 and 7: `scripts/scenes.py` generates a Gazebo world and site per benchmark task with the same entity IDs, each task runs three times in a fresh container (`scripts/run_task.sh`), the four failure cases once each, and a test-only oracle (`scripts/oracle.py`) compares every evaluated goal condition with Gazebo's box and wrist poses and the simulated gripper joint. `scripts/acceptance.py` applies the pass bar.
+Unit tests use fake operations and snapshots to check guard ordering, failure propagation, thresholds, the grasp check and verdicts, and validate every generated scene's site. The on-demand/nightly ROS 2 workflow is the acceptance run of 0029 sections 3 and 7: `scripts/scenes.py` generates a Gazebo world and site per benchmark task with the same entity IDs, each task runs three times in a fresh container (`scripts/run_task.sh`), the four failure cases and the two stop cases once each (a stop case also needs the oracle to confirm the safe state: the hold was sent, the arm moves less than 1 cm in 3 s, and a box held at the stop is still closed in the gripper and under it), and a test-only oracle (`scripts/oracle.py`) compares every evaluated goal condition with Gazebo's box and wrist poses and the simulated gripper joint. `scripts/acceptance.py` applies the pass bar.

@@ -10,7 +10,7 @@ from pathlib import Path
 from robolang import ir
 from robolang.diagnostics import RoboLangError
 
-from .executor import BackendFailure, execute
+from .executor import BackendFailure, Stop, execute
 from .site import read_site
 
 
@@ -29,6 +29,10 @@ def main() -> None:
     ap.add_argument("--site", required=True)
     ap.add_argument("--bind", action="append", default=[], metavar="NAME=ID")
     ap.add_argument("--out", required=True)
+    ap.add_argument("--deadline-s", type=float, metavar="S",
+                    help="stop the run S seconds of simulation time after the guard passes (S512, decision 0038 P7)")
+    ap.add_argument("--stop-file", metavar="PATH",
+                    help="stop the run when PATH holds 'cancel' (S511) or 'revoke' (S513), even during a motion")
     args = ap.parse_args()
     try:
         source = Path(args.source).read_text(encoding="utf-8")
@@ -46,8 +50,12 @@ def main() -> None:
             bindings[name] = value
         site = read_site(args.site)
         from .ros import ROSOperations  # never import ROS for an invalid task or site
-        ops = ROSOperations(site)
-        record = execute(task, bindings, site, ops)
+        after = None if args.deadline_s is None else int(args.deadline_s * 1000)
+        if after is not None and after <= 0:
+            raise BackendFailure("S507", "--deadline-s must be greater than zero")
+        stop = Stop(stop_file=args.stop_file, after_ms=after) if after is not None or args.stop_file else None
+        ops = ROSOperations(site, stop)
+        record = execute(task, bindings, site, ops, stop)
         Path(args.out).write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
         if record["state"] == "SUCCEEDED":
             print("goal verified from observations", file=sys.stderr)
