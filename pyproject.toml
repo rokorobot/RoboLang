@@ -7,7 +7,7 @@ name = "robolang"
 # Distribution version: the maturity of this package (0.2.0 was the first PyPI release; still alpha).
 # It is independent of the language versions (1.1 to 1.6) and the IR schema
 # versions (1.0 to 1.5), which are defined in src/robolang/.
-version = "0.3.0"
+version = "0.3.1"
 description = "RoboLang: a checked robot task language (1.1 to 1.6) with a validator, symbolic simulation and RoboLang Core outcomes."
 readme = "README.md"
 requires-python = ">=3.11"

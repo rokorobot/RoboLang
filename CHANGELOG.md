@@ -3,7 +3,7 @@
 The distribution version (this file) is independent of the language versions (1.1 to 1.6) and the Task IR schema
 versions (1.0 to 1.5). Decision records are in [`spec/decisions/`](https://github.com/rokorobot/RoboLang/tree/main/spec/decisions).
 
-## Unreleased
+## 0.3.1 (2026-11-12)
 
 **First run from PyPI alone**
 - `robolang example [DIR]` writes a sample task (`fetch.rob`) and a world for it (`world.json`), so a pip user can
