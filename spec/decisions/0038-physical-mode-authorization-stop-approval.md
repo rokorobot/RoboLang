@@ -1,7 +1,10 @@
 # Decision record 0038: Physical-mode authorization, stop and safe state, task approval (H4 G1, G3, G6)
 
 **Date:** 2026-11-12
-**Status:** **PROPOSED**, for the owner. Design only: no code, and nothing here enables physical execution.
+**Status:** **APPROVED by the owner, 2026-11-12**, with the recommended option for P1–P9, including the `ed25519`
+dependency confined to an optional extra or the robot backend package (never the core wheel). The maximum grant
+lease is set in the cell configuration, which the owner signs (P1, P2). Design only: no code, and nothing here
+enables physical execution. Each delivery step of section 4 is its own PR.
 Physical mode stays unauthorized until the owner signs a written safety case for a named robot and cell.
 **Applies to (when decided):** [safety case draft](../../docs/safety-case-draft.md) gaps G1, G3 and G6; claims C3
 and C4. Builds on RFC-001 13.2–13.6 (authorization is local, standing authorizations, `mode`, safety), Core 0.1
