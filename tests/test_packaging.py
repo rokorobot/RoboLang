@@ -47,7 +47,9 @@ def test_setup_py_adds_no_metadata_of_its_own():
     assert "console_scripts" not in source
 
 
-LEGACY_MODULES = ("robolang_runtime", "robolang_adapter", "robolang_adapter_ros2", "robolang_ros2_main")
+LEGACY_MODULES = ("robolang_runtime", "robolang_adapter")
+# Removed 2026-11-13 (safety case H19, gap G8): the two v1 modules that could drive ROS 2 without the validator.
+REMOVED_LEGACY_MODULES = ("robolang_adapter_ros2", "robolang_ros2_main")
 
 
 def test_only_the_read_only_package_is_installed():
@@ -66,9 +68,19 @@ def test_legacy_sources_are_still_in_the_repository():
         assert (REPO_ROOT / "legacy" / f"{module}.py").is_file(), module
 
 
+def test_no_legacy_code_can_drive_ros_2():
+    """H19: nothing in legacy/ may bypass the validator to command a robot through ROS 2."""
+    for module in REMOVED_LEGACY_MODULES:
+        assert not (REPO_ROOT / "legacy" / f"{module}.py").exists(), module
+    for path in (REPO_ROOT / "legacy").rglob("*.py"):
+        text = path.read_text(encoding="utf-8")
+        for word in ("rclpy", "control_msgs", "trajectory_msgs", "std_msgs"):
+            assert word not in text, (path.name, word)
+
+
 def test_read_only_package_does_not_depend_on_the_legacy_modules():
     package = REPO_ROOT / "src" / "robolang"
     for path in package.rglob("*.py"):
         text = path.read_text(encoding="utf-8")
-        for module in LEGACY_MODULES:
+        for module in LEGACY_MODULES + REMOVED_LEGACY_MODULES:
             assert f"import {module}" not in text and f"from {module}" not in text, (path.name, module)

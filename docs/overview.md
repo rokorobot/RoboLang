@@ -70,6 +70,6 @@ These define what the implemented tooling does. They live in the repository's `s
 
 ## Legacy v1
 
-The original line-based interpreter, the simulated and experimental ROS 2 adapters and the four
-v1 PDF guides are historical material. They are not part of the installed package and bypass
+The original line-based interpreter, its print-only adapter and the four v1 PDF guides are
+historical material; the experimental ROS 2 adapter was removed on 2026-11-13. They are not part of the installed package and bypass
 the validator. See [Legacy RoboLang v1](legacy-v1.md).
