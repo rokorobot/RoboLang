@@ -28,7 +28,12 @@ gripper motion already under way finishes. A failed step ends in the same safe s
 
 The record's `stop` is `null`, or `{reason, code, kind: "controlled_hold", safe_state: {position: "hold", gripper:
 "unchanged"}, hold}`, where `reason` is `cancelled`, `expired`, `revoked` or `step_failed` and `hold` is `sent` or
-`failed: …`. A failure before any step (guard, site, preconditions) or of the goal has no stop: nothing is moving.
+`failed: …`. After a hold that was sent, `confirmation` records whether the arm was confirmed stopped (safety case
+H18): `confirmed` is true only when fresh `/joint_states` messages (distinct stamps) show no arm joint moving more than
+0.001 rad over 500 ms of simulation time, within 3 s of the hold; it also gives `after_ms` (from the first sample to the
+start of that window), `max_motion_rad`, the number of samples, the window and the tolerance. Stale joint states never
+confirm a stop. An unconfirmed stop is recorded and warned about on stderr; the run's code and exit status do not
+change. Confirmation only reads: it commands nothing. A failure before any step (guard, site, preconditions) or of the goal has no stop: nothing is moving.
 This stop is RoboLang's own. It is not a safety function: e-stop and protective stops belong to the cell (0038 P6).
 
 ## Observations and verdicts

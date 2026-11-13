@@ -78,6 +78,7 @@ class Operations(Protocol):
     def versions(self) -> dict[str, str]: ...
     def observe(self, marker_ids: list[int], ready: bool = False) -> observe.Snapshot: ...
     def hold(self) -> None: ...  # stop the arm where it is (controlled stop); never touches the gripper
+    def confirm_stopped(self) -> dict: ...  # watch joint states until the arm is still; `confirmed` says if it was
 
 
 @dataclass(frozen=True)
@@ -272,6 +273,12 @@ def _hold(ops: Operations, code: str) -> dict:
         entry["hold"] = "sent"
     except Exception as exc:  # the record must still be written; the cell's own stops remain the safety function
         entry["hold"] = f"failed: {exc}"
+        entry["confirmation"] = {"confirmed": False, "error": "no hold was sent"}
+        return entry
+    try:  # safety case H18: a hold that was sent is not yet a robot that stopped
+        entry["confirmation"] = ops.confirm_stopped()
+    except Exception as exc:
+        entry["confirmation"] = {"confirmed": False, "error": str(exc)}
     return entry
 
 
