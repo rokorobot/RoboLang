@@ -65,7 +65,7 @@ evidence that exists on `main`; "gap" items are collected and ranked in section 
 | H16 | A simulation result is taken as proof of safety, or a task meant for simulation reaches hardware | Mode confusion | "Simulation only" in every output; no physical-mode option or key is accepted; the ROS 2 backend refuses to start without simulated time and the Gazebo model (`S501`) | A physical mode that can only be entered by an explicit, recorded authorization (G1) |
 | H17 | A bug in the validator or executor | Software defect | ~3,400 tests on Linux and Windows; deterministic, byte-identical run records | Not qualified as safety software. Acceptable only while section 1 holds: RoboLang never carries a safety function |
 | H18 | A stop is recorded as done while the robot is still moving | The hold is sent but not confirmed: the record says `hold: sent`, not that the arm stopped | In Gazebo the test oracle measured 0.0 m of drift after each stop; the backend itself does not check | Confirm a stop from the controller's joint states and record it, before physical mode (G3) |
-| H19 | Unvalidated code drives a robot | The v1 prototype in `legacy/` can drive ROS 2 without the validator | Never installed (a packaging test guards it); README warning | Remove or quarantine `legacy/` before any physical pilot (G8) |
+| H19 | Unvalidated code drives a robot | The v1 prototype in `legacy/` could drive ROS 2 without the validator | **Closed 2026-11-13 (G8):** its ROS 2 adapter and entry point are removed; what remains only prints. A test fails if any `legacy/` file imports ROS 2 | None |
 
 ## 3. Safety case outline
 
@@ -101,8 +101,8 @@ Ranked by how much of the safety case each one unblocks. Each is a design item; 
    Unblocks H01, H02; part of C4.
 7. **G7 External partner and cell risk assessment.** Owner action: choose the pilot partner and robot, whose risk
    assessment C1 rests on.
-8. **G8 Quarantine `legacy/`.** Remove the v1 prototype, or move it where no installed or documented path can run
-   it, before any physical pilot. Small; unblocks H19.
+8. **G8 Quarantine `legacy/`.** **Done 2026-11-13:** the ROS 2 adapter and entry point are removed; the print-only
+   v1 interpreter stays as the compatibility fixture of development plan A7. Closes H19.
 
 **Recommendation:** design G1, G3 and G6 together first (proposed in decision
 [0038](../spec/decisions/0038-physical-mode-authorization-stop-approval.md)). They are robot-independent, small, and are what an
