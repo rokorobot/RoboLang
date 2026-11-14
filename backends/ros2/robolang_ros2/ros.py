@@ -17,6 +17,9 @@ SETTLE_MS = 500  # let a released object come to rest before the first fused fra
 ARM_JOINTS = ["shoulder_pan_joint", "shoulder_lift_joint", "elbow_joint", "wrist_1_joint", "wrist_2_joint",
               "wrist_3_joint"]  # config/controllers.yaml, joint_trajectory_controller
 HOLD_TOPIC = "/joint_trajectory_controller/joint_trajectory"
+# Safety case H18: a stop counts as confirmed only when fresh joint states show no arm joint moving more than
+# STILL_RAD over STILL_WINDOW_MS of simulation time, within CONFIRM_TIMEOUT_MS of the hold.
+STILL_RAD, STILL_WINDOW_MS, CONFIRM_TIMEOUT_MS = 0.001, 500, 3000
 
 
 class ROSOperations:
@@ -95,6 +98,21 @@ class ROSOperations:
             self._hold_publisher = self.node.create_publisher(JointTrajectory, HOLD_TOPIC, 10)
         self._hold_publisher.publish(self._hold_message)
         self.held.set()
+
+    def confirm_stopped(self) -> dict:
+        """Watch fresh /joint_states after a hold until the arm is still (H18). Never commands anything."""
+        samples, last_stamp = [], None
+        wall_deadline = time.monotonic() + CONFIRM_TIMEOUT_MS / 1000 * 5 + 5  # a slow simulation still gets its time
+        while time.monotonic() < wall_deadline:
+            self.rclpy.spin_once(self.node, timeout_sec=0.05)
+            stamp = self.joint_stamp_ms
+            if stamp is not None and stamp != last_stamp and all(j in self.joints for j in ARM_JOINTS):
+                samples.append((stamp, [self.joints[j] for j in ARM_JOINTS]))
+                last_stamp = stamp
+            result = arm_still(samples, STILL_WINDOW_MS, STILL_RAD)
+            if result is not None or (samples and samples[-1][0] - samples[0][0] >= CONFIRM_TIMEOUT_MS):
+                break
+        return confirmation(samples, STILL_WINDOW_MS, STILL_RAD)
 
     def _stopped(self) -> BackendFailure | None:
         reason = self.stop.due(self.clock_values[-1] // 1_000_000) if self.stop and self.clock_values else None
@@ -527,6 +545,31 @@ def gazebo_joint_command(model: str, obj: str, action: str) -> None:
             except subprocess.TimeoutExpired:
                 subscriber.kill()
                 subscriber.communicate()
+
+
+def arm_still(samples: list[tuple[int, list[float]]], window_ms: int, tolerance_rad: float):
+    """The first window of `window_ms` in which no joint moves more than `tolerance_rad` from its value at the
+    window's start: (start offset in ms from the first sample, largest motion in it), or None.
+
+    `samples` are (stamp in ms, joint positions) of distinct joint-state messages, in time order.
+    """
+    for i, (t0, p0) in enumerate(samples):
+        motion = 0.0
+        for t, p in samples[i + 1:]:
+            motion = max(motion, *(abs(a - b) for a, b in zip(p, p0)))
+            if motion > tolerance_rad:
+                break
+            if t - t0 >= window_ms:
+                return t0 - samples[0][0], motion
+    return None
+
+
+def confirmation(samples, window_ms: int, tolerance_rad: float) -> dict:
+    """The record's `stop.confirmation`."""
+    still = arm_still(samples, window_ms, tolerance_rad)
+    return {"confirmed": still is not None, "after_ms": None if still is None else still[0],
+            "max_motion_rad": None if still is None else round(still[1], 6), "samples": len(samples),
+            "window_ms": window_ms, "tolerance_rad": tolerance_rad}
 
 
 def force_detached(model: str, obj: str, rounds: int = 3) -> None:

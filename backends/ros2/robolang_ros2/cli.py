@@ -61,6 +61,9 @@ def main() -> None:
             print("goal verified from observations", file=sys.stderr)
             _finish(0)
         print(f"{record['failure']['code']}: {record['failure']['message']}", file=sys.stderr)
+        confirmation = (record["stop"] or {}).get("confirmation")
+        if confirmation is not None and not confirmation["confirmed"]:
+            print("warning: the arm was not confirmed stopped after the hold; check the cell", file=sys.stderr)
         # S302: the observations could not decide the goal. Never reported as completion.
         _finish(3 if record["failure"]["code"] == "S302" else 1)
     except RoboLangError as exc:

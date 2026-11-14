@@ -78,7 +78,9 @@ def safe_state(record, site, stop) -> dict:
     wrist = _pose(["-m", site["gazebo_model"], "--link", "wrist_3_link"])
     time.sleep(HOLD_WATCH_S)
     later = _pose(["-m", site["gazebo_model"], "--link", "wrist_3_link"])
-    out = {"hold_sent": (record.get("stop") or {}).get("hold") == "sent",
+    stop_record = record.get("stop") or {}
+    out = {"hold_sent": stop_record.get("hold") == "sent",
+           "stop_confirmed": bool((stop_record.get("confirmation") or {}).get("confirmed")),
            "arm_drift_m": round(math.dist(wrist, later), 4)}
     out["arm_holds"] = out["arm_drift_m"] < HOLD_DRIFT_M
     if stop["holding"]:
@@ -86,7 +88,8 @@ def safe_state(record, site, stop) -> dict:
         out["gripper"] = _gripper()
         out["box_held"] = (out["gripper"] >= GRIPPER_CLOSED_RAD and math.dist(box[:2], later[:2]) <= UNDER_XY_M and
                            UNDER_Z_M[0] <= later[2] - box[2] <= UNDER_Z_M[1])
-    out["ok"] = out["hold_sent"] and out["arm_holds"] and out.get("box_held", True)
+    # H18: the backend's own confirmation must agree with the arm the oracle sees holding still.
+    out["ok"] = out["hold_sent"] and out["stop_confirmed"] and out["arm_holds"] and out.get("box_held", True)
     return out
 
 

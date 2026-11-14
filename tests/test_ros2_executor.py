@@ -70,6 +70,9 @@ class FakeOps:
     def detach(self, model): self._call("detach", model)
     def wait_ms(self, duration): self._call("wait", duration)
     def hold(self): self.calls.append(("hold",))
+    def confirm_stopped(self):
+        self.calls.append(("confirm",))
+        return {"confirmed": True, "after_ms": 0}
     def versions(self): return {"ros": "lyrical"}
     def observe(self, marker_ids, ready=False):
         after_move = self.calls[-1][0] == "move"
@@ -200,7 +203,7 @@ def test_grasp_needs_the_object_seen_under_the_gripper(snap):
     ops = FakeOps(grasp_snap=snap)
     record = execute(task, bindings, site, ops)
     assert record["failure"]["code"] == "S506" and record["failure"]["step"] == 2
-    assert [call[0] for call in ops.calls][-3:] == ["move", "observe", "hold"]  # never closed or attached
+    assert [call[0] for call in ops.calls][-4:] == ["move", "observe", "hold", "confirm"]  # never closed or attached
 
 
 def test_approach_height_adds_straight_moves():
@@ -261,7 +264,7 @@ def test_failed_move_stops_before_gripper():
     assert record["state"] == "FAILED"
     assert record["failure"]["code"] == "S502"
     assert record["failure"]["step"] == 1
-    assert [call[0] for call in ops.calls] == ["guard", "move", "hold"]
+    assert [call[0] for call in ops.calls] == ["guard", "move", "hold", "confirm"]
 
 
 def test_missing_pose_fails_closed():
@@ -521,10 +524,10 @@ def test_a_stop_during_a_motion_holds_and_never_touches_the_gripper_again(reason
     ops = StopAfter(stop, "attach", 1, reason)  # holding the box
     record = execute(task, bindings, site, ops, stop)
     assert (record["state"], record["failure"]["code"], record["failure"]["step"]) == ("FAILED", code, 2)
-    assert kinds(ops)[-1] == "hold" and kinds(ops).count("grip") == 1  # closed once, never opened
+    assert kinds(ops)[-2:] == ["hold", "confirm"] and kinds(ops).count("grip") == 1  # closed once, never opened
     assert "detach" not in kinds(ops)
     assert record["stop"] == {"reason": reason, "code": code, "kind": "controlled_hold", "safe_state": SAFE_STATE,
-                              "hold": "sent"}
+                              "hold": "sent", "confirmation": {"confirmed": True, "after_ms": 0}}
     assert record["run_record_schema_version"] == "0.3"
     assert check_core(record["core_outcome"])["status"] == "failed"
 
@@ -534,7 +537,7 @@ def test_a_stop_between_steps_starts_no_further_step():
     stop = Stop()
     ops = StopAfter(stop, "move", 1)
     record = execute(task, bindings, site, ops, stop)
-    assert kinds(ops) == ["guard", "move", "hold"]
+    assert kinds(ops) == ["guard", "move", "hold", "confirm"]
     assert [s["status"] for s in record["steps"]] == ["failed"]
 
 
@@ -544,7 +547,7 @@ def test_the_deadline_counts_from_the_guard_on_simulation_time():
     ops = FakeOps()
     record = execute(task, bindings, site, ops, stop)
     assert record["failure"]["code"] == "S512" and record["stop"]["reason"] == "expired"
-    assert stop.deadline_ms == 6 and kinds(ops)[-1] == "hold"
+    assert stop.deadline_ms == 6 and kinds(ops)[-2:] == ["hold", "confirm"]
 
 
 def test_stop_file(tmp_path):
@@ -565,7 +568,7 @@ def test_a_failed_step_also_ends_in_the_safe_state():
     task, bindings, site = fixture()
     ops = FakeOps(fail="grip")
     record = execute(task, bindings, site, ops)
-    assert record["failure"]["code"] == "S505" and kinds(ops)[-1] == "hold"
+    assert record["failure"]["code"] == "S505" and kinds(ops)[-2:] == ["hold", "confirm"]
     assert record["stop"]["reason"] == "step_failed" and record["stop"]["safe_state"] == SAFE_STATE
 
 
@@ -587,6 +590,7 @@ def test_a_failing_hold_is_recorded_not_raised():
 
     record = execute(task, bindings, site, BrokenHold(fail="move"))
     assert record["stop"]["hold"] == "failed: no publisher"
+    assert record["stop"]["confirmation"] == {"confirmed": False, "error": "no hold was sent"}
 # -------- initial detach (harness and guard) --------
 
 def _fake_joint(monkeypatch, outcomes):
@@ -620,3 +624,47 @@ def test_force_detached_gives_up_after_its_rounds(monkeypatch):
     _fake_joint(monkeypatch, [False, False, False])
     with pytest.raises(BackendFailure, match="attach did not confirm"):
         ros.force_detached("ur", "box1")
+
+
+# -------- confirming a stop from joint states (safety case H18) --------
+
+def test_an_unconfirmed_stop_is_recorded():
+    task, bindings, site = fixture()
+
+    class StillMoving(FakeOps):
+        def confirm_stopped(self):
+            return ros.confirmation([(0, [0.0]), (100, [0.01]), (200, [0.02])], 500, 0.001)
+
+    record = execute(task, bindings, site, StillMoving(fail="move"))
+    assert record["stop"]["hold"] == "sent" and record["stop"]["confirmation"]["confirmed"] is False
+
+
+def test_a_crashing_confirmation_is_recorded_not_raised():
+    task, bindings, site = fixture()
+
+    class Crash(FakeOps):
+        def confirm_stopped(self):
+            raise RuntimeError("no joint states")
+
+    record = execute(task, bindings, site, Crash(fail="move"))
+    assert record["stop"]["confirmation"] == {"confirmed": False, "error": "no joint states"}
+
+
+def still(*positions, step=100):
+    return [(i * step, [p, 0.0]) for i, p in enumerate(positions)]
+
+
+def test_arm_still_needs_a_full_window_within_tolerance():
+    assert ros.arm_still(still(0.0, 0.0, 0.0, 0.0, 0.0, 0.0), 500, 0.001) == (0, 0.0)
+    assert ros.arm_still(still(0.0, 0.0, 0.0, 0.0, 0.0), 500, 0.001) is None  # only 400 ms of samples
+    moving_then_still = still(0.0, 0.05, 0.1, 0.1005, 0.1, 0.1, 0.1, 0.1)
+    offset, motion = ros.arm_still(moving_then_still, 500, 0.001)
+    assert offset == 200 and motion == pytest.approx(0.0005)
+    assert ros.arm_still(still(*[i * 0.002 for i in range(10)]), 500, 0.001) is None  # creeping
+    assert ros.arm_still([], 500, 0.001) is None
+
+
+def test_confirmation_without_fresh_samples_is_not_confirmed():
+    c = ros.confirmation([(0, [0.0])], 500, 0.001)
+    assert c == {"confirmed": False, "after_ms": None, "max_motion_rad": None, "samples": 1, "window_ms": 500,
+                 "tolerance_rad": 0.001}
