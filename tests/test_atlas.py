@@ -1,0 +1,65 @@
+"""
+RSI-01 activity atlas (bench/atlas.json, docs/plans/rsi-01.md). Gaps: every `inexpressible` benchmark task belongs to
+exactly one gap, and every task a gap names exists and is inexpressible. Activities: the fields loop A fills in, with
+a forecast that can be marked true or false on its due date. No network.
+"""
+
+from __future__ import annotations
+import datetime
+import json
+import re
+from pathlib import Path
+
+from bench import lib
+
+ATLAS = json.loads((Path(lib.BENCH) / "atlas.json").read_text(encoding="utf-8"))
+GAPS = {g["id"]: g for g in ATLAS["gaps"]}
+MATURITY = {"research", "demo", "pilot", "deployment"}
+HORIZON = {"now", "1-3y", "3-7y", "7y+"}
+
+
+def inexpressible_tasks() -> set[str]:
+    found = set()
+    for tasks_dir, _ in lib.SETS.values():
+        for path in Path(tasks_dir).glob("*.json"):
+            task = json.loads(path.read_text(encoding="utf-8"))
+            if task.get("group") == "inexpressible":
+                found.add(task["id"])
+    return found
+
+
+def test_schema():
+    assert ATLAS["atlas_schema"] == "robolang.atlas"
+    assert ATLAS["atlas_schema_version"] == "0.1"
+
+
+def test_gaps():
+    assert len(GAPS) == len(ATLAS["gaps"]), "duplicate gap id"
+    for gap in ATLAS["gaps"]:
+        assert re.fullmatch(r"G-[A-Z]+", gap["id"]), gap["id"]
+        assert gap["name"] and gap["scope"] in {"open", "out"}, gap["id"]
+        assert gap["scope"] == "open" or gap["scope_note"], f"{gap['id']}: an out-of-scope gap names its decision"
+
+
+def test_every_inexpressible_task_is_in_exactly_one_gap():
+    named = [t for gap in ATLAS["gaps"] for t in gap["tasks"]]
+    assert len(named) == len(set(named)), "a task is in two gaps"
+    assert set(named) == inexpressible_tasks()
+
+
+def test_activities():
+    ids = [a["id"] for a in ATLAS["activities"]]
+    assert len(ids) == len(set(ids)), "duplicate activity id"
+    for act in ATLAS["activities"]:
+        where = act["id"]
+        assert re.fullmatch(r"ACT-[A-Z]{2,5}-\d{3}", where), where
+        assert act["name"] and act["domain"] and act["basis"], where
+        assert act["maturity"] in MATURITY and act["horizon"] in HORIZON, where
+        assert act["requests"] and all(isinstance(r, str) and r for r in act["requests"]), where
+        assert all(n in GAPS for n in act["needs"]), f"{where}: unknown gap in needs"
+        forecast = act["forecast"]
+        assert forecast["claim"], where
+        datetime.date.fromisoformat(forecast["due"])
+        assert 0 < forecast["p"] < 1, where
+        assert forecast.get("outcome") in (None, True, False), where
+        assert act["sources"] and all(s.startswith("https://") for s in act["sources"]), where

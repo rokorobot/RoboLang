@@ -1,0 +1,135 @@
+{
+  "atlas_schema": "robolang.atlas",
+  "atlas_schema_version": "0.1",
+  "about": "RSI-01 activity atlas (docs/plans/rsi-01.md). Gaps: language capabilities RoboLang lacks, each with the benchmark tasks that show it. Activities: what robots are expected to do, with dated, checkable forecasts.",
+  "gaps": [
+    {
+      "id": "G-LOOP",
+      "name": "Repetition without a fixed bound: loops, retry until it works, schedules, event streams",
+      "scope": "out",
+      "scope_note": "N4 (2026-10-29): the orchestrator repeats tasks. First to revisit: continuous work is repetition",
+      "tasks": [
+        "x_every_hour",
+        "x_keep_feeding",
+        "x_retry_grasp",
+        "x_wait_forever",
+        "u03_until_stop",
+        "u04_back_and_forth",
+        "x04_every_minute",
+        "f10_retry_until_works",
+        "f13_retry_every_minute",
+        "x_all_parts_ever",
+        "x_retry_until_grasped",
+        "x_shuttle_until_five"
+      ]
+    },
+    {
+      "id": "G-CLOCK",
+      "name": "Clock readings and times of day",
+      "scope": "open",
+      "scope_note": "",
+      "tasks": [
+        "x_elapsed_time",
+        "u17_at_1400",
+        "u18_every_morning",
+        "x05_cooling_time",
+        "x_report_duration"
+      ]
+    },
+    {
+      "id": "G-MSG",
+      "name": "Waiting for an incoming message, or confirming delivery",
+      "scope": "open",
+      "scope_note": "`message_received` reserved (E211)",
+      "tasks": [
+        "x_wait_message",
+        "u11_wait_go",
+        "u12_radio_clearance",
+        "x_wait_ready_message",
+        "f12_message_delivery"
+      ]
+    },
+    {
+      "id": "G-CALC",
+      "name": "Arithmetic, counting and text built from values",
+      "scope": "open",
+      "scope_note": "0036 V1 excluded it from 1.6",
+      "tasks": [
+        "x_count_report",
+        "x01_average",
+        "x02_formatted",
+        "x_count_and_send"
+      ]
+    },
+    {
+      "id": "G-ACT",
+      "name": "Actions beyond move, grasp, place, inspect, wait, communicate, measure: open, charge, set a device",
+      "scope": "open",
+      "scope_note": "",
+      "tasks": [
+        "u15_open_oven",
+        "u16_charge_drone",
+        "x06_set_oven"
+      ]
+    },
+    {
+      "id": "G-PATH",
+      "name": "Staying inside or outside a region while moving",
+      "scope": "open",
+      "scope_note": "`in_region`, `no_go_region` reserved (E211); needed by H4 (safety case G2)",
+      "tasks": [
+        "u09_avoid_quay",
+        "u10_inside_clean_room"
+      ]
+    },
+    {
+      "id": "G-FORCE",
+      "name": "Force limits and gentle handling",
+      "scope": "open",
+      "scope_note": "needed by H4 (safety case G2, H05)",
+      "tasks": [
+        "a15_nice_and_slow"
+      ]
+    },
+    {
+      "id": "G-CONC",
+      "name": "Several robots acting at the same time",
+      "scope": "open",
+      "scope_note": "",
+      "tasks": [
+        "u13_simultaneous_lift",
+        "u14_while_carrying"
+      ]
+    },
+    {
+      "id": "G-CHOOSE",
+      "name": "Choosing objects or robots at run time",
+      "scope": "open",
+      "scope_note": "D4 deferred `detect`; D5 ranks it by the atlas",
+      "tasks": [
+        "x03_any_hot_pan",
+        "x_nearest_robot"
+      ]
+    },
+    {
+      "id": "G-PERCEIVE",
+      "name": "Conditions on perceived properties (dirty, damaged)",
+      "scope": "open",
+      "scope_note": "",
+      "tasks": [
+        "u01_if_dirty",
+        "u02_if_damaged"
+      ]
+    },
+    {
+      "id": "G-FALLBACK",
+      "name": "A different end state counts as done",
+      "scope": "out",
+      "scope_note": "0034: success means the stated goal",
+      "tasks": [
+        "f11_fallback_done"
+      ]
+    }
+  ],
+  "activities": []
+}

@@ -1,7 +1,7 @@
 # RSI-01: a language that evolves with future robot activities
 
-**Status:** PROPOSED, 2026-11-16. Not approved. Nothing here is built or scheduled. Section 8 proposes an amendment
-to the [strategy](../STRATEGY.md); until the owner approves it, rules 1–6 and D4 hold unchanged.
+**Status:** **APPROVED by the owner, 2026-11-16**, with the strategy amendment of section 8 (now in the
+[strategy](../STRATEGY.md): rule 1, D5, P1). R1 and R2 started 2026-11-16; R3–R5 not started.
 
 ## 1. The shift
 
