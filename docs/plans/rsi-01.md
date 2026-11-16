@@ -1,97 +1,124 @@
-# RSI-01: the first automated improvement loop for RoboLang
+# RSI-01: a language that evolves with future robot activities
 
-**Status:** PROPOSED, 2026-11-16. Not approved. Nothing here is built or scheduled.
-**Scope:** automate the loop RoboLang already runs by hand. No new subsystem, no new language feature, no new
-dependency. Strategy D4 (no new language work until H4 needs it) and section 4 rules 1, 2 and 6 hold unchanged.
+**Status:** PROPOSED, 2026-11-16. Not approved. Nothing here is built or scheduled. Section 8 proposes an amendment
+to the [strategy](../STRATEGY.md); until the owner approves it, rules 1–6 and D4 hold unchanged.
 
-## 1. The loop already exists, by hand
+## 1. The shift
 
-RoboLang has finished three improvement iterations with the same steps:
+RoboLang 1.4–1.6 grew from **today's** failures: a benchmark task that a model could not express was evidence for a
+feature. That loop exists and works (decision records 0027, 0033, 0036). It can only see requests someone has
+already thought of.
 
-| Step | 1.4 branching | 1.5 failure handlers | 1.6 measured values | Automated today? |
+RSI-01 adds a loop that looks **forward**: it tries to discover which activities humanoids and other robots will
+perform, derives the requests operators will give them, and finds what the language will need before the need is
+urgent. The language then evolves with robotics instead of behind it.
+
+The risk of looking forward is building for an imagined future: a large language for activities that never arrive.
+RSI-01 handles it with two rules: **every forecast is falsifiable and scored**, and **syntax changes only for
+activities that are close** (section 5).
+
+## 2. Three loops
+
+| Loop | Question | Input | Output | Cadence |
 |---|---|---|---|---|
-| Evaluate | set 2: silent half-programs (F3) | set 4 baseline | set 5 baseline: silent `inspect` substitution | **Yes:** per-PR and weekly `Benchmark` |
-| Diagnose | [bench-set2-analysis](../evidence/bench-set2-analysis.md) | [0033](../../spec/decisions/0033-step-failure-handlers.md) | [0036](../../spec/decisions/0036-lang-4-measured-values.md) evidence | Partly: the weekly Loop writes the history row and a note |
-| Propose | N4 | 0033 | 0036 | No |
-| Pre-register | set 3 bounds | set 4 bounds | set 5 bounds (rule 6) | No |
-| Implement + verify | #70–#73, acceptance run | acceptance run | acceptance run | No |
-| Promote | owner | owner | owner | Must stay manual |
+| A Foresight | What will robots do? | Vendor deployments and pilots, research (e.g. arXiv cs.RO), SDK releases (ROS 2, Isaac, LeRobot), standards, HumanoidOnline | Activity entries with dated, checkable forecasts | Weekly |
+| B Language | Can RoboLang express it? | Activities → operator requests → benchmark tasks | Gaps, ranked; one proposal | Weekly gaps, monthly proposal |
+| C Calibration (meta) | Is A right, is B worth it? | Forecasts that came due; accepted and rejected proposals | Source and weight changes for A and B | Quarterly |
 
-RSI-01 automates Diagnose and Propose, and keeps the rest as it is. Language changes stay a human decision.
+Loop B is the existing benchmark machinery. Loop A and C are new.
 
-## 2. Capability atlas, seeded from evidence
+## 3. Activity atlas
 
-The atlas has two levels. **Activities** are what humanoids and other robots will do (household work, logistics,
-care, shift work beside people); they are still being defined and will change as robotics does. **Gaps** are the
-language capabilities those activities need. Activities decide which gaps matter; the language follows them.
+The atlas has two levels. **Activities** are what robots will do; **gaps** are the language capabilities those
+activities need. One entry per activity:
 
-The 39 `inexpressible` tasks across sets 2, ask, 3, 4 and 5 are the first atlas: each is a request that RoboLang
-cannot express today, with a written reason. Grouped by the capability they need (one primary group per task):
+```json
+{
+  "id": "ACT-LOG-004",
+  "name": "Machine tending for a whole shift",
+  "domain": "logistics",
+  "maturity": "pilot",
+  "horizon": "1-3y",
+  "requests": ["Keep the press fed until the shift ends; call me if a part is rejected twice."],
+  "needs": ["G-LOOP", "G-CLOCK", "G-MSG"],
+  "forecast": {"claim": "At least two humanoid vendors publish a paid machine-tending deployment", "due": "2027-06-30", "p": 0.7},
+  "sources": ["https://…"]
+}
+```
 
-| Gap | Tasks | Examples | Scope today (a dated decision, not a law) |
-|---|---|---|---|
-| G-LOOP unbounded repetition, retry-until, schedules | 12 | `x_every_hour`, `f10_retry_until_works` | **Out of scope since N4 (2026-10-29):** the orchestrator repeats tasks. Likely the first to revisit: continuous humanoid work is repetition |
-| G-CLOCK clock readings, times of day | 5 | `u17_at_1400`, `x05_cooling_time` | Open |
-| G-MSG waiting for or confirming a message | 5 | `u11_wait_go`, `f12_message_delivery` | Open (`message_received` reserved, E211) |
-| G-CALC arithmetic, counting, formatting | 4 | `x01_average`, `x_count_and_send` | Open (0036 V1 excluded it) |
-| G-ACT new actions: open, charge, set a device | 3 | `u15_open_oven`, `x06_set_oven` | Open |
-| G-PATH stay inside / outside a region while moving | 2 | `u09_avoid_quay`, `u10_inside_clean_room` | Open (`in_region`, `no_go_region` reserved, E211) |
-| G-CONC two robots at the same time | 2 | `u13_simultaneous_lift`, `u14_while_carrying` | Open |
-| G-CHOOSE choose an object at run time | 2 | `x03_any_hot_pan`, `x_nearest_robot` | Deferred by D4 |
-| G-PERCEIVE conditions on perceived properties | 2 | `u01_if_dirty`, `u02_if_damaged` | Open |
-| G-FORCE force limits, gentle handling | 1 | `a15_nice_and_slow` | Open |
-| G-FALLBACK a different end state counts as done | 1 | `f11_fallback_done` | Out of scope since 0034: success means the stated goal |
+`maturity` is one of `research`, `demo`, `pilot`, `deployment`. `forecast` is a claim that a reviewer can mark true
+or false on its due date, with the probability the loop gave it. Loop C scores these (Brier score), so the foresight
+loop is measured, not believed.
 
-Two consequences for measuring:
+**Today's gaps, seeded from evidence.** The 39 `inexpressible` benchmark tasks give the first gap list:
 
-1. **Scope moves only by decision.** 13 of 39 gaps are out of scope *today*. Each scope entry names the decision that
-   set it and the activity evidence that would reopen it. When new activities need a gap, a decision record reopens
-   it, with its own pre-registered tasks. The loop proposes this; it never does it silently. Coverage counts open
-   gaps, so the metric cannot rise by quietly accepting what the current scope should decline (promise 2).
-2. **New atlas entries need a task, not just a description.** An entry without a benchmark task that fails without
-   it is a wish, not evidence (rule 1). Capabilities from robotics research (humanoids, bimanual work, tool use)
-   enter the atlas as new `inexpressible` tasks.
+| Gap | Tasks | Scope today (a dated decision, not a law) |
+|---|---|---|
+| G-LOOP repetition, retry-until, schedules | 12 | Out since N4 (2026-10-29). First to revisit: continuous work is repetition |
+| G-CLOCK, G-MSG clock readings; waiting for messages | 5, 5 | Open (`message_received` reserved, E211) |
+| G-CALC arithmetic, counting, formatting | 4 | Open (0036 V1) |
+| G-ACT new actions: open, charge, set a device | 3 | Open |
+| G-PATH, G-FORCE stay in or out of a region; force limits | 2, 1 | Open; needed by H4 (safety case G2) |
+| G-CONC, G-CHOOSE, G-PERCEIVE concurrency; choosing objects at run time; perceived properties | 2, 2, 2 | Open; G-CHOOSE deferred by D4 |
+| G-FALLBACK a different end state counts as done | 1 | Out since 0034 |
 
-## 3. Quality, measured with what exists
+Scope moves only by a decision record, which the loop may propose but never makes. Coverage counts open gaps, so the
+metric cannot rise by quietly accepting what the current scope declines (promise 2: safe to say no).
 
-| Dimension | Measure | Source | New work |
-|---|---|---|---|
-| Coverage | open gaps expressible / open gaps | atlas file + task groups | atlas file |
-| Fidelity | `goal_correct`, `decision_correct` | `bench/score.py` | none |
-| Safety to say no | `false_program`, false programs valid and `SUCCEEDED` | `bench/score.py`, `gate.json` | none: **a hard gate, never traded** |
-| Verifiability | `plan_succeeds` with goal verified; every diagnostic static, not at run time | scorer, validator | none |
-| Economy | grammar productions, keywords, tokens of `language-reference.md` | `spec/grammar-v1.x.ebnf`, reference | one small deterministic counter |
-| Cost | dollars per accepted change | run reports | none |
+## 4. From a forecast to evidence
+
+A forecast is not evidence for syntax; a failing task is. Each activity becomes **future tasks**: 3–5 operator
+requests with a world, written like today's benchmark tasks and marked `"activity": "ACT-…"`. They live in a new
+set (`bench/tasks_future/`), run weekly with the others but outside the PR gate. A future task that models must
+decline today is a measured gap with a known activity behind it.
+
+## 5. Ranking gaps, and two speeds
+
+A gap's priority is the sum over the activities that need it of `p(activity arrives) × nearness × safety relevance`,
+divided by its estimated grammar cost. Then:
+
+- **Near** (maturity `pilot` or `deployment`, horizon ≤ 3 years): eligible for a language proposal, run as 1.4–1.6
+  were: decision record, pre-registered set, implementation, acceptance run, owner.
+- **Far** (`research`, `demo`, or > 3 years): a design sketch only, no syntax. It is promoted when its activity's
+  maturity changes.
+
+This keeps the language small while the atlas stays large.
+
+## 6. Measuring the language
+
+| Dimension | Measure | New work |
+|---|---|---|
+| Coverage | open gaps expressible, weighted by activity priority | atlas |
+| Fidelity | `goal_correct`, `decision_correct` | none |
+| Safety to say no | `false_program`; **a hard gate, never traded** | none |
+| Verifiability | goal verified at the end; diagnostics static | none |
+| Economy | grammar productions, keywords, reference tokens | small counter |
+| Foresight quality | Brier score of due forecasts; share of proposals whose activity arrived | loop C |
 
 A candidate is better only when Coverage or Economy improves and Fidelity, Safety and Verifiability are no worse
-than the baseline (rule 6 wording). Economy guards against growing a language of a thousand special commands.
+than the baseline (rule 6).
 
-## 4. RSI-01 in three steps
+## 7. Steps
 
 | Step | What | Cost | Needs owner |
 |---|---|---|---|
-| R1 | `bench/atlas.json`: the table above, one entry per gap with its task IDs and status. A test fails if an `inexpressible` task is in no entry, or if a task's ID is missing. A deterministic counter adds Economy to the score report | $0 | Approve this plan |
-| R2 | The existing weekly Loop also classifies each failed answer: F1 the model misused the language (fix: reference), F2 the language cannot express it (atlas), F3 the language is ambiguous (spec), F4 a tool bug (code), F5 a correct decline. The note lists new F2 and F3 cases and which gap they hit | a few cents per week | No |
-| R3 | Monthly, with the strategy review: a ranked one-page proposal of the next gap to close (most failing tasks, horizon fit, smallest grammar change), with draft pre-registered bounds. **Proposal only:** no branch, no code, no auto-merge | ~$1 | Each proposal |
+| R1 | Atlas file with the gap list above; test that every `inexpressible` task belongs to a gap; Economy counter | $0 | Approve this plan |
+| R2 | First foresight pass, by hand-supervised agent: 15–25 activities with sources, maturity and forecasts | ~$5–15, once | Approve the spend |
+| R3 | Future tasks for the near activities (`bench/tasks_future/`), run once to measure today's gaps | ~$2 | No |
+| R4 | Cloudroom Loop for loop A (weekly): new sources, maturity changes, new activities, as a PR | ~$1/week | Approve the loop |
+| R5 | Monthly ranked proposal (section 5); quarterly calibration (loop C) | ~$1/month | Each proposal |
 
-An approved proposal then runs as 1.4–1.6 did: decision record, pre-registered set, implementation, acceptance run,
-owner. That is where an implementation agent could later help, in its own branch, with the acceptance set frozen
-before it starts.
+## 8. Proposed strategy amendment
 
-## 5. Not now
+- **Rule 1, added:** "A future task, derived from an atlas activity of maturity `pilot` or `deployment`, counts as a
+  benchmark task that fails without the feature."
+- **D4, replaced:** "New language work follows the ranked atlas. Near gaps needed by the current horizon come first."
+- **Pillar P1:** "Everyday requests" becomes "the requests of today's and the next three years' robot activities".
 
-- **Meta-RSI** (improving the improver): after three hand iterations there is too little data. Revisit after five
-  RSI-01 proposals, with dollars and owner rejections per proposal as the measure.
+## 9. Not now
+
 - **Probabilistic prediction in `.rob`** (`PREDICT …`, `collision_probability > 0.05`): collision avoidance is the
-  motion planner's and the safety controller's job (safety case C1, H06). The task language can ask for constraints
-  the backend must guarantee (G-PATH, G-FORCE); it does not compute them. 1.6 already models uncertainty where the
-  task needs it: readings with `±` that fail closed when unknown.
-- **Automated research of robotics trends.** Useful input for new atlas tasks, but it produces descriptions, not
-  evidence. Add it after R2 shows the loop can absorb new tasks.
-
-## 6. A first candidate for the owner, when H4 asks
-
-G-PATH and G-FORCE are the gaps closest to the current horizon: safety case gap G2 needs "a declared workspace it
-cannot leave" and checked speed and force limits (hazards H05, H06). Expressing them as requests checked against
-the controller's envelope, never enforced by RoboLang, would close three standing tasks and serve H4. It would also
-show whether the loop works on a safety-relevant change before it is used on anything larger.
+  motion planner's and safety controller's job (safety case C1, H06). The task language asks for constraints the
+  backend must guarantee (G-PATH, G-FORCE). 1.6 already models uncertainty where tasks need it.
+- **Auto-implementation of language changes.** An implementation agent may help after a proposal is approved, in its
+  own branch, with the acceptance set frozen before it starts. Never auto-merge.
