@@ -30,13 +30,16 @@ Loop B is the existing benchmark machinery. Loop A and C are new.
 ## 3. Activity atlas
 
 The atlas has two levels. **Activities** are what robots will do; **gaps** are the language capabilities those
-activities need. One entry per activity:
+activities need. Both are grouped by eight **directions** (owner, 2026-11-16): perception, reasoning, prediction,
+action, learning, cooperation, safety, communication. Each activity names the 1–3 directions it mainly exercises;
+each gap has one primary direction. One entry per activity:
 
 ```json
 {
   "id": "ACT-LOG-004",
   "name": "Machine tending for a whole shift",
   "domain": "logistics",
+  "directions": ["action", "reasoning"],
   "maturity": "pilot",
   "horizon": "1-3y",
   "requests": ["Keep the press fed until the shift ends; call me if a part is rejected twice."],
