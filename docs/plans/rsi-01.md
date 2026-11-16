@@ -21,12 +21,16 @@ RSI-01 automates Diagnose and Propose, and keeps the rest as it is. Language cha
 
 ## 2. Capability atlas, seeded from evidence
 
+The atlas has two levels. **Activities** are what humanoids and other robots will do (household work, logistics,
+care, shift work beside people); they are still being defined and will change as robotics does. **Gaps** are the
+language capabilities those activities need. Activities decide which gaps matter; the language follows them.
+
 The 39 `inexpressible` tasks across sets 2, ask, 3, 4 and 5 are the first atlas: each is a request that RoboLang
 cannot express today, with a written reason. Grouped by the capability they need (one primary group per task):
 
-| Gap | Tasks | Examples | Status by design |
+| Gap | Tasks | Examples | Scope today (a dated decision, not a law) |
 |---|---|---|---|
-| G-LOOP unbounded repetition, retry-until, schedules | 12 | `x_every_hour`, `f10_retry_until_works` | **Out of scope:** belongs to the orchestrator (N4). A decline is correct |
+| G-LOOP unbounded repetition, retry-until, schedules | 12 | `x_every_hour`, `f10_retry_until_works` | **Out of scope since N4 (2026-10-29):** the orchestrator repeats tasks. Likely the first to revisit: continuous humanoid work is repetition |
 | G-CLOCK clock readings, times of day | 5 | `u17_at_1400`, `x05_cooling_time` | Open |
 | G-MSG waiting for or confirming a message | 5 | `u11_wait_go`, `f12_message_delivery` | Open (`message_received` reserved, E211) |
 | G-CALC arithmetic, counting, formatting | 4 | `x01_average`, `x_count_and_send` | Open (0036 V1 excluded it) |
@@ -36,12 +40,14 @@ cannot express today, with a written reason. Grouped by the capability they need
 | G-CHOOSE choose an object at run time | 2 | `x03_any_hot_pan`, `x_nearest_robot` | Deferred by D4 |
 | G-PERCEIVE conditions on perceived properties | 2 | `u01_if_dirty`, `u02_if_damaged` | Open |
 | G-FORCE force limits, gentle handling | 1 | `a15_nice_and_slow` | Open |
-| G-FALLBACK a different end state counts as done | 1 | `f11_fallback_done` | Out of scope: success means the stated goal |
+| G-FALLBACK a different end state counts as done | 1 | `f11_fallback_done` | Out of scope since 0034: success means the stated goal |
 
 Two consequences for measuring:
 
-1. **Coverage is not "more is better".** 13 of 39 gaps are out of scope on purpose. Coverage counts only gaps marked
-   open, and an out-of-scope gap that becomes expressible is a regression of promise 2 (safe to say no).
+1. **Scope moves only by decision.** 13 of 39 gaps are out of scope *today*. Each scope entry names the decision that
+   set it and the activity evidence that would reopen it. When new activities need a gap, a decision record reopens
+   it, with its own pre-registered tasks. The loop proposes this; it never does it silently. Coverage counts open
+   gaps, so the metric cannot rise by quietly accepting what the current scope should decline (promise 2).
 2. **New atlas entries need a task, not just a description.** An entry without a benchmark task that fails without
    it is a wish, not evidence (rule 1). Capabilities from robotics research (humanoids, bimanual work, tool use)
    enter the atlas as new `inexpressible` tasks.
