@@ -32,7 +32,8 @@ Loop B is the existing benchmark machinery. Loop A and C are new.
 The atlas has two levels. **Activities** are what robots will do; **gaps** are the language capabilities those
 activities need. Both are grouped by eight **directions** (owner, 2026-11-16): perception, reasoning, prediction,
 action, learning, cooperation, safety, communication. Each activity names the 1–3 directions it mainly exercises;
-each gap has one primary direction. One entry per activity:
+each gap has one primary direction. The plan by direction, with priorities, is generated from the atlas:
+[humanoid-activities.md](humanoid-activities.md) (`python bench/atlas_report.py`). One entry per activity:
 
 ```json
 {
