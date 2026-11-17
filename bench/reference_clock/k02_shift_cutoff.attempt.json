@@ -1,0 +1,9 @@
+{
+  "task": "move_tote",
+  "bindings": {
+    "r": "digit2",
+    "tote": "tote_2",
+    "src": "inbound_conveyor",
+    "dst": "outbound_conveyor"
+  }
+}

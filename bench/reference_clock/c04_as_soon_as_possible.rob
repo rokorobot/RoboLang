@@ -1,0 +1,7 @@
+// bench/reference_clock/c04_as_soon_as_possible.rob: hand-written reference
+robolang 1.8;
+
+task go(robot r, location dst) {
+    goal { robot_at r dst; }
+    plan { move r to dst; }
+}

@@ -1,0 +1,81 @@
+{
+  "id": "k08_time_and_no_go",
+  "prompt": "With printer1, go to gridline_c and keep it out of wet_floor the whole way, but only if it is before 17:00. If it is 17:00 or later, send \"too late\" to channel \"site\" from printer1 and stop the job as failed.",
+  "world": "bench/worlds/site_1_3.json",
+  "group": "clock",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_9": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "before 17:00: the robot goes to gridline_c",
+        "goal": [
+          [
+            "rl:robot:printer1",
+            "located_in",
+            "rl:place:gridline_c"
+          ]
+        ],
+        "world_patch": {
+          "clock": {
+            "start": "2026-11-17T15:40:00",
+            "zone": "Europe/Prague"
+          }
+        }
+      },
+      {
+        "when": "17:00 or later: the message is sent, the run stops",
+        "fails": true,
+        "messages": [
+          [
+            "site",
+            "too late"
+          ]
+        ],
+        "world_patch": {
+          "clock": {
+            "start": "2026-11-17T17:25:00",
+            "zone": "Europe/Prague"
+          }
+        }
+      }
+    ],
+    "world_1_5": {
+      "clock": {
+        "start": "2026-11-17T15:40:00",
+        "zone": "Europe/Prague"
+      }
+    }
+  },
+  "expected_clock": [
+    {
+      "robot": "printer1",
+      "reading": "time",
+      "use": "if",
+      "conditions": [
+        [
+          "<",
+          "17:00"
+        ]
+      ]
+    }
+  ],
+  "expected_limits": [
+    [
+      "no_go_region",
+      "wet_floor"
+    ]
+  ],
+  "tags": [
+    "clock_time",
+    "if",
+    "no_go_region",
+    "region_limit"
+  ],
+  "gap": "G-CLOCK",
+  "why": "A time condition and a 1.7 region limit. A program with only the limit and the move drops the time; a program with only the time drops the limit. 1.9 keeps both: `@safety no_go_region` and the tested `time` (0042 T3; 0039).",
+  "attempt_fails_with": "E101"
+}

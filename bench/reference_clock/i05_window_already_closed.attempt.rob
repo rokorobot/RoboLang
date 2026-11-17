@@ -1,0 +1,17 @@
+// bench/reference_clock/i05_window_already_closed.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 1.8;
+
+task early_window(robot r, object part, location src, location dst) {
+    goal { object_at part dst; }
+    plan {
+        measure r time as now;                           // @clock
+        if now >= 06:00 and now < 08:00 {                // @clock
+            move r to src;
+            grasp r part;
+            move r to dst;
+            place r part at dst;
+        } else {                                         // @clock
+            fail "outside the window";                   // @clock
+        }                                                // @clock
+    }
+}

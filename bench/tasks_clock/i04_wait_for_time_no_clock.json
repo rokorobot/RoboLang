@@ -1,0 +1,30 @@
+{
+  "id": "i04_wait_for_time_no_clock",
+  "prompt": "At 14:00, have arm1 move box1 from the shelf to the table. Wait up to 12 hours for 14:00 and, if it has not come by then, stop the job as failed.",
+  "world": "examples/world.json",
+  "group": "infeasible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_9": {
+    "decision": "cannot",
+    "category": "infeasible",
+    "because": "0042 T7",
+    "world_1_5": {
+      "clock": null,
+      "note": "the world file has no `clock`"
+    }
+  },
+  "blockers": [
+    "the world has no clock, so `clock_time` cannot be read and the wait fails closed"
+  ],
+  "tags": [
+    "clock_time",
+    "wait_until",
+    "no_world_clock"
+  ],
+  "gap": "G-CLOCK",
+  "why": "A live `clock_time` needs the world's `clock`; without it the wait fails closed (0042 T7). The wait is bounded and well formed, so this is not a syntax problem. Compare `k03`.",
+  "attempt_fails_with": "E101"
+}

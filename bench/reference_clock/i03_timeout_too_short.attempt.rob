@@ -1,0 +1,10 @@
+// bench/reference_clock/i03_timeout_too_short.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 1.8;
+
+task late_run(robot r, location dst) {
+    goal { robot_at r dst; }
+    plan {
+        wait until clock_time >= 23:00 timeout 10 min else { fail "23:00 did not come in time"; }  // @clock
+        move r to dst;
+    }
+}

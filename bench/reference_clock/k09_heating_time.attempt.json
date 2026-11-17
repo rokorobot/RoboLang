@@ -1,0 +1,11 @@
+{
+  "task": "heat_time",
+  "bindings": {
+    "r": "flippy1",
+    "oil": "oil_1",
+    "probe": "probe_flippy1",
+    "basket": "basket_2",
+    "src": "prep_table",
+    "fryer": "fryer"
+  }
+}

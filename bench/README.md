@@ -327,3 +327,21 @@ worlds, the references (valid, SUCCEEDED on every path, exactly their actions), 
 controls. On demand from GitHub Actions: `Benchmark`, `actions: true` (full and minimal prompts, 3 repeats, Sonnet and
 Haiku, `--max-usd 3` each, not gated, not in the per-PR or weekly runs). Locally: `python bench/run.py --set actions
 --repeats 3 --models claude-sonnet-5-5,claude-haiku-5-5` (a paid run: confirm it first; estimate ~$3.6 per prompt).
+
+## Set 8: clock readings (`--set clock`)
+
+24 tasks in `tasks_clock/`, controls' references and the obvious attempts in `reference_clock/`, decision record
+[0042](../spec/decisions/0042-clock-readings.md), plan, proposed bounds and open points in
+[bench-8-clock.md](../docs/plans/bench-8-clock.md) (draft for the owner). Pre-registered against 1.8 before any 1.9 code
+(iteration I3, step L3): `expect` is the 1.8 label (all 20 non-controls `cannot / inexpressible`, each with an attempt
+that fails with `E101`, a time literal, or `E217`, the kind `time` or `elapsed`), `expect_1_9` the label for acceptance
+(10 `clock` programs, 5 `infeasible`, 5 `inexpressible`, 4 `control` programs) and `expected_clock` the clock readings a
+1.9 program must make (`[]` on a control). The world 1.5 facts a 1.9 label needs (`clock`: a start and a zone, or none)
+are a note in `expect_1_9.world_1_5`; no world file has them yet, and one new world exists (`fry_station_at_fryer.json`,
+a copy with the robot already at the fryer). The attempts mark the clock part with `// @clock`: without those lines every
+attempt is a valid 1.8 program that ends SUCCEEDED, which is the silent replacement of the time that the plan's B8
+counts. `tests/test_bench_clock.py` checks the counts, the labels, the attempts and the controls. On demand from GitHub
+Actions: `Benchmark`, `clock: true` (full and minimal prompts, 3 repeats, Sonnet and Haiku, `--max-usd 3` each, not
+gated, not in the per-PR or weekly runs; the workflow is at GitHub's limit of 10 dispatch inputs). Locally: `python
+bench/run.py --set clock --repeats 3 --models claude-sonnet-5-5,claude-haiku-5-5` (a paid run: confirm it first;
+estimate ~$3.6 per prompt).

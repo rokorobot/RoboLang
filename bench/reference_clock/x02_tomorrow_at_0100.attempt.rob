@@ -1,0 +1,10 @@
+// bench/reference_clock/x02_tomorrow_at_0100.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 1.8;
+
+task tugger_run(robot r, location dst) {
+    goal { robot_at r dst; }
+    plan {
+        wait until clock_time >= 01:00 timeout 12 h else { fail "01:00 did not come in time"; }  // @clock
+        move r to dst;
+    }
+}

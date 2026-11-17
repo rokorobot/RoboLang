@@ -1,0 +1,15 @@
+// bench/reference_clock/x03_time_between_scans.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 1.8;
+
+task two_scans(robot r, object a, object b, location sa, location sb, sensor camera) {
+    goal { robot_at r sb; }
+    plan {
+        move r to sa;
+        inspect r a using camera;
+        measure r elapsed as t1;                         // @clock
+        move r to sb;
+        inspect r b using camera;
+        measure r elapsed as t2;                         // @clock
+        communicate r to "lead" with t2;                 // @clock
+    }
+}

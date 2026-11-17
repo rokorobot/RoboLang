@@ -1,0 +1,13 @@
+// bench/reference_clock/c02_wait_30_seconds.rob: hand-written reference
+robolang 1.8;
+
+task pause_then_move(robot r, object box, location src, location dst) {
+    goal { object_at box dst; }
+    plan {
+        wait for 30 s;
+        move r to src;
+        grasp r box;
+        move r to dst;
+        place r box at dst;
+    }
+}

@@ -30,7 +30,8 @@
         "x_all_parts_ever",
         "x_retry_until_grasped",
         "x_shuttle_until_five",
-        "x04_open_until_open"
+        "x04_open_until_open",
+        "x01_every_night_round"
       ]
     },
     {
@@ -48,7 +49,24 @@
         "f_clock_scan_stamp",
         "f_clock_shift_cutoff",
         "f_clock_clean_at_2300",
-        "x05_open_at_six"
+        "x05_open_at_six",
+        "i01_stamp_no_clock",
+        "i02_before_it_has_passed",
+        "i03_timeout_too_short",
+        "i04_wait_for_time_no_clock",
+        "i05_window_already_closed",
+        "k01_scan_stamp",
+        "k02_shift_cutoff",
+        "k03_wait_for_0530",
+        "k04_job_elapsed",
+        "k05_open_hours_window",
+        "k06_two_robots_at_2000",
+        "k07_time_and_open",
+        "k08_time_and_no_go",
+        "k09_heating_time",
+        "k10_decoy_11_pm",
+        "x02_tomorrow_at_0100",
+        "x05_on_monday"
       ]
     },
     {
@@ -81,7 +99,9 @@
         "x_count_and_send",
         "f_calc_total_weight",
         "f_calc_over_limit",
-        "f_calc_text_line"
+        "f_calc_text_line",
+        "x03_time_between_scans",
+        "x04_pickup_two_hours_later"
       ]
     },
     {
@@ -2491,6 +2511,63 @@
     {
       "date": "2026-11-17",
       "note": "L6 of I2: G-ACT closed by RoboLang 1.8 declared actions",
+      "activities": {
+        "ACT-LOG-001": "deployment now",
+        "ACT-LOG-002": "deployment now",
+        "ACT-MFG-001": "pilot 1-3y",
+        "ACT-MFG-002": "pilot 1-3y",
+        "ACT-RET-001": "deployment now",
+        "ACT-HOS-001": "deployment now",
+        "ACT-HLTH-001": "deployment now",
+        "ACT-ELD-001": "pilot 3-7y",
+        "ACT-HOME-001": "research 3-7y",
+        "ACT-HOME-002": "demo 3-7y",
+        "ACT-INSP-001": "demo now",
+        "ACT-INSP-002": "demo 1-3y",
+        "ACT-SEC-001": "demo 1-3y",
+        "ACT-SAFE-001": "demo 3-7y",
+        "ACT-CON-001": "deployment now",
+        "ACT-AGR-001": "pilot 3-7y",
+        "ACT-EV-001": "pilot 1-3y",
+        "ACT-CLN-001": "deployment now",
+        "ACT-MRC-001": "demo 3-7y",
+        "ACT-MRC-002": "demo 1-3y",
+        "ACT-HRC-001": "research 3-7y",
+        "ACT-HRC-002": "research 3-7y",
+        "ACT-ASM-001": "research 7y+",
+        "ACT-PRED-001": "research 3-7y",
+        "ACT-PRED-002": "research 3-7y",
+        "ACT-AUTO-001": "deployment now",
+        "ACT-AUTO-002": "demo 1-3y",
+        "ACT-AUTO-003": "research 3-7y",
+        "ACT-MFG-003": "demo 1-3y",
+        "ACT-AGR-002": "deployment now",
+        "ACT-SOL-001": "deployment now",
+        "ACT-PRED-003": "concept 3-7y",
+        "ACT-PRED-004": "concept 7y+",
+        "ACT-LRN-001": "concept 3-7y",
+        "ACT-LRN-002": "concept 3-7y",
+        "ACT-AUTO-004": "concept 3-7y",
+        "ACT-SAFE-002": "concept 3-7y",
+        "ACT-CARE-001": "concept 7y+",
+        "ACT-MFG-004": "demo 1-3y",
+        "ACT-HRC-003": "concept 3-7y"
+      },
+      "directions": {
+        "perception": 2.78,
+        "reasoning": 0.68,
+        "prediction": 0.25,
+        "action": 4.52,
+        "learning": 0.75,
+        "cooperation": 1.07,
+        "safety": 0.49,
+        "communication": 0.95,
+        "autonomy": 0.67
+      }
+    },
+    {
+      "date": "2026-11-17",
+      "note": "I3 L3: set 8 clock pre-registered (24 tasks)",
       "activities": {
         "ACT-LOG-001": "deployment now",
         "ACT-LOG-002": "deployment now",

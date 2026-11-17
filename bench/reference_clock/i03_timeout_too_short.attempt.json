@@ -1,0 +1,7 @@
+{
+  "task": "late_run",
+  "bindings": {
+    "r": "tug1",
+    "dst": "gate_out"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "task": "two_stops",
+  "bindings": {
+    "r": "tug1",
+    "a": "gate_out",
+    "b": "wash"
+  }
+}

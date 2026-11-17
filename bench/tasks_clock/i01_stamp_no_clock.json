@@ -1,0 +1,30 @@
+{
+  "id": "i01_stamp_no_clock",
+  "prompt": "With arm1, inspect vial1 with microscope, then send channel \"log\" the time of day the inspection was done.",
+  "world": "bench/worlds/lab.json",
+  "group": "infeasible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_9": {
+    "decision": "cannot",
+    "category": "infeasible",
+    "because": "0042 T7",
+    "world_1_5": {
+      "clock": null,
+      "note": "the world file has no `clock`"
+    }
+  },
+  "blockers": [
+    "the world has no clock, so a `time` reading fails the step (fail closed)"
+  ],
+  "tags": [
+    "clock_time",
+    "no_world_clock",
+    "time_stamp"
+  ],
+  "gap": "G-CLOCK",
+  "why": "A `time` reading needs the world's `clock`. The world has none, so the step fails closed (0042 T7). `elapsed` would still work, but the request asks for the time of day. Compare `k01`, the same request in a world with a clock.",
+  "attempt_fails_with": "E217"
+}

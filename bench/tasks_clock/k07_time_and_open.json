@@ -1,0 +1,87 @@
+{
+  "id": "k07_time_and_open",
+  "prompt": "With moxi1, open closet_door and take iv_kit_1 from the supply closet to room_412, but only if it is before 18:00. If it is 18:00 or later, send \"supplies closed\" to channel \"charge_nurse\" from moxi1 and stop the job as failed.",
+  "world": "bench/worlds/ward_1_4.json",
+  "group": "clock",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_9": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "before 18:00: the door is opened and the kit is moved",
+        "goal": [
+          [
+            "rl:thing:closet_door",
+            "in_state",
+            "open"
+          ],
+          [
+            "rl:thing:iv_kit_1",
+            "located_in",
+            "rl:place:room_412"
+          ]
+        ],
+        "world_patch": {
+          "clock": {
+            "start": "2026-11-17T16:30:00",
+            "zone": "Europe/Prague"
+          }
+        }
+      },
+      {
+        "when": "18:00 or later: the message is sent, the run stops",
+        "fails": true,
+        "messages": [
+          [
+            "charge_nurse",
+            "supplies closed"
+          ]
+        ],
+        "world_patch": {
+          "clock": {
+            "start": "2026-11-17T18:20:00",
+            "zone": "Europe/Prague"
+          }
+        }
+      }
+    ],
+    "world_1_5": {
+      "clock": {
+        "start": "2026-11-17T16:30:00",
+        "zone": "Europe/Prague"
+      }
+    }
+  },
+  "expected_clock": [
+    {
+      "robot": "moxi1",
+      "reading": "time",
+      "use": "if",
+      "conditions": [
+        [
+          "<",
+          "18:00"
+        ]
+      ]
+    }
+  ],
+  "expected_actions": [
+    {
+      "robot": "moxi1",
+      "action": "open",
+      "target": "closet_door"
+    }
+  ],
+  "tags": [
+    "clock_time",
+    "if",
+    "open",
+    "declared_action"
+  ],
+  "gap": "G-CLOCK",
+  "why": "A time condition in front of a 1.8 `do`. Neither the clock nor the condition is in 1.8, and the `do` alone would be a silent replacement of the condition. 1.9 measures `time`, tests it and calls `do` in the branch (0042 T1, T3; 0040).",
+  "attempt_fails_with": "E101"
+}

@@ -1,0 +1,9 @@
+{
+  "task": "pause_then_move",
+  "bindings": {
+    "r": "arm1",
+    "box": "box1",
+    "src": "shelf",
+    "dst": "table"
+  }
+}

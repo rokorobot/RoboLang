@@ -1,0 +1,24 @@
+{
+  "id": "c02_wait_30_seconds",
+  "prompt": "With arm1, wait 30 seconds, then move box1 from the shelf to the table.",
+  "world": "examples/world.json",
+  "group": "control",
+  "expect": {
+    "decision": "program"
+  },
+  "expect_1_9": {
+    "decision": "program"
+  },
+  "expected_goal": [
+    [
+      "rl:thing:box1",
+      "located_in",
+      "rl:place:table"
+    ]
+  ],
+  "expected_clock": [],
+  "tags": [
+    "wait_for",
+    "no_clock"
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "id": "k09_heating_time",
+  "prompt": "With flippy1, which is at the fryer, wait up to 2 minutes for the oil in oil_1 to read above 170 degrees Celsius. As soon as it does, send channel \"fry\" how long the job has taken so far, then move basket_2 from the prep_table to the fryer. If the oil does not get there, stop.",
+  "world": "bench/worlds/fry_station_at_fryer.json",
+  "group": "clock",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_9": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "the oil reaches 175 degC at 20 s: the time is sent, the basket is moved",
+        "goal": [
+          [
+            "rl:thing:basket_2",
+            "located_in",
+            "rl:place:fryer"
+          ]
+        ],
+        "messages": [
+          [
+            "fry",
+            null
+          ]
+        ],
+        "world_patch": {}
+      },
+      {
+        "when": "the oil never heats: the run stops",
+        "fails": true,
+        "world_patch": {
+          "events": []
+        }
+      }
+    ],
+    "world_1_5": {
+      "clock": null,
+      "note": "no clock needed: `elapsed` after the wait, which is the first step (20 s)"
+    }
+  },
+  "expected_clock": [
+    {
+      "robot": "flippy1",
+      "reading": "elapsed",
+      "use": "message",
+      "channel": "fry",
+      "after": "wait until"
+    }
+  ],
+  "tags": [
+    "elapsed",
+    "wait_until",
+    "live_reading",
+    "communicate"
+  ],
+  "gap": "G-CLOCK",
+  "why": "The time the heating took is `elapsed` read right after the wait, because the wait is the first step (the robot starts at the fryer, so the contact probe reads at once). 1.8 has no `elapsed` (0042 T1); the standing `x05_cooling_time` is this shape. A reading taken after the move would include the move.",
+  "attempt_fails_with": "E217"
+}

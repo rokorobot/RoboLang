@@ -1,0 +1,22 @@
+{
+  "id": "x04_pickup_two_hours_later",
+  "prompt": "With arm1, inspect box1 on shelf_a with camera_top, then send channel \"lead\" the time of day two hours after the scan finished, as the pickup time.",
+  "world": "bench/worlds/warehouse.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_9": {
+    "decision": "cannot",
+    "category": "inexpressible",
+    "because": "0042 T11"
+  },
+  "tags": [
+    "clock_time",
+    "arithmetic"
+  ],
+  "gap": "G-CALC",
+  "why": "Adding two hours to a time is arithmetic on times (0042 T11, G-CALC). 1.9 can send the time of the scan but not the time two hours later. The attempt sends the scan time as the pickup time.",
+  "attempt_fails_with": "E217"
+}

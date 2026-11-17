@@ -1,0 +1,7 @@
+{
+  "task": "monday_run",
+  "bindings": {
+    "r": "cart1",
+    "dst": "intake"
+  }
+}

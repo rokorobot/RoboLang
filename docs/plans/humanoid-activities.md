@@ -87,6 +87,7 @@ before.
 
 | Date | Note | Added | Removed | Changed | Ranking |
 |---|---|---|---|---|---|
+| 2026-11-17 | I3 L3: set 8 clock pre-registered (24 tasks) | — | — | — | 1. action 4.52 · 2. perception 2.78 · 3. cooperation 1.07 · 4. communication 0.95 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
 | 2026-11-17 | L6 of I2: G-ACT closed by RoboLang 1.8 declared actions | — | — | — | 1. action 4.52 · 2. perception 2.78 · 3. cooperation 1.07 · 4. communication 0.95 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
 | 2026-11-17 | I2 L4: RoboLang 1.8 built and taught | — | — | — | 1. action 4.52 · 2. perception 2.78 · 3. cooperation 1.07 · 4. communication 0.95 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
 | 2026-11-17 | I2 L3 done: set 7 frozen; bounds B1-B8 and clarifications C1-C15 approved; x02 to G-SELF (C9) | — | — | — | 1. action 4.52 · 2. perception 2.78 · 3. cooperation 1.07 · 4. communication 0.95 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
@@ -221,9 +222,9 @@ before.
 
 | Language gap | Scope | Priority | Near | Benchmark tasks |
 |---|---|---|---|---|
-| `G-LOOP` Repetition without a fixed bound: loops, retry until it works, schedules, event streams | open | 8.21 | yes | 13 |
-| `G-CLOCK` Clock readings and times of day | open | 4.73 | yes | 9 |
-| `G-CALC` Arithmetic, counting and text built from values | open | 1.55 | yes | 7 |
+| `G-LOOP` Repetition without a fixed bound: loops, retry until it works, schedules, event streams | open | 8.21 | yes | 14 |
+| `G-CLOCK` Clock readings and times of day | open | 4.73 | yes | 26 |
+| `G-CALC` Arithmetic, counting and text built from values | open | 1.55 | yes | 9 |
 | `G-FALLBACK` A different end state counts as done | out | 0.00 | — | 1 |
 
 ## Autonomy

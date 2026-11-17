@@ -1,0 +1,61 @@
+{
+  "id": "k01_scan_stamp",
+  "prompt": "With arm1, inspect box1 on shelf_a with camera_top, then send channel \"lead\" the time of day the scan was done.",
+  "world": "bench/worlds/warehouse.json",
+  "group": "clock",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_9": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "the scan is done and the time is sent",
+        "goal": [
+          [
+            "rl:robot:arm1",
+            "located_in",
+            "rl:place:shelf_a"
+          ]
+        ],
+        "messages": [
+          [
+            "lead",
+            null
+          ]
+        ],
+        "world_patch": {
+          "clock": {
+            "start": "2026-11-17T14:20:00",
+            "zone": "Europe/Prague"
+          }
+        }
+      }
+    ],
+    "world_1_5": {
+      "clock": {
+        "start": "2026-11-17T14:20:00",
+        "zone": "Europe/Prague"
+      }
+    }
+  },
+  "expected_clock": [
+    {
+      "robot": "arm1",
+      "reading": "time",
+      "use": "message",
+      "channel": "lead",
+      "after": "inspect"
+    }
+  ],
+  "tags": [
+    "clock_time",
+    "time_stamp",
+    "inspect",
+    "communicate"
+  ],
+  "gap": "G-CLOCK",
+  "why": "A message is a fixed string or one measured value, and a time of day is neither: there is no `time` reading in 1.8. 1.9 reads it with `measure r time as t;` after the `inspect` and sends the binding (0042 T1, T8). The attempt reads the time and sends it.",
+  "attempt_fails_with": "E217"
+}
