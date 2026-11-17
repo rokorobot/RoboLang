@@ -89,8 +89,8 @@ def log(atlas: dict) -> list[str]:
     history = atlas.get("history") or []
     if not history:
         return ["No entries yet: the first one is written with `--snapshot`."]
-    out = ["Newest first. Ranking: the directions in order of priority, with the change of rank since the entry before.",
-           "", "| Date | Note | Added | Removed | Changed | Ranking |", "|---|---|---|---|---|---|"]
+    out = ["Newest first. Ranking: the directions in order of priority, with the change of rank since the entry",
+           "before.", "", "| Date | Note | Added | Removed | Changed | Ranking |", "|---|---|---|---|---|---|"]
     rows = []
     for i, entry in enumerate(history):
         before = history[i - 1] if i else {"activities": {}, "directions": {}}
@@ -111,39 +111,42 @@ def log(atlas: dict) -> list[str]:
     return out + rows[::-1]
 
 
+HEADER = """\
+# Humanoid activities and the direction of RoboLang
+
+**Generated** from [`bench/atlas.json`](../../bench/atlas.json) by `python bench/atlas_report.py`; do not edit by
+hand. Strategy: [language evolution](../LANGUAGE_EVOLUTION.md); rules: [LE-1 to LE-15](../LANGUAGE_EVOLUTION_RULES.md).
+Status: [RSI-01](rsi-01.md). Sub-activities are added to the atlas as the foresight loop finds them; the
+priorities below follow from them.
+
+<p align="center"><img src="capability-directions.svg" width="420"
+alt="The directions of the RoboLang Capability Atlas (eight in the diagram; autonomy, the ninth, added later)"/></p>
+
+**Priorities.** A sub-activity's priority is `p × nearness` (`p`: its forecast's probability; nearness: now 1,
+1–3y 0.7, 3–7y 0.4, 7y+ 0.1). A direction's priority is the sum of its sub-activities' priorities, each split
+evenly over the directions it names. A language gap's priority is the sum over the sub-activities that need it;
+it is **near** when one of them is a pilot or deployment within three years, and only near gaps are eligible
+for new syntax (strategy rule 1, D5). Out-of-scope gaps are listed but never proposed without a decision record.
+
+## Directions by priority
+
+*Priority* comes from the sub-activities (what robots will do). *Language need* is the sum of the priorities
+of the direction's open gaps (what RoboLang lacks there); the two differ when sub-activities of one direction
+need gaps of another, e.g. tote handling (action) needs clock readings (reasoning). *Future need* is the sum of
+`p` over the direction's far sub-activities (concept or research, or 3+ years away): where the language is
+headed, and what a near design must not rule out. It never gives syntax by itself.
+
+| # | Direction | Priority | Language need | Future need | Sub-activities | Near gaps |
+|---|---|---|---|---|---|---|"""
+
+
 def render(atlas: dict) -> str:
     direction, gap, near = scores(atlas)
     far = future(atlas)
     acts = atlas["activities"]
     gaps = {g["id"]: g for g in atlas["gaps"]}
     order = sorted(DIRECTIONS, key=lambda d: (-direction[d], DIRECTIONS.index(d)))
-    out = [
-        "# Humanoid activities and the direction of RoboLang",
-        "",
-        "**Generated** from [`bench/atlas.json`](../../bench/atlas.json) by `python bench/atlas_report.py`; do not edit by",
-        "hand. Strategy: [language evolution](../LANGUAGE_EVOLUTION.md); rules: [LE-1 to LE-15](../LANGUAGE_EVOLUTION_RULES.md);",
-        "status: [RSI-01](rsi-01.md). Sub-activities are added to the atlas as the foresight loop finds them; the",
-        "priorities below follow from them.",
-        "",
-        '<p align="center"><img src="capability-directions.svg" width="420" alt="The directions of the RoboLang Capability Atlas (eight in the diagram; autonomy, the ninth, was added later)"/></p>',
-        "",
-        "**Priorities.** A sub-activity's priority is `p × nearness` (`p`: its forecast's probability; nearness: now 1,",
-        "1–3y 0.7, 3–7y 0.4, 7y+ 0.1). A direction's priority is the sum of its sub-activities' priorities, each split",
-        "evenly over the directions it names. A language gap's priority is the sum over the sub-activities that need it;",
-        "it is **near** when one of them is a pilot or deployment within three years, and only near gaps are eligible for",
-        "new syntax (strategy rule 1, D5). Out-of-scope gaps are listed but never proposed without a decision record.",
-        "",
-        "## Directions by priority",
-        "",
-        "*Priority* comes from the sub-activities (what robots will do). *Language need* is the sum of the priorities of",
-        "the direction's open gaps (what RoboLang lacks there); the two differ when sub-activities of one direction need",
-        "gaps of another, e.g. tote handling (action) needs clock readings (reasoning). *Future need* is the sum of `p`",
-        "over the direction's far sub-activities (concept or research, or 3+ years away): where the language is headed,",
-        "and what a near design must not rule out. It never gives syntax by itself.",
-        "",
-        "| # | Direction | Priority | Language need | Future need | Sub-activities | Near gaps |",
-        "|---|---|---|---|---|---|---|",
-    ]
+    out = HEADER.split("\n")
     for i, d in enumerate(order, 1):
         n = sum(1 for a in acts if d in (a.get("directions") or []))
         ng = sorted((g for g in near if gaps[g].get("direction") == d), key=lambda g: -gap[g])
@@ -154,7 +157,8 @@ def render(atlas: dict) -> str:
             "roadmap, funding, standard, demand, forecast.", ""]
     ahead = sorted((a for a in acts if is_far(a)), key=lambda a: (-a["forecast"]["p"], a["id"]))
     if ahead:
-        out += ["| Sub-activity | Directions | Maturity | Horizon | p | Needs | Leading signals |", "|---|---|---|---|---|---|---|"]
+        out += ["| Sub-activity | Directions | Maturity | Horizon | p | Needs | Leading signals |",
+                "|---|---|---|---|---|---|---|"]
         for a in ahead:
             sig = " ".join(f"[{s['kind']}]({s['url']})" for s in a.get("leading", [])) or "—"
             out.append(f"| `{a['id']}` {a['name']} | {', '.join(a.get('directions') or [])} | {a['maturity']} | "
@@ -166,7 +170,8 @@ def render(atlas: dict) -> str:
         out += ["", f"## {d.capitalize()}", ""]
         mine = sorted((a for a in acts if d in (a.get("directions") or [])), key=lambda a: (-priority(a), a["id"]))
         if mine:
-            out += ["| Sub-activity | Maturity | Horizon | p | Priority | Needs | Sources |", "|---|---|---|---|---|---|---|"]
+            out += ["| Sub-activity | Maturity | Horizon | p | Priority | Needs | Sources |",
+                    "|---|---|---|---|---|---|---|"]
             for a in mine:
                 src = " ".join(f"[{k}]({u})" for k, u in enumerate(a["sources"], 1))
                 out.append(f"| `{a['id']}` {a['name']} | {a['maturity']} | {a['horizon']} | {a['forecast']['p']:.2f} | "
@@ -194,7 +199,7 @@ def main(argv: list[str]) -> int:
         ATLAS.write_text(json.dumps(atlas, indent=2, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
     text = render(atlas)
     if "--check" in argv:
-        if PLAN.read_text(encoding="utf-8") != text:
+        if PLAN.read_text(encoding="utf-8").replace("\r\n", "\n") != text:
             print(f"{PLAN} is out of date: run python bench/atlas_report.py", file=sys.stderr)
             return 1
         return 0

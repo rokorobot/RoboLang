@@ -10,8 +10,8 @@ from bench import atlas_report as ar
 
 
 def test_plan_is_up_to_date():
-    assert ar.PLAN.read_text(encoding="utf-8") == ar.render(json.loads(ar.ATLAS.read_text(encoding="utf-8"))), \
-        "run python bench/atlas_report.py"
+    plan = ar.PLAN.read_text(encoding="utf-8").replace("\r\n", "\n")  # Windows checkouts may turn LF into CRLF
+    assert plan == ar.render(json.loads(ar.ATLAS.read_text(encoding="utf-8"))), "run python bench/atlas_report.py"
 
 
 def test_priorities():
@@ -47,4 +47,5 @@ def test_development_log():
     newer, older = text.index("| 2026-11-24 | second |"), text.index("| 2026-11-17 | first |")
     assert newer < older
     row = text[newer:text.index("\n", newer)]
-    assert "| A2 |" in row and "A1: demo 1-3y → pilot 1-3y" in row and "1. safety 0.50 (+6) · 2. action 0.35 (-1) · others 0" in row
+    assert "| A2 |" in row and "A1: demo 1-3y → pilot 1-3y" in row
+    assert "1. safety 0.50 (+6) · 2. action 0.35 (-1) · others 0" in row

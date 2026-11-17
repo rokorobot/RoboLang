@@ -1,25 +1,26 @@
 # Humanoid activities and the direction of RoboLang
 
 **Generated** from [`bench/atlas.json`](../../bench/atlas.json) by `python bench/atlas_report.py`; do not edit by
-hand. Strategy: [language evolution](../LANGUAGE_EVOLUTION.md); rules: [LE-1 to LE-15](../LANGUAGE_EVOLUTION_RULES.md);
-status: [RSI-01](rsi-01.md). Sub-activities are added to the atlas as the foresight loop finds them; the
+hand. Strategy: [language evolution](../LANGUAGE_EVOLUTION.md); rules: [LE-1 to LE-15](../LANGUAGE_EVOLUTION_RULES.md).
+Status: [RSI-01](rsi-01.md). Sub-activities are added to the atlas as the foresight loop finds them; the
 priorities below follow from them.
 
-<p align="center"><img src="capability-directions.svg" width="420" alt="The directions of the RoboLang Capability Atlas (eight in the diagram; autonomy, the ninth, was added later)"/></p>
+<p align="center"><img src="capability-directions.svg" width="420"
+alt="The directions of the RoboLang Capability Atlas (eight in the diagram; autonomy, the ninth, added later)"/></p>
 
 **Priorities.** A sub-activity's priority is `p × nearness` (`p`: its forecast's probability; nearness: now 1,
 1–3y 0.7, 3–7y 0.4, 7y+ 0.1). A direction's priority is the sum of its sub-activities' priorities, each split
 evenly over the directions it names. A language gap's priority is the sum over the sub-activities that need it;
-it is **near** when one of them is a pilot or deployment within three years, and only near gaps are eligible for
-new syntax (strategy rule 1, D5). Out-of-scope gaps are listed but never proposed without a decision record.
+it is **near** when one of them is a pilot or deployment within three years, and only near gaps are eligible
+for new syntax (strategy rule 1, D5). Out-of-scope gaps are listed but never proposed without a decision record.
 
 ## Directions by priority
 
-*Priority* comes from the sub-activities (what robots will do). *Language need* is the sum of the priorities of
-the direction's open gaps (what RoboLang lacks there); the two differ when sub-activities of one direction need
-gaps of another, e.g. tote handling (action) needs clock readings (reasoning). *Future need* is the sum of `p`
-over the direction's far sub-activities (concept or research, or 3+ years away): where the language is headed,
-and what a near design must not rule out. It never gives syntax by itself.
+*Priority* comes from the sub-activities (what robots will do). *Language need* is the sum of the priorities
+of the direction's open gaps (what RoboLang lacks there); the two differ when sub-activities of one direction
+need gaps of another, e.g. tote handling (action) needs clock readings (reasoning). *Future need* is the sum of
+`p` over the direction's far sub-activities (concept or research, or 3+ years away): where the language is
+headed, and what a near design must not rule out. It never gives syntax by itself.
 
 | # | Direction | Priority | Language need | Future need | Sub-activities | Near gaps |
 |---|---|---|---|---|---|---|
@@ -62,7 +63,8 @@ roadmap, funding, standard, demand, forecast.
 
 ## Development log
 
-Newest first. Ranking: the directions in order of priority, with the change of rank since the entry before.
+Newest first. Ranking: the directions in order of priority, with the change of rank since the entry
+before.
 
 | Date | Note | Added | Removed | Changed | Ranking |
 |---|---|---|---|---|---|
