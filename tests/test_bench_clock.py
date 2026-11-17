@@ -369,7 +369,7 @@ def test_the_controls_are_a_move_a_wait_for_and_a_measure_and_want_no_clock_read
 
 # -------- the atlas --------
 
-def test_the_atlas_keeps_what_1_9_still_declines_and_g_clock_stays_open_until_l6():
+def test_the_atlas_keeps_what_1_9_still_declines_and_g_clock_is_closed():
     """As for set 7 at 0040 L4: a gap lists the tasks that are still inexpressible, so G-CLOCK, which 1.9 expresses,
     lists none and stays open until the acceptance run (L5) and closes at L6; the five that stay out are in their own
     gaps."""
@@ -379,8 +379,7 @@ def test_the_atlas_keeps_what_1_9_still_declines_and_g_clock_stays_open_until_l6
         assert INEXPRESSIBLE[task_id]["gap"] == gap and GAPS[gap]["scope"] == "open"
     assert Counter(gap for _, gap in in_gaps) == {"G-DATE": 2, "G-LOOP": 1, "G-CALC": 2}
     assert {t["gap"] for t in PROGRAMS.values()} | {t["gap"] for t in INFEASIBLE.values()} == {"G-CLOCK"}
-    assert GAPS["G-CLOCK"]["scope"] == "open" and GAPS["G-CLOCK"]["tasks"] == []
-    assert "L5" in GAPS["G-CLOCK"]["scope_note"] and "closes at L6" in GAPS["G-CLOCK"]["scope_note"]
+    assert GAPS["G-CLOCK"]["scope"] == "closed" and GAPS["G-CLOCK"]["closed_in"] == "RoboLang 1.9"  # L6 of I3
     assert not {c for c in CONTROLS} & {t for g in ATLAS["gaps"] for t in g["tasks"]}
 
 

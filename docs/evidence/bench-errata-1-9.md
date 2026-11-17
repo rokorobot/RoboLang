@@ -190,3 +190,8 @@ reference's `robot_at arm1 shelf_a`. `object_at box1 shelf_a` is equally defensi
 inspected. That is the reading of `k_inspect_thrice` in set 2. Both are now accepted as `goals`. Haiku wrote that
 reading in 3/3 answers, and Sonnet wrote `object_exists box1`, which stays wrong. The L5 answers are re-scored
 offline, with no new request. `docs/evidence/bench-freeze-v2.json` is regenerated.
+
+## Erratum K3 (2026-11-17, L6): G-CLOCK closed
+
+G-CLOCK is closed in the atlas by RoboLang 1.9. The tests of sets "future" and 8 now expect it closed. No task or label
+changed. `docs/evidence/bench-freeze-v2.json` is regenerated.
