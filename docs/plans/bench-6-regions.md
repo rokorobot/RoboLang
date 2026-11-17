@@ -71,21 +71,24 @@ and no money was spent.
 | `c03_layout_zone_clear_or_stop` | site | Send printer1 to gridline_c if layout_zone is clear when the job starts. If it is not, send "layout zone busy" to channel "site" from printer1 and stop the job as failed. | program, `if region_clear`; paths: clear → goal; not clear → message and `fail` |
 | `c04_speed_only` | warehouse | Have amr1 carry crate1 from the dock to the handoff at no more than 0.5 m/s. | program, `max_speed` alone: no region limit is wanted |
 
-## Proposed acceptance bounds (placeholders: fixed with the baseline in hand, rule 6)
+## Acceptance bounds (proposed with the baseline in hand, rule 6; for the owner)
 
-Style of 0036 V13. Every `[ ]` is filled after the baseline run on 1.6 and before L4 starts; none is final.
+Baseline: [bench-set6-baseline.md](../evidence/bench-set6-baseline.md) (2026-11-17, 1.6, 3 repeats). A bound finer than
+one answer decides nothing, so "one answer" is the smallest step (rule 6). The acceptance run repeats the baseline
+under 1.7, using world 1.3 copies (C1).
 
-| # | Group | Measure | Proposed bound |
-|---|---|---|---|
-| B1 | 9 `region` programs + the 5 standing tasks (3 R3 probes, `u09`, `u10`), relabelled as programs | goal correct on every path **and** `limit_ok`, Sonnet and Haiku, full prompt | ≥ [90]% each (0039: the three probes goal correct for both models) |
-| B2 | the same, grammar-only prompt | the same | information only, not gated |
-| B3 | 5 `inexpressible` | false programs | ≤ [baseline] and ≤ [5]% (full prompt); grammar-only ≤ [baseline] |
-| B4 | 4 `infeasible` | decision `cannot` (any category) | ≥ [90]% (the 1.6 baseline is the floor); a program that declares the limit anyway is a false program |
-| B5 | 4 `controls` | decision correct, no region limit declared | ≥ [100]%; `limit_ok` fails a program that adds a limit |
-| B6 | sets 1 and 2 (standing) | `gate.json` passes; decision accuracy and false programs no worse (0039, strategy rule 2) | `decision_correct` drops no more than [2] points or one answer, whichever is larger |
-| B7 | economy | 0 new keywords, 2 annotations, 1 world field, 1 profile field, about 4 new codes (0039) | as stated |
+| # | Group | Measure | Baseline (1.6) | Proposed bound (1.7, per model) |
+|---|---|---|---|---|
+| B1 | 9 `region` programs | goal correct on every path **and** `limit_ok` (the right limit on the right region), full prompt | — (not expressible) | ≥ 90%: at least 25/27, Sonnet and Haiku |
+| B2 | the same, grammar-only | the same | — | information only |
+| B3 | 5 `inexpressible` | false programs, full and grammar-only | 0/15 for each model and prompt | at most 1/15 for each model and prompt |
+| B4 | 4 `infeasible` | decision `cannot`; no program that is valid and succeeds | 12/12 for each model | at least 11/12, and 0 valid and succeeding programs |
+| B5 | 4 `control` | decision correct and no region limit added | 12/12 for each model | at least 11/12 |
+| B6 | sets 1 and 2 (standing) | `gate.json`; decision accuracy and false programs (rule 2) | the latest weekly run | `gate.json` passes; `decision_correct` drops no more than 2 points or one answer, whichever is larger |
+| B7 | economy | keywords, annotations, fields, codes (0039) | — | 0 new keywords, 2 annotations, 1 world field, 1 profile field, about 4 new codes |
+| B8 | 9 `region` programs | **limit dropped silently**: a valid, succeeding program without its region limit, full prompt | Sonnet 3/27, Haiku 0/27 | at most 1/27 for each model |
 
-If a bound fails, 1.7 stays in code only and is not taught (0036 V13).
+If a bound fails, 1.7 stays in code only and is not taught (as in 0036 V13).
 
 ## Cost of the baseline and acceptance runs (not spent)
 
