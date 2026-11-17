@@ -12,7 +12,8 @@ which keeps the north star, the pillars and the horizons. This page says **how t
 | 1 Direction | [STRATEGY.md](STRATEGY.md) | North star, pillars, horizons, decision rules 1–6, D1–D5 | Owner, monthly review |
 | 2 Language strategy | this page | Principle, directions, loops, atlas, ranking, phases | Owner |
 | 2 Rules | [LANGUAGE_EVOLUTION_RULES.md](LANGUAGE_EVOLUTION_RULES.md) | Rules LE-1 to LE-15, binding for people and automation | Owner only |
-| 3 Plan and status | [plans/rsi-01.md](plans/rsi-01.md) | Steps R1–R5 and the first L1–L6 iteration, with their state | Each step |
+| 3 Plan and status | [plans/rsi-01.md](plans/rsi-01.md) | Steps R1–R5 and their state | Each step |
+| 3 Language roadmap | [LANGUAGE_ROADMAP.md](LANGUAGE_ROADMAP.md) | The iterations I1–I10: which gap, which version, in what order, designed for which far needs | After R3, then monthly; dated snapshots with a git tag in [roadmap-snapshots/](roadmap-snapshots/README.md) |
 | 4 Data | [`bench/atlas.json`](../bench/atlas.json) → [plans/humanoid-activities.md](plans/humanoid-activities.md) (generated) | Activities, gaps, priorities, development log | Loops A1, A2 (weekly PR) |
 | 4 Evidence | [`docs/evidence/rsi-*.md`](evidence/), [`spec/decisions/`](../spec/decisions/) | One report per research pass; one decision record per language change | Each pass, each change |
 

@@ -19,7 +19,7 @@ are in the [language evolution strategy](../LANGUAGE_EVOLUTION.md), the binding 
 ## Language phase, first iteration
 
 Starts after R3 ([strategy section 6](../LANGUAGE_EVOLUTION.md#6-phases)): L1 choose → L2 decision record → L3
-pre-register → L4 build → L5 accept → L6 release.
+pre-register → L4 build → L5 accept → L6 release. The iterations and their order: [language roadmap](../LANGUAGE_ROADMAP.md).
 
 **Candidates** on 2026-11-17, near gaps by priority, to be confirmed or refuted by R3: G-PERCEIVE (conditions on
 perceived properties), G-CLOCK (clock readings), G-CHOOSE (choosing objects at run time), G-ACT (new actions),

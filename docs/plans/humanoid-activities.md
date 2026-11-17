@@ -34,6 +34,26 @@ headed, and what a near design must not rule out. It never gives syntax by itsel
 | 8 | safety | 0.49 | 4.46 | 0.74 | 5 | G-PATH |
 | 9 | prediction | 0.25 | 0.50 | 0.68 | 4 | — |
 
+## Suggested order of language work
+
+Near gaps in the order that unlocks the most: *Unlocked* is the summed priority of the sub-activities
+whose needs are all closed once this gap and those above it are. Gaps the current horizon needs come
+first (strategy D5). An `out` gap enters only through its own decision record (LE-9). The roadmap
+([LANGUAGE_ROADMAP.md](../LANGUAGE_ROADMAP.md)) turns this order into versions.
+
+| # | Gap | Direction | Scope | Priority | Unlocked | Why here |
+|---|---|---|---|---|---|---|
+| 1 | `G-PATH` | safety | open | 2.86 | 0.00 | current horizon (D5) |
+| 2 | `G-ACT` | action | open | 4.30 | 0.00 | unlocks the most |
+| 3 | `G-PERCEIVE` | perception | open | 5.54 | 0.45 | unlocks the most |
+| 4 | `G-LOOP` | reasoning | out | 8.21 | 0.90 | unlocks the most |
+| 5 | `G-CLOCK` | reasoning | open | 4.73 | 2.25 | unlocks the most |
+| 6 | `G-MSG` | communication | open | 3.86 | 3.74 | unlocks the most |
+| 7 | `G-CHOOSE` | perception | open | 5.23 | 5.95 | unlocks the most |
+| 8 | `G-SELF` | autonomy | open | 1.33 | 7.29 | unlocks the most |
+| 9 | `G-CALC` | reasoning | open | 1.55 | 8.46 | unlocks the most |
+| 10 | `G-CONC` | cooperation | open | 1.00 | 9.46 | unlocks the most |
+
 ## Future direction
 
 Far sub-activities by `p`: what is coming, and the signals that point to it. Leading signals: research,

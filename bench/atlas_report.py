@@ -16,12 +16,17 @@ The atlas is the only source: add or change sub-activities there, then run this.
                  its language need is the sum of the priorities of its open gaps; its future need is the sum of p
                  over its far sub-activities (concept or research, or horizon 3-7y or 7y+), split the same way:
                  what the language must not rule out, not what gets syntax now
+- order:         near gaps in the order that unlocks the most: after each gap closes, the summed priority of the
+                 sub-activities whose needs are all closed (greedy, three steps ahead); near gaps the current horizon
+                 needs come first (strategy D5)
 - language gap:  sum of the priorities of the sub-activities that need it; "near" if one of them is pilot or
                  deployment with horizon now or 1-3y (eligible for syntax, strategy rule 1 and D5)
 """
 
 from __future__ import annotations
+import itertools
 import json
+import math
 import sys
 from pathlib import Path
 
@@ -69,6 +74,35 @@ def scores(atlas: dict) -> tuple[dict[str, float], dict[str, float], set[str]]:
             if is_near(act):
                 near.add(g)
     return direction, gap, near
+
+
+def unlocked(atlas: dict, closed: set[str]) -> float:
+    return math.fsum(priority(a) for a in atlas["activities"] if set(a["needs"]) <= closed)
+
+
+def suggested_order(atlas: dict) -> list[tuple[str, float]]:
+    """Near gaps in the order that unlocks the most priority, horizon gaps first (D5): [(gap, unlocked after)]."""
+    _, _, near = scores(atlas)
+    pinned = [g for g in (atlas.get("current_horizon") or {}).get("gaps", []) if g in near]
+    order, closed = list(pinned), set(pinned)
+    rest = sorted(near - closed)
+    while rest:
+        best = None
+        for seq in itertools.permutations(rest, min(3, len(rest))):
+            trial, total = set(closed), 0.0
+            for g in seq:
+                trial.add(g)
+                total += unlocked(atlas, trial)
+            if best is None or total > best[0] + 1e-9:
+                best = (total, seq[0])
+        order.append(best[1])
+        closed.add(best[1])
+        rest.remove(best[1])
+    result, closed = [], set()
+    for g in order:
+        closed.add(g)
+        result.append((g, unlocked(atlas, closed)))
+    return result
 
 
 def snapshot(atlas: dict, date: str, note: str) -> dict:
@@ -150,8 +184,20 @@ def render(atlas: dict) -> str:
     for i, d in enumerate(order, 1):
         n = sum(1 for a in acts if d in (a.get("directions") or []))
         ng = sorted((g for g in near if gaps[g].get("direction") == d), key=lambda g: -gap[g])
-        need = sum(gap[g["id"]] for g in gaps.values() if g.get("direction") == d and g["scope"] == "open")
+        need = math.fsum(gap[g["id"]] for g in gaps.values() if g.get("direction") == d and g["scope"] == "open")
         out.append(f"| {i} | {d} | {direction[d]:.2f} | {need:.2f} | {far[d]:.2f} | {n} | {', '.join(ng) or '—'} |")
+    pinned = set((atlas.get("current_horizon") or {}).get("gaps", []))
+    out += ["", "## Suggested order of language work", "",
+            "Near gaps in the order that unlocks the most: *Unlocked* is the summed priority of the sub-activities",
+            "whose needs are all closed once this gap and those above it are. Gaps the current horizon needs come",
+            "first (strategy D5). An `out` gap enters only through its own decision record (LE-9). The roadmap",
+            "([LANGUAGE_ROADMAP.md](../LANGUAGE_ROADMAP.md)) turns this order into versions.", "",
+            "| # | Gap | Direction | Scope | Priority | Unlocked | Why here |",
+            "|---|---|---|---|---|---|---|"]
+    for i, (g, after) in enumerate(suggested_order(atlas), 1):
+        why = "current horizon (D5)" if g in pinned else "unlocks the most"
+        out.append(f"| {i} | `{g}` | {gaps[g].get('direction', '—')} | {gaps[g]['scope']} | {gap[g]:.2f} | "
+                   f"{after:.2f} | {why} |")
     out += ["", "## Future direction", "",
             "Far sub-activities by `p`: what is coming, and the signals that point to it. Leading signals: research,",
             "roadmap, funding, standard, demand, forecast.", ""]

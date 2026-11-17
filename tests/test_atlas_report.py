@@ -49,3 +49,15 @@ def test_development_log():
     row = text[newer:text.index("\n", newer)]
     assert "| A2 |" in row and "A1: demo 1-3y → pilot 1-3y" in row
     assert "1. safety 0.50 (+6) · 2. action 0.35 (-1) · others 0" in row
+
+
+def test_suggested_order():
+    def act(i, needs, p):
+        return {"id": i, "name": i, "directions": ["action"], "needs": needs, "maturity": "pilot", "horizon": "now",
+                "forecast": {"p": p}, "sources": ["https://example.org"]}
+    gaps = [{"id": g, "name": g, "scope": "open", "direction": "action", "tasks": []} for g in ("G-A", "G-B", "G-C")]
+    atlas = {"gaps": gaps, "activities": [act("A1", ["G-A", "G-B"], 0.9), act("A2", ["G-C"], 0.2)]}
+    assert [g for g, _ in ar.suggested_order(atlas)] == ["G-A", "G-B", "G-C"]  # A and B together unlock 0.9
+    atlas["current_horizon"] = {"name": "H", "gaps": ["G-C"]}
+    order = ar.suggested_order(atlas)
+    assert order[0] == ("G-C", 0.2) and round(order[-1][1], 3) == 1.1

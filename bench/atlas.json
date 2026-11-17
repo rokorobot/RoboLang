@@ -2,6 +2,14 @@
   "atlas_schema": "robolang.atlas",
   "atlas_schema_version": "0.1",
   "about": "RSI-01 activity atlas (docs/plans/rsi-01.md). Gaps: language capabilities RoboLang lacks, each with the benchmark tasks that show it. Activities: what robots are expected to do, with dated, checkable forecasts.",
+  "current_horizon": {
+    "name": "H4 Earn hardware",
+    "gaps": [
+      "G-PATH",
+      "G-FORCE"
+    ],
+    "note": "Strategy D5: near gaps needed by the current horizon come first. Safety case gap G2 needs a declared workspace and checked limits (hazards H05, H06)."
+  },
   "gaps": [
     {
       "id": "G-LOOP",
