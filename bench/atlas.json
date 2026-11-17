@@ -1595,6 +1595,83 @@
           "url": "https://arxiv.org/abs/2508.19816"
         }
       ]
+    },
+    {
+      "id": "ACT-MFG-004",
+      "name": "Humanoid assembly and component work in a car plant",
+      "domain": "manufacturing",
+      "directions": [
+        "action"
+      ],
+      "maturity": "demo",
+      "horizon": "1-3y",
+      "basis": "Hexagon Robotics (announcement 2026-06-12, page 2026-06-15): its AEON humanoid has begun production tasks at BMW Group Plant Leipzig (a photo caption shows it scanning a car with a laser), battery assembly is to move from BMW's Innovation Garage into the factory as a later pilot, and production deployment is slated for the end of 2026. AI News (2026-03-13): BMW announced the project on 2026-03-09; first test deployment December 2025; the summer 2026 pilot puts two AEON units on high-voltage battery assembly and exterior-component manufacturing. The pages name no production task beyond the scan, give no unit count and no metrics, and the assembly work itself has not started on the plant floor, so `demo` (LE-3), not `pilot`. Method for the forecast: extrapolation from BMW Spartanburg (ACT-MFG-001), where a Figure pilot went from tests to production work in about a year.",
+      "requests": [
+        "Take a battery module from the tray, set it into the housing and press it down until it seats; stop if the force goes over the limit.",
+        "Laser-scan every finished exterior part on the cart and tell me which ones are damaged.",
+        "Fit the clip on each part on the cart, and hand the cart to the tugger when all parts are done."
+      ],
+      "needs": [
+        "G-FORCE",
+        "G-PERCEIVE"
+      ],
+      "forecast": {
+        "claim": "BMW or Hexagon publicly confirms AEON humanoids doing high-voltage battery assembly or exterior-component manufacturing in series production at Plant Leipzig by 2027-12-31.",
+        "due": "2027-12-31",
+        "p": 0.5
+      },
+      "sources": [
+        "https://robotics.hexagon.com/?p=720",
+        "https://www.artificialintelligence-news.com/news/bmw-humanoid-robots-manufacturing-europe-leipzig/"
+      ]
+    },
+    {
+      "id": "ACT-HRC-003",
+      "name": "Handing a stuck job to a remote operator and taking it back",
+      "domain": "human-robot collaboration",
+      "directions": [
+        "cooperation",
+        "communication"
+      ],
+      "maturity": "concept",
+      "horizon": "3-7y",
+      "basis": "Method: combination. Remote takeover exists as a service, not as robot behaviour: 1X's NEO has an 'Expert Mode' in which a remote operator teleoperates the robot, but the owner schedules the session and the article does not say how control passes back (Road to VR, 2025-10-30); Foundation says its robot works autonomously and a remote human steps in on edge cases, with interventions kept as training data, first fleet to an unnamed auto OEM (Sacra summary of a 2025-03-09 CEO interview). Research feeds human interventions from a fleet of 16 dual-arm robots back into one VLA policy (arXiv 2605.00416, 2026-05-01; the authors say the policy does not model execution safety). No source shows a robot that itself detects it is stuck, asks a named remote person to take over, waits, and resumes the job after the handback.",
+      "requests": [
+        "If you cannot grasp a tote after three tries, call the remote operator and wait for them.",
+        "When the operator says resume, carry on with the next tote.",
+        "If nobody answers within ten minutes, put the tote down, tell the shift lead and stop."
+      ],
+      "needs": [
+        "G-SELF",
+        "G-MSG"
+      ],
+      "forecast": {
+        "claim": "A humanoid or mobile-manipulator vendor documents, for a product with paying customers, a robot-initiated request for remote takeover of a stuck task and automatic resumption of autonomy after handback, by 2029-12-31.",
+        "due": "2029-12-31",
+        "p": 0.4
+      },
+      "sources": [
+        "https://roadtovr.com/helper-robot-neo-vr-telepresence/",
+        "https://sacra.com/chat/h/93dc70de-7775-4bc2-b477-ce4cd741da03/",
+        "https://arxiv.org/abs/2605.00416"
+      ],
+      "leading": [
+        {
+          "kind": "roadmap",
+          "claim": "1X NEO's Expert Mode: remote operators teleoperate the robot in sessions the owner schedules; handback to autonomy is not described (Road to VR, 2025-10-30).",
+          "url": "https://roadtovr.com/helper-robot-neo-vr-telepresence/"
+        },
+        {
+          "kind": "roadmap",
+          "claim": "Foundation: robot autonomous most of the time, a remote human steps in on edge cases; first fleet to an unnamed auto OEM; interventions become training data (Sacra, CEO interview 2025-03-09).",
+          "url": "https://sacra.com/chat/h/93dc70de-7775-4bc2-b477-ce4cd741da03/"
+        },
+        {
+          "kind": "research",
+          "claim": "Learning While Deploying: human interventions from 16 dual-arm robots improve one VLA policy to 95% mean task score on eight tasks (arXiv 2605.00416, 2026-05-01).",
+          "url": "https://arxiv.org/abs/2605.00416"
+        }
+      ]
     }
   ],
   "history": [
@@ -1901,6 +1978,63 @@
         "cooperation": 0.99,
         "safety": 0.49,
         "communication": 0.87,
+        "autonomy": 0.67
+      }
+    },
+    {
+      "date": "2026-11-17",
+      "note": "Weekly A1/A2: ACT-MFG-004 (Hexagon AEON at BMW Leipzig, demo) and ACT-HRC-003 (remote takeover and handback, concept); no maturity or horizon changes, no gap changes",
+      "activities": {
+        "ACT-LOG-001": "deployment now",
+        "ACT-LOG-002": "deployment now",
+        "ACT-MFG-001": "pilot 1-3y",
+        "ACT-MFG-002": "pilot 1-3y",
+        "ACT-RET-001": "deployment now",
+        "ACT-HOS-001": "deployment now",
+        "ACT-HLTH-001": "deployment now",
+        "ACT-ELD-001": "pilot 3-7y",
+        "ACT-HOME-001": "research 3-7y",
+        "ACT-HOME-002": "demo 3-7y",
+        "ACT-INSP-001": "demo now",
+        "ACT-INSP-002": "demo 1-3y",
+        "ACT-SEC-001": "demo 1-3y",
+        "ACT-SAFE-001": "demo 3-7y",
+        "ACT-CON-001": "deployment now",
+        "ACT-AGR-001": "pilot 3-7y",
+        "ACT-EV-001": "pilot 1-3y",
+        "ACT-CLN-001": "deployment now",
+        "ACT-MRC-001": "demo 3-7y",
+        "ACT-MRC-002": "demo 1-3y",
+        "ACT-HRC-001": "research 3-7y",
+        "ACT-HRC-002": "research 3-7y",
+        "ACT-ASM-001": "research 7y+",
+        "ACT-PRED-001": "research 3-7y",
+        "ACT-PRED-002": "research 3-7y",
+        "ACT-AUTO-001": "deployment now",
+        "ACT-AUTO-002": "demo 1-3y",
+        "ACT-AUTO-003": "research 3-7y",
+        "ACT-MFG-003": "demo 1-3y",
+        "ACT-AGR-002": "deployment now",
+        "ACT-SOL-001": "deployment now",
+        "ACT-PRED-003": "concept 3-7y",
+        "ACT-PRED-004": "concept 7y+",
+        "ACT-LRN-001": "concept 3-7y",
+        "ACT-LRN-002": "concept 3-7y",
+        "ACT-AUTO-004": "concept 3-7y",
+        "ACT-SAFE-002": "concept 3-7y",
+        "ACT-CARE-001": "concept 7y+",
+        "ACT-MFG-004": "demo 1-3y",
+        "ACT-HRC-003": "concept 3-7y"
+      },
+      "directions": {
+        "perception": 2.78,
+        "reasoning": 0.68,
+        "prediction": 0.25,
+        "action": 4.52,
+        "learning": 0.75,
+        "cooperation": 1.07,
+        "safety": 0.49,
+        "communication": 0.95,
         "autonomy": 0.67
       }
     }
