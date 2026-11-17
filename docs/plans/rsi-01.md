@@ -109,7 +109,7 @@ than the baseline (rule 6).
 | R1 | Atlas file with the gap list above; test that every `inexpressible` task belongs to a gap; Economy counter | $0 | Approve this plan |
 | R2 | First foresight pass, by hand-supervised agent: 15–25 activities with sources, maturity and forecasts | ~$5–15, once | Approve the spend |
 | R3 | Future tasks for the near activities (`bench/tasks_future/`), run once to measure today's gaps | ~$2 | No |
-| R4 | Cloudroom Loop for loop A (weekly): new sources, maturity changes, new activities, as a PR | ~$1/week | Approve the loop |
+| R4 | Cloudroom Loop for loop A (weekly): new sources, maturity changes, new activities in the atlas, then `python bench/atlas_report.py --snapshot DATE --note …` so [humanoid-activities.md](humanoid-activities.md) gets a dated development-log entry; as a PR | ~$1/week | Approve the loop |
 | R5 | Monthly ranked proposal (section 5); quarterly calibration (loop C) | ~$1/month | Each proposal |
 
 ## 8. Proposed strategy amendment

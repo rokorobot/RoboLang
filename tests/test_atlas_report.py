@@ -28,3 +28,19 @@ def test_priorities():
     assert near == {"G-A"}
     text = ar.render(atlas)
     assert text.index("| 1 | action |") < text.index("| 2 | safety |")
+
+
+def test_development_log():
+    def act(i, maturity, horizon):
+        return {"id": i, "name": i, "directions": ["action"], "needs": [], "maturity": maturity, "horizon": horizon,
+                "forecast": {"p": 0.5}, "sources": ["https://example.org"]}
+    atlas = {"gaps": [], "activities": [act("A1", "demo", "1-3y")]}
+    ar.snapshot(atlas, "2026-11-17", "first")
+    atlas["activities"] = [act("A1", "pilot", "1-3y"),
+                           {**act("A2", "pilot", "now"), "directions": ["safety"]}]
+    ar.snapshot(atlas, "2026-11-24", "second")
+    text = ar.render(atlas)
+    newer, older = text.index("| 2026-11-24 | second |"), text.index("| 2026-11-17 | first |")
+    assert newer < older
+    row = text[newer:text.index("\n", newer)]
+    assert "| A2 |" in row and "A1: demo 1-3y → pilot 1-3y" in row and "1. safety 0.50 (+6) · 2. action 0.35 (-1) · others 0" in row

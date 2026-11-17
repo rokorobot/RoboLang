@@ -23,6 +23,10 @@ new syntax (strategy rule 1, D5). Out-of-scope gaps are listed but never propose
 | 7 | safety | 0.00 | 0 | — |
 | 8 | communication | 0.00 | 0 | — |
 
+## Development log
+
+No entries yet: the first one is written with `--snapshot`.
+
 ## Perception
 
 No sub-activities yet.
