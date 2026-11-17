@@ -79,31 +79,23 @@ that differs changes the labels named there.**
 | `c03_wait_oil_by_itself` | fry_station | With flippy1, wait up to 60 seconds for the oil in oil_1 to read above 170 degrees Celsius, then move basket_2 from the prep_table to the fryer. If the oil does not get there, stop. | program, a `wait until` on a live reading; paths: heats at 20 s → basket at the fryer; never heats → the run stops; no `do set` |
 | `c04_plain_move_printer` | site | Send printer1 to gridline_c. | program, a plain move; printer1 declares `print` in the 1.8 world and the request does not ask for it |
 
-## Acceptance bounds (PROPOSED: placeholders, to be fixed with the baseline in hand, rule 6)
+## Acceptance bounds (proposed with the baseline in hand, rule 6; for the owner)
 
-Baseline: not taken yet. It is a run of this set under 1.7 (3 repeats, Sonnet and Haiku, both prompts), confirmed by the
-owner before it starts; the numbers below are then confirmed or changed in the same way as set 6's B1–B8 ([plan](bench-6-regions.md)).
-A bound finer than one answer decides nothing, so "one answer" is the smallest step (rule 6). The acceptance run repeats the
-baseline under 1.8, using world 1.4 copies. The bounds follow the counts of this set: 10 `action` programs × 3 repeats = 30
-answers per model and prompt; 5 `infeasible` and 5 `inexpressible` × 3 = 15; 4 `control` × 3 = 12.
+Baseline: [bench-set7-baseline.md](../evidence/bench-set7-baseline.md) (2026-11-17, 1.7, 3 repeats). The smallest step
+is one answer (rule 6). The acceptance run repeats the baseline under 1.8, with world 1.4 copies.
 
 | # | Group | Measure | Baseline (1.7) | Proposed bound (1.8, per model) |
 |---|---|---|---|---|
-| B1 | 10 `action` programs | goal correct on every path **and** `action_ok` (the right action, on the right target, with the right value), full prompt | — (not expressible) | ≥ 90%: at least 27/30, Sonnet and Haiku |
-| B2 | the same, grammar-only | the same | — | information only |
-| B3 | 5 `inexpressible` | false programs, full and grammar-only | to be measured | at most 1/15 for each model and prompt |
-| B4 | 5 `infeasible` | decision `cannot`; no program that is valid and succeeds | to be measured | at least 14/15, and 0 valid and succeeding programs |
-| B5 | 4 `control` | decision correct and no `do` added (`expected_actions: []`) | to be measured | at least 11/12 |
-| B6 | sets 1 and 2 (standing) | `gate.json`; decision accuracy and false programs (rule 2) | the latest weekly run | `gate.json` passes; `decision_correct` drops no more than 2 points or one answer, whichever is larger |
-| B7 | economy | keywords, statements, conditions, world fields, codes (0040) | — | 2 new keywords (`do`, `in_state`), 1 statement, 1 condition, 2 world fields (`actions`, `state`), about 5 new codes |
-| B8 | 10 `action` programs | **action replaced silently**: a valid, succeeding program that does not call the requested action (a `move`, an `inspect`, a `communicate` or nothing in its place), full prompt | to be measured (every valid, succeeding program is one: 1.7 cannot call an action) | at most 1/30 for each model |
+| B1 | 10 `action` programs | goal on every path (including `in_state`) **and** `actions_ok`, meaning the right action on the right target with the right value; full prompt | not expressible | ≥ 90%: at least 27/30 |
+| B2 | the same, grammar-only | the same | not expressible | for information |
+| B3 | 5 `inexpressible` | false programs, full and grammar-only | 0/15 for each | at most 1/15 for each model and prompt |
+| B4 | 5 `infeasible` | decision `cannot`; no valid program that succeeds | 15/15 for each | at least 14/15, and 0 that succeed |
+| B5 | 4 `control` | right decision and no `do` added | 12/12 for each | at least 11/12 |
+| B6 | sets 1 and 2 (standing) | `gate.json`; decision accuracy | the latest run | the gate passes; `decision_correct` drops at most 2 points or one answer, whichever is larger |
+| B7 | economy | keywords, statements, conditions, world fields, codes | — | 2 keywords, 1 statement, 1 condition, 3 world fields (`actions`, `state`, `location_states`); about 5 user-facing codes plus their IR forms |
+| B8 | 10 `action` programs | **action replaced silently**: a valid, succeeding program that leaves out or replaces the requested action; full prompt | Haiku 3/30, Sonnet 0/30 | at most 1/30 |
 
-If a bound fails, 1.8 stays in code only and is not taught (as in 0036 V13 and 0039).
-
-B8 is judged on the source, as `limit_dropped_silently` is: the program has no `do` for an `expected_actions` entry of the
-task. It is the same failure as the half program (before 1.4), the silent substitution (before 1.6) and the dropped limit
-(before 1.7): a request is lost while every other check passes. For `a07` it is also the case that the 1.7 region limit is
-kept and only the action is lost, which is why that task is in the set.
+If a bound fails, 1.8 stays in code only and is not taught.
 
 ## Cost of the baseline and acceptance runs (not spent)
 

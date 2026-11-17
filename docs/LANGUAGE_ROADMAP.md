@@ -65,6 +65,6 @@ Frozen, dated copies with a git tag: [roadmap-snapshots/](roadmap-snapshots/READ
 | # | State |
 |---|---|
 | I1 G-PATH | L1–L5 done (accepted 2026-11-17, [acceptance](evidence/bench-1-7-acceptance.md): silent limit drops 3/27 → 0/27). **L6:** G-PATH closed in the atlas; release 0.4.0 with RoboLang 1.7 prepared, published by the owner (strategy D3) |
-| I2 G-ACT | **L1 done** (owner, 2026-11-17). **L2 done:** decision record [0040](../spec/decisions/0040-declared-actions.md) approved 2026-11-17 (`do`, `in_state`, values and location targets in 1.8). **L3 done:** set 7 "actions" (24 tasks) pre-registered against 1.7 ([plan](plans/bench-7-actions.md), draft for the owner; open points before L4 are listed in it); the baseline run and the bounds (rule 6) are next |
+| I2 G-ACT | L1 and L2 done (0040 approved 2026-11-17). **L3:** set 7 "actions" (24 tasks) pre-registered ([plan](plans/bench-7-actions.md)); baseline on 1.7 done ([evidence](evidence/bench-set7-baseline.md)): an action is replaced silently in 3/30 answers (Haiku, full prompt); clarifications C1–C15 and bounds B1–B8 proposed for the owner |
 | I3–I10 | Not started |
 | Mission layer decision record | [0041](../spec/decisions/0041-mission-layer.md) **approved 2026-11-17**: G-LOOP reopened (LE-9), mission layer with a hard bound, `stop`/`continue`/`retry N`; built at I4 |

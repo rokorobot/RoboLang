@@ -96,3 +96,23 @@ The closet carries a state: `"state": "closed"`.
 1. The keywords are `do` and `in_state`.
 2. Setpoint values are in 1.8 (A5).
 3. Locations can be targets (A4).
+
+## Clarifications (PROPOSED 2026-11-17, from writing the L3 set; for the owner)
+
+| # | Question | Recommended |
+|---|---|---|
+| C1 | How the scorer compares `in_state` | As a fact `[X, "in_state", label]`. Goals are compared by meaning, as today: the comparison enumerates the labels the world and the declared results allow |
+| C2 | Must the robot be at the target? | **Yes**, as for `grasp`. The robot must be at the target location, or at the target object's location, or the step fails. Remote actions are not in 1.8. `a06` gains a move |
+| C3 | What an action task's goal contains | The requested `in_state` plus the other requested end conditions; no `robot_at` unless the request asks for it (the existing reference rule) |
+| C4 | The result of a setpoint action | The declared `result` label (e.g. `"heating"`). Reaching the value is a separate `wait until`, as in `a02` |
+| C5 | Where a location's state lives | World 1.4 `location_states`: location → label. The list of locations stays as it is |
+| C6 | Scripting a failing `do` | The world's existing step-fault script, the same mechanism as for other steps (1.5) |
+| C7 | `i05`: no declared action produces the required state | **Infeasible, caught before the run**: a new world check fails a goal `in_state` that no declared action of the task's robots produces and the world does not already hold |
+| C8 | Durations as values | Not in 1.8 (A10). "Fry for 3 minutes" is `do` and then `wait for 3 min` |
+| C9 | `x02`: an action that returns a value | Inexpressible. Its gap moves from G-ACT to **G-SELF** (a self-test result is the robot's own state), so that G-ACT can close at L6 |
+| C10 | `x01`: hand it to Ana | Inexpressible, gap G-PROX: people are not entities in 1.8 |
+| C11 | `x03`: a macro | Inexpressible, gap G-TEACH: it asks for a reusable named skill, not a single task |
+| C12 | `a10`: decoy names | Names must match exactly. The world shown to the model lists each robot's actions with their targets and results |
+| C13 | Region limits and actions | A `do` with a location target counts as a target for `S004`. The robot has to move there (C2), so 1.7's checks apply as they do to `move` |
+| C14 | Charge and dock | In 1.8 the state is on the charger or the dock (a location target). The robot's own state is G-SELF (I8) |
+| C15 | `x03` and G-TEACH | `x03` is the first task of G-TEACH, as its scope note says |
