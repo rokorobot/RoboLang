@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 import re
 from collections.abc import Mapping
+import dataclasses
 from dataclasses import dataclass
 from decimal import Decimal
 from types import MappingProxyType
@@ -168,7 +169,8 @@ class World:
     events: tuple[Event, ...]  # stably sorted by at_ms: equal times keep file order
     task: TaskScript
     schema_version: str = WORLD_SCHEMA_VERSION
-    location_states: Mapping[str, str] = MappingProxyType({})  # world file 1.4: location -> its state label
+    # world file 1.4: location -> its state label (default_factory: Python 3.11 rejects a mappingproxy default)
+    location_states: Mapping[str, str] = dataclasses.field(default_factory=lambda: MappingProxyType({}))
 
     def kind_of(self, entity_id: str) -> str | None:
         if entity_id in self.locations:

@@ -157,3 +157,16 @@ Snapshot added to the history ("I2 L4: RoboLang 1.8 built and taught").
 ### Freeze
 
 `docs/evidence/bench-freeze-v2.json` is regenerated for all of the above (the manifest of E1 and A1 is in git history).
+
+## Erratum E3 (2026-11-17, after the L5 run): `a08_charge_cart` accepts two readings
+
+The request "Send cart2 to the charger and have it charge there" asks for the cart to be **at** the charger. So a goal
+with `robot_at cart2 charger` as well as `in_state charger "charging"` is a defensible reading, not an extra
+condition (C3). Sonnet wrote it in 3/3 full-prompt answers. The path now lists both readings as `goals`. The 1.8
+reference is unchanged. The L5 answers are re-scored offline, with no new request.
+
+## Erratum E4 (2026-11-17): Python 3.11
+
+`World.location_states` had a `mappingproxy` default, which Python 3.11 rejects when the dataclass is defined.
+Importing `robolang.sim` failed on 3.11 (CI on PR #151). It now uses `default_factory`. No behaviour changed.
+`docs/evidence/bench-freeze-v2.json` is regenerated for E3 and E4.

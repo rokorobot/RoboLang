@@ -1,5 +1,5 @@
 {
-  "sha256": "560a74bbbe28d43e78d82289ef37acc53181744545d67c0fef725ebd11de1157",
+  "sha256": "c92ae17a3c0aca62dfc92c47b59c3e409608f34d457e97dcaf772eca44b79805",
   "schema": "robolang.bench.freeze.v2",
   "patterns": [
     "bench/tasks*/*.json",
@@ -741,7 +741,7 @@
     "bench/tasks_actions/a05_open_or_report.json": "b6da5374750584fbb774fce4e30c1f1f73fc8daeba274a47f4ba76827f26f75f",
     "bench/tasks_actions/a06_two_cranes_lock.json": "8c6646254cdaf03cde374365457d20960b8b6aec7dc6cab4fa04fa600b5efe62",
     "bench/tasks_actions/a07_print_dry.json": "0b569537cbae30aa856420deec38d888c4087108d0c271985d4244dbb96d3451",
-    "bench/tasks_actions/a08_charge_cart.json": "0c671e0a99a9453e6ad06c2a7d238fe445424ebb7bc52015ee3a2a2f303b956c",
+    "bench/tasks_actions/a08_charge_cart.json": "c4cc185812a243eea2cdac8e3a73cca91482036d78a1943d707b6745e6d98461",
     "bench/tasks_actions/a09_dock_drone.json": "50ecc9ed5d1f403c490c4d4eeec4b52f8c939e020bc5bb3992ee5c30b03ba905",
     "bench/tasks_actions/a10_decoy_open_closet.json": "f845c5afd8fcf84dd16636b95ded66db956796f8d59be2e6b85cae1b8d5cc07d",
     "bench/tasks_actions/c01_fetch_no_door.json": "f1297393da0e5c585fede14a2533aac5926e136d682f0e805d6a9e78ae7024f8",
@@ -1102,7 +1102,7 @@
     "src/robolang/sim/record.py": "c118f3e88022c93da1bf7a093af62b5d8f0d23981c6ac6cb4fc09524eb3503de",
     "src/robolang/sim/regions.py": "c28d97576c6c0a7c4df3d225673a843f0db329353ddf025fba4b47677949b32b",
     "src/robolang/sim/values.py": "e8f88333e38609b48c3e902d9181b603de07322deda63222ae6d6b44cf77ef10",
-    "src/robolang/sim/world.py": "b00feb1385c03f9f986d113f85f5ff3b60e470f64867723faa74a66765c110e6",
+    "src/robolang/sim/world.py": "cfb2b380ae09a62840fe8abc331a75f6e5ee8f2ffbc8ee80e3a1cabd1519797f",
     "src/robolang/tokens.py": "c1a26a6846bf765f95800ce8d4c85958aff9cb9bff8d57376e4a4416b57fb656",
     "src/robolang/validator.py": "214db6a8fb61374c0aa534f2b0d721a41271f53cd75d4bf5e2c4618695d455ee",
     "tests/test_bench.py": "a0143a888b853172cad7eb6ee39da34b14f8a30a3e2a7b7e2246535b1b7c4814",
