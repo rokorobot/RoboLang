@@ -49,6 +49,11 @@ sketches only (LE-8). They are promoted to iterations when their sub-activities 
 - **After each release (L6):** the gap closes in the atlas, the iteration is marked done here, and the next one
   starts at L1.
 
+## Snapshots
+
+Frozen, dated copies with a git tag: [roadmap-snapshots/](roadmap-snapshots/README.md). Latest:
+[2026-11-17](roadmap-snapshots/2026-11-17.md) (tag `roadmap-2026-11-17`).
+
 ## Iteration status
 
 | # | State |
