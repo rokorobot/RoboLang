@@ -2,7 +2,7 @@
 
 The current language is **RoboLang 1.8** (files of 1.1 to 1.7 keep their meaning), with Task IR
 1.0 to 1.7, simulation-only execution and RoboLang Core 0.1 and 0.2 messages in simulation. The
-installed package is `robolang` 0.4.0. Physical robot execution is not implemented or
+installed package is `robolang` 0.5.0. Physical robot execution is not implemented or
 authorized. Start with the [home page](index.md) or the
 [README](https://github.com/rokorobot/RoboLang#readme).
 

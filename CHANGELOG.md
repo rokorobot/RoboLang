@@ -3,7 +3,11 @@
 The distribution version (this file) is independent of the language versions (1.1 to 1.8) and the Task IR schema
 versions (1.0 to 1.7). Decision records are in [`spec/decisions/`](https://github.com/rokorobot/RoboLang/tree/main/spec/decisions).
 
-## Unreleased
+## 0.5.0 (2026-11-17)
+
+RoboLang 1.8 (declared actions), iteration I2 of the [roadmap](docs/LANGUAGE_ROADMAP.md). Accepted on benchmark set 7:
+silently replaced actions fell from 3/30 to 0/30 ([acceptance](docs/evidence/bench-1-8-acceptance.md)). Also fixes
+importing `robolang.sim` on Python 3.11 (erratum E4).
 
 - **RoboLang 1.8: declared actions** (decision 0040, step L4 of iteration I2). `robolang reference` and the benchmark
   prompts teach 1.8; set 7 (`--set actions`) is labelled for 1.8 with `actions_ok` and `action_replaced_silently`
