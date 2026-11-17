@@ -12,7 +12,8 @@ which sub-activities were added or removed, which changed maturity or horizon, a
 The atlas is the only source: add or change sub-activities there, then run this. Priorities:
 
 - sub-activity:  p x nearness(horizon)                      (nearness: now 1, 1-3y 0.7, 3-7y 0.4, 7y+ 0.1)
-- direction:     sum of its sub-activities' priorities, each split evenly over the directions the sub-activity names
+- direction:     sum of its sub-activities' priorities, each split evenly over the directions the sub-activity names;
+                 its language need is the sum of the priorities of its open gaps
 - language gap:  sum of the priorities of the sub-activities that need it; "near" if one of them is pilot or
                  deployment with horizon now or 1-3y (eligible for syntax, strategy rule 1 and D5)
 """
@@ -113,13 +114,18 @@ def render(atlas: dict) -> str:
         "",
         "## Directions by priority",
         "",
-        "| # | Direction | Priority | Sub-activities | Near gaps |",
-        "|---|---|---|---|---|",
+        "*Priority* comes from the sub-activities (what robots will do). *Language need* is the sum of the priorities of",
+        "the direction's open gaps (what RoboLang lacks there); the two differ when sub-activities of one direction need",
+        "gaps of another, e.g. tote handling (action) needs clock readings (reasoning).",
+        "",
+        "| # | Direction | Priority | Language need | Sub-activities | Near gaps |",
+        "|---|---|---|---|---|---|",
     ]
     for i, d in enumerate(order, 1):
         n = sum(1 for a in acts if d in (a.get("directions") or []))
         ng = sorted((g for g in near if gaps[g].get("direction") == d), key=lambda g: -gap[g])
-        out.append(f"| {i} | {d} | {direction[d]:.2f} | {n} | {', '.join(ng) or '—'} |")
+        need = sum(gap[g["id"]] for g in gaps.values() if g.get("direction") == d and g["scope"] == "open")
+        out.append(f"| {i} | {d} | {direction[d]:.2f} | {need:.2f} | {n} | {', '.join(ng) or '—'} |")
     out += ["", "## Development log", ""] + log(atlas)
     for d in order:
         out += ["", f"## {d.capitalize()}", ""]
