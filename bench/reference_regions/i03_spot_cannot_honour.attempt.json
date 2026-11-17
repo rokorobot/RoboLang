@@ -1,0 +1,8 @@
+{
+  "task": "walk",
+  "bindings": {
+    "r": "spot1",
+    "dst": "stop_d",
+    "road": "road_zone"
+  }
+}

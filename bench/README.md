@@ -270,3 +270,16 @@ record an atlas claim that R3 refuted. Four new worlds (`worlds/fulfilment.json`
 
 Run it on demand from GitHub Actions: `Benchmark`, `future: true` (full prompt, 1 repeat, Sonnet and Haiku, `--max-usd 3`,
 not gated). It is not in the per-PR or weekly runs. Locally: `python bench/run.py --set future` (a paid run: confirm it first).
+
+## Set 6: region limits (`--set regions`)
+
+22 tasks in `tasks_regions/`, controls' references and the obvious attempts in `reference_regions/`, decision record
+[0039](../spec/decisions/0039-region-limits.md), plan and labels in [bench-6-regions.md](../docs/plans/bench-6-regions.md)
+(draft for the owner). Pre-registered against 1.6 before any 1.7 code (iteration I1, step L3): `expect` is the 1.6
+label (all 18 non-controls `cannot / inexpressible`, each with an attempt and `attempt_fails_with`), `expect_1_7` the
+label for acceptance (9 `region` programs, 4 `infeasible`, 5 `inexpressible`, 4 `control` programs in both versions).
+The 1.3 world facts a 1.7 label needs are a note in `expect_1_7.world_1_3`; no world file has them yet.
+`tests/test_bench_regions.py` checks the counts, the labels, the attempts and the controls. On demand from GitHub
+Actions: `Benchmark`, `regions: true` (full and minimal prompts, 3 repeats, Sonnet and Haiku, `--max-usd 3` each, not
+gated, not in the per-PR or weekly runs). Locally: `python bench/run.py --set regions --repeats 3` (a paid run: confirm
+it first).

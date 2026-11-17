@@ -1,0 +1,8 @@
+{
+  "task": "to_sink",
+  "bindings": {
+    "r": "runner",
+    "dst": "sink",
+    "busy": "hot_zone"
+  }
+}

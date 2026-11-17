@@ -1,0 +1,13 @@
+// bench/reference_regions/x04_grip_ten_newtons.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 1.6;
+
+task carry(robot r, object c, location src, location dst) {
+    @safety max_force 10 N;
+    goal { object_at c dst; }
+    plan {
+        move r to src;
+        grasp r c;
+        move r to dst;
+        place r c at dst;
+    }
+}

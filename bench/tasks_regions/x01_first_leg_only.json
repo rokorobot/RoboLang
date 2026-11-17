@@ -1,0 +1,20 @@
+{
+  "id": "x01_first_leg_only",
+  "prompt": "Send cleaner1 to the hall and then on to dock_3. On the way to the hall it must stay out of wet_floor; on the way to dock_3 it may cross it.",
+  "world": "bench/worlds/site.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_7": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "tags": [
+    "per_step_limit"
+  ],
+  "gap": "G-PATH",
+  "why": "A limit on one `move` and not on the next is per-step scope, left out of 1.7 until a task needs it (0039 P2, P9). A whole-task `no_go_region` would forbid the second leg too: not what was asked.",
+  "attempt_fails_with": "E202"
+}

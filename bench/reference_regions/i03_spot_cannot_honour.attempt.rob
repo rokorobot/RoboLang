@@ -1,0 +1,8 @@
+// bench/reference_regions/i03_spot_cannot_honour.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 1.6;
+
+task walk(robot r, location dst, region road) {
+    @safety no_go_region road;
+    goal { robot_at r dst; }
+    plan { move r to dst; }
+}

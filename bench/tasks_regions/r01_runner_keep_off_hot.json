@@ -1,0 +1,49 @@
+{
+  "id": "r01_runner_keep_off_hot",
+  "prompt": "Send the runner to the sink, and keep it out of the hot zone the whole way.",
+  "world": "bench/worlds/kitchen.json",
+  "group": "region",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_7": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "the world as given",
+        "goal": [
+          [
+            "rl:robot:runner",
+            "located_in",
+            "rl:place:sink"
+          ]
+        ],
+        "world_patch": {}
+      }
+    ],
+    "world_1_3": {
+      "robots": {
+        "runner": {
+          "honours": [
+            "no_go_region",
+            "in_region"
+          ]
+        }
+      }
+    }
+  },
+  "expected_limits": [
+    [
+      "no_go_region",
+      "hot_zone"
+    ]
+  ],
+  "tags": [
+    "no_go_region",
+    "stay_out"
+  ],
+  "gap": "G-PATH",
+  "why": "RoboLang 1.6 has no way to say where a robot may not be while it moves: `no_go_region` is reserved and not implemented (language reference: reserved words). 1.7 states it as a task annotation (0039 P1).",
+  "attempt_fails_with": "E211"
+}

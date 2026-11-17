@@ -64,6 +64,6 @@ Frozen, dated copies with a git tag: [roadmap-snapshots/](roadmap-snapshots/READ
 
 | # | State |
 |---|---|
-| I1 G-PATH | **L1 done** (owner, 2026-11-17). **L2:** decision record [0039](../spec/decisions/0039-region-limits.md): P1 and P2 decided, P3–P10 await the owner. **L3:** pre-registration drafted in parallel; its labels follow P3–P10 |
+| I1 G-PATH | **L1 done** (owner, 2026-11-17). **L2:** decision record [0039](../spec/decisions/0039-region-limits.md): P1 and P2 decided, P3–P10 await the owner. **L3 done:** set 6 "regions" (22 tasks) pre-registered against 1.6 ([plan](plans/bench-6-regions.md), draft for the owner); its labels follow the recommended P3–P10, so they stand only if the owner confirms them; the baseline run and the bounds (rule 6) are next |
 | I2–I10 | Not started; R3 done: tests and model run (0/25 false programs) |
 | Mission layer decision record | Not started |

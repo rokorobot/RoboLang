@@ -1,0 +1,32 @@
+{
+  "id": "i03_spot_cannot_honour",
+  "prompt": "Walk spot1 from stop_a to stop_d, and keep it out of road_zone the whole way.",
+  "world": "bench/worlds/site.json",
+  "group": "infeasible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_7": {
+    "decision": "cannot",
+    "category": "infeasible",
+    "because": "0039 P6",
+    "world_1_3": {
+      "robots": {
+        "spot1": {
+          "honours": []
+        }
+      }
+    }
+  },
+  "tags": [
+    "no_go_region",
+    "robot_ability"
+  ],
+  "gap": "G-PATH",
+  "why": "In the 1.3 world spot1 declares no `honours`, so a task bound to it with a region limit fails the run before AUTHORIZED (0039 P6, fail closed). 1.6 cannot state the limit at all.",
+  "blockers": [
+    "spot1 has no honours"
+  ],
+  "attempt_fails_with": "E211"
+}
