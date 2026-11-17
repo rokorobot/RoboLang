@@ -1,7 +1,8 @@
 # Decision record 0039: Region limits on motion (I1, G-PATH, RoboLang 1.7)
 
 **Date:** 2026-11-17
-**Status:** PROPOSED; **P1 decided by the owner, 2026-11-17: the reserved words.** Step L2 of iteration I1 in the [language roadmap](../../docs/LANGUAGE_ROADMAP.md). The owner
+**Status:** **APPROVED by the owner, 2026-11-17**: P1 the reserved words, P2 the whole task, and the
+recommended option for P3–P10. Step L2 of iteration I1 in the [language roadmap](../../docs/LANGUAGE_ROADMAP.md). The owner
 chose the gap (L1) on 2026-11-17. Nothing is built until the owner approves the recommended options or picks others.
 **Applies to (when decided):** a new `spec/robolang-v1.7.md` and `grammar-v1.7.ebnf`, Task IR 1.6, world file 1.3,
 `simulation-v1.0.md` section 4.3, `src/robolang/`, `docs/language-reference.md`, the ROS 2 backend's refusal list,
@@ -68,4 +69,4 @@ task to_lobby(robot r, location lobby, region wet) {
 ## Open questions for the owner
 
 1. ~~P1: reuse the reserved words or add new ones?~~ **Decided 2026-11-17: the reserved words `no_go_region`, `in_region`.**
-2. P2: is a whole-task limit enough for 1.7?
+2. ~~P2: is a whole-task limit enough for 1.7?~~ **Decided 2026-11-17: yes; per-step limits wait for evidence.**
