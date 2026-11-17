@@ -1,9 +1,13 @@
 {
   "id": "i05_window_already_closed",
   "prompt": "With arm2, move part7 from the table to shelf_b, but only between 06:00 and 08:00 today.",
-  "world": "bench/worlds/warehouse.json",
+  "world": "bench/worlds/warehouse_1_5_0915.json",
   "group": "infeasible",
   "expect": {
+    "decision": "cannot",
+    "category": "infeasible"
+  },
+  "expect_1_8": {
     "decision": "cannot",
     "category": "inexpressible"
   },

@@ -1,0 +1,72 @@
+{
+  "world_schema": "robolang.sim.world",
+  "world_schema_version": "1.5",
+  "clock": {
+    "start": "2026-11-17T16:30:00",
+    "zone": "Europe/Prague"
+  },
+  "locations": [
+    "elevator",
+    "lab",
+    "nurse_station",
+    "pharmacy",
+    "room_412",
+    "supply_closet",
+    "ward_3"
+  ],
+  "regions": {
+    "corridor": {
+      "clear": true
+    }
+  },
+  "robots": {
+    "moxi1": {
+      "ready": true,
+      "location": "nurse_station",
+      "gripper": true,
+      "max_speed": [
+        {
+          "value": "0.8",
+          "unit": "m/s"
+        }
+      ],
+      "actions": {
+        "open": {
+          "target": "object",
+          "result": "open"
+        }
+      }
+    }
+  },
+  "objects": {
+    "medication_1": {
+      "present": true,
+      "location": "pharmacy",
+      "class": "medication"
+    },
+    "iv_kit_1": {
+      "present": true,
+      "location": "supply_closet",
+      "class": "kit"
+    },
+    "samples_1": {
+      "present": true,
+      "location": "ward_3",
+      "class": "samples"
+    },
+    "closet_door": {
+      "present": true,
+      "location": "supply_closet",
+      "class": "door",
+      "state": "closed"
+    }
+  },
+  "sensors": {
+    "cam_moxi1": {
+      "robot": "moxi1",
+      "available": true
+    }
+  },
+  "events": [],
+  "tasks": {}
+}

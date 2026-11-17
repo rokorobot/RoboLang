@@ -1,0 +1,11 @@
+// bench/reference_future/f_clock_clean_at_2300.rob: hand-written reference
+robolang 1.9;
+
+task night_clean(robot r, location lobby, location home) {
+    goal { robot_at r home; }
+    plan {
+        wait until clock_time >= 23:00 timeout 120 min else { fail "11 pm did not come in time"; }
+        move r to lobby;
+        move r to home;
+    }
+}

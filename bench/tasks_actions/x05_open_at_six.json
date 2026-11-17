@@ -1,11 +1,10 @@
 {
   "id": "x05_open_at_six",
   "prompt": "At 06:00, have helper_arm open oven_door_1.",
-  "world": "bench/worlds/kitchen_values_1_4.json",
-  "group": "inexpressible",
+  "world": "bench/worlds/kitchen_values_1_5_0530.json",
+  "group": "clock",
   "expect": {
-    "decision": "cannot",
-    "category": "inexpressible"
+    "decision": "program"
   },
   "expect_1_7": {
     "decision": "cannot",
@@ -31,10 +30,47 @@
       }
     }
   },
+  "expect_1_9": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "the task starts at 05:30: it waits for 06:00, then opens the door",
+        "goal": [
+          [
+            "rl:thing:oven_door_1",
+            "in_state",
+            "open"
+          ]
+        ],
+        "world_patch": {}
+      }
+    ],
+    "world_1_5": {
+      "clock": {
+        "start": "2026-11-17T05:30:00",
+        "zone": "Europe/Prague"
+      }
+    }
+  },
   "tags": [
     "clock_time"
   ],
   "gap": "G-CLOCK",
-  "why": "There is no clock in the language, so \"at 06:00\" cannot be said (G-CLOCK). The attempt drops the time and acts at once.",
+  "expected_clock": [
+    {
+      "use": "wait",
+      "reading": "time",
+      "op": ">=",
+      "value": "06:00"
+    }
+  ],
+  "expected_actions": [
+    {
+      "robot": "helper_arm",
+      "action": "open",
+      "target": "oven_door_1"
+    }
+  ],
+  "why": "A bounded wait for 06:00 (0042 T5), then the declared `open` (0040): a time and an action together. The request gives no limit, so the timeout is the program's choice. The world copy starts at 05:30.",
   "attempt_fails_with": "E203"
 }

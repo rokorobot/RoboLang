@@ -124,7 +124,7 @@ The owner approved the replacement plan, freeze, paid validation and merge. See 
 Run `python tools/bench_freeze.py --check` to verify the recorded inputs against freeze v2
 (`docs/evidence/bench-freeze-v2.json`, decision 0035 E9; v1 is kept as history). Changes after the freeze require errata
 ([errata for 1.5](../docs/evidence/bench-errata-1-5.md), [errata for 1.6](../docs/evidence/bench-errata-1-6.md),
-[errata for 1.7](../docs/evidence/bench-errata-1-7.md), [errata for 1.8](../docs/evidence/bench-errata-1-8.md)).
+[errata for 1.7](../docs/evidence/bench-errata-1-7.md), [errata for 1.8](../docs/evidence/bench-errata-1-8.md), [errata for 1.9](../docs/evidence/bench-errata-1-9.md)).
 A `decoy` looks impossible or unclear but is feasible. A `clarify` task
 expects `"decision": "clarify"`: the request could mean several entities (`candidates`) or omits a value, and the world
 does not decide. A request that leaves the choice to the model ("a shelf", "one of the vials", set 2's `ambiguous`
@@ -205,8 +205,8 @@ read from these numbers.
 
 Set 2 has the same for its three branching tasks (`x_route_by_cell`, `x_whichever_free`, `x_missing_box_branch`),
 group `branching`. The grammar-only prompt pastes `spec/grammar-v1.3.ebnf`, `spec/grammar-v1.4.ebnf`,
-`spec/grammar-v1.5.ebnf`, `spec/grammar-v1.6.ebnf`, `spec/grammar-v1.7.ebnf` and `spec/grammar-v1.8.ebnf`, each a delta
-over the one before. Since 0040 L4 the prompts teach RoboLang 1.8 (0039 L4 taught 1.7, 0036 PR 2 taught 1.6, 0035 PR 2 taught 1.5). In set 3,
+`spec/grammar-v1.5.ebnf`, `spec/grammar-v1.6.ebnf`, `spec/grammar-v1.7.ebnf`, `spec/grammar-v1.8.ebnf` and `spec/grammar-v1.9.ebnf`, each a delta
+over the one before. Since 0042 L4 the prompts teach RoboLang 1.9 (0040 L4 taught 1.8, 0039 L4 taught 1.7, 0036 PR 2 taught 1.6, 0035 PR 2 taught 1.5). In set 3,
 `x_failover_on_fault` is now a program judged per path (group `recover`; `expect_1_4` keeps the old label).
 
 Run it on demand from GitHub Actions: `Benchmark`, `set3: true`. That runs full and grammar-only prompts with 3
@@ -264,8 +264,8 @@ Locally: `python bench/run.py --set values --repeats 3` (a paid run: confirm it 
 [rsi-r3-gap-verification.md](../docs/evidence/rsi-r3-gap-verification.md) (RSI-01 step R3, rule LE-7). 25 `inexpressible`
 **probes**, each needing exactly one open gap that a near activity of `atlas.json` claims (`activity`, `gap`), with an
 obvious attempt (`<id>.attempt.rob`) that RoboLang 1.6 rejects and `attempt_fails_with`, the first code `check_answer`
-reports (since 0040 L4: 19 probes; the three `G-PATH` probes are `region` programs with a 1.7 reference and the three `G-ACT`
-probes `action` programs with a 1.8 reference); 8 `control` requests from near activities that 1.6 can express (`<id>.rob`, `<id>.json`), three of which
+reports (since 0042 L4: 16 probes; the three `G-PATH` probes are `region` programs with a 1.7 reference, the three `G-ACT`
+probes `action` programs with a 1.8 reference and the three `G-CLOCK` probes `clock` programs with a 1.9 reference); 8 `control` requests from near activities that 1.6 can express (`<id>.rob`, `<id>.json`), three of which
 record an atlas claim that R3 refuted. Four new worlds (`worlds/fulfilment.json`, `site.json`, `ward.json`,
 `fry_station.json`) and `worlds/warehouse.json`. A probe belongs to exactly one gap in `atlas.json`;
 `tests/test_bench_future.py` checks the counts per group and per gap.
@@ -331,17 +331,32 @@ Haiku, `--max-usd 3` each, not gated, not in the per-PR or weekly runs). Locally
 ## Set 8: clock readings (`--set clock`)
 
 24 tasks in `tasks_clock/`, controls' references and the obvious attempts in `reference_clock/`, decision record
-[0042](../spec/decisions/0042-clock-readings.md), plan, proposed bounds and open points in
-[bench-8-clock.md](../docs/plans/bench-8-clock.md) (draft for the owner). Pre-registered against 1.8 before any 1.9 code
-(iteration I3, step L3): `expect` is the 1.8 label (all 20 non-controls `cannot / inexpressible`, each with an attempt
-that fails with `E101`, a time literal, or `E217`, the kind `time` or `elapsed`), `expect_1_9` the label for acceptance
-(10 `clock` programs, 5 `infeasible`, 5 `inexpressible`, 4 `control` programs) and `expected_clock` the clock readings a
-1.9 program must make (`[]` on a control). The world 1.5 facts a 1.9 label needs (`clock`: a start and a zone, or none)
-are a note in `expect_1_9.world_1_5`; no world file has them yet, and one new world exists (`fry_station_at_fryer.json`,
-a copy with the robot already at the fryer). The attempts mark the clock part with `// @clock`: without those lines every
-attempt is a valid 1.8 program that ends SUCCEEDED, which is the silent replacement of the time that the plan's B8
-counts. `tests/test_bench_clock.py` checks the counts, the labels, the attempts and the controls. On demand from GitHub
-Actions: `Benchmark`, `clock: true` (full and minimal prompts, 3 repeats, Sonnet and Haiku, `--max-usd 3` each, not
+[0042](../spec/decisions/0042-clock-readings.md), plan and approved bounds in
+[bench-8-clock.md](../docs/plans/bench-8-clock.md), baseline under 1.8 in
+[bench-set8-baseline.md](../docs/evidence/bench-set8-baseline.md). Pre-registered against 1.8 (iteration I3, step L3) and
+labelled for 1.9 in L4 ([errata](../docs/evidence/bench-errata-1-9.md)): `expect` is the 1.9 label, `expect_1_8` keeps the
+1.8 one (`cannot / inexpressible` for every non-control, each with an attempt that fails with `E101`, a time literal, or
+`E217`, the kind `time` or `elapsed`), and `expect_1_9` holds the paths of a program and the world 1.5 facts it rests on
+(10 `clock` programs, 5 `infeasible`, 5 `inexpressible`, 4 `control` programs). `expected_clock` is the clock use a 1.9
+program must make (`[]` on a control). The tasks use world file 1.5 copies (`worlds/*_1_5*.json`: the base world with the
+version moved to 1.5 and a `clock`, or none; a path may set another start with `world_patch.clock`); the prompt shows,
+for a 1.5 world, `clock: the task starts at 2026-11-17 21:30:00 (Europe/Prague)` or `clock: none (this world has no
+clock)` (0042 K9). Seven older probes were relabelled the same way: `f_clock_scan_stamp`, `f_clock_shift_cutoff`,
+`f_clock_clean_at_2300` (set future), `x_elapsed_time` (set hard), `x_report_duration` (set branch), `u17_at_1400` (set
+ask) and `x05_open_at_six` (set actions), group `clock`. The 1.8 attempts mark the clock part with `// @clock`: without
+those lines every attempt is a valid 1.8 program that ends SUCCEEDED, which is the silent replacement of the time that
+B8 counts.
+
+Two measures on top of the usual ones (0042 B1, B5, B8), in `report.md` and `scores.json`, per model: `clock_ok` (a task
+with `expected_clock: [{reading, use, ...}, ...]`, an empty list on a control: the valid program reads the clock exactly
+as asked, the right reading sent to the right channel, a comparison with the operators and times asked (an `if` with its
+branches swapped is the same test: the paths decide), a wait for the time asked with the timeout asked (compared as
+durations, so 60 min is 1 h), none more, none fewer, and none on a control; it is one of the task's checks, so
+`request_satisfied` needs it) and `time_replaced_silently` (a valid program whose run ends SUCCEEDED but that lacks a time
+condition or a wait for a time the request asked for, as when a guessed `wait for`, a fixed message or nothing stands in
+its place; counted over every answer to those tasks, like `action_replaced_silently`). `tests/test_bench_clock.py`
+checks the counts, the labels, the worlds, the references (valid, SUCCEEDED on every path, exactly their clock use), the
+1.8 attempts, the scorer and the controls. On demand from GitHub Actions: `Benchmark`, `clock: true` (full and minimal prompts, 3 repeats, Sonnet and Haiku, `--max-usd 3` each, not
 gated, not in the per-PR or weekly runs; the workflow is at GitHub's limit of 10 dispatch inputs). Locally: `python
 bench/run.py --set clock --repeats 3 --models claude-sonnet-5-5,claude-haiku-5-5` (a paid run: confirm it first;
-estimate ~$3.6 per prompt).
+estimate ~$3.7 for the full prompt and ~$3.5 for the grammar-only one).

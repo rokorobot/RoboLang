@@ -1,0 +1,8 @@
+{
+  "task": "go_dry",
+  "bindings": {
+    "r": "printer1",
+    "dst": "gridline_c",
+    "wet": "wet_floor"
+  }
+}

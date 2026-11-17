@@ -27,7 +27,8 @@ from bench import lib, run, score
 SET3 = lib.load_set("ask")
 REFS = lib.ASK_REFERENCE_DIR
 BY_GROUP = {g: sorted(t for t, d in SET3.items() if d["group"] == g)
-            for g in ("feasible", "decoy", "value", "region", "action", "infeasible", "inexpressible", "clarify")}
+            for g in ("feasible", "decoy", "value", "region", "action", "clock", "infeasible", "inexpressible",
+                      "clarify")}
 
 
 def answer(stem: str, decision="program") -> dict:
@@ -49,18 +50,19 @@ def run_in(task: dict, ans: dict, patch: dict | None = None):
 
 def test_the_mix_of_tasks():
     assert Counter(d["group"] for d in SET3.values()) == {"feasible": 12, "decoy": 11, "value": 4, "region": 2,
-                                                          "action": 2, "infeasible": 20, "inexpressible": 11,
-                                                          "clarify": 18}
+                                                          "action": 2, "clock": 1, "infeasible": 20,
+                                                          "inexpressible": 10, "clarify": 18}
     for task in SET3.values():
         assert task["world"] in {"bench/worlds/pharmacy.json", "bench/worlds/yard.json", "bench/worlds/kitchen.json",
                                  "bench/worlds/kitchen_values.json",  # u06: knife_1 put down, so the arm can grasp
                                  "bench/worlds/pharmacy_1_3.json", "bench/worlds/yard_1_3.json",  # u09, u10 (0039)
-                                 "bench/worlds/kitchen_1_4.json", "bench/worlds/yard_1_4.json"}  # u15, u16 (0040)
+                                 "bench/worlds/kitchen_1_4.json", "bench/worlds/yard_1_4.json",  # u15, u16 (0040)
+                                 "bench/worlds/pharmacy_1_5_1330.json"}  # u17 (0042)
         assert task["prompt"].endswith(".") and task["tags"]
         decision, category = lib.expectation(task)
         assert (decision, category) == {"feasible": ("program", "none"), "decoy": ("program", "none"),
                                         "value": ("program", "none"), "region": ("program", "none"),
-                                        "action": ("program", "none"),
+                                        "action": ("program", "none"), "clock": ("program", "none"),
                                         "infeasible": ("cannot", "infeasible"),
                                         "inexpressible": ("cannot", "inexpressible"),
                                         "clarify": ("clarify", "none")}[task["group"]]
@@ -73,7 +75,7 @@ def test_the_worlds_are_large(name):
 
 
 @pytest.mark.parametrize("task_id", BY_GROUP["feasible"] + BY_GROUP["decoy"] + BY_GROUP["value"] + BY_GROUP["region"]
-                         + BY_GROUP["action"])
+                         + BY_GROUP["action"] + BY_GROUP["clock"])
 def test_feasible_reference_is_valid_reaches_its_goal_and_passes_its_checks(task_id):
     task = SET3[task_id]
     checked = lib.check_answer(task, answer(task_id))

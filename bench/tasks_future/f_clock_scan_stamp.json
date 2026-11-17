@@ -1,11 +1,36 @@
 {
   "id": "f_clock_scan_stamp",
   "prompt": "With arm1, inspect box1 on shelf_a with camera_top, then tell channel \"lead\" the time of day when the scan finished.",
-  "world": "bench/worlds/warehouse.json",
-  "group": "inexpressible",
+  "world": "bench/worlds/warehouse_1_5_1420.json",
+  "group": "clock",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_8": {
     "decision": "cannot",
     "category": "inexpressible"
+  },
+  "expect_1_9": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "the scan is done and the time is sent",
+        "goal": [
+          [
+            "rl:robot:arm1",
+            "located_in",
+            "rl:place:shelf_a"
+          ]
+        ],
+        "world_patch": {}
+      }
+    ],
+    "world_1_5": {
+      "clock": {
+        "start": "2026-11-17T14:20:00",
+        "zone": "Europe/Prague"
+      }
+    }
   },
   "activity": "ACT-RET-001",
   "gap": "G-CLOCK",
@@ -14,6 +39,14 @@
     "communicate",
     "inspect"
   ],
-  "why": "There is no clock reading: a message is a fixed string or one measured value, and a time of day is neither (language reference: 'Not in the language: ... clock readings').",
-  "attempt_fails_with": "E317"
+  "expected_clock": [
+    {
+      "robot": "arm1",
+      "reading": "time",
+      "use": "message",
+      "channel": "lead",
+      "after": "inspect"
+    }
+  ],
+  "why": "1.9 reads the time of day with `measure r time as t;` right after the scan and sends the binding (0042 T1, T8): a time stamp is never a fixed text. The world copy has a clock."
 }

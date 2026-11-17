@@ -1,5 +1,5 @@
 // bench/reference_clock/c02_wait_30_seconds.rob: hand-written reference
-robolang 1.8;
+robolang 1.9;
 
 task pause_then_move(robot r, object box, location src, location dst) {
     goal { object_at box dst; }

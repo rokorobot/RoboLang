@@ -1,23 +1,24 @@
-# RoboLang 1.8 language reference
+# RoboLang 1.9 language reference
 
 RoboLang is a small, checked language for robot tasks. A program describes a desired final state and
 a plan for reaching it in a symbolic world. A program is correct only when it validates, names the
 right entities, states the operator's requested outcome in `goal`, and reaches that goal.
 
-RoboLang 1.8 has bounded branching (`if`/`else`, see "Branching"), step failure handlers (a step
+RoboLang 1.9 has bounded branching (`if`/`else`, see "Branching"), step failure handlers (a step
 `else { ... }` that runs when that step fails, see "Failure handlers"), measured values (`measure`
 reads a temperature, a mass, a distance or a label from a sensor, see "Measured values"), region
 limits (`@safety no_go_region R;`, `@safety in_region R;`: where the robots may be while they move, see
-"Region limits") and declared actions (`do r open door;` asks a robot for an action its profile declares, and
-`in_state door "open"` checks the result, see "Declared actions"). It has no loops
-("until it works"), counts, clocks, schedules, arithmetic, string formatting, message waits, limits on one
+"Region limits"), declared actions (`do r open door;` asks a robot for an action its profile declares, and
+`in_state door "open"` checks the result, see "Declared actions") and clock readings (`measure r time as t;` reads the
+time of day, `22:00` is a time, `wait until clock_time >= 23:00 ...` waits for one, see "Clock readings"). It has no loops
+("until it works"), counts, dates, schedules, arithmetic, string formatting, message waits, limits on one
 step only, limits on an arm or a person, or
 variables beyond typed task parameters and the names that `measure` binds. Do not silently drop part of a request. If a request needs an unsupported construct, or the available
 world and robots cannot perform it, say that it cannot be represented or completed.
 
 ## File and task structure
 
-A file starts with `robolang 1.8;` and holds one or more tasks. `//` starts a comment. The language
+A file starts with `robolang 1.9;` and holds one or more tasks. `//` starts a comment. The language
 is case-sensitive. Whitespace only separates tokens.
 
 ```text
@@ -41,12 +42,13 @@ and `_`, starting with a letter. These words are reserved and cannot be names:
 robolang task pre plan goal robot object location region sensor move grasp place inspect wait communicate
 to at using with for until timeout robot_ready region_clear object_exists sensor_ok object_at robot_at holding
 and or not in_region with_approach no_go_region require_guard message_received scalar duration
-if else fail measure as do in_state
+if else fail measure as do in_state clock_time clock_elapsed
 ```
 
 Numbers are unsigned decimals (`2`, `0.5`); there is no sign or exponent. A duration is a number
 followed by `ms`, `s`, or `min`, and must be above zero. Write prose quantities numerically: half a
-second is `500 ms`; a quarter minute is `15 s`.
+second is `500 ms`; a quarter minute is `15 s`. **There is no unit for hours:** 90 minutes is `90 min` and 2 hours are
+`120 min`. A time of day is not a duration: it is written `22:00` ("Clock readings").
 
 ## Plan statements
 
@@ -56,16 +58,18 @@ grasp r obj;
 place r obj at dst;
 inspect r obj using camera;
 measure r temperature of obj using probe as t;
+measure r time as now;
 do r open door;
 do r set fryer to 175 degC;
 wait for 2 s;
 wait until region_clear cell timeout 30 s else { fail "cell not clear"; }
+wait until clock_time >= 23:00 timeout 90 min else { fail "23:00 did not come in time"; }
 communicate r to "channel" with "message";
 communicate r to "channel" with t;
 ```
 
 Here `r` is a robot, `obj` an object, `dst` a location, `camera` and `probe` sensor parameters, `t` a name bound by
-`measure` ("Measured values"), and `door` an object or `fryer` a location that a `do` acts on ("Declared actions"). A sensor is
+`measure` ("Measured values"; `now` is a time of day, "Clock readings"), and `door` an object or `fryer` a location that a `do` acts on ("Declared actions"). A sensor is
 never a quoted string. `wait until` always needs a timeout and a failure handler (`E316`). Strings cannot contain a literal
 line break; the only escapes are `\"`, `\\`, `\n`, and `\t`.
 
@@ -216,8 +220,88 @@ program uses the value afterwards.
   uncertainty. "Tell the channel the value you measured" is this, never a literal text. There is no formatting: a
   message cannot be built from a value ("Pan 1 is at <reading> degC"), and the request is then not representable.
 - **Not in the language:** arithmetic (an average, a difference, a sum of readings), formatting a value into text,
-  counting, clock readings, and choosing an object at run time ("any pan
-  above 80 degC": there is no way to search; name the objects). Say that these cannot be represented.
+  counting, and choosing an object at run time ("any pan
+  above 80 degC": there is no way to search; name the objects). Say that these cannot be represented. The clock has
+  its own section ("Clock readings").
+
+## Clock readings
+
+```text
+measure r time as now;                     // the time of day when this step runs, in the world's zone
+measure r elapsed as took;                 // the time since the task started
+if now < 22:00 { ... } else { ... }        // a time is HH:MM or HH:MM:SS, 24-hour
+if took >= 2 min { ... }                   // an elapsed time compares with a duration
+wait until clock_time >= 23:00 timeout 90 min else { fail "23:00 did not come in time"; }
+communicate r to "lead" with now;          // a time is sent as HH:MM:SS; an elapsed time as seconds, `37 s`
+```
+
+```rob
+robolang 1.9;
+
+task tote_if_open(robot r, object tote, location inb, location outb) {
+    plan {
+        measure r time as now;
+        if now < 22:00 {
+            goal { object_at tote outb; }
+            move r to inb; grasp r tote; move r to outb; place r tote at outb;
+        } else {
+            communicate r to "lead" with "the shift is over";
+            fail "the shift has ended";
+        }
+    }
+}
+```
+
+The world list says when the task starts and in which zone: `clock: the task starts at 2026-11-17 21:30:00
+(Europe/Prague)`, or `clock: none (this world has no clock)`. The clock runs with the task: a `wait for 90 s` moves it
+90 seconds on.
+
+- **Reading the time.** `measure r time as now;` binds the time of day, `measure r elapsed as took;` the time since the
+  task started. There is no `of` and no `using`: the clock is not an object and has no sensor. `r` is a robot of the
+  task: use the robot that does the work or sends the message. It takes a handler like any step. "Tell the lead the time
+  the scan finished" is `measure` right after the step it names, then `communicate ... with now;`. It is **never** a
+  literal text: "the time" written as a string, a guessed `wait for`, or nothing at all does less than was asked.
+- **A time literal** is `HH:MM` or `HH:MM:SS`, 24 hours, two digits each: `06:00`, `21:30`, `23:00:15`. **`24:00`, `9:30` and
+  `5pm` are not times** (`E105`). Convert a 12-hour time yourself: 11 pm is `23:00`, 6 am is `06:00`, noon is `12:00`.
+- **Comparing.** A time compares with a time (a literal or another time name) and an elapsed value with a duration
+  (`90 s`, `2 min`, `500 ms`) or another elapsed name, with `<`, `<=`, `>`, `>=` only: `==` is `E320`, and the kinds
+  never mix (`E319`: a time against `90 s`, a time against an elapsed value). "Only if it is before 21:30" is
+  `now < 21:30`; "from 08:00 to 18:00" is `now >= 08:00 and now < 18:00`; "at 14:00 or later" is `>=`. A comparison
+  stands in `if` and `wait until` only (`E321` in `pre` and `goal`), as for any measured value.
+- **Waiting for a time.** `wait until clock_time >= 23:00 timeout 90 min else { ... }` reads the clock each time it looks;
+  `clock_elapsed` does the same for elapsed time. They are words, not names: use them in `wait until` only (`E322`
+  elsewhere: `measure` the time and compare the name). The timeout and the handler are required as for every wait
+  (`E209`, `E316`). "At 11 pm send the cleaner" is a wait until 23:00 with a timeout (the time the request allows, in
+  minutes: 2 hours are `120 min`), then the steps. A wait for a time ends at that exact time.
+- **A wait that can time out.** "At 05:30, send tug1; wait up to 90 minutes for 05:30 and stop if it has not come" is one
+  wait with the timeout the request gives and `fail` in the handler. Two robots waiting for one time are one wait,
+  then both robots act.
+- **A reading is exact** and is never unknown: the clock has no uncertainty.
+- **One day only.** A time literal is that time **on the day the task starts**. "Tomorrow at 01:00", "at midnight
+  tonight" (midnight is the next day), "on Monday" and every date cannot be said. If the clock would reach the end of
+  the day, a time reading fails (`S238`).
+- **A time that has already passed.** A wait for a time that is before the start of the task (`wait until clock_time >=
+  09:00` when the task starts at 10:30) fails before anything moves (`S010`): "at 09:00" never silently means "now".
+  If the request says "if it is already after 9, go now", write `measure` and `if`. A request that wants an action
+  *before* a time that has already passed (the clock starts at 09:15 and the request says "before 08:00 today") or
+  *between* times that have passed cannot be done in this world: decline it as `infeasible`, and do not write a program
+  for it. The same for a wait whose timeout is shorter than the time left to wait (23:00 is 90 minutes after 21:30,
+  and the request allows 10 minutes): decline it as `infeasible`.
+- **No clock.** A `time` reading, or `clock_time` in a wait, fails when the world says `clock: none` (`S237`): decline
+  the request as `infeasible` when it needs the time of day. `elapsed` needs no clock: "how long the job took" is a program
+  even in a world with no clock.
+- **How long.** An `elapsed` value is the time since the **task** started, never since another moment, so "how long the
+  whole job took" is `measure r elapsed as took;` after the last step, and "how long the job has taken so far" is the same
+  right where it is asked. Sent in a message, it is `37 s`. It is **not** the time between two moments: "how much time
+  passed between the two scans", "how long the oil took to heat" after other steps, are a difference.
+- **Not in the language** (decline as `inexpressible`): another day, a date or a weekday ("tomorrow at 01:00", "on
+  Monday at 09:00", "tonight at midnight"); repeating at a time ("every morning at 6", "every night at 23:30", "every
+  hour": a task runs once); arithmetic on times and durations ("two hours after the scan finished", the time between
+  two readings, "in 2 hours" from a moment that is not the start); another format for a time or a duration ("just
+  HH:MM", "9:30 pm", minutes, a bare number of seconds in a message); a time zone in the request ("23:00 UTC"). Say
+  that these cannot be represented. **"As soon as possible" asks for no clock:** it is a plain move.
+- **Never in a delegated goal.** The clock cannot be in a goal; `delegate` does not delegate a plan that reads it, and
+  the ROS 2 backend refuses `measure r time` and `measure r elapsed`.
 
 ## Declared actions
 
@@ -229,7 +313,7 @@ goal { in_state door "open"; }      // the result is checked, never assumed
 ```
 
 ```rob
-robolang 1.8;
+robolang 1.9;
 
 task restock(robot r, object closet, object kit, location ward, location store) {
     goal { in_state closet "open"; object_at kit ward; }
@@ -302,6 +386,7 @@ An action is a **name**, not a keyword: write it exactly as the world lists it (
 | `holding r o` | robot `r` holds object `o` |
 | `in_state x "open"` | the state of object or location `x` is that label (see "Declared actions"; unknown when the world gives `x` no state) |
 | `t < 60 degC`, `lot == "A"` | a measured value compares as stated (only in `if` and `wait until`; see "Measured values") |
+| `now < 22:00`, `clock_time >= 23:00` | a time of day compares as stated (only in `if` and `wait until`; see "Clock readings") |
 
 Combine conditions with `not`, `and`, `or`, and parentheses:
 
@@ -344,7 +429,7 @@ Both words go after `@safety`, name a `region` parameter, and are written before
 order with `max_speed`. Bind the parameter to the region of the world that the request names, by its exact ID.
 
 ```rob
-robolang 1.8;
+robolang 1.9;
 
 task to_lobby(robot r, location lobby, region wet) {
     @safety no_go_region wet;
@@ -403,6 +488,8 @@ task to_lobby(robot r, location lobby, region wet) {
 - `do r ACTION TARGET` requires `r` to be ready, to list the action in the world, and to be at the target (a location, or the
   location of the object). It sets the state of the target to the result the action lists, records `requested` and
   changes nothing else. It takes no time.
+- `measure r time` and `measure r elapsed` read the world's clock, take no time and need no sensor; `wait until
+  clock_time >= T` ends at the exact time `T`.
 - `communicate` records a message and changes no other state.
 - A task can bind more than one robot. Their steps still run sequentially in written order.
 
@@ -413,13 +500,14 @@ are:
 
 | Code | Meaning |
 |---|---|
+| `E105` | a time of day that is not `HH:MM` or `HH:MM:SS` in 24-hour form (`24:00`, `9:30`, `21:60`) |
 | `E201` | a handler after `wait for`, `communicate` or `fail` |
 | `E202` | missing `;` |
 | `E206` | missing or unknown unit, or a number in a comparison with no unit |
 | `E208` | task blocks in the wrong order, an empty branch or handler, a `goal` block that is not first in a branch, or a `goal` block in a handler |
 | `E212` | reserved word used as a name |
 | `E214` | `and` and `or` mixed without parentheses |
-| `E217` | a kind that is not `temperature`, `mass`, `distance` or `label` |
+| `E217` | a kind that is not `temperature`, `mass`, `distance`, `label`, `time` or `elapsed` |
 | `E216` | `if` statements and handlers nested more than 4 deep |
 | `E303` | name is not a task parameter |
 | `E304` | parameter used with the wrong type |
@@ -431,10 +519,13 @@ are:
 | `E316` | `wait until` without a failure handler |
 | `E317` | a name used as a value that is not a visible binding (before its `measure`, outside its branch or handler, a parameter) |
 | `E318` | a binding named like a parameter or another binding (except a retry in the handler of its own `measure`) |
-| `E319` | kinds that do not match: a unit of another kind, a string against a quantity, a retry of another kind |
-| `E320` | `==` or `!=` on a quantity, or ordering on a label |
+| `E319` | kinds that do not match: a unit of another kind, a string against a quantity, a time against a duration or an elapsed value, a retry of another kind |
+| `E320` | `==` or `!=` on a quantity, a time or an elapsed value, or ordering on a label |
 | `E321` | a comparison in `pre` or `goal` |
-| `E322` | a live reading anywhere but the condition of a `wait until` |
+| `E322` | a live reading or `clock_time` / `clock_elapsed` anywhere but the condition of a `wait until` |
+| `S010` | `wait until clock_time >= T` where T has already passed when the task starts |
+| `S237` | a `time` reading and the world has no clock |
+| `S238` | a `time` reading after the clock has reached the end of the day the task started on |
 | `S006` | a `do` names an action the robot does not list in the world |
 | `S007` | the target of a `do` is an object where the action acts on a location, or the reverse |
 | `S008` | a `do` gives a value the action does not take, no value where it takes one, or a value of the wrong kind |
@@ -456,7 +547,7 @@ records completion. Its parameters still
 need bindings to concrete world entities before simulation.
 
 ```rob
-robolang 1.8;
+robolang 1.9;
 
 task deliver(robot r, object box, location src, location dst, region cell, sensor camera) {
     @safety max_speed 0.5 m/s;
@@ -480,7 +571,7 @@ This task chooses at run time. If the cell is clear when the job reaches the `if
 `a`; otherwise it goes to `b`. Each path has its own goal.
 
 ```rob
-robolang 1.8;
+robolang 1.9;
 
 task route(robot r, object box, location src, location a, location b, region cell) {
     plan {
@@ -502,7 +593,7 @@ task route(robot r, object box, location src, location a, location b, region cel
 This task retries a failed grasp once. If the second grasp also fails, it reports and stops.
 
 ```rob
-robolang 1.8;
+robolang 1.9;
 
 task fetch(robot r, object box, location src, location dst) {
     goal { object_at box dst; }
@@ -526,7 +617,7 @@ reading to the "pass" channel, and moves the pan only if the reading is clearly 
 may be too hot.
 
 ```rob
-robolang 1.8;
+robolang 1.9;
 
 task check_pan(robot r, object pan, sensor probe, location src, location dst) {
     goal { object_at pan dst; }

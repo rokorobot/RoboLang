@@ -1,14 +1,47 @@
 {
   "id": "u17_at_1400",
   "prompt": "At 14:00 today, have picker1 take tray 2 to dispatch.",
-  "world": "bench/worlds/pharmacy.json",
-  "group": "inexpressible",
+  "world": "bench/worlds/pharmacy_1_5_1330.json",
+  "group": "clock",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_8": {
     "decision": "cannot",
     "category": "inexpressible"
+  },
+  "expect_1_9": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "the task starts at 13:30: it waits for 14:00, then moves the tray",
+        "goal": [
+          [
+            "rl:thing:tray_2",
+            "located_in",
+            "rl:place:dispatch"
+          ]
+        ],
+        "world_patch": {}
+      }
+    ],
+    "world_1_5": {
+      "clock": {
+        "start": "2026-11-17T13:30:00",
+        "zone": "Europe/Prague"
+      }
+    }
   },
   "tags": [
     "clock_time"
   ],
-  "why": "There is no clock; waits are relative durations only."
+  "expected_clock": [
+    {
+      "use": "wait",
+      "reading": "time",
+      "op": ">=",
+      "value": "14:00"
+    }
+  ],
+  "why": "\"At 14:00 today\" is a bounded wait for 14:00 (0042 T5), then the move; the request gives no limit, so the timeout is the program's choice. The world copy starts at 13:30."
 }

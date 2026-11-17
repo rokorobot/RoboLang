@@ -38,6 +38,7 @@ CANNOT = {"decision": "cannot", "category": "inexpressible"}
 PROBES = {t: d for t, d in SET.items() if d["group"] == "inexpressible"}
 REGIONS = {t: d for t, d in SET.items() if d["group"] == "region"}  # 1.7: programs with a region limit (0039)
 ACTIONS = {t: d for t, d in SET.items() if d["group"] == "action"}  # 1.8: programs with declared actions (0040)
+CLOCKS = {t: d for t, d in SET.items() if d["group"] == "clock"}  # 1.9: programs that read the clock (0042)
 CONTROLS = {t: d for t, d in SET.items() if d["group"] == "control"}
 # R3 refutations: (activity, gap) -> the control whose reference program expresses the claim
 REFUTED = {("ACT-HOS-001", "G-PERCEIVE"): "c_fries_too_dark", ("ACT-SOL-001", "G-PERCEIVE"): "c_table_out_of_tolerance"}
@@ -70,14 +71,15 @@ def decline(category: str = "inexpressible") -> dict:
 
 def test_the_mix_of_tasks():
     assert len(SET) == 33
-    assert Counter(d["group"] for d in SET.values()) == {"inexpressible": 19, "control": 8, "region": 3,
-                                                           "action": 3}
+    assert Counter(d["group"] for d in SET.values()) == {"inexpressible": 16, "control": 8, "region": 3,
+                                                           "action": 3, "clock": 3}
     assert set(REGIONS) == {"f_path_avoid_wet_floor", "f_path_stay_in_zone", "f_path_keep_off_road"}
     assert set(ACTIONS) == {"f_act_set_fryer", "f_act_open_closet", "f_act_print_layout"}
+    assert set(CLOCKS) == {"f_clock_scan_stamp", "f_clock_shift_cutoff", "f_clock_clean_at_2300"}
     # probes per gap: change on purpose (R3 evidence, docs/evidence/rsi-r3-gap-verification.md)
     assert Counter(d["gap"] for d in PROBES.values()) == {
-        "G-CLOCK": 3, "G-CALC": 3, "G-MSG": 3, "G-CONC": 2, "G-CHOOSE": 3, "G-PERCEIVE": 2,
-        "G-SELF": 3}  # G-PATH and G-ACT: their probes are 1.7 and 1.8 programs now (REGIONS, ACTIONS)
+        "G-CALC": 3, "G-MSG": 3, "G-CONC": 2, "G-CHOOSE": 3, "G-PERCEIVE": 2,
+        "G-SELF": 3}  # G-PATH, G-ACT and G-CLOCK: their probes are 1.7, 1.8 and 1.9 programs now
     for task_id, task in SET.items():
         assert task["id"] == task_id and (lib.FUTURE_TASKS_DIR / f"{task_id}.json").is_file()
         assert (REPO / task["world"]).is_file() and task["tags"] and task["prompt"].endswith(".")
@@ -101,13 +103,13 @@ def test_every_task_names_a_near_activity_and_every_probe_an_open_gap_that_activ
         assert (task_id in gap["tasks"]) == (task["group"] == "inexpressible"), task_id
     # each of the nine gaps has probes from the activities that claim it, in the atlas, and nowhere else
     in_atlas = {t for g in GAPS.values() for t in g["tasks"]}
-    assert set(PROBES) <= in_atlas and not (set(CONTROLS) | set(REGIONS) | set(ACTIONS)) & in_atlas
+    assert set(PROBES) <= in_atlas and not (set(CONTROLS) | set(REGIONS) | set(ACTIONS) | set(CLOCKS)) & in_atlas
 
 
 def test_every_gap_a_near_activity_claims_is_probed_except_the_proven_loop():
     claimed = {g for a in ATLAS["activities"] if atlas_report.is_near(a) for g in a["needs"]
                if GAPS[g]["scope"] == "open" and g != "G-LOOP"}  # G-LOOP: 12 standing tasks prove it; reopened by 0041
-    assert claimed == {t["gap"] for t in PROBES.values()}
+    assert claimed == {t["gap"] for t in (*PROBES.values(), *CLOCKS.values())}
     assert {t["gap"] for t in ACTIONS.values()} == {"G-ACT"} and GAPS["G-ACT"]["scope"] == "closed"  # L6 of I2
     assert {t["gap"] for t in REGIONS.values()} == {"G-PATH"} and GAPS["G-PATH"]["scope"] == "closed"
     assert {g for g, v in GAPS.items() if v["scope"] == "out"} == {"G-FALLBACK"}
@@ -132,7 +134,7 @@ def test_references_and_attempts_are_where_they_should_be():
     names = [p.name for p in REF.iterdir()]
     refs = {n.split(".")[0] for n in names if n.endswith((".rob", ".json")) and ".attempt" not in n}
     attempts = {n.split(".")[0] for n in names if ".attempt." in n}
-    programs = set(CONTROLS) | set(REGIONS) | set(ACTIONS)
+    programs = set(CONTROLS) | set(REGIONS) | set(ACTIONS) | set(CLOCKS)
     assert refs == programs and attempts == set(PROBES)
     assert {p.stem for p in REF.glob("*.rob") if ".attempt" not in p.stem} == programs
     assert {p.stem for p in REF.glob("*.json") if ".attempt" not in p.stem} == programs
@@ -159,6 +161,13 @@ def test_expectations_are_well_formed():
         assert lib.expectation(task) == ("program", "none") and task["expect_1_8"]["decision"] == "program"
         assert 1 <= len(task["expected_actions"]) <= 1 and lib.task_paths(task) == task["expect_1_8"]["paths"]
         assert json.loads((REPO / task["world"]).read_text(encoding="utf-8"))["world_schema_version"] == "1.4"
+        assert len(task["why"]) > 40 and not {"attempt_fails_with", "expected_goal"} & set(task)
+    for task_id, task in CLOCKS.items():  # decision 0042: a program that reads the clock, on a world file 1.5
+        assert task["expect"] == {"decision": "program"} and task["expect_1_8"] == CANNOT, task_id
+        assert lib.expectation(task) == ("program", "none") and task["expect_1_9"]["decision"] == "program"
+        assert task["expected_clock"] and lib.task_paths(task) == task["expect_1_9"]["paths"]
+        assert task["gap"] == "G-CLOCK"
+        assert json.loads((REPO / task["world"]).read_text(encoding="utf-8"))["world_schema_version"] == "1.5"
         assert len(task["why"]) > 40 and not {"attempt_fails_with", "expected_goal"} & set(task)
     for task_id, task in CONTROLS.items():
         assert lib.expectation(task) == ("program", "none") and lib.expected_goals(task), task_id
@@ -187,8 +196,6 @@ def test_no_probe_is_a_bug_in_disguise():
     """An attempt fails for the construct it uses, not for a slip in the rest of the program: with its one offending
     expression made harmless, it is a valid 1.6 program in the probe's world and binds every name it uses."""
     stand_ins = {  # probe: (offending text, harmless text, bindings)
-        "f_clock_scan_stamp": ("time_now", '"13:45"', {"r": "arm1", "box": "box1", "shelf": "shelf_a",
-                                                       "camera": "camera_top"}),
         "f_calc_total_weight": ("ma + mb", "ma", {"r": "digit1", "a": "tote_1", "b": "tote_2", "scale": "scale_digit1",
                                                   "src": "inbound_conveyor"}),
         "f_calc_over_limit": ("m - 20 kg", "m", {"r": "stretch1", "c": "case_1", "scale": "scale_stretch1",
@@ -295,7 +302,8 @@ def test_the_new_worlds_are_world_1_2_files_and_nothing_else_new_is_added():
     used = {t["world"] for t in SET.values()}
     # site_1_3: a 0039 world copy; the 1_4 files: 0040 world copies
     assert {Path(w).stem for w in used} <= set(NEW_WORLDS) | {"warehouse", "site_1_3", "ward_1_4", "site_1_4",
-                                                              "fry_station_hot_1_4"}
+                                                              "fry_station_hot_1_4", "warehouse_1_5_1420",
+                                                              "fulfilment_1_5_2115", "site_1_5_2220"}  # 0042 copies
     for name in NEW_WORLDS:
         world = json.loads((REPO / f"bench/worlds/{name}.json").read_text(encoding="utf-8"))
         assert world["world_schema_version"] == "1.2" and world["tasks"] == {}
@@ -344,7 +352,7 @@ def test_the_scorer_counts_a_program_for_a_probe_as_false_and_a_decline_for_a_co
     sequential["rob"] = sequential["rob"].replace("parallel {", "{")  # still not valid: the point is a program at all
     replies = {
         "f_msg_nurse_confirm": decline(),                          # right
-        "f_clock_shift_cutoff": decline("infeasible"),             # declined, wrong category
+        "f_calc_total_weight": decline("infeasible"),              # declined, wrong category
         "f_conc_carry_and_drive": sequential,                      # a program for a probe: false program
         "c_count_two_totes": reference("c_count_two_totes"),       # right
         "c_fries_too_dark": decline(),                             # false refusal of a control
@@ -354,7 +362,7 @@ def test_the_scorer_counts_a_program_for_a_probe_as_false_and_a_decline_for_a_co
     by = {r["task_id"]: r for r in rows}
     assert meta["set"] == "future" and meta["prompt"] == "full"
     assert by["f_msg_nurse_confirm"]["decision_correct"] and by["f_msg_nurse_confirm"]["category_correct"] is True
-    assert by["f_clock_shift_cutoff"]["decision_correct"] and by["f_clock_shift_cutoff"]["category_correct"] is False
+    assert by["f_calc_total_weight"]["decision_correct"] and by["f_calc_total_weight"]["category_correct"] is False
     assert by["f_conc_carry_and_drive"]["false_program"] and not by["f_conc_carry_and_drive"]["decision_correct"]
     assert by["c_count_two_totes"]["decision_correct"] and by["c_count_two_totes"]["goal_correct"]
     assert by["c_fries_too_dark"]["false_refusal"] and not by["c_fries_too_dark"]["decision_correct"]
@@ -380,3 +388,31 @@ def test_the_set_is_in_the_run_script_and_only_runs_on_demand_in_the_workflow():
     weekly = next(s for s in steps if s.startswith("name: Run (weekly or on demand)"))
     assert "future" not in pr_step and "!inputs.future" in weekly and "--set future" not in weekly
     assert re.search(r"      future:\n        description: .*\n        type: boolean\n        default: false", workflow)
+
+
+@pytest.mark.parametrize("task_id", sorted(CLOCKS))
+def test_the_1_9_reference_reads_the_clock_exactly_as_asked_on_every_path(task_id):
+    """Decision 0042: the relabelled probe is a program with its clock use. Its reference is valid, right on every path
+    and `clock_ok`; the same program with the time left out (a fixed message, a guessed `wait for`, nothing) is a
+    program that succeeds without it (`time_replaced`)."""
+    task = CLOCKS[task_id]
+    answer = reference(task_id)
+    assert answer["rob"].count("robolang 1.9;") == 1 and answer["rob"].isascii()
+    checked = lib.check_answer(task, answer)
+    assert checked.valid and checked.language_version == "1.9", checked.report
+    judgement = lib.judge(task, checked, answer["bindings"])
+    assert judgement.goal_correct and judgement.plan_succeeds and judgement.clock_ok and not judgement.time_replaced
+    assert all(p["goal_ok"] and p["plan_ok"] for p in judgement.paths)
+    swaps = {  # task: the clock use replaced by a fixed text, or a guessed `wait for` (the cutoff `if` has no
+        # such stand-in: test_bench_clock.py scores a program with its time test dropped)
+        "f_clock_scan_stamp": (("measure r time as done_at;\n", ""), ("with done_at;", 'with "14:20";')),
+        "f_clock_clean_at_2300": (('wait until clock_time >= 23:00 timeout 120 min else { fail "11 pm did not come in '
+                                   'time"; }', "wait for 40 min;"),)}
+    if task_id not in swaps:
+        return
+    stripped = answer["rob"]
+    for old, new in swaps[task_id]:
+        assert old in stripped, (task_id, old)
+        stripped = stripped.replace(old, new)
+    replaced = lib.judge(task, lib.check_answer(task, dict(answer, rob=stripped)), answer["bindings"])
+    assert replaced.state == "SUCCEEDED" and replaced.time_replaced and not replaced.clock_ok

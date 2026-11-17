@@ -1,0 +1,13 @@
+// bench/reference_ask/u17_at_1400.rob: hand-written reference
+robolang 1.9;
+
+task at_two(robot r, object tray, location src, location dst) {
+    goal { object_at tray dst; }
+    plan {
+        wait until clock_time >= 14:00 timeout 60 min else { fail "14:00 did not come in time"; }
+        move r to src;
+        grasp r tray;
+        move r to dst;
+        place r tray at dst;
+    }
+}

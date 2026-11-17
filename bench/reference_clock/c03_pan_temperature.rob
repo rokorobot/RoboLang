@@ -1,5 +1,5 @@
 // bench/reference_clock/c03_pan_temperature.rob: hand-written reference
-robolang 1.8;
+robolang 1.9;
 
 task read_pan(robot r, object pan, sensor probe, location stove) {
     goal { robot_at r stove; }

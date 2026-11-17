@@ -1,0 +1,7 @@
+{
+  "task": "night_round",
+  "bindings": {
+    "r": "cleaner1",
+    "dst": "lobby"
+  }
+}

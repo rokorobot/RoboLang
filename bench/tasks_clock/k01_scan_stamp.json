@@ -1,9 +1,12 @@
 {
   "id": "k01_scan_stamp",
   "prompt": "With arm1, inspect box1 on shelf_a with camera_top, then send channel \"lead\" the time of day the scan was done.",
-  "world": "bench/worlds/warehouse.json",
+  "world": "bench/worlds/warehouse_1_5_1420.json",
   "group": "clock",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_8": {
     "decision": "cannot",
     "category": "inexpressible"
   },

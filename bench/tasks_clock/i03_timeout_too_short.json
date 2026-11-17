@@ -1,9 +1,13 @@
 {
   "id": "i03_timeout_too_short",
   "prompt": "At 23:00, send tug1 from gate_in to gate_out. Wait up to 10 minutes for 23:00 and, if it has not come by then, stop the job as failed.",
-  "world": "bench/worlds/yard.json",
+  "world": "bench/worlds/yard_1_5_2130.json",
   "group": "infeasible",
   "expect": {
+    "decision": "cannot",
+    "category": "infeasible"
+  },
+  "expect_1_8": {
     "decision": "cannot",
     "category": "inexpressible"
   },

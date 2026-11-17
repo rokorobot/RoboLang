@@ -33,9 +33,10 @@ CANNOT = {"decision": "cannot", "category": "inexpressible"}
 ACTION = {t: d for t, d in SET.items() if d["group"] == "action"}
 INFEASIBLE = {t: d for t, d in SET.items() if d["group"] == "infeasible"}
 INEXPRESSIBLE = {t: d for t, d in SET.items() if d["group"] == "inexpressible"}
+CLOCK = {t: d for t, d in SET.items() if d["group"] == "clock"}  # x05_open_at_six: a program in 1.9 (0042)
 CONTROLS = {t: d for t, d in SET.items() if d["group"] == "control"}
-DECLINED = {**ACTION, **INFEASIBLE, **INEXPRESSIBLE}  # what 1.7 declined: an attempt each (the baseline evidence)
-PROGRAMS = {**ACTION, **CONTROLS}  # what 1.8 answers with a program: a reference each
+DECLINED = {**ACTION, **INFEASIBLE, **INEXPRESSIBLE, **CLOCK}  # what 1.7 declined: an attempt each (the baseline)
+PROGRAMS = {**ACTION, **CONTROLS, **CLOCK}  # what 1.9 answers with a program: a reference each
 DO_LINE = re.compile(r"^\s*do [^\n]*\n", re.M)  # an attempt keeps each `do` statement on one line
 
 
@@ -69,12 +70,12 @@ def decline(category: str = "inexpressible") -> dict:
 def test_the_mix_of_tasks():
     assert len(SET) == 24
     groups = Counter(d["group"] for d in SET.values())
-    assert groups == {"action": 10, "infeasible": 5, "inexpressible": 5, "control": 4}
+    assert groups == {"action": 10, "infeasible": 5, "inexpressible": 4, "control": 4, "clock": 1}
     for task_id, task in SET.items():
         assert task["id"] == task_id and (lib.ACTIONS_TASKS_DIR / f"{task_id}.json").is_file()
         assert (REPO / task["world"]).is_file() and task["tags"] and task["prompt"].endswith(".")
         assert task["prompt"].isascii() and "\r" not in read(lib.ACTIONS_TASKS_DIR / f"{task_id}.json")
-    prefixes = {"action": "a", "infeasible": "i", "inexpressible": "x", "control": "c"}
+    prefixes = {"action": "a", "infeasible": "i", "inexpressible": "x", "control": "c", "clock": "x"}
     for task_id, task in SET.items():
         assert re.fullmatch(prefixes[task["group"]] + r"\d\d_[a-z0-9_]+", task_id), task_id
 
@@ -99,6 +100,11 @@ def test_labels_are_1_8_in_expect_and_1_7_in_expect_1_7():
             continue
         assert task["expect_1_7"] == CANNOT and len(task["why"]) > 40 and task["attempt_fails_with"] == "E203", task_id
         assert not {"expected_goal", "expected_goals", "expect_1_6"} & set(task)
+        if task["group"] == "clock":  # 0042: the 1.8 label stays (inexpressible), `expect` is the 1.9 program
+            assert task["expect"] == {"decision": "program"} and task["expect_1_8"]["decision"] == "cannot", task_id
+            assert task["expect_1_9"]["decision"] == "program" and lib.task_paths(task) == task["expect_1_9"]["paths"]
+            assert task["expected_clock"] and task["expected_actions"], task_id
+            continue
         assert "world_1_4" in task["expect_1_8"], task_id
         later = task["expect_1_8"]
         assert lib.expectation(task) == (later["decision"], later.get("category", "none")), task_id
@@ -171,6 +177,9 @@ def test_every_world_is_a_1_4_copy_and_holds_the_facts_its_label_rests_on():
     """The 1.4 facts a label needs are recorded in `expect_1_8.world_1_4`; the world copies hold every one of them."""
     for task_id, task in SET.items():
         world = world_of(task_id)
+        if task["group"] == "clock":  # x05_open_at_six: a 1.5 copy of kitchen_values_1_4 (0042), tested in set 8's way
+            assert world["world_schema_version"] == "1.5" and world["tasks"] == {} and "clock" in world
+            continue
         assert world["world_schema_version"] == "1.4" and world["tasks"] == {}, task_id
         assert Path(task["world"]).stem.endswith("_1_4") and "\r" not in read(REPO / task["world"])
         if task["group"] == "control":
@@ -203,7 +212,7 @@ def test_the_world_files_are_the_old_ones_with_only_the_1_4_fields_added_and_loa
     from robolang.sim import load_world
     source = "robolang 1.8;\ntask t(robot r, location l) { goal { robot_at r l; } plan { move r to l; } }\n"
     plan = compile_source(source).ir.tasks[0]
-    names = {Path(t["world"]).stem for t in SET.values()}
+    names = {Path(t["world"]).stem for t in SET.values() if t["group"] != "clock"}
     assert len(names) == 11  # one file for each profile a request needs: the decoy and the two-action ward differ
     bases = {"ward_door": "ward", "ward_close": "ward", "ward_hand": "ward", "fry_station_selftest": "fry_station",
              "site_limits": "site_1_3"}
@@ -285,7 +294,7 @@ def test_no_probe_is_a_bug_in_disguise(task_id):
     action), and it is what the baseline counted as a false program (the plan's B8)."""
     answer = attempt_answer(task_id, strip=True)
     assert "do " not in answer["rob"].split("\n", 1)[1]
-    task = dict(DECLINED[task_id], goal_free=True, expect_1_8={"decision": "program"})  # no paths: the world as given
+    task = dict(DECLINED[task_id], goal_free=True, expect_1_8={"decision": "program"}, expect_1_9=None)  # no paths
     checked = lib.check_answer(task, answer)
     assert checked.valid, (task_id, checked.report)
     assert checked.language_version == "1.7"
@@ -341,10 +350,11 @@ def test_the_attempt_binds_the_entities_the_request_names():
 def test_the_reference_is_valid_succeeds_on_every_path_and_does_exactly_the_actions_asked(task_id):
     task = PROGRAMS[task_id]
     answer = reference(task_id)
-    assert answer["rob"].count("robolang 1.8;") == 1 and answer["rob"].isascii() and "\r" not in answer["rob"]
+    version = "1.9" if task_id in CLOCK else "1.8"
+    assert answer["rob"].count(f"robolang {version};") == 1 and answer["rob"].isascii() and "\r" not in answer["rob"]
     checked = lib.check_answer(task, answer)
     assert checked.valid, checked.report
-    assert checked.language_version == "1.8"
+    assert checked.language_version == version
     judgement = lib.judge(task, checked, answer["bindings"])
     assert judgement.goal_correct and judgement.plan_succeeds, (judgement.state, judgement.failure_code)
     assert judgement.actions_ok is True and not judgement.action_replaced and not judgement.half_program
@@ -485,7 +495,7 @@ def test_every_task_1_7_declined_is_labelled_for_1_8_and_g_act_is_closed():
     in_gaps = {t: g["id"] for g in ATLAS["gaps"] for t in g["tasks"] if t in SET}
     assert set(in_gaps) == set(INEXPRESSIBLE)  # the programs and the infeasible tasks left the atlas (as set 6's did)
     assert in_gaps == {"x01_hand_to_ana": "G-PROX", "x02_selftest_result": "G-SELF", "x03_teach_restock": "G-TEACH",
-                       "x04_open_until_open": "G-LOOP", "x05_open_at_six": "G-CLOCK"}
+                       "x04_open_until_open": "G-LOOP"}  # x05_open_at_six is a 1.9 program, G-CLOCK lists none
     for task_id, gap in in_gaps.items():
         assert DECLINED[task_id]["gap"] == gap and GAPS[gap]["scope"] == "open"
     assert GAPS["G-ACT"]["scope"] == "closed" and GAPS["G-ACT"]["closed_in"] == "RoboLang 1.8"  # L6 of I2

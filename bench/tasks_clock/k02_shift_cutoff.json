@@ -1,9 +1,12 @@
 {
   "id": "k02_shift_cutoff",
   "prompt": "With digit2, move tote_2 from inbound_conveyor to outbound_conveyor, but only if it is before 21:30. If it is 21:30 or later, move nothing, send \"after cutoff\" to channel \"lead\" from digit2 and stop the job as failed.",
-  "world": "bench/worlds/fulfilment.json",
+  "world": "bench/worlds/fulfilment_1_5_2105.json",
   "group": "clock",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_8": {
     "decision": "cannot",
     "category": "inexpressible"
   },

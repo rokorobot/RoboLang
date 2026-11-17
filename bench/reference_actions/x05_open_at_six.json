@@ -1,0 +1,8 @@
+{
+  "task": "open_oven_at_six",
+  "bindings": {
+    "r": "helper_arm",
+    "door": "oven_door_1",
+    "oven": "oven"
+  }
+}

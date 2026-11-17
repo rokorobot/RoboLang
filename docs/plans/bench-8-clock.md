@@ -8,6 +8,12 @@ label states the reading used and the question is listed under "Open points" bel
 changes the labels named there.** The acceptance bounds are placeholders, to be fixed with the baseline in hand
 (rule 6, [STRATEGY.md](../STRATEGY.md)); nothing here is frozen yet.
 
+**L4 (2026-11-17):** 1.9 is built and taught. `expect` now holds the 1.9 label and `expect_1_8` the 1.8 one; the 1.9
+references, the world 1.5 copies (`worlds/*_1_5*.json`) and the scorer checks `clock_ok` and `time_replaced_silently` (B8)
+are written. The sections below describe the set as it was frozen at L3 (where they say "now", "the baseline" or "L4
+writes", read L3); the changes are listed in [bench-errata-1-9.md](../evidence/bench-errata-1-9.md). The tasks, their 1.8
+labels and the bounds B1–B8 are unchanged.
+
 ## How the set is used
 
 - **Labels.** `expect` is the **1.8** label and is what the baseline scores. `expect_1_9` is the label for acceptance

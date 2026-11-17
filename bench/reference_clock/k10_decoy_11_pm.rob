@@ -1,0 +1,10 @@
+// bench/reference_clock/k10_decoy_11_pm.rob: hand-written reference
+robolang 1.9;
+
+task night_round(robot r, location dst) {
+    goal { robot_at r dst; }
+    plan {
+        wait until clock_time >= 23:00 timeout 120 min else { fail "11 pm did not come in time"; }
+        move r to dst;
+    }
+}

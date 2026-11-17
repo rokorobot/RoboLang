@@ -1,0 +1,18 @@
+// bench/reference_clock/k05_open_hours_window.rob: hand-written reference
+robolang 1.9;
+
+task in_hours(robot r, object part, location src, location dst) {
+    goal { object_at part dst; }
+    plan {
+        measure r time as now;
+        if now >= 08:00 and now < 18:00 {
+            move r to src;
+            grasp r part;
+            move r to dst;
+            place r part at dst;
+        } else {
+            communicate r to "ops" with "outside hours";
+            fail "outside the open hours";
+        }
+    }
+}

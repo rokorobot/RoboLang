@@ -1,9 +1,12 @@
 {
   "id": "k04_job_elapsed",
   "prompt": "With arm1, move box1 from the shelf to the table, then send channel \"ops\" how long the whole job took.",
-  "world": "examples/world.json",
+  "world": "bench/worlds/example_1_5.json",
   "group": "clock",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_8": {
     "decision": "cannot",
     "category": "inexpressible"
   },

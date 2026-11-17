@@ -1,0 +1,10 @@
+{
+  "task": "fetch_before_six",
+  "bindings": {
+    "r": "moxi1",
+    "door": "closet_door",
+    "kit": "iv_kit_1",
+    "closet": "supply_closet",
+    "dst": "room_412"
+  }
+}

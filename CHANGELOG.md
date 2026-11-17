@@ -5,8 +5,10 @@ versions (1.0 to 1.8). Decision records are in [`spec/decisions/`](https://githu
 
 ## Unreleased
 
-- **RoboLang 1.9: clock readings** (decision 0042, step L4 of iteration I3; language, IR, world file and run record
-  only in the first commit: the reference and prompts are taught in the second). `measure r time as t;` reads the time
+- **RoboLang 1.9: clock readings** (decision 0042, step L4 of iteration I3). `robolang reference` and the benchmark
+  prompts teach 1.9; set 8 (`--set clock`) is labelled for 1.9 with `clock_ok` and `time_replaced_silently`
+  ([errata](docs/evidence/bench-errata-1-9.md)); seven older probes became programs (`f_clock_*`, `x_elapsed_time`,
+  `x_report_duration`, `u17_at_1400`, `x05_open_at_six`). `measure r time as t;` reads the time
   of day and `measure r elapsed as d;` the time since the task started; a time literal is `HH:MM` or `HH:MM:SS`
   (24-hour; `24:00` is not a time); a comparison takes `<`, `<=`, `>`, `>=` and the kinds never mix; `clock_time` and
   `clock_elapsed` read the live clock in `wait until` only (`E322` elsewhere). One day only: a time literal is on the day

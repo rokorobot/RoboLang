@@ -1,0 +1,10 @@
+// bench/reference_clock/k03_wait_for_0530.rob: hand-written reference
+robolang 1.9;
+
+task early_run(robot r, location dst) {
+    goal { robot_at r dst; }
+    plan {
+        wait until clock_time >= 05:30 timeout 90 min else { fail "05:30 did not come in time"; }
+        move r to dst;
+    }
+}

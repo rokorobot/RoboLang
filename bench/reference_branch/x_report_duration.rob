@@ -1,0 +1,14 @@
+// bench/reference_branch/x_report_duration.rob: hand-written reference
+robolang 1.9;
+
+task timed(robot r, object box, location src, location dst) {
+    goal { object_at box dst; }
+    plan {
+        move r to src;
+        grasp r box;
+        move r to dst;
+        place r box at dst;
+        measure r elapsed as took;
+        communicate r to "ops" with took;
+    }
+}

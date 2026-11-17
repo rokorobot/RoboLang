@@ -1,0 +1,16 @@
+// bench/reference_clock/k08_time_and_no_go.rob: hand-written reference
+robolang 1.9;
+
+task go_dry(robot r, location dst, region wet) {
+    @safety no_go_region wet;
+    goal { robot_at r dst; }
+    plan {
+        measure r time as now;
+        if now < 17:00 {
+            move r to dst;
+        } else {
+            communicate r to "site" with "too late";
+            fail "too late";
+        }
+    }
+}

@@ -1,11 +1,36 @@
 {
   "id": "f_clock_clean_at_2300",
   "prompt": "At 11 pm tonight, send cleaner1 from dock_2 to the lobby and then back to dock_2.",
-  "world": "bench/worlds/site.json",
-  "group": "inexpressible",
+  "world": "bench/worlds/site_1_5_2220.json",
+  "group": "clock",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_8": {
     "decision": "cannot",
     "category": "inexpressible"
+  },
+  "expect_1_9": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "the task starts at 22:20: it waits 40 minutes for 23:00, then goes and comes back",
+        "goal": [
+          [
+            "rl:robot:cleaner1",
+            "located_in",
+            "rl:place:dock_2"
+          ]
+        ],
+        "world_patch": {}
+      }
+    ],
+    "world_1_5": {
+      "clock": {
+        "start": "2026-11-17T22:20:00",
+        "zone": "Europe/Prague"
+      }
+    }
   },
   "activity": "ACT-CLN-001",
   "gap": "G-CLOCK",
@@ -13,6 +38,13 @@
     "clock",
     "wait"
   ],
-  "why": "Waits are relative durations only; there is no way to wait for a time of day, because the program cannot read the clock (language reference: 'Not in the language: ... clock readings').",
-  "attempt_fails_with": "E101"
+  "expected_clock": [
+    {
+      "use": "wait",
+      "reading": "time",
+      "op": ">=",
+      "value": "23:00"
+    }
+  ],
+  "why": "\"At 11 pm\" is a bounded wait for 23:00 (0042 T5): the request gives no limit, so the timeout is the program's choice, as long as it reaches 23:00 from the 22:20 start. 11 pm is converted to 23:00 by the author (T2)."
 }

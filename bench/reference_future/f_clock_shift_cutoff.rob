@@ -1,17 +1,18 @@
-// bench/reference_future/f_clock_shift_cutoff.attempt.rob: the obvious attempt; it does not do what the request asks
-robolang 1.6;
+// bench/reference_future/f_clock_shift_cutoff.rob: hand-written reference
+robolang 1.9;
 
 task move_tote(robot r, object tote, location src, location dst) {
     plan {
-        if time_of_day < 22:00 {
+        measure r time as now;
+        if now < 22:00 {
             goal { object_at tote dst; }
             move r to src;
             grasp r tote;
             move r to dst;
             place r tote at dst;
         } else {
+            goal { object_at tote src; }
             communicate r to "lead" with "the shift is over";
-            fail "shift over";
         }
     }
 }

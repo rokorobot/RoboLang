@@ -1,9 +1,12 @@
 {
   "id": "k05_open_hours_window",
   "prompt": "With arm2, move part7 from the table to shelf_b, but only within the open hours, 08:00 to 18:00. Outside them, send \"outside hours\" to channel \"ops\" from arm2 and stop the job as failed.",
-  "world": "bench/worlds/warehouse.json",
+  "world": "bench/worlds/warehouse_1_5_0940.json",
   "group": "clock",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_8": {
     "decision": "cannot",
     "category": "inexpressible"
   },

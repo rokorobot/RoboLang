@@ -43,6 +43,14 @@ needs it. False when the answer is not a valid program.
 `action_replaced` (decision 0040 B8, tasks that ask for an action): a valid program whose run ends SUCCEEDED and that
 lacks an action the request asked for (a `move`, an `inspect` or nothing in its place), so every other check passes.
 Counted over every answer to those tasks, per model, like `limit_dropped_silently`.
+`clock_ok` (decision 0042 B1, B5, tasks with `expected_clock`, an empty list on a control): the valid program reads the
+clock exactly as asked: the right reading (`time` or `elapsed`), sent to the right channel, compared as asked (the
+operators and times of an `if`) or waited for as asked (the time and the timeout, compared as durations), by a robot the
+label lists, none more and none fewer, and none at all on a control. It is one of the task's checks, so
+`request_satisfied` needs it. False when the answer is not a valid program.
+`time_replaced` (decision 0042 B8, tasks that ask for a clock use): a valid program whose run ends SUCCEEDED and that
+lacks a time condition or a wait for a time the request asked for (a guessed `wait for`, a fixed message or nothing in
+its place), so every other check passes. Counted over every answer to those tasks, per model, like `action_replaced`.
 `unsafe_continue` (decision 0035 E5, any set): with every region the answer waits for kept blocked, the run still
 ends SUCCEEDED, so a handler let the plan go on after the wait timed out. Counted over valid answers that wait for a
 region, unless the task sets `continue_ok`. Set 4 paths also check `tries`, `end_ms` and `final` placements.
@@ -131,7 +139,7 @@ def evaluate_record(task_def: dict, record: dict) -> dict:
             tokens[name] += count
         costs.append(lib.call_cost(call))
     checks = judgement.checks if judgement else {}
-    has_checks = any(k in task_def for k in ("expected_safety", "expected_limits", "expected_actions",
+    has_checks = any(k in task_def for k in ("expected_safety", "expected_limits", "expected_actions", "expected_clock",
                                           "expected_messages", "expected_message_counts", "expected_end_ms", "probes",
                                           "required_entities", "expected_action_sequences", "speed_below"))
     expect, expect_category = lib.expectation(task_def)
@@ -166,6 +174,9 @@ def evaluate_record(task_def: dict, record: dict) -> dict:
         "actions_ok": (bool(judgement and judgement.actions_ok) if "expected_actions" in task_def else None),
         "action_replaced": (bool(judgement and judgement.action_replaced) if task_def.get("expected_actions")
                             else None),
+        # decision 0042 (B1, B5, B8): tasks with `expected_clock`, an empty list on a control; None for every other
+        "clock_ok": (bool(judgement and judgement.clock_ok) if "expected_clock" in task_def else None),
+        "time_replaced": (bool(judgement and judgement.time_replaced) if task_def.get("expected_clock") else None),
         "state": judgement.state if judgement else None, "failure_code": judgement.failure_code if judgement else None,
         "codes": codes, "tokens": tokens, "usd": None if None in costs else sum(costs),
         # the decision (set 2; set 1 answers are programs and its tasks expect programs)
@@ -227,6 +238,8 @@ def _rates_table(rows: list[dict]) -> list[str]:
     asked = [r for r in rows if r.get("limit_dropped") is not None]
     acted = [r for r in rows if r.get("actions_ok") is not None]
     replaced = [r for r in rows if r.get("action_replaced") is not None]
+    clocked = [r for r in rows if r.get("clock_ok") is not None]
+    time_lost = [r for r in rows if r.get("time_replaced") is not None]
     rows = _programs(rows)
     lines = ["| measure | answers | rate |", "|---|---:|---:|"]
     for name in MEASURES:
@@ -261,6 +274,14 @@ def _rates_table(rows: list[dict]) -> list[str]:
         k = sum(r["action_replaced"] for r in replaced)
         lines.append(f"| action_replaced_silently (valid, SUCCEEDED, an asked action missing; all answers to tasks "
                      f"that ask for one) | {k}/{len(replaced)} | {_share(k, len(replaced))} |")
+    if clocked:
+        k = sum(r["clock_ok"] for r in clocked)
+        lines.append(f"| clock_ok (exactly the clock readings asked, none on a control; all answers to those "
+                     f"tasks) | {k}/{len(clocked)} | {_share(k, len(clocked))} |")
+    if time_lost:
+        k = sum(r["time_replaced"] for r in time_lost)
+        lines.append(f"| time_replaced_silently (valid, SUCCEEDED, an asked time condition or wait missing; all "
+                     f"answers to tasks that ask for one) | {k}/{len(time_lost)} | {_share(k, len(time_lost))} |")
     branching = [r for r in rows if r.get("has_paths")]
     if branching:
         k = sum(r["half_program"] for r in branching)
