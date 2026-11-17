@@ -42,5 +42,16 @@ check. Under 1.8 that count is **0/30** for both models and both prompts. The fu
 
 ## Verdict
 
-**Pending the owner's decision.** As pre-registered, 1.8 is not accepted: B3 (grammar-only) and B6 (one answer) were
-missed.
+**ACCEPTED, 2026-11-17**, after the fix and the confirming runs the owner approved (erratum E5,
+[errata](bench-errata-1-8.md)):
+
+| Run | What | Sonnet | Haiku |
+|---|---|---|---|
+| [44184896333](https://github.com/rokorobot/RoboLang/actions/runs/44184896333) | set 7 inexpressible and controls, **grammar-only**, 3 repeats | B3 **0/15** (was 6/15) | B3 **0/15** (was 6/15) |
+| [44185127429](https://github.com/rokorobot/RoboLang/actions/runs/44185127429) | the same, full prompt | B3 0/15, controls 12/12 | B3 0/15, controls 12/12 |
+| PR #151 per-PR run after E5 | sets 1 and 2, 1 repeat | 40/40 and 40/40, false programs 0/15; gate passes | 40/40 and 40/40, 0/15 |
+
+Grammar-only controls stay weaker: Sonnet 10/12, Haiku 8/12, mostly `c03`, where the probe needs contact with the
+oil. That is for information (B5 is measured on the full prompt, as B1 and B8 are). Every bound is met.
+
+**Paid cost of I2:** baseline $0.76, acceptance $1.04, confirming runs $0.34.
