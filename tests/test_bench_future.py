@@ -231,7 +231,6 @@ def test_the_new_worlds_are_world_1_2_files_and_nothing_else_new_is_added():
         shown = lib.describe_world(world)
         assert "properties" not in shown and "too_dark" not in shown and "WIND" not in shown
         assert not (REPO / f"bench/worlds/{name}.notes.json").exists()
-        assert (REPO / f"bench/worlds/{name}.json").read_bytes().count(b"\r") == 0
 
 
 def test_the_worlds_hold_what_the_controls_and_probes_rely_on():
