@@ -1,0 +1,10 @@
+// bench/reference_actions/i03_fryer_in_kilograms.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 1.7;
+
+task set_fryer(robot r, location fryer) {
+    goal { robot_at r fryer; }
+    plan {
+        move r to fryer;
+        do r set fryer to 2 kg;
+    }
+}

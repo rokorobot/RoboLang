@@ -1,0 +1,37 @@
+{
+  "id": "i02_lock_a_berth",
+  "prompt": "Have crane1 lock berth_2.",
+  "world": "bench/worlds/yard.json",
+  "group": "infeasible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_8": {
+    "decision": "cannot",
+    "category": "infeasible",
+    "because": "0040 A6",
+    "world_1_4": {
+      "robots": {
+        "crane1": {
+          "actions": {
+            "lock": {
+              "target": "object",
+              "result": "locked"
+            }
+          }
+        }
+      }
+    }
+  },
+  "blockers": [
+    "lock acts on an object, berth_2 is a location"
+  ],
+  "tags": [
+    "wrong_target_kind",
+    "lock"
+  ],
+  "gap": "G-ACT",
+  "why": "crane1's `lock` acts on an object and berth_2 is a location, so the target kind does not match and the run stops before anything moves (0040 A6).",
+  "attempt_fails_with": "E203"
+}

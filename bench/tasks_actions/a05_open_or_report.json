@@ -1,0 +1,72 @@
+{
+  "id": "a05_open_or_report",
+  "prompt": "Have moxi1 open closet_door. If it will not open, tell channel \"charge_nurse\" \"closet stuck\" and stop the job as failed.",
+  "world": "bench/worlds/ward.json",
+  "group": "action",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_8": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "the world as given",
+        "goal": [
+          [
+            "rl:thing:closet_door",
+            "in_state",
+            "open"
+          ]
+        ],
+        "world_patch": {}
+      },
+      {
+        "when": "the open action fails: handler reports and stops",
+        "fails": true,
+        "messages": [
+          [
+            "charge_nurse",
+            null
+          ]
+        ],
+        "world_patch": {},
+        "scripted_fault": {
+          "step": "do",
+          "action": "open",
+          "target": "closet_door"
+        }
+      }
+    ],
+    "world_1_4": {
+      "robots": {
+        "moxi1": {
+          "actions": {
+            "open": {
+              "target": "object",
+              "result": "open"
+            }
+          }
+        }
+      },
+      "object_states": {
+        "closet_door": "closed"
+      }
+    }
+  },
+  "expected_actions": [
+    {
+      "robot": "moxi1",
+      "action": "open",
+      "target": "closet_door"
+    }
+  ],
+  "tags": [
+    "open",
+    "handler",
+    "fail"
+  ],
+  "gap": "G-ACT",
+  "why": "A failure handler takes a `move`, `grasp`, `place`, `inspect`, `measure` or `wait until` in 1.7, and `do` is none of them. 1.8 lets `do` fail like any step and take a handler (0040 A7).",
+  "attempt_fails_with": "E203"
+}

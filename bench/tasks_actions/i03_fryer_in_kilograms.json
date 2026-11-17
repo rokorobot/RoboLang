@@ -1,0 +1,41 @@
+{
+  "id": "i03_fryer_in_kilograms",
+  "prompt": "Have flippy1 set the fryer to 2 kg.",
+  "world": "bench/worlds/fry_station.json",
+  "group": "infeasible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_8": {
+    "decision": "cannot",
+    "category": "infeasible",
+    "because": "0040 A6",
+    "world_1_4": {
+      "robots": {
+        "flippy1": {
+          "actions": {
+            "set": {
+              "target": "location",
+              "result": "heating",
+              "value": "temperature"
+            }
+          }
+        }
+      },
+      "location_states": {
+        "fryer": "off"
+      }
+    }
+  },
+  "blockers": [
+    "set takes a temperature, 2 kg is a mass"
+  ],
+  "tags": [
+    "wrong_value_kind",
+    "set_value"
+  ],
+  "gap": "G-ACT",
+  "why": "`set` declares a temperature value and the request gives a mass, so the value kind does not match (0040 A5, A6, E319 as in 1.6).",
+  "attempt_fails_with": "E203"
+}

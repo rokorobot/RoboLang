@@ -1,0 +1,34 @@
+{
+  "id": "x03_teach_restock",
+  "prompt": "Teach moxi1 a skill called restock: open closet_door, then take iv_kit_1 to ward_3. Do not run it now.",
+  "world": "bench/worlds/ward.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_8": {
+    "decision": "cannot",
+    "category": "inexpressible",
+    "because": "0040 A10",
+    "world_1_4": {
+      "robots": {
+        "moxi1": {
+          "actions": {
+            "open": {
+              "target": "object",
+              "result": "open"
+            }
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    "macro",
+    "teach"
+  ],
+  "gap": "G-TEACH",
+  "why": "A name for a list of steps that is kept and used later is a macro, left out of 1.8 (0040 A10, A11: a taught skill is a profile action, a later G-TEACH question). The request asks that nothing runs now.",
+  "attempt_fails_with": "E203"
+}

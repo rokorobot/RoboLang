@@ -1,0 +1,69 @@
+{
+  "id": "a09_dock_drone",
+  "prompt": "Fly drone1 to berth_1 and back to the workshop, then dock it there.",
+  "world": "bench/worlds/yard.json",
+  "group": "action",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_8": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "the world as given",
+        "goals": [
+          [
+            [
+              "rl:place:workshop",
+              "in_state",
+              "docked"
+            ]
+          ],
+          [
+            [
+              "rl:place:workshop",
+              "in_state",
+              "docked"
+            ],
+            [
+              "rl:robot:drone1",
+              "located_in",
+              "rl:place:workshop"
+            ]
+          ]
+        ],
+        "world_patch": {}
+      }
+    ],
+    "world_1_4": {
+      "robots": {
+        "drone1": {
+          "actions": {
+            "dock": {
+              "target": "location",
+              "result": "docked"
+            }
+          }
+        }
+      },
+      "location_states": {
+        "workshop": "empty"
+      }
+    }
+  },
+  "expected_actions": [
+    {
+      "robot": "drone1",
+      "action": "dock",
+      "target": "workshop"
+    }
+  ],
+  "tags": [
+    "dock",
+    "location_target"
+  ],
+  "gap": "G-ACT",
+  "why": "Docking is an action the plan has no statement for. 1.8 declares `dock` in the drone's profile; where the drone is afterwards is a fact of its own (`robot_at`), not of the dock.",
+  "attempt_fails_with": "E203"
+}

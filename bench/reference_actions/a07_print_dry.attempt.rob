@@ -1,0 +1,11 @@
+// bench/reference_actions/a07_print_dry.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 1.7;
+
+task print_layout(robot r, location wall, region wet) {
+    @safety no_go_region wet;
+    goal { robot_at r wall; }
+    plan {
+        move r to wall;
+        do r print wall;
+    }
+}

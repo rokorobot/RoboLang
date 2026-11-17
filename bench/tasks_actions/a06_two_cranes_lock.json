@@ -1,0 +1,74 @@
+{
+  "id": "a06_two_cranes_lock",
+  "prompt": "Have crane1 lock cont_101 and crane2 lock cont_102.",
+  "world": "bench/worlds/yard.json",
+  "group": "action",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_8": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "the world as given",
+        "goal": [
+          [
+            "rl:thing:cont_101",
+            "in_state",
+            "locked"
+          ],
+          [
+            "rl:thing:cont_102",
+            "in_state",
+            "locked"
+          ]
+        ],
+        "world_patch": {}
+      }
+    ],
+    "world_1_4": {
+      "robots": {
+        "crane1": {
+          "actions": {
+            "lock": {
+              "target": "object",
+              "result": "locked"
+            }
+          }
+        },
+        "crane2": {
+          "actions": {
+            "lock": {
+              "target": "object",
+              "result": "locked"
+            }
+          }
+        }
+      },
+      "object_states": {
+        "cont_101": "unlocked",
+        "cont_102": "unlocked"
+      }
+    }
+  },
+  "expected_actions": [
+    {
+      "robot": "crane1",
+      "action": "lock",
+      "target": "cont_101"
+    },
+    {
+      "robot": "crane2",
+      "action": "lock",
+      "target": "cont_102"
+    }
+  ],
+  "tags": [
+    "lock",
+    "two_robots"
+  ],
+  "gap": "G-ACT",
+  "why": "Two robots, one action each: 1.7 can move both but cannot make either lock anything. 1.8 declares `lock` in both profiles.",
+  "attempt_fails_with": "E203"
+}

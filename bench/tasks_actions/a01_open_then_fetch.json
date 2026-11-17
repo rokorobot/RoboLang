@@ -1,0 +1,61 @@
+{
+  "id": "a01_open_then_fetch",
+  "prompt": "Have moxi1 open closet_door, then take iv_kit_1 from the supply closet to room_412.",
+  "world": "bench/worlds/ward.json",
+  "group": "action",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_8": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "the world as given",
+        "goal": [
+          [
+            "rl:thing:closet_door",
+            "in_state",
+            "open"
+          ],
+          [
+            "rl:thing:iv_kit_1",
+            "located_in",
+            "rl:place:room_412"
+          ]
+        ],
+        "world_patch": {}
+      }
+    ],
+    "world_1_4": {
+      "robots": {
+        "moxi1": {
+          "actions": {
+            "open": {
+              "target": "object",
+              "result": "open"
+            }
+          }
+        }
+      },
+      "object_states": {
+        "closet_door": "closed"
+      }
+    }
+  },
+  "expected_actions": [
+    {
+      "robot": "moxi1",
+      "action": "open",
+      "target": "closet_door"
+    }
+  ],
+  "tags": [
+    "open",
+    "fetch",
+    "pick_place"
+  ],
+  "gap": "G-ACT",
+  "why": "RoboLang 1.7 has no statement that opens a door: the plan has move, grasp, place, inspect, measure, wait and communicate. 1.8 declares `open` in moxi1's profile and calls it with `do` (0040 A1).",
+  "attempt_fails_with": "E203"
+}

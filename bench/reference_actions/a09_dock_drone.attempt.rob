@@ -1,0 +1,11 @@
+// bench/reference_actions/a09_dock_drone.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 1.7;
+
+task patrol_and_dock(robot r, location out, location home) {
+    goal { robot_at r home; }
+    plan {
+        move r to out;
+        move r to home;
+        do r dock home;
+    }
+}

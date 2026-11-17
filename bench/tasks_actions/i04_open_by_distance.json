@@ -1,0 +1,40 @@
+{
+  "id": "i04_open_by_distance",
+  "prompt": "Have moxi1 open closet_door to 30 cm.",
+  "world": "bench/worlds/ward.json",
+  "group": "infeasible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_8": {
+    "decision": "cannot",
+    "category": "infeasible",
+    "because": "0040 A6",
+    "world_1_4": {
+      "robots": {
+        "moxi1": {
+          "actions": {
+            "open": {
+              "target": "object",
+              "result": "open"
+            }
+          }
+        }
+      },
+      "object_states": {
+        "closet_door": "closed"
+      }
+    }
+  },
+  "blockers": [
+    "open takes no value"
+  ],
+  "tags": [
+    "value_for_no_value_action",
+    "open"
+  ],
+  "gap": "G-ACT",
+  "why": "moxi1's `open` declares no value, so `to 30 cm` has nothing to be checked against (0040 A5, A6).",
+  "attempt_fails_with": "E203"
+}

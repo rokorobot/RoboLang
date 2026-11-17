@@ -1,0 +1,10 @@
+// bench/reference_actions/a03_print_gridline.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 1.7;
+
+task print_marks(robot r, location line) {
+    goal { robot_at r line; }
+    plan {
+        move r to line;
+        do r print line;
+    }
+}

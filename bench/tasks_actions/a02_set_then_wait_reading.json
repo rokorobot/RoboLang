@@ -1,0 +1,74 @@
+{
+  "id": "a02_set_then_wait_reading",
+  "prompt": "With flippy1, set the fryer to 175 degrees Celsius. Once the oil in oil_1 reads above 170 degrees Celsius (give it 60 seconds), move basket_2 from the prep_table to the fryer. If the oil does not get there, stop.",
+  "world": "bench/worlds/fry_station.json",
+  "group": "action",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_8": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "the oil reaches 175 degC at 20 s",
+        "goal": [
+          [
+            "rl:place:fryer",
+            "in_state",
+            "heating"
+          ],
+          [
+            "rl:thing:basket_2",
+            "located_in",
+            "rl:place:fryer"
+          ]
+        ],
+        "world_patch": {}
+      },
+      {
+        "when": "the oil never heats: the run stops",
+        "fails": true,
+        "world_patch": {
+          "events": []
+        }
+      }
+    ],
+    "world_1_4": {
+      "robots": {
+        "flippy1": {
+          "actions": {
+            "set": {
+              "target": "location",
+              "result": "heating",
+              "value": "temperature"
+            }
+          }
+        }
+      },
+      "location_states": {
+        "fryer": "off"
+      }
+    }
+  },
+  "expected_actions": [
+    {
+      "robot": "flippy1",
+      "action": "set",
+      "target": "fryer",
+      "value": [
+        "175",
+        "degC"
+      ]
+    }
+  ],
+  "tags": [
+    "set_value",
+    "wait_until",
+    "live_reading",
+    "location_target"
+  ],
+  "gap": "G-ACT",
+  "why": "No command writes a value to a device (language reference: 'setting a value'). 1.8 declares `set` with a temperature value (0040 A5); reaching the value is checked with `wait until`, never assumed.",
+  "attempt_fails_with": "E203"
+}

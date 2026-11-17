@@ -1,0 +1,10 @@
+// bench/reference_actions/i02_lock_a_berth.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 1.7;
+
+task lock_berth(robot r, location bay) {
+    goal { robot_at r bay; }
+    plan {
+        move r to bay;
+        do r lock bay;
+    }
+}

@@ -296,3 +296,18 @@ request asked for, so no other check notices; counted over every answer to those
 exactly their limits), the scorer and the controls. On demand from GitHub Actions: `Benchmark`, `regions: true` (full and
 minimal prompts, 3 repeats, Sonnet and Haiku, `--max-usd 3` each, not gated, not in the per-PR or weekly runs). Locally:
 `python bench/run.py --set regions --repeats 3` (a paid run: confirm it first; estimate ~$3.3 per prompt).
+
+## Set 7: declared actions (`--set actions`)
+
+24 tasks in `tasks_actions/`, controls' references and the obvious attempts in `reference_actions/`, decision record
+[0040](../spec/decisions/0040-declared-actions.md), plan, proposed bounds and open points in
+[bench-7-actions.md](../docs/plans/bench-7-actions.md) (draft for the owner). Pre-registered against 1.7 before any 1.8 code
+(iteration I2, step L3): `expect` is the 1.7 label (all 20 non-controls `cannot / inexpressible`, each with an attempt that
+fails with `E203`), `expect_1_8` the label for acceptance (10 `action` programs, 5 `infeasible`, 5 `inexpressible`, 4
+`control` programs) and `expected_actions` the calls a 1.8 program must make (`[]` on a control). The world 1.4 facts a
+1.8 label needs (`actions`, `state`) are a note in `expect_1_8.world_1_4`; no world file has them yet. Without its `do`, every
+attempt is a valid 1.7 program that ends SUCCEEDED: that is the silent replacement the plan's B8 counts.
+`tests/test_bench_actions.py` checks the counts, the labels, the attempts and the controls. On demand from GitHub Actions:
+`Benchmark`, `actions: true` (full and minimal prompts, 3 repeats, Sonnet and Haiku, `--max-usd 3` each, not gated, not in
+the per-PR or weekly runs). Locally: `python bench/run.py --set actions --repeats 3` (a paid run: confirm it first;
+estimate ~$3.6 per prompt).

@@ -88,6 +88,8 @@ before.
 
 | Date | Note | Added | Removed | Changed | Ranking |
 |---|---|---|---|---|---|
+| 2026-11-17 | I2 L3 done: set 7 frozen; bounds B1-B8 and clarifications C1-C15 approved; x02 to G-SELF (C9) | — | — | — | 1. action 4.52 · 2. perception 2.78 · 3. cooperation 1.07 · 4. communication 0.95 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
+| 2026-11-17 | I2 L3: set 7 actions pre-registered (24 tasks) | — | — | — | 1. action 4.52 · 2. perception 2.78 · 3. cooperation 1.07 · 4. communication 0.95 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
 | 2026-11-17 | 0040 approved (I2 G-ACT); 0041 approved: G-LOOP reopened with the mission layer (LE-9) | — | — | — | 1. action 4.52 · 2. perception 2.78 · 3. cooperation 1.07 · 4. communication 0.95 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
 | 2026-11-17 | L6 of I1: G-PATH closed by RoboLang 1.7; G-STEPLIMIT and G-WORKSPACE opened (0039 C4) | — | — | — | 1. action 4.52 · 2. perception 2.78 · 3. cooperation 1.07 · 4. communication 0.95 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
 | 2026-11-17 | I1 L4: RoboLang 1.7 built and taught | — | — | — | 1. action 4.52 · 2. perception 2.78 · 3. cooperation 1.07 · 4. communication 0.95 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
@@ -129,7 +131,7 @@ before.
 
 | Language gap | Scope | Priority | Near | Benchmark tasks |
 |---|---|---|---|---|
-| `G-ACT` Actions beyond move, grasp, place, inspect, wait, communicate, measure: open, charge, set a device | open | 4.30 | yes | 6 |
+| `G-ACT` Actions beyond move, grasp, place, inspect, wait, communicate, measure: open, charge, set a device | open | 4.30 | yes | 21 |
 
 ## Perception
 
@@ -202,7 +204,7 @@ before.
 
 | Language gap | Scope | Priority | Near | Benchmark tasks |
 |---|---|---|---|---|
-| `G-TEACH` Teaching the robot a new skill, object or route by demonstration or correction, then using it by name | open | 0.65 | — | 0 |
+| `G-TEACH` Teaching the robot a new skill, object or route by demonstration or correction, then using it by name | open | 0.65 | — | 1 |
 
 ## Reasoning
 
@@ -218,8 +220,8 @@ before.
 
 | Language gap | Scope | Priority | Near | Benchmark tasks |
 |---|---|---|---|---|
-| `G-LOOP` Repetition without a fixed bound: loops, retry until it works, schedules, event streams | open | 8.21 | yes | 12 |
-| `G-CLOCK` Clock readings and times of day | open | 4.73 | yes | 8 |
+| `G-LOOP` Repetition without a fixed bound: loops, retry until it works, schedules, event streams | open | 8.21 | yes | 13 |
+| `G-CLOCK` Clock readings and times of day | open | 4.73 | yes | 9 |
 | `G-CALC` Arithmetic, counting and text built from values | open | 1.55 | yes | 7 |
 | `G-FALLBACK` A different end state counts as done | out | 0.00 | — | 1 |
 
@@ -234,7 +236,7 @@ before.
 
 | Language gap | Scope | Priority | Near | Benchmark tasks |
 |---|---|---|---|---|
-| `G-SELF` The robot's own state as readings and conditions: battery level, health, faults; acting on them and asking for service | open | 1.50 | yes | 3 |
+| `G-SELF` The robot's own state as readings and conditions: battery level, health, faults; acting on them and asking for service | open | 1.50 | yes | 4 |
 
 ## Safety
 
@@ -249,7 +251,7 @@ before.
 | Language gap | Scope | Priority | Near | Benchmark tasks |
 |---|---|---|---|---|
 | `G-FORCE` Force limits and gentle handling | open | 0.98 | — | 2 |
-| `G-PROX` Limits and reactions that depend on people nearby: slow, stop or yield when a person is within a distance | open | 0.97 | — | 2 |
+| `G-PROX` Limits and reactions that depend on people nearby: slow, stop or yield when a person is within a distance | open | 0.97 | — | 3 |
 | `G-PATH` Staying inside or outside a region while moving | closed | 0.00 | — | 0 |
 | `G-STEPLIMIT` A region or speed limit on one step or one stretch of a route, not the whole task | open | 0.00 | — | 1 |
 | `G-WORKSPACE` Limits on the arm's workspace, not only on where the robot drives | open | 0.00 | — | 1 |

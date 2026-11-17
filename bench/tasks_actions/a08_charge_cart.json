@@ -1,0 +1,56 @@
+{
+  "id": "a08_charge_cart",
+  "prompt": "Send cart2 to the charger and have it charge there.",
+  "world": "bench/worlds/pharmacy.json",
+  "group": "action",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_8": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "the world as given",
+        "goal": [
+          [
+            "rl:place:charger",
+            "in_state",
+            "charging"
+          ]
+        ],
+        "world_patch": {}
+      }
+    ],
+    "world_1_4": {
+      "robots": {
+        "cart2": {
+          "actions": {
+            "charge": {
+              "target": "location",
+              "result": "charging"
+            }
+          }
+        }
+      },
+      "location_states": {
+        "charger": "free"
+      }
+    }
+  },
+  "expected_actions": [
+    {
+      "robot": "cart2",
+      "action": "charge",
+      "target": "charger"
+    }
+  ],
+  "tags": [
+    "charge",
+    "location_target",
+    "self"
+  ],
+  "gap": "G-ACT",
+  "why": "Charging is an action beyond move, grasp and place. 1.8 declares `charge` as an action on the charger (0040 A11); the battery level stays out until G-SELF.",
+  "attempt_fails_with": "E203"
+}

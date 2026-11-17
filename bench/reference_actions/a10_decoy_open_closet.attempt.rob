@@ -1,0 +1,10 @@
+// bench/reference_actions/a10_decoy_open_closet.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 1.7;
+
+task open_closet(robot r, object door, location closet) {
+    goal { robot_at r closet; }
+    plan {
+        move r to closet;
+        do r open door;
+    }
+}

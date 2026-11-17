@@ -29,7 +29,8 @@
         "f13_retry_every_minute",
         "x_all_parts_ever",
         "x_retry_until_grasped",
-        "x_shuttle_until_five"
+        "x_shuttle_until_five",
+        "x04_open_until_open"
       ]
     },
     {
@@ -46,7 +47,8 @@
         "x_report_duration",
         "f_clock_scan_stamp",
         "f_clock_shift_cutoff",
-        "f_clock_clean_at_2300"
+        "f_clock_clean_at_2300",
+        "x05_open_at_six"
       ]
     },
     {
@@ -94,7 +96,22 @@
         "x06_set_oven",
         "f_act_set_fryer",
         "f_act_open_closet",
-        "f_act_print_layout"
+        "f_act_print_layout",
+        "a01_open_then_fetch",
+        "a02_set_then_wait_reading",
+        "a03_print_gridline",
+        "a04_open_if_clear",
+        "a05_open_or_report",
+        "a06_two_cranes_lock",
+        "a07_print_dry",
+        "a08_charge_cart",
+        "a09_dock_drone",
+        "a10_decoy_open_closet",
+        "i01_runner_cannot_open",
+        "i02_lock_a_berth",
+        "i03_fryer_in_kilograms",
+        "i04_open_by_distance",
+        "i05_leave_it_locked"
       ]
     },
     {
@@ -175,7 +192,8 @@
       "scope_note": "from foresight pass 1; one benchmark task since I1 L3 (set regions, 2026-11-17)",
       "tasks": [
         "x03_person_distance",
-        "x05_avoid_busy_areas"
+        "x05_avoid_busy_areas",
+        "x01_hand_to_ana"
       ]
     },
     {
@@ -191,8 +209,10 @@
       "name": "Teaching the robot a new skill, object or route by demonstration or correction, then using it by name",
       "direction": "learning",
       "scope": "open",
-      "scope_note": "from foresight pass 1, no benchmark task yet",
-      "tasks": []
+      "scope_note": "from foresight pass 1; its first benchmark task is set 7 `x03_teach_restock` (a macro, 0040 A10)",
+      "tasks": [
+        "x03_teach_restock"
+      ]
     },
     {
       "id": "G-SELF",
@@ -202,7 +222,8 @@
       "tasks": [
         "f_self_low_battery",
         "f_self_enough_for_route",
-        "f_self_report_charge"
+        "f_self_report_charge",
+        "x02_selftest_result"
       ],
       "direction": "autonomy"
     },
@@ -2278,6 +2299,120 @@
     {
       "date": "2026-11-17",
       "note": "0040 approved (I2 G-ACT); 0041 approved: G-LOOP reopened with the mission layer (LE-9)",
+      "activities": {
+        "ACT-LOG-001": "deployment now",
+        "ACT-LOG-002": "deployment now",
+        "ACT-MFG-001": "pilot 1-3y",
+        "ACT-MFG-002": "pilot 1-3y",
+        "ACT-RET-001": "deployment now",
+        "ACT-HOS-001": "deployment now",
+        "ACT-HLTH-001": "deployment now",
+        "ACT-ELD-001": "pilot 3-7y",
+        "ACT-HOME-001": "research 3-7y",
+        "ACT-HOME-002": "demo 3-7y",
+        "ACT-INSP-001": "demo now",
+        "ACT-INSP-002": "demo 1-3y",
+        "ACT-SEC-001": "demo 1-3y",
+        "ACT-SAFE-001": "demo 3-7y",
+        "ACT-CON-001": "deployment now",
+        "ACT-AGR-001": "pilot 3-7y",
+        "ACT-EV-001": "pilot 1-3y",
+        "ACT-CLN-001": "deployment now",
+        "ACT-MRC-001": "demo 3-7y",
+        "ACT-MRC-002": "demo 1-3y",
+        "ACT-HRC-001": "research 3-7y",
+        "ACT-HRC-002": "research 3-7y",
+        "ACT-ASM-001": "research 7y+",
+        "ACT-PRED-001": "research 3-7y",
+        "ACT-PRED-002": "research 3-7y",
+        "ACT-AUTO-001": "deployment now",
+        "ACT-AUTO-002": "demo 1-3y",
+        "ACT-AUTO-003": "research 3-7y",
+        "ACT-MFG-003": "demo 1-3y",
+        "ACT-AGR-002": "deployment now",
+        "ACT-SOL-001": "deployment now",
+        "ACT-PRED-003": "concept 3-7y",
+        "ACT-PRED-004": "concept 7y+",
+        "ACT-LRN-001": "concept 3-7y",
+        "ACT-LRN-002": "concept 3-7y",
+        "ACT-AUTO-004": "concept 3-7y",
+        "ACT-SAFE-002": "concept 3-7y",
+        "ACT-CARE-001": "concept 7y+",
+        "ACT-MFG-004": "demo 1-3y",
+        "ACT-HRC-003": "concept 3-7y"
+      },
+      "directions": {
+        "perception": 2.78,
+        "reasoning": 0.68,
+        "prediction": 0.25,
+        "action": 4.52,
+        "learning": 0.75,
+        "cooperation": 1.07,
+        "safety": 0.49,
+        "communication": 0.95,
+        "autonomy": 0.67
+      }
+    },
+    {
+      "date": "2026-11-17",
+      "note": "I2 L3: set 7 actions pre-registered (24 tasks)",
+      "activities": {
+        "ACT-LOG-001": "deployment now",
+        "ACT-LOG-002": "deployment now",
+        "ACT-MFG-001": "pilot 1-3y",
+        "ACT-MFG-002": "pilot 1-3y",
+        "ACT-RET-001": "deployment now",
+        "ACT-HOS-001": "deployment now",
+        "ACT-HLTH-001": "deployment now",
+        "ACT-ELD-001": "pilot 3-7y",
+        "ACT-HOME-001": "research 3-7y",
+        "ACT-HOME-002": "demo 3-7y",
+        "ACT-INSP-001": "demo now",
+        "ACT-INSP-002": "demo 1-3y",
+        "ACT-SEC-001": "demo 1-3y",
+        "ACT-SAFE-001": "demo 3-7y",
+        "ACT-CON-001": "deployment now",
+        "ACT-AGR-001": "pilot 3-7y",
+        "ACT-EV-001": "pilot 1-3y",
+        "ACT-CLN-001": "deployment now",
+        "ACT-MRC-001": "demo 3-7y",
+        "ACT-MRC-002": "demo 1-3y",
+        "ACT-HRC-001": "research 3-7y",
+        "ACT-HRC-002": "research 3-7y",
+        "ACT-ASM-001": "research 7y+",
+        "ACT-PRED-001": "research 3-7y",
+        "ACT-PRED-002": "research 3-7y",
+        "ACT-AUTO-001": "deployment now",
+        "ACT-AUTO-002": "demo 1-3y",
+        "ACT-AUTO-003": "research 3-7y",
+        "ACT-MFG-003": "demo 1-3y",
+        "ACT-AGR-002": "deployment now",
+        "ACT-SOL-001": "deployment now",
+        "ACT-PRED-003": "concept 3-7y",
+        "ACT-PRED-004": "concept 7y+",
+        "ACT-LRN-001": "concept 3-7y",
+        "ACT-LRN-002": "concept 3-7y",
+        "ACT-AUTO-004": "concept 3-7y",
+        "ACT-SAFE-002": "concept 3-7y",
+        "ACT-CARE-001": "concept 7y+",
+        "ACT-MFG-004": "demo 1-3y",
+        "ACT-HRC-003": "concept 3-7y"
+      },
+      "directions": {
+        "perception": 2.78,
+        "reasoning": 0.68,
+        "prediction": 0.25,
+        "action": 4.52,
+        "learning": 0.75,
+        "cooperation": 1.07,
+        "safety": 0.49,
+        "communication": 0.95,
+        "autonomy": 0.67
+      }
+    },
+    {
+      "date": "2026-11-17",
+      "note": "I2 L3 done: set 7 frozen; bounds B1-B8 and clarifications C1-C15 approved; x02 to G-SELF (C9)",
       "activities": {
         "ACT-LOG-001": "deployment now",
         "ACT-LOG-002": "deployment now",

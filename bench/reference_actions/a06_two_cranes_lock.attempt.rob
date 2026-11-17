@@ -1,0 +1,12 @@
+// bench/reference_actions/a06_two_cranes_lock.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 1.7;
+
+task lock_pair(robot a, robot b, object x, object y, location la, location lb) {
+    goal { robot_at a la; robot_at b lb; }
+    plan {
+        move a to la;
+        do a lock x;
+        move b to lb;
+        do b lock y;
+    }
+}

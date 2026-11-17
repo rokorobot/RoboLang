@@ -1,0 +1,73 @@
+{
+  "id": "a04_open_if_clear",
+  "prompt": "If pass_area is clear when the job starts, have chef_arm open oven_door_1. If it is not, send \"pass busy\" to channel \"kitchen\" from chef_arm and stop the job as failed.",
+  "world": "bench/worlds/kitchen_values.json",
+  "group": "action",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_8": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "pass_area clear",
+        "goal": [
+          [
+            "rl:thing:oven_door_1",
+            "in_state",
+            "open"
+          ]
+        ],
+        "world_patch": {}
+      },
+      {
+        "when": "pass_area not clear: message sent, the run stops",
+        "fails": true,
+        "messages": [
+          [
+            "kitchen",
+            null
+          ]
+        ],
+        "world_patch": {
+          "regions": {
+            "pass_area": {
+              "clear": false
+            }
+          }
+        }
+      }
+    ],
+    "world_1_4": {
+      "robots": {
+        "chef_arm": {
+          "actions": {
+            "open": {
+              "target": "object",
+              "result": "open"
+            }
+          }
+        }
+      },
+      "object_states": {
+        "oven_door_1": "closed"
+      }
+    }
+  },
+  "expected_actions": [
+    {
+      "robot": "chef_arm",
+      "action": "open",
+      "target": "oven_door_1"
+    }
+  ],
+  "tags": [
+    "open",
+    "if",
+    "region_clear"
+  ],
+  "gap": "G-ACT",
+  "why": "`if` is in 1.7 but `do` is not, so the branch that must act cannot be written. 1.8 allows `do` in a branch like any step.",
+  "attempt_fails_with": "E203"
+}

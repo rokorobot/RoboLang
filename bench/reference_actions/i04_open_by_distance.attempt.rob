@@ -1,0 +1,10 @@
+// bench/reference_actions/i04_open_by_distance.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 1.7;
+
+task open_by(robot r, object door, location closet) {
+    goal { robot_at r closet; }
+    plan {
+        move r to closet;
+        do r open door to 30 cm;
+    }
+}

@@ -1,0 +1,55 @@
+{
+  "id": "a03_print_gridline",
+  "prompt": "Have printer1 print the grid marks at gridline_c.",
+  "world": "bench/worlds/site.json",
+  "group": "action",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_8": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "the world as given",
+        "goal": [
+          [
+            "rl:place:gridline_c",
+            "in_state",
+            "printed"
+          ]
+        ],
+        "world_patch": {}
+      }
+    ],
+    "world_1_4": {
+      "robots": {
+        "printer1": {
+          "actions": {
+            "print": {
+              "target": "location",
+              "result": "printed"
+            }
+          }
+        }
+      },
+      "location_states": {
+        "gridline_c": "blank"
+      }
+    }
+  },
+  "expected_actions": [
+    {
+      "robot": "printer1",
+      "action": "print",
+      "target": "gridline_c"
+    }
+  ],
+  "tags": [
+    "print",
+    "location_target"
+  ],
+  "gap": "G-ACT",
+  "why": "Printing is an action the plan has no statement for. 1.8 allows a location as the target of `do` (0040 A4) and declares `print` in printer1's profile.",
+  "attempt_fails_with": "E203"
+}

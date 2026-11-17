@@ -1,0 +1,7 @@
+{
+  "task": "go",
+  "bindings": {
+    "r": "printer1",
+    "dst": "gridline_c"
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "id": "i01_runner_cannot_open",
+  "prompt": "Have the runner open oven_door_1.",
+  "world": "bench/worlds/kitchen_values.json",
+  "group": "infeasible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_8": {
+    "decision": "cannot",
+    "category": "infeasible",
+    "because": "0040 A6",
+    "world_1_4": {
+      "robots": {
+        "chef_arm": {
+          "actions": {
+            "open": {
+              "target": "object",
+              "result": "open"
+            }
+          }
+        },
+        "helper_arm": {
+          "actions": {
+            "open": {
+              "target": "object",
+              "result": "open"
+            }
+          }
+        },
+        "runner": {
+          "actions": {}
+        }
+      },
+      "object_states": {
+        "oven_door_1": "closed"
+      }
+    }
+  },
+  "blockers": [
+    "runner declares no `open`"
+  ],
+  "tags": [
+    "robot_ability",
+    "open"
+  ],
+  "gap": "G-ACT",
+  "why": "In the 1.8 world the runner declares no action, so the check before the run fails (0040 A6): the language can say it, this robot cannot do it. 1.7 cannot say it at all.",
+  "attempt_fails_with": "E203"
+}

@@ -1,0 +1,56 @@
+{
+  "id": "a10_decoy_open_closet",
+  "prompt": "Have moxi1 open the supply closet.",
+  "world": "bench/worlds/ward.json",
+  "group": "action",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_8": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "the world as given",
+        "goal": [
+          [
+            "rl:thing:closet_door",
+            "in_state",
+            "open"
+          ]
+        ],
+        "world_patch": {}
+      }
+    ],
+    "world_1_4": {
+      "robots": {
+        "moxi1": {
+          "actions": {
+            "open_door": {
+              "target": "object",
+              "result": "open"
+            }
+          }
+        }
+      },
+      "object_states": {
+        "closet_door": "closed"
+      }
+    }
+  },
+  "expected_actions": [
+    {
+      "robot": "moxi1",
+      "action": "open_door",
+      "target": "closet_door"
+    }
+  ],
+  "tags": [
+    "open",
+    "decoy_names",
+    "near_miss_action"
+  ],
+  "gap": "G-ACT",
+  "why": "The profile declares `open_door`, not `open`, and it acts on the object closet_door, not on the location supply_closet. A program must use the declared name and the target of the declared kind (0040 A1, A6).",
+  "attempt_fails_with": "E203"
+}

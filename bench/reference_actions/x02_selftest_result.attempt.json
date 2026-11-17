@@ -1,0 +1,7 @@
+{
+  "task": "self_test",
+  "bindings": {
+    "r": "flippy1",
+    "fryer": "fryer"
+  }
+}

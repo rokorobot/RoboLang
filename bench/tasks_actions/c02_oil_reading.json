@@ -1,0 +1,41 @@
+{
+  "id": "c02_oil_reading",
+  "prompt": "With flippy1, go to the fryer, measure the oil temperature and send the reading to the \"fry\" channel.",
+  "world": "bench/worlds/fry_station.json",
+  "group": "control",
+  "expect": {
+    "decision": "program"
+  },
+  "expected_goal": [
+    [
+      "rl:robot:flippy1",
+      "located_in",
+      "rl:place:fryer"
+    ]
+  ],
+  "expected_readings": [
+    [
+      "flippy1",
+      "temperature",
+      "oil_1"
+    ]
+  ],
+  "expected_messages": [
+    {
+      "channel": "fry",
+      "value_of": [
+        "oil_1",
+        "temperature"
+      ]
+    }
+  ],
+  "expect_1_8": {
+    "decision": "program"
+  },
+  "expected_actions": [],
+  "tags": [
+    "measure",
+    "value_message",
+    "no_action"
+  ]
+}
