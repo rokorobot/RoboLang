@@ -1,5 +1,5 @@
 {
-  "sha256": "a082c25b01d427b528562af4505745a0dca62cac3a9806615bb3fb91e6aeb41a",
+  "sha256": "15e93abe6ab8d6a05b624a42f07249aea53b7783fe53ba07281c0b8696c3d0ec",
   "schema": "robolang.bench.freeze.v2",
   "patterns": [
     "bench/tasks*/*.json",
@@ -879,8 +879,8 @@
     "bench/tasks_regions/r07_carry_module_dry.json": "92c768ec254df15dbd0333b1eef8179b50e4dfa684f955b90052df0c727b658c",
     "bench/tasks_regions/r08_decoy_door_zone2.json": "4cede5e1713738bb67921b2900116bd725e8e2986373ab8789a80e6579eda2d2",
     "bench/tasks_regions/r09_crate_around_aisle_and_cell.json": "5c0b983f5a55e1f19d7f113564bbacd84457919808a24794448c72fea1a0d281",
-    "bench/tasks_regions/x01_first_leg_only.json": "eb9ce2b885645bafac7c5faa41dc28ad955e7739529d64cdb4f0838eddafebd4",
-    "bench/tasks_regions/x02_arm_over_wet.json": "72de201416a87d793c7774b7ab925545831b9a9e75391a73b7c50c26c8bffc82",
+    "bench/tasks_regions/x01_first_leg_only.json": "e9f85894cf40749737f3f2082ca77781acecf23051c5fc698ae574aabaf318bd",
+    "bench/tasks_regions/x02_arm_over_wet.json": "f0f722cc43c526afb293d3e83d89475251673ae536a885ff7cb374b49a614796",
     "bench/tasks_regions/x03_person_distance.json": "b78acd2cc0a4d167aa5dcdb8c5f87630577b8136b69181fc9bd50e17be9e0ee4",
     "bench/tasks_regions/x04_grip_ten_newtons.json": "eb63acdad5e7f5e646956427d8a94b298febcfe2217808b552efacdaa6d040a6",
     "bench/tasks_regions/x05_avoid_busy_areas.json": "053710f9c4853d63bae5902d09b446d8d7e43113968795a88b04ab8adb961dee",
@@ -993,10 +993,10 @@
     "tests/test_bench_branch.py": "ad6cfe43cc265e6d7d833eb7e89bd8770b4d47ee656a2c8e54238a600fdd66d2",
     "tests/test_bench_cascade.py": "5bb726f33ea9f6f23c2dfad8df07b43d551d9697e94409b4fb2798366f323e50",
     "tests/test_bench_failure.py": "0eaf64464bcc628431f079147266c73fd23ccb746894c0e7965c6db569633958",
-    "tests/test_bench_future.py": "241511b934909475b1c1c5bdb5f51b7be0778b0283c1d903d1644e56a5901e1d",
+    "tests/test_bench_future.py": "fc8c5144794bf1cf8170c11c234b6d3f9dcaa3d33031f7b651c6d9531221dc8e",
     "tests/test_bench_gate.py": "653be1ae7d454b4b93d8df99b6a999214511d76bae37c1f147108dbe98d608b9",
     "tests/test_bench_hard.py": "820d1fb7d0fa79b121f4819ad34d7afcf8aa4596144b5aa2f99ef948e6d370b7",
-    "tests/test_bench_regions.py": "ac90788064ea965243bb12056f347904eb9fa9f7a5466e4fba7de41680f90163",
+    "tests/test_bench_regions.py": "31a0ff4b5d4dd1d7efda0ca6666cf4a0548ee887e22b4f6156b73fca97d54ec6",
     "tests/test_bench_values.py": "bc3eba2f50963a6fe9d38df70d4c934b9c0a447b70ef8a3eeaebb785f0af97cd",
     "tools/bench_freeze.py": "921ce22129c37ddbfdd2ea2c716189f6195759b8377b6ce97383556a93852065"
   }

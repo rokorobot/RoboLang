@@ -101,12 +101,10 @@
       "id": "G-PATH",
       "name": "Staying inside or outside a region while moving",
       "direction": "safety",
-      "scope": "open",
-      "scope_note": "RoboLang 1.7 region limits are built and taught (0039, I1 L4, 2026-11-17); the gap stays open until the acceptance run on set 6 (L5) and closes at L6 (C4). What stays inexpressible is a limit on one step (x01) and on the arm's workspace (x02); needed by H4 (safety case G2)",
-      "tasks": [
-        "x01_first_leg_only",
-        "x02_arm_over_wet"
-      ]
+      "scope": "closed",
+      "scope_note": "Closed 2026-11-17 at L6 of iteration I1: RoboLang 1.7 region limits (`@safety no_go_region`, `@safety in_region`, decision 0039), accepted on set 6 (docs/evidence/bench-1-7-acceptance.md). What stayed inexpressible moved to G-STEPLIMIT and G-WORKSPACE (0039 C4)",
+      "tasks": [],
+      "closed_in": "RoboLang 1.7"
     },
     {
       "id": "G-FORCE",
@@ -207,6 +205,26 @@
         "f_self_report_charge"
       ],
       "direction": "autonomy"
+    },
+    {
+      "id": "G-STEPLIMIT",
+      "name": "A region or speed limit on one step or one stretch of a route, not the whole task",
+      "direction": "safety",
+      "scope": "open",
+      "scope_note": "From G-PATH at 1.7 (0039 P2, C4); far until a sub-activity needs it",
+      "tasks": [
+        "x01_first_leg_only"
+      ]
+    },
+    {
+      "id": "G-WORKSPACE",
+      "name": "Limits on the arm's workspace, not only on where the robot drives",
+      "direction": "safety",
+      "scope": "open",
+      "scope_note": "From G-PATH at 1.7 (0039 P3, C4); far until a sub-activity needs it",
+      "tasks": [
+        "x02_arm_over_wet"
+      ]
     }
   ],
   "activities": [
@@ -520,7 +538,7 @@
       ],
       "maturity": "demo",
       "horizon": "3-7y",
-      "basis": "heise (2026-05-08): 1X plans first NEO deliveries to US private customers by end of 2026, price from 20,000 USD or about 500 USD/month, with a first-year batch of 10,000 reportedly sold out; early units help with internal logistics in the factory. No source I opened confirms robots working in customer homes.",
+      "basis": "heise (2026-05-08): 1X plans first NEO deliveries to US private customers by end of 2026, price from 20,000 USD or about 500 USD/month, with a first-year batch of 10,000 reportedly sold out; early units help with internal logistics in the factory. No source I opened confirms robots working in customer homes. L6 (2026-11-17): G-PATH closed by RoboLang 1.7 region limits.",
       "requests": [
         "At 8 pm vacuum the living room unless someone is in it.",
         "Put every toy on the floor into the toy box, but stay out of the nursery.",
@@ -531,7 +549,6 @@
         "G-ACT",
         "G-LOOP",
         "G-CHOOSE",
-        "G-PATH",
         "G-PERCEIVE"
       ],
       "forecast": {
@@ -624,7 +641,7 @@
       ],
       "maturity": "demo",
       "horizon": "1-3y",
-      "basis": "The Robot Report (2026-01-21): Orbit 5.1 adds a security patrol mission type for Spot. When Spot detects a person it pauses, switches on lights, captures PTZ, panoramic and thermal images, triggers an alert and resumes its path. No customer is named.",
+      "basis": "The Robot Report (2026-01-21): Orbit 5.1 adds a security patrol mission type for Spot. When Spot detects a person it pauses, switches on lights, captures PTZ, panoramic and thermal images, triggers an alert and resumes its path. No customer is named. L6 (2026-11-17): G-PATH closed by RoboLang 1.7 region limits.",
       "requests": [
         "Patrol the north perimeter after 10 pm; if you see a person, stop, take a picture and alert security, then continue.",
         "Stay out of the lab corridor during the patrol.",
@@ -634,8 +651,7 @@
         "G-LOOP",
         "G-CLOCK",
         "G-PERCEIVE",
-        "G-PROX",
-        "G-PATH"
+        "G-PROX"
       ],
       "forecast": {
         "claim": "Boston Dynamics or a security firm publicly names a customer running Spot autonomous security patrols by 2028-03-31.",
@@ -656,7 +672,7 @@
       ],
       "maturity": "demo",
       "horizon": "3-7y",
-      "basis": "Agility says Digit v5 is designed to work beside people without safety fencing ('cooperative safety'), with early-customer deployments from December 2026; it has published no certification for unguarded operation (2026-08-10 article). ISO 25785-1 (dynamically stable industrial robots) was still a working draft as of early 2026, with zoning, speed reduction near people and force limits expected; ratification was estimated at late 2026 to 2027.",
+      "basis": "Agility says Digit v5 is designed to work beside people without safety fencing ('cooperative safety'), with early-customer deployments from December 2026; it has published no certification for unguarded operation (2026-08-10 article). ISO 25785-1 (dynamically stable industrial robots) was still a working draft as of early 2026, with zoning, speed reduction near people and force limits expected; ratification was estimated at late 2026 to 2027. L6 (2026-11-17): G-PATH closed by RoboLang 1.7 region limits.",
       "requests": [
         "Work in aisle 3, but slow to 0.2 m/s when a person is within 2 metres and stop when one is within 1 metre.",
         "Never enter the red zone while a person is in it.",
@@ -664,7 +680,6 @@
       ],
       "needs": [
         "G-PROX",
-        "G-PATH",
         "G-FORCE"
       ],
       "forecast": {
@@ -699,14 +714,13 @@
       ],
       "maturity": "deployment",
       "horizon": "now",
-      "basis": "Dusty Robotics' site: the FieldPrinter prints full-size BIM layout on jobsite floors, with over 300 million square feet printed in more than 1,000 buildings and general contractors such as DPR, Skanska and McCarthy named (vendor claims); available in North America only.",
+      "basis": "Dusty Robotics' site: the FieldPrinter prints full-size BIM layout on jobsite floors, with over 300 million square feet printed in more than 1,000 buildings and general contractors such as DPR, Skanska and McCarthy named (vendor claims); available in North America only. L6 (2026-11-17): G-PATH closed by RoboLang 1.7 region limits.",
       "requests": [
         "Print the wall layout for level 3 and stay inside the marked zone.",
         "Print the layout for all trades on this floor, then stop.",
         "If something blocks the floor, go around it and tell me where it is."
       ],
       "needs": [
-        "G-PATH",
         "G-LOOP",
         "G-PERCEIVE",
         "G-ACT"
@@ -804,7 +818,7 @@
       ],
       "maturity": "deployment",
       "horizon": "now",
-      "basis": "Robotics Tomorrow (2026-04-07): Brain Corp says more than 40,000 robots are deployed across six continents; BrainOS Clean 2.0 for Tennant floor cleaners adds SelfPath AI (no manual route training), schedule-based operation and automatic charging, with fleet-wide rollout planned for May 2026.",
+      "basis": "Robotics Tomorrow (2026-04-07): Brain Corp says more than 40,000 robots are deployed across six continents; BrainOS Clean 2.0 for Tennant floor cleaners adds SelfPath AI (no manual route training), schedule-based operation and automatic charging, with fleet-wide rollout planned for May 2026. L6 (2026-11-17): G-PATH closed by RoboLang 1.7 region limits.",
       "requests": [
         "Clean the lobby every night at 11 pm, then go back to the dock to charge.",
         "Do not clean the wet-floor zone.",
@@ -813,8 +827,7 @@
       "needs": [
         "G-CLOCK",
         "G-LOOP",
-        "G-ACT",
-        "G-PATH"
+        "G-ACT"
       ],
       "forecast": {
         "claim": "Brain Corp reports at least 75,000 deployed robots by 2028-12-31.",
@@ -1226,7 +1239,7 @@
       ],
       "maturity": "deployment",
       "horizon": "now",
-      "basis": "AgFunderNews (2026-08-31): Carbon Robotics passed 100 million USD revenue in the year to March 2026, sells LaserWeeder G2 in modular sizes in about 20 countries, and offers a kit that makes an existing tractor autonomous (cameras, radar, lidar) for weeding, tillage and irrigation. No installed-machine count or acreage is given on this page.",
+      "basis": "AgFunderNews (2026-08-31): Carbon Robotics passed 100 million USD revenue in the year to March 2026, sells LaserWeeder G2 in modular sizes in about 20 countries, and offers a kit that makes an existing tractor autonomous (cameras, radar, lidar) for weeding, tillage and irrigation. No installed-machine count or acreage is given on this page. L6 (2026-11-17): G-PATH closed by RoboLang 1.7 region limits.",
       "requests": [
         "Weed rows 1 to 12 of field 3 and leave the crop untouched.",
         "Stop at the headland and turn into the next row.",
@@ -1235,7 +1248,6 @@
       "needs": [
         "G-PERCEIVE",
         "G-LOOP",
-        "G-PATH",
         "G-CHOOSE"
       ],
       "forecast": {
@@ -1257,7 +1269,7 @@
       ],
       "maturity": "deployment",
       "horizon": "now",
-      "basis": "eWeek (2026-03-31): a Maximo robot of AES has completed the installation of 100 MW of solar power; Maximo robots have worked at AES's Bellefield complex, still under construction. Version 3.0 installs up to one module a minute (a worker: up to 24 an hour). The article does not give the number of robots. R3 (2026-11-17): G-PERCEIVE refuted, 1.6 expresses it with `measure r distance of table using laser as off` and `if off <= 5 mm`, when the world has a sensor that measures distance (control c_table_out_of_tolerance).",
+      "basis": "eWeek (2026-03-31): a Maximo robot of AES has completed the installation of 100 MW of solar power; Maximo robots have worked at AES's Bellefield complex, still under construction. Version 3.0 installs up to one module a minute (a worker: up to 24 an hour). The article does not give the number of robots. R3 (2026-11-17): G-PERCEIVE refuted, 1.6 expresses it with `measure r distance of table using laser as off` and `if off <= 5 mm`, when the world has a sensor that measures distance (control c_table_out_of_tolerance). L6 (2026-11-17): G-PATH closed by RoboLang 1.7 region limits.",
       "requests": [
         "Install modules on table row 14 until the row is full, then move to row 15.",
         "If a table is out of tolerance, skip it and report which one.",
@@ -1265,7 +1277,6 @@
       ],
       "needs": [
         "G-LOOP",
-        "G-PATH",
         "G-MSG"
       ],
       "forecast": {
@@ -1507,7 +1518,7 @@
       ],
       "maturity": "concept",
       "horizon": "3-7y",
-      "basis": "Method: combination. A training-free control-barrier-function filter now sits between a VLA policy and the robot, reading the policy's target from its attention heads and treating the rest as obstacles (arXiv 2606.09749, 2026-06-08; simulation only, 43% better than an oracle with a moving-obstacle variant), while the standard for dynamically stable robots is in drafting (DIN EN ISO 25785-1 project from 2026-03-02) and Agility is adding onboard human detection to Digit v5 without a published certification. No source shows an assessed safety function for a learned controller.",
+      "basis": "Method: combination. A training-free control-barrier-function filter now sits between a VLA policy and the robot, reading the policy's target from its attention heads and treating the rest as obstacles (arXiv 2606.09749, 2026-06-08; simulation only, 43% better than an oracle with a moving-obstacle variant), while the standard for dynamically stable robots is in drafting (DIN EN ISO 25785-1 project from 2026-03-02) and Agility is adding onboard human detection to Digit v5 without a published certification. No source shows an assessed safety function for a learned controller. L6 (2026-11-17): G-PATH closed by RoboLang 1.7 region limits.",
       "requests": [
         "Use the learned grasp, but never move faster than 0.25 m/s within 1 m of a person, whatever the model proposes.",
         "If the safety layer vetoes a move twice, stop and call me.",
@@ -1515,8 +1526,7 @@
       ],
       "needs": [
         "G-PROX",
-        "G-FORCE",
-        "G-PATH"
+        "G-FORCE"
       ],
       "forecast": {
         "claim": "A vendor announces a third-party-assessed safety function for a learned (VLA or foundation-model) controller on a humanoid or mobile manipulator by 2029-12-31.",
@@ -2154,6 +2164,63 @@
     {
       "date": "2026-11-17",
       "note": "I1 L4: RoboLang 1.7 built and taught",
+      "activities": {
+        "ACT-LOG-001": "deployment now",
+        "ACT-LOG-002": "deployment now",
+        "ACT-MFG-001": "pilot 1-3y",
+        "ACT-MFG-002": "pilot 1-3y",
+        "ACT-RET-001": "deployment now",
+        "ACT-HOS-001": "deployment now",
+        "ACT-HLTH-001": "deployment now",
+        "ACT-ELD-001": "pilot 3-7y",
+        "ACT-HOME-001": "research 3-7y",
+        "ACT-HOME-002": "demo 3-7y",
+        "ACT-INSP-001": "demo now",
+        "ACT-INSP-002": "demo 1-3y",
+        "ACT-SEC-001": "demo 1-3y",
+        "ACT-SAFE-001": "demo 3-7y",
+        "ACT-CON-001": "deployment now",
+        "ACT-AGR-001": "pilot 3-7y",
+        "ACT-EV-001": "pilot 1-3y",
+        "ACT-CLN-001": "deployment now",
+        "ACT-MRC-001": "demo 3-7y",
+        "ACT-MRC-002": "demo 1-3y",
+        "ACT-HRC-001": "research 3-7y",
+        "ACT-HRC-002": "research 3-7y",
+        "ACT-ASM-001": "research 7y+",
+        "ACT-PRED-001": "research 3-7y",
+        "ACT-PRED-002": "research 3-7y",
+        "ACT-AUTO-001": "deployment now",
+        "ACT-AUTO-002": "demo 1-3y",
+        "ACT-AUTO-003": "research 3-7y",
+        "ACT-MFG-003": "demo 1-3y",
+        "ACT-AGR-002": "deployment now",
+        "ACT-SOL-001": "deployment now",
+        "ACT-PRED-003": "concept 3-7y",
+        "ACT-PRED-004": "concept 7y+",
+        "ACT-LRN-001": "concept 3-7y",
+        "ACT-LRN-002": "concept 3-7y",
+        "ACT-AUTO-004": "concept 3-7y",
+        "ACT-SAFE-002": "concept 3-7y",
+        "ACT-CARE-001": "concept 7y+",
+        "ACT-MFG-004": "demo 1-3y",
+        "ACT-HRC-003": "concept 3-7y"
+      },
+      "directions": {
+        "perception": 2.78,
+        "reasoning": 0.68,
+        "prediction": 0.25,
+        "action": 4.52,
+        "learning": 0.75,
+        "cooperation": 1.07,
+        "safety": 0.49,
+        "communication": 0.95,
+        "autonomy": 0.67
+      }
+    },
+    {
+      "date": "2026-11-17",
+      "note": "L6 of I1: G-PATH closed by RoboLang 1.7; G-STEPLIMIT and G-WORKSPACE opened (0039 C4)",
       "activities": {
         "ACT-LOG-001": "deployment now",
         "ACT-LOG-002": "deployment now",

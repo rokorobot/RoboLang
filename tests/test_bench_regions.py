@@ -374,17 +374,16 @@ def test_the_controls_need_no_limit_and_two_of_them_stop_where_the_request_says(
 # -------- the atlas --------
 
 def test_only_the_tasks_1_7_still_declines_as_inexpressible_are_in_the_atlas_gaps():
-    """The atlas lists inexpressible tasks. The 9 `region` programs and the 4 `infeasible` tasks left it at L4, and
-    G-PATH stays open until the acceptance run (L5) and closes at L6 (C4): what remains of it is x01 and x02."""
+    """The atlas lists inexpressible tasks. The 9 `region` programs and the 4 `infeasible` tasks left it at L4. G-PATH
+    closed at L6 (C4): what remains of it, x01 and x02, moved to G-STEPLIMIT and G-WORKSPACE."""
     in_gaps = [(t, g["id"]) for g in ATLAS["gaps"] for t in g["tasks"] if t in SET]
     assert len(in_gaps) == len({t for t, _ in in_gaps}) == len(INEXPRESSIBLE)
     assert {t for t, _ in in_gaps} == set(INEXPRESSIBLE)
     for task_id, gap in in_gaps:
         assert INEXPRESSIBLE[task_id]["gap"] == gap and GAPS[gap]["scope"] == "open"
-    assert Counter(gap for _, gap in in_gaps) == {"G-PATH": 2, "G-PROX": 2, "G-FORCE": 1}
-    assert {t["gap"] for t in INEXPRESSIBLE.values()} == {"G-PATH", "G-PROX", "G-FORCE"}
+    assert Counter(gap for _, gap in in_gaps) == {"G-STEPLIMIT": 1, "G-WORKSPACE": 1, "G-PROX": 2, "G-FORCE": 1}
     assert {t["gap"] for t in REGION.values()} | {t["gap"] for t in INFEASIBLE.values()} == {"G-PATH"}
-    assert GAPS["G-PATH"]["scope"] == "open" and "L5" in GAPS["G-PATH"]["scope_note"]
+    assert GAPS["G-PATH"]["scope"] == "closed" and GAPS["G-PATH"]["closed_in"] == "RoboLang 1.7"
     assert {t for g in ATLAS["gaps"] for t in g["tasks"]} & (set(REGION) | set(INFEASIBLE) | set(CONTROLS)) == set()
 
 

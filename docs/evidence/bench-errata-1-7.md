@@ -113,3 +113,9 @@ The acceptance run ([bench-1-7-acceptance.md](bench-1-7-acceptance.md)) showed t
 limit. Haiku with the grammar-only prompt wrote that program in 3/3 repeats, and Sonnet with the full prompt asked to
 clarify in 3/3. New wording: "Send the runner to the sink, and keep it out of any area that becomes busy while it drives.". The labels are unchanged. Only a confirming run of `x05` (Haiku, grammar-only,
 3 repeats) decides B3; the acceptance run itself is not repeated. `docs/evidence/bench-freeze-v2.json` regenerated for this erratum.
+
+## Erratum E2 (2026-11-17, L6): gap labels of `x01` and `x02`
+
+G-PATH closed at L6 (0039 C4). `x01_first_leg_only` now names gap G-STEPLIMIT and `x02_arm_over_wet` names
+G-WORKSPACE. Scoring is unchanged: both stay `cannot / inexpressible`. `docs/evidence/bench-freeze-v2.json` is
+regenerated.

@@ -3,7 +3,12 @@
 The distribution version (this file) is independent of the language versions (1.1 to 1.7) and the Task IR schema
 versions (1.0 to 1.6). Decision records are in [`spec/decisions/`](https://github.com/rokorobot/RoboLang/tree/main/spec/decisions).
 
-## Unreleased
+## 0.4.0 (2026-11-17)
+
+RoboLang 1.7 (region limits), the first language version chosen by the activity atlas
+([language evolution](docs/LANGUAGE_EVOLUTION.md), iteration I1 of the [roadmap](docs/LANGUAGE_ROADMAP.md)).
+Accepted on benchmark set 6: silently dropped region limits fell from 3/27 to 0/27
+([acceptance](docs/evidence/bench-1-7-acceptance.md)).
 
 - **RoboLang 1.7: region limits** (decision 0039, step L4 of iteration I1). `robolang reference` and the benchmark
   prompts teach 1.7; set 6 (`--set regions`) is labelled for 1.7 with `limit_ok` and `limit_dropped_silently`

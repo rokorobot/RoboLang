@@ -43,7 +43,9 @@ def test_gaps():
     assert len(GAPS) == len(ATLAS["gaps"]), "duplicate gap id"
     for gap in ATLAS["gaps"]:
         assert re.fullmatch(r"G-[A-Z]+", gap["id"]), gap["id"]
-        assert gap["name"] and gap["scope"] in {"open", "out"}, gap["id"]
+        assert gap["name"] and gap["scope"] in {"open", "out", "closed"}, gap["id"]
+        if gap["scope"] == "closed":  # closed by a released language version (L6): no task, no sub-activity needs it
+            assert gap["closed_in"] and gap["scope_note"] and not gap["tasks"], gap["id"]
         assert gap["direction"] in DIRECTIONS, f"{gap['id']}: unknown direction"
         assert gap["scope"] == "open" or gap["scope_note"], f"{gap['id']}: an out-of-scope gap names its decision"
 
@@ -66,6 +68,7 @@ def test_activities():
         assert act["maturity"] in MATURITY and act["horizon"] in HORIZON, where
         assert act["requests"] and all(isinstance(r, str) and r for r in act["requests"]), where
         assert all(n in GAPS for n in act["needs"]), f"{where}: unknown gap in needs"
+        assert all(GAPS[n]["scope"] != "closed" for n in act["needs"]), f"{where}: needs a closed gap"
         forecast = act["forecast"]
         assert forecast["claim"], where
         datetime.date.fromisoformat(forecast["due"])
