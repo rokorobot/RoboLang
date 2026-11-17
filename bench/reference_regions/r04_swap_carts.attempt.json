@@ -1,0 +1,10 @@
+{
+  "task": "swap",
+  "bindings": {
+    "a": "cart1",
+    "b": "cart2",
+    "pa": "intake",
+    "pb": "dispatch",
+    "corridor": "corridor"
+  }
+}

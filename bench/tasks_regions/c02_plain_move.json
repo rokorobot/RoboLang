@@ -1,0 +1,22 @@
+{
+  "id": "c02_plain_move",
+  "prompt": "Send weeder1 to row_14.",
+  "world": "bench/worlds/site.json",
+  "group": "control",
+  "expect": {
+    "decision": "program"
+  },
+  "expected_goal": [
+    [
+      "rl:robot:weeder1",
+      "located_in",
+      "rl:place:row_14"
+    ]
+  ],
+  "expect_1_7": {
+    "decision": "program"
+  },
+  "tags": [
+    "plain_move"
+  ]
+}

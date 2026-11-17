@@ -1,0 +1,66 @@
+{
+  "id": "r06_field_clear_or_other_row",
+  "prompt": "If field_zone is clear when the job starts, drive weeder1 to row_14; if it is not, drive weeder1 to row_15 instead. Either way weeder1 must stay out of road_zone.",
+  "world": "bench/worlds/site.json",
+  "group": "region",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_7": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "field_zone clear",
+        "goal": [
+          [
+            "rl:robot:weeder1",
+            "located_in",
+            "rl:place:row_14"
+          ]
+        ],
+        "world_patch": {}
+      },
+      {
+        "when": "field_zone not clear",
+        "goal": [
+          [
+            "rl:robot:weeder1",
+            "located_in",
+            "rl:place:row_15"
+          ]
+        ],
+        "world_patch": {
+          "regions": {
+            "field_zone": {
+              "clear": false
+            }
+          }
+        }
+      }
+    ],
+    "world_1_3": {
+      "robots": {
+        "weeder1": {
+          "honours": [
+            "no_go_region",
+            "in_region"
+          ]
+        }
+      }
+    }
+  },
+  "expected_limits": [
+    [
+      "no_go_region",
+      "road_zone"
+    ]
+  ],
+  "tags": [
+    "no_go_region",
+    "if_region_clear"
+  ],
+  "gap": "G-PATH",
+  "why": "The limit holds for the whole task, whichever branch runs (0039 P2); 1.6 can write the `if` but not the limit, so every attempt is a half program.",
+  "attempt_fails_with": "E211"
+}

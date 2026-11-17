@@ -1,0 +1,44 @@
+{
+  "id": "i02_hall_is_outside",
+  "prompt": "Move printer1 from gridline_a to the hall and keep it inside layout_zone the whole way.",
+  "world": "bench/worlds/site.json",
+  "group": "infeasible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_7": {
+    "decision": "cannot",
+    "category": "infeasible",
+    "because": "0039 P5",
+    "world_1_3": {
+      "regions": {
+        "layout_zone": {
+          "contains": [
+            "gridline_a",
+            "gridline_c",
+            "level_3_wall"
+          ]
+        }
+      },
+      "robots": {
+        "printer1": {
+          "honours": [
+            "no_go_region",
+            "in_region"
+          ]
+        }
+      }
+    }
+  },
+  "tags": [
+    "in_region",
+    "destination_outside"
+  ],
+  "gap": "G-PATH",
+  "why": "In the 1.3 world layout_zone lists the locations it contains and the hall is not one of them, so the target lies outside the `in_region` and the run fails before it starts (0039 P5). 1.6 cannot state the limit at all.",
+  "blockers": [
+    "layout_zone does not contain hall"
+  ],
+  "attempt_fails_with": "E201"
+}

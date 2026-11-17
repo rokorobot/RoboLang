@@ -1,0 +1,10 @@
+{
+  "task": "fetch",
+  "bindings": {
+    "r": "chef_arm",
+    "b": "bowl_2",
+    "src": "fridge",
+    "dst": "pass",
+    "hot": "hot_zone"
+  }
+}

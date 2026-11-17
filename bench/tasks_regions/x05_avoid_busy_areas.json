@@ -1,0 +1,21 @@
+{
+  "id": "x05_avoid_busy_areas",
+  "prompt": "Send the runner to the sink, going around whichever areas are busy at the time.",
+  "world": "bench/worlds/kitchen.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_7": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "tags": [
+    "no_region_declared",
+    "run_time_choice"
+  ],
+  "gap": "G-CHOOSE",
+  "why": "The request names no region: which areas are busy is known only at run time, and a limit names its region before the run (0039 P4: `R` must be a `region` parameter). Picking a region that happens not to be clear now is a half program.",
+  "attempt_fails_with": "E211"
+}

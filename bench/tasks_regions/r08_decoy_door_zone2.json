@@ -1,0 +1,49 @@
+{
+  "id": "r08_decoy_door_zone2",
+  "prompt": "Send rover_1 to bench_1 and keep it out of door_zone2 on the way.",
+  "world": "bench/worlds/cleanroom.json",
+  "group": "region",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_7": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "the world as given",
+        "goal": [
+          [
+            "rl:robot:rover_1",
+            "located_in",
+            "rl:place:bench_1"
+          ]
+        ],
+        "world_patch": {}
+      }
+    ],
+    "world_1_3": {
+      "robots": {
+        "rover_1": {
+          "honours": [
+            "no_go_region",
+            "in_region"
+          ]
+        }
+      }
+    }
+  },
+  "expected_limits": [
+    [
+      "no_go_region",
+      "door_zone2"
+    ]
+  ],
+  "tags": [
+    "no_go_region",
+    "decoy_names"
+  ],
+  "gap": "G-PATH",
+  "why": "Near-miss names: the world has door_zone and door_zone2 (and rover_1 beside rover1, bench_1 beside bench1). 1.6 cannot state the limit at all; 1.7 must bind the region the request names.",
+  "attempt_fails_with": "E211"
+}

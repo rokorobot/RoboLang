@@ -22,11 +22,14 @@ DIRECTIONS = {"perception", "reasoning", "prediction", "action", "learning", "co
 
 
 def inexpressible_tasks() -> set[str]:
+    """Tasks the current language must decline as `inexpressible`: by their `expect` label, not their group. Set 6
+    ("regions", decision 0039) is pre-registered against 1.6, so its programs and infeasible tasks of 1.7 are here
+    until L4 relabels them."""
     found = set()
     for tasks_dir, _ in lib.SETS.values():
         for path in Path(tasks_dir).glob("*.json"):
             task = json.loads(path.read_text(encoding="utf-8"))
-            if task.get("group") == "inexpressible":
+            if lib.expectation(task) == ("cannot", "inexpressible"):
                 found.add(task["id"])
     return found
 

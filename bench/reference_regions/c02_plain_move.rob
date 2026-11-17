@@ -1,0 +1,7 @@
+// bench/reference_regions/c02_plain_move.rob: hand-written reference
+robolang 1.6;
+
+task go(robot r, location dst) {
+    goal { robot_at r dst; }
+    plan { move r to dst; }
+}

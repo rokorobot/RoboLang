@@ -1,0 +1,13 @@
+// bench/reference_regions/x03_person_distance.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 1.6;
+
+task bring(robot r, object v, location src, location dst) {
+    @safety min_distance 1.5 m;
+    goal { object_at v dst; }
+    plan {
+        move r to src;
+        grasp r v;
+        move r to dst;
+        place r v at dst;
+    }
+}
