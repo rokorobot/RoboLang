@@ -26,6 +26,7 @@ The atlas is the only source: add or change sub-activities there, then run this.
 from __future__ import annotations
 import itertools
 import json
+import math
 import sys
 from pathlib import Path
 
@@ -76,7 +77,7 @@ def scores(atlas: dict) -> tuple[dict[str, float], dict[str, float], set[str]]:
 
 
 def unlocked(atlas: dict, closed: set[str]) -> float:
-    return sum(priority(a) for a in atlas["activities"] if set(a["needs"]) <= closed)
+    return math.fsum(priority(a) for a in atlas["activities"] if set(a["needs"]) <= closed)
 
 
 def suggested_order(atlas: dict) -> list[tuple[str, float]]:
@@ -183,7 +184,7 @@ def render(atlas: dict) -> str:
     for i, d in enumerate(order, 1):
         n = sum(1 for a in acts if d in (a.get("directions") or []))
         ng = sorted((g for g in near if gaps[g].get("direction") == d), key=lambda g: -gap[g])
-        need = sum(gap[g["id"]] for g in gaps.values() if g.get("direction") == d and g["scope"] == "open")
+        need = math.fsum(gap[g["id"]] for g in gaps.values() if g.get("direction") == d and g["scope"] == "open")
         out.append(f"| {i} | {d} | {direction[d]:.2f} | {need:.2f} | {far[d]:.2f} | {n} | {', '.join(ng) or '—'} |")
     pinned = set((atlas.get("current_horizon") or {}).get("gaps", []))
     out += ["", "## Suggested order of language work", "",
