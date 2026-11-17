@@ -119,3 +119,9 @@ clarify in 3/3. New wording: "Send the runner to the sink, and keep it out of an
 G-PATH closed at L6 (0039 C4). `x01_first_leg_only` now names gap G-STEPLIMIT and `x02_arm_over_wet` names
 G-WORKSPACE. Scoring is unchanged: both stay `cannot / inexpressible`. `docs/evidence/bench-freeze-v2.json` is
 regenerated.
+
+## Erratum E3 (2026-11-17): G-LOOP reopened
+
+Decision 0041 reopened G-LOOP (LE-9). In `tests/test_bench_future.py`, the out-of-scope set is now only G-FALLBACK,
+and G-LOOP stays exempt from probes (12 standing tasks prove it). No task or label changed.
+`docs/evidence/bench-freeze-v2.json` is regenerated.
