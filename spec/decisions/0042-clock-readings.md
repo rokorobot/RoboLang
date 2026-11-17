@@ -91,7 +91,6 @@ task tote_if_open(robot r, object tote, location inb, location outb) {
 - **Standing tasks:**
   - `x_elapsed_time` and `x_report_duration`: elapsed time since the task started;
   - `u17_at_1400`: a bounded wait;
-  - `x05_cooling_time`: elapsed time after the wait, when the wait is the first step;
   - set 7's `x05_open_at_six`.
 
 **Still inexpressible:**
@@ -119,3 +118,19 @@ task tote_if_open(robot r, object tote, location inb, location outb) {
 1. One day only in 1.9 (T4).
 2. The live names stay `clock_time` and `clock_elapsed` (T6).
 3. T1–T12 are accepted.
+
+## Clarifications (PROPOSED 2026-11-17, from writing the L3 set; for the owner)
+
+| # | Question | Recommended |
+|---|---|---|
+| K1 | Which clock `wait until clock_time …` reads | The world clock (T7). In the simulation every robot's clock is the world clock, so `measure r time` and `clock_time` agree. The robot named in `measure` is recorded for the backends |
+| K2 | A time that has already passed, with no else path (`i02`, `i05`) | `cannot / infeasible`, caught before the run by K3 |
+| K3 | `wait until clock_time >= 09:00` started at 10:30 | **Fails before the run** with a new S-code ("the time has already passed"): "at 09:00" must never silently mean "now". A request "if it is already after 9, go now" is written with `measure` and `if` |
+| K4 | "Midnight" and "tonight" | Midnight belongs to the next day, so it is inexpressible in 1.9 (T4). `24:00` is not a valid literal |
+| K5 | When a wait for a time ends | At the exact instant the condition becomes true: the simulation knows it, because time advances continuously |
+| K6 | When `elapsed` starts | Simulated time 0, when the run reaches `RUNNING`, before `pre` is checked |
+| K7 | The standing task `x05_cooling_time` | **Stays inexpressible** (G-CALC). The probe is a contact sensor, so the arm moves first. "How long it took to cool" is the time between two moments, and a reading of `elapsed` since the start would include the move on a real robot. 0042's list of expressible tasks is corrected |
+| K8 | Message formats (T8) | `time` as `HH:MM:SS` and `elapsed` in seconds with the unit (`37 s`). Asking for another format ("just HH:MM") is G-CALC |
+| K9 | Worlds with no clock | The world shown to the model says "no clock", so `i01` and `i04` can be solved |
+| K10 | `clock_elapsed` in `wait until` | Kept as approved (T6), with no task of its own. `==` stays excluded (T3) |
+| K11 | Atlas gaps for `x02` (tomorrow) and `x05` (Monday) | A new far gap, **G-DATE** (dates and times on another day), so that G-CLOCK can close at L6 |

@@ -91,25 +91,25 @@ that the author must convert is a **program** (`k10`), never infeasible.
 | `c03_pan_temperature` | kitchen_values | With chef_arm, measure the temperature of pan_1 with its probe and send the reading to channel "pass". | program, a `measure` of a temperature and a value message (`expected_readings` names it); no clock reading |
 | `c04_as_soon_as_possible` | site | As soon as possible, send cleaner1 from dock_2 to the lobby. | program, a plain move; "as soon as possible" asks for no duration or time of day |
 
-## Proposed acceptance bounds (PLACEHOLDERS: to fix with the baseline in hand, rule 6)
+## Acceptance bounds (proposed with the baseline in hand, rule 6; for the owner)
 
-Baseline: not run. The numbers below copy set 7 and change only what the groups change. The smallest step is one answer
-(rule 6). The acceptance run repeats the baseline under 1.9, with world 1.5 copies.
+Baseline: [bench-set8-baseline.md](../evidence/bench-set8-baseline.md) (2026-11-17, 1.8, 3 repeats): no false
+programs at all. The smallest step is one answer (rule 6). The acceptance run repeats the baseline under 1.9 with
+world 1.5 copies.
 
 | # | Group | Measure | Baseline (1.8) | Proposed bound (1.9, per model) |
 |---|---|---|---|---|
-| B1 | 10 `clock` programs | goal on every path (the clock forced by each path) **and** `clock_ok`, meaning the clock is read as asked in `expected_clock` (kind, use, literal, timeout); full prompt | not expressible | ≥ 90%: at least 27/30 |
+| B1 | 10 `clock` programs | goal on every path **and** `clock_ok` (the right reading, comparison and time), full prompt | not expressible | ≥ 90%: at least 27/30 |
 | B2 | the same, grammar-only | the same | not expressible | for information |
-| B3 | 5 `inexpressible` | false programs, full and grammar-only | to be measured (0/15 expected) | at most 1/15 for each model and prompt |
-| B4 | 5 `infeasible` | decision `cannot`; no valid program that succeeds | to be measured | at least 14/15, and 0 that succeed |
-| B5 | 4 `control` | right decision and no clock reading added | to be measured (12/12 expected) | at least 11/12 |
-| B6 | sets 1 and 2 (standing) | `gate.json`; decision accuracy | the latest run | the gate passes; `decision_correct` drops at most 2 points or one answer, whichever is larger |
-| B7 | economy | statements, kinds, literals, reserved words, world fields, codes (0042) | — | 0 statements, 2 kinds (`time`, `elapsed`), 1 literal (`HH:MM[:SS]`), 2 reserved words (`clock_time`, `clock_elapsed`), 1 world field (`clock`), about 4 user-facing codes plus their IR forms |
-| B8 | 10 `clock` programs | **time replaced silently**: a valid, succeeding program that replaces the time condition or the wait for a time by a guessed `wait for`, a fixed message, or drops it; full prompt | to be measured | at most 1/30 |
+| B3 | inexpressible tasks | false programs, full and grammar-only | 0/15 for each | at most 1/15 for each model and prompt |
+| B4 | infeasible tasks | decision `cannot`; no valid program that succeeds | 15/15 for each | at least 14/15, and 0 that succeed |
+| B5 | 4 `control` | right decision and no clock reading added, full prompt | 12/12 for each | at least 11/12 |
+| B6 | sets 1 and 2 (standing) | `gate.json`; decision accuracy | latest run | the gate passes; `decision_correct` drops at most 2 points or one answer, whichever is larger |
+| B7 | economy | statements, kinds, literals, reserved words, world fields, codes | — | 0 statements, 2 kinds, 1 literal, 2 reserved words, 1 world field; about 4 user-facing codes plus their IR forms |
+| B8 | 10 `clock` programs | **time replaced silently**: a valid, succeeding program that replaces the time condition or the wait with a guessed `wait for`, a fixed message, or nothing; full prompt | 0/30 for each | at most 1/30 |
 
-If a bound fails, 1.9 stays in code only and is not taught. B8 is the measure that matters most: set 7's baseline
-counted action replaced silently at Haiku 3/30 and Sonnet 0/30, and the time replaced silently has the same shape. A
-run of an answer that ignores the time will look successful to every other check.
+If a bound fails, 1.9 stays in code only and is not taught.
+
 
 ## Cost of the baseline and acceptance runs (not spent)
 
