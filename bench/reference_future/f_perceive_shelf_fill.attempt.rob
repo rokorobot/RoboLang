@@ -1,0 +1,13 @@
+// bench/reference_future/f_perceive_shelf_fill.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 1.6;
+
+task check_fill(robot r, object box, sensor camera, location shelf) {
+    goal { robot_at r shelf; }
+    plan {
+        move r to shelf;
+        measure r fill of box using camera as f;
+        if f < 25 percent {
+            communicate r to "lead" with "shelf_a needs restocking";
+        }
+    }
+}

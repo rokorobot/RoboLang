@@ -1,0 +1,19 @@
+{
+  "id": "f_self_low_battery",
+  "prompt": "With spot1, if your battery is below 25 percent, go to dock_1 and tell channel \"lead\"; otherwise carry on to stop_c.",
+  "world": "bench/worlds/site.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "activity": "ACT-AUTO-001",
+  "gap": "G-SELF",
+  "tags": [
+    "self",
+    "battery",
+    "if"
+  ],
+  "why": "The robot's own charge is not a measured kind and no condition reads it: `robot_ready` says ready or not, never how much charge is left (language reference: 'Measured values', 'Conditions').",
+  "attempt_fails_with": "E217"
+}

@@ -1,0 +1,74 @@
+{
+  "id": "c_whichever_tugger_ready",
+  "prompt": "Send whichever of tugger_a and tugger_b is ready to the handoff point; tugger_a first if both are ready.",
+  "world": "bench/worlds/fulfilment.json",
+  "group": "control",
+  "expect": {
+    "decision": "program",
+    "category": "none"
+  },
+  "activity": "ACT-MFG-002",
+  "expected_goal": [
+    [
+      "rl:robot:tugger_a",
+      "located_in",
+      "rl:place:handoff_point"
+    ]
+  ],
+  "expect_1_6": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "tugger_a is ready",
+        "goal": [
+          [
+            "rl:robot:tugger_a",
+            "located_in",
+            "rl:place:handoff_point"
+          ]
+        ],
+        "world_patch": {
+          "events": []
+        }
+      },
+      {
+        "when": "tugger_a is not ready, tugger_b is",
+        "goal": [
+          [
+            "rl:robot:tugger_b",
+            "located_in",
+            "rl:place:handoff_point"
+          ]
+        ],
+        "world_patch": {
+          "events": [],
+          "robots": {
+            "tugger_a": {
+              "ready": false
+            }
+          }
+        }
+      },
+      {
+        "when": "neither is ready: the move fails",
+        "fails": true,
+        "world_patch": {
+          "events": [],
+          "robots": {
+            "tugger_a": {
+              "ready": false
+            },
+            "tugger_b": {
+              "ready": false
+            }
+          }
+        }
+      }
+    ]
+  },
+  "tags": [
+    "if",
+    "robot_ready",
+    "choose_by_state"
+  ]
+}

@@ -1,0 +1,15 @@
+// bench/reference_future/c_camera_fault_stop.rob: hand-written reference
+robolang 1.6;
+
+task camera_check(robot r, object tbl, sensor cam, location spot) {
+    plan {
+        if sensor_ok cam {
+            goal { robot_at r spot; }
+            move r to spot;
+            inspect r tbl using cam;
+        } else {
+            communicate r to "maint" with "camera not working";
+            fail "camera not working";
+        }
+    }
+}

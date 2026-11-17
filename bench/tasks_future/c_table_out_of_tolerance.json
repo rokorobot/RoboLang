@@ -1,0 +1,79 @@
+{
+  "id": "c_table_out_of_tolerance",
+  "prompt": "With installer1, put module_14 on row_14 and module_15 on row_15. Before module_14, measure table_14 with laser_installer1: if it is more than 5 mm out of tolerance, skip it and tell channel \"foreman\" that table_14 was skipped.",
+  "world": "bench/worlds/site.json",
+  "group": "control",
+  "expect": {
+    "decision": "program",
+    "category": "none"
+  },
+  "activity": "ACT-SOL-001",
+  "expected_goal": [
+    [
+      "rl:thing:module_14",
+      "located_in",
+      "rl:place:row_14"
+    ],
+    [
+      "rl:thing:module_15",
+      "located_in",
+      "rl:place:row_15"
+    ]
+  ],
+  "expect_1_6": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "table_14 is 3 mm off",
+        "goal": [
+          [
+            "rl:thing:module_14",
+            "located_in",
+            "rl:place:row_14"
+          ],
+          [
+            "rl:thing:module_15",
+            "located_in",
+            "rl:place:row_15"
+          ]
+        ],
+        "world_patch": {}
+      },
+      {
+        "when": "table_14 is 8 mm off: skipped and reported, module_15 still placed",
+        "goal": [
+          [
+            "rl:thing:module_15",
+            "located_in",
+            "rl:place:row_15"
+          ]
+        ],
+        "messages": [
+          [
+            "foreman",
+            null
+          ]
+        ],
+        "world_patch": {
+          "objects": {
+            "table_14": {
+              "properties": {
+                "distance": {
+                  "value": "8",
+                  "unit": "mm"
+                }
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "tags": [
+    "measure",
+    "if",
+    "distance",
+    "communicate",
+    "pick_place"
+  ]
+}

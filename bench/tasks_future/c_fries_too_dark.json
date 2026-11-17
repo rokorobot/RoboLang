@@ -1,0 +1,68 @@
+{
+  "id": "c_fries_too_dark",
+  "prompt": "With flippy1, check basket_1 with its camera. If the camera labels the fries \"too_dark\", put the basket in the discard bin and tell channel \"lead\"; otherwise put it on the hot tray.",
+  "world": "bench/worlds/fry_station.json",
+  "group": "control",
+  "expect": {
+    "decision": "program",
+    "category": "none"
+  },
+  "activity": "ACT-HOS-001",
+  "expected_goal": [
+    [
+      "rl:thing:basket_1",
+      "located_in",
+      "rl:place:discard_bin"
+    ]
+  ],
+  "expect_1_6": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "the camera labels basket_1 too_dark",
+        "goal": [
+          [
+            "rl:thing:basket_1",
+            "located_in",
+            "rl:place:discard_bin"
+          ]
+        ],
+        "messages": [
+          [
+            "lead",
+            null
+          ]
+        ],
+        "world_patch": {}
+      },
+      {
+        "when": "the camera labels basket_1 golden",
+        "goal": [
+          [
+            "rl:thing:basket_1",
+            "located_in",
+            "rl:place:hot_tray"
+          ]
+        ],
+        "world_patch": {
+          "objects": {
+            "basket_1": {
+              "properties": {
+                "label": {
+                  "value": "golden"
+                }
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "tags": [
+    "measure",
+    "label",
+    "if",
+    "communicate",
+    "pick_place"
+  ]
+}

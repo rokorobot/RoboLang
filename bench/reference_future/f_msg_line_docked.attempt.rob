@@ -1,0 +1,14 @@
+// bench/reference_future/f_msg_line_docked.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 1.6;
+
+task hand_to_line(robot r, object tote, location src, location hold, location dst) {
+    goal { object_at tote dst; }
+    plan {
+        move r to src;
+        grasp r tote;
+        move r to hold;
+        wait until message_received "line" "TUGGER DOCKED" timeout 2 min else { fail "no docking message"; }
+        move r to dst;
+        place r tote at dst;
+    }
+}

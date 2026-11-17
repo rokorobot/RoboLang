@@ -1,0 +1,17 @@
+// bench/reference_future/c_count_two_totes.rob: hand-written reference
+robolang 1.6;
+
+task move_two(robot r, object a, object b, location src, location dst) {
+    goal { object_at a dst; object_at b dst; }
+    plan {
+        move r to src;
+        grasp r a;
+        move r to dst;
+        place r a at dst;
+        move r to src;
+        grasp r b;
+        move r to dst;
+        place r b at dst;
+        communicate r to "lead" with "2 totes moved";
+    }
+}

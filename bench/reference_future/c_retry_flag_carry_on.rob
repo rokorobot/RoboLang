@@ -1,0 +1,25 @@
+// bench/reference_future/c_retry_flag_carry_on.rob: hand-written reference
+robolang 1.6;
+
+task two_totes(robot r, object first, object second, location src, location dst) {
+    goal { object_at second dst; }
+    plan {
+        move r to src;
+        grasp r first else {
+            grasp r first else {
+                grasp r first else {
+                    communicate r to "lead" with "could not grasp tote_1";
+                }
+            }
+        }
+        if holding r first {
+            goal { object_at first dst; }
+            move r to dst;
+            place r first at dst;
+            move r to src;
+        }
+        grasp r second;
+        move r to dst;
+        place r second at dst;
+    }
+}

@@ -1,0 +1,10 @@
+{
+  "task": "two_totes",
+  "bindings": {
+    "r": "digit1",
+    "first": "tote_1",
+    "second": "tote_2",
+    "src": "inbound_conveyor",
+    "dst": "cart_3"
+  }
+}

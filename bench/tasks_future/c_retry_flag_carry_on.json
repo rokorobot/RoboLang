@@ -1,0 +1,81 @@
+{
+  "id": "c_retry_flag_carry_on",
+  "prompt": "With digit1, move tote_1 and then tote_2 from the inbound conveyor to cart_3. If digit1 cannot grasp a tote after three tries, leave it, tell channel \"lead\" which tote it is, and carry on with the next one.",
+  "world": "bench/worlds/fulfilment.json",
+  "group": "control",
+  "expect": {
+    "decision": "program",
+    "category": "none"
+  },
+  "activity": "ACT-LOG-001",
+  "expected_goal": [
+    [
+      "rl:thing:tote_2",
+      "located_in",
+      "rl:place:cart_3"
+    ]
+  ],
+  "expect_1_6": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "both totes grasp at once",
+        "goal": [
+          [
+            "rl:thing:tote_1",
+            "located_in",
+            "rl:place:cart_3"
+          ],
+          [
+            "rl:thing:tote_2",
+            "located_in",
+            "rl:place:cart_3"
+          ]
+        ],
+        "tries": [
+          "grasp",
+          2
+        ],
+        "world_patch": {
+          "events": []
+        }
+      },
+      {
+        "when": "tote_1 is gone: three failed tries, flagged, tote_2 still moved",
+        "goal": [
+          [
+            "rl:thing:tote_2",
+            "located_in",
+            "rl:place:cart_3"
+          ]
+        ],
+        "messages": [
+          [
+            "lead",
+            null
+          ]
+        ],
+        "tries": [
+          "grasp",
+          4
+        ],
+        "world_patch": {
+          "events": [],
+          "objects": {
+            "tote_1": {
+              "present": false,
+              "location": null
+            }
+          }
+        }
+      }
+    ]
+  },
+  "tags": [
+    "retry",
+    "failure_handler",
+    "if",
+    "communicate",
+    "pick_place"
+  ]
+}

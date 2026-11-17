@@ -1,0 +1,20 @@
+// bench/reference_future/c_fries_too_dark.rob: hand-written reference
+robolang 1.6;
+
+task check_basket(robot r, object basket, sensor cam, location hot, location bin) {
+    plan {
+        measure r label of basket using cam as shade;
+        if shade == "too_dark" {
+            goal { object_at basket bin; }
+            grasp r basket;
+            move r to bin;
+            place r basket at bin;
+            communicate r to "lead" with "discarded a basket of fries: too dark";
+        } else {
+            goal { object_at basket hot; }
+            grasp r basket;
+            move r to hot;
+            place r basket at hot;
+        }
+    }
+}

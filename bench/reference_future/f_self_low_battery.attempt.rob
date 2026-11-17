@@ -1,0 +1,16 @@
+// bench/reference_future/f_self_low_battery.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 1.6;
+
+task check_battery(robot r, location dock, location next) {
+    plan {
+        measure r battery of r using battery_gauge as b;
+        if b < 25 percent {
+            goal { robot_at r dock; }
+            move r to dock;
+            communicate r to "lead" with "battery low";
+        } else {
+            goal { robot_at r next; }
+            move r to next;
+        }
+    }
+}

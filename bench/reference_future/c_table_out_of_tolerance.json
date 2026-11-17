@@ -1,0 +1,13 @@
+{
+  "task": "place_modules",
+  "bindings": {
+    "r": "installer1",
+    "m14": "module_14",
+    "m15": "module_15",
+    "t14": "table_14",
+    "laser": "laser_installer1",
+    "pallet": "module_pallet",
+    "row14": "row_14",
+    "row15": "row_15"
+  }
+}

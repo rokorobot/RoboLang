@@ -256,3 +256,17 @@ an `inspect` of the object and no `measure` of an expected kind of it: `inspect`
 and `fails: true` together with `goals` ("stop" may also be "leave it"). A task with `goal_free: true` names no end
 state ("send the batch number"): any goal that the run reaches is right.
 Locally: `python bench/run.py --set values --repeats 3` (a paid run: confirm it first, 0036 V12).
+
+## Set "future": probes of the atlas's near gaps (`--set future`)
+
+33 tasks in `tasks_future/`, references and attempts in `reference_future/`, evidence in
+[rsi-r3-gap-verification.md](../docs/evidence/rsi-r3-gap-verification.md) (RSI-01 step R3, rule LE-7). 25 `inexpressible`
+**probes**, each needing exactly one open gap that a near activity of `atlas.json` claims (`activity`, `gap`), with an
+obvious attempt (`<id>.attempt.rob`) that RoboLang 1.6 rejects and `attempt_fails_with`, the first code `check_answer`
+reports; 8 `control` requests from near activities that 1.6 can express (`<id>.rob`, `<id>.json`), three of which
+record an atlas claim that R3 refuted. Four new worlds (`worlds/fulfilment.json`, `site.json`, `ward.json`,
+`fry_station.json`) and `worlds/warehouse.json`. A probe belongs to exactly one gap in `atlas.json`;
+`tests/test_bench_future.py` checks the counts per group and per gap.
+
+Run it on demand from GitHub Actions: `Benchmark`, `future: true` (full prompt, 1 repeat, Sonnet and Haiku, `--max-usd 3`,
+not gated). It is not in the per-PR or weekly runs. Locally: `python bench/run.py --set future` (a paid run: confirm it first).

@@ -1,0 +1,14 @@
+// bench/reference_future/f_msg_nurse_confirm.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 1.6;
+
+task deliver(robot r, object med, location src, location room, location home) {
+    goal { object_at med room; robot_at r home; }
+    plan {
+        move r to src;
+        grasp r med;
+        move r to room;
+        place r med at room;
+        wait until nurse_confirmed timeout 5 min else { fail "the nurse did not confirm"; }
+        move r to home;
+    }
+}

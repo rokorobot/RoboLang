@@ -1,0 +1,17 @@
+// bench/reference_future/f_conc_two_hand_lift.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 1.6;
+
+task two_hand_lift(robot a, robot b, object tote, location src, location dst) {
+    goal { object_at tote dst; }
+    plan {
+        move a to src;
+        move b to src;
+        together {
+            grasp a tote;
+            grasp b tote;
+        }
+        move a to dst;
+        move b to dst;
+        place a tote at dst;
+    }
+}

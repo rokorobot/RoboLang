@@ -1,0 +1,22 @@
+// bench/reference_future/c_table_out_of_tolerance.rob: hand-written reference
+robolang 1.6;
+
+task place_modules(robot r, object m14, object m15, object t14, sensor laser, location pallet, location row14, location row15) {
+    goal { object_at m15 row15; }
+    plan {
+        measure r distance of t14 using laser as off;
+        if off <= 5 mm {
+            goal { object_at m14 row14; }
+            move r to pallet;
+            grasp r m14;
+            move r to row14;
+            place r m14 at row14;
+        } else {
+            communicate r to "foreman" with "table_14 skipped: out of tolerance";
+        }
+        move r to pallet;
+        grasp r m15;
+        move r to row15;
+        place r m15 at row15;
+    }
+}
