@@ -65,5 +65,6 @@ Frozen, dated copies with a git tag: [roadmap-snapshots/](roadmap-snapshots/READ
 | # | State |
 |---|---|
 | I1 G-PATH | L1–L5 done (accepted 2026-11-17, [acceptance](evidence/bench-1-7-acceptance.md): silent limit drops 3/27 → 0/27). **L6:** G-PATH closed in the atlas; release 0.4.0 with RoboLang 1.7 prepared, published by the owner (strategy D3) |
-| I2–I10 | Not started; R3 done: tests and model run (0/25 false programs) |
-| Mission layer decision record | Not started |
+| I2 G-ACT | **L1 done** (owner, 2026-11-17). **L2:** decision record [0040](../spec/decisions/0040-declared-actions.md) proposed, all points await the owner |
+| I3–I10 | Not started |
+| Mission layer decision record | [0041](../spec/decisions/0041-mission-layer.md) proposed 2026-11-17 (design only; asks the owner to reopen G-LOOP, LE-9) |
