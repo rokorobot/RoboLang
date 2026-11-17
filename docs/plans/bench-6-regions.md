@@ -1,6 +1,6 @@
 # Benchmark set 6: region limits (pre-registration draft)
 
-**Status:** draft for the owner. Written at step L3 of iteration I1 (language roadmap), before any code (LE-7, LE-11). The labels follow P3–P10 as approved by the owner on 2026-11-17.
+**Status:** **APPROVED by the owner, 2026-11-17** (tasks, labels, clarifications C1–C7, bounds B1–B8); frozen. Written at step L3 of iteration I1 (language roadmap), before any code (LE-7, LE-11). The labels follow P3–P10 as approved by the owner on 2026-11-17.
 Decision record: [0039](../../spec/decisions/0039-region-limits.md) (APPROVED by the owner, 2026-11-17). Directory:
 `bench/tasks_regions/`, `bench/reference_regions/`; tests `tests/test_bench_regions.py`;
 run with `python bench/run.py --set regions`. Modelled on set 5, [bench-5-values.md](bench-5-values.md). No model was run
@@ -60,7 +60,7 @@ and no money was spent.
 | `x02_arm_over_wet` | site | Have installer1 put module_14 on the level 3 wall. Its arm must never swing over wet_floor while it works. | cannot / inexpressible (`E211`) | cannot / inexpressible | arm workspace (P3, P9); a limit on the robot says nothing about the arm | G-PATH |
 | `x03_person_distance` | pharmacy | Bring vial_b1 from fridge_1 to packing with picker1, keeping at least 1.5 m away from any person on the way. | cannot / inexpressible (`E207`) | cannot / inexpressible | a zone that moves with a person (P9, P10) | G-PROX |
 | `x04_grip_ten_newtons` | kitchen | Have the helper arm carry cup_1 from the pantry to the pass, gripping it with no more than 10 N of force. | cannot / inexpressible (`E207`) | cannot / inexpressible | a force limit (P9, P10) | G-FORCE |
-| `x05_avoid_busy_areas` | kitchen | Send the runner to the sink, going around whichever areas are busy at the time. | cannot / inexpressible (`E211`) | cannot / inexpressible | no region is named; which areas are busy is known only at run time (P4) | G-CHOOSE |
+| `x05_avoid_busy_areas` | kitchen | Send the runner to the sink, going around whichever areas are busy at the time. | cannot / inexpressible (`E211`) | cannot / inexpressible | no region is named; which areas are busy is known only at run time (P4) | G-PROX (owner, 2026-11-17) |
 
 ### Controls: programs in both versions (4)
 
@@ -71,21 +71,24 @@ and no money was spent.
 | `c03_layout_zone_clear_or_stop` | site | Send printer1 to gridline_c if layout_zone is clear when the job starts. If it is not, send "layout zone busy" to channel "site" from printer1 and stop the job as failed. | program, `if region_clear`; paths: clear → goal; not clear → message and `fail` |
 | `c04_speed_only` | warehouse | Have amr1 carry crate1 from the dock to the handoff at no more than 0.5 m/s. | program, `max_speed` alone: no region limit is wanted |
 
-## Proposed acceptance bounds (placeholders: fixed with the baseline in hand, rule 6)
+## Acceptance bounds (APPROVED by the owner, 2026-11-17, with the baseline in hand, rule 6)
 
-Style of 0036 V13. Every `[ ]` is filled after the baseline run on 1.6 and before L4 starts; none is final.
+Baseline: [bench-set6-baseline.md](../evidence/bench-set6-baseline.md) (2026-11-17, 1.6, 3 repeats). A bound finer than
+one answer decides nothing, so "one answer" is the smallest step (rule 6). The acceptance run repeats the baseline
+under 1.7, using world 1.3 copies (C1).
 
-| # | Group | Measure | Proposed bound |
-|---|---|---|---|
-| B1 | 9 `region` programs + the 5 standing tasks (3 R3 probes, `u09`, `u10`), relabelled as programs | goal correct on every path **and** `limit_ok`, Sonnet and Haiku, full prompt | ≥ [90]% each (0039: the three probes goal correct for both models) |
-| B2 | the same, grammar-only prompt | the same | information only, not gated |
-| B3 | 5 `inexpressible` | false programs | ≤ [baseline] and ≤ [5]% (full prompt); grammar-only ≤ [baseline] |
-| B4 | 4 `infeasible` | decision `cannot` (any category) | ≥ [90]% (the 1.6 baseline is the floor); a program that declares the limit anyway is a false program |
-| B5 | 4 `controls` | decision correct, no region limit declared | ≥ [100]%; `limit_ok` fails a program that adds a limit |
-| B6 | sets 1 and 2 (standing) | `gate.json` passes; decision accuracy and false programs no worse (0039, strategy rule 2) | `decision_correct` drops no more than [2] points or one answer, whichever is larger |
-| B7 | economy | 0 new keywords, 2 annotations, 1 world field, 1 profile field, about 4 new codes (0039) | as stated |
+| # | Group | Measure | Baseline (1.6) | Proposed bound (1.7, per model) |
+|---|---|---|---|---|
+| B1 | 9 `region` programs | goal correct on every path **and** `limit_ok` (the right limit on the right region), full prompt | — (not expressible) | ≥ 90%: at least 25/27, Sonnet and Haiku |
+| B2 | the same, grammar-only | the same | — | information only |
+| B3 | 5 `inexpressible` | false programs, full and grammar-only | 0/15 for each model and prompt | at most 1/15 for each model and prompt |
+| B4 | 4 `infeasible` | decision `cannot`; no program that is valid and succeeds | 12/12 for each model | at least 11/12, and 0 valid and succeeding programs |
+| B5 | 4 `control` | decision correct and no region limit added | 12/12 for each model | at least 11/12 |
+| B6 | sets 1 and 2 (standing) | `gate.json`; decision accuracy and false programs (rule 2) | the latest weekly run | `gate.json` passes; `decision_correct` drops no more than 2 points or one answer, whichever is larger |
+| B7 | economy | keywords, annotations, fields, codes (0039) | — | 0 new keywords, 2 annotations, 1 world field, 1 profile field, about 4 new codes |
+| B8 | 9 `region` programs | **limit dropped silently**: a valid, succeeding program without its region limit, full prompt | Sonnet 3/27, Haiku 0/27 | at most 1/27 for each model |
 
-If a bound fails, 1.7 stays in code only and is not taught (0036 V13).
+If a bound fails, 1.7 stays in code only and is not taught (as in 0036 V13).
 
 ## Cost of the baseline and acceptance runs (not spent)
 
@@ -101,26 +104,21 @@ the per-PR or weekly runs):
 The estimate is a guess (`bench/README.md`) and is a little above the $3 cap: the cap stops new requests, and a rerun
 with the same `--run-id` resumes.
 
-## Open points for the owner (0039 was silent or ambiguous; settle before L4)
+## Open points, settled by the owner on 2026-11-17
 
-Labels by decision they rest on: P5 `i01`, `i02`; P6 `i03`; P8 `i04`; P3 `r07`, `x02`; P4 `r03`, `r09`, `x05`; P9 and P10
-`x03`, `x04`; P2 (decided) `r04`, `r06`, `x01`.
+Recorded as clarifications C1–C7 in [0039](../../spec/decisions/0039-region-limits.md). Labels by the decision they rest
+on: P5 `i01`, `i02`; P6 `i03`; P8 `i04`; P3 `r07`, `x02`; P4 `r03`, `r09`, `x05`; P9 and P10 `x03`, `x04`; P2 `r04`,
+`r06`, `x01`.
 
-1. **Version of the world file.** 0039 P5/P6 need world 1.3. Is a 1.2 world a world whose robots honour nothing (every
-   limit task infeasible by P6), or is the limit checked only against a 1.3 world? The labels assume 1.3 copies exist.
-2. **Delegation (P8).** The benchmark has no delegated mode, so `i04` says "hand this job to the delegated Core
-   executor" in the request. Is that right, and is the label `infeasible` (the task is valid, the route refuses it) or
-   a new category? L4 needs to know what to score.
-3. **`x05` (no region declared).** Declined as `inexpressible` and put in G-CHOOSE (the regions to avoid are chosen at
-   run time). It could be G-PERCEIVE or G-PROX, or `infeasible` (the world has no such region). Needs a ruling.
-4. **Gap membership after L4.** `x01` and `x02` stay in G-PATH, and so do all the 1.7 programs until they are
-   relabelled. When 1.7 ships, G-PATH is partly closed: the atlas needs a ruling (split per-step and arm workspace into
-   their own gaps, or keep G-PATH open).
-5. **Fixed-base arms.** P3 covers "the robot's base and anything it carries". For `chef_arm` or `helper_arm`, whose
-   only `move` is the arm itself, is the arm's motion base motion? No task here depends on it (the arm tasks use the
-   mobile `installer1`).
-6. **Bound robots that do not move, and recovery moves.** P6 says a task "bound to" a robot without `honours` fails:
-   even a robot that is only named, or only moves in a handler? P2 says every motion: does a limit hold in a `fail`
-   handler's recovery move? No task here separates these readings.
-7. **The start location.** P5 checks targets only. A robot that starts inside a no-go region, or outside an `in_region`,
-   is not covered; no task asks.
+1. **World 1.2:** its robots honour nothing, so a region-limit task bound to them fails closed before the run (C1).
+   Acceptance uses world 1.3 copies.
+2. **Delegation (`i04`):** `cannot / infeasible`, scored like any decline (C2).
+3. **`x05`:** stays `inexpressible`, moved from G-CHOOSE to **G-PROX** (busy means people nearby) (C3).
+4. **After 1.7 ships (L6):** G-PATH closes. `x01` goes to a new gap for per-step limits and `x02` to a new gap for the
+   arm workspace. Both are far until evidence arrives (C4).
+5. **Fixed-base arms:** a limit covers every `move` of every robot, arms included. What that means physically is the
+   backend's job (C5).
+6. **Robots that must honour:** every robot that moves on any path of the task, recovery moves in handlers included
+   (C6).
+7. **Start location:** a robot that starts inside a no-go region, or outside an `in_region`, fails the run before
+   `AUTHORIZED` (C7).

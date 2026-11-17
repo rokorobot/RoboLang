@@ -15,7 +15,7 @@
     "no_region_declared",
     "run_time_choice"
   ],
-  "gap": "G-CHOOSE",
+  "gap": "G-PROX",
   "why": "The request names no region: which areas are busy is known only at run time, and a limit names its region before the run (0039 P4: `R` must be a `region` parameter). Picking a region that happens not to be clear now is a half program.",
   "attempt_fails_with": "E211"
 }

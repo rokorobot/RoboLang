@@ -246,8 +246,8 @@ def test_every_task_1_6_declines_is_in_exactly_one_atlas_gap_and_no_control_is()
     assert {t for t, _ in in_gaps} == set(DECLINED)
     for task_id, gap in in_gaps:
         assert DECLINED[task_id]["gap"] == gap and GAPS[gap]["scope"] == "open"
-    assert Counter(gap for _, gap in in_gaps) == {"G-PATH": 15, "G-PROX": 1, "G-FORCE": 1, "G-CHOOSE": 1}
-    assert {t["gap"] for t in INEXPRESSIBLE.values()} == {"G-PATH", "G-PROX", "G-FORCE", "G-CHOOSE"}
+    assert Counter(gap for _, gap in in_gaps) == {"G-PATH": 15, "G-PROX": 2, "G-FORCE": 1}
+    assert {t["gap"] for t in INEXPRESSIBLE.values()} == {"G-PATH", "G-PROX", "G-FORCE"}
     assert {t["gap"] for t in REGION.values()} | {t["gap"] for t in INFEASIBLE.values()} == {"G-PATH"}
 
 
