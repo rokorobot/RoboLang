@@ -164,6 +164,14 @@
       "scope": "open",
       "scope_note": "from foresight pass 1, no benchmark task yet",
       "tasks": []
+    },
+    {
+      "id": "G-SELF",
+      "name": "The robot's own state as readings and conditions: battery level, health, faults; acting on them and asking for service",
+      "scope": "open",
+      "scope_note": "owner added the autonomy direction 2026-11-17, no benchmark task yet",
+      "tasks": [],
+      "direction": "autonomy"
     }
   ],
   "activities": [
@@ -931,6 +939,105 @@
       "sources": [
         "https://arxiv.org/abs/2606.13672"
       ]
+    },
+    {
+      "id": "ACT-AUTO-001",
+      "name": "Self-charging on long inspection missions",
+      "domain": "inspection",
+      "directions": [
+        "autonomy",
+        "action"
+      ],
+      "maturity": "deployment",
+      "horizon": "now",
+      "basis": "Boston Dynamics: with several docks along its route, Spot recharges at the nearest one as needed and then continues its autonomous mission (multi-docking, managed from Orbit).",
+      "requests": [
+        "Patrol the plant route; when your battery is low, charge at the nearest dock and carry on where you stopped.",
+        "Before the night round, check you have enough charge for the whole route; if not, charge first."
+      ],
+      "needs": [
+        "G-SELF",
+        "G-LOOP",
+        "G-CHOOSE",
+        "G-ACT"
+      ],
+      "forecast": {
+        "claim": "At least one legged or humanoid robot vendor other than Boston Dynamics publicly documents recharging at docks along a route during autonomous missions by 2027-12-31.",
+        "due": "2027-12-31",
+        "p": 0.65
+      },
+      "sources": [
+        "https://bostondynamics.com/blog/making-every-step-count-with-spot/"
+      ]
+    },
+    {
+      "id": "ACT-AUTO-002",
+      "name": "Battery swapping for whole-shift humanoid work",
+      "domain": "manufacturing",
+      "directions": [
+        "autonomy",
+        "action"
+      ],
+      "maturity": "demo",
+      "horizon": "1-3y",
+      "basis": "New Atlas (2025-07-21): UBTech's Walker S2 walks to a swap station and exchanges one of its two battery packs itself, aiming at near-continuous work on production lines; the article reports no confirmed factory deployment.",
+      "requests": [
+        "Work the line all shift; swap your battery when it drops below 20 %, but never in the middle of a pick.",
+        "If the tower has no charged battery, tell the supervisor and finish the current part first."
+      ],
+      "needs": [
+        "G-SELF",
+        "G-LOOP",
+        "G-ACT"
+      ],
+      "forecast": {
+        "claim": "A named manufacturer confirms humanoids that swap their own batteries working regular shifts at one of its plants by 2028-06-30.",
+        "due": "2028-06-30",
+        "p": 0.55
+      },
+      "sources": [
+        "https://newatlas.com/ai-humanoids/walker-s2-humanoid-robot-swaps-batteries"
+      ]
+    },
+    {
+      "id": "ACT-AUTO-003",
+      "name": "Self-diagnosis, safe degradation and service requests",
+      "domain": "maintenance",
+      "directions": [
+        "autonomy",
+        "safety"
+      ],
+      "maturity": "research",
+      "horizon": "3-7y",
+      "basis": "SPG (Edaily, 2026-06-18) filed a patent for sensorless AI fault diagnosis of humanoid joints in which healthy neighbouring joints take over torque so the robot halts or holds its posture; RAPT (arXiv 2602.01515, 2026) monitors a real humanoid online for deviations from nominal behaviour and diagnoses likely failures.",
+      "requests": [
+        "If a joint reports a fault, put the box down safely, stop, and ask for maintenance.",
+        "Do not start the next job if your self-check fails; report what failed."
+      ],
+      "needs": [
+        "G-SELF"
+      ],
+      "forecast": {
+        "claim": "A humanoid vendor ships self-diagnosis that reports joint faults and requests service through its fleet software by 2028-12-31.",
+        "due": "2028-12-31",
+        "p": 0.45
+      },
+      "sources": [
+        "https://en.edaily.co.kr/news/eda202606185436/",
+        "https://arxiv.org/abs/2602.01515"
+      ],
+      "leading": [
+        {
+          "kind": "research",
+          "claim": "Online deviation monitoring and failure diagnosis on a real humanoid (RAPT)",
+          "url": "https://arxiv.org/abs/2602.01515"
+        },
+        {
+          "kind": "roadmap",
+          "claim": "Actuator maker SPG patents sensorless joint fault diagnosis with fault-tolerant control",
+          "url": "https://en.edaily.co.kr/news/eda202606185436/"
+        }
+      ]
     }
   ],
   "history": [
@@ -973,6 +1080,51 @@
         "cooperation": 0.86,
         "safety": 0.34,
         "communication": 0.87
+      }
+    },
+    {
+      "date": "2026-11-17",
+      "note": "Ninth direction autonomy (owner): 3 sub-activities, new gap G-SELF",
+      "activities": {
+        "ACT-LOG-001": "deployment now",
+        "ACT-LOG-002": "deployment now",
+        "ACT-MFG-001": "pilot 1-3y",
+        "ACT-MFG-002": "pilot 1-3y",
+        "ACT-RET-001": "deployment now",
+        "ACT-HOS-001": "deployment now",
+        "ACT-HLTH-001": "deployment now",
+        "ACT-ELD-001": "pilot 3-7y",
+        "ACT-HOME-001": "research 3-7y",
+        "ACT-HOME-002": "demo 3-7y",
+        "ACT-INSP-001": "demo now",
+        "ACT-INSP-002": "demo 1-3y",
+        "ACT-SEC-001": "demo 1-3y",
+        "ACT-SAFE-001": "demo 3-7y",
+        "ACT-CON-001": "deployment now",
+        "ACT-AGR-001": "pilot 3-7y",
+        "ACT-EV-001": "pilot 1-3y",
+        "ACT-CLN-001": "deployment now",
+        "ACT-MRC-001": "demo 3-7y",
+        "ACT-MRC-002": "demo 1-3y",
+        "ACT-HRC-001": "research 3-7y",
+        "ACT-HRC-002": "research 3-7y",
+        "ACT-ASM-001": "research 7y+",
+        "ACT-PRED-001": "research 3-7y",
+        "ACT-PRED-002": "research 3-7y",
+        "ACT-AUTO-001": "deployment now",
+        "ACT-AUTO-002": "demo 1-3y",
+        "ACT-AUTO-003": "research 3-7y"
+      },
+      "directions": {
+        "perception": 2.33,
+        "reasoning": 0.45,
+        "prediction": 0.17,
+        "action": 3.43,
+        "learning": 0.62,
+        "cooperation": 0.86,
+        "safety": 0.43,
+        "communication": 0.87,
+        "autonomy": 0.61
       }
     }
   ]

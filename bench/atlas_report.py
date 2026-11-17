@@ -29,7 +29,8 @@ BENCH = Path(__file__).resolve().parent
 ATLAS = BENCH / "atlas.json"
 PLAN = BENCH.parent / "docs" / "plans" / "humanoid-activities.md"
 
-DIRECTIONS = ["perception", "reasoning", "prediction", "action", "learning", "cooperation", "safety", "communication"]
+DIRECTIONS = ["perception", "reasoning", "prediction", "action", "learning", "cooperation", "safety", "communication",
+              "autonomy"]
 NEARNESS = {"now": 1.0, "1-3y": 0.7, "3-7y": 0.4, "7y+": 0.1}
 
 
@@ -100,7 +101,7 @@ def log(atlas: dict) -> list[str]:
         new_rank, old_rank = rank(entry["directions"]), rank(before["directions"])
         ranking = []
         for pos, d in enumerate(new_rank, 1):
-            if not entry["directions"][d]:
+            if not entry["directions"].get(d):
                 ranking.append("others 0")
                 break
             move = old_rank.index(d) + 1 - pos if i else 0
@@ -123,7 +124,7 @@ def render(atlas: dict) -> str:
         "hand. Plan: [RSI-01](rsi-01.md). Sub-activities are added to the atlas as the foresight loop finds them; the",
         "priorities below follow from them.",
         "",
-        '<p align="center"><img src="capability-directions.svg" width="420" alt="The eight directions of the RoboLang Capability Atlas"/></p>',
+        '<p align="center"><img src="capability-directions.svg" width="420" alt="The directions of the RoboLang Capability Atlas (eight in the diagram; autonomy, the ninth, was added later)"/></p>',
         "",
         "**Priorities.** A sub-activity's priority is `p × nearness` (`p`: its forecast's probability; nearness: now 1,",
         "1–3y 0.7, 3–7y 0.4, 7y+ 0.1). A direction's priority is the sum of its sub-activities' priorities, each split",

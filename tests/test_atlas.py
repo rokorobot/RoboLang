@@ -17,7 +17,8 @@ GAPS = {g["id"]: g for g in ATLAS["gaps"]}
 MATURITY = {"concept", "research", "demo", "pilot", "deployment"}
 LEADING = {"research", "roadmap", "funding", "standard", "demand", "forecast"}
 HORIZON = {"now", "1-3y", "3-7y", "7y+"}
-DIRECTIONS = {"perception", "reasoning", "prediction", "action", "learning", "cooperation", "safety", "communication"}
+DIRECTIONS = {"perception", "reasoning", "prediction", "action", "learning", "cooperation", "safety", "communication",
+              "autonomy"}
 
 
 def inexpressible_tasks() -> set[str]:
