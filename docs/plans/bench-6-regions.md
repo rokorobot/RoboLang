@@ -1,6 +1,6 @@
 # Benchmark set 6: region limits (pre-registration draft)
 
-**Status:** draft for the owner. Written at step L3 of iteration I1 (language roadmap), before any code (LE-7, LE-11). The labels follow P3–P10 as approved by the owner on 2026-11-17.
+**Status:** **APPROVED by the owner, 2026-11-17** (tasks, labels, clarifications C1–C7, bounds B1–B8); frozen. Written at step L3 of iteration I1 (language roadmap), before any code (LE-7, LE-11). The labels follow P3–P10 as approved by the owner on 2026-11-17.
 Decision record: [0039](../../spec/decisions/0039-region-limits.md) (APPROVED by the owner, 2026-11-17). Directory:
 `bench/tasks_regions/`, `bench/reference_regions/`; tests `tests/test_bench_regions.py`;
 run with `python bench/run.py --set regions`. Modelled on set 5, [bench-5-values.md](bench-5-values.md). No model was run
@@ -71,7 +71,7 @@ and no money was spent.
 | `c03_layout_zone_clear_or_stop` | site | Send printer1 to gridline_c if layout_zone is clear when the job starts. If it is not, send "layout zone busy" to channel "site" from printer1 and stop the job as failed. | program, `if region_clear`; paths: clear → goal; not clear → message and `fail` |
 | `c04_speed_only` | warehouse | Have amr1 carry crate1 from the dock to the handoff at no more than 0.5 m/s. | program, `max_speed` alone: no region limit is wanted |
 
-## Acceptance bounds (proposed with the baseline in hand, rule 6; for the owner)
+## Acceptance bounds (APPROVED by the owner, 2026-11-17, with the baseline in hand, rule 6)
 
 Baseline: [bench-set6-baseline.md](../evidence/bench-set6-baseline.md) (2026-11-17, 1.6, 3 repeats). A bound finer than
 one answer decides nothing, so "one answer" is the smallest step (rule 6). The acceptance run repeats the baseline
