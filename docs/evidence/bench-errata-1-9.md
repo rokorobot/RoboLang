@@ -36,3 +36,17 @@ Not copied, as in sets 6 and 7: the three R3 probes (`f_clock_scan_stamp`, `f_cl
 ## Freeze
 
 `docs/evidence/bench-freeze-v2.json` is regenerated for all of the above.
+
+## Erratum K (owner, 2026-11-17): gap membership after the clarifications of 0042
+
+The owner approved K7 and K11, and with them four tasks change gap. Labels and scoring are unchanged.
+
+| Task | From | To | Why |
+|---|---|---|---|
+| `x02_tomorrow_at_0100` | G-CLOCK | new **G-DATE** | another day (K11) |
+| `x05_on_monday` | G-CLOCK | new **G-DATE** | a date (K11) |
+| `x05_cooling_time` (set "values") | G-CLOCK | G-CALC | it stays inexpressible: the time between two moments (K7) |
+| `u18_every_morning` (set "ask") | G-CLOCK | G-LOOP | a mission trigger (0041 M6), not a clock reading |
+
+With these moves G-CLOCK holds only what 1.9 expresses, so it can close at L6.
+`docs/evidence/bench-freeze-v2.json` is regenerated.

@@ -16,7 +16,7 @@
     "clock_time",
     "another_day"
   ],
-  "gap": "G-CLOCK",
+  "gap": "G-DATE",
   "why": "A time literal means that time on the calendar day the task starts (0042 T4). 01:00 tomorrow is another day. The attempt waits for `clock_time >= 01:00`, which is true at once on any day after midnight and moves the robot now: a silent wrong day.",
   "attempt_fails_with": "E101"
 }

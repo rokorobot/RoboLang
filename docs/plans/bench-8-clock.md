@@ -1,6 +1,6 @@
 # Benchmark set 8: clock readings (pre-registration draft)
 
-**Status:** draft for the owner. Decision record: [0042](../../spec/decisions/0042-clock-readings.md) (APPROVED by the
+**Status:** **APPROVED by the owner, 2026-11-17** (tasks, labels, clarifications K1–K11 in 0042, bounds B1–B8); frozen.
 owner, 2026-11-17). Directory: `bench/tasks_clock/`, `bench/reference_clock/`; tests `tests/test_bench_clock.py`; run
 with `python bench/run.py --set clock`. Modelled on set 7, [bench-7-actions.md](bench-7-actions.md). No model was run
 and no money was spent. **The labels follow 0042 T1–T12 as approved. Where 0042 does not decide what a label needs, the
@@ -91,7 +91,7 @@ that the author must convert is a **program** (`k10`), never infeasible.
 | `c03_pan_temperature` | kitchen_values | With chef_arm, measure the temperature of pan_1 with its probe and send the reading to channel "pass". | program, a `measure` of a temperature and a value message (`expected_readings` names it); no clock reading |
 | `c04_as_soon_as_possible` | site | As soon as possible, send cleaner1 from dock_2 to the lobby. | program, a plain move; "as soon as possible" asks for no duration or time of day |
 
-## Acceptance bounds (proposed with the baseline in hand, rule 6; for the owner)
+## Acceptance bounds (APPROVED by the owner 2026-11-17, with the baseline in hand, rule 6)
 
 Baseline: [bench-set8-baseline.md](../evidence/bench-set8-baseline.md) (2026-11-17, 1.8, 3 repeats): no false
 programs at all. The smallest step is one answer (rule 6). The acceptance run repeats the baseline under 1.9 with

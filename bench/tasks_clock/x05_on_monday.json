@@ -16,7 +16,7 @@
     "clock_time",
     "date"
   ],
-  "gap": "G-CLOCK",
+  "gap": "G-DATE",
   "why": "A date or weekday is not a time of day: dates come with mission schedules (0042 T4, T11). The attempt waits for 09:00 on the start day, whatever day that is.",
   "attempt_fails_with": "E101"
 }

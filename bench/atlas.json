@@ -31,7 +31,8 @@
         "x_retry_until_grasped",
         "x_shuttle_until_five",
         "x04_open_until_open",
-        "x01_every_night_round"
+        "x01_every_night_round",
+        "u18_every_morning"
       ]
     },
     {
@@ -43,8 +44,6 @@
       "tasks": [
         "x_elapsed_time",
         "u17_at_1400",
-        "u18_every_morning",
-        "x05_cooling_time",
         "x_report_duration",
         "f_clock_scan_stamp",
         "f_clock_shift_cutoff",
@@ -64,9 +63,7 @@
         "k07_time_and_open",
         "k08_time_and_no_go",
         "k09_heating_time",
-        "k10_decoy_11_pm",
-        "x02_tomorrow_at_0100",
-        "x05_on_monday"
+        "k10_decoy_11_pm"
       ]
     },
     {
@@ -101,7 +98,8 @@
         "f_calc_over_limit",
         "f_calc_text_line",
         "x03_time_between_scans",
-        "x04_pickup_two_hours_later"
+        "x04_pickup_two_hours_later",
+        "x05_cooling_time"
       ]
     },
     {
@@ -244,6 +242,17 @@
       "scope_note": "From G-PATH at 1.7 (0039 P3, C4); far until a sub-activity needs it",
       "tasks": [
         "x02_arm_over_wet"
+      ]
+    },
+    {
+      "id": "G-DATE",
+      "name": "Dates and times on another day: tomorrow, a weekday, a calendar date",
+      "direction": "reasoning",
+      "scope": "open",
+      "scope_note": "From G-CLOCK by 0042 K11 (owner, 2026-11-17): 1.9 reads the time of day on the day the task starts only (T4); far until a sub-activity needs it",
+      "tasks": [
+        "x02_tomorrow_at_0100",
+        "x05_on_monday"
       ]
     }
   ],
@@ -2568,6 +2577,63 @@
     {
       "date": "2026-11-17",
       "note": "I3 L3: set 8 clock pre-registered (24 tasks)",
+      "activities": {
+        "ACT-LOG-001": "deployment now",
+        "ACT-LOG-002": "deployment now",
+        "ACT-MFG-001": "pilot 1-3y",
+        "ACT-MFG-002": "pilot 1-3y",
+        "ACT-RET-001": "deployment now",
+        "ACT-HOS-001": "deployment now",
+        "ACT-HLTH-001": "deployment now",
+        "ACT-ELD-001": "pilot 3-7y",
+        "ACT-HOME-001": "research 3-7y",
+        "ACT-HOME-002": "demo 3-7y",
+        "ACT-INSP-001": "demo now",
+        "ACT-INSP-002": "demo 1-3y",
+        "ACT-SEC-001": "demo 1-3y",
+        "ACT-SAFE-001": "demo 3-7y",
+        "ACT-CON-001": "deployment now",
+        "ACT-AGR-001": "pilot 3-7y",
+        "ACT-EV-001": "pilot 1-3y",
+        "ACT-CLN-001": "deployment now",
+        "ACT-MRC-001": "demo 3-7y",
+        "ACT-MRC-002": "demo 1-3y",
+        "ACT-HRC-001": "research 3-7y",
+        "ACT-HRC-002": "research 3-7y",
+        "ACT-ASM-001": "research 7y+",
+        "ACT-PRED-001": "research 3-7y",
+        "ACT-PRED-002": "research 3-7y",
+        "ACT-AUTO-001": "deployment now",
+        "ACT-AUTO-002": "demo 1-3y",
+        "ACT-AUTO-003": "research 3-7y",
+        "ACT-MFG-003": "demo 1-3y",
+        "ACT-AGR-002": "deployment now",
+        "ACT-SOL-001": "deployment now",
+        "ACT-PRED-003": "concept 3-7y",
+        "ACT-PRED-004": "concept 7y+",
+        "ACT-LRN-001": "concept 3-7y",
+        "ACT-LRN-002": "concept 3-7y",
+        "ACT-AUTO-004": "concept 3-7y",
+        "ACT-SAFE-002": "concept 3-7y",
+        "ACT-CARE-001": "concept 7y+",
+        "ACT-MFG-004": "demo 1-3y",
+        "ACT-HRC-003": "concept 3-7y"
+      },
+      "directions": {
+        "perception": 2.78,
+        "reasoning": 0.68,
+        "prediction": 0.25,
+        "action": 4.52,
+        "learning": 0.75,
+        "cooperation": 1.07,
+        "safety": 0.49,
+        "communication": 0.95,
+        "autonomy": 0.67
+      }
+    },
+    {
+      "date": "2026-11-17",
+      "note": "I3 L3 done: set 8 frozen; bounds B1-B8 and clarifications K1-K11 approved; G-DATE opened (K11)",
       "activities": {
         "ACT-LOG-001": "deployment now",
         "ACT-LOG-002": "deployment now",

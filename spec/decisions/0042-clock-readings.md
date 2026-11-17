@@ -119,7 +119,7 @@ task tote_if_open(robot r, object tote, location inb, location outb) {
 2. The live names stay `clock_time` and `clock_elapsed` (T6).
 3. T1–T12 are accepted.
 
-## Clarifications (PROPOSED 2026-11-17, from writing the L3 set; for the owner)
+## Clarifications (APPROVED by the owner 2026-11-17, from writing the L3 set)
 
 | # | Question | Recommended |
 |---|---|---|

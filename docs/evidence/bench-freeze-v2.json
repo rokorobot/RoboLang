@@ -1,5 +1,5 @@
 {
-  "sha256": "62e19d6ef338fb1a255dbeba7cec7f65c15b9b58e93f7b583fbdc4bdaa4b9429",
+  "sha256": "7d9eb1f090e4b4401685b65669ef4f8ed3f93fdb8be8b20cebc97ca4404941a7",
   "schema": "robolang.bench.freeze.v2",
   "patterns": [
     "bench/tasks*/*.json",
@@ -942,10 +942,10 @@
     "bench/tasks_clock/k09_heating_time.json": "39eff104a3b399b0755ba80f090181fb74e07f7325a914f0f39f7ca1b06d53da",
     "bench/tasks_clock/k10_decoy_11_pm.json": "81e101cb2384b14c2ac2fc9d2bf3b9a5585f2188ffa64c3612a869d3a07b65fe",
     "bench/tasks_clock/x01_every_night_round.json": "74230aa13965d3254eec7f42707781a48f761d7c78bb752bff00cbb8087e75ec",
-    "bench/tasks_clock/x02_tomorrow_at_0100.json": "cdfdf02ee82bc9476fff6a9d5b37ded421250191a0aa5218a0ae1a6fed5c3430",
+    "bench/tasks_clock/x02_tomorrow_at_0100.json": "4cc13c5b08284cfdcd3f475e004a52b5bcdefe3454d806e357987dfcf6e2ed2e",
     "bench/tasks_clock/x03_time_between_scans.json": "5110cf532c8cc99a58cf298a98f9d8aa5b08237b48ae9f09fd9e3968d9250ed4",
     "bench/tasks_clock/x04_pickup_two_hours_later.json": "7d2b7d87024683356b27e21d6e29fc0bcf2158e4021d0363ff6dace357ca5bff",
-    "bench/tasks_clock/x05_on_monday.json": "a1aad348591d54bfe5d1123e0db9c5eb32424e264f362fb064f44c64b3efc516",
+    "bench/tasks_clock/x05_on_monday.json": "fdbc63555e7d5ff7bede10c80453505d50101cd4b2d6e6aad9f380429607a1c8",
     "bench/tasks_failure/f01_retry_grasp_once.json": "49e40ce0c6477e5f1d84f80217bf9703eaded92c32a12fdf8790662b28a7fef5",
     "bench/tasks_failure/f02_three_tries.json": "238a058a302519a8c5dcd902e746aaff23affd3464a4fdd116ad6ed6b1076002",
     "bench/tasks_failure/f03_wait_then_report.json": "9fca91cf31d97a300d7ddb1526eaa0edd89ef98668954613e875135e2faa54b9",
@@ -1183,7 +1183,7 @@
     "tests/test_bench_ask.py": "7199f9152d2f46626f1b5f32d42109aa1872a28a4ecb054a03c72c3abc224219",
     "tests/test_bench_branch.py": "ad6cfe43cc265e6d7d833eb7e89bd8770b4d47ee656a2c8e54238a600fdd66d2",
     "tests/test_bench_cascade.py": "5bb726f33ea9f6f23c2dfad8df07b43d551d9697e94409b4fb2798366f323e50",
-    "tests/test_bench_clock.py": "f3892c6429541c650ed7342523e8af3ddf7b44763509c9f39b462cb576c9c11a",
+    "tests/test_bench_clock.py": "f310ee83a0c9a79d525cf0310ffe3e0e9c52de9a8c850bd7f3f4943d67e7a9b2",
     "tests/test_bench_failure.py": "0eaf64464bcc628431f079147266c73fd23ccb746894c0e7965c6db569633958",
     "tests/test_bench_future.py": "48d0f4fb2fa40a0da759088dc427d24b2464553064627c439bd64fdf3a3060e3",
     "tests/test_bench_gate.py": "653be1ae7d454b4b93d8df99b6a999214511d76bae37c1f147108dbe98d608b9",

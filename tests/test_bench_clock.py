@@ -5,7 +5,7 @@ Benchmark set 8, "clock" (bench/tasks_clock/, decision record 0042, plan docs/pl
 baseline), `expect_1_9` the label for acceptance.
 
 10 `clock` requests that become programs in 1.9, 5 `infeasible` in 1.9 (0042 T4, T5, T7), 5 `inexpressible` that stay
-out (0042 T4, T11; G-CLOCK, G-LOOP, G-CALC), 4 `control` requests that are programs in both versions. 1.8 declines every
+out (0042 T4, T11; G-DATE, G-LOOP, G-CALC), 4 `control` requests that are programs in both versions. 1.8 declines every
 non-control task, and every one has an obvious attempt that 1.8 rejects (`E101`: a time literal, or `E217`: the kind
 `time` / `elapsed`). Only the controls have a 1.8 reference; the 1.9 references wait for L4. No network and no SDK; the
 model run is the `Benchmark` workflow with `clock: true`.
@@ -182,7 +182,7 @@ def test_the_inexpressible_tasks_each_stay_out_for_one_reason_of_0042_t11():
                        "x03_time_between_scans": {"elapsed", "arithmetic"},
                        "x04_pickup_two_hours_later": {"arithmetic"},
                        "x05_on_monday": {"date"}}
-    assert [d["gap"] for _, d in sorted(INEXPRESSIBLE.items())] == ["G-LOOP", "G-CLOCK", "G-CALC", "G-CALC", "G-CLOCK"]
+    assert [d["gap"] for _, d in sorted(INEXPRESSIBLE.items())] == ["G-LOOP", "G-DATE", "G-CALC", "G-CALC", "G-DATE"]
 
 
 def test_no_new_world_1_4_file_and_at_most_two_new_world_files():
@@ -344,8 +344,8 @@ def test_every_task_1_8_declines_is_in_exactly_one_atlas_gap_and_no_control_is()
     assert {t for t, _ in in_gaps} == set(DECLINED)
     for task_id, gap in in_gaps:
         assert DECLINED[task_id]["gap"] == gap and GAPS[gap]["scope"] == "open"
-    assert Counter(gap for _, gap in in_gaps) == {"G-CLOCK": 17, "G-LOOP": 1, "G-CALC": 2}
-    assert {t["gap"] for t in INEXPRESSIBLE.values()} == {"G-CLOCK", "G-LOOP", "G-CALC"}
+    assert Counter(gap for _, gap in in_gaps) == {"G-CLOCK": 15, "G-DATE": 2, "G-LOOP": 1, "G-CALC": 2}
+    assert {t["gap"] for t in INEXPRESSIBLE.values()} == {"G-DATE", "G-LOOP", "G-CALC"}
     assert {t["gap"] for t in PROGRAMS.values()} | {t["gap"] for t in INFEASIBLE.values()} == {"G-CLOCK"}
 
 
