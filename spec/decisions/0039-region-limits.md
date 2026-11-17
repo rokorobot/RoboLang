@@ -66,6 +66,18 @@ task to_lobby(robot r, location lobby, region wet) {
   - decision accuracy and false programs on the standing sets 1 and 2: no worse (rule 2).
 - **Economy:** 0 new keywords, 2 annotations, 1 world field, 1 profile field, and about 4 new diagnostic codes.
 
+## Clarifications (owner, 2026-11-17, from writing the L3 set)
+
+| # | Question | Decision |
+|---|---|---|
+| C1 | A world file 1.2 has no `honours` or `contains` | Its robots honour nothing: a task with a region limit bound to them fails before the run (P6, fail closed). Region limits need world 1.3 |
+| C2 | A task with a region limit handed to `delegate` (P8) | Benchmark label `cannot / infeasible`; scored like any other decline |
+| C3 | "Avoid busy areas" with no region named | Stays inexpressible; atlas gap G-PROX (busy means people nearby), not G-CHOOSE |
+| C4 | What remains of G-PATH after 1.7 | At L6, G-PATH closes. New far gaps are opened for per-step limits and for the arm workspace, holding `x01` and `x02` |
+| C5 | Fixed-base arms (P3) | A limit covers every `move` of every robot, arms included. What it means physically is the backend's concern |
+| C6 | Which robots must honour (P6) | Every robot that moves on any path of the task, recovery moves in failure handlers included (P2) |
+| C7 | The start location | A robot that starts inside a `no_go_region`, or outside an `in_region` that lists its locations, fails the run before `AUTHORIZED` (new S-code) |
+
 ## Open questions for the owner
 
 1. ~~P1: reuse the reserved words or add new ones?~~ **Decided 2026-11-17: the reserved words `no_go_region`, `in_region`.**
