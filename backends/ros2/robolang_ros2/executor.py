@@ -164,6 +164,9 @@ def execute(task: ir.Task, bindings: dict[str, str], site: Site, ops: Operations
             raise BackendFailure("S507", "this site supports exactly its declared robot")
         if any(isinstance(step, ir.Measure) for _, step in ir.walk(task.steps)):
             raise BackendFailure("S509", "measure reads values, and this backend has no value sensors")
+        if any(isinstance(step, ir.Do) for _, step in ir.walk(task.steps)) or task.goal_states:
+            raise BackendFailure("S508", "declared actions (do) and states (in_state) can be neither run nor observed "
+                                         "by this backend")
         for condition in (*task.preconditions, *task.goal):
             kind = observe.unsupported(condition)
             if kind:

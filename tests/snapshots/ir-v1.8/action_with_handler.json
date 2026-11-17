@@ -1,0 +1,49 @@
+{
+  "ir_schema": "robolang.task-ir",
+  "ir_schema_version": "1.7",
+  "language_version": "1.8",
+  "tasks": [
+    {
+      "name": "open_or_report",
+      "parameters": [
+        {
+          "name": "r",
+          "type": "robot"
+        },
+        {
+          "name": "door",
+          "type": "object"
+        }
+      ],
+      "safety": [],
+      "preconditions": [],
+      "goal": [
+        {
+          "kind": "in_state",
+          "target": "door",
+          "label": "open"
+        }
+      ],
+      "steps": [
+        {
+          "kind": "do",
+          "robot": "r",
+          "action": "open",
+          "target": "door",
+          "else": [
+            {
+              "kind": "communicate",
+              "robot": "r",
+              "channel": "charge_nurse",
+              "message": "closet stuck"
+            },
+            {
+              "kind": "fail",
+              "reason": "door stuck"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

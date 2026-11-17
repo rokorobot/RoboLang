@@ -60,7 +60,10 @@ def limit_problems(task: ir.Task, world: World, bound: dict[str, str], limit: ir
             problems.append(RegionProblem("S003", f"robot '{robot}' moves in this task but does not declare that it "
                                                   f"honours {limit.kind} (its 'honours': {declared})", robot))
     for step in steps:
-        if isinstance(step, (ir.Move, ir.Place)) and _violates(limit, world, region, bound[step.target]):
+        # RoboLang 1.8 (decision 0040 C13): a `do` on a location counts as a target, as `move` and `place` do
+        counts = isinstance(step, (ir.Move, ir.Place)) or (
+            isinstance(step, ir.Do) and world.kind_of(bound[step.target]) == "location")
+        if counts and _violates(limit, world, region, bound[step.target]):
             problems.append(RegionProblem("S004", f"a {step.KIND} step has '{bound[step.target]}' as its target, which "
                                                   f"is {_forbidden(limit, region)}", bound[step.robot]))
     for atom in _goal_atoms(task):

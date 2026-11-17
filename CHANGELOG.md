@@ -1,7 +1,19 @@
 # Changelog
 
-The distribution version (this file) is independent of the language versions (1.1 to 1.7) and the Task IR schema
-versions (1.0 to 1.6). Decision records are in [`spec/decisions/`](https://github.com/rokorobot/RoboLang/tree/main/spec/decisions).
+The distribution version (this file) is independent of the language versions (1.1 to 1.8) and the Task IR schema
+versions (1.0 to 1.7). Decision records are in [`spec/decisions/`](https://github.com/rokorobot/RoboLang/tree/main/spec/decisions).
+
+## Unreleased
+
+- **RoboLang 1.8: declared actions** (decision 0040, step L4 of iteration I2; language, IR, world file and run record
+  only: the reference and prompts are not yet taught). A robot's profile declares its actions; a task asks for one with
+  `do r ACTION TARGET [to VALUE];` and verifies it with the condition `in_state X "label"`. Two new reserved words
+  (`do`, `in_state`), no new keyword for any action. `robolang 1.8;` builds Task IR 1.7 and run record 1.7; world file
+  1.4 adds a robot's `actions`, an object's `state` and `location_states`. A `do` is a request: the simulation sets the
+  declared result and records `requested`, and only the goal's `in_state` counts. New codes `S006`, `S007`, `S008`,
+  `S009` (before `AUTHORIZED`), `S271` (a `do` when the robot is not at the target), `E517` (world file) and `X606`
+  (`export-goal` and `delegate` refuse a goal with `in_state`). The ROS 2 backend refuses `do` and `in_state` with
+  `S508`. Safety case hazard H20 ("a declared action does more than its name says"). Files of 1.1 to 1.7 are unchanged.
 
 ## 0.4.0 (2026-11-17)
 

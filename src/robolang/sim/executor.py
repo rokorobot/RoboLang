@@ -12,6 +12,7 @@ from decimal import Decimal
 
 from .. import ir
 from ..measured import LABEL, Interval, compare_intervals, convert, reading_interval, to_base
+from .actions import action_problems
 from .regions import CHECKED, limit_problems
 from .values import Truth, duration_ms_of
 from .world import Property, World
@@ -78,6 +79,22 @@ class Message:
 
 
 @dataclass(frozen=True)
+class ActionRequest:
+    """
+    RoboLang 1.8 (decision 0040 A7): what a `do` asked of the robot's controller. `value` is the quantity or text of
+    the step, `result` the state label the profile declares. The status is always "requested": the effect counts only
+    through an `in_state` condition.
+    """
+
+    robot: str
+    action: str
+    target: str
+    value: ir.QuantityLit | ir.TextLit | None
+    result: str
+    status: str = "requested"
+
+
+@dataclass(frozen=True)
 class StepResult:
     index: int
     step: ir.Step
@@ -90,6 +107,7 @@ class StepResult:
     path: str = ""  # the label of the step (ir.walk), e.g. "3.then.1"
     handled: str | None = None  # RoboLang 1.5: the code of a failure its handler took over (decision 0033 F2)
     reading: Reading | None = None  # RoboLang 1.6: what a `measure` read
+    action: ActionRequest | None = None  # RoboLang 1.8: what a `do` requested
 
 
 @dataclass(frozen=True)
@@ -123,6 +141,7 @@ class ObjectState:
     present: bool | None
     location: str | None
     held_by: str | None
+    state: str | None = None  # RoboLang 1.8, world file 1.4
 
 
 @dataclass(frozen=True)
@@ -144,6 +163,7 @@ class FinalWorld:
     objects: tuple[tuple[str, ObjectState], ...]
     regions: tuple[tuple[str, RegionState], ...]
     sensors: tuple[tuple[str, SensorState], ...]
+    location_states: tuple[tuple[str, str], ...] = ()  # world file 1.4: the locations that have a state, by ID
 
 
 @dataclass(frozen=True)
@@ -193,6 +213,9 @@ class _State:
         self.clear = {k: v.clear for k, v in world.regions.items()}
         self.available = {k: v.available for k, v in world.sensors.items()}
         self.props = {k: {p.kind: p for p in v.properties} for k, v in world.objects.items()}  # world file 1.2
+        self.state = {k: v.state for k, v in world.objects.items()}  # world file 1.4
+        self.location_state = dict(world.location_states)
+        self.request: ActionRequest | None = None  # what the step just run requested (RoboLang 1.8)
         self.values: dict[str, Reading] = {}  # the bindings of `measure` (RoboLang 1.6)
         self.clock = Decimal(0)
         self.next_event = 0
@@ -219,9 +242,11 @@ class _State:
         w = self.world
         return FinalWorld(
             tuple((k, RobotState(self.ready[k], self.location[k], self.holding[k])) for k in sorted(w.robots)),
-            tuple((k, ObjectState(self.present[k], self.at[k], self.held_by[k])) for k in sorted(w.objects)),
+            tuple((k, ObjectState(self.present[k], self.at[k], self.held_by[k], self.state[k]))
+                  for k in sorted(w.objects)),
             tuple((k, RegionState(self.clear[k])) for k in sorted(w.regions)),
             tuple((k, SensorState(w.sensors[k].robot, self.available[k])) for k in sorted(w.sensors)),
+            tuple(sorted(self.location_state.items())),
         )
 
 
@@ -334,6 +359,10 @@ def _evaluate(task: ir.Task, state: _State, bound: dict[str, str], condition: ir
         return Truth.of(state.location[bound[condition.robot]] == bound[condition.location])
     if isinstance(condition, ir.Holding):
         return _holding(state, bound[condition.robot], bound[condition.obj])
+    if isinstance(condition, ir.InState):  # RoboLang 1.8 (decision 0040 A2): no known state is unknown, fail closed
+        target = bound[condition.target]
+        held = state.state[target] if target in state.state else state.location_state.get(target)
+        return Truth.UNKNOWN if held is None else Truth.of(held == condition.label)
     sensor = _sensor_id(task, bound, condition.sensor)
     if sensor in state.available:
         return Truth.of(state.available[sensor])
@@ -375,6 +404,10 @@ def _authorize(task: ir.Task, world: World, bindings: tuple[tuple[str, str], ...
         else:
             statuses.append("failed_check")
             failure = Failure(code, "authorization", None, None, index, culprit)
+    if failure is None:  # RoboLang 1.8: the declared actions, after the limits (decision 0040 A6, C7)
+        problems = action_problems(task, world, bound)
+        if problems:
+            failure = Failure(problems[0].code, "authorization", problems[0].step, None, None, problems[0].robot)
     return tuple(LimitResult(lim, status) for lim, status in zip(task.safety, statuses)), failure
 
 
@@ -408,6 +441,20 @@ def _execute(task: ir.Task, state: _State, bound: dict[str, str], step: ir.Step)
         state.at[obj] = target
         state.held_by[obj] = None
         state.holding[robot] = None
+    elif isinstance(step, ir.Do):  # RoboLang 1.8 (decision 0040 A7, C2)
+        robot, target = bound[step.robot], bound[step.target]
+        _require_ready(state.ready[robot])
+        action = state.world.robots[robot].action(step.action)
+        if action is None:  # authorization has failed such a run already
+            raise _StepFailed("S006")
+        where = state.at[target] if target in state.at else target  # an object is where it is; a location is itself
+        if state.held_by.get(target) != robot and where != state.location[robot]:
+            raise _StepFailed("S271")
+        if target in state.state:
+            state.state[target] = action.result
+        else:
+            state.location_state[target] = action.result
+        state.request = ActionRequest(robot, action.name, target, step.value, action.result)
     elif isinstance(step, ir.Inspect):
         robot, obj = bound[step.robot], bound[step.obj]
         sensor_id = _sensor_id(task, bound, step.sensor)
@@ -579,6 +626,7 @@ def run(task: ir.Task, world: World) -> RunResult:
                         return True
                     i += 1 + size_then + sum(1 for _ in ir.walk(step.orelse))
                     continue
+                state.request = None
                 observation, message, condition_result, reading = _execute(task, state, bound, step)
             except _StepFailed as exc:
                 handler = ir.handler_of(step)
@@ -595,7 +643,7 @@ def run(task: ir.Task, world: World) -> RunResult:
                 continue
             done[i] = StepResult(
                 i, step, "succeeded", start, state.clock, observation, message, condition_result, label,
-                reading=reading,
+                reading=reading, action=state.request,
             )
             i += 1 + sum(1 for _ in ir.walk(ir.handler_of(step) or ()))  # a handler not needed is not run
         return False

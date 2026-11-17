@@ -1,5 +1,5 @@
 """
-Developer commands for RoboLang 1.1 to 1.7.
+Developer commands for RoboLang 1.1 to 1.8.
 
     reference              print the shipped RoboLang 1.7 language reference
     example [DIR]          write a sample task (fetch.rob) and world (world.json) to start from
@@ -13,7 +13,7 @@ Developer commands for RoboLang 1.1 to 1.7.
                            send the task's goal to a robot that runs its own plan; print the delegate record
 
 validate, inspect, simulate, export-goal and delegate take `--ir IR` instead of FILE: a Task IR JSON
-document (schema 1.0 to 1.6), read strictly and re-validated in full (spec/ir-reader-v0.1.md).
+document (schema 1.0 to 1.7), read strictly and re-validated in full (spec/ir-reader-v0.1.md).
     arch02 --scenario SCENARIO --cases CASES --case ID
                            run one case of the RFC-001 reference scenario in simulation
 
@@ -80,7 +80,7 @@ NOT_A_SAFETY_CHECK_IR = (
 NOTHING_EXECUTED = "This is a description only. Nothing was executed."
 
 _DESCRIPTION = f"""\
-Tools for RoboLang 1.1 to 1.7 task files.
+Tools for RoboLang 1.1 to 1.8 task files.
 
 reference prints the shipped 1.7 language reference. validate and inspect check and describe .rob
 files; they never execute anything.
@@ -267,6 +267,8 @@ def _world_diagnostic(args, inputs: _RunInputs, finding: Finding):
             pointer += f"/{side}/{int(position) - 1}"
         return IRDiagnostic(finding.code, finding.message, pointer, args.file)
     node = next(t for t in inputs.loaded.program.tasks if t.name.text == inputs.task.name)
+    if part == "goal":
+        return Diagnostic(finding.code, finding.message, node.goal.conditions[index].span, filename=args.file)
     statement = (node.annotations if part == "safety" else node.plan.statements)[index]
     for side, position in zip(parts[1::2], parts[2::2]):  # into the branch, then to the statement in it
         branch = statement.then if side == "then" else statement.orelse if hasattr(statement, "then") \
@@ -358,6 +360,8 @@ def _condition(condition: task_ir.Condition, typed: bool = False) -> str:
         return f"robot_at {condition.robot} {condition.location}"
     if isinstance(condition, task_ir.Holding):
         return f"holding {condition.robot} {condition.obj}"
+    if isinstance(condition, task_ir.InState):
+        return f"in_state {condition.target} {_quoted(condition.label)}"
     if isinstance(condition, task_ir.Compare):
         return f"{_value(condition.left, typed)} {condition.op} {_value(condition.right, typed)}"
     # A new condition kind must be rendered here explicitly, never shown as another kind.
@@ -376,6 +380,9 @@ def _step(step: task_ir.Step, typed: bool = False) -> str:
     if isinstance(step, task_ir.Measure):
         return (f"measure {step.robot} {step.reading} of {step.obj} using {_sensor(step.sensor, typed)} "
                 f"as {step.binding}")
+    if isinstance(step, task_ir.Do):
+        value = "" if step.value is None else f" to {_value(step.value, typed)}"
+        return f"do {step.robot} {step.action} {step.target}{value}"
     if isinstance(step, task_ir.WaitFor):
         return f"wait for {_quantity(step.duration)}"
     if isinstance(step, task_ir.WaitUntil):
@@ -488,6 +495,10 @@ _FAILURE_MEANING = {
     "S003": "a robot that moves in the task does not declare that it honours a region limit",
     "S004": "a target of the task is inside a no_go_region, or outside an in_region",
     "S005": "a robot that moves in the task starts inside a no_go_region, or outside an in_region",
+    "S006": "a bound robot does not declare an action a do step asks for",
+    "S007": "the target of a do step is not of the kind (object or location) the robot's action acts on",
+    "S008": "the value of a do step is missing, unexpected or not of the kind the robot's action takes",
+    "S009": "a goal in_state that no declared action of the task's robots produces and the world does not hold",
     "S101": "a pre condition is false",
     "S102": "a pre condition is unknown in the world",
     "S201": "the robot is not ready",
@@ -505,6 +516,7 @@ _FAILURE_MEANING = {
     "S234": "measure: the sensor does not measure that kind",
     "S235": "measure: a contact reading, and the robot is not at the object",
     "S236": "measure: the object has no value for that kind",
+    "S271": "do: the robot is not at the target (or at the object's location)",
     "S241": "wait until: the timeout expired before the condition was true",
     "S251": "a scripted fault from the world file",
     "S261": "the condition of an if is unknown; no branch was taken",
@@ -809,7 +821,7 @@ def _input_arguments(command: argparse.ArgumentParser, what: str, note: str = ""
         "--ir",
         metavar="IR",
         help=(
-            "path to a Task IR JSON file (schema 1.0 to 1.6) instead of FILE. It is read strictly and "
+            "path to a Task IR JSON file (schema 1.0 to 1.7) instead of FILE. It is read strictly and "
             f"re-validated in full, whatever versions it claims (spec/ir-reader-v0.1.md){note}"
         ),
     )

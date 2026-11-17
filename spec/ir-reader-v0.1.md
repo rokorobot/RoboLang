@@ -2,7 +2,7 @@
 
 **Status:** implemented in `src/robolang/ir_reader.py` (CORE-1); decision record
 [0021](decisions/0021-core-1-ir-reader.md).
-**Reads:** Task IR schemas [1.0](ir-schema-v1.0.md) to [1.6](ir-schema-v1.6.md)
+**Reads:** Task IR schemas [1.0](ir-schema-v1.0.md) to [1.7](ir-schema-v1.7.md)
 **Duties implemented:** 1 and 2 of [ir-schema-v1.0.md](ir-schema-v1.0.md) section 2 (kernel rules K4 and K5
 of the domain contracts)
 
@@ -116,6 +116,8 @@ section 4), in the same order and with the same "one error per item" behaviour (
   comparison stands in a goal or a live reading outside a `wait_until` (`I218` to `I223`).
 - in schema 1.6 (RoboLang 1.7, [robolang-v1.7.md](robolang-v1.7.md) section 3): a region limit names a `region`
   parameter (`I203`, `I204`), once (`I224`), and a task has at most 8 (`I225`).
+- in schema 1.7 (RoboLang 1.8, [robolang-v1.8.md](robolang-v1.8.md) section 3): a `do` and an `in_state` name
+  parameters of the right types (`I203`, `I204`), and a state label or a text value is not empty (`I207`).
 
 Not re-checked, because the IR cannot express a violation: the optional `robolang` marker, `;`, block
 structure, the mixing of `and` and `or` without parentheses, the source depth of parentheses.

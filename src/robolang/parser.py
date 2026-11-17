@@ -1,7 +1,7 @@
 """
 Recursive-descent parser for RoboLang v1.1 (spec/grammar.ebnf), v1.2 (spec/grammar-v1.2.ebnf) and
-v1.3 (spec/grammar-v1.3.ebnf), v1.4 (spec/grammar-v1.4.ebnf), v1.5 (grammar-v1.5.ebnf), v1.6 (grammar-v1.6.ebnf)
-and v1.7 (grammar-v1.7.ebnf).
+v1.3 (spec/grammar-v1.3.ebnf), v1.4 (spec/grammar-v1.4.ebnf), v1.5 (grammar-v1.5.ebnf), v1.6 (grammar-v1.6.ebnf),
+v1.7 (grammar-v1.7.ebnf) and v1.8 (grammar-v1.8.ebnf).
 
 Produces the AST of `nodes.py` or raises RoboLangError carrying every syntax error found.
 After a syntax error the parser resynchronises (see `_resync`) and carries on, so independent
@@ -28,6 +28,7 @@ from .nodes import Span
 from .tokens import (
     CONDITIONS,
     CONDITIONS_V1_3,
+    CONDITIONS_V1_8,
     DURATION_UNITS,
     KIND_UNITS,
     PARAM_TYPES,
@@ -37,13 +38,14 @@ from .tokens import (
     SPEED_UNITS,
     STATEMENTS,
     STATEMENTS_V1_6,
+    STATEMENTS_V1_8,
     VERIFY_KEYS,
     Token,
     TokenKind,
 )
 
 DEFAULT_VERSION = "1.1"  # the version of a file without a marker
-SUPPORTED_VERSIONS = ("1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7")
+SUPPORTED_VERSIONS = ("1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8")
 SUPPORTED_VERSION = DEFAULT_VERSION  # kept for existing imports
 MAX_CONDITION_DEPTH = 8  # spec/robolang-v1.2.md section 3.3
 MAX_IF_DEPTH = 4  # spec/robolang-v1.4.md section 3.3 (E216)
@@ -109,31 +111,38 @@ class _Parser:
 
     @property
     def _typed(self) -> bool:
-        """True in 1.3 to 1.7 files: goal blocks, outcome atoms and sensor parameters."""
-        return self._language in ("1.3", "1.4", "1.5", "1.6", "1.7")
+        """True in 1.3 to 1.8 files: goal blocks, outcome atoms and sensor parameters."""
+        return self._language in ("1.3", "1.4", "1.5", "1.6", "1.7", "1.8")
 
     @property
     def _branching(self) -> bool:
-        """True in 1.4 to 1.7 files: `if`, `else` and `fail`."""
-        return self._language in ("1.4", "1.5", "1.6", "1.7")
+        """True in 1.4 to 1.8 files: `if`, `else` and `fail`."""
+        return self._language in ("1.4", "1.5", "1.6", "1.7", "1.8")
 
     @property
     def _handlers(self) -> bool:
-        """True in 1.5 to 1.7 files: a step may end with a failure handler `else { ... }`."""
-        return self._language in ("1.5", "1.6", "1.7")
+        """True in 1.5 to 1.8 files: a step may end with a failure handler `else { ... }`."""
+        return self._language in ("1.5", "1.6", "1.7", "1.8")
 
     @property
     def _values(self) -> bool:
-        """True in 1.6 and 1.7 files: `measure`, comparisons, live readings and sending a binding (decision 0036)."""
-        return self._language in ("1.6", "1.7")
+        """True in 1.6 to 1.8 files: `measure`, comparisons, live readings and sending a binding (decision 0036)."""
+        return self._language in ("1.6", "1.7", "1.8")
 
     @property
     def _regions(self) -> bool:
-        """True in 1.7 files: `@safety no_go_region R;` and `@safety in_region R;` (decision 0039)."""
-        return self._language == "1.7"
+        """True in 1.7 and 1.8 files: `@safety no_go_region R;` and `@safety in_region R;` (decision 0039)."""
+        return self._language in ("1.7", "1.8")
+
+    @property
+    def _actions(self) -> bool:
+        """True in 1.8 files: `do` and `in_state` (decision 0040)."""
+        return self._language == "1.8"
 
     @property
     def _statements(self) -> tuple[str, ...]:
+        if self._actions:
+            return STATEMENTS_V1_8
         return STATEMENTS_V1_6 if self._values else STATEMENTS
 
     def _peek(self) -> Token | None:
@@ -157,7 +166,7 @@ class _Parser:
         self._record(error.diagnostic)
         starts = self._at(TokenKind.RBRACE) or self._at(TokenKind.LPAREN)
         starts = starts or self._at(TokenKind.AT_SAFETY) or self._at(TokenKind.AT_VERIFY)
-        starts = starts or self._at_keyword(*self._statements, *CONDITIONS, "not", "pre", "plan")
+        starts = starts or self._at_keyword(*self._statements, *CONDITIONS, "in_state", "not", "pre", "plan")
         starts = starts or (self._branching and self._at_keyword("if", "fail"))
         skip = not (error.code == "E202" and starts)
         while skip and not self._at_boundary():
@@ -517,7 +526,7 @@ class _Parser:
 
     def _atom(self, expected: str) -> ast.Condition:
         token = self._tok
-        atoms = CONDITIONS_V1_3 if self._typed else CONDITIONS
+        atoms = CONDITIONS_V1_8 if self._actions else CONDITIONS_V1_3 if self._typed else CONDITIONS
         if self._at_keyword("message_received"):
             self._error("E211", f"'message_received' {_NOT_IN_V1_1}")
         if self._values and self._at(TokenKind.IDENT):
@@ -528,6 +537,10 @@ class _Parser:
             self._error("E201", f"expected {expected}, found {self._found()}")
         self._advance()
 
+        if token.text == "in_state":  # RoboLang 1.8 (decision 0040 A2)
+            target = self._name("an object or location name after 'in_state'")
+            label = self._string("a state label in quotes after the name")
+            return ast.InState(target, label, token.span.to(label.span))
         if token.text == "sensor_ok":
             sensor = self._sensor("sensor_ok")
             return ast.SensorOk(sensor, token.span.to(sensor.span))
@@ -772,6 +785,24 @@ class _Parser:
         handler, end = self._end("the measure statement")
         return ast.Measure(robot, kind, obj, sensor, binding, start.span.to(end.span), handler)
 
+    def _do(self, start: Token) -> ast.Do:
+        """`do r ACTION TARGET;` or `... to VALUE;`, with a failure handler as any step (1.8, decision 0040 A1, A5)."""
+        robot = self._name("a robot name after 'do'")
+        action = self._name("an action name after the robot")
+        target = self._name("an object or location name after the action name")
+        value = None
+        if self._at_keyword("to"):
+            self._advance()
+            if self._at(TokenKind.NUMBER):
+                value = self._quantity()
+            elif self._at(TokenKind.STRING):
+                value = self._string("a value")
+            else:
+                self._error("E201", "expected a quantity such as '175 degC' or a string after 'to', "
+                                    f"found {self._found()}")
+        handler, end = self._end("the do statement")
+        return ast.Do(robot, action, target, value, start.span.to(end.span), handler)
+
     def _wait(self, start: Token) -> ast.WaitFor | ast.WaitUntil:
         if self._at_keyword("for"):
             self._advance()
@@ -831,7 +862,7 @@ def parse_recovering(source: str, filename: str = "<string>") -> Parsed:
 
 
 def parse(source: str, filename: str = "<string>") -> ParseResult:
-    """Parse RoboLang v1.1 to v1.7 source. Raises RoboLangError with every lexical or syntax error found."""
+    """Parse RoboLang v1.1 to v1.8 source. Raises RoboLangError with every lexical or syntax error found."""
     parsed = parse_recovering(source, filename)
     if parsed.errors:
         raise RoboLangError(parsed.errors, warnings=parsed.warnings)

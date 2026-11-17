@@ -36,10 +36,11 @@ from .tokens import (
 )
 from .validator import double_grasp_message, fail_reason_problem
 
-SCHEMA_VERSIONS = tuple(ir.IR_SCHEMA_VERSIONS.values())  # "1.0" to "1.6": the index is the schema's rank
+SCHEMA_VERSIONS = tuple(ir.IR_SCHEMA_VERSIONS.values())  # "1.0" to "1.7": the index is the schema's rank
 LANGUAGE_OF = {schema: language for language, schema in ir.IR_SCHEMA_VERSIONS.items()}
 SAFETY_KINDS = ("max_speed", "no_go_region", "in_region")
 _REGION_RANK = 6  # the first schema with region limits (`no_go_region`, `in_region`)
+_ACTIONS_RANK = 7  # the first schema with the step `do` and the condition `in_state` (RoboLang 1.8)
 MAX_DECIMAL_CHARS = 64
 
 _READ_CODES = {"encoding": "I101", "json": "I102", "duplicate_key": "I103", "number": "I104", "depth": "I105"}
@@ -56,6 +57,7 @@ _ATOMS = {
     "object_at": (2, ("object", "location")),
     "robot_at": (2, ("robot", "location")),
     "holding": (2, ("robot", "object")),
+    "in_state": (_ACTIONS_RANK, ("target", "label")),
 }
 _COMPOUND = {"and": 1, "or": 1, "not": 1}
 _STEPS = {
@@ -88,10 +90,13 @@ _USES = {
     "inspect": (("robot", "robot"), ("object", "object")),
     "measure": (("robot", "robot"), ("object", "object")),
     "communicate": (("robot", "robot"),),
+    "do": (("robot", "robot"), ("target", ("object", "location"))),
+    "in_state": (("target", ("object", "location")),),
 }
 _PARAM_TYPES = {"robot": 0, "object": 0, "location": 0, "region": 0, "sensor": 2}
 _BRANCH_STEPS = {"if": 3, "fail": 3}  # kind -> first schema rank that has it
-_HANDLED = ("move", "grasp", "place", "inspect", "measure", "wait_until")  # a failure handler: schema 1.4 (rank 4)
+# a failure handler: schema 1.4 (rank 4)
+_HANDLED = ("move", "grasp", "place", "inspect", "measure", "do", "wait_until")
 _HANDLER_KEYS = ("else",)  # a handler has no goal (decision 0034)
 
 
@@ -429,6 +434,9 @@ class _Reader:
             if "binding" in node:
                 ok = self.name(node["binding"], _pointer(ptr, "binding")) and ok
             return self.handler(node, ptr, ifs) and ok
+        if kind == "do":
+            known = self._needs("step kind 'do'", _ACTIONS_RANK, _pointer(ptr, "kind"))
+            return known and self.do(node, ptr, ifs, handled)
         if kind == "communicate" and self._rank >= _VALUES_RANK:
             return self.communicate(node, ptr)
         if kind in _STEPS:
@@ -448,6 +456,15 @@ class _Reader:
             return self.handler(node, ptr, ifs) and ok
         self.error("I114", f"unknown step kind '{kind}'", _pointer(ptr, "kind"))
         return False
+
+    def do(self, node, ptr: str, ifs: int, handled) -> bool:
+        """Schema 1.7: `robot`, `action` and `target` names, an optional `value` (a quantity or a text), a handler."""
+        ok = self.strings(node, ptr, ("kind", "robot", "action", "target"), ("robot", "target"), ("value", *handled))
+        if "action" in node:
+            ok = self.name(node["action"], _pointer(ptr, "action")) and ok
+        if "value" in node:
+            ok = self.operand(node["value"], _pointer(ptr, "value"), ("quantity", "text")) and ok
+        return self.handler(node, ptr, ifs) and ok
 
     def communicate(self, node, ptr: str) -> bool:
         """Schema 1.5: `message` (text) or `binding` (the name of a `measure`), exactly one."""
@@ -698,6 +715,8 @@ class _Reader:
             self.uses(node, ptr)
             if kind == "sensor_ok":
                 self.sensor(node["sensor"], _pointer(ptr, "sensor"), "sensor_ok")
+            elif kind == "in_state":
+                self.not_empty(node["label"], "state label", _pointer(ptr, "label"))
 
     def live(self, node: dict, ptr: str):
         """The object and sensor of a live reading are parameters of the right types (E303, E304, E310)."""
@@ -733,6 +752,10 @@ class _Reader:
             self.uses(node, ptr)
             if kind in ("inspect", "measure"):
                 self.sensor(node["sensor"], _pointer(ptr, "sensor"), kind)
+            elif kind == "do":
+                value = node.get("value")
+                if isinstance(value, dict) and value["kind"] == "text":
+                    self.not_empty(value["value"], "value", _pointer(_pointer(ptr, "value"), "value"))
             elif kind == "communicate":
                 for key, what in (("channel", "channel name"), ("message", "message")):
                     if key in node:  # schema 1.5 may send a binding instead of a message
@@ -745,9 +768,9 @@ class _Reader:
             declared = self._params.get(name)
             if declared is None:
                 self.error("I203", f"undeclared name '{name}': it is not a parameter of this task", at)
-            elif declared != expected:
-                self.error("I204", f"'{name}' is {_article(declared)}, but '{node['kind']}' expects "
-                                   f"{_article(expected)} here", at)
+            elif declared not in ((expected,) if isinstance(expected, str) else expected):
+                wanted = _article(expected) if isinstance(expected, str) else " or ".join(map(_article, expected))
+                self.error("I204", f"'{name}' is {_article(declared)}, but '{node['kind']}' expects {wanted} here", at)
 
     def sensor(self, name: str, ptr: str, context: str):
         """E307, E310 and the sensor case of E303/E304: a world sensor ID before schema 1.2, a parameter name in it."""
@@ -855,6 +878,8 @@ def _condition(node: dict) -> ir.Condition:
         return ir.Not(_condition(node["condition"]))
     if kind == "compare":
         return ir.Compare(_operand(node["left"]), node["op"], _operand(node["right"]))
+    if kind == "in_state":
+        return ir.InState(node["target"], node["label"])
     return _of(next(c for c in _CONDITIONS if c.KIND == kind), node)
 
 
@@ -922,6 +947,9 @@ def _step(node: dict) -> ir.Step:
 
 def _plain_step(node: dict) -> ir.Step:
     kind = node["kind"]
+    if kind == "do":
+        return ir.Do(node["robot"], node["action"], node["target"],
+                     None if "value" not in node else _operand(node["value"]))
     if kind == "if":
         return ir.If(_condition(node["condition"]), tuple(_step(s) for s in node["then"]),
                      tuple(_step(s) for s in node["else"]), _goal(node["goal_then"]), _goal(node["goal_else"]))

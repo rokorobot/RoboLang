@@ -1,5 +1,5 @@
 """
-Abstract syntax tree for RoboLang v1.1 to v1.7 (robolang-v1.1.md section 7, v1.2 section 6, v1.3 section 6).
+Abstract syntax tree for RoboLang v1.1 to v1.8 (robolang-v1.1.md section 7, v1.2 section 6, v1.3 section 6).
 
 Nodes are immutable and record the source faithfully: names are unresolved,
 units are kept as written and nothing is normalized. Binding and type checks
@@ -197,7 +197,17 @@ class Compare:
     span: Span
 
 
-Condition = Union[RobotReady, RegionClear, ObjectExists, SensorOk, ObjectAt, RobotAt, Holding, And, Or, Not, Compare]
+@dataclass(frozen=True)
+class InState:
+    """RoboLang 1.8 (decision 0040 A2): `in_state closet "open"`: the entity's observed state is the label."""
+
+    target: Name
+    label: StringLit
+    span: Span
+
+
+Condition = Union[RobotReady, RegionClear, ObjectExists, SensorOk, ObjectAt, RobotAt, Holding, And, Or, Not, Compare,
+                  InState]
 
 
 # -------- statements --------
@@ -245,6 +255,21 @@ class Measure:
     obj: Name
     sensor: Name | StringLit  # a StringLit is E310, as for `inspect`
     binding: Name
+    span: Span
+    handler: Branch | None = None
+
+
+@dataclass(frozen=True)
+class Do:
+    """
+    RoboLang 1.8 (decision 0040 A1, A5): `do r open closet;` or `do r set fryer to 175 degC;`. `action` is a name the
+    robot's profile declares; `value` is a quantity or a string, or None.
+    """
+
+    robot: Name
+    action: Name
+    target: Name
+    value: QuantityLit | StringLit | None
     span: Span
     handler: Branch | None = None
 
@@ -303,8 +328,8 @@ class If:
     span: Span
 
 
-Statement = Union[Move, Grasp, Place, Inspect, Measure, WaitFor, WaitUntil, Communicate, If, Fail]
-HANDLED = (Move, Grasp, Place, Inspect, Measure, WaitUntil)  # the statements that may take a failure handler (1.5, 1.6)
+Statement = Union[Move, Grasp, Place, Inspect, Measure, Do, WaitFor, WaitUntil, Communicate, If, Fail]
+HANDLED = (Move, Grasp, Place, Inspect, Measure, Do, WaitUntil)  # the statements with a failure handler
 
 
 # -------- structure --------

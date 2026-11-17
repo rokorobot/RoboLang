@@ -22,6 +22,7 @@ RUN_RECORD_SCHEMA_VERSION = "1.0"
 # Language version -> run record schema version (robolang-v1.2.md section 8.3; v1.3 section 8.3).
 RUN_RECORD_SCHEMA_VERSIONS = {
     "1.1": "1.0", "1.2": "1.1", "1.3": "1.2", "1.4": "1.3", "1.5": "1.4", "1.6": "1.5", "1.7": "1.6",
+    "1.8": "1.7",
 }
 SEED = re.compile(r"[A-Za-z0-9._-]{1,64}")
 DEFAULT_SEED = "0"
@@ -115,7 +116,26 @@ def _event(event) -> dict:
     return {**out, "value": event.value}
 
 
-def _step(step, branching: bool, handlers: bool = False, values: bool = False) -> dict:
+def _value(value) -> dict | None:
+    """The value of a `do` as the IR writes it (a quantity or a text), or None."""
+    return None if value is None else ir.to_dict(value)
+
+
+def _action(request) -> dict | None:
+    """RoboLang 1.8 (decision 0040 A7): what a `do` requested. The effect is never claimed here, only requested."""
+    if request is None:
+        return None
+    return {
+        "robot": request.robot,
+        "action": request.action,
+        "target": request.target,
+        "value": _value(request.value),
+        "result": request.result,
+        "status": request.status,
+    }
+
+
+def _step(step, branching: bool, handlers: bool = False, values: bool = False, actions: bool = False) -> dict:
     # An `if` is written without its branches, and a step without its failure handler: they are steps of their
     # own, in the same array.
     if isinstance(step.step, ir.If):
@@ -134,6 +154,7 @@ def _step(step, branching: bool, handlers: bool = False, values: bool = False) -
         "observation": _observation(step.observation),
         **({"reading": _reading(step.reading)} if values else {}),
         "message": _message(step.message, values),
+        **({"action": _action(step.action)} if actions else {}),
         "condition_result": None if step.condition_result is None else step.condition_result.value,
     }
 
@@ -160,16 +181,19 @@ def _decision(decision) -> dict:
     }
 
 
-def _final_world(world) -> dict:
+def _final_world(world, actions: bool = False) -> dict:
+    """`actions` (a 1.8 record): each object also has its `state`, and `location_states` follows `sensors`."""
     return {
         "robots": {
             k: {"ready": v.ready, "location": v.location, "holding": v.holding} for k, v in world.robots
         },
         "objects": {
-            k: {"present": v.present, "location": v.location, "held_by": v.held_by} for k, v in world.objects
+            k: {"present": v.present, "location": v.location, "held_by": v.held_by,
+                **({"state": v.state} if actions else {})} for k, v in world.objects
         },
         "regions": {k: {"clear": v.clear} for k, v in world.regions},
         "sensors": {k: {"robot": v.robot, "available": v.available} for k, v in world.sensors},
+        **({"location_states": dict(world.location_states)} if actions else {}),
     }
 
 
@@ -195,7 +219,9 @@ def to_record(
     a 1.5 source (adds `handled` after `status` on every step: the code of a failure a handler took over, or null),
     1.5 for a 1.6 source (adds `reading` after `observation` on every step, and `value` after `status` on every
     message: the typed value of a measurement, or null), 1.6 for a 1.7 source (the same shape: it embeds Task IR 1.6,
-    and `safety_limits` may hold region limits with the status `checked_against_world_not_enforced`).
+    and `safety_limits` may hold region limits with the status `checked_against_world_not_enforced`), 1.7 for a 1.8
+    source (adds `action` after `message` on every step: what a `do` requested, with the status `requested`, or null;
+    `state` on every `final_world` object, and `final_world.location_states`).
     """
     inputs = {
         "source_sha256": source_sha256,
@@ -209,9 +235,10 @@ def to_record(
     }
     if bindings_source != "world":  # a record without the key has world-file bindings (section 5.1)
         inputs["bindings_source"] = bindings_source
-    branching = language_version in ("1.4", "1.5", "1.6", "1.7")
-    handlers = language_version in ("1.5", "1.6", "1.7")
-    values = language_version in ("1.6", "1.7")
+    branching = language_version in ("1.4", "1.5", "1.6", "1.7", "1.8")
+    handlers = language_version in ("1.5", "1.6", "1.7", "1.8")
+    values = language_version in ("1.6", "1.7", "1.8")
+    actions = language_version == "1.8"
     return {
         "run_record_schema": RUN_RECORD_SCHEMA,
         "run_record_schema_version": RUN_RECORD_SCHEMA_VERSIONS[language_version],
@@ -228,10 +255,10 @@ def to_record(
         "preconditions": _results(result.preconditions),
         **({} if result.goal is None else {"goal": _results(result.goal, branching)}),
         **({"decisions": [_decision(d) for d in result.decisions]} if branching else {}),
-        "steps": [_step(s, branching, handlers, values) for s in result.steps],
+        "steps": [_step(s, branching, handlers, values, actions) for s in result.steps],
         "events_applied": [_event(e) for e in result.events_applied],
         "end_t_ms": ms_text(result.end_t_ms),
-        "final_world": _final_world(result.final_world),
+        "final_world": _final_world(result.final_world, actions),
         **({} if result.goal is None else {"core_outcome": core_outcome(result, task, run_id, core=core)}),
     }
 

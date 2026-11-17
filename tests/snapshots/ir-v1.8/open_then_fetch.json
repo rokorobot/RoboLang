@@ -1,0 +1,66 @@
+{
+  "ir_schema": "robolang.task-ir",
+  "ir_schema_version": "1.7",
+  "language_version": "1.8",
+  "tasks": [
+    {
+      "name": "restock",
+      "parameters": [
+        {
+          "name": "r",
+          "type": "robot"
+        },
+        {
+          "name": "closet",
+          "type": "object"
+        },
+        {
+          "name": "kit",
+          "type": "object"
+        },
+        {
+          "name": "ward",
+          "type": "location"
+        }
+      ],
+      "safety": [],
+      "preconditions": [],
+      "goal": [
+        {
+          "kind": "in_state",
+          "target": "closet",
+          "label": "open"
+        },
+        {
+          "kind": "object_at",
+          "object": "kit",
+          "location": "ward"
+        }
+      ],
+      "steps": [
+        {
+          "kind": "do",
+          "robot": "r",
+          "action": "open",
+          "target": "closet"
+        },
+        {
+          "kind": "grasp",
+          "robot": "r",
+          "object": "kit"
+        },
+        {
+          "kind": "move",
+          "robot": "r",
+          "target": "ward"
+        },
+        {
+          "kind": "place",
+          "robot": "r",
+          "object": "kit",
+          "target": "ward"
+        }
+      ]
+    }
+  ]
+}

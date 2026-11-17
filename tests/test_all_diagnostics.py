@@ -217,3 +217,17 @@ def test_region_limit_errors_are_all_reported_with_the_others():
         + "  goal { robot_at r d; }\n  plan { move r to d; }\n}\n"
     )
     assert errors(source) == [("E323", 4), ("E303", 5), ("E304", 6), ("E306", 8), ("E324", 16)]
+
+
+def test_declared_action_errors_are_all_reported_with_the_others():
+    """RoboLang 1.8 (decision 0040): E303, E304, E307 and E206-free static errors in one task, each at its own line."""
+    source = (
+        "robolang 1.8;\ntask t(robot r, object door, region zone) {\n"
+        '  goal { in_state door ""; }\n'  # 3: E307
+        "  plan {\n"
+        "    do r open window;\n"  # 5: E303
+        "    do r open zone;\n"  # 6: E304
+        "    do window open door;\n"  # 7: E303
+        "  }\n}\n"
+    )
+    assert errors(source) == [("E307", 3), ("E303", 5), ("E304", 6), ("E303", 7)]

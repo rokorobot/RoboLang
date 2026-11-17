@@ -1,0 +1,13 @@
+// RoboLang v1.8 fixture: valid
+// expect: ok
+// why: a string value, and in_state in a wait until
+
+robolang 1.8;
+
+task label_it(robot r, object box, location dock) {
+    goal { in_state box "labelled"; }
+    plan {
+        do r tag box to "LOT-7";
+        wait until in_state box "labelled" timeout 5 s else { fail "not labelled"; }
+    }
+}

@@ -1,0 +1,10 @@
+// RoboLang v1.8 fixture: invalid
+// expect: error E212 (syntax) line 9
+// why: an action name is a name, not a reserved word
+
+robolang 1.8;
+
+task t(robot r, object door) {
+    goal { in_state door "open"; }
+    plan { do r move door; }
+}

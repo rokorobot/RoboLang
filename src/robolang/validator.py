@@ -1,5 +1,5 @@
 """
-Static validation for RoboLang v1.1 to v1.7 (spec/robolang-v1.1.md, section 5; spec/robolang-v1.3.md, section 4;
+Static validation for RoboLang v1.1 to v1.8 (spec/robolang-v1.1.md, section 5; spec/robolang-v1.3.md, section 4;
 spec/robolang-v1.4.md, section 4; spec/robolang-v1.6.md, section 6 for bindings and kinds).
 
 Checks a parsed program for errors that the grammar cannot express: duplicate
@@ -140,10 +140,10 @@ class _Validator:
         self._filename = filename
         self._params: dict[str, ParamType] = {}
         self.errors: list[Diagnostic] = []
-        self._typed_sensors = False  # RoboLang 1.3 to 1.7: sensors are parameters
-        self._branching = False  # RoboLang 1.4 to 1.7
-        self._handlers = False  # RoboLang 1.5 to 1.7
-        self._values = False  # RoboLang 1.6 and 1.7
+        self._typed_sensors = False  # RoboLang 1.3 to 1.8: sensors are parameters
+        self._branching = False  # RoboLang 1.4 to 1.8
+        self._handlers = False  # RoboLang 1.5 to 1.8
+        self._values = False  # RoboLang 1.6 to 1.8
         self._language = None
 
     def _report(self, code: str, message: str, span: Span):
@@ -177,10 +177,10 @@ class _Validator:
     def _program(self, program: ast.Program):
         language = program.version.version if program.version is not None else None
         self._language = language
-        self._typed_sensors = language in ("1.3", "1.4", "1.5", "1.6", "1.7")
-        self._branching = language in ("1.4", "1.5", "1.6", "1.7")
-        self._handlers = language in ("1.5", "1.6", "1.7")
-        self._values = language in ("1.6", "1.7")
+        self._typed_sensors = language in ("1.3", "1.4", "1.5", "1.6", "1.7", "1.8")
+        self._branching = language in ("1.4", "1.5", "1.6", "1.7", "1.8")
+        self._handlers = language in ("1.5", "1.6", "1.7", "1.8")
+        self._values = language in ("1.6", "1.7", "1.8")
         seen: dict[str, ast.Name] = {}
         for task in program.tasks:
             first = seen.setdefault(task.name.text, task.name)
@@ -371,6 +371,9 @@ class _Validator:
         elif isinstance(condition, ast.Holding):
             self._use(condition.robot, ParamType.ROBOT, "holding")
             self._use(condition.obj, ParamType.OBJECT, "holding")
+        elif isinstance(condition, ast.InState):  # RoboLang 1.8 (decision 0040 A6)
+            self._use_any(condition.target, "in_state")
+            self._not_empty(condition.label, "state label")
         elif isinstance(condition, ast.Compare):
             if isinstance(condition.left, ast.LiveReading):  # a binding is checked by `_bindings`
                 self._live(condition.left)
@@ -396,6 +399,11 @@ class _Validator:
             self._use(statement.robot, ParamType.ROBOT, "measure")
             self._use(statement.obj, ParamType.OBJECT, "measure")
             self._sensor(statement.sensor, "measure ... using")
+        elif isinstance(statement, ast.Do):  # RoboLang 1.8 (decision 0040 A6): the action is checked against the world
+            self._use(statement.robot, ParamType.ROBOT, "do")
+            self._use_any(statement.target, f"do ... {statement.action.text}")
+            if isinstance(statement.value, ast.StringLit):
+                self._not_empty(statement.value, "value")
         elif isinstance(statement, ast.WaitFor):
             self._positive(statement.duration.value, "duration", statement.duration.span)
         elif isinstance(statement, ast.WaitUntil):
@@ -447,6 +455,18 @@ class _Validator:
             self._error(
                 "E304",
                 f"'{name.text}' is {_article(declared)}, but '{context}' expects {_article(expected)} here",
+                name.span,
+            )
+
+    def _use_any(self, name: ast.Name, context: str):
+        """RoboLang 1.8: the target of `do` or `in_state` is an object or a location parameter (E303, E304)."""
+        declared = self._params.get(name.text)
+        if declared is None:
+            self._error("E303", f"undeclared name '{name.text}': it is not a parameter of this task", name.span)
+        if declared not in (ParamType.OBJECT, ParamType.LOCATION):
+            self._error(
+                "E304",
+                f"'{name.text}' is {_article(declared)}, but '{context}' expects an object or a location here",
                 name.span,
             )
 

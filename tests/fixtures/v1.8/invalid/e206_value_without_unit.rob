@@ -1,0 +1,10 @@
+// RoboLang v1.8 fixture: invalid
+// expect: error E206 (syntax) line 9
+// why: a quantity value has a unit
+
+robolang 1.8;
+
+task t(robot r, location fryer) {
+    goal { in_state fryer "heating"; }
+    plan { do r set fryer to 175; }
+}

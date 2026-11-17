@@ -1,0 +1,15 @@
+// RoboLang v1.8 fixture: valid
+// expect: ok
+// why: a do with a failure handler
+
+robolang 1.8;
+
+task open_or_report(robot r, object door) {
+    goal { in_state door "open"; }
+    plan {
+        do r open door else {
+            communicate r to "charge_nurse" with "closet stuck";
+            fail "door stuck";
+        }
+    }
+}
