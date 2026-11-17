@@ -418,6 +418,18 @@
       },
       "sources": [
         "https://health.ucdavis.edu/medical-center/news/headlines/uc-davis-launches-first-long-term-us-study-led-by-nurses-on-humanoid-robots-in-dementia-care/2026/05"
+      ],
+      "leading": [
+        {
+          "kind": "demand",
+          "claim": "Japan's health ministry estimates a shortfall of about 690,000 caregivers by the 2040s (article of 2026-10-07).",
+          "url": "https://e27.co/when-the-carer-has-dementia-too-japan-turns-to-physical-ai-to-rescue-eldercare-20261007/"
+        },
+        {
+          "kind": "roadmap",
+          "claim": "Tokyo's ugo robots already patrol care facilities at night and hand off to remote operators; Enactic's humanoid Ena had MOUs with more than 80 care organisations in April 2026 and planned care-facility pilots for summer 2026.",
+          "url": "https://e27.co/when-the-carer-has-dementia-too-japan-turns-to-physical-ai-to-rescue-eldercare-20261007/"
+        }
       ]
     },
     {
@@ -450,6 +462,18 @@
       },
       "sources": [
         "https://arxiv.org/abs/2511.14759"
+      ],
+      "leading": [
+        {
+          "kind": "research",
+          "claim": "pi0.7 (Physical Intelligence, 2026-04-16) reports zero-shot cross-embodiment generalization, such as folding laundry on a robot without having seen the task before.",
+          "url": "https://arxiv.org/abs/2604.15483"
+        },
+        {
+          "kind": "funding",
+          "claim": "Physical Intelligence was reported (2026-03-27/30) to be in early talks to raise about 1 billion USD at over 11 billion USD, doubling its 5.6 billion USD valuation; use of funds not stated.",
+          "url": "https://dealroom.co/news/127095-robot-ai-startup-physical-intelligence-seeks-1b-at-11b-valuation/"
+        }
       ]
     },
     {
@@ -483,6 +507,18 @@
       },
       "sources": [
         "https://heise.de/-11287205"
+      ],
+      "leading": [
+        {
+          "kind": "research",
+          "claim": "pi0.7 follows language instructions for multi-stage tasks with kitchen appliances in unseen environments, and operates an espresso machine out of the box.",
+          "url": "https://arxiv.org/abs/2604.15483"
+        },
+        {
+          "kind": "forecast",
+          "claim": "Goldman Sachs (2026-09-15) raised its humanoid shipment forecast to about 890,000 units in 2030 and 6.5 million in 2035, led by logistics, warehousing and automotive; the article names no household use case, so it is a weak signal for homes.",
+          "url": "https://humanoid.guide/goldman-raises-2035-humanoid-robot-forecast-to-6-5-million/"
+        }
       ]
     },
     {
@@ -605,6 +641,18 @@
       "sources": [
         "https://letsdatascience.com/news/agility-robotics-previews-cage-free-digit-v5-847ce6a1",
         "https://www.i-scoop.eu/iso-25785-1-explained-and-what-it-means-for-humanoid-robot-safety/"
+      ],
+      "leading": [
+        {
+          "kind": "standard",
+          "claim": "A DIN project for DIN EN ISO 25785-1 (safety requirements for industrial mobile robots with actively controlled stability) began on 2026-03-02, tied to ISO/TC 299/WG 12 and CEN/TC 310; the page gives no status or planned dates.",
+          "url": "https://www.din.de/en/getting-involved/standards-committees/nam/projects/wdc-proj:din21:400666335"
+        },
+        {
+          "kind": "roadmap",
+          "claim": "Agility (Forbes, 2026-08-10): Digit v5 is meant to work beside people without safety fencing, with onboard human detection and early-customer deployments from December 2026; no certification published.",
+          "url": "https://letsdatascience.com/news/agility-robotics-previews-cage-free-digit-v5-847ce6a1"
+        }
       ]
     },
     {
@@ -668,6 +716,18 @@
       },
       "sources": [
         "https://www.freshplaza.com/europe/article/9842754/japanese-agri-tech-startup-puts-cherry-tomato-harvesting-robot-into-routine-production-use/"
+      ],
+      "leading": [
+        {
+          "kind": "roadmap",
+          "claim": "Tokuiten schedules a 1-hectare facility with six cherry-tomato robots for March 2027 (FreshPlaza, opened in pass 1).",
+          "url": "https://www.freshplaza.com/europe/article/9842754/japanese-agri-tech-startup-puts-cherry-tomato-harvesting-robot-into-routine-production-use/"
+        },
+        {
+          "kind": "funding",
+          "claim": "Carbon Robotics (weeding, not harvesting) passed 100 million USD revenue in the year to March 2026, took a 20 million USD Series D extension and says an unannounced ag-robotics machine is in development (2026-08-31).",
+          "url": "https://agfundernews.com/🎥-carbon-robotics-100m-revenue-new-machine-and-a-path-to-ipo"
+        }
       ]
     },
     {
@@ -759,6 +819,18 @@
       },
       "sources": [
         "https://deepmind.google/blog/gemini-robotics-2-brings-whole-body-intelligence-to-robots/"
+      ],
+      "leading": [
+        {
+          "kind": "roadmap",
+          "claim": "Gemini Robotics ER 2 (2026-07-30) adds multi-robot collaboration on workflows one robot cannot finish alone; ER 2 is in Google AI Studio and private preview.",
+          "url": "https://deepmind.google/blog/gemini-robotics-2-brings-whole-body-intelligence-to-robots/"
+        },
+        {
+          "kind": "standard",
+          "claim": "ISO 21423:2026 (published about 2026-11-02) lets mobile robots of different suppliers share location, condition, tasking and availability.",
+          "url": "https://www.therobotreport.com/new-iso-interoperability-standard-covers-collaboration-among-mobile-robots-from-multiple-vendors/"
+        }
       ]
     },
     {
@@ -820,6 +892,13 @@
       },
       "sources": [
         "https://arxiv.org/abs/2602.05760v1"
+      ],
+      "leading": [
+        {
+          "kind": "research",
+          "claim": "AFT-Handover (ETH Zurich, HRI 2026) presents objects so the person can use them next; a user study preferred it. Opened in pass 1, not re-opened.",
+          "url": "https://arxiv.org/abs/2602.05760v1"
+        }
       ]
     },
     {
@@ -850,6 +929,13 @@
       },
       "sources": [
         "https://arxiv.org/abs/2602.14551"
+      ],
+      "leading": [
+        {
+          "kind": "research",
+          "claim": "A humanoid maps ambiguous, corrective instructions to action targets (66.7% object fixation, 75% corrective tool selection). Opened in pass 1, not re-opened.",
+          "url": "https://arxiv.org/abs/2602.14551"
+        }
       ]
     },
     {
@@ -880,6 +966,18 @@
       },
       "sources": [
         "https://arxiv.org/abs/2601.00978v1"
+      ],
+      "leading": [
+        {
+          "kind": "research",
+          "claim": "VLM agents build a symbolic state of a 27-component timber frame (97% accuracy) and a planner replans across robots. Opened in pass 1, not re-opened.",
+          "url": "https://arxiv.org/abs/2601.00978v1"
+        },
+        {
+          "kind": "demand",
+          "claim": "ABC estimates the US construction industry needs about 349,000 net new workers in 2026 and about 456,000 in 2027, most of the 2026 demand to replace retirees (2026-01-16).",
+          "url": "https://ecmweb.com/construction/news/55344103/construction-industry-must-attract-349000-workers-in-2026"
+        }
       ]
     },
     {
@@ -909,6 +1007,13 @@
       },
       "sources": [
         "https://arxiv.org/abs/2604.03065"
+      ],
+      "leading": [
+        {
+          "kind": "research",
+          "claim": "MA-HERP (2026-04-03) jointly predicts human movements and actions for collaboration, in a simulation-trained preliminary evaluation. Opened in pass 1, not re-opened.",
+          "url": "https://arxiv.org/abs/2604.03065"
+        }
       ]
     },
     {
@@ -938,6 +1043,13 @@
       },
       "sources": [
         "https://arxiv.org/abs/2606.13672"
+      ],
+      "leading": [
+        {
+          "kind": "research",
+          "claim": "WEAVER (2026-06-11): a world model whose simulated outcomes correlate with real success (rho 0.87) and improved real success by 14% with test-time planning. Opened in pass 1, not re-opened.",
+          "url": "https://arxiv.org/abs/2606.13672"
+        }
       ]
     },
     {
@@ -1038,6 +1150,419 @@
           "url": "https://en.edaily.co.kr/news/eda202606185436/"
         }
       ]
+    },
+    {
+      "id": "ACT-MFG-003",
+      "name": "Humanoid machine tending at a machine builder's customer site",
+      "domain": "manufacturing",
+      "directions": [
+        "action",
+        "reasoning"
+      ],
+      "maturity": "pilot",
+      "horizon": "1-3y",
+      "basis": "Robotics and Automation News (2026-05-15): Hexagon Robotics' AEON humanoid is piloted at one of machine builder Fill's client use cases in Gurten, Austria, on selected machine tending, inspection and operational tasks. Duration, metrics and the customer are not stated.",
+      "requests": [
+        "Load a blank into CNC 2, start the program, and unload the finished part when the machine reports it is done.",
+        "If a part is rejected twice, stop loading and call the shift lead.",
+        "Keep tending machines 1 and 2 until the end of the shift."
+      ],
+      "needs": [
+        "G-LOOP",
+        "G-ACT",
+        "G-MSG",
+        "G-CLOCK"
+      ],
+      "forecast": {
+        "claim": "Hexagon or Fill publishes results of the Gurten AEON machine-tending pilot, or a follow-on paid deployment at a named customer, by 2027-12-31.",
+        "due": "2027-12-31",
+        "p": 0.45
+      },
+      "sources": [
+        "https://roboticsandautomationnews.com/2026/05/15/hexagon-and-fill-maschinenbau-partner-to-advance-manufacturing-autonomy-using-humanoids/101578/"
+      ]
+    },
+    {
+      "id": "ACT-AGR-002",
+      "name": "Autonomous laser weeding between crop rows",
+      "domain": "agriculture",
+      "directions": [
+        "perception",
+        "action"
+      ],
+      "maturity": "deployment",
+      "horizon": "now",
+      "basis": "AgFunderNews (2026-08-31): Carbon Robotics passed 100 million USD revenue in the year to March 2026, sells LaserWeeder G2 in modular sizes in about 20 countries, and offers a kit that makes an existing tractor autonomous (cameras, radar, lidar) for weeding, tillage and irrigation. No installed-machine count or acreage is given on this page.",
+      "requests": [
+        "Weed rows 1 to 12 of field 3 and leave the crop untouched.",
+        "Stop at the headland and turn into the next row.",
+        "If you are not sure it is a weed, do not fire, and tell me which row."
+      ],
+      "needs": [
+        "G-PERCEIVE",
+        "G-LOOP",
+        "G-PATH",
+        "G-CHOOSE"
+      ],
+      "forecast": {
+        "claim": "Carbon Robotics files for an IPO, or reports revenue above 200 million USD in a fiscal year, by 2028-12-31.",
+        "due": "2028-12-31",
+        "p": 0.4
+      },
+      "sources": [
+        "https://agfundernews.com/🎥-carbon-robotics-100m-revenue-new-machine-and-a-path-to-ipo"
+      ]
+    },
+    {
+      "id": "ACT-SOL-001",
+      "name": "Robotic solar module installation",
+      "domain": "energy and facilities",
+      "directions": [
+        "action",
+        "perception"
+      ],
+      "maturity": "deployment",
+      "horizon": "now",
+      "basis": "eWeek (2026-03-31): AES's Maximo robots completed 100 MW of solar installation at the Bellefield complex; version 3.0 installs up to one module a minute (a worker: up to 24 an hour), and the 100 MW mark came sooner than expected. The article does not give the number of robots.",
+      "requests": [
+        "Install modules on table row 14 until the row is full, then move to row 15.",
+        "If a table is out of tolerance, skip it and report which one.",
+        "Stop when the wind alarm sounds and resume when it clears."
+      ],
+      "needs": [
+        "G-LOOP",
+        "G-PERCEIVE",
+        "G-PATH",
+        "G-MSG"
+      ],
+      "forecast": {
+        "claim": "AES or Maximo reports at least 500 MW of solar installed by robots by 2028-06-30.",
+        "due": "2028-06-30",
+        "p": 0.5
+      },
+      "sources": [
+        "https://www.eweek.com/news/robots-install-100mw-solar-power-maximo/"
+      ]
+    },
+    {
+      "id": "ACT-PRED-003",
+      "name": "Forecasting its own failure and asking before it happens",
+      "domain": "manipulation",
+      "directions": [
+        "prediction",
+        "reasoning"
+      ],
+      "maturity": "concept",
+      "horizon": "3-7y",
+      "basis": "Method: combination. Failure detectors for robot foundation-model (VLA) policies now give calibrated warnings (SentryVLA, arXiv 2604.16677, 2026-04-17: conformalized quantile regression ranks candidate actions and a latent-state anomaly score flags abnormal states, tested in simulation and on a physical robot), and planners track progress and self-correct failed steps (Gemini Robotics ER 2, 2026-07-30). No source shows a robot telling a person, before or during a job, that it expects to fail, and asking.",
+      "requests": [
+        "Before you start, tell me if you expect to fail, and why.",
+        "If your chance of success drops below 80 percent in the middle of the job, stop and ask me.",
+        "Pick the next tote only if you are at least 95 percent sure of the grasp."
+      ],
+      "needs": [
+        "G-PREDICT",
+        "G-MSG"
+      ],
+      "forecast": {
+        "claim": "A robot foundation-model provider (Google, NVIDIA, Physical Intelligence, Figure or Boston Dynamics) documents a calibrated per-task success estimate that triggers a stop or a request for help in a shipping product by 2029-12-31.",
+        "due": "2029-12-31",
+        "p": 0.35
+      },
+      "sources": [
+        "https://arxiv.org/abs/2604.16677",
+        "https://deepmind.google/blog/gemini-robotics-2-brings-whole-body-intelligence-to-robots/"
+      ],
+      "leading": [
+        {
+          "kind": "research",
+          "claim": "SentryVLA: conformal action ranking plus anomaly warnings for frozen VLA policies; simulation and one physical robot (arXiv 2604.16677, revised 2026-10-25, slated for CoRL 2026).",
+          "url": "https://arxiv.org/abs/2604.16677"
+        },
+        {
+          "kind": "roadmap",
+          "claim": "Gemini Robotics ER 2 tracks progress through tasks of several minutes with hundreds of decisions and self-corrects when a step fails (2026-07-30).",
+          "url": "https://deepmind.google/blog/gemini-robotics-2-brings-whole-body-intelligence-to-robots/"
+        }
+      ]
+    },
+    {
+      "id": "ACT-PRED-004",
+      "name": "Helping before being asked: acting on a predicted need",
+      "domain": "human-robot collaboration",
+      "directions": [
+        "prediction",
+        "cooperation"
+      ],
+      "maturity": "concept",
+      "horizon": "7y+",
+      "basis": "Method: combination, with demand pull. Event-driven proactive assistance (arXiv 2603.23950, 2026-03-25): a monitor sees a human-object interaction finish, a vision-language planner infers the task goal from before and after snapshots, decides whether to help and plans assistive actions; tested on a real tabletop block task only. Care sectors are short of staff (Japan: about 690,000 caregivers by the 2040s). No source shows a robot in a care or home setting acting unasked on a predicted need.",
+      "requests": [
+        "When the resident puts the cup in the sink, wipe the table without being asked.",
+        "If Ana starts unpacking the delivery, put the empty boxes in the bin.",
+        "Do not help unless it is clear what I am doing; if you are not sure, ask."
+      ],
+      "needs": [
+        "G-PREDICT",
+        "G-PERCEIVE",
+        "G-MSG",
+        "G-ACT"
+      ],
+      "forecast": {
+        "claim": "A commercial care or home robot documents a proactive mode that acts without a request after a person's activity by 2030-12-31.",
+        "due": "2030-12-31",
+        "p": 0.15
+      },
+      "sources": [
+        "https://arxiv.org/abs/2603.23950",
+        "https://e27.co/when-the-carer-has-dementia-too-japan-turns-to-physical-ai-to-rescue-eldercare-20261007/"
+      ],
+      "leading": [
+        {
+          "kind": "research",
+          "claim": "Event-driven proactive assistive manipulation with grounded vision-language planning, real tabletop collaboration (arXiv 2603.23950).",
+          "url": "https://arxiv.org/abs/2603.23950"
+        },
+        {
+          "kind": "demand",
+          "claim": "Japan's health ministry estimates a shortfall of about 690,000 caregivers by the 2040s.",
+          "url": "https://e27.co/when-the-carer-has-dementia-too-japan-turns-to-physical-ai-to-rescue-eldercare-20261007/"
+        }
+      ]
+    },
+    {
+      "id": "ACT-LRN-001",
+      "name": "Learning a new task from half an hour of a worker's video",
+      "domain": "manipulation",
+      "directions": [
+        "learning",
+        "action"
+      ],
+      "maturity": "concept",
+      "horizon": "3-7y",
+      "basis": "Method: combination. HumanEgo (arXiv 2605.24934, 2026-05-24) learns a manipulation policy from 30 minutes of human egocentric video per task with no robot data (92.5% average success on four real tasks; 75% with 15 minutes; 41% better than matched-time teleoperation) and transfers zero-shot across robots and cameras. Four tasks in a lab are not a product, and no source shows a customer teaching a robot by video.",
+      "requests": [
+        "Watch me pack this carton for half an hour, then do it yourself.",
+        "Learn how I stack the pallet from this video, and tell me which step is unclear.",
+        "Add the routine I just showed you to your jobs, called close_the_cell."
+      ],
+      "needs": [
+        "G-TEACH",
+        "G-PERCEIVE"
+      ],
+      "forecast": {
+        "claim": "A vendor ships a feature where a customer trains a new manipulation task from human video alone, without robot teleoperation, by 2029-12-31.",
+        "due": "2029-12-31",
+        "p": 0.35
+      },
+      "sources": [
+        "https://arxiv.org/abs/2605.24934",
+        "https://dealroom.co/news/127095-robot-ai-startup-physical-intelligence-seeks-1b-at-11b-valuation/"
+      ],
+      "leading": [
+        {
+          "kind": "research",
+          "claim": "HumanEgo: zero-shot robot learning from minutes of human egocentric video, hardware-agnostic (arXiv 2605.24934, v3 2026-09-14).",
+          "url": "https://arxiv.org/abs/2605.24934"
+        },
+        {
+          "kind": "funding",
+          "claim": "Physical Intelligence, a general robot-learning lab, was reported in talks for about 1 billion USD at over 11 billion USD (2026-03-30); the page does not say what the money is for.",
+          "url": "https://dealroom.co/news/127095-robot-ai-startup-physical-intelligence-seeks-1b-at-11b-valuation/"
+        }
+      ]
+    },
+    {
+      "id": "ACT-LRN-002",
+      "name": "One taught skill, any robot on the site",
+      "domain": "multi-robot cooperation",
+      "directions": [
+        "learning",
+        "cooperation"
+      ],
+      "maturity": "concept",
+      "horizon": "3-7y",
+      "basis": "Method: extrapolation: the learning path of ACT-INSP-002 (one facility's robots learn and share) applied to different robot bodies. Gemini Robotics On-Device 2 is described as natively multi-embodiment, adapting to a new bi-arm robot in a few hours from fewer than 200 examples, and one checkpoint controlled three embodiments in testing (2026-07-30; early-access partners only). HumanEgo reports zero-shot transfer across novel robots. No source shows a customer reusing a taught skill on a robot of another make.",
+      "requests": [
+        "The new AMR should do the pallet routine the humanoid learned yesterday.",
+        "Teach one robot to open this door, and let the other two use it too.",
+        "Which of my robots can already do restock_shelf?"
+      ],
+      "needs": [
+        "G-TEACH",
+        "G-CHOOSE"
+      ],
+      "forecast": {
+        "claim": "A vendor publicly shows a skill trained on one robot body running at a customer site on a body of a different make or model by 2029-12-31.",
+        "due": "2029-12-31",
+        "p": 0.3
+      },
+      "sources": [
+        "https://deepmind.google/blog/gemini-robotics-2-brings-whole-body-intelligence-to-robots/",
+        "https://arxiv.org/abs/2605.24934"
+      ],
+      "leading": [
+        {
+          "kind": "roadmap",
+          "claim": "Gemini Robotics On-Device 2: multi-embodiment, new bi-arm robots in hours with under 200 examples, one checkpoint on three embodiments; early-access partners.",
+          "url": "https://deepmind.google/blog/gemini-robotics-2-brings-whole-body-intelligence-to-robots/"
+        },
+        {
+          "kind": "research",
+          "claim": "HumanEgo transfers zero-shot across novel robots, cameras and environments (arXiv 2605.24934).",
+          "url": "https://arxiv.org/abs/2605.24934"
+        }
+      ]
+    },
+    {
+      "id": "ACT-AUTO-004",
+      "name": "Mid-shift relief: a low-battery robot hands its job to a peer",
+      "domain": "multi-robot cooperation",
+      "directions": [
+        "autonomy",
+        "cooperation"
+      ],
+      "maturity": "concept",
+      "horizon": "3-7y",
+      "basis": "Method: combination. Fleet scheduling research plans task assignment, charging and shared-charger access together (arXiv 2603.22731, 2026-03-24); UBTech's Walker S2 swaps its own battery to keep working (New Atlas, 2025-07-21; no factory confirmed); ISO 21423:2026 has robots from different suppliers share tasking and availability (the article does not mention handover or battery state). No source shows a robot passing a job in progress to a peer because its battery is low.",
+      "requests": [
+        "When your battery is low, hand the rest of the tote run to the next free robot and go charge.",
+        "Tell robot 2 where you stopped, and leave only after it confirms.",
+        "Never leave the aisle unattended during the shift."
+      ],
+      "needs": [
+        "G-SELF",
+        "G-MSG",
+        "G-CHOOSE",
+        "G-LOOP"
+      ],
+      "forecast": {
+        "claim": "A fleet-management vendor or customer documents task handover between robots triggered by battery state in a commercial product by 2029-12-31.",
+        "due": "2029-12-31",
+        "p": 0.3
+      },
+      "sources": [
+        "https://arxiv.org/abs/2603.22731",
+        "https://newatlas.com/ai-humanoids/walker-s2-humanoid-robot-swaps-batteries",
+        "https://www.therobotreport.com/new-iso-interoperability-standard-covers-collaboration-among-mobile-robots-from-multiple-vendors/"
+      ],
+      "leading": [
+        {
+          "kind": "research",
+          "claim": "Fleet-level battery-health-aware scheduling jointly optimises assignment, charging and charger access (arXiv 2603.22731); the page does not say if tested on real robots.",
+          "url": "https://arxiv.org/abs/2603.22731"
+        },
+        {
+          "kind": "roadmap",
+          "claim": "UBTech's Walker S2 swaps one of its two battery packs itself, aiming at near-continuous operation (New Atlas, 2025-07-21).",
+          "url": "https://newatlas.com/ai-humanoids/walker-s2-humanoid-robot-swaps-batteries"
+        },
+        {
+          "kind": "standard",
+          "claim": "ISO 21423:2026 covers sharing tasking and availability among mobile robots of different suppliers.",
+          "url": "https://www.therobotreport.com/new-iso-interoperability-standard-covers-collaboration-among-mobile-robots-from-multiple-vendors/"
+        }
+      ]
+    },
+    {
+      "id": "ACT-SAFE-002",
+      "name": "A safety layer under a learned policy that vetoes unsafe moves",
+      "domain": "safety",
+      "directions": [
+        "safety",
+        "action"
+      ],
+      "maturity": "concept",
+      "horizon": "3-7y",
+      "basis": "Method: combination. A training-free control-barrier-function filter now sits between a VLA policy and the robot, reading the policy's target from its attention heads and treating the rest as obstacles (arXiv 2606.09749, 2026-06-08; simulation only, 43% better than an oracle with a moving-obstacle variant), while the standard for dynamically stable robots is in drafting (DIN EN ISO 25785-1 project from 2026-03-02) and Agility is adding onboard human detection to Digit v5 without a published certification. No source shows an assessed safety function for a learned controller.",
+      "requests": [
+        "Use the learned grasp, but never move faster than 0.25 m/s within 1 m of a person, whatever the model proposes.",
+        "If the safety layer vetoes a move twice, stop and call me.",
+        "Keep contact force below 20 N even if the policy asks for more."
+      ],
+      "needs": [
+        "G-PROX",
+        "G-FORCE",
+        "G-PATH"
+      ],
+      "forecast": {
+        "claim": "A vendor announces a third-party-assessed safety function for a learned (VLA or foundation-model) controller on a humanoid or mobile manipulator by 2029-12-31.",
+        "due": "2029-12-31",
+        "p": 0.3
+      },
+      "sources": [
+        "https://arxiv.org/abs/2606.09749",
+        "https://www.din.de/en/getting-involved/standards-committees/nam/projects/wdc-proj:din21:400666335",
+        "https://letsdatascience.com/news/agility-robotics-previews-cage-free-digit-v5-847ce6a1"
+      ],
+      "leading": [
+        {
+          "kind": "research",
+          "claim": "Attention-guided CBF safety filter for VLA models; simulation (SafeLIBERO with moving obstacles), no real robot (arXiv 2606.09749).",
+          "url": "https://arxiv.org/abs/2606.09749"
+        },
+        {
+          "kind": "standard",
+          "claim": "DIN project for DIN EN ISO 25785-1 began 2026-03-02 (ISO/TC 299/WG 12, CEN/TC 310); no status given.",
+          "url": "https://www.din.de/en/getting-involved/standards-committees/nam/projects/wdc-proj:din21:400666335"
+        },
+        {
+          "kind": "roadmap",
+          "claim": "Agility: Digit v5 adds onboard safe-human-detection and aims to work without fencing; no certification published (Forbes, 2026-08-10).",
+          "url": "https://letsdatascience.com/news/agility-robotics-previews-cage-free-digit-v5-847ce6a1"
+        }
+      ]
+    },
+    {
+      "id": "ACT-CARE-001",
+      "name": "Physical help with standing and transfers in care homes",
+      "domain": "elder care",
+      "directions": [
+        "safety",
+        "action",
+        "cooperation"
+      ],
+      "maturity": "concept",
+      "horizon": "7y+",
+      "basis": "Method: demand pull, with combination. Japan's health ministry expects about 690,000 caregivers short by the 2040s; humanoid pilots in Japanese care homes so far take over chores (Enactic's Ena: laundry, dish collection, restocking) so caregivers can do personal care. Research robots already do sit-to-stand and toilet-transfer support (Moby, arXiv 2508.19816, a non-humanoid standing aid, RO-MAN 2025; the page gives no force results). No source shows a humanoid physically assisting a resident.",
+      "requests": [
+        "Help Mrs Lee stand from the chair, and stop at once if she says it hurts.",
+        "Walk beside Mr Kim to the toilet, and never exceed the force limit in his care plan.",
+        "If she is unsteady, call the nurse before you lift."
+      ],
+      "needs": [
+        "G-FORCE",
+        "G-PROX",
+        "G-PERCEIVE",
+        "G-MSG",
+        "G-ACT"
+      ],
+      "forecast": {
+        "claim": "A humanoid or general-purpose robot is publicly reported in a trial with care-home residents for sit-to-stand or transfer assistance by 2030-12-31.",
+        "due": "2030-12-31",
+        "p": 0.12
+      },
+      "sources": [
+        "https://e27.co/when-the-carer-has-dementia-too-japan-turns-to-physical-ai-to-rescue-eldercare-20261007/",
+        "https://arxiv.org/abs/2508.19816"
+      ],
+      "leading": [
+        {
+          "kind": "demand",
+          "claim": "Japan's health ministry estimates a shortfall of about 690,000 caregivers by the 2040s.",
+          "url": "https://e27.co/when-the-carer-has-dementia-too-japan-turns-to-physical-ai-to-rescue-eldercare-20261007/"
+        },
+        {
+          "kind": "roadmap",
+          "claim": "Enactic's humanoid Ena (chores in care homes, MOUs with 80+ organisations, pilots planned for summer 2026) targets the step before personal care.",
+          "url": "https://e27.co/when-the-carer-has-dementia-too-japan-turns-to-physical-ai-to-rescue-eldercare-20261007/"
+        },
+        {
+          "kind": "research",
+          "claim": "Moby, a standing-support mobility robot for toilet transfers and sit-to-stand (arXiv 2508.19816, 2025-08-27).",
+          "url": "https://arxiv.org/abs/2508.19816"
+        }
+      ]
     }
   ],
   "history": [
@@ -1125,6 +1650,61 @@
         "safety": 0.43,
         "communication": 0.87,
         "autonomy": 0.61
+      }
+    },
+    {
+      "date": "2026-11-17",
+      "note": "Horizon scan 1 (A2): 35 leading signals (18 on 11 far activities, 17 on the new ones), 7 concept activities, 3 R2 holes filled (machine tending, weeding, solar); no changes to existing activities, no new gaps",
+      "activities": {
+        "ACT-LOG-001": "deployment now",
+        "ACT-LOG-002": "deployment now",
+        "ACT-MFG-001": "pilot 1-3y",
+        "ACT-MFG-002": "pilot 1-3y",
+        "ACT-RET-001": "deployment now",
+        "ACT-HOS-001": "deployment now",
+        "ACT-HLTH-001": "deployment now",
+        "ACT-ELD-001": "pilot 3-7y",
+        "ACT-HOME-001": "research 3-7y",
+        "ACT-HOME-002": "demo 3-7y",
+        "ACT-INSP-001": "demo now",
+        "ACT-INSP-002": "demo 1-3y",
+        "ACT-SEC-001": "demo 1-3y",
+        "ACT-SAFE-001": "demo 3-7y",
+        "ACT-CON-001": "deployment now",
+        "ACT-AGR-001": "pilot 3-7y",
+        "ACT-EV-001": "pilot 1-3y",
+        "ACT-CLN-001": "deployment now",
+        "ACT-MRC-001": "demo 3-7y",
+        "ACT-MRC-002": "demo 1-3y",
+        "ACT-HRC-001": "research 3-7y",
+        "ACT-HRC-002": "research 3-7y",
+        "ACT-ASM-001": "research 7y+",
+        "ACT-PRED-001": "research 3-7y",
+        "ACT-PRED-002": "research 3-7y",
+        "ACT-AUTO-001": "deployment now",
+        "ACT-AUTO-002": "demo 1-3y",
+        "ACT-AUTO-003": "research 3-7y",
+        "ACT-MFG-003": "pilot 1-3y",
+        "ACT-AGR-002": "deployment now",
+        "ACT-SOL-001": "deployment now",
+        "ACT-PRED-003": "concept 3-7y",
+        "ACT-PRED-004": "concept 7y+",
+        "ACT-LRN-001": "concept 3-7y",
+        "ACT-LRN-002": "concept 3-7y",
+        "ACT-AUTO-004": "concept 3-7y",
+        "ACT-SAFE-002": "concept 3-7y",
+        "ACT-CARE-001": "concept 7y+"
+      },
+      "directions": {
+        "perception": 2.78,
+        "reasoning": 0.68,
+        "prediction": 0.25,
+        "action": 4.17,
+        "learning": 0.75,
+        "cooperation": 0.99,
+        "safety": 0.49,
+        "communication": 0.87,
+        "autonomy": 0.67
       }
     }
   ]
