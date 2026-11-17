@@ -14,7 +14,7 @@
   "tags": [
     "arm_workspace"
   ],
-  "gap": "G-PATH",
+  "gap": "G-WORKSPACE",
   "why": "A region limit covers the base and what it carries, not the arm's workspace (0039 P3, P9). An `in_region` or `no_go_region` on the robot says nothing about the arm: a half program.",
   "attempt_fails_with": "E211"
 }
