@@ -1,0 +1,14 @@
+// bench/reference_actions/c03_wait_oil_by_itself.rob: hand-written reference
+robolang 1.7;
+
+task fill_when_hot(robot r, object basket, object oil, sensor probe, location src, location fryer) {
+    goal { object_at basket fryer; }
+    plan {
+        move r to fryer;
+        wait until temperature of oil using probe > 170 degC timeout 60 s else { fail "the oil did not heat"; }
+        move r to src;
+        grasp r basket;
+        move r to fryer;
+        place r basket at fryer;
+    }
+}

@@ -17,6 +17,9 @@ name: Benchmark
 # - On demand with `regions: true`: only set "regions" (decision 0039: region limits; pre-registered against 1.6),
 #   full and grammar-only prompts, 3 repeats each, Sonnet and Haiku, each prompt capped at $3 (`--max-usd`), for
 #   information and not gated. Never run per pull request or weekly.
+# - On demand with `actions: true`: only set "actions" (decision 0040: declared actions; pre-registered against 1.7),
+#   full and grammar-only prompts, 3 repeats each, Sonnet and Haiku, each prompt capped at $3 (`--max-usd`), for
+#   information and not gated. Never run per pull request or weekly.
 # Needs the repository secret ANTHROPIC_API_KEY; without it (and on pull requests from forks) the
 # job is skipped and nothing is spent.
 
@@ -59,6 +62,10 @@ on:
         default: false
       regions:
         description: "Run only set regions (region limits), full and minimal prompts, 3 repeats, Sonnet and Haiku, max $3 each; not gated"
+        type: boolean
+        default: false
+      actions:
+        description: "Run only set actions (declared actions), full and minimal prompts, 3 repeats, Sonnet and Haiku, max $3 each; not gated"
         type: boolean
         default: false
       confirm_tasks:
@@ -133,6 +140,11 @@ jobs:
         run: |
           python bench/run.py --yes --set regions --prompt full --repeats 3 --models claude-sonnet-5-5,claude-haiku-5-5 --max-usd 3 --run-id regions
           python bench/run.py --yes --set regions --prompt minimal --repeats 3 --models claude-sonnet-5-5,claude-haiku-5-5 --max-usd 3 --run-id regions-minimal
+      - name: Run (set actions, on demand)
+        if: steps.key.outputs.present == 'true' && inputs.actions
+        run: |
+          python bench/run.py --yes --set actions --prompt full --repeats 3 --models claude-sonnet-5-5,claude-haiku-5-5 --max-usd 3 --run-id actions
+          python bench/run.py --yes --set actions --prompt minimal --repeats 3 --models claude-sonnet-5-5,claude-haiku-5-5 --max-usd 3 --run-id actions-minimal
       - name: Run (confirming run, on demand)
         if: steps.key.outputs.present == 'true' && inputs.confirm_tasks != ''
         env:
@@ -143,7 +155,7 @@ jobs:
         run: |
           python bench/run.py --yes --set "$CONFIRM_SET" --tasks "$CONFIRM_TASKS" --models "$CONFIRM_MODELS" --prompt "$CONFIRM_PROMPT" --repeats 3 --max-usd 1 --run-id confirm
       - name: Run (weekly or on demand)
-        if: steps.key.outputs.present == 'true' && github.event_name != 'pull_request' && !inputs.set3 && !inputs.set4 && !inputs.future && !inputs.regions && inputs.confirm_tasks == ''
+        if: steps.key.outputs.present == 'true' && github.event_name != 'pull_request' && !inputs.set3 && !inputs.set4 && !inputs.future && !inputs.regions && !inputs.actions && inputs.confirm_tasks == ''
         run: |
           python bench/run.py --yes --repeats 3 --run-id set1
           python bench/run.py --yes --set hard --repeats 3 --run-id set2
@@ -171,7 +183,7 @@ jobs:
               echo "" >> summary.md; cat cascade.md >> summary.md
             fi
           done
-          for extra in set3 set3-minimal set4 set4-minimal set5 set5-minimal future regions regions-minimal confirm; do
+          for extra in set3 set3-minimal set4 set4-minimal set5 set5-minimal future regions regions-minimal actions actions-minimal confirm; do
             if [ -d "bench/results/$extra" ]; then
               echo "" >> summary.md
               echo "_For information, not gated: $extra._" >> summary.md

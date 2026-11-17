@@ -1,0 +1,9 @@
+{
+  "task": "hand_over",
+  "bindings": {
+    "r": "moxi1",
+    "kit": "iv_kit_1",
+    "src": "supply_closet",
+    "dst": "room_412"
+  }
+}

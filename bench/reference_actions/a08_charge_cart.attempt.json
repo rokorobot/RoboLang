@@ -1,0 +1,7 @@
+{
+  "task": "charge_cart",
+  "bindings": {
+    "r": "cart2",
+    "charger": "charger"
+  }
+}

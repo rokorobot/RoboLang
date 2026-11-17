@@ -1,0 +1,13 @@
+// bench/reference_actions/x03_teach_restock.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 1.7;
+
+task restock(robot r, object door, object kit, location closet, location dst) {
+    goal { object_at kit dst; }
+    plan {
+        move r to closet;
+        do r open door;
+        grasp r kit;
+        move r to dst;
+        place r kit at dst;
+    }
+}

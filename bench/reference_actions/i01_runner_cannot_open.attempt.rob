@@ -1,0 +1,10 @@
+// bench/reference_actions/i01_runner_cannot_open.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 1.7;
+
+task open_oven(robot r, object door, location oven) {
+    goal { robot_at r oven; }
+    plan {
+        move r to oven;
+        do r open door;
+    }
+}

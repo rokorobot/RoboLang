@@ -1,0 +1,8 @@
+{
+  "task": "open_oven",
+  "bindings": {
+    "r": "runner",
+    "door": "oven_door_1",
+    "oven": "oven"
+  }
+}

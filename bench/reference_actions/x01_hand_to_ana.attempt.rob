@@ -1,0 +1,12 @@
+// bench/reference_actions/x01_hand_to_ana.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 1.7;
+
+task hand_over(robot r, object kit, location src, location dst) {
+    goal { holding r kit; }
+    plan {
+        move r to src;
+        grasp r kit;
+        move r to dst;
+        do r hand kit;
+    }
+}

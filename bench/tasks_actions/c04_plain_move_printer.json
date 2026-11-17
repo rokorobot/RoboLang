@@ -1,0 +1,24 @@
+{
+  "id": "c04_plain_move_printer",
+  "prompt": "Send printer1 to gridline_c.",
+  "world": "bench/worlds/site.json",
+  "group": "control",
+  "expect": {
+    "decision": "program"
+  },
+  "expected_goal": [
+    [
+      "rl:robot:printer1",
+      "located_in",
+      "rl:place:gridline_c"
+    ]
+  ],
+  "expect_1_8": {
+    "decision": "program"
+  },
+  "expected_actions": [],
+  "tags": [
+    "plain_move",
+    "no_action"
+  ]
+}

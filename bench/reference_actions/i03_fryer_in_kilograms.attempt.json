@@ -1,0 +1,7 @@
+{
+  "task": "set_fryer",
+  "bindings": {
+    "r": "flippy1",
+    "fryer": "fryer"
+  }
+}

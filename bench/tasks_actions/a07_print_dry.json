@@ -1,0 +1,63 @@
+{
+  "id": "a07_print_dry",
+  "prompt": "Have printer1 print the layout at level_3_wall, and keep it out of wet_floor the whole way.",
+  "world": "bench/worlds/site_1_3.json",
+  "group": "action",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_8": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "the world as given",
+        "goal": [
+          [
+            "rl:place:level_3_wall",
+            "in_state",
+            "printed"
+          ]
+        ],
+        "world_patch": {}
+      }
+    ],
+    "world_1_4": {
+      "robots": {
+        "printer1": {
+          "actions": {
+            "print": {
+              "target": "location",
+              "result": "printed"
+            }
+          }
+        }
+      },
+      "location_states": {
+        "level_3_wall": "blank"
+      }
+    }
+  },
+  "expected_actions": [
+    {
+      "robot": "printer1",
+      "action": "print",
+      "target": "level_3_wall"
+    }
+  ],
+  "expected_limits": [
+    [
+      "no_go_region",
+      "wet_floor"
+    ]
+  ],
+  "tags": [
+    "print",
+    "location_target",
+    "no_go_region",
+    "region_limit"
+  ],
+  "gap": "G-ACT",
+  "why": "An action and a 1.7 region limit in one task: the limit is valid in 1.7 but `do` is not, so the attempt is the half program that keeps the limit and drops the print. 1.8 keeps both.",
+  "attempt_fails_with": "E203"
+}

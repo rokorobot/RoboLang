@@ -1,0 +1,10 @@
+// bench/reference_actions/a05_open_or_report.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 1.7;
+
+task open_closet(robot r, object door, location closet) {
+    goal { robot_at r closet; }
+    plan {
+        move r to closet;
+        do r open door else { communicate r to "charge_nurse" with "closet stuck"; fail "closet stuck"; }
+    }
+}

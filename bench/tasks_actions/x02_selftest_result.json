@@ -1,0 +1,33 @@
+{
+  "id": "x02_selftest_result",
+  "prompt": "Have flippy1 run the fryer's self-test and tell channel \"fry\" the result.",
+  "world": "bench/worlds/fry_station.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_8": {
+    "decision": "cannot",
+    "category": "inexpressible",
+    "because": "0040 A10",
+    "world_1_4": {
+      "robots": {
+        "flippy1": {
+          "actions": {
+            "self_test": {
+              "target": "location",
+              "result": "tested"
+            }
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    "action_returns_value"
+  ],
+  "gap": "G-ACT",
+  "why": "An action that returns a value is not a `do`: a value comes from a sensor, with `measure` (0040 A10). The self-test has no sensor to read, so there is nothing to send but a made-up text.",
+  "attempt_fails_with": "E203"
+}

@@ -1,0 +1,11 @@
+// bench/reference_actions/x02_selftest_result.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 1.7;
+
+task self_test(robot r, location fryer) {
+    goal { robot_at r fryer; }
+    plan {
+        move r to fryer;
+        do r self_test fryer;
+        communicate r to "fry" with "self-test done";
+    }
+}

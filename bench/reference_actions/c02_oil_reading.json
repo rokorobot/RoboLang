@@ -1,0 +1,9 @@
+{
+  "task": "read_oil",
+  "bindings": {
+    "r": "flippy1",
+    "oil": "oil_1",
+    "probe": "probe_flippy1",
+    "fryer": "fryer"
+  }
+}

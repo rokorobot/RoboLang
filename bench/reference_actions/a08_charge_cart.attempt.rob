@@ -1,0 +1,10 @@
+// bench/reference_actions/a08_charge_cart.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 1.7;
+
+task charge_cart(robot r, location charger) {
+    goal { robot_at r charger; }
+    plan {
+        move r to charger;
+        do r charge charger;
+    }
+}

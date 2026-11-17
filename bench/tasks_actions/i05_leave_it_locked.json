@@ -1,0 +1,44 @@
+{
+  "id": "i05_leave_it_locked",
+  "prompt": "Have moxi1 leave closet_door locked.",
+  "world": "bench/worlds/ward.json",
+  "group": "infeasible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_8": {
+    "decision": "cannot",
+    "category": "infeasible",
+    "because": "0040 A7",
+    "world_1_4": {
+      "robots": {
+        "moxi1": {
+          "actions": {
+            "open": {
+              "target": "object",
+              "result": "open"
+            },
+            "close": {
+              "target": "object",
+              "result": "closed"
+            }
+          }
+        }
+      },
+      "object_states": {
+        "closet_door": "closed"
+      }
+    }
+  },
+  "blockers": [
+    "no declared action leaves closet_door locked"
+  ],
+  "tags": [
+    "result_not_the_state",
+    "lock"
+  ],
+  "gap": "G-ACT",
+  "why": "moxi1 declares `open` (result open) and `close` (result closed), and none leaves the door locked, so `in_state closet_door \"locked\"` can never hold (0040 A2, A7).",
+  "attempt_fails_with": "E203"
+}

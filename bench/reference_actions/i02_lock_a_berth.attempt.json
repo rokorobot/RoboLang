@@ -1,0 +1,7 @@
+{
+  "task": "lock_berth",
+  "bindings": {
+    "r": "crane1",
+    "bay": "berth_2"
+  }
+}
