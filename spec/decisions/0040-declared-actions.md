@@ -97,7 +97,7 @@ The closet carries a state: `"state": "closed"`.
 2. Setpoint values are in 1.8 (A5).
 3. Locations can be targets (A4).
 
-## Clarifications (PROPOSED 2026-11-17, from writing the L3 set; for the owner)
+## Clarifications (APPROVED by the owner 2026-11-17, from writing the L3 set)
 
 | # | Question | Recommended |
 |---|---|---|

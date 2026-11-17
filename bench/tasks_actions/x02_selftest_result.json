@@ -27,7 +27,7 @@
   "tags": [
     "action_returns_value"
   ],
-  "gap": "G-ACT",
+  "gap": "G-SELF",
   "why": "An action that returns a value is not a `do`: a value comes from a sensor, with `measure` (0040 A10). The self-test has no sensor to read, so there is nothing to send but a made-up text.",
   "attempt_fails_with": "E203"
 }

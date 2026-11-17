@@ -33,3 +33,8 @@ tasks `u15_open_oven`, `u16_charge_drone`, `x06_set_oven`. They stay in their se
 ## Freeze
 
 `docs/evidence/bench-freeze-v2.json` is regenerated for all of the above.
+
+## Erratum A1 (owner, 2026-11-17): `x02_selftest_result` moves from G-ACT to G-SELF
+
+Clarification C9 of 0040: an action that returns a value is the robot's own state, so the task belongs in G-SELF. It
+stays `cannot / inexpressible`, and its scoring is unchanged. `docs/evidence/bench-freeze-v2.json` is regenerated.

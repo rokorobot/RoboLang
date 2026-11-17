@@ -1,6 +1,6 @@
 # Benchmark set 7: declared actions (pre-registration draft)
 
-**Status:** draft for the owner. Written at step L3 of iteration I2 (language roadmap), before any code (LE-7, LE-11).
+**Status:** **APPROVED by the owner, 2026-11-17** (tasks, labels, clarifications C1–C15 in 0040, bounds B1–B8); frozen.
 Decision record: [0040](../../spec/decisions/0040-declared-actions.md) (APPROVED by the owner, 2026-11-17). Directory:
 `bench/tasks_actions/`, `bench/reference_actions/`; tests `tests/test_bench_actions.py`; run with
 `python bench/run.py --set actions`. Modelled on set 6, [bench-6-regions.md](bench-6-regions.md). No model was run and no
@@ -79,7 +79,7 @@ that differs changes the labels named there.**
 | `c03_wait_oil_by_itself` | fry_station | With flippy1, wait up to 60 seconds for the oil in oil_1 to read above 170 degrees Celsius, then move basket_2 from the prep_table to the fryer. If the oil does not get there, stop. | program, a `wait until` on a live reading; paths: heats at 20 s → basket at the fryer; never heats → the run stops; no `do set` |
 | `c04_plain_move_printer` | site | Send printer1 to gridline_c. | program, a plain move; printer1 declares `print` in the 1.8 world and the request does not ask for it |
 
-## Acceptance bounds (proposed with the baseline in hand, rule 6; for the owner)
+## Acceptance bounds (APPROVED by the owner 2026-11-17, with the baseline in hand, rule 6)
 
 Baseline: [bench-set7-baseline.md](../evidence/bench-set7-baseline.md) (2026-11-17, 1.7, 3 repeats). The smallest step
 is one answer (rule 6). The acceptance run repeats the baseline under 1.8, with world 1.4 copies.

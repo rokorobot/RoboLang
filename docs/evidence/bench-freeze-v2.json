@@ -1,5 +1,5 @@
 {
-  "sha256": "7e1563632d9c1c3f495fd46d7556bced0635a230350ba8ae83968829d9d971c6",
+  "sha256": "45a467e3327b2278e81d7afc092ec25e9b35fd470ac56492c5ae2095a1268f6c",
   "schema": "robolang.bench.freeze.v2",
   "patterns": [
     "bench/tasks*/*.json",
@@ -725,7 +725,7 @@
     "bench/tasks_actions/i04_open_by_distance.json": "28221ddb0a2c6d68c0688564bb31d2b06b68d84480082b0644bb5686f5c678d0",
     "bench/tasks_actions/i05_leave_it_locked.json": "4f41ff6ce81a340a3f8cd3de0e1ad42b6dbb6479da28879f628a585f6b6d7668",
     "bench/tasks_actions/x01_hand_to_ana.json": "32412e99dfb2aca580ba60c34ed2aa839f02a3bf6398d90eaa6641f6ae608ea9",
-    "bench/tasks_actions/x02_selftest_result.json": "6edf67609af01f6365dd5575a8ae5f867d8ae3a90a1a3fb0d1d476779a979c67",
+    "bench/tasks_actions/x02_selftest_result.json": "39f477c43ceba4a622326ed7e625b0b4c4b04eb5dbac3efa8a69b3af1f88106f",
     "bench/tasks_actions/x03_teach_restock.json": "9b71261a9b16e1b9d222ae4681df7209f8d3e6cb4fff932c478230ad6ac595d1",
     "bench/tasks_actions/x04_open_until_open.json": "697f4628c11662baa3b862c6c5713fe2405727434499660414027e57585291cf",
     "bench/tasks_actions/x05_open_at_six.json": "b4841422a4a5b7a5697481897bbe4fd9390e47985654f76152bdc39c7a407ac4",
@@ -1061,7 +1061,7 @@
     "src/robolang/tokens.py": "382cea639db08265d0c1c46a50d4bd0a61cbb43428dd46762f4d8bab87a0fb07",
     "src/robolang/validator.py": "0d5cf2fe73696afc3a3a0747a9fe4251a8f676a451befc191178b83c0a6635f7",
     "tests/test_bench.py": "e722788f1372b7f20feeb683d1383e7b1e865454679030db48460ba4fce4c1dd",
-    "tests/test_bench_actions.py": "08c2ff6ee02eb07a243e55740f4a5e34a548fca71e88f2bab0c664aa57a6017f",
+    "tests/test_bench_actions.py": "4b10c01b5a4be99be9e6650dff3154db6a85d174ca0e3ccb680e36c01f4af89d",
     "tests/test_bench_ask.py": "39f4b3fcae9e2b3ebe01983f5f6ef3cac970fe9e82d8b084ef3a420f47ef34c9",
     "tests/test_bench_branch.py": "ad6cfe43cc265e6d7d833eb7e89bd8770b4d47ee656a2c8e54238a600fdd66d2",
     "tests/test_bench_cascade.py": "5bb726f33ea9f6f23c2dfad8df07b43d551d9697e94409b4fb2798366f323e50",

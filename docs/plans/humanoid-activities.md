@@ -88,6 +88,7 @@ before.
 
 | Date | Note | Added | Removed | Changed | Ranking |
 |---|---|---|---|---|---|
+| 2026-11-17 | I2 L3 done: set 7 frozen; bounds B1-B8 and clarifications C1-C15 approved; x02 to G-SELF (C9) | — | — | — | 1. action 4.52 · 2. perception 2.78 · 3. cooperation 1.07 · 4. communication 0.95 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
 | 2026-11-17 | I2 L3: set 7 actions pre-registered (24 tasks) | — | — | — | 1. action 4.52 · 2. perception 2.78 · 3. cooperation 1.07 · 4. communication 0.95 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
 | 2026-11-17 | 0040 approved (I2 G-ACT); 0041 approved: G-LOOP reopened with the mission layer (LE-9) | — | — | — | 1. action 4.52 · 2. perception 2.78 · 3. cooperation 1.07 · 4. communication 0.95 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
 | 2026-11-17 | L6 of I1: G-PATH closed by RoboLang 1.7; G-STEPLIMIT and G-WORKSPACE opened (0039 C4) | — | — | — | 1. action 4.52 · 2. perception 2.78 · 3. cooperation 1.07 · 4. communication 0.95 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
@@ -130,7 +131,7 @@ before.
 
 | Language gap | Scope | Priority | Near | Benchmark tasks |
 |---|---|---|---|---|
-| `G-ACT` Actions beyond move, grasp, place, inspect, wait, communicate, measure: open, charge, set a device | open | 4.30 | yes | 22 |
+| `G-ACT` Actions beyond move, grasp, place, inspect, wait, communicate, measure: open, charge, set a device | open | 4.30 | yes | 21 |
 
 ## Perception
 
@@ -235,7 +236,7 @@ before.
 
 | Language gap | Scope | Priority | Near | Benchmark tasks |
 |---|---|---|---|---|
-| `G-SELF` The robot's own state as readings and conditions: battery level, health, faults; acting on them and asking for service | open | 1.50 | yes | 3 |
+| `G-SELF` The robot's own state as readings and conditions: battery level, health, faults; acting on them and asking for service | open | 1.50 | yes | 4 |
 
 ## Safety
 
