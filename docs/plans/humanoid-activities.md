@@ -24,14 +24,14 @@ headed, and what a near design must not rule out. It never gives syntax by itsel
 
 | # | Direction | Priority | Language need | Future need | Sub-activities | Near gaps |
 |---|---|---|---|---|---|---|
-| 1 | action | 4.17 | 4.30 | 1.01 | 20 | G-ACT |
-| 2 | perception | 2.78 | 9.81 | 0.45 | 11 | G-CHOOSE, G-PERCEIVE |
-| 3 | cooperation | 0.99 | 1.00 | 1.61 | 12 | G-CONC |
-| 4 | communication | 0.87 | 3.86 | 0.32 | 5 | G-MSG |
+| 1 | action | 4.52 | 4.30 | 1.01 | 21 | G-ACT |
+| 2 | perception | 2.78 | 10.16 | 0.45 | 11 | G-CHOOSE, G-PERCEIVE |
+| 3 | cooperation | 1.07 | 1.00 | 1.81 | 13 | G-CONC |
+| 4 | communication | 0.95 | 4.02 | 0.52 | 6 | G-MSG |
 | 5 | learning | 0.75 | 0.65 | 0.70 | 6 | — |
 | 6 | reasoning | 0.68 | 6.28 | 0.88 | 7 | G-LOOP, G-CLOCK, G-CALC |
-| 7 | autonomy | 0.67 | 1.33 | 0.38 | 4 | G-SELF |
-| 8 | safety | 0.49 | 4.46 | 0.74 | 5 | G-PATH |
+| 7 | autonomy | 0.67 | 1.50 | 0.38 | 4 | G-SELF |
+| 8 | safety | 0.49 | 4.81 | 0.74 | 5 | G-PATH |
 | 9 | prediction | 0.25 | 0.50 | 0.68 | 4 | — |
 
 ## Suggested order of language work
@@ -47,12 +47,12 @@ first (strategy D5). An `out` gap enters only through its own decision record (L
 | 2 | `G-ACT` | action | open | 4.30 | 0.45 | unlocks the most |
 | 3 | `G-CLOCK` | reasoning | open | 4.73 | 0.45 | unlocks the most |
 | 4 | `G-LOOP` | reasoning | out | 8.21 | 1.00 | unlocks the most |
-| 5 | `G-MSG` | communication | open | 3.86 | 2.37 | unlocks the most |
-| 6 | `G-PERCEIVE` | perception | open | 4.59 | 3.74 | unlocks the most |
+| 5 | `G-MSG` | communication | open | 4.02 | 2.37 | unlocks the most |
+| 6 | `G-PERCEIVE` | perception | open | 4.94 | 3.74 | unlocks the most |
 | 7 | `G-CHOOSE` | perception | open | 5.23 | 5.95 | unlocks the most |
-| 8 | `G-SELF` | autonomy | open | 1.33 | 7.29 | unlocks the most |
-| 9 | `G-CALC` | reasoning | open | 1.55 | 8.46 | unlocks the most |
-| 10 | `G-CONC` | cooperation | open | 1.00 | 9.46 | unlocks the most |
+| 8 | `G-SELF` | autonomy | open | 1.50 | 7.45 | unlocks the most |
+| 9 | `G-CALC` | reasoning | open | 1.55 | 8.62 | unlocks the most |
+| 10 | `G-CONC` | cooperation | open | 1.00 | 9.62 | unlocks the most |
 
 ## Future direction
 
@@ -67,6 +67,7 @@ roadmap, funding, standard, demand, forecast.
 | `ACT-PRED-002` Checking a plan with a world model before acting | prediction, learning | research | 3-7y | 0.45 | G-PREDICT, G-CHOOSE | [research](https://arxiv.org/abs/2606.13672) |
 | `ACT-HOME-002` General household chores by a home humanoid | action, reasoning | demo | 3-7y | 0.40 | G-CLOCK, G-ACT, G-LOOP, G-CHOOSE, G-PATH, G-PERCEIVE | [research](https://arxiv.org/abs/2604.15483) [forecast](https://humanoid.guide/goldman-raises-2035-humanoid-robot-forecast-to-6-5-million/) |
 | `ACT-HRC-002` Following ambiguous and corrective instructions during shared work | reasoning, cooperation | research | 3-7y | 0.40 | G-MSG, G-CHOOSE, G-PERCEIVE | [research](https://arxiv.org/abs/2602.14551) |
+| `ACT-HRC-003` Handing a stuck job to a remote operator and taking it back | cooperation, communication | concept | 3-7y | 0.40 | G-SELF, G-MSG | [roadmap](https://roadtovr.com/helper-robot-neo-vr-telepresence/) [roadmap](https://sacra.com/chat/h/93dc70de-7775-4bc2-b477-ce4cd741da03/) [research](https://arxiv.org/abs/2605.00416) |
 | `ACT-PRED-001` Anticipating a coworker's next movement | prediction, cooperation | research | 3-7y | 0.40 | G-PREDICT, G-PROX | [research](https://arxiv.org/abs/2604.03065) |
 | `ACT-HRC-001` Task-oriented object handover to a person | cooperation, communication | research | 3-7y | 0.35 | G-ACT, G-PERCEIVE, G-MSG, G-CHOOSE | [research](https://arxiv.org/abs/2602.05760v1) |
 | `ACT-LRN-001` Learning a new task from half an hour of a worker's video | learning, action | concept | 3-7y | 0.35 | G-TEACH, G-PERCEIVE | [research](https://arxiv.org/abs/2605.24934) [funding](https://dealroom.co/news/127095-robot-ai-startup-physical-intelligence-seeks-1b-at-11b-valuation/) |
@@ -88,6 +89,7 @@ before.
 
 | Date | Note | Added | Removed | Changed | Ranking |
 |---|---|---|---|---|---|
+| 2026-11-17 | Weekly A1/A2: ACT-MFG-004 (Hexagon AEON at BMW Leipzig, demo) and ACT-HRC-003 (remote takeover and handback, concept); no maturity or horizon changes, no gap changes | ACT-HRC-003, ACT-MFG-004 | — | — | 1. action 4.52 · 2. perception 2.78 · 3. cooperation 1.07 · 4. communication 0.95 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
 | 2026-11-17 | I1 L3: set 6 regions pre-registered (22 tasks) | — | — | — | 1. action 4.17 · 2. perception 2.78 · 3. cooperation 0.99 · 4. communication 0.87 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
 | 2026-11-17 | R3 model run: 0/25 false programs (Sonnet 25/25 declines, Haiku 23/25 plus 2 clarify); ACT-MFG-001 G-CHOOSE refutation withdrawn | — | — | — | 1. action 4.17 · 2. perception 2.78 · 3. cooperation 0.99 · 4. communication 0.87 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
 | 2026-11-17 | R3: 25 probes confirm G-CLOCK, G-CALC, G-MSG, G-ACT, G-PATH, G-CONC, G-CHOOSE, G-PERCEIVE, G-SELF; refuted: G-PERCEIVE for ACT-HOS-001 and ACT-SOL-001, G-CHOOSE for ACT-MFG-001 | — | — | — | 1. action 4.17 · 2. perception 2.78 · 3. cooperation 0.99 · 4. communication 0.87 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
@@ -113,6 +115,7 @@ before.
 | `ACT-AGR-002` Autonomous laser weeding between crop rows | deployment | now | 0.40 | 0.40 | G-PERCEIVE, G-LOOP, G-PATH, G-CHOOSE | [1](https://agfundernews.com/🎥-carbon-robotics-100m-revenue-new-machine-and-a-path-to-ipo) |
 | `ACT-AUTO-002` Battery swapping for whole-shift humanoid work | demo | 1-3y | 0.55 | 0.39 | G-SELF, G-LOOP, G-ACT | [1](https://newatlas.com/ai-humanoids/walker-s2-humanoid-robot-swaps-batteries) |
 | `ACT-EV-001` Robotic EV charging in garages and depots | pilot | 1-3y | 0.55 | 0.39 | G-ACT, G-MSG, G-CHOOSE, G-LOOP | [1](https://electrek.co/2026/02/23/china-overhead-rail-ev-charging-robots-parking-garages/) |
+| `ACT-MFG-004` Humanoid assembly and component work in a car plant | demo | 1-3y | 0.50 | 0.35 | G-FORCE, G-PERCEIVE | [1](https://robotics.hexagon.com/?p=720) [2](https://www.artificialintelligence-news.com/news/bmw-humanoid-robots-manufacturing-europe-leipzig/) |
 | `ACT-MFG-003` Humanoid machine tending at a machine builder's customer site | demo | 1-3y | 0.45 | 0.32 | G-LOOP, G-ACT, G-MSG, G-CLOCK | [1](https://roboticsandautomationnews.com/2026/05/15/hexagon-and-fill-maschinenbau-partner-to-advance-manufacturing-autonomy-using-humanoids/101578/) |
 | `ACT-AGR-001` Greenhouse fruit harvesting | pilot | 3-7y | 0.60 | 0.24 | G-CHOOSE, G-PERCEIVE, G-LOOP, G-CLOCK, G-FORCE | [1](https://www.freshplaza.com/europe/article/9842754/japanese-agri-tech-startup-puts-cherry-tomato-harvesting-robot-into-routine-production-use/) |
 | `ACT-HOME-002` General household chores by a home humanoid | demo | 3-7y | 0.40 | 0.16 | G-CLOCK, G-ACT, G-LOOP, G-CHOOSE, G-PATH, G-PERCEIVE | [1](https://heise.de/-11287205) |
@@ -144,7 +147,7 @@ before.
 | Language gap | Scope | Priority | Near | Benchmark tasks |
 |---|---|---|---|---|
 | `G-CHOOSE` Choosing objects or robots at run time | open | 5.23 | yes | 6 |
-| `G-PERCEIVE` Conditions on perceived properties (dirty, damaged) | open | 4.59 | yes | 4 |
+| `G-PERCEIVE` Conditions on perceived properties (dirty, damaged) | open | 4.94 | yes | 4 |
 
 ## Cooperation
 
@@ -154,6 +157,7 @@ before.
 | `ACT-MRC-002` Multi-vendor fleet interoperability | demo | 1-3y | 0.55 | 0.39 | G-MSG, G-CHOOSE, G-CONC | [1](https://www.therobotreport.com/new-iso-interoperability-standard-covers-collaboration-among-mobile-robots-from-multiple-vendors/) |
 | `ACT-SAFE-001` Fence-free humanoid work beside people | demo | 3-7y | 0.65 | 0.26 | G-PROX, G-PATH, G-FORCE | [1](https://letsdatascience.com/news/agility-robotics-previews-cage-free-digit-v5-847ce6a1) [2](https://www.i-scoop.eu/iso-25785-1-explained-and-what-it-means-for-humanoid-robot-safety/) |
 | `ACT-HRC-002` Following ambiguous and corrective instructions during shared work | research | 3-7y | 0.40 | 0.16 | G-MSG, G-CHOOSE, G-PERCEIVE | [1](https://arxiv.org/abs/2602.14551) |
+| `ACT-HRC-003` Handing a stuck job to a remote operator and taking it back | concept | 3-7y | 0.40 | 0.16 | G-SELF, G-MSG | [1](https://roadtovr.com/helper-robot-neo-vr-telepresence/) [2](https://sacra.com/chat/h/93dc70de-7775-4bc2-b477-ce4cd741da03/) [3](https://arxiv.org/abs/2605.00416) |
 | `ACT-PRED-001` Anticipating a coworker's next movement | research | 3-7y | 0.40 | 0.16 | G-PREDICT, G-PROX | [1](https://arxiv.org/abs/2604.03065) |
 | `ACT-HRC-001` Task-oriented object handover to a person | research | 3-7y | 0.35 | 0.14 | G-ACT, G-PERCEIVE, G-MSG, G-CHOOSE | [1](https://arxiv.org/abs/2602.05760v1) |
 | `ACT-MRC-001` Mixed robot teams on one workflow | demo | 3-7y | 0.35 | 0.14 | G-CONC, G-CHOOSE, G-MSG | [1](https://deepmind.google/blog/gemini-robotics-2-brings-whole-body-intelligence-to-robots/) |
@@ -174,12 +178,13 @@ before.
 | `ACT-HLTH-001` Hospital delivery and supply runs for nurses and pharmacy | deployment | now | 0.55 | 0.55 | G-ACT, G-MSG, G-LOOP, G-CLOCK | [1](https://www.therobotreport.com/five-years-operation-shape-diligent-robotics-rollout-moxi-2-0/) |
 | `ACT-RET-001` Store shelf scanning and out-of-stock reporting | deployment | now | 0.55 | 0.55 | G-CLOCK, G-LOOP, G-PERCEIVE, G-CHOOSE | [1](https://theshelbyreport.com/2026/09/21/simbe-surpasses-3000-units-in-shelf-intelligence-fleet/) |
 | `ACT-MRC-002` Multi-vendor fleet interoperability | demo | 1-3y | 0.55 | 0.39 | G-MSG, G-CHOOSE, G-CONC | [1](https://www.therobotreport.com/new-iso-interoperability-standard-covers-collaboration-among-mobile-robots-from-multiple-vendors/) |
+| `ACT-HRC-003` Handing a stuck job to a remote operator and taking it back | concept | 3-7y | 0.40 | 0.16 | G-SELF, G-MSG | [1](https://roadtovr.com/helper-robot-neo-vr-telepresence/) [2](https://sacra.com/chat/h/93dc70de-7775-4bc2-b477-ce4cd741da03/) [3](https://arxiv.org/abs/2605.00416) |
 | `ACT-HRC-001` Task-oriented object handover to a person | research | 3-7y | 0.35 | 0.14 | G-ACT, G-PERCEIVE, G-MSG, G-CHOOSE | [1](https://arxiv.org/abs/2602.05760v1) |
 | `ACT-ELD-001` Companion robot in dementia and memory care | pilot | 3-7y | 0.30 | 0.12 | G-CLOCK, G-ACT, G-LOOP, G-PERCEIVE, G-MSG | [1](https://health.ucdavis.edu/medical-center/news/headlines/uc-davis-launches-first-long-term-us-study-led-by-nurses-on-humanoid-robots-in-dementia-care/2026/05) |
 
 | Language gap | Scope | Priority | Near | Benchmark tasks |
 |---|---|---|---|---|
-| `G-MSG` Waiting for an incoming message, or confirming delivery | open | 3.86 | yes | 8 |
+| `G-MSG` Waiting for an incoming message, or confirming delivery | open | 4.02 | yes | 8 |
 
 ## Learning
 
@@ -226,7 +231,7 @@ before.
 
 | Language gap | Scope | Priority | Near | Benchmark tasks |
 |---|---|---|---|---|
-| `G-SELF` The robot's own state as readings and conditions: battery level, health, faults; acting on them and asking for service | open | 1.33 | yes | 3 |
+| `G-SELF` The robot's own state as readings and conditions: battery level, health, faults; acting on them and asking for service | open | 1.50 | yes | 3 |
 
 ## Safety
 
@@ -241,8 +246,8 @@ before.
 | Language gap | Scope | Priority | Near | Benchmark tasks |
 |---|---|---|---|---|
 | `G-PATH` Staying inside or outside a region while moving | open | 2.86 | yes | 20 |
+| `G-FORCE` Force limits and gentle handling | open | 0.98 | — | 2 |
 | `G-PROX` Limits and reactions that depend on people nearby: slow, stop or yield when a person is within a distance | open | 0.97 | — | 1 |
-| `G-FORCE` Force limits and gentle handling | open | 0.63 | — | 2 |
 
 ## Prediction
 
