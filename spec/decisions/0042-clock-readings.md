@@ -1,8 +1,9 @@
 # Decision record 0042: Clock readings (I3, G-CLOCK, RoboLang 1.9)
 
 **Date:** 2026-11-17
-**Status:** PROPOSED. This is step L2 of iteration I3 in the [language roadmap](../../docs/LANGUAGE_ROADMAP.md). The
-owner chose the gap (L1) on 2026-11-17. Every point below needs the owner's review before anything is built.
+**Status:** **APPROVED by the owner, 2026-11-17**: one day only (T4), the live names `clock_time` and `clock_elapsed`
+(T6), and T1–T12 as recommended. This is step L2 of iteration I3 in the
+[language roadmap](../../docs/LANGUAGE_ROADMAP.md); the owner chose the gap (L1) on 2026-11-17.
 **Applies to (when decided):**
 - new `spec/robolang-v1.9.md` and `grammar-v1.9.ebnf`;
 - Task IR 1.8 and world file 1.5;
@@ -113,8 +114,8 @@ task tote_if_open(robot r, object tote, location inb, location outb) {
 - **Economy:** 0 new statements, 2 kinds, 1 literal, 2 reserved words for the live readings (T6), 1 world field and
   about 4 codes.
 
-## Open questions for the owner
+## Owner's answers (2026-11-17)
 
-1. T4: one day only in 1.9 (recommended), or dates now?
-2. T6: are the live clock readings in `wait until` called `clock_time` and `clock_elapsed`, or something shorter?
-3. Are T1–T12 accepted?
+1. One day only in 1.9 (T4).
+2. The live names stay `clock_time` and `clock_elapsed` (T6).
+3. T1–T12 are accepted.
