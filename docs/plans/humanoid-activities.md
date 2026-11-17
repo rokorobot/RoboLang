@@ -14,18 +14,39 @@ new syntax (strategy rule 1, D5). Out-of-scope gaps are listed but never propose
 
 *Priority* comes from the sub-activities (what robots will do). *Language need* is the sum of the priorities of
 the direction's open gaps (what RoboLang lacks there); the two differ when sub-activities of one direction need
-gaps of another, e.g. tote handling (action) needs clock readings (reasoning).
+gaps of another, e.g. tote handling (action) needs clock readings (reasoning). *Future need* is the sum of `p`
+over the direction's far sub-activities (concept or research, or 3+ years away): where the language is headed,
+and what a near design must not rule out. It never gives syntax by itself.
 
-| # | Direction | Priority | Language need | Sub-activities | Near gaps |
-|---|---|---|---|---|---|
-| 1 | action | 2.91 | 2.93 | 12 | G-ACT |
-| 2 | perception | 2.33 | 8.41 | 9 | G-PERCEIVE, G-CHOOSE |
-| 3 | communication | 0.87 | 2.76 | 5 | G-MSG |
-| 4 | cooperation | 0.86 | 1.00 | 8 | G-CONC |
-| 5 | learning | 0.62 | 0.39 | 4 | — |
-| 6 | reasoning | 0.45 | 5.96 | 5 | G-LOOP, G-CLOCK, G-CALC |
-| 7 | safety | 0.34 | 3.18 | 2 | G-PATH |
-| 8 | prediction | 0.17 | 0.34 | 2 | — |
+| # | Direction | Priority | Language need | Future need | Sub-activities | Near gaps |
+|---|---|---|---|---|---|---|
+| 1 | action | 2.91 | 2.93 | 0.65 | 12 | G-ACT |
+| 2 | perception | 2.33 | 8.41 | 0.45 | 9 | G-PERCEIVE, G-CHOOSE |
+| 3 | communication | 0.87 | 2.76 | 0.32 | 5 | G-MSG |
+| 4 | cooperation | 0.86 | 1.00 | 1.20 | 8 | G-CONC |
+| 5 | learning | 0.62 | 0.39 | 0.38 | 4 | — |
+| 6 | reasoning | 0.45 | 5.96 | 0.70 | 5 | G-LOOP, G-CLOCK, G-CALC |
+| 7 | safety | 0.34 | 3.18 | 0.33 | 2 | G-PATH |
+| 8 | prediction | 0.17 | 0.34 | 0.43 | 2 | — |
+
+## Future direction
+
+Far sub-activities by `p`: what is coming, and the signals that point to it. Leading signals: research,
+roadmap, funding, standard, demand, forecast.
+
+| Sub-activity | Directions | Maturity | Horizon | p | Needs | Leading signals |
+|---|---|---|---|---|---|---|
+| `ACT-SAFE-001` Fence-free humanoid work beside people | safety, cooperation | demo | 3-7y | 0.65 | G-PROX, G-PATH, G-FORCE | — |
+| `ACT-AGR-001` Greenhouse fruit harvesting | perception, action | pilot | 3-7y | 0.60 | G-CHOOSE, G-PERCEIVE, G-LOOP, G-CLOCK, G-FORCE | — |
+| `ACT-PRED-002` Checking a plan with a world model before acting | prediction, learning | research | 3-7y | 0.45 | G-PREDICT, G-CHOOSE | — |
+| `ACT-HOME-002` General household chores by a home humanoid | action, reasoning | demo | 3-7y | 0.40 | G-CLOCK, G-ACT, G-LOOP, G-CHOOSE, G-PATH, G-PERCEIVE | — |
+| `ACT-HRC-002` Following ambiguous and corrective instructions during shared work | reasoning, cooperation | research | 3-7y | 0.40 | G-MSG, G-CHOOSE, G-PERCEIVE | — |
+| `ACT-PRED-001` Anticipating a coworker's next movement | prediction, cooperation | research | 3-7y | 0.40 | G-PREDICT, G-PROX | — |
+| `ACT-HRC-001` Task-oriented object handover to a person | cooperation, communication | research | 3-7y | 0.35 | G-ACT, G-PERCEIVE, G-MSG, G-CHOOSE | — |
+| `ACT-MRC-001` Mixed robot teams on one workflow | cooperation, reasoning | demo | 3-7y | 0.35 | G-CONC, G-CHOOSE, G-MSG | — |
+| `ACT-ELD-001` Companion robot in dementia and memory care | communication, perception | pilot | 3-7y | 0.30 | G-CLOCK, G-ACT, G-LOOP, G-PERCEIVE, G-MSG | — |
+| `ACT-HOME-001` Laundry folding in the home | learning, action | research | 3-7y | 0.30 | G-ACT, G-LOOP, G-CHOOSE, G-PERCEIVE, G-CALC | — |
+| `ACT-ASM-001` Robot-team structural assembly with symbolic replanning | reasoning, cooperation | research | 7y+ | 0.25 | G-LOOP, G-PERCEIVE, G-CONC | — |
 
 ## Development log
 

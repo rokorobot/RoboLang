@@ -21,11 +21,34 @@ activities that are close** (section 5).
 
 | Loop | Question | Input | Output | Cadence |
 |---|---|---|---|---|
-| A Foresight | What will robots do? | Vendor deployments and pilots, research (e.g. arXiv cs.RO), SDK releases (ROS 2, Isaac, LeRobot), standards, HumanoidOnline | Activity entries with dated, checkable forecasts | Weekly |
+| A1 Present scan | What do robots do now? | Vendor deployments and pilots, SDK releases (ROS 2, Isaac, LeRobot), HumanoidOnline | New activities; maturity changes | Weekly |
+| A2 Horizon scan | Where is it heading? | Leading signals (below); the atlas's own history | Emerging activities (`concept`, `research`) with leading signals and forecasts | Weekly, deeper monthly |
 | B Language | Can RoboLang express it? | Activities → operator requests → benchmark tasks | Gaps, ranked; one proposal | Weekly gaps, monthly proposal |
 | C Calibration (meta) | Is A right, is B worth it? | Forecasts that came due; accepted and rejected proposals | Source and weight changes for A and B | Quarterly |
 
-Loop B is the existing benchmark machinery. Loop A and C are new.
+Loop B is the existing benchmark machinery. Loops A1, A2 and C are new.
+
+**Looking forward (A2).** A1 sees what exists; it cannot see what is coming. A2 looks for **leading signals**, which
+come years before a deployment, each recorded with its kind:
+
+| Kind | Example | Why it leads |
+|---|---|---|
+| `research` | a result at CoRL, RSS, ICRA or on arXiv cs.RO; a new robot foundation model and what it can do | capabilities appear in papers 3–7 years before products |
+| `roadmap` | a vendor's or integrator's stated product plans and targets | what companies are building towards |
+| `funding` | a funding round or programme, with the use case it names | where money expects work to be |
+| `standard` | standards in drafting (e.g. ISO 25785-1), regulation | what will be allowed, and on what conditions |
+| `demand` | labour shortages, ageing, costs in a sector | where robots will be pulled in |
+| `forecast` | analysts' and experts' published forecasts | a reference to calibrate against |
+
+A2 then uses three methods: **combination** (capabilities shown separately in research, e.g. dexterous hands and
+long-horizon planning, suggest an activity that needs both, such as physical care at home); **extrapolation** (from
+the development log, how fast activities move from `research` to `demo` to `pilot`, applied to emerging ones); and
+**demand pull** (activities that sectors short of workers will ask for). An activity with no demonstration yet has
+maturity `concept`; its `basis` says which signals it rests on.
+
+**Build next, design for.** Near activities decide what gets syntax now. Far and emerging activities decide what the
+language must not rule out: the plan by direction shows a **future need** per direction, so a near design does not
+close a door the far ones need (e.g. a loop construct that could never carry a person-proximity limit).
 
 ## 3. Activity atlas
 
@@ -50,7 +73,8 @@ each gap has one primary direction. The plan by direction, with priorities, is g
 }
 ```
 
-`maturity` is one of `research`, `demo`, `pilot`, `deployment`. `forecast` is a claim that a reviewer can mark true
+`maturity` is one of `concept`, `research`, `demo`, `pilot`, `deployment`. Optional `leading` lists leading signals as
+`{"kind", "claim", "url"}`. `forecast` is a claim that a reviewer can mark true
 or false on its due date, with the probability the loop gave it. Loop C scores these (Brier score), so the foresight
 loop is measured, not believed.
 
@@ -83,7 +107,7 @@ divided by its estimated grammar cost. Then:
 
 - **Near** (maturity `pilot` or `deployment`, horizon ≤ 3 years): eligible for a language proposal, run as 1.4–1.6
   were: decision record, pre-registered set, implementation, acceptance run, owner.
-- **Far** (`research`, `demo`, or > 3 years): a design sketch only, no syntax. It is promoted when its activity's
+- **Far** (`concept`, `research`, `demo`, or > 3 years): a design sketch only, no syntax. It is promoted when its activity's
   maturity changes.
 
 This keeps the language small while the atlas stays large.

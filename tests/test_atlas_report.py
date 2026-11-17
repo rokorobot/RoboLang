@@ -26,6 +26,10 @@ def test_priorities():
     assert round(direction["safety"], 3) == 0.28 and round(direction["action"], 3) == 0.78
     assert round(gap["G-A"], 3) == 1.06 and round(gap["G-B"], 3) == 0.5
     assert near == {"G-A"}
+    atlas["activities"].append({**act("A3", ["prediction"], [], "concept", "7y+", 0.3),
+                                "leading": [{"kind": "research", "claim": "c", "url": "https://example.org"}]})
+    assert ar.future(atlas)["prediction"] == 0.3 and ar.future(atlas)["action"] == 0.0
+    assert "| `A3` A3 | prediction | concept | 7y+ | 0.30 |" in ar.render(atlas)
     text = ar.render(atlas)
     assert text.index("| 1 | action |") < text.index("| 2 | safety |")
 

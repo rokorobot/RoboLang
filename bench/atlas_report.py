@@ -13,7 +13,9 @@ The atlas is the only source: add or change sub-activities there, then run this.
 
 - sub-activity:  p x nearness(horizon)                      (nearness: now 1, 1-3y 0.7, 3-7y 0.4, 7y+ 0.1)
 - direction:     sum of its sub-activities' priorities, each split evenly over the directions the sub-activity names;
-                 its language need is the sum of the priorities of its open gaps
+                 its language need is the sum of the priorities of its open gaps; its future need is the sum of p
+                 over its far sub-activities (concept or research, or horizon 3-7y or 7y+), split the same way:
+                 what the language must not rule out, not what gets syntax now
 - language gap:  sum of the priorities of the sub-activities that need it; "near" if one of them is pilot or
                  deployment with horizon now or 1-3y (eligible for syntax, strategy rule 1 and D5)
 """
@@ -33,6 +35,20 @@ NEARNESS = {"now": 1.0, "1-3y": 0.7, "3-7y": 0.4, "7y+": 0.1}
 
 def priority(act: dict) -> float:
     return act["forecast"]["p"] * NEARNESS[act["horizon"]]
+
+
+def is_far(act: dict) -> bool:
+    return act["maturity"] in ("concept", "research") or act["horizon"] in ("3-7y", "7y+")
+
+
+def future(atlas: dict) -> dict[str, float]:
+    need = {d: 0.0 for d in DIRECTIONS}
+    for act in atlas["activities"]:
+        dirs = act.get("directions") or []
+        if is_far(act):
+            for d in dirs:
+                need[d] += act["forecast"]["p"] / len(dirs)
+    return need
 
 
 def is_near(act: dict) -> bool:
@@ -96,6 +112,7 @@ def log(atlas: dict) -> list[str]:
 
 def render(atlas: dict) -> str:
     direction, gap, near = scores(atlas)
+    far = future(atlas)
     acts = atlas["activities"]
     gaps = {g["id"]: g for g in atlas["gaps"]}
     order = sorted(DIRECTIONS, key=lambda d: (-direction[d], DIRECTIONS.index(d)))
@@ -116,16 +133,30 @@ def render(atlas: dict) -> str:
         "",
         "*Priority* comes from the sub-activities (what robots will do). *Language need* is the sum of the priorities of",
         "the direction's open gaps (what RoboLang lacks there); the two differ when sub-activities of one direction need",
-        "gaps of another, e.g. tote handling (action) needs clock readings (reasoning).",
+        "gaps of another, e.g. tote handling (action) needs clock readings (reasoning). *Future need* is the sum of `p`",
+        "over the direction's far sub-activities (concept or research, or 3+ years away): where the language is headed,",
+        "and what a near design must not rule out. It never gives syntax by itself.",
         "",
-        "| # | Direction | Priority | Language need | Sub-activities | Near gaps |",
-        "|---|---|---|---|---|---|",
+        "| # | Direction | Priority | Language need | Future need | Sub-activities | Near gaps |",
+        "|---|---|---|---|---|---|---|",
     ]
     for i, d in enumerate(order, 1):
         n = sum(1 for a in acts if d in (a.get("directions") or []))
         ng = sorted((g for g in near if gaps[g].get("direction") == d), key=lambda g: -gap[g])
         need = sum(gap[g["id"]] for g in gaps.values() if g.get("direction") == d and g["scope"] == "open")
-        out.append(f"| {i} | {d} | {direction[d]:.2f} | {need:.2f} | {n} | {', '.join(ng) or '—'} |")
+        out.append(f"| {i} | {d} | {direction[d]:.2f} | {need:.2f} | {far[d]:.2f} | {n} | {', '.join(ng) or '—'} |")
+    out += ["", "## Future direction", "",
+            "Far sub-activities by `p`: what is coming, and the signals that point to it. Leading signals: research,",
+            "roadmap, funding, standard, demand, forecast.", ""]
+    ahead = sorted((a for a in acts if is_far(a)), key=lambda a: (-a["forecast"]["p"], a["id"]))
+    if ahead:
+        out += ["| Sub-activity | Directions | Maturity | Horizon | p | Needs | Leading signals |", "|---|---|---|---|---|---|---|"]
+        for a in ahead:
+            sig = " ".join(f"[{s['kind']}]({s['url']})" for s in a.get("leading", [])) or "—"
+            out.append(f"| `{a['id']}` {a['name']} | {', '.join(a.get('directions') or [])} | {a['maturity']} | "
+                       f"{a['horizon']} | {a['forecast']['p']:.2f} | {', '.join(a['needs']) or '—'} | {sig} |")
+    else:
+        out.append("No far sub-activities yet.")
     out += ["", "## Development log", ""] + log(atlas)
     for d in order:
         out += ["", f"## {d.capitalize()}", ""]

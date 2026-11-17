@@ -14,7 +14,8 @@ from bench import lib
 
 ATLAS = json.loads((Path(lib.BENCH) / "atlas.json").read_text(encoding="utf-8"))
 GAPS = {g["id"]: g for g in ATLAS["gaps"]}
-MATURITY = {"research", "demo", "pilot", "deployment"}
+MATURITY = {"concept", "research", "demo", "pilot", "deployment"}
+LEADING = {"research", "roadmap", "funding", "standard", "demand", "forecast"}
 HORIZON = {"now", "1-3y", "3-7y", "7y+"}
 DIRECTIONS = {"perception", "reasoning", "prediction", "action", "learning", "cooperation", "safety", "communication"}
 
@@ -67,6 +68,10 @@ def test_activities():
         assert 0 < forecast["p"] < 1, where
         assert forecast.get("outcome") in (None, True, False), where
         assert act["sources"] and all(s.startswith("https://") for s in act["sources"]), where
+        for signal in act.get("leading", []):
+            assert signal["kind"] in LEADING and signal["claim"], f"{where}: leading signal"
+            assert signal["url"].startswith("https://"), f"{where}: leading signal url"
+        assert act["maturity"] != "concept" or act.get("leading"), f"{where}: a concept rests on leading signals"
 
 
 def test_every_direction_is_used():
