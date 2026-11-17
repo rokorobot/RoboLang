@@ -16,6 +16,7 @@ ATLAS = json.loads((Path(lib.BENCH) / "atlas.json").read_text(encoding="utf-8"))
 GAPS = {g["id"]: g for g in ATLAS["gaps"]}
 MATURITY = {"research", "demo", "pilot", "deployment"}
 HORIZON = {"now", "1-3y", "3-7y", "7y+"}
+DIRECTIONS = {"perception", "reasoning", "prediction", "action", "learning", "cooperation", "safety", "communication"}
 
 
 def inexpressible_tasks() -> set[str]:
@@ -38,6 +39,7 @@ def test_gaps():
     for gap in ATLAS["gaps"]:
         assert re.fullmatch(r"G-[A-Z]+", gap["id"]), gap["id"]
         assert gap["name"] and gap["scope"] in {"open", "out"}, gap["id"]
+        assert gap["direction"] in DIRECTIONS, f"{gap['id']}: unknown direction"
         assert gap["scope"] == "open" or gap["scope_note"], f"{gap['id']}: an out-of-scope gap names its decision"
 
 
@@ -54,6 +56,8 @@ def test_activities():
         where = act["id"]
         assert re.fullmatch(r"ACT-[A-Z]{2,5}-\d{3}", where), where
         assert act["name"] and act["domain"] and act["basis"], where
+        assert act["directions"] and set(act["directions"]) <= DIRECTIONS, f"{where}: directions"
+        assert len(act["directions"]) <= 3 and len(set(act["directions"])) == len(act["directions"]), where
         assert act["maturity"] in MATURITY and act["horizon"] in HORIZON, where
         assert act["requests"] and all(isinstance(r, str) and r for r in act["requests"]), where
         assert all(n in GAPS for n in act["needs"]), f"{where}: unknown gap in needs"
@@ -63,3 +67,13 @@ def test_activities():
         assert 0 < forecast["p"] < 1, where
         assert forecast.get("outcome") in (None, True, False), where
         assert act["sources"] and all(s.startswith("https://") for s in act["sources"]), where
+
+
+def test_every_direction_is_used():
+    used = {g["direction"] for g in ATLAS["gaps"]} | {d for a in ATLAS["activities"] for d in a["directions"]}
+    assert used == DIRECTIONS, f"directions with no gap or activity: {DIRECTIONS - used}"
+
+
+def test_every_direction_is_the_main_one_of_two_activities():
+    main = [a["directions"][0] for a in ATLAS["activities"]]
+    assert all(main.count(d) >= 2 for d in DIRECTIONS), {d: main.count(d) for d in DIRECTIONS}
