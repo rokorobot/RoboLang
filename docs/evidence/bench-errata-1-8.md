@@ -185,3 +185,8 @@ Approved by the owner after the acceptance run missed B3 (grammar-only) and B6 b
 No label changed. The confirming runs decide B3 and B6: the 5 inexpressible tasks and 4 controls of set 7,
 grammar-only and full, both models, 3 repeats, plus the per-PR run of sets 1 and 2. `docs/evidence/bench-freeze-v2.json`
 is regenerated.
+
+## Erratum E6 (2026-11-17, L6): G-ACT closed
+
+G-ACT is closed in the atlas by RoboLang 1.8. The tests of sets "future" and 7 now expect it closed. No task or label
+changed. `docs/evidence/bench-freeze-v2.json` is regenerated.

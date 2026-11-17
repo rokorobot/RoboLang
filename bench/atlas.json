@@ -88,9 +88,10 @@
       "id": "G-ACT",
       "name": "Actions beyond move, grasp, place, inspect, wait, communicate, measure: open, charge, set a device",
       "direction": "action",
-      "scope": "open",
-      "scope_note": "RoboLang 1.8 declared actions are built and taught (0040, I2 L4, 2026-11-17); the gap stays open until the acceptance run on set 7 (L5) and closes at L6. Nothing is left inexpressible in it: set 7's x02 moved to G-SELF, x01 to G-PROX, x03 to G-TEACH (0040 C9 to C11)",
-      "tasks": []
+      "scope": "closed",
+      "scope_note": "Closed 2026-11-17 at L6 of iteration I2: RoboLang 1.8 declared actions (`do`, `in_state`, decision 0040), accepted on set 7 (docs/evidence/bench-1-8-acceptance.md). What stays out: several targets (G-PROX), actions that return a value (G-SELF), macros (G-TEACH)",
+      "tasks": [],
+      "closed_in": "RoboLang 1.8"
     },
     {
       "id": "G-PATH",
@@ -390,15 +391,13 @@
       ],
       "maturity": "deployment",
       "horizon": "now",
-      "basis": "Fast Casual (2026-03-26): Miso Robotics' Flippy Fry Station has produced over 5 million fried baskets in live restaurants across seven US states, including White Castle, Jack in the Box and Wing Zone sites. R3 (2026-11-17): G-PERCEIVE refuted, 1.6 expresses it with `measure r label of basket using camera as shade` and `if shade == \"too_dark\"`, when the world has a camera that measures label (control c_fries_too_dark).",
+      "basis": "Fast Casual (2026-03-26): Miso Robotics' Flippy Fry Station has produced over 5 million fried baskets in live restaurants across seven US states, including White Castle, Jack in the Box and Wing Zone sites. R3 (2026-11-17): G-PERCEIVE refuted, 1.6 expresses it with `measure r label of basket using camera as shade` and `if shade == \"too_dark\"`, when the world has a camera that measures label (control c_fries_too_dark). L6 (2026-11-17): G-ACT closed by RoboLang 1.8 declared actions.",
       "requests": [
         "Fry a basket of fries for 3 minutes, then tip it into the hot-holding tray.",
         "Set the fryer to 175 degrees and start the next basket when the oil reads 175.",
         "If the fries come out too dark, discard that basket and tell the kitchen lead."
       ],
-      "needs": [
-        "G-ACT"
-      ],
+      "needs": [],
       "forecast": {
         "claim": "Miso Robotics reports at least 15 million cumulative fried baskets, or Flippy in at least 15 US states, by 2028-03-31.",
         "due": "2028-03-31",
@@ -418,14 +417,13 @@
       ],
       "maturity": "deployment",
       "horizon": "now",
-      "basis": "The Robot Report (2026): Diligent's Moxi (acquired by Serve Robotics in January 2026) runs in more than 25 US hospitals; Children's Hospital Los Angeles reports over 40,000 deliveries and 16,000 hours of work and has grown from two to three robots. Moxi 2.0 rollout was announced on 2026-08-17.",
+      "basis": "The Robot Report (2026): Diligent's Moxi (acquired by Serve Robotics in January 2026) runs in more than 25 US hospitals; Children's Hospital Los Angeles reports over 40,000 deliveries and 16,000 hours of work and has grown from two to three robots. Moxi 2.0 rollout was announced on 2026-08-17. L6 (2026-11-17): G-ACT closed by RoboLang 1.8 declared actions.",
       "requests": [
         "Take the medication from the pharmacy to room 412 and wait for the nurse to confirm before leaving.",
         "Open the supply closet, take the IV kit to the ward, and tell the charge nurse it is there.",
         "Every hour, bring the lab samples from the ward to the lab."
       ],
       "needs": [
-        "G-ACT",
         "G-MSG",
         "G-LOOP",
         "G-CLOCK"
@@ -449,7 +447,7 @@
       ],
       "maturity": "pilot",
       "horizon": "3-7y",
-      "basis": "UC Davis Health (2026-05-28): a yearlong, non-interventional study of Andromeda Robotics' humanoid companion Abi with up to 25 residents in the memory care neighbourhood of Eskaton Village, Carmichael. Abi holds conversations, plays music and runs shared activities; the study is about companionship, not physical care.",
+      "basis": "UC Davis Health (2026-05-28): a yearlong, non-interventional study of Andromeda Robotics' humanoid companion Abi with up to 25 residents in the memory care neighbourhood of Eskaton Village, Carmichael. Abi holds conversations, plays music and runs shared activities; the study is about companionship, not physical care. L6 (2026-11-17): G-ACT closed by RoboLang 1.8 declared actions.",
       "requests": [
         "At 3 pm play music for Mrs Lee in the lounge, and stay until the song ends.",
         "Stay with Mr Kim until he falls asleep, and tell the nurse if he gets upset.",
@@ -457,7 +455,6 @@
       ],
       "needs": [
         "G-CLOCK",
-        "G-ACT",
         "G-LOOP",
         "G-PERCEIVE",
         "G-MSG"
@@ -493,14 +490,13 @@
       ],
       "maturity": "research",
       "horizon": "3-7y",
-      "basis": "arXiv 2511.14759 (Physical Intelligence, 2025-11-18): the pi*0.6 model, trained with offline RL and on-robot experience (RECAP), folds laundry in real homes, assembles boxes and makes espresso, with more than double the throughput and about half the failure rate on hard tasks. A research result, not a product.",
+      "basis": "arXiv 2511.14759 (Physical Intelligence, 2025-11-18): the pi*0.6 model, trained with offline RL and on-robot experience (RECAP), folds laundry in real homes, assembles boxes and makes espresso, with more than double the throughput and about half the failure rate on hard tasks. A research result, not a product. L6 (2026-11-17): G-ACT closed by RoboLang 1.8 declared actions.",
       "requests": [
         "Fold the laundry in the basket: towels on the left shelf, shirts on the right.",
         "If a piece has a stain, put it in the wash pile instead.",
         "Keep folding until the basket is empty, then tell me how many pieces you folded."
       ],
       "needs": [
-        "G-ACT",
         "G-LOOP",
         "G-CHOOSE",
         "G-PERCEIVE",
@@ -537,7 +533,7 @@
       ],
       "maturity": "demo",
       "horizon": "3-7y",
-      "basis": "heise (2026-05-08): 1X plans first NEO deliveries to US private customers by end of 2026, price from 20,000 USD or about 500 USD/month, with a first-year batch of 10,000 reportedly sold out; early units help with internal logistics in the factory. No source I opened confirms robots working in customer homes. L6 (2026-11-17): G-PATH closed by RoboLang 1.7 region limits.",
+      "basis": "heise (2026-05-08): 1X plans first NEO deliveries to US private customers by end of 2026, price from 20,000 USD or about 500 USD/month, with a first-year batch of 10,000 reportedly sold out; early units help with internal logistics in the factory. No source I opened confirms robots working in customer homes. L6 (2026-11-17): G-PATH closed by RoboLang 1.7 region limits. L6 (2026-11-17): G-ACT closed by RoboLang 1.8 declared actions.",
       "requests": [
         "At 8 pm vacuum the living room unless someone is in it.",
         "Put every toy on the floor into the toy box, but stay out of the nursery.",
@@ -545,7 +541,6 @@
       ],
       "needs": [
         "G-CLOCK",
-        "G-ACT",
         "G-LOOP",
         "G-CHOOSE",
         "G-PERCEIVE"
@@ -713,7 +708,7 @@
       ],
       "maturity": "deployment",
       "horizon": "now",
-      "basis": "Dusty Robotics' site: the FieldPrinter prints full-size BIM layout on jobsite floors, with over 300 million square feet printed in more than 1,000 buildings and general contractors such as DPR, Skanska and McCarthy named (vendor claims); available in North America only. L6 (2026-11-17): G-PATH closed by RoboLang 1.7 region limits.",
+      "basis": "Dusty Robotics' site: the FieldPrinter prints full-size BIM layout on jobsite floors, with over 300 million square feet printed in more than 1,000 buildings and general contractors such as DPR, Skanska and McCarthy named (vendor claims); available in North America only. L6 (2026-11-17): G-PATH closed by RoboLang 1.7 region limits. L6 (2026-11-17): G-ACT closed by RoboLang 1.8 declared actions.",
       "requests": [
         "Print the wall layout for level 3 and stay inside the marked zone.",
         "Print the layout for all trades on this floor, then stop.",
@@ -721,8 +716,7 @@
       ],
       "needs": [
         "G-LOOP",
-        "G-PERCEIVE",
-        "G-ACT"
+        "G-PERCEIVE"
       ],
       "forecast": {
         "claim": "Dusty Robotics announces FieldPrinter availability outside North America by 2028-12-31.",
@@ -786,14 +780,13 @@
       ],
       "maturity": "pilot",
       "horizon": "1-3y",
-      "basis": "Electrek (2026-02-23): overhead-rail charging robots are already deployed in garages across multiple Chinese cities, and Beijing plans 1,000 mobile charging robots in 150 car parks; Western deployments are still in pilot. No site is named.",
+      "basis": "Electrek (2026-02-23): overhead-rail charging robots are already deployed in garages across multiple Chinese cities, and Beijing plans 1,000 mobile charging robots in 150 car parks; Western deployments are still in pilot. No site is named. L6 (2026-11-17): G-ACT closed by RoboLang 1.8 declared actions.",
       "requests": [
         "Charge the white van in bay 6 until it reaches 80 percent.",
         "Plug in the next car in the queue when its driver asks for a charge.",
         "Unplug the car in bay 2 and return to the dock."
       ],
       "needs": [
-        "G-ACT",
         "G-MSG",
         "G-CHOOSE",
         "G-LOOP"
@@ -817,7 +810,7 @@
       ],
       "maturity": "deployment",
       "horizon": "now",
-      "basis": "Robotics Tomorrow (2026-04-07): Brain Corp says more than 40,000 robots are deployed across six continents; BrainOS Clean 2.0 for Tennant floor cleaners adds SelfPath AI (no manual route training), schedule-based operation and automatic charging, with fleet-wide rollout planned for May 2026. L6 (2026-11-17): G-PATH closed by RoboLang 1.7 region limits.",
+      "basis": "Robotics Tomorrow (2026-04-07): Brain Corp says more than 40,000 robots are deployed across six continents; BrainOS Clean 2.0 for Tennant floor cleaners adds SelfPath AI (no manual route training), schedule-based operation and automatic charging, with fleet-wide rollout planned for May 2026. L6 (2026-11-17): G-PATH closed by RoboLang 1.7 region limits. L6 (2026-11-17): G-ACT closed by RoboLang 1.8 declared actions.",
       "requests": [
         "Clean the lobby every night at 11 pm, then go back to the dock to charge.",
         "Do not clean the wet-floor zone.",
@@ -825,8 +818,7 @@
       ],
       "needs": [
         "G-CLOCK",
-        "G-LOOP",
-        "G-ACT"
+        "G-LOOP"
       ],
       "forecast": {
         "claim": "Brain Corp reports at least 75,000 deployed robots by 2028-12-31.",
@@ -919,14 +911,13 @@
       ],
       "maturity": "research",
       "horizon": "3-7y",
-      "basis": "arXiv 2602.05760 (ETH Zurich, HRI 2026): AFT-Handover uses LLM affordance reasoning to present an object so the person can use it next (for example a tool handle), shown on legged manipulators; a user study preferred it over the prior state of the art.",
+      "basis": "arXiv 2602.05760 (ETH Zurich, HRI 2026): AFT-Handover uses LLM affordance reasoning to present an object so the person can use it next (for example a tool handle), shown on legged manipulators; a user study preferred it over the prior state of the art. L6 (2026-11-17): G-ACT closed by RoboLang 1.8 declared actions.",
       "requests": [
         "Hand the screwdriver to Ana handle first, and let go only when she has it.",
         "Pass me the wrench, then wait until I say I am done.",
         "Hand the part to whoever is at station 2."
       ],
       "needs": [
-        "G-ACT",
         "G-PERCEIVE",
         "G-MSG",
         "G-CHOOSE"
@@ -1108,7 +1099,7 @@
       ],
       "maturity": "deployment",
       "horizon": "now",
-      "basis": "Boston Dynamics: with several docks along its route, Spot recharges at the nearest one as needed and then continues its autonomous mission (multi-docking, managed from Orbit).",
+      "basis": "Boston Dynamics: with several docks along its route, Spot recharges at the nearest one as needed and then continues its autonomous mission (multi-docking, managed from Orbit). L6 (2026-11-17): G-ACT closed by RoboLang 1.8 declared actions.",
       "requests": [
         "Patrol the plant route; when your battery is low, charge at the nearest dock and carry on where you stopped.",
         "Before the night round, check you have enough charge for the whole route; if not, charge first."
@@ -1116,8 +1107,7 @@
       "needs": [
         "G-SELF",
         "G-LOOP",
-        "G-CHOOSE",
-        "G-ACT"
+        "G-CHOOSE"
       ],
       "forecast": {
         "claim": "At least one legged or humanoid robot vendor other than Boston Dynamics publicly documents recharging at docks along a route during autonomous missions by 2027-12-31.",
@@ -1138,15 +1128,14 @@
       ],
       "maturity": "demo",
       "horizon": "1-3y",
-      "basis": "New Atlas (2025-07-21): UBTech's Walker S2 walks to a swap station and exchanges one of its two battery packs itself, aiming at near-continuous work on production lines; the article reports no confirmed factory deployment.",
+      "basis": "New Atlas (2025-07-21): UBTech's Walker S2 walks to a swap station and exchanges one of its two battery packs itself, aiming at near-continuous work on production lines; the article reports no confirmed factory deployment. L6 (2026-11-17): G-ACT closed by RoboLang 1.8 declared actions.",
       "requests": [
         "Work the line all shift; swap your battery when it drops below 20 %, but never in the middle of a pick.",
         "If the tower has no charged battery, tell the supervisor and finish the current part first."
       ],
       "needs": [
         "G-SELF",
-        "G-LOOP",
-        "G-ACT"
+        "G-LOOP"
       ],
       "forecast": {
         "claim": "A named manufacturer confirms humanoids that swap their own batteries working regular shifts at one of its plants by 2028-06-30.",
@@ -1207,7 +1196,7 @@
       ],
       "maturity": "demo",
       "horizon": "1-3y",
-      "basis": "Robotics and Automation News (2026-05-15): Hexagon Robotics' AEON humanoid will be piloted at one of machine builder Fill's client use cases in Gurten, Austria, on selected machine tending, inspection and operational tasks. Duration, metrics and the customer are not stated. Orchestrator check 2026-11-17: the pilot is announced, not yet running, so demo (LE-3).",
+      "basis": "Robotics and Automation News (2026-05-15): Hexagon Robotics' AEON humanoid will be piloted at one of machine builder Fill's client use cases in Gurten, Austria, on selected machine tending, inspection and operational tasks. Duration, metrics and the customer are not stated. Orchestrator check 2026-11-17: the pilot is announced, not yet running, so demo (LE-3). L6 (2026-11-17): G-ACT closed by RoboLang 1.8 declared actions.",
       "requests": [
         "Load a blank into CNC 2, start the program, and unload the finished part when the machine reports it is done.",
         "If a part is rejected twice, stop loading and call the shift lead.",
@@ -1215,7 +1204,6 @@
       ],
       "needs": [
         "G-LOOP",
-        "G-ACT",
         "G-MSG",
         "G-CLOCK"
       ],
@@ -1339,7 +1327,7 @@
       ],
       "maturity": "concept",
       "horizon": "7y+",
-      "basis": "Method: combination, with demand pull. Event-driven proactive assistance (arXiv 2603.23950, 2026-03-25): a monitor sees a human-object interaction finish, a vision-language planner infers the task goal from before and after snapshots, decides whether to help and plans assistive actions; tested on a real tabletop block task only. Care sectors are short of staff (Japan: about 690,000 caregivers by the 2040s). No source shows a robot in a care or home setting acting unasked on a predicted need.",
+      "basis": "Method: combination, with demand pull. Event-driven proactive assistance (arXiv 2603.23950, 2026-03-25): a monitor sees a human-object interaction finish, a vision-language planner infers the task goal from before and after snapshots, decides whether to help and plans assistive actions; tested on a real tabletop block task only. Care sectors are short of staff (Japan: about 690,000 caregivers by the 2040s). No source shows a robot in a care or home setting acting unasked on a predicted need. L6 (2026-11-17): G-ACT closed by RoboLang 1.8 declared actions.",
       "requests": [
         "When the resident puts the cup in the sink, wipe the table without being asked.",
         "If Ana starts unpacking the delivery, put the empty boxes in the bin.",
@@ -1348,8 +1336,7 @@
       "needs": [
         "G-PREDICT",
         "G-PERCEIVE",
-        "G-MSG",
-        "G-ACT"
+        "G-MSG"
       ],
       "forecast": {
         "claim": "A commercial care or home robot documents a proactive mode that acts without a request after a person's activity by 2030-12-31.",
@@ -1566,7 +1553,7 @@
       ],
       "maturity": "concept",
       "horizon": "7y+",
-      "basis": "Method: demand pull, with combination. Japan's health ministry expects about 690,000 caregivers short by the 2040s; humanoid pilots in Japanese care homes so far take over chores (Enactic's Ena: laundry, dish collection, restocking) so caregivers can do personal care. Research robots already do sit-to-stand and toilet-transfer support (Moby, arXiv 2508.19816, a non-humanoid standing aid, RO-MAN 2025; the page gives no force results). No source shows a humanoid physically assisting a resident.",
+      "basis": "Method: demand pull, with combination. Japan's health ministry expects about 690,000 caregivers short by the 2040s; humanoid pilots in Japanese care homes so far take over chores (Enactic's Ena: laundry, dish collection, restocking) so caregivers can do personal care. Research robots already do sit-to-stand and toilet-transfer support (Moby, arXiv 2508.19816, a non-humanoid standing aid, RO-MAN 2025; the page gives no force results). No source shows a humanoid physically assisting a resident. L6 (2026-11-17): G-ACT closed by RoboLang 1.8 declared actions.",
       "requests": [
         "Help Mrs Lee stand from the chair, and stop at once if she says it hurts.",
         "Walk beside Mr Kim to the toilet, and never exceed the force limit in his care plan.",
@@ -1576,8 +1563,7 @@
         "G-FORCE",
         "G-PROX",
         "G-PERCEIVE",
-        "G-MSG",
-        "G-ACT"
+        "G-MSG"
       ],
       "forecast": {
         "claim": "A humanoid or general-purpose robot is publicly reported in a trial with care-home residents for sit-to-stand or transfer assistance by 2030-12-31.",
@@ -2448,6 +2434,63 @@
     {
       "date": "2026-11-17",
       "note": "I2 L4: RoboLang 1.8 built and taught",
+      "activities": {
+        "ACT-LOG-001": "deployment now",
+        "ACT-LOG-002": "deployment now",
+        "ACT-MFG-001": "pilot 1-3y",
+        "ACT-MFG-002": "pilot 1-3y",
+        "ACT-RET-001": "deployment now",
+        "ACT-HOS-001": "deployment now",
+        "ACT-HLTH-001": "deployment now",
+        "ACT-ELD-001": "pilot 3-7y",
+        "ACT-HOME-001": "research 3-7y",
+        "ACT-HOME-002": "demo 3-7y",
+        "ACT-INSP-001": "demo now",
+        "ACT-INSP-002": "demo 1-3y",
+        "ACT-SEC-001": "demo 1-3y",
+        "ACT-SAFE-001": "demo 3-7y",
+        "ACT-CON-001": "deployment now",
+        "ACT-AGR-001": "pilot 3-7y",
+        "ACT-EV-001": "pilot 1-3y",
+        "ACT-CLN-001": "deployment now",
+        "ACT-MRC-001": "demo 3-7y",
+        "ACT-MRC-002": "demo 1-3y",
+        "ACT-HRC-001": "research 3-7y",
+        "ACT-HRC-002": "research 3-7y",
+        "ACT-ASM-001": "research 7y+",
+        "ACT-PRED-001": "research 3-7y",
+        "ACT-PRED-002": "research 3-7y",
+        "ACT-AUTO-001": "deployment now",
+        "ACT-AUTO-002": "demo 1-3y",
+        "ACT-AUTO-003": "research 3-7y",
+        "ACT-MFG-003": "demo 1-3y",
+        "ACT-AGR-002": "deployment now",
+        "ACT-SOL-001": "deployment now",
+        "ACT-PRED-003": "concept 3-7y",
+        "ACT-PRED-004": "concept 7y+",
+        "ACT-LRN-001": "concept 3-7y",
+        "ACT-LRN-002": "concept 3-7y",
+        "ACT-AUTO-004": "concept 3-7y",
+        "ACT-SAFE-002": "concept 3-7y",
+        "ACT-CARE-001": "concept 7y+",
+        "ACT-MFG-004": "demo 1-3y",
+        "ACT-HRC-003": "concept 3-7y"
+      },
+      "directions": {
+        "perception": 2.78,
+        "reasoning": 0.68,
+        "prediction": 0.25,
+        "action": 4.52,
+        "learning": 0.75,
+        "cooperation": 1.07,
+        "safety": 0.49,
+        "communication": 0.95,
+        "autonomy": 0.67
+      }
+    },
+    {
+      "date": "2026-11-17",
+      "note": "L6 of I2: G-ACT closed by RoboLang 1.8 declared actions",
       "activities": {
         "ACT-LOG-001": "deployment now",
         "ACT-LOG-002": "deployment now",
