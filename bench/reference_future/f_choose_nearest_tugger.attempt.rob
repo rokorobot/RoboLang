@@ -1,0 +1,16 @@
+// bench/reference_future/f_choose_nearest_tugger.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 1.6;
+
+task send_nearest(robot r, robot ta, robot tb, sensor lidar, location spot) {
+    plan {
+        measure r distance of ta using lidar as da;
+        measure r distance of tb using lidar as db;
+        if da <= db {
+            goal { robot_at ta spot; }
+            move ta to spot;
+        } else {
+            goal { robot_at tb spot; }
+            move tb to spot;
+        }
+    }
+}

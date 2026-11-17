@@ -1,0 +1,13 @@
+// bench/reference_future/f_msg_wind_clear.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 1.6;
+
+task hold_for_wind(robot r, object m, location pallet, location row) {
+    goal { object_at m row; }
+    plan {
+        move r to pallet;
+        grasp r m;
+        wait until message "site" == "WIND CLEAR" timeout 10 min else { fail "no all-clear"; }
+        move r to row;
+        place r m at row;
+    }
+}

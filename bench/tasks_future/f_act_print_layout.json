@@ -1,0 +1,18 @@
+{
+  "id": "f_act_print_layout",
+  "prompt": "Have printer1 print the wall layout for level 3 at level_3_wall.",
+  "world": "bench/worlds/site.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "activity": "ACT-CON-001",
+  "gap": "G-ACT",
+  "tags": [
+    "device",
+    "print"
+  ],
+  "why": "Printing is an action the plan has no statement for; RoboLang can move a robot to level_3_wall but not run its tool (language reference: 'Plan statements').",
+  "attempt_fails_with": "E203"
+}

@@ -1,0 +1,33 @@
+{
+  "world_schema": "robolang.sim.world",
+  "world_schema_version": "1.2",
+  "locations": ["dock_1", "dock_2", "dock_3", "gridline_a", "gridline_c", "hall", "headland", "level_3_wall", "lobby", "module_pallet", "row_12", "row_14", "row_15", "stop_a", "stop_b", "stop_c", "stop_d"],
+  "regions": {
+    "wet_floor": {"clear": false},
+    "layout_zone": {"clear": true},
+    "field_zone": {"clear": true},
+    "road_zone": {"clear": true}
+  },
+  "robots": {
+    "spot1": {"ready": true, "location": "stop_a", "gripper": false, "max_speed": [{"value": "1.6", "unit": "m/s"}]},
+    "cleaner1": {"ready": true, "location": "dock_2", "gripper": false, "max_speed": [{"value": "1", "unit": "m/s"}]},
+    "printer1": {"ready": true, "location": "gridline_a", "gripper": false, "max_speed": [{"value": "0.5", "unit": "m/s"}]},
+    "weeder1": {"ready": true, "location": "headland", "gripper": false, "max_speed": [{"value": "1.2", "unit": "m/s"}]},
+    "installer1": {"ready": true, "location": "module_pallet", "gripper": true, "max_speed": [{"value": "0.4", "unit": "m/s"}]}
+  },
+  "objects": {
+    "plant_7": {"present": true, "location": "row_12", "class": "plant", "properties": {"label": {"value": "weed"}}},
+    "table_14": {"present": true, "location": "row_14", "class": "table", "properties": {"distance": {"value": "3", "unit": "mm"}}},
+    "table_15": {"present": true, "location": "row_15", "class": "table", "properties": {"distance": {"value": "2", "unit": "mm"}}},
+    "module_14": {"present": true, "location": "module_pallet", "class": "module"},
+    "module_15": {"present": true, "location": "module_pallet", "class": "module"}
+  },
+  "sensors": {
+    "cam_spot": {"robot": "spot1", "available": true},
+    "lidar_spot1": {"robot": "spot1", "available": true, "measures": {"distance": {"unit": "m", "uncertainty": "0.05", "contact": false}}},
+    "cam_weeder1": {"robot": "weeder1", "available": true, "measures": {"label": {"contact": false}}},
+    "laser_installer1": {"robot": "installer1", "available": true, "measures": {"distance": {"unit": "mm", "uncertainty": "0.5", "contact": false}}}
+  },
+  "events": [],
+  "tasks": {}
+}

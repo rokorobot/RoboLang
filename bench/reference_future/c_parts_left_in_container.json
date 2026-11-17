@@ -1,0 +1,11 @@
+{
+  "task": "sort_parts",
+  "bindings": {
+    "r": "digit1",
+    "p1": "part_1",
+    "p2": "part_2",
+    "p3": "part_3",
+    "bin": "container_2",
+    "trolley": "trolley"
+  }
+}

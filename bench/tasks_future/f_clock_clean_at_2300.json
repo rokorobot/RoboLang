@@ -1,0 +1,18 @@
+{
+  "id": "f_clock_clean_at_2300",
+  "prompt": "At 11 pm tonight, send cleaner1 from dock_2 to the lobby and then back to dock_2.",
+  "world": "bench/worlds/site.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "activity": "ACT-CLN-001",
+  "gap": "G-CLOCK",
+  "tags": [
+    "clock",
+    "wait"
+  ],
+  "why": "Waits are relative durations only; there is no way to wait for a time of day, because the program cannot read the clock (language reference: 'Not in the language: ... clock readings').",
+  "attempt_fails_with": "E101"
+}

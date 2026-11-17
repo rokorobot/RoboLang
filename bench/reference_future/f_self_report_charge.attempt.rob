@@ -1,0 +1,10 @@
+// bench/reference_future/f_self_report_charge.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 1.6;
+
+task report_charge(robot r, location spot) {
+    goal { robot_at r spot; }
+    plan {
+        move r to spot;
+        communicate r to "lead" with battery_level;
+    }
+}

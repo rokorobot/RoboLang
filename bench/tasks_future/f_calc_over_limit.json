@@ -1,0 +1,19 @@
+{
+  "id": "f_calc_over_limit",
+  "prompt": "Weigh case_1 with stretch1's scale and tell channel \"dock\" by how many kilograms it is over the 20 kg limit.",
+  "world": "bench/worlds/fulfilment.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "activity": "ACT-LOG-002",
+  "gap": "G-CALC",
+  "tags": [
+    "arithmetic",
+    "measure",
+    "communicate"
+  ],
+  "why": "A difference between a reading and a limit is arithmetic, and a message carries a fixed string or one measured value, not a computed one (language reference: 'Not in the language: arithmetic').",
+  "attempt_fails_with": "E101"
+}

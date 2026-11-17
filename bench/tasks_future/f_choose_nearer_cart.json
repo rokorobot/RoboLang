@@ -1,0 +1,20 @@
+{
+  "id": "f_choose_nearer_cart",
+  "prompt": "With digit1, take tote_1 from the inbound conveyor to whichever of cart_3 and conveyor_b is closer to the inbound conveyor and place it there.",
+  "world": "bench/worlds/fulfilment.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "activity": "ACT-LOG-001",
+  "gap": "G-CHOOSE",
+  "tags": [
+    "choose",
+    "distance",
+    "locations",
+    "pick_place"
+  ],
+  "why": "Choosing by distance needs a reading of each candidate: `measure` takes an object, never a location, so no distance between places can be read (language reference: 'Measured values').",
+  "attempt_fails_with": "E304"
+}

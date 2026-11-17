@@ -1,0 +1,11 @@
+// bench/reference_future/f_clock_clean_at_2300.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 1.6;
+
+task night_clean(robot r, location lobby, location home) {
+    goal { robot_at r home; }
+    plan {
+        wait until time_is 23:00 timeout 12 h else { fail "not yet 11 pm"; }
+        move r to lobby;
+        move r to home;
+    }
+}

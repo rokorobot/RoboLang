@@ -1,0 +1,9 @@
+{
+  "task": "camera_check",
+  "bindings": {
+    "r": "spot1",
+    "tbl": "table_14",
+    "cam": "cam_spot",
+    "spot": "stop_b"
+  }
+}

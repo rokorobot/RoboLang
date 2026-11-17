@@ -1,0 +1,16 @@
+// bench/reference_future/f_choose_nearest_dock.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 1.6;
+
+task go_to_dock(robot r, sensor lidar, location d1, location d2) {
+    plan {
+        measure r distance of d1 using lidar as x1;
+        measure r distance of d2 using lidar as x2;
+        if x1 <= x2 {
+            goal { robot_at r d1; }
+            move r to d1;
+        } else {
+            goal { robot_at r d2; }
+            move r to d2;
+        }
+    }
+}

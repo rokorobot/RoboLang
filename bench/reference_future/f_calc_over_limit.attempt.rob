@@ -1,0 +1,11 @@
+// bench/reference_future/f_calc_over_limit.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 1.6;
+
+task over_limit(robot r, object c, sensor scale, location src) {
+    goal { robot_at r src; }
+    plan {
+        move r to src;
+        measure r mass of c using scale as m;
+        communicate r to "dock" with m - 20 kg;
+    }
+}

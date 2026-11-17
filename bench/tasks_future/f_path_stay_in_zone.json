@@ -1,0 +1,18 @@
+{
+  "id": "f_path_stay_in_zone",
+  "prompt": "Move printer1 from gridline_a to gridline_c and keep it inside layout_zone the whole way.",
+  "world": "bench/worlds/site.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "activity": "ACT-CON-001",
+  "gap": "G-PATH",
+  "tags": [
+    "route",
+    "region"
+  ],
+  "why": "A goal states the end state; nothing says where the robot may be on the way. `in_region` is reserved and not implemented (language reference: reserved words).",
+  "attempt_fails_with": "E201"
+}

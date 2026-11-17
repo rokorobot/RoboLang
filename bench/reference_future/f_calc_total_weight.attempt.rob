@@ -1,0 +1,12 @@
+// bench/reference_future/f_calc_total_weight.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 1.6;
+
+task weigh_both(robot r, object a, object b, sensor scale, location src) {
+    goal { robot_at r src; }
+    plan {
+        move r to src;
+        measure r mass of a using scale as ma;
+        measure r mass of b using scale as mb;
+        communicate r to "lead" with ma + mb;
+    }
+}

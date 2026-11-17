@@ -1,0 +1,19 @@
+{
+  "id": "f_perceive_weed_confidence",
+  "prompt": "With weeder1, look at plant_7 with its camera. If the detector is less than 90 percent confident that it is a weed, tell channel \"ops\" which row it is in and do not move to it.",
+  "world": "bench/worlds/site.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "activity": "ACT-AGR-002",
+  "gap": "G-PERCEIVE",
+  "tags": [
+    "perception",
+    "if",
+    "confidence"
+  ],
+  "why": "The confidence of a detection is not a measured kind (temperature, mass, distance, label), and labels are exact: a program cannot test how sure the camera is (language reference: 'Measured values').",
+  "attempt_fails_with": "E217"
+}

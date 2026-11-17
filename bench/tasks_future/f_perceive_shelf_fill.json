@@ -1,0 +1,19 @@
+{
+  "id": "f_perceive_shelf_fill",
+  "prompt": "With arm1, scan shelf_a with camera_top; if the shelf is less than a quarter full, tell channel \"lead\" to restock it.",
+  "world": "bench/worlds/warehouse.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "activity": "ACT-RET-001",
+  "gap": "G-PERCEIVE",
+  "tags": [
+    "perception",
+    "if",
+    "percent"
+  ],
+  "why": "A condition on a perceived level in percent: `measure` reads only temperature, mass, distance or label, and no unit is a percentage (language reference: 'Measured values', kinds and units).",
+  "attempt_fails_with": "E217"
+}

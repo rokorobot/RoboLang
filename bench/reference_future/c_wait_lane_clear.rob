@@ -1,0 +1,13 @@
+// bench/reference_future/c_wait_lane_clear.rob: hand-written reference
+robolang 1.6;
+
+task to_handoff(robot r, object tote, location src, location dst, region lane) {
+    goal { object_at tote dst; }
+    plan {
+        move r to src;
+        grasp r tote;
+        wait until region_clear lane timeout 30 s else { fail "the lane did not clear"; }
+        move r to dst;
+        place r tote at dst;
+    }
+}

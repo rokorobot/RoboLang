@@ -1,0 +1,18 @@
+{
+  "id": "f_conc_two_hand_lift",
+  "prompt": "Have digit1 and digit2 lift tote_3 together at the same moment and carry it to cart_3.",
+  "world": "bench/worlds/fulfilment.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "activity": "ACT-MFG-002",
+  "gap": "G-CONC",
+  "tags": [
+    "concurrency",
+    "two_robots"
+  ],
+  "why": "A robot holds one object at a time and steps run one after another, so a lift by two robots at the same moment has no form (language reference: 'What symbolic simulation requires').",
+  "attempt_fails_with": "E203"
+}

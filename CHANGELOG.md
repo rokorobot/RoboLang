@@ -5,6 +5,8 @@ versions (1.0 to 1.5). Decision records are in [`spec/decisions/`](https://githu
 
 ## Unreleased
 
+- Benchmark set "future" (`bench/`, not installed; RSI-01 R3): 25 probes of the atlas's near language gaps and 8 controls, four new
+  worlds, `python bench/run.py --set future`, and the `future: true` input of the `Benchmark` workflow. No language change.
 - Optional extra `robolang[ed25519]` (installs `cryptography`): real Ed25519 signatures for Core documents
   (`sign_ed25519`, `verify_ed25519`, `generate_ed25519`), the first build step of decision 0038. A receiver accepts
   them only when its `Context.algorithms` lists `ed25519`; by default nothing changes. Simulation only: physical mode
