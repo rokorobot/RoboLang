@@ -1,6 +1,6 @@
 {
   "id": "x05_avoid_busy_areas",
-  "prompt": "Send the runner to the sink, going around whichever areas are busy at the time.",
+  "prompt": "Send the runner to the sink, and keep it out of any area that becomes busy while it drives.",
   "world": "bench/worlds/kitchen_1_3.json",
   "group": "inexpressible",
   "expect": {

@@ -61,6 +61,22 @@ on:
         description: "Run only set regions (region limits), full and minimal prompts, 3 repeats, Sonnet and Haiku, max $3 each; not gated"
         type: boolean
         default: false
+      confirm_tasks:
+        description: "Confirming run (an erratum): comma-separated task IDs; with confirm_set, confirm_models, confirm_prompt; 3 repeats, max $1; not gated"
+        type: string
+        default: ""
+      confirm_set:
+        description: "Set of the confirming run"
+        type: string
+        default: ""
+      confirm_models:
+        description: "Models of the confirming run"
+        type: string
+        default: "claude-sonnet-5-5,claude-haiku-5-5"
+      confirm_prompt:
+        description: "Prompt of the confirming run (full or minimal)"
+        type: string
+        default: "full"
 
 permissions:
   contents: read
@@ -117,8 +133,17 @@ jobs:
         run: |
           python bench/run.py --yes --set regions --prompt full --repeats 3 --models claude-sonnet-5-5,claude-haiku-5-5 --max-usd 3 --run-id regions
           python bench/run.py --yes --set regions --prompt minimal --repeats 3 --models claude-sonnet-5-5,claude-haiku-5-5 --max-usd 3 --run-id regions-minimal
+      - name: Run (confirming run, on demand)
+        if: steps.key.outputs.present == 'true' && inputs.confirm_tasks != ''
+        env:
+          CONFIRM_SET: ${{ inputs.confirm_set }}
+          CONFIRM_TASKS: ${{ inputs.confirm_tasks }}
+          CONFIRM_MODELS: ${{ inputs.confirm_models }}
+          CONFIRM_PROMPT: ${{ inputs.confirm_prompt }}
+        run: |
+          python bench/run.py --yes --set "$CONFIRM_SET" --tasks "$CONFIRM_TASKS" --models "$CONFIRM_MODELS" --prompt "$CONFIRM_PROMPT" --repeats 3 --max-usd 1 --run-id confirm
       - name: Run (weekly or on demand)
-        if: steps.key.outputs.present == 'true' && github.event_name != 'pull_request' && !inputs.set3 && !inputs.set4 && !inputs.future && !inputs.regions
+        if: steps.key.outputs.present == 'true' && github.event_name != 'pull_request' && !inputs.set3 && !inputs.set4 && !inputs.future && !inputs.regions && inputs.confirm_tasks == ''
         run: |
           python bench/run.py --yes --repeats 3 --run-id set1
           python bench/run.py --yes --set hard --repeats 3 --run-id set2
@@ -146,7 +171,7 @@ jobs:
               echo "" >> summary.md; cat cascade.md >> summary.md
             fi
           done
-          for extra in set3 set3-minimal set4 set4-minimal set5 set5-minimal future regions regions-minimal; do
+          for extra in set3 set3-minimal set4 set4-minimal set5 set5-minimal future regions regions-minimal confirm; do
             if [ -d "bench/results/$extra" ]; then
               echo "" >> summary.md
               echo "_For information, not gated: $extra._" >> summary.md

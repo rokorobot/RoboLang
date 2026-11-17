@@ -1,5 +1,5 @@
 {
-  "sha256": "3eca56815d3a1fb4829983047913dea6941184688c6df8adcdfa7ea60404079c",
+  "sha256": "a082c25b01d427b528562af4505745a0dca62cac3a9806615bb3fb91e6aeb41a",
   "schema": "robolang.bench.freeze.v2",
   "patterns": [
     "bench/tasks*/*.json",
@@ -883,7 +883,7 @@
     "bench/tasks_regions/x02_arm_over_wet.json": "72de201416a87d793c7774b7ab925545831b9a9e75391a73b7c50c26c8bffc82",
     "bench/tasks_regions/x03_person_distance.json": "b78acd2cc0a4d167aa5dcdb8c5f87630577b8136b69181fc9bd50e17be9e0ee4",
     "bench/tasks_regions/x04_grip_ten_newtons.json": "eb63acdad5e7f5e646956427d8a94b298febcfe2217808b552efacdaa6d040a6",
-    "bench/tasks_regions/x05_avoid_busy_areas.json": "92664ec2e657dafdc10da9002a9536d13ffba014ea0610aac1c8fd7c0e58ba26",
+    "bench/tasks_regions/x05_avoid_busy_areas.json": "053710f9c4853d63bae5902d09b446d8d7e43113968795a88b04ab8adb961dee",
     "bench/tasks_values/c01_hot_pan_words.json": "5b0551cfa5f1e8c16f62b0ca21faa03ccc7ec7a49c32a7e7f3b6e06322929e26",
     "bench/tasks_values/c02_inspect_not_measure.json": "ac18d30631a20eb8ae6ebfff112c5ca18ea419834150418449e0472c14b76d37",
     "bench/tasks_values/i01_scale_offline.json": "e6bbcd32079b20bf141f489316ac3699bee41ee6beaa12bda00bc31702a0d0d9",
@@ -996,7 +996,7 @@
     "tests/test_bench_future.py": "241511b934909475b1c1c5bdb5f51b7be0778b0283c1d903d1644e56a5901e1d",
     "tests/test_bench_gate.py": "653be1ae7d454b4b93d8df99b6a999214511d76bae37c1f147108dbe98d608b9",
     "tests/test_bench_hard.py": "820d1fb7d0fa79b121f4819ad34d7afcf8aa4596144b5aa2f99ef948e6d370b7",
-    "tests/test_bench_regions.py": "742d248203c72b3356fbd7b37b3b0858ffcdd4ab64d57a678c36f358e1c69860",
+    "tests/test_bench_regions.py": "ac90788064ea965243bb12056f347904eb9fa9f7a5466e4fba7de41680f90163",
     "tests/test_bench_values.py": "bc3eba2f50963a6fe9d38df70d4c934b9c0a447b70ef8a3eeaebb785f0af97cd",
     "tools/bench_freeze.py": "921ce22129c37ddbfdd2ea2c716189f6195759b8377b6ce97383556a93852065"
   }

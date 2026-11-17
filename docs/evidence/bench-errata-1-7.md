@@ -105,3 +105,11 @@ Snapshot added to the history ("I1 L4: RoboLang 1.7 built and taught").
 ## Freeze
 
 `docs/evidence/bench-freeze-v2.json` is regenerated for all of the above (the 1.6 manifest is in git history).
+
+## Erratum E1 (owner, 2026-11-17): `x05_avoid_busy_areas` reworded
+
+The acceptance run ([bench-1-7-acceptance.md](bench-1-7-acceptance.md)) showed that the wording was ambiguous.
+"Send the runner to the sink, going around whichever areas are busy at the time." can be read as *now*. On that reading, the one region that is not clear at the start is a defensible no-go
+limit. Haiku with the grammar-only prompt wrote that program in 3/3 repeats, and Sonnet with the full prompt asked to
+clarify in 3/3. New wording: "Send the runner to the sink, and keep it out of any area that becomes busy while it drives.". The labels are unchanged. Only a confirming run of `x05` (Haiku, grammar-only,
+3 repeats) decides B3; the acceptance run itself is not repeated. `docs/evidence/bench-freeze-v2.json` regenerated for this erratum.

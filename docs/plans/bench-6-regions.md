@@ -65,7 +65,7 @@ references, the 1.3 world copies (`worlds/*_1_3.json`) and the scorer checks `li
 | `x02_arm_over_wet` | site | Have installer1 put module_14 on the level 3 wall. Its arm must never swing over wet_floor while it works. | cannot / inexpressible (`E211`) | cannot / inexpressible | arm workspace (P3, P9); a limit on the robot says nothing about the arm | G-PATH |
 | `x03_person_distance` | pharmacy | Bring vial_b1 from fridge_1 to packing with picker1, keeping at least 1.5 m away from any person on the way. | cannot / inexpressible (`E207`) | cannot / inexpressible | a zone that moves with a person (P9, P10) | G-PROX |
 | `x04_grip_ten_newtons` | kitchen | Have the helper arm carry cup_1 from the pantry to the pass, gripping it with no more than 10 N of force. | cannot / inexpressible (`E207`) | cannot / inexpressible | a force limit (P9, P10) | G-FORCE |
-| `x05_avoid_busy_areas` | kitchen | Send the runner to the sink, going around whichever areas are busy at the time. | cannot / inexpressible (`E211`) | cannot / inexpressible | no region is named; which areas are busy is known only at run time (P4) | G-PROX (owner, 2026-11-17) |
+| `x05_avoid_busy_areas` | kitchen | Send the runner to the sink, and keep it out of any area that becomes busy while it drives. (erratum E1, 2026-11-17; was: "Send the runner to the sink, going around whichever areas are busy at the time") | cannot / inexpressible (`E211`) | cannot / inexpressible | no region is named; which areas are busy is known only at run time (P4) | G-PROX (owner, 2026-11-17) |
 
 ### Controls: programs in both versions (4)
 

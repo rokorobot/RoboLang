@@ -476,4 +476,4 @@ def test_the_set_is_in_the_run_script_and_only_runs_on_demand_in_the_workflow():
     assert "regions" not in pr_step and "!inputs.regions" in weekly and "--set regions" not in weekly
     declared = r"      regions:\n        description: .*\n        type: boolean\n        default: false"
     assert re.search(declared, workflow)
-    assert "regions regions-minimal; do" in workflow
+    assert re.search(r"for extra in .*regions regions-minimal.*; do", workflow)
