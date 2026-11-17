@@ -166,5 +166,13 @@
   "I223_live_reading_in_an_if.json": [
     "I223",
     "/tasks/0/steps/1/condition/left"
+  ],
+  "I224_region_named_twice.json": [
+    "I224",
+    "/tasks/0/safety/1"
+  ],
+  "I225_nine_region_limits.json": [
+    "I225",
+    "/tasks/0/safety/8"
   ]
 }

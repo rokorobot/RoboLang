@@ -1,10 +1,19 @@
 # Changelog
 
-The distribution version (this file) is independent of the language versions (1.1 to 1.6) and the Task IR schema
-versions (1.0 to 1.5). Decision records are in [`spec/decisions/`](https://github.com/rokorobot/RoboLang/tree/main/spec/decisions).
+The distribution version (this file) is independent of the language versions (1.1 to 1.7) and the Task IR schema
+versions (1.0 to 1.6). Decision records are in [`spec/decisions/`](https://github.com/rokorobot/RoboLang/tree/main/spec/decisions).
 
 ## Unreleased
 
+- **RoboLang 1.7: region limits** (decision 0039, step L4 of iteration I1). `robolang reference` and the benchmark
+  prompts teach 1.7; set 6 (`--set regions`) is labelled for 1.7 with `limit_ok` and `limit_dropped_silently`
+  ([errata](docs/evidence/bench-errata-1-7.md)); five older probes became programs. `@safety no_go_region R;` and `@safety in_region R;` for the
+  whole task, with no new keyword. `robolang 1.7;` builds Task IR 1.6 and run record 1.6; world file 1.3 adds a
+  region's `contains` and a robot's `honours`. A region limit is a request, checked before the run against the world
+  and the robot's declared abilities, never enforced (`checked_against_world_not_enforced`). New codes `E323`, `E324`
+  (static), `S003`, `S004`, `S005` (before `AUTHORIZED`), `E516` (world file), `I224`, `I225` (IR reader) and `X605`
+  (`export-goal` and `delegate` refuse a task with a region limit). The ROS 2 backend refuses one with `S508`.
+  Files of 1.1 to 1.6 are unchanged.
 - Benchmark set "future" (`bench/`, not installed; RSI-01 R3): 25 probes of the atlas's near language gaps and 8 controls, four new
   worlds, `python bench/run.py --set future`, and the `future: true` input of the `Benchmark` workflow. No language change.
 - Optional extra `robolang[ed25519]` (installs `cryptography`): real Ed25519 signatures for Core documents

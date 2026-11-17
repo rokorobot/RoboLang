@@ -1,9 +1,13 @@
 {
   "id": "i02_hall_is_outside",
   "prompt": "Move printer1 from gridline_a to the hall and keep it inside layout_zone the whole way.",
-  "world": "bench/worlds/site.json",
+  "world": "bench/worlds/site_1_3.json",
   "group": "infeasible",
   "expect": {
+    "decision": "cannot",
+    "category": "infeasible"
+  },
+  "expect_1_6": {
     "decision": "cannot",
     "category": "inexpressible"
   },

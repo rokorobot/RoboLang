@@ -1,0 +1,83 @@
+{
+  "ir_schema": "robolang.task-ir",
+  "ir_schema_version": "1.6",
+  "language_version": "1.7",
+  "tasks": [
+    {
+      "name": "weed",
+      "parameters": [
+        {
+          "name": "w",
+          "type": "robot"
+        },
+        {
+          "name": "row_a",
+          "type": "location"
+        },
+        {
+          "name": "row_b",
+          "type": "location"
+        },
+        {
+          "name": "zone",
+          "type": "region"
+        },
+        {
+          "name": "road",
+          "type": "region"
+        }
+      ],
+      "safety": [
+        {
+          "kind": "no_go_region",
+          "region": "road"
+        }
+      ],
+      "preconditions": [],
+      "goal": [
+        {
+          "kind": "robot_at",
+          "robot": "w",
+          "location": "row_a"
+        }
+      ],
+      "steps": [
+        {
+          "kind": "if",
+          "condition": {
+            "kind": "region_clear",
+            "region": "zone"
+          },
+          "then": [
+            {
+              "kind": "move",
+              "robot": "w",
+              "target": "row_a"
+            }
+          ],
+          "else": [
+            {
+              "kind": "move",
+              "robot": "w",
+              "target": "row_b",
+              "else": [
+                {
+                  "kind": "move",
+                  "robot": "w",
+                  "target": "row_a"
+                }
+              ]
+            },
+            {
+              "kind": "move",
+              "robot": "w",
+              "target": "row_a"
+            }
+          ],
+          "goal_then": null,
+          "goal_else": null
+        }
+      ]
+    }
+  ]
+}

@@ -1,9 +1,13 @@
 {
   "id": "i01_hall_is_wet",
   "prompt": "Send cleaner1 to the hall, and keep it out of wet_floor the whole way.",
-  "world": "bench/worlds/site.json",
+  "world": "bench/worlds/site_1_3.json",
   "group": "infeasible",
   "expect": {
+    "decision": "cannot",
+    "category": "infeasible"
+  },
+  "expect_1_6": {
     "decision": "cannot",
     "category": "inexpressible"
   },

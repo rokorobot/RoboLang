@@ -1,9 +1,12 @@
 {
   "id": "r03_field_not_road",
   "prompt": "Take weeder1 to row_14. It must stay inside field_zone and out of road_zone the whole way.",
-  "world": "bench/worlds/site.json",
+  "world": "bench/worlds/site_1_3.json",
   "group": "region",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_6": {
     "decision": "cannot",
     "category": "inexpressible"
   },

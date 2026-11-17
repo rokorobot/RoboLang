@@ -2,7 +2,7 @@
 
 **Status:** implemented in `src/robolang/ir_reader.py` (CORE-1); decision record
 [0021](decisions/0021-core-1-ir-reader.md).
-**Reads:** Task IR schemas [1.0](ir-schema-v1.0.md) to [1.5](ir-schema-v1.5.md)
+**Reads:** Task IR schemas [1.0](ir-schema-v1.0.md) to [1.6](ir-schema-v1.6.md)
 **Duties implemented:** 1 and 2 of [ir-schema-v1.0.md](ir-schema-v1.0.md) section 2 (kernel rules K4 and K5
 of the domain contracts)
 
@@ -95,6 +95,8 @@ the whole document; a missing field is reported at the object that lacks it). Th
 | `I221` | Schema 1.5: an operator the kind does not take: `==` or `!=` on a quantity, ordering on a label (E320) |
 | `I222` | Schema 1.5: a `compare` in `preconditions`, `goal`, `goal_then` or `goal_else` (E321) |
 | `I223` | Schema 1.5: a `live` operand outside the condition of a `wait_until` (E322) |
+| `I224` | Schema 1.6: a region named by more than one region limit (E323) |
+| `I225` | Schema 1.6: more than 8 region limits in a task (E324) |
 
 `I211` is not used: a repeated `@verify` key (E311) cannot be written in a JSON object, where it is `I103`.
 
@@ -112,6 +114,8 @@ section 4), in the same order and with the same "one error per item" behaviour (
 - in schema 1.5 (RoboLang 1.6, [robolang-v1.6.md](robolang-v1.6.md) sections 3 to 6), by the same code the compiler uses
   (`measured.py`): bindings are visible where they are used, kinds and units match, operators fit the kind, and no
   comparison stands in a goal or a live reading outside a `wait_until` (`I218` to `I223`).
+- in schema 1.6 (RoboLang 1.7, [robolang-v1.7.md](robolang-v1.7.md) section 3): a region limit names a `region`
+  parameter (`I203`, `I204`), once (`I224`), and a task has at most 8 (`I225`).
 
 Not re-checked, because the IR cannot express a violation: the optional `robolang` marker, `;`, block
 structure, the mixing of `and` and `or` without parentheses, the source depth of parentheses.

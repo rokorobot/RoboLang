@@ -1,0 +1,13 @@
+// RoboLang v1.7 fixture: valid
+// expect: ok
+// why: an in_region on a region parameter
+
+robolang 1.7;
+
+task drive(robot tug, location gate_in, location gate_out, region lane) {
+    @safety in_region lane;
+    goal { robot_at tug gate_out; }
+    plan {
+        move tug to gate_out;
+    }
+}

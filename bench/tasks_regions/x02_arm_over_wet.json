@@ -1,7 +1,7 @@
 {
   "id": "x02_arm_over_wet",
   "prompt": "Have installer1 put module_14 on the level 3 wall. Its arm must never swing over wet_floor while it works.",
-  "world": "bench/worlds/site.json",
+  "world": "bench/worlds/site_1_3.json",
   "group": "inexpressible",
   "expect": {
     "decision": "cannot",

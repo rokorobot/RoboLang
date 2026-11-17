@@ -1,0 +1,49 @@
+{
+  "ir_schema": "robolang.task-ir",
+  "ir_schema_version": "1.6",
+  "language_version": "1.7",
+  "tasks": [
+    {
+      "name": "drive",
+      "parameters": [
+        {
+          "name": "tug",
+          "type": "robot"
+        },
+        {
+          "name": "gate_in",
+          "type": "location"
+        },
+        {
+          "name": "gate_out",
+          "type": "location"
+        },
+        {
+          "name": "lane",
+          "type": "region"
+        }
+      ],
+      "safety": [
+        {
+          "kind": "in_region",
+          "region": "lane"
+        }
+      ],
+      "preconditions": [],
+      "goal": [
+        {
+          "kind": "robot_at",
+          "robot": "tug",
+          "location": "gate_out"
+        }
+      ],
+      "steps": [
+        {
+          "kind": "move",
+          "robot": "tug",
+          "target": "gate_out"
+        }
+      ]
+    }
+  ]
+}

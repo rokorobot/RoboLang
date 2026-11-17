@@ -1,9 +1,12 @@
 {
   "id": "r02_tug_stay_in_lane",
   "prompt": "Drive tug1 from gate_in to gate_out, and keep it inside lane_1 the whole time.",
-  "world": "bench/worlds/yard.json",
+  "world": "bench/worlds/yard_1_3.json",
   "group": "region",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_6": {
     "decision": "cannot",
     "category": "inexpressible"
   },

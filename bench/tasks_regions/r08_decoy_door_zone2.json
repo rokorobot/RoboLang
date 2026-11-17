@@ -1,9 +1,12 @@
 {
   "id": "r08_decoy_door_zone2",
   "prompt": "Send rover_1 to bench_1 and keep it out of door_zone2 on the way.",
-  "world": "bench/worlds/cleanroom.json",
+  "world": "bench/worlds/cleanroom_1_3.json",
   "group": "region",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_6": {
     "decision": "cannot",
     "category": "inexpressible"
   },

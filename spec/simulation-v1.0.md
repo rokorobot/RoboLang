@@ -1,4 +1,4 @@
-# RoboLang simulation — semantics, world files 1.0 to 1.2 and run records 1.0 to 1.5
+# RoboLang simulation — semantics, world files 1.0 to 1.3 and run records 1.0 to 1.6
 
 **Status:** RL-BASIC-01a specification, **approved by the owner on 2026-10-26**. Every choice
 in it is recorded in [decision record 0004](decisions/0004-rl-basic-01a-simulation-semantics.md)
@@ -11,8 +11,9 @@ separately authorizes implementation.
 **Language:** RoboLang 1.1 ([`robolang-v1.1.md`](robolang-v1.1.md)), unchanged.
 **IR:** Task IR 1.0 ([`ir-schema-v1.0.md`](ir-schema-v1.0.md)), unchanged.
 **Later languages:** RoboLang 1.2 sources are covered by [`robolang-v1.2.md`](robolang-v1.2.md) section 8;
-RoboLang 1.3 sources (goals, typed sensors, run record 1.2) by section 10 of this document. RoboLang 1.4 (branching), 1.5 (failure handlers) and 1.6 (measured
-values, world file 1.2, run record 1.5) by sections 12, 13 and 14.
+RoboLang 1.3 sources (goals, typed sensors, run record 1.2) by section 10 of this document. RoboLang 1.4 (branching), 1.5 (failure handlers), 1.6 (measured
+values, world file 1.2, run record 1.5) and 1.7 (region limits, world file 1.3, run record 1.6) by sections 12, 13, 14
+and 15.
 **Fixtures:** [`tests/fixtures/simulation/`](../tests/fixtures/simulation/README.md)
 
 > **Simulation only.** This document defines what a RoboLang 1.1 task does in a symbolic,
@@ -173,7 +174,7 @@ A world file is a UTF-8 JSON document (RFC 8259) with one object at the top leve
 | Field | Required | Content |
 |---|---|---|
 | `world_schema` | yes | Exactly `"robolang.sim.world"` |
-| `world_schema_version` | yes | Exactly `"1.0"` or `"1.1"` |
+| `world_schema_version` | yes | `"1.0"`, `"1.1"`, `"1.2"` (section 14.1) or `"1.3"` (section 15.1) |
 | `locations` | yes | Array of location IDs |
 | `regions` | no | Object: region ID → region (3.3) |
 | `robots` | no | Object: robot ID → robot (3.3) |
@@ -307,6 +308,7 @@ bindings, fault indices and cancellation index depend on it.
 | `E513` | World file 1.2: a unit that is not a unit of the kind |
 | `E514` | World file 1.2: a label with a unit or an uncertainty |
 | `E515` | World file 1.2: a `property` event whose target is not a declared entity |
+| `E516` | World file 1.3 (section 15.1): an unknown ability in a robot's `honours` |
 
 ## 4. Execution semantics
 
@@ -357,6 +359,11 @@ The `simulate` command authorizes this one run in simulation mode. Before the ru
 
 This is a configuration check. No speed is simulated, so **no limit is ever enforced**, and
 no run record reports a limit as enforced.
+
+A RoboLang 1.7 task may also carry **region limits** (`@safety no_go_region R;`, `@safety in_region R;`). They sit in
+the same list, in source order, and are examined by the same loop with the rules of section 15.3: a limit that passes
+has the status `checked_against_world_not_enforced`; one that fails has `failed_check` and the run fails with
+`S003`, `S004` or `S005` before `AUTHORIZED`. Limits after the failed one are `not_checked`.
 
 ### 4.4 Conditions
 
@@ -466,7 +473,7 @@ and speed enforcement remain RL-12B and RL-12C work.
 | `state` | The final state |
 | `failure` | `null`, or the object of 5.2 |
 | `cancelled_before_step` | `null`, or the step index at which the run was cancelled |
-| `safety_limits` | One entry per limit in source order: `limit` (the IR safety limit) and `status`: `unit_unspecified_not_enforced`, `checked_against_profile_not_enforced`, `failed_check` for the limit that failed the run (`S001`, `S002`), or `not_checked` for limits after it |
+| `safety_limits` | One entry per limit in source order: `limit` (the IR safety limit) and `status`: `unit_unspecified_not_enforced`, `checked_against_profile_not_enforced`, `failed_check` for the limit that failed the run (`S001`, `S002`), or `not_checked` for limits after it. A region limit (RoboLang 1.7, section 15) is `{ "kind", "region" }` and has the status `checked_against_world_not_enforced` or `failed_check` (`S003`, `S004`, `S005`) |
 | `preconditions` | One entry per condition of `pre`: `index` (from 1), `condition` (IR form) and `result`: `true`, `false`, `unknown`, or `not_evaluated` when the run failed authorization |
 | `steps` | One entry per plan step: section 5.3 |
 | `events_applied` | Every event applied, in the order applied: `t_ms` (the event's `at` in milliseconds), `fact`, `target`, `value` |
@@ -572,7 +579,7 @@ run_id            = "sim-" + lowercase hex SHA-256 of preimage
 
 ### 7.1 World-file errors
 
-Section 3.9 (`E501`–`E515`). They stop processing with exit status 3; no run is created.
+Section 3.9 (`E501`–`E516`). They stop processing with exit status 3; no run is created.
 
 ### 7.2 Run failures
 
@@ -580,6 +587,9 @@ Section 3.9 (`E501`–`E515`). They stop processing with exit status 3; no run i
 |---|---|---|
 | `S001` | authorization | A `max_speed` limit is greater than a bound robot's declared maximum for that unit |
 | `S002` | authorization | A bound robot declares no maximum for the unit of a `max_speed` limit |
+| `S003` | authorization | RoboLang 1.7: a robot that moves on some path does not declare that it honours a region limit (section 15.3) |
+| `S004` | authorization | RoboLang 1.7: a target of the task is inside a `no_go_region`, or outside an `in_region` that lists its locations (section 15.3) |
+| `S005` | authorization | RoboLang 1.7: a robot that moves starts inside a `no_go_region`, or outside an `in_region` that lists its locations (section 15.3) |
 | `S101` | precondition | A `pre` condition is false |
 | `S102` | precondition | A `pre` condition is unknown |
 | `S201` | step | The robot is not ready |
@@ -769,6 +779,7 @@ authoring error.
 | Code | Check (same rule as the run) |
 |---|---|
 | `S001`, `S002` | Section 4.3, for **every** `max_speed` limit with a unit and every bound robot. The run stops at the first one; this check lists all of them |
+| `S003`, `S004`, `S005` | RoboLang 1.7, section 15.3, for **every** region limit; every problem of a limit is listed, not only the first |
 | `S211` | A `grasp` whose robot has no gripper (4.5) |
 | `S231` | An `inspect` or `measure` whose sensor is not declared, or not mounted on its robot (4.5, 14.2) |
 | `S234` | A `measure` of a kind its sensor does not measure (14.2): a sensor with no `measures` in the world file measures nothing |
@@ -998,3 +1009,70 @@ and no `uncertainty` key. No string formatting is ever applied to a value. Live 
 
 `core_outcome` is unchanged: goals have no values (V1). `export-goal` is unchanged. `delegate` and the ROS 2
 backend refuse a task with a `measure` ([robolang-v1.6.md](robolang-v1.6.md) section 10).
+
+## 15. RoboLang 1.7: region limits
+
+Decision record [0039](decisions/0039-region-limits.md); language in [robolang-v1.7.md](robolang-v1.7.md). A task of
+language 1.1 to 1.6 runs exactly as before, whatever the world file's version.
+
+A region limit is a **request**, as `max_speed` is (rule LE-13): the simulation checks it against the world and the
+robots' declared abilities before the run and **never enforces it**. No route is modelled (section 3.4), so a robot
+that moves between two allowed locations is not seen to cross a region; keeping it out is the planner's job.
+
+### 15.1 World file 1.3
+
+`"world_schema_version": "1.3"` is 1.2 plus two optional fields. Files 1.0 to 1.2 are still accepted and unchanged;
+`contains` and `honours` are unknown fields there (`E503`).
+
+| Where | Field | Content |
+|---|---|---|
+| region | `contains` | Array of location IDs: the locations inside the region (a location may be in several regions; an undeclared one is `E505`, a repeated one `E504`). A region **without** `contains` is *unknown*: nothing is concluded from it |
+| robot | `honours` | Array of the region limits the robot can honour: `"no_go_region"`, `"in_region"` (any other word is `E516`, a repeated one `E504`) |
+
+```json
+"regions": { "wet_floor": { "clear": true, "contains": ["hall"] } },
+"robots": { "cleaner1": { "location": "dock_2", "gripper": false, "honours": ["no_go_region", "in_region"] } }
+```
+
+A robot with no `honours` honours nothing, and a world file 1.0 to 1.2 has none: **every robot of a world file 1.2
+honours nothing** (C1), so a task with a region limit bound to those robots fails before the run (`S003`).
+
+### 15.2 What a region limit covers
+
+The limit holds for the **whole task** (P2): every robot that moves on any path, handlers included (C6). "Moves" is a
+`move` step; a robot that only grasps or places is not asked to honour anything, but the *targets* of `move` and
+`place` and the `robot_at` goals are checked for every region limit.
+
+### 15.3 Authorization with region limits
+
+Before the run reaches `AUTHORIZED`, each region limit of the task is examined in source order, together with the
+speed limits of section 4.3 (one list). `region` is the entity bound to the limit's parameter. The first problem found,
+in this order, fails the run and gives the limit the status `failed_check`:
+
+1. **`S003`**, robot cannot honour (P6, C6): a robot bound to a robot parameter that has a `move` step on some path
+   (handlers included) does not list the limit's kind in `honours`. Robots are examined in parameter order.
+2. **`S004`**, target (P5): the location a `move` or `place` step names, or a location a top-level goal condition
+   `robot_at r L` (the task's goal or the goal of an `if` branch) names, is *forbidden*. The conditions of `pre`, and
+   `object_at`, `holding` and compound conditions, conclude nothing. A branch counts whether or not the run takes it.
+3. **`S005`**, start location (C7): a robot that moves starts at a forbidden location.
+
+A location is **forbidden** by a `no_go_region` when the region's `contains` lists it, and by an `in_region` when the
+region has a `contains` that does **not** list it. A region with no `contains` forbids nothing. If no problem is found
+the status is `checked_against_world_not_enforced`. The `failure` of the record names the limit's index
+(`safety_limit`) and the robot at fault.
+
+### 15.4 `validate --world`
+
+The same three checks run without a run, for **every** region limit, each problem its own diagnostic positioned at the
+limit's annotation (`/tasks/<i>/safety/<j>` for `--ir`). The summary and exit status are as in section 11.
+
+### 15.5 Run record 1.6
+
+A 1.7 source writes `run_record_schema_version` `1.6` and embeds Task IR 1.6. The shape is that of record 1.5; the
+entries of `safety_limits` for a region limit are `{ "limit": { "kind", "region" }, "status" }`. No record ever says a
+region limit was *enforced*. Earlier sources write their records unchanged, byte for byte.
+
+### 15.6 Core, ROS 2, delegation
+
+`core_outcome` is unchanged. `export-goal` and `delegate` refuse a task with a region limit with `X605`; the ROS 2
+backend refuses it with `S508` ([robolang-v1.7.md](robolang-v1.7.md) section 6).

@@ -1,0 +1,13 @@
+// bench/reference_regions/r07_carry_module_dry.rob: hand-written reference
+robolang 1.7;
+
+task install(robot r, object m, location src, location dst, region wet) {
+    @safety no_go_region wet;
+    goal { object_at m dst; }
+    plan {
+        move r to src;
+        grasp r m;
+        move r to dst;
+        place r m at dst;
+    }
+}

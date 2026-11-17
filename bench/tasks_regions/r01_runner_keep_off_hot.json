@@ -1,9 +1,12 @@
 {
   "id": "r01_runner_keep_off_hot",
   "prompt": "Send the runner to the sink, and keep it out of the hot zone the whole way.",
-  "world": "bench/worlds/kitchen.json",
+  "world": "bench/worlds/kitchen_1_3.json",
   "group": "region",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_6": {
     "decision": "cannot",
     "category": "inexpressible"
   },

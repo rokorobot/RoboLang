@@ -1,9 +1,0 @@
-// bench/reference_future/f_path_keep_off_road.attempt.rob: the obvious attempt; it does not do what the request asks
-robolang 1.6;
-
-task to_row(robot r, location row, region road) {
-    goal { robot_at r row; }
-    plan {
-        move r to row no_go_region road;
-    }
-}

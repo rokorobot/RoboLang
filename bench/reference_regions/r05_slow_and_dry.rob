@@ -1,0 +1,9 @@
+// bench/reference_regions/r05_slow_and_dry.rob: hand-written reference
+robolang 1.7;
+
+task to_dock(robot r, location dst, region wet) {
+    @safety max_speed 0.5 m/s;
+    @safety no_go_region wet;
+    goal { robot_at r dst; }
+    plan { move r to dst; }
+}

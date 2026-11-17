@@ -1,7 +1,8 @@
 """
 Versioned task IR for RoboLang (spec/ir-schema-v1.0.md; schema 1.1 for RoboLang 1.2: ir-schema-v1.1.md;
 schema 1.2 for RoboLang 1.3: ir-schema-v1.2.md; schema 1.3 for RoboLang 1.4: ir-schema-v1.3.md; schema 1.4 for
-RoboLang 1.5: ir-schema-v1.4.md; schema 1.5 for RoboLang 1.6: ir-schema-v1.5.md).
+RoboLang 1.5: ir-schema-v1.4.md; schema 1.5 for RoboLang 1.6: ir-schema-v1.5.md; schema 1.6 for
+RoboLang 1.7: ir-schema-v1.6.md).
 
 The IR is a description of validated tasks with source details removed:
 no spans, comments or formatting. Two sources that differ only in layout
@@ -29,7 +30,7 @@ IR_SCHEMA = "robolang.task-ir"
 IR_SCHEMA_VERSION = "1.0"
 LANGUAGE_VERSION = DEFAULT_VERSION
 # Language version -> the IR schema version it compiles to (ir-schema-v1.1.md section 1).
-IR_SCHEMA_VERSIONS = {"1.1": "1.0", "1.2": "1.1", "1.3": "1.2", "1.4": "1.3", "1.5": "1.4", "1.6": "1.5"}
+IR_SCHEMA_VERSIONS = {"1.1": "1.0", "1.2": "1.1", "1.3": "1.2", "1.4": "1.3", "1.5": "1.4", "1.6": "1.5", "1.7": "1.6"}
 
 
 def _key(name: str):
@@ -62,6 +63,18 @@ class SafetyLimit:
 
     kind: str
     limit: Quantity
+
+
+@dataclass(frozen=True)
+class RegionLimit:
+    """
+    Schema 1.6 (RoboLang 1.7, decision 0039): the robots of the task must stay out of (`kind` "no_go_region") or
+    inside ("in_region") the region parameter `region`, in every motion of the task. A request, as `max_speed` is:
+    nothing in this package enforces it.
+    """
+
+    kind: str
+    region: str
 
 
 @dataclass(frozen=True)
@@ -316,11 +329,19 @@ def handler_of(step: Step) -> tuple[Step, ...] | None:
 class Task:
     name: str
     parameters: tuple[Parameter, ...]
-    safety: tuple[SafetyLimit, ...]
+    safety: tuple[SafetyLimit | RegionLimit, ...]  # in source order; a RegionLimit is schema 1.6
     preconditions: tuple[Condition, ...]
     goal: tuple[Condition, ...] | None = field(metadata={"omit_none": True})  # 1.2 on; () if only branches give goals
     verify: Verify | None = field(default=None, kw_only=True, metadata={"omit_none": True})  # schema 1.2, if declared
     steps: tuple[Step, ...]
+
+    @property
+    def speed_limits(self) -> tuple[SafetyLimit, ...]:
+        return tuple(s for s in self.safety if isinstance(s, SafetyLimit))
+
+    @property
+    def region_limits(self) -> tuple[RegionLimit, ...]:
+        return tuple(s for s in self.safety if isinstance(s, RegionLimit))
 
     @property
     def typed_sensors(self) -> bool:
@@ -476,10 +497,14 @@ def _task(node: ast.Task, language: str) -> Task:
     return Task(
         name=node.name.text,
         parameters=tuple(Parameter(p.name.text, p.type.value) for p in node.params),
-        safety=tuple(SafetyLimit(a.key.text, _quantity(a.value)) for a in node.annotations),
+        safety=tuple(
+            RegionLimit(a.key.text, a.region.text) if isinstance(a, ast.RegionAnnotation)
+            else SafetyLimit(a.key.text, _quantity(a.value))
+            for a in node.annotations
+        ),
         preconditions=tuple(_condition(c) for c in node.pre.conditions) if node.pre else (),
         # 1.4 on: no task goal, the branches give them
-        goal=() if goal is None and language in ("1.4", "1.5", "1.6") else goal,
+        goal=() if goal is None and language in ("1.4", "1.5", "1.6", "1.7") else goal,
         steps=tuple(_step(s) for s in node.plan.statements),
         verify=_verify(node),
     )

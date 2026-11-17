@@ -6,6 +6,10 @@ atlas's near language gaps.
 that RoboLang 1.6 rejects with a named diagnostic (LE-7). 8 `control` requests from near activities that 1.6 can
 express, so the set also measures false refusals; three of them record a refuted claim of the atlas. No network and
 no SDK; the model run is the `Benchmark` workflow with `future: true`.
+
+RoboLang 1.7 (decision 0039, errata docs/evidence/bench-errata-1-7.md) relabelled the three `G-PATH` probes as programs
+(group `region`): `expect` is the 1.7 label, `expect_1_6` keeps the 1.6 one, and their attempts are replaced by 1.7
+references. So 22 probes remain `inexpressible`.
 """
 
 from __future__ import annotations
@@ -28,6 +32,7 @@ GAPS = {g["id"]: g for g in ATLAS["gaps"]}
 ACTIVITIES = {a["id"]: a for a in ATLAS["activities"]}
 CANNOT = {"decision": "cannot", "category": "inexpressible"}
 PROBES = {t: d for t, d in SET.items() if d["group"] == "inexpressible"}
+REGIONS = {t: d for t, d in SET.items() if d["group"] == "region"}  # 1.7: programs with a region limit (0039)
 CONTROLS = {t: d for t, d in SET.items() if d["group"] == "control"}
 # R3 refutations: (activity, gap) -> the control whose reference program expresses the claim
 REFUTED = {("ACT-HOS-001", "G-PERCEIVE"): "c_fries_too_dark", ("ACT-SOL-001", "G-PERCEIVE"): "c_table_out_of_tolerance"}
@@ -60,11 +65,12 @@ def decline(category: str = "inexpressible") -> dict:
 
 def test_the_mix_of_tasks():
     assert len(SET) == 33
-    assert Counter(d["group"] for d in SET.values()) == {"inexpressible": 25, "control": 8}
+    assert Counter(d["group"] for d in SET.values()) == {"inexpressible": 22, "control": 8, "region": 3}
+    assert set(REGIONS) == {"f_path_avoid_wet_floor", "f_path_stay_in_zone", "f_path_keep_off_road"}
     # probes per gap: change on purpose (R3 evidence, docs/evidence/rsi-r3-gap-verification.md)
     assert Counter(d["gap"] for d in PROBES.values()) == {
-        "G-CLOCK": 3, "G-CALC": 3, "G-MSG": 3, "G-ACT": 3, "G-PATH": 3, "G-CONC": 2, "G-CHOOSE": 3, "G-PERCEIVE": 2,
-        "G-SELF": 3}
+        "G-CLOCK": 3, "G-CALC": 3, "G-MSG": 3, "G-ACT": 3, "G-CONC": 2, "G-CHOOSE": 3, "G-PERCEIVE": 2,
+        "G-SELF": 3}  # G-PATH: its three probes are 1.7 programs now (REGIONS)
     for task_id, task in SET.items():
         assert task["id"] == task_id and (lib.FUTURE_TASKS_DIR / f"{task_id}.json").is_file()
         assert (REPO / task["world"]).is_file() and task["tags"] and task["prompt"].endswith(".")
@@ -81,16 +87,17 @@ def test_every_task_names_a_near_activity_and_every_probe_an_open_gap_that_activ
         gap = GAPS[task["gap"]]
         assert gap["scope"] == "open" and task["gap"] != "G-LOOP", task_id
         assert task["gap"] in activity["needs"], f"{task_id}: {task['activity']} does not claim {task['gap']}"
-        assert task_id in gap["tasks"], f"{task_id} is not in the atlas under {task['gap']}"
+        # a probe is in the atlas under its gap; a relabelled one (a 1.7 program, decision 0039) left it
+        assert (task_id in gap["tasks"]) == (task["group"] == "inexpressible"), task_id
     # each of the nine gaps has probes from the activities that claim it, in the atlas, and nowhere else
     in_atlas = {t for g in GAPS.values() for t in g["tasks"]}
-    assert set(PROBES) <= in_atlas and not set(CONTROLS) & in_atlas
+    assert set(PROBES) <= in_atlas and not (set(CONTROLS) | set(REGIONS)) & in_atlas
 
 
 def test_every_gap_a_near_activity_claims_is_probed_except_the_proven_loop():
     claimed = {g for a in ATLAS["activities"] if atlas_report.is_near(a) for g in a["needs"]
                if GAPS[g]["scope"] == "open"}
-    assert claimed == {t["gap"] for t in PROBES.values()}
+    assert claimed == {t["gap"] for t in (*PROBES.values(), *REGIONS.values())}
     assert {g for g, v in GAPS.items() if v["scope"] == "out"} == {"G-LOOP", "G-FALLBACK"}
 
 
@@ -112,9 +119,9 @@ def test_references_and_attempts_are_where_they_should_be():
     names = [p.name for p in REF.iterdir()]
     refs = {n.split(".")[0] for n in names if n.endswith((".rob", ".json")) and ".attempt" not in n}
     attempts = {n.split(".")[0] for n in names if ".attempt." in n}
-    assert refs == set(CONTROLS) and attempts == set(PROBES)
-    assert {p.stem for p in REF.glob("*.rob") if ".attempt" not in p.stem} == set(CONTROLS)
-    assert {p.stem for p in REF.glob("*.json") if ".attempt" not in p.stem} == set(CONTROLS)
+    assert refs == set(CONTROLS) | set(REGIONS) and attempts == set(PROBES)
+    assert {p.stem for p in REF.glob("*.rob") if ".attempt" not in p.stem} == set(CONTROLS) | set(REGIONS)
+    assert {p.stem for p in REF.glob("*.json") if ".attempt" not in p.stem} == set(CONTROLS) | set(REGIONS)
     assert {p.name for p in REF.glob("*.attempt.*")} >= {f"{t}.attempt.rob" for t in PROBES}
     assert {p.name for p in REF.glob("*.attempt.json")} <= {f"{t}.attempt.json" for t in PROBES}
     for name in names:
@@ -127,6 +134,12 @@ def test_expectations_are_well_formed():
         assert not {"expected_goal", "expected_goals", "expect_1_6"} & set(task)
         assert len(task["why"]) > 40 and re.fullmatch(r"[ES]\d{3}", task["attempt_fails_with"]), task_id
         assert "language reference" in task["why"] or "reserved" in task["why"], task_id  # cites the yardstick
+    for task_id, task in REGIONS.items():  # decision 0039: a program with one region limit, on a world file 1.3
+        assert task["expect"] == {"decision": "program"} and task["expect_1_6"] == CANNOT, task_id
+        assert lib.expectation(task) == ("program", "none") and len(task["expected_limits"]) == 1
+        assert task["expect_1_7"]["decision"] == "program" and len(lib.task_paths(task)) == 1
+        assert task["world"] == "bench/worlds/site_1_3.json" and len(task["why"]) > 40
+        assert not {"attempt_fails_with", "expected_goal"} & set(task)
     for task_id, task in CONTROLS.items():
         assert lib.expectation(task) == ("program", "none") and lib.expected_goals(task), task_id
         assert not {"why", "attempt_fails_with", "gap"} & set(task)
@@ -165,8 +178,6 @@ def test_no_probe_is_a_bug_in_disguise():
         "f_self_report_charge": ("battery_level", '"low"', {"r": "spot1", "spot": "stop_b"}),
         "f_act_print_layout": ("print r layout at wall;", "communicate r to \"x\" with \"y\";",
                                {"r": "printer1", "wall": "level_3_wall"}),
-        "f_path_stay_in_zone": ("pre { in_region r zone; }", "pre { region_clear zone; }",
-                                {"r": "printer1", "dst": "gridline_c", "zone": "layout_zone"}),
     }
     for task_id, (bad, good, bindings) in stand_ins.items():
         answer = attempt_answer(task_id)
@@ -176,6 +187,22 @@ def test_no_probe_is_a_bug_in_disguise():
         answer["bindings"] = bindings
         checked = lib.check_answer(PROBES[task_id], answer)
         assert checked.valid, (task_id, checked.report)
+
+
+@pytest.mark.parametrize("task_id", sorted(REGIONS))
+def test_the_1_7_reference_declares_exactly_its_limit_and_succeeds(task_id):
+    """Decision 0039: the relabelled probe is a program. Its reference is valid, reaches the goal, declares the one
+    region limit the request asks for, and the same program without the limit is a half program (limit_dropped)."""
+    task = REGIONS[task_id]
+    answer = reference(task_id)
+    checked = lib.check_answer(task, answer)
+    assert checked.valid and checked.language_version == "1.7", checked.report
+    judgement = lib.judge(task, checked, answer["bindings"])
+    assert judgement.goal_correct and judgement.plan_succeeds and judgement.limit_ok and not judgement.limit_dropped
+    assert [p["goal_ok"] and p["plan_ok"] for p in judgement.paths] == [True]
+    stripped = dict(answer, rob=re.sub(r"^\s*@safety [^\n]*\n", "", answer["rob"], flags=re.M))
+    half = lib.judge(task, lib.check_answer(task, stripped), answer["bindings"])
+    assert half.goal_correct and half.plan_succeeds and not half.limit_ok and half.limit_dropped
 
 
 # -------- the controls --------
@@ -224,7 +251,7 @@ def test_the_new_worlds_are_world_1_2_files_and_nothing_else_new_is_added():
     worlds = {p.stem for p in (REPO / "bench" / "worlds").glob("*.json") if ".notes" not in p.name}
     assert set(NEW_WORLDS) <= worlds
     used = {t["world"] for t in SET.values()}
-    assert {Path(w).stem for w in used} <= set(NEW_WORLDS) | {"warehouse"}
+    assert {Path(w).stem for w in used} <= set(NEW_WORLDS) | {"warehouse", "site_1_3"}  # site_1_3: 0039 world copy
     for name in NEW_WORLDS:
         world = json.loads((REPO / f"bench/worlds/{name}.json").read_text(encoding="utf-8"))
         assert world["world_schema_version"] == "1.2" and world["tasks"] == {}

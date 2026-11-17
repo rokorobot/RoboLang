@@ -1,9 +1,12 @@
 {
   "id": "r04_swap_carts",
   "prompt": "Swap the carts: cart1 goes to intake and cart2 goes to dispatch. Neither may enter the corridor.",
-  "world": "bench/worlds/pharmacy.json",
+  "world": "bench/worlds/pharmacy_1_3.json",
   "group": "region",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_6": {
     "decision": "cannot",
     "category": "inexpressible"
   },

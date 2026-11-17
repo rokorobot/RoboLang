@@ -1,0 +1,8 @@
+{
+  "task": "run_gridline",
+  "bindings": {
+    "r": "printer1",
+    "dst": "gridline_c",
+    "zone": "layout_zone"
+  }
+}

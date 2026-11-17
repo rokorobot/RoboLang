@@ -1,5 +1,5 @@
 """
-Static validation for RoboLang v1.1 to v1.6 (spec/robolang-v1.1.md, section 5; spec/robolang-v1.3.md, section 4;
+Static validation for RoboLang v1.1 to v1.7 (spec/robolang-v1.1.md, section 5; spec/robolang-v1.3.md, section 4;
 spec/robolang-v1.4.md, section 4; spec/robolang-v1.6.md, section 6 for bindings and kinds).
 
 Checks a parsed program for errors that the grammar cannot express: duplicate
@@ -25,6 +25,7 @@ from .measured import Atom, Operand, Scopes, View
 from .nodes import ParamType, Span
 from .paths import double_grasps, goalless_path
 from .parser import ParseResult, parse_recovering
+from .tokens import MAX_REGION_LIMITS
 
 
 def _parts(statement: ast.Statement):
@@ -139,10 +140,10 @@ class _Validator:
         self._filename = filename
         self._params: dict[str, ParamType] = {}
         self.errors: list[Diagnostic] = []
-        self._typed_sensors = False  # RoboLang 1.3 to 1.6: sensors are parameters
-        self._branching = False  # RoboLang 1.4 to 1.6
-        self._handlers = False  # RoboLang 1.5 and 1.6
-        self._values = False  # RoboLang 1.6
+        self._typed_sensors = False  # RoboLang 1.3 to 1.7: sensors are parameters
+        self._branching = False  # RoboLang 1.4 to 1.7
+        self._handlers = False  # RoboLang 1.5 to 1.7
+        self._values = False  # RoboLang 1.6 and 1.7
         self._language = None
 
     def _report(self, code: str, message: str, span: Span):
@@ -176,10 +177,10 @@ class _Validator:
     def _program(self, program: ast.Program):
         language = program.version.version if program.version is not None else None
         self._language = language
-        self._typed_sensors = language in ("1.3", "1.4", "1.5", "1.6")
-        self._branching = language in ("1.4", "1.5", "1.6")
-        self._handlers = language in ("1.5", "1.6")
-        self._values = language == "1.6"
+        self._typed_sensors = language in ("1.3", "1.4", "1.5", "1.6", "1.7")
+        self._branching = language in ("1.4", "1.5", "1.6", "1.7")
+        self._handlers = language in ("1.5", "1.6", "1.7")
+        self._values = language in ("1.6", "1.7")
         seen: dict[str, ast.Name] = {}
         for task in program.tasks:
             first = seen.setdefault(task.name.text, task.name)
@@ -272,11 +273,31 @@ class _Validator:
 
     # -------- @safety --------
 
-    def _annotations(self, annotations: tuple[ast.SafetyAnnotation, ...]):
+    def _annotations(self, annotations: tuple[ast.SafetyAnnotation | ast.RegionAnnotation, ...]):
         earlier: dict[ast.SpeedUnit | None, ast.SafetyAnnotation] = {}
+        regions: dict[str, ast.RegionAnnotation] = {}
         for annotation in annotations:
+            if isinstance(annotation, ast.RegionAnnotation):
+                self._checked(self._region_limit, annotation, regions)
+                continue
             self._checked(self._annotation, annotation, earlier)
             earlier.setdefault(annotation.value.unit, annotation)  # the first declaration stands
+
+    def _region_limit(self, annotation: ast.RegionAnnotation, earlier: dict[str, ast.RegionAnnotation]):
+        """RoboLang 1.7 (decision 0039 P4): a region parameter (E303, E304), named once (E323), at most 8 (E324)."""
+        region = annotation.region
+        self._use(region, ParamType.REGION, annotation.key.text)
+        first = earlier.get(region.text)
+        if first is not None:
+            same = first.key.text == annotation.key.text
+            what = f"is already a {first.key.text}"
+            if not same:
+                what += f", and cannot also be a {annotation.key.text}"
+            self._error("E323", f"region '{region.text}' {what} (line {first.span.line}); "
+                                "a task names a region in one region limit only", annotation.span)
+        if len(earlier) >= MAX_REGION_LIMITS:
+            self._error("E324", f"a task may declare at most {MAX_REGION_LIMITS} region limits", annotation.span)
+        earlier[region.text] = annotation
 
     def _annotation(self, annotation: ast.SafetyAnnotation, earlier: dict[ast.SpeedUnit | None, ast.SafetyAnnotation]):
         unit = annotation.value.unit

@@ -1,0 +1,8 @@
+// bench/reference_future/f_path_keep_off_road.rob: hand-written reference
+robolang 1.7;
+
+task to_row(robot r, location dst, region road) {
+    @safety no_go_region road;
+    goal { robot_at r dst; }
+    plan { move r to dst; }
+}

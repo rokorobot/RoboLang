@@ -1,0 +1,45 @@
+{
+  "ir_schema": "robolang.task-ir",
+  "ir_schema_version": "1.6",
+  "language_version": "1.7",
+  "tasks": [
+    {
+      "name": "to_lobby",
+      "parameters": [
+        {
+          "name": "r",
+          "type": "robot"
+        },
+        {
+          "name": "lobby",
+          "type": "location"
+        },
+        {
+          "name": "wet",
+          "type": "region"
+        }
+      ],
+      "safety": [
+        {
+          "kind": "no_go_region",
+          "region": "wet"
+        }
+      ],
+      "preconditions": [],
+      "goal": [
+        {
+          "kind": "robot_at",
+          "robot": "r",
+          "location": "lobby"
+        }
+      ],
+      "steps": [
+        {
+          "kind": "move",
+          "robot": "r",
+          "target": "lobby"
+        }
+      ]
+    }
+  ]
+}

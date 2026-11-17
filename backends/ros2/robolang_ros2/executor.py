@@ -169,6 +169,9 @@ def execute(task: ir.Task, bindings: dict[str, str], site: Site, ops: Operations
             if kind:
                 raise BackendFailure("S508", f"{kind} has no observation in this backend")
             _check_observable(condition, bindings, site)
+        if task.region_limits:
+            raise BackendFailure("S508", "declared region limits (no_go_region, in_region) are not passed to a planner "
+                                         "by this backend yet")
         if task.safety:
             raise BackendFailure("S508", "declared speed limits are not enforced by this backend yet")
         for step in task.steps:

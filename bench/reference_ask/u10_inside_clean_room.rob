@@ -1,12 +1,13 @@
-// bench/reference_ask/u10_inside_clean_room.attempt.rob: hand-written
-robolang 1.3;
+// bench/reference_ask/u10_inside_clean_room.rob: hand-written reference
+robolang 1.7;
 
 task inside(robot r, object o, location src, location dst, region z) {
+    @safety in_region z;
     goal { object_at o dst; }
     plan {
-        move r to src in_region z;
+        move r to src;
         grasp r o;
-        move r to dst in_region z;
+        move r to dst;
         place r o at dst;
     }
 }

@@ -1,0 +1,8 @@
+// bench/reference_future/f_path_avoid_wet_floor.rob: hand-written reference
+robolang 1.7;
+
+task to_lobby(robot r, location dst, region wet) {
+    @safety no_go_region wet;
+    goal { robot_at r dst; }
+    plan { move r to dst; }
+}

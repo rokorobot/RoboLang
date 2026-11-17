@@ -1,7 +1,7 @@
 {
   "id": "c01_wait_hot_zone_clear",
   "prompt": "With the chef arm, take bowl_2 from the fridge to the pass, but wait for hot_zone to clear first. Give it 60 seconds, and if it has not cleared by then, do nothing more.",
-  "world": "bench/worlds/kitchen_values.json",
+  "world": "bench/worlds/kitchen_values_1_3.json",
   "group": "control",
   "expect": {
     "decision": "program"
@@ -43,5 +43,6 @@
         }
       }
     ]
-  }
+  },
+  "expected_limits": []
 }

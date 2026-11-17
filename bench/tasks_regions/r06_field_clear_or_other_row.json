@@ -1,9 +1,12 @@
 {
   "id": "r06_field_clear_or_other_row",
   "prompt": "If field_zone is clear when the job starts, drive weeder1 to row_14; if it is not, drive weeder1 to row_15 instead. Either way weeder1 must stay out of road_zone.",
-  "world": "bench/worlds/site.json",
+  "world": "bench/worlds/site_1_3.json",
   "group": "region",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_6": {
     "decision": "cannot",
     "category": "inexpressible"
   },

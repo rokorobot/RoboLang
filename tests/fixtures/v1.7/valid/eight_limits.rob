@@ -1,0 +1,18 @@
+// RoboLang v1.7 fixture: valid
+// expect: ok
+// why: the most a task may declare: 8 region limits (P4)
+
+robolang 1.7;
+
+task t(robot r, location d, region a, region b, region c, region e, region f, region g, region h, region i) {
+    @safety no_go_region a;
+    @safety no_go_region b;
+    @safety no_go_region c;
+    @safety no_go_region e;
+    @safety in_region f;
+    @safety in_region g;
+    @safety in_region h;
+    @safety in_region i;
+    goal { robot_at r d; }
+    plan { move r to d; }
+}

@@ -1,0 +1,8 @@
+// bench/reference_regions/r01_runner_keep_off_hot.rob: hand-written reference
+robolang 1.7;
+
+task to_sink(robot r, location dst, region hot) {
+    @safety no_go_region hot;
+    goal { robot_at r dst; }
+    plan { move r to dst; }
+}

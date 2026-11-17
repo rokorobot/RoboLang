@@ -1,9 +1,12 @@
 {
   "id": "r05_slow_and_dry",
   "prompt": "Send cleaner1 from dock_2 to dock_3 at no more than 0.5 m/s, and keep it out of wet_floor the whole way.",
-  "world": "bench/worlds/site.json",
+  "world": "bench/worlds/site_1_3.json",
   "group": "region",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_6": {
     "decision": "cannot",
     "category": "inexpressible"
   },

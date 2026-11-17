@@ -1,0 +1,11 @@
+// RoboLang v1.7 fixture: invalid
+// expect: error E303 (static) line 8
+// why: the region of a limit must be a parameter of the task
+
+robolang 1.7;
+
+task t(robot r, location d) {
+    @safety no_go_region wet;
+    goal { robot_at r d; }
+    plan { move r to d; }
+}

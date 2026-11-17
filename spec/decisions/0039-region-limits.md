@@ -82,3 +82,17 @@ task to_lobby(robot r, location lobby, region wet) {
 
 1. ~~P1: reuse the reserved words or add new ones?~~ **Decided 2026-11-17: the reserved words `no_go_region`, `in_region`.**
 2. ~~P2: is a whole-task limit enough for 1.7?~~ **Decided 2026-11-17: yes; per-step limits wait for evidence.**
+
+## Implementation note (L4–L5, 2026-11-17)
+
+Built in PR #147 and accepted on 2026-11-17 ([acceptance](../../docs/evidence/bench-1-7-acceptance.md)). The record
+expected about 4 new diagnostic codes (B7); 9 were added, which the owner accepted:
+
+- **User-facing (6):** `E323` (a region named by two limits, or as both kinds), `E324` (more than 8 limits), `S003`
+  (a robot that moves does not honour the limit; a world 1.2 robot honours nothing), `S004` (a target or a
+  `robot_at` goal inside a no-go region or outside an `in_region`), `S005` (the start location) and `E516` (an
+  unknown ability in `honours`).
+- **Task IR (2):** `I224` and `I225`, the same two checks on IR.
+- **Delegation (1):** `X605`, the refusal by `export-goal` and `delegate`.
+
+P4's "R must be a region" reuses `E303` and `E304`.

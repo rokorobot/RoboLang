@@ -1,15 +1,40 @@
 {
   "id": "u10_inside_clean_room",
   "prompt": "Have picker1 bring vial A2 to packing, staying inside the clean room the whole way.",
-  "world": "bench/worlds/pharmacy.json",
-  "group": "inexpressible",
+  "world": "bench/worlds/pharmacy_1_3.json",
+  "group": "region",
   "expect": {
+    "decision": "program",
+    "category": "none"
+  },
+  "expect_1_6": {
     "decision": "cannot",
     "category": "inexpressible"
+  },
+  "expect_1_7": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "the world as given",
+        "goal": [
+          [
+            "rl:thing:vial_a2",
+            "located_in",
+            "rl:place:packing"
+          ]
+        ],
+        "world_patch": {}
+      }
+    ]
   },
   "tags": [
     "path_constraint"
   ],
-  "why": "Staying inside or out of a region while moving needs in_region / no_go_region, deferred (E211).",
-  "attempt_fails_with": "E211"
+  "expected_limits": [
+    [
+      "in_region",
+      "clean_room"
+    ]
+  ],
+  "why": "A whole-task `@safety in_region z;` keeps the picker inside the clean room (0039 P1, P2). The world does not list the room's locations, so nothing is concluded from it."
 }

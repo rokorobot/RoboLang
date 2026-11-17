@@ -1,11 +1,30 @@
 {
   "id": "f_path_keep_off_road",
   "prompt": "Drive weeder1 from the headland to row_12 and never enter road_zone on the way.",
-  "world": "bench/worlds/site.json",
-  "group": "inexpressible",
+  "world": "bench/worlds/site_1_3.json",
+  "group": "region",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_6": {
     "decision": "cannot",
     "category": "inexpressible"
+  },
+  "expect_1_7": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "the world as given",
+        "goal": [
+          [
+            "rl:robot:weeder1",
+            "located_in",
+            "rl:place:row_12"
+          ]
+        ],
+        "world_patch": {}
+      }
+    ]
   },
   "activity": "ACT-AGR-002",
   "gap": "G-PATH",
@@ -13,6 +32,11 @@
     "route",
     "region"
   ],
-  "why": "Keeping out of a region while moving is not expressible: `no_go_region` is reserved and not implemented (language reference: reserved words).",
-  "attempt_fails_with": "E202"
+  "expected_limits": [
+    [
+      "no_go_region",
+      "road_zone"
+    ]
+  ],
+  "why": "A whole-task `@safety no_go_region road;` keeps the robot out of the road zone (0039 P1, P2)."
 }

@@ -96,6 +96,7 @@ Exit 6 prints one diagnostic, `FILE: error[CODE]: task 'T': …`:
 | `X603` | RoboLang 1.4, with `--core 0.1` only: the paths of a branching task do not all have the same goal, or one ends in `fail` (decision 0027 B7; [simulation 12.4](simulation-v1.0.md)). The message says to use `--core 0.2`. Not raised for 0.2 |
 | `X604` | `--core 0.2` only: the goal has more than 16 distinct alternatives (decision 0028 Q2) |
 | `X602` | A bound object has no `class` or no `mass` in the world file (needs `world_schema_version` 1.1) |
+| `X605` | RoboLang 1.7: the task has a region limit (`@safety no_go_region` or `in_region`). Core 0.1 and 0.2 carry no region limit, so the task is refused rather than exported without it (decision 0039 P8) |
 
 Warnings (skipped limits) never change the exit status.
 

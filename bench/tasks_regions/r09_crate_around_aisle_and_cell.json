@@ -1,9 +1,12 @@
 {
   "id": "r09_crate_around_aisle_and_cell",
   "prompt": "Have amr1 carry crate1 from the dock to the handoff, keeping out of both the aisle and the cell.",
-  "world": "bench/worlds/warehouse.json",
+  "world": "bench/worlds/warehouse_1_3.json",
   "group": "region",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_6": {
     "decision": "cannot",
     "category": "inexpressible"
   },

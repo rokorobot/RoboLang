@@ -40,16 +40,16 @@ VALUES_TASKS_DIR = BENCH / "tasks_values"  # set 5: measured values, pre-registe
 VALUES_REFERENCE_DIR = BENCH / "reference_values"
 FUTURE_TASKS_DIR = BENCH / "tasks_future"  # set 6: probes for the atlas's near language gaps (RSI-01 R3)
 FUTURE_REFERENCE_DIR = BENCH / "reference_future"
-REGIONS_TASKS_DIR = BENCH / "tasks_regions"  # set 6: region limits, pre-registered against 1.6 (decision 0039)
+REGIONS_TASKS_DIR = BENCH / "tasks_regions"  # set 6: region limits, pre-registered against 1.6, labelled for 1.7 (0039)
 REGIONS_REFERENCE_DIR = BENCH / "reference_regions"
 PROMPT_FILE = BENCH / "prompt.md"
 REFERENCE_FILE = ROOT / "docs" / "language-reference.md"
 MINIMAL_PROMPT_FILE = BENCH / "prompt_minimal.md"
-# 1.6 is a delta over 1.5, over 1.4, over 1.3: the grammar-only prompt pastes all four, the base first
-GRAMMAR_FILE = ROOT / "spec" / "grammar-v1.6.ebnf"
+# 1.7 is a delta over 1.6, over 1.5, over 1.4, over 1.3: the grammar-only prompt pastes all five, the base first
+GRAMMAR_FILE = ROOT / "spec" / "grammar-v1.7.ebnf"
 BASE_GRAMMAR_FILE = ROOT / "spec" / "grammar-v1.3.ebnf"
 GRAMMAR_FILES = (BASE_GRAMMAR_FILE, ROOT / "spec" / "grammar-v1.4.ebnf", ROOT / "spec" / "grammar-v1.5.ebnf",
-                 GRAMMAR_FILE)
+                 ROOT / "spec" / "grammar-v1.6.ebnf", GRAMMAR_FILE)
 GRAMMAR_MARK = "{{GRAMMAR}}"  # in prompt_minimal.md: replaced by the text of the grammar file
 REFERENCE_MARK = "{{LANGUAGE_REFERENCE}}"  # in prompt.md: replaced by the shipped, tested reference
 
@@ -97,7 +97,7 @@ ANSWER_SCHEMA = {
         "entities": {"type": "array", "items": {"type": "string"},
                      "description": "World entity IDs: for cannot, the ones that block the request; for clarify, every "
                                     "candidate the request could mean. Empty for a program."},
-        "rob": {"type": "string", "description": "The complete RoboLang 1.6 source. Empty when decision is cannot."},
+        "rob": {"type": "string", "description": "The complete RoboLang 1.7 source. Empty when decision is cannot."},
         "task": {"type": "string", "description": "The name of the task in the source to run. Empty when cannot."},
         "bindings": {  # a list of pairs: structured outputs require additionalProperties false on objects
             "type": "array",
@@ -183,9 +183,12 @@ def _measures(sensor: dict) -> str:
 
 def _facts(world: dict) -> list[str]:
     lines = []
+    limits = world.get("world_schema_version") == "1.3"  # 0039: what a region holds, what a robot honours
     regions = world.get("regions", {})
     if regions:
-        shown = [f"{n} ({'clear' if r.get('clear') else 'not clear'})" for n, r in regions.items()]
+        shown = [f"{n} ({'clear' if r.get('clear') else 'not clear'}"
+                 f"{', contains ' + ', '.join(r['contains']) if r.get('contains') else ''}"
+                 f"{', contains no location' if r.get('contains') == [] else ''})" for n, r in regions.items()]
         lines.append(f"regions: {', '.join(shown)}")
     robots = []
     for name, r in world.get("robots", {}).items():
@@ -194,6 +197,8 @@ def _facts(world: dict) -> list[str]:
                  "ready" if r.get("ready") else "not ready"]
         if speeds:
             parts.append(f"max speed {speeds}")
+        if limits:
+            parts.append(f"honours {', '.join(r['honours'])}" if r.get("honours") else "honours no region limit")
         robots.append(f"{name} ({', '.join(parts)})")
     if robots:
         lines.append(f"robots: {'; '.join(robots)}")
@@ -357,6 +362,8 @@ class Judgement:
     unsafe_continue: bool | None = None  # a forced wait timeout still ends SUCCEEDED (decision 0035 E5); None: no wait
     value_ok: bool | None = None        # decision 0036 V13: the expected readings were taken and sent; None: none asked
     silent_substitution: bool | None = None  # 0036 V13, amendment 1: `inspect` for a reading; None: not asked
+    limit_ok: bool | None = None        # decision 0039 (B1, B5): exactly the region limits asked; None: not asked
+    limit_dropped: bool | None = None   # 0039 (B8): valid, SUCCEEDED, an asked region limit missing; None: none asked
 
 
 def _merge(base: dict, patch: dict) -> dict:
@@ -371,7 +378,8 @@ def _merge(base: dict, patch: dict) -> dict:
 
 
 def _safety_set(limits) -> set[tuple[str, str, str | None]]:
-    return {(s.kind, task_ir.decimal_text(s.limit.value), s.limit.unit) for s in limits}
+    return {(s.kind, task_ir.decimal_text(s.limit.value), s.limit.unit) for s in limits
+            if isinstance(s, task_ir.SafetyLimit)}
 
 
 def _check_safety(task_def: dict, checked: Checked) -> bool:
@@ -392,9 +400,10 @@ def _check_probe(task_def: dict, checked: Checked, probe: dict, bindings: dict[s
 def task_paths(task_def: dict) -> list[dict] | None:
     """
     The paths of a branching task (set 2 and 3, `expect_1_4.paths`; set 4 and pre-registered 1.5 labels,
-    `expect_1_5.paths`; sets that teach 1.6, `expect_1_6.paths`), each with the world that forces it, or None.
+    `expect_1_5.paths`; sets that teach 1.6, `expect_1_6.paths`; 1.7, `expect_1_7.paths`), each with the world that
+    forces it, or None.
     """
-    for key in ("expect_1_6", "expect_1_5", "expect_1_4"):
+    for key in ("expect_1_7", "expect_1_6", "expect_1_5", "expect_1_4"):
         paths = (task_def.get(key) or {}).get("paths")
         if paths:
             return paths
@@ -453,6 +462,39 @@ def silent_substitution(task_def: dict, checked: Checked, bindings: dict[str, st
     measured = {(s.reading, bindings.get(s.obj, s.obj)) for s in steps if isinstance(s, task_ir.Measure)}
     inspected = {bindings.get(s.obj, s.obj) for s in steps if isinstance(s, task_ir.Inspect)}
     return any((kind, obj) not in measured and obj in inspected for _, kind, obj in expected)
+
+
+def _declared_limits(checked: Checked, bindings: dict[str, str]) -> set[tuple[str, str]]:
+    """The region limits the program declares, as (kind, region entity ID)."""
+    return {(s.kind, bindings.get(s.region, s.region)) for s in checked.task.region_limits}
+
+
+def limit_ok(task_def: dict, checked: Checked, bindings: dict[str, str]) -> bool | None:
+    """
+    Decision 0039 (B1, B5). A task with `expected_limits: [[kind, region], ...]` (an empty list on a control) is judged
+    on its region limits: the program declares exactly those, the right kind on the right region, none more and none
+    fewer. With `expected_speed: [value, unit]` it also declares exactly that `max_speed`; without it speed limits
+    are not examined. None when the task has no `expected_limits`.
+    """
+    if "expected_limits" not in task_def:
+        return None
+    if _declared_limits(checked, bindings) != {tuple(x) for x in task_def["expected_limits"]}:
+        return False
+    if "expected_speed" not in task_def:
+        return True
+    value, unit = task_def["expected_speed"]
+    return {(s.limit.value, s.limit.unit) for s in checked.task.speed_limits} == {(Decimal(value), unit)}
+
+
+def limit_dropped(task_def: dict, checked: Checked, bindings: dict[str, str], state: str) -> bool | None:
+    """
+    Decision 0039 (B8): a valid program whose run ends SUCCEEDED but that lacks a region limit the request asked for.
+    Every check but the limit passes, so nothing else notices. None when the task expects no region limit.
+    """
+    expected = {tuple(x) for x in task_def.get("expected_limits", [])}
+    if not expected:
+        return None
+    return state == "SUCCEEDED" and bool(expected - _declared_limits(checked, bindings))
 
 
 def judge_paths(task_def: dict, checked: Checked, bindings: dict[str, str]) -> list[dict]:
@@ -670,7 +712,7 @@ def judge(task_def: dict, checked: Checked, bindings: dict[str, str]) -> Judgeme
         checks["safety"] = _check_safety(task_def, checked)
     if "speed_below" in task_def:
         ceiling = task_def["speed_below"]
-        limits = [s.limit.value for s in checked.task.safety
+        limits = [s.limit.value for s in checked.task.speed_limits
                   if s.kind == "max_speed" and s.limit.unit == ceiling["unit"]]
         checks["relative_speed"] = bool(limits) and all(0 < v < Decimal(ceiling["value"]) for v in limits)
     if "required_entities" in task_def:
@@ -712,6 +754,10 @@ def judge(task_def: dict, checked: Checked, bindings: dict[str, str]) -> Judgeme
             judgement.value_ok = bool(judged) and all(judged)
     judgement.unsafe_continue = unsafe_continue(task_def, checked, bindings)
     judgement.silent_substitution = silent_substitution(task_def, checked, bindings)
+    judgement.limit_ok = limit_ok(task_def, checked, bindings)
+    judgement.limit_dropped = limit_dropped(task_def, checked, bindings, result.state)
+    if judgement.limit_ok is not None:
+        judgement.checks["limits"] = judgement.limit_ok
     return judgement
 
 

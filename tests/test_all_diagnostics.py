@@ -200,3 +200,20 @@ def test_inspect_and_simulate_print_every_error(command, tmp_path):
 def test_a_missing_goal_does_not_stop_the_plan_from_being_checked():
     source = "robolang 1.3;\ntask t(robot r, location l) {\n    plan {\n        move r to x;\n    }\n}\n"
     assert errors(source) == [("E309", 2), ("E303", 4)]
+
+
+def test_region_limit_errors_are_all_reported_with_the_others():
+    """RoboLang 1.7 (decision 0039): E303, E304, E323 and E324 in one task, each at its own annotation."""
+    params = ("robot r, location d, region zone, " + ", ".join(f"region g{i}" for i in range(8)))
+    source = (
+        f"robolang 1.7;\ntask t({params}) {{\n"
+        "  @safety no_go_region zone;\n"      # 3
+        "  @safety in_region zone;\n"         # 4: E323
+        "  @safety no_go_region wet;\n"       # 5: E303
+        "  @safety in_region d;\n"            # 6: E304
+        "  @safety max_speed 1 m/s;\n"
+        "  @safety max_speed 2 m/s;\n"        # 8: E306
+        + "".join(f"  @safety no_go_region g{i};\n" for i in range(8))  # 9-16: g7 is the ninth: E324
+        + "  goal { robot_at r d; }\n  plan { move r to d; }\n}\n"
+    )
+    assert errors(source) == [("E323", 4), ("E303", 5), ("E304", 6), ("E306", 8), ("E324", 16)]

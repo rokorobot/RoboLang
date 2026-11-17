@@ -1,7 +1,7 @@
 {
   "id": "x04_grip_ten_newtons",
   "prompt": "Have the helper arm carry cup_1 from the pantry to the pass, gripping it with no more than 10 N of force.",
-  "world": "bench/worlds/kitchen.json",
+  "world": "bench/worlds/kitchen_1_3.json",
   "group": "inexpressible",
   "expect": {
     "decision": "cannot",

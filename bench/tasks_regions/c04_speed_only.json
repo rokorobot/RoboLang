@@ -1,7 +1,7 @@
 {
   "id": "c04_speed_only",
   "prompt": "Have amr1 carry crate1 from the dock to the handoff at no more than 0.5 m/s.",
-  "world": "bench/worlds/warehouse.json",
+  "world": "bench/worlds/warehouse_1_3.json",
   "group": "control",
   "expect": {
     "decision": "program"
@@ -19,5 +19,6 @@
   "tags": [
     "max_speed",
     "pick_place"
-  ]
+  ],
+  "expected_limits": []
 }
