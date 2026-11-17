@@ -1,0 +1,7 @@
+{
+  "task": "go",
+  "bindings": {
+    "r": "weeder1",
+    "dst": "row_14"
+  }
+}

@@ -1,0 +1,8 @@
+// bench/reference_regions/r04_swap_carts.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 1.6;
+
+task swap(robot a, robot b, location pa, location pb, region corridor) {
+    @safety no_go_region corridor;
+    goal { robot_at a pa; robot_at b pb; }
+    plan { move a to pa; move b to pb; }
+}

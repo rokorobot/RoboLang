@@ -1,0 +1,57 @@
+{
+  "id": "c03_layout_zone_clear_or_stop",
+  "prompt": "Send printer1 to gridline_c if layout_zone is clear when the job starts. If it is not, send \"layout zone busy\" to channel \"site\" from printer1 and stop the job as failed.",
+  "world": "bench/worlds/site.json",
+  "group": "control",
+  "expect": {
+    "decision": "program"
+  },
+  "expected_goal": [
+    [
+      "rl:robot:printer1",
+      "located_in",
+      "rl:place:gridline_c"
+    ]
+  ],
+  "expect_1_7": {
+    "decision": "program"
+  },
+  "tags": [
+    "if_region_clear",
+    "report_and_stop",
+    "region"
+  ],
+  "expect_1_6": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "layout_zone clear",
+        "goal": [
+          [
+            "rl:robot:printer1",
+            "located_in",
+            "rl:place:gridline_c"
+          ]
+        ],
+        "world_patch": {}
+      },
+      {
+        "when": "layout_zone not clear",
+        "fail": "layout zone busy",
+        "messages": [
+          [
+            "site",
+            "layout zone busy"
+          ]
+        ],
+        "world_patch": {
+          "regions": {
+            "layout_zone": {
+              "clear": false
+            }
+          }
+        }
+      }
+    ]
+  }
+}

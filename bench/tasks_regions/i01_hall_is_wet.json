@@ -1,0 +1,42 @@
+{
+  "id": "i01_hall_is_wet",
+  "prompt": "Send cleaner1 to the hall, and keep it out of wet_floor the whole way.",
+  "world": "bench/worlds/site.json",
+  "group": "infeasible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_7": {
+    "decision": "cannot",
+    "category": "infeasible",
+    "because": "0039 P5",
+    "world_1_3": {
+      "regions": {
+        "wet_floor": {
+          "contains": [
+            "hall"
+          ]
+        }
+      },
+      "robots": {
+        "cleaner1": {
+          "honours": [
+            "no_go_region",
+            "in_region"
+          ]
+        }
+      }
+    }
+  },
+  "tags": [
+    "no_go_region",
+    "destination_inside"
+  ],
+  "gap": "G-PATH",
+  "why": "In the 1.3 world wet_floor lists the hall among the locations it contains, so the target lies inside the no-go region and the run fails before it starts (0039 P5). 1.6 cannot state the limit at all.",
+  "blockers": [
+    "wet_floor contains hall"
+  ],
+  "attempt_fails_with": "E211"
+}

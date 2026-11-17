@@ -1,0 +1,54 @@
+{
+  "id": "r09_crate_around_aisle_and_cell",
+  "prompt": "Have amr1 carry crate1 from the dock to the handoff, keeping out of both the aisle and the cell.",
+  "world": "bench/worlds/warehouse.json",
+  "group": "region",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_7": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "the world as given",
+        "goal": [
+          [
+            "rl:thing:crate1",
+            "located_in",
+            "rl:place:handoff"
+          ]
+        ],
+        "world_patch": {}
+      }
+    ],
+    "world_1_3": {
+      "robots": {
+        "amr1": {
+          "honours": [
+            "no_go_region",
+            "in_region"
+          ]
+        }
+      }
+    }
+  },
+  "expected_limits": [
+    [
+      "no_go_region",
+      "aisle"
+    ],
+    [
+      "no_go_region",
+      "cell"
+    ]
+  ],
+  "tags": [
+    "no_go_region",
+    "two_regions",
+    "carrying"
+  ],
+  "gap": "G-PATH",
+  "why": "Two limits of the same kind on two regions while carrying an object: 1.6 can state neither (`no_go_region` is reserved); 1.7 allows up to 8 limits (0039 P4).",
+  "attempt_fails_with": "E211"
+}

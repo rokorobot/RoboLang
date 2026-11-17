@@ -14,6 +14,9 @@ name: Benchmark
 # - On demand with `future: true`: only set "future" (RSI-01 R3: probes of the atlas's near language gaps), full
 #   prompt, 1 repeat, Sonnet and Haiku, capped at $3 (`--max-usd`), for information and not gated. Never run per
 #   pull request or weekly.
+# - On demand with `regions: true`: only set "regions" (decision 0039: region limits; pre-registered against 1.6),
+#   full and grammar-only prompts, 3 repeats each, Sonnet and Haiku, each prompt capped at $3 (`--max-usd`), for
+#   information and not gated. Never run per pull request or weekly.
 # Needs the repository secret ANTHROPIC_API_KEY; without it (and on pull requests from forks) the
 # job is skipped and nothing is spent.
 
@@ -52,6 +55,10 @@ on:
         default: false
       future:
         description: "Run only set future (gap probes), full prompt, 1 repeat, Sonnet and Haiku, max $3; not gated"
+        type: boolean
+        default: false
+      regions:
+        description: "Run only set regions (region limits), full and minimal prompts, 3 repeats, Sonnet and Haiku, max $3 each; not gated"
         type: boolean
         default: false
 
@@ -105,8 +112,13 @@ jobs:
         if: steps.key.outputs.present == 'true' && inputs.future
         run: |
           python bench/run.py --yes --set future --prompt full --repeats 1 --models claude-sonnet-5-5,claude-haiku-5-5 --max-usd 3 --run-id future
+      - name: Run (set regions, on demand)
+        if: steps.key.outputs.present == 'true' && inputs.regions
+        run: |
+          python bench/run.py --yes --set regions --prompt full --repeats 3 --models claude-sonnet-5-5,claude-haiku-5-5 --max-usd 3 --run-id regions
+          python bench/run.py --yes --set regions --prompt minimal --repeats 3 --models claude-sonnet-5-5,claude-haiku-5-5 --max-usd 3 --run-id regions-minimal
       - name: Run (weekly or on demand)
-        if: steps.key.outputs.present == 'true' && github.event_name != 'pull_request' && !inputs.set3 && !inputs.set4 && !inputs.future
+        if: steps.key.outputs.present == 'true' && github.event_name != 'pull_request' && !inputs.set3 && !inputs.set4 && !inputs.future && !inputs.regions
         run: |
           python bench/run.py --yes --repeats 3 --run-id set1
           python bench/run.py --yes --set hard --repeats 3 --run-id set2
@@ -134,7 +146,7 @@ jobs:
               echo "" >> summary.md; cat cascade.md >> summary.md
             fi
           done
-          for extra in set3 set3-minimal set4 set4-minimal set5 set5-minimal future; do
+          for extra in set3 set3-minimal set4 set4-minimal set5 set5-minimal future regions regions-minimal; do
             if [ -d "bench/results/$extra" ]; then
               echo "" >> summary.md
               echo "_For information, not gated: $extra._" >> summary.md

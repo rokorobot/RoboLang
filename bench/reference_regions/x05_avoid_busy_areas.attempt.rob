@@ -1,0 +1,8 @@
+// bench/reference_regions/x05_avoid_busy_areas.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 1.6;
+
+task to_sink(robot r, location dst, region busy) {
+    @safety no_go_region busy;
+    goal { robot_at r dst; }
+    plan { move r to dst; }
+}

@@ -1,0 +1,21 @@
+{
+  "id": "x03_person_distance",
+  "prompt": "Bring vial_b1 from fridge_1 to packing with picker1, keeping at least 1.5 m away from any person on the way.",
+  "world": "bench/worlds/pharmacy.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_7": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "tags": [
+    "person_zone",
+    "proximity"
+  ],
+  "gap": "G-PROX",
+  "why": "A zone around a person moves with the person: a region that moves is not in 1.7 (0039 P9, P10). The world declares no region for it, and no `@safety` key limits a distance to people.",
+  "attempt_fails_with": "E207"
+}

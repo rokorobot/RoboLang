@@ -1,0 +1,60 @@
+{
+  "id": "r04_swap_carts",
+  "prompt": "Swap the carts: cart1 goes to intake and cart2 goes to dispatch. Neither may enter the corridor.",
+  "world": "bench/worlds/pharmacy.json",
+  "group": "region",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_7": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "the world as given",
+        "goal": [
+          [
+            "rl:robot:cart1",
+            "located_in",
+            "rl:place:intake"
+          ],
+          [
+            "rl:robot:cart2",
+            "located_in",
+            "rl:place:dispatch"
+          ]
+        ],
+        "world_patch": {}
+      }
+    ],
+    "world_1_3": {
+      "robots": {
+        "cart1": {
+          "honours": [
+            "no_go_region",
+            "in_region"
+          ]
+        },
+        "cart2": {
+          "honours": [
+            "no_go_region",
+            "in_region"
+          ]
+        }
+      }
+    }
+  },
+  "expected_limits": [
+    [
+      "no_go_region",
+      "corridor"
+    ]
+  ],
+  "tags": [
+    "no_go_region",
+    "two_robots"
+  ],
+  "gap": "G-PATH",
+  "why": "One limit covers every robot of the task (0039 P2: the whole task, every motion of every robot). 1.6 cannot state it at all (`no_go_region` is reserved).",
+  "attempt_fails_with": "E211"
+}

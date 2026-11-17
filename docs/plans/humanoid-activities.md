@@ -88,6 +88,7 @@ before.
 
 | Date | Note | Added | Removed | Changed | Ranking |
 |---|---|---|---|---|---|
+| 2026-11-17 | I1 L3: set 6 regions pre-registered (22 tasks) | — | — | — | 1. action 4.17 · 2. perception 2.78 · 3. cooperation 0.99 · 4. communication 0.87 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
 | 2026-11-17 | R3 model run: 0/25 false programs (Sonnet 25/25 declines, Haiku 23/25 plus 2 clarify); ACT-MFG-001 G-CHOOSE refutation withdrawn | — | — | — | 1. action 4.17 · 2. perception 2.78 · 3. cooperation 0.99 · 4. communication 0.87 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
 | 2026-11-17 | R3: 25 probes confirm G-CLOCK, G-CALC, G-MSG, G-ACT, G-PATH, G-CONC, G-CHOOSE, G-PERCEIVE, G-SELF; refuted: G-PERCEIVE for ACT-HOS-001 and ACT-SOL-001, G-CHOOSE for ACT-MFG-001 | — | — | — | 1. action 4.17 · 2. perception 2.78 · 3. cooperation 0.99 · 4. communication 0.87 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
 | 2026-11-17 | Orchestrator spot-check of A2: ACT-MFG-003 pilot announced, not running; ACT-SOL-001 basis corrected | — | — | ACT-MFG-003: pilot 1-3y → demo 1-3y | 1. action 4.17 · 2. perception 2.78 · 3. cooperation 0.99 · 4. communication 0.87 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
@@ -142,7 +143,7 @@ before.
 
 | Language gap | Scope | Priority | Near | Benchmark tasks |
 |---|---|---|---|---|
-| `G-CHOOSE` Choosing objects or robots at run time | open | 5.23 | yes | 5 |
+| `G-CHOOSE` Choosing objects or robots at run time | open | 5.23 | yes | 6 |
 | `G-PERCEIVE` Conditions on perceived properties (dirty, damaged) | open | 4.59 | yes | 4 |
 
 ## Cooperation
@@ -239,9 +240,9 @@ before.
 
 | Language gap | Scope | Priority | Near | Benchmark tasks |
 |---|---|---|---|---|
-| `G-PATH` Staying inside or outside a region while moving | open | 2.86 | yes | 5 |
-| `G-PROX` Limits and reactions that depend on people nearby: slow, stop or yield when a person is within a distance | open | 0.97 | — | 0 |
-| `G-FORCE` Force limits and gentle handling | open | 0.63 | — | 1 |
+| `G-PATH` Staying inside or outside a region while moving | open | 2.86 | yes | 20 |
+| `G-PROX` Limits and reactions that depend on people nearby: slow, stop or yield when a person is within a distance | open | 0.97 | — | 1 |
+| `G-FORCE` Force limits and gentle handling | open | 0.63 | — | 2 |
 
 ## Prediction
 

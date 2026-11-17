@@ -1,0 +1,8 @@
+// bench/reference_regions/r02_tug_stay_in_lane.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 1.6;
+
+task to_gate(robot r, location dst, region lane) {
+    @safety in_region lane;
+    goal { robot_at r dst; }
+    plan { move r to dst; }
+}

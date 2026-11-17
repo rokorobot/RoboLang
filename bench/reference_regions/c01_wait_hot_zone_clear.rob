@@ -1,0 +1,13 @@
+// bench/reference_regions/c01_wait_hot_zone_clear.rob: hand-written reference
+robolang 1.6;
+
+task fetch(robot r, object b, location src, location dst, region hot) {
+    goal { object_at b dst; }
+    plan {
+        wait until region_clear hot timeout 60 s else { fail "the hot zone did not clear"; }
+        move r to src;
+        grasp r b;
+        move r to dst;
+        place r b at dst;
+    }
+}

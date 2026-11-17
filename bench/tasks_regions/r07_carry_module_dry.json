@@ -1,0 +1,49 @@
+{
+  "id": "r07_carry_module_dry",
+  "prompt": "Have installer1 carry module_14 from the module pallet to the level 3 wall, without letting it, or the module, enter wet_floor.",
+  "world": "bench/worlds/site.json",
+  "group": "region",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_7": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "the world as given",
+        "goal": [
+          [
+            "rl:thing:module_14",
+            "located_in",
+            "rl:place:level_3_wall"
+          ]
+        ],
+        "world_patch": {}
+      }
+    ],
+    "world_1_3": {
+      "robots": {
+        "installer1": {
+          "honours": [
+            "no_go_region",
+            "in_region"
+          ]
+        }
+      }
+    }
+  },
+  "expected_limits": [
+    [
+      "no_go_region",
+      "wet_floor"
+    ]
+  ],
+  "tags": [
+    "no_go_region",
+    "carrying"
+  ],
+  "gap": "G-PATH",
+  "why": "The request covers the base and anything it carries (0039 P3). 1.6 cannot state a region limit (`no_go_region` is reserved), carrying or not.",
+  "attempt_fails_with": "E211"
+}

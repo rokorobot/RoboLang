@@ -1,0 +1,54 @@
+{
+  "id": "r03_field_not_road",
+  "prompt": "Take weeder1 to row_14. It must stay inside field_zone and out of road_zone the whole way.",
+  "world": "bench/worlds/site.json",
+  "group": "region",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_7": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "the world as given",
+        "goal": [
+          [
+            "rl:robot:weeder1",
+            "located_in",
+            "rl:place:row_14"
+          ]
+        ],
+        "world_patch": {}
+      }
+    ],
+    "world_1_3": {
+      "robots": {
+        "weeder1": {
+          "honours": [
+            "no_go_region",
+            "in_region"
+          ]
+        }
+      }
+    }
+  },
+  "expected_limits": [
+    [
+      "in_region",
+      "field_zone"
+    ],
+    [
+      "no_go_region",
+      "road_zone"
+    ]
+  ],
+  "tags": [
+    "in_region",
+    "no_go_region",
+    "both_limits"
+  ],
+  "gap": "G-PATH",
+  "why": "Two limits on one task, one of each kind: neither is expressible in 1.6 (`in_region`, `no_go_region` are reserved words). 1.7 allows both on different regions (0039 P4).",
+  "attempt_fails_with": "E201"
+}

@@ -1,0 +1,9 @@
+{
+  "task": "via_hall",
+  "bindings": {
+    "r": "cleaner1",
+    "hall": "hall",
+    "dst": "dock_3",
+    "wet": "wet_floor"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "task": "bring",
+  "bindings": {
+    "r": "picker1",
+    "v": "vial_b1",
+    "src": "fridge_1",
+    "dst": "packing"
+  }
+}
