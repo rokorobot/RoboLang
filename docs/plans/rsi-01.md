@@ -13,7 +13,7 @@ are in the [language evolution strategy](../LANGUAGE_EVOLUTION.md), the binding 
 | R2 | First present scan (A1): activities with sources, maturity, forecasts | ~$5–15 | **Done** 2026-11-17: 25 activities, gaps G-PROX, G-PREDICT, G-TEACH ([report](../evidence/rsi-r2-foresight-pass-1.md)); autonomy added by hand: 3 activities, gap G-SELF |
 | A2 | First horizon scan: leading signals for far activities, `concept` activities, R2's holes | ~$5–15 | **Done** 2026-11-17: 35 leading signals, 7 `concept` activities, machine tending, weeding and solar installation added ([report](../evidence/rsi-a2-horizon-scan-1.md)) |
 | R3 | Future tasks (`bench/tasks_future/`) for the near activities: an attempt that fails with a named diagnostic per claimed gap, a reference for what 1.6 can do; then a model run through the `Benchmark` workflow | ~$2 | **Probes done** 2026-11-17: 25 probes confirm the nine near gaps, 3 claims refuted, 8 controls ([report](../evidence/rsi-r3-gap-verification.md)); model run 2026-11-17: 0/25 false programs (Sonnet 25/25 declines; Haiku 23/25 plus 2 `clarify`), $0.20; the ACT-MFG-001 G-CHOOSE refutation withdrawn; follow-up: teach fixed counts and bounded retries in the reference (F01) |
-| R4 | Weekly Cloudroom Loop: A1 and A2, atlas PR with a development log entry; monthly a ranked proposal for L1 | ~$1/week | After R3 |
+| R4 | Weekly Cloudroom Loop: A1 and A2, atlas PR with a development log entry; monthly a ranked proposal for L1 | ~$1/week | **Running** since 2026-11-17: Cloudroom Loop "Atlas weekly (Mondays 08:00)", Europe/Prague, Sonnet; first test run 2026-11-17 |
 | R5 | Quarterly calibration (loop C): score due forecasts, adjust sources and weights | ~$1/quarter | First forecasts due 2027-03 |
 
 ## Language phase, first iteration

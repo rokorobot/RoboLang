@@ -64,5 +64,6 @@ Frozen, dated copies with a git tag: [roadmap-snapshots/](roadmap-snapshots/READ
 
 | # | State |
 |---|---|
-| I1–I10 | Not started; R3 done: tests and model run (0/25 false programs) |
+| I1 G-PATH | **L1 done** (owner, 2026-11-17). **L2:** decision record [0039](../spec/decisions/0039-region-limits.md) proposed |
+| I2–I10 | Not started; R3 done: tests and model run (0/25 false programs) |
 | Mission layer decision record | Not started |
