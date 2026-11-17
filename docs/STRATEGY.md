@@ -3,7 +3,8 @@
 **Status:** **APPROVED by the owner, 2026-11-11**, with decisions D1–D4 and rule 6 as below. First proposed 2026-10-29;
 revised 2026-11-10/11 (state as of 2026-11-11).
 **Reviewed:** every month (section 5). The [development plan](DEVELOPMENT_PLAN.md) holds the detail;
-this page holds the direction.
+this page holds the direction. How the language evolves with robot activities: the
+[language evolution strategy](LANGUAGE_EVOLUTION.md) and its [rules](LANGUAGE_EVOLUTION_RULES.md) (since 2026-11-16).
 
 ## 1. Where we are going
 
@@ -21,7 +22,7 @@ Two measurable promises follow from it, and every release is judged against them
 
 | Pillar | What "done" looks like | Today |
 |---|---|---|
-| P1 **Expressive language** | Operators' everyday requests fit RoboLang without silent loss: goals, bounded branching, typed values. Unbounded loops and schedules stay with the orchestrator | RoboLang 1.6: goals, bounded branching (1.4), step failure handlers (1.5), measured values with units and uncertainty (1.6). Not yet: choosing objects at run time (`detect`), arithmetic, structured data |
+| P1 **Expressive language** | The requests of today's robot activities and of those expected within three years ([activity atlas](plans/humanoid-activities.md)) fit RoboLang without silent loss: goals, bounded branching, typed values. Unbounded loops and schedules stay with the orchestrator | RoboLang 1.6: goals, bounded branching (1.4), step failure handlers (1.5), measured values with units and uncertainty (1.6). Not yet: choosing objects at run time (`detect`), arithmetic, structured data |
 | P2 **Safety by construction** | Errors are caught while the task is written, not when it runs. Authority is local and explicit, and success requires evidence | Validator with all diagnostics, `validate --world`, holder check, verified outcomes; uncertain readings and unknown conditions fail closed. The benchmark measures silent failures (`half_program`, `unsafe_continue`, `silent_substitution`) |
 | P3 **Interoperability through Core** | A stable Core version that an independent party implements from the spec alone | Core 0.2 frozen; gate 2 passed 2026-11-10: an independent Core 0.2 amr-07, written by a clean-room AI session from the frozen bundle, passes 25/25 cases ([evidence](interop/interop-4-run-2.md)). Network and search were not technically blocked. No human or outside implementer yet |
 | P4 **Path to real execution** | The same task runs in the symbolic simulator, then in a physics simulator through ROS 2, then on hardware behind a safety case | Symbolic simulation, plus a ROS 2 backend in Gazebo (UR5e, MoveIt 2) verified from sensor observations: 11 tasks × 3 runs pass. `robot_ready` from ROS 2 merged (#100). No hardware |
@@ -49,14 +50,19 @@ A horizon ends when its exit criteria hold, not on a date. Dates are targets.
 - **D3. Release 0.3.0** with languages 1.5 and 1.6, first: P5's "installs it from PyPI" covers the current language.
   The owner publishes the GitHub release, which runs the PyPI workflow.
 - **D4. No new language work until H4 needs it.** The `detect` evidence set (set 5 `x03` is its first evidence) is
-  deferred: it lies outside the current horizon (rule 3) and its evidence is thin.
+  deferred: it lies outside the current horizon (rule 3) and its evidence is thin. **Superseded 2026-11-16 by D5.**
+- **D5 (owner, 2026-11-16). New language work follows the ranked activity atlas**
+  ([language evolution strategy](LANGUAGE_EVOLUTION.md), [rules](LANGUAGE_EVOLUTION_RULES.md), [RSI-01](plans/rsi-01.md)).
+  Near gaps needed by the current horizon come first; far gaps get design sketches only, no syntax.
 - **Follow-up, off the critical path:** a stronger gate 2 run, technically isolated or by a human team, would remove
   the recorded caveat of the 2026-11-10 pass (gate 2 spec section 2).
 
 ## 4. How decisions get made
 
 1. **Evidence before syntax.** A new language feature needs (a) benchmark tasks that fail without it,
-   and (b) a re-run showing that it fixes them without raising false programs.
+   and (b) a re-run showing that it fixes them without raising false programs. A future task, derived from an atlas
+   activity of maturity `pilot` or `deployment` ([rule LE-7](LANGUAGE_EVOLUTION_RULES.md)), counts as such a task
+   (owner, 2026-11-16).
 2. **No regression on the two promises.** A change that lowers decision accuracy or raises false
    programs on the standing benchmark is not merged without an explicit owner decision.
 3. **Horizons limit scope.** Work outside the current horizon waits unless it unblocks it. At most two
@@ -102,3 +108,4 @@ is skipped and nothing is spent.
 | 2026-11-10 | **H3 met.** Gate 2 passed and signed off by the owner: an independent Core 0.2 amr-07, written in TypeScript by a clean-room `gpt-6-astra` session from the frozen bundle alone, passes all 25 gate 2 cases with 442/442 messages identical to the reference, after erratum [0037](../spec/decisions/0037-gate-2-errata-f1-f2.md) ([run 1](interop/interop-4-run-1.md), [run 2](interop/interop-4-run-2.md)). Caveat: network and search were not technically blocked; the transcript audit found neither used. H4 is next; it still needs a written safety case and the owner's authorization |
 | 2026-11-11 | **Approved by the owner** with D1–D4 and rule 6 as amended after H3: H4 is the current horizon; order: release 0.3.0, start H4 (safety case draft, hazard list, authorization design), confirm H1 on 2026-11-16 |
 | 2026-11-12 | **H4 started.** 0.3.1 released (first run from PyPI alone). [Safety case draft](safety-case-draft.md): 17 hazards, gaps G1–G7. Decision [0038](../spec/decisions/0038-physical-mode-authorization-stop-approval.md) approved: physical mode only by an owner-signed cell configuration, a person grants each run, signed task approval bound to the IR hash, RoboLang's own stop is controlled and holds with the gripper unchanged. Next: `ed25519` as an optional extra (simulation only) |
+| 2026-11-16 | **Language evolves with future robot activities** (owner): [RSI-01](plans/rsi-01.md) approved with its strategy amendment: rule 1 accepts future tasks from near atlas activities, D5 replaces D4, P1 covers activities expected within three years. First foresight pass (R2) started |
