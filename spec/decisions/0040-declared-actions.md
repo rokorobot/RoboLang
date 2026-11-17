@@ -1,8 +1,9 @@
 # Decision record 0040: Declared actions (I2, G-ACT, RoboLang 1.8)
 
 **Date:** 2026-11-17
-**Status:** PROPOSED. This is step L2 of iteration I2 in the [language roadmap](../../docs/LANGUAGE_ROADMAP.md).
-The owner chose the gap (L1) on 2026-11-17. Every point below needs the owner's review before anything is built.
+**Status:** **APPROVED by the owner, 2026-11-17**. The keywords are `do` and `in_state`; setpoint values (A5) and
+location targets (A4) are in 1.8; A1–A11 are as recommended. This is step L2 of iteration I2 in the
+[language roadmap](../../docs/LANGUAGE_ROADMAP.md); the owner chose the gap (L1) on 2026-11-17.
 **Applies to (when decided):**
 - a new `spec/robolang-v1.8.md` and `grammar-v1.8.ebnf`;
 - Task IR 1.7;
@@ -90,8 +91,8 @@ The closet carries a state: `"state": "closed"`.
   **an action replaced silently**, such as a `move` or an `inspect` written in place of the requested action.
 - **Economy:** 2 new keywords (`do`, `in_state`), 1 statement, 1 condition, 2 world-file fields and about 5 codes.
 
-## Open questions for the owner
+## Owner's answers (2026-11-17)
 
-1. A1/A2: the keywords `do` and `in_state`, or `perform` and `state`?
-2. A5: setpoint values in 1.8, or later?
-3. A4: should locations be targets ("print at level_3_wall"), or only objects?
+1. The keywords are `do` and `in_state`.
+2. Setpoint values are in 1.8 (A5).
+3. Locations can be targets (A4).

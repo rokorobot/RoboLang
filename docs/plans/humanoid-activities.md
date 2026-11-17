@@ -29,7 +29,7 @@ headed, and what a near design must not rule out. It never gives syntax by itsel
 | 3 | cooperation | 1.07 | 1.00 | 1.81 | 13 | G-CONC |
 | 4 | communication | 0.95 | 4.02 | 0.52 | 6 | G-MSG |
 | 5 | learning | 0.75 | 0.65 | 0.70 | 6 | — |
-| 6 | reasoning | 0.68 | 6.28 | 0.88 | 7 | G-LOOP, G-CLOCK, G-CALC |
+| 6 | reasoning | 0.68 | 14.49 | 0.88 | 7 | G-LOOP, G-CLOCK, G-CALC |
 | 7 | autonomy | 0.67 | 1.50 | 0.38 | 4 | G-SELF |
 | 8 | safety | 0.49 | 1.95 | 0.74 | 5 | — |
 | 9 | prediction | 0.25 | 0.50 | 0.68 | 4 | — |
@@ -45,7 +45,7 @@ first (strategy D5). An `out` gap enters only through its own decision record (L
 |---|---|---|---|---|---|---|
 | 1 | `G-ACT` | action | open | 4.30 | 0.45 | unlocks the most |
 | 2 | `G-CLOCK` | reasoning | open | 4.73 | 0.45 | unlocks the most |
-| 3 | `G-LOOP` | reasoning | out | 8.21 | 1.00 | unlocks the most |
+| 3 | `G-LOOP` | reasoning | open | 8.21 | 1.00 | unlocks the most |
 | 4 | `G-MSG` | communication | open | 4.02 | 2.37 | unlocks the most |
 | 5 | `G-PERCEIVE` | perception | open | 4.94 | 3.74 | unlocks the most |
 | 6 | `G-CHOOSE` | perception | open | 5.23 | 5.95 | unlocks the most |
@@ -88,6 +88,7 @@ before.
 
 | Date | Note | Added | Removed | Changed | Ranking |
 |---|---|---|---|---|---|
+| 2026-11-17 | 0040 approved (I2 G-ACT); 0041 approved: G-LOOP reopened with the mission layer (LE-9) | — | — | — | 1. action 4.52 · 2. perception 2.78 · 3. cooperation 1.07 · 4. communication 0.95 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
 | 2026-11-17 | L6 of I1: G-PATH closed by RoboLang 1.7; G-STEPLIMIT and G-WORKSPACE opened (0039 C4) | — | — | — | 1. action 4.52 · 2. perception 2.78 · 3. cooperation 1.07 · 4. communication 0.95 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
 | 2026-11-17 | I1 L4: RoboLang 1.7 built and taught | — | — | — | 1. action 4.52 · 2. perception 2.78 · 3. cooperation 1.07 · 4. communication 0.95 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
 | 2026-11-17 | 0039 clarifications C1-C7 (owner); x05 moved from G-CHOOSE to G-PROX | — | — | — | 1. action 4.52 · 2. perception 2.78 · 3. cooperation 1.07 · 4. communication 0.95 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
@@ -217,7 +218,7 @@ before.
 
 | Language gap | Scope | Priority | Near | Benchmark tasks |
 |---|---|---|---|---|
-| `G-LOOP` Repetition without a fixed bound: loops, retry until it works, schedules, event streams | out | 8.21 | yes | 12 |
+| `G-LOOP` Repetition without a fixed bound: loops, retry until it works, schedules, event streams | open | 8.21 | yes | 12 |
 | `G-CLOCK` Clock readings and times of day | open | 4.73 | yes | 8 |
 | `G-CALC` Arithmetic, counting and text built from values | open | 1.55 | yes | 7 |
 | `G-FALLBACK` A different end state counts as done | out | 0.00 | — | 1 |

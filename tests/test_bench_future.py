@@ -99,10 +99,11 @@ def test_every_task_names_a_near_activity_and_every_probe_an_open_gap_that_activ
 
 def test_every_gap_a_near_activity_claims_is_probed_except_the_proven_loop():
     claimed = {g for a in ATLAS["activities"] if atlas_report.is_near(a) for g in a["needs"]
-               if GAPS[g]["scope"] == "open"}
+               if GAPS[g]["scope"] == "open" and g != "G-LOOP"}  # G-LOOP: 12 standing tasks prove it; reopened by 0041
     assert claimed == {t["gap"] for t in PROBES.values()}
     assert {t["gap"] for t in REGIONS.values()} == {"G-PATH"} and GAPS["G-PATH"]["scope"] == "closed"
-    assert {g for g, v in GAPS.items() if v["scope"] == "out"} == {"G-LOOP", "G-FALLBACK"}
+    assert {g for g, v in GAPS.items() if v["scope"] == "out"} == {"G-FALLBACK"}
+    assert GAPS["G-LOOP"]["scope"] == "open" and "0041" in GAPS["G-LOOP"]["scope_note"]
 
 
 def test_refuted_claims_are_removed_from_needs_and_recorded_with_a_control():

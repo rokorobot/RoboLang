@@ -1,9 +1,9 @@
 # Decision record 0041: The mission layer (G-LOOP, RoboLang 2.0)
 
 **Date:** 2026-11-17
-**Status:** PROPOSED, design only. The [language roadmap](../../docs/LANGUAGE_ROADMAP.md) puts this record
-alongside I1/I2. It asks the owner to **reopen G-LOOP**, which is out of scope since N4 (2026-10-29). Only a decision
-record may reopen it (rule LE-9). Nothing is built before I4, and every point below needs the owner's review.
+**Status:** **APPROVED by the owner, 2026-11-17**, design only: **G-LOOP is reopened** (LE-9), with the mission layer
+as its design. Every repeat has a hard bound (M2); 2.0 has `stop`, `continue` and `retry N` (M4); M1–M10 are as
+recommended. It is built at iteration I4 of the [language roadmap](../../docs/LANGUAGE_ROADMAP.md), after I2 and I3.
 **Applies to (when decided, at I4):** a new layer in `spec/robolang-v2.0.md`, a mission record, `simulate`,
 `docs/language-reference.md`, and benchmark set 8. Tasks, Task IR and Core 0.2 are unchanged (M8).
 **Evidence:**
@@ -70,8 +70,8 @@ With G-MSG it makes 4. The order is generated in
 - **Bounds:** fixed with the baseline (rule 6), including a measure of **a bound dropped or invented**: a mission
   without the bound the request implies, or with one it did not state.
 
-## Open questions for the owner
+## Owner's answers (2026-11-17)
 
-1. **Reopen G-LOOP** (LE-9) with the mission layer as its design, yes or no?
-2. M2: a hard bound on every repeat (recommended), or allow "until stopped" with the operator as the only bound?
-3. M4: are `continue` and `retry N` in 2.0, or only `stop`?
+1. G-LOOP is reopened, with the mission layer as its design.
+2. Every repeat has a hard bound.
+3. 2.0 has `continue` and `retry N`, as well as `stop`.
