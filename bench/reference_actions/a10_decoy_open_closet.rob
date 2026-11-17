@@ -1,0 +1,10 @@
+// bench/reference_actions/a10_decoy_open_closet.rob: hand-written reference
+robolang 1.8;
+
+task open_closet(robot r, object door, location closet) {
+    goal { in_state door "open"; }
+    plan {
+        move r to closet;
+        do r open_door door;
+    }
+}

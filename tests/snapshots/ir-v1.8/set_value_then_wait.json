@@ -1,0 +1,103 @@
+{
+  "ir_schema": "robolang.task-ir",
+  "ir_schema_version": "1.7",
+  "language_version": "1.8",
+  "tasks": [
+    {
+      "name": "fry",
+      "parameters": [
+        {
+          "name": "r",
+          "type": "robot"
+        },
+        {
+          "name": "fryer",
+          "type": "location"
+        },
+        {
+          "name": "oil",
+          "type": "object"
+        },
+        {
+          "name": "basket",
+          "type": "object"
+        },
+        {
+          "name": "probe",
+          "type": "sensor"
+        }
+      ],
+      "safety": [],
+      "preconditions": [],
+      "goal": [
+        {
+          "kind": "in_state",
+          "target": "fryer",
+          "label": "heating"
+        },
+        {
+          "kind": "object_at",
+          "object": "basket",
+          "location": "fryer"
+        }
+      ],
+      "steps": [
+        {
+          "kind": "do",
+          "robot": "r",
+          "action": "set",
+          "target": "fryer",
+          "value": {
+            "kind": "quantity",
+            "value": "175",
+            "unit": "degC"
+          }
+        },
+        {
+          "kind": "wait_until",
+          "condition": {
+            "kind": "compare",
+            "left": {
+              "kind": "live",
+              "reading": "temperature",
+              "object": "oil",
+              "sensor": "probe"
+            },
+            "op": ">",
+            "right": {
+              "kind": "quantity",
+              "value": "170",
+              "unit": "degC"
+            }
+          },
+          "timeout": {
+            "value": "60",
+            "unit": "s"
+          },
+          "else": [
+            {
+              "kind": "fail",
+              "reason": "oil did not heat"
+            }
+          ]
+        },
+        {
+          "kind": "grasp",
+          "robot": "r",
+          "object": "basket"
+        },
+        {
+          "kind": "move",
+          "robot": "r",
+          "target": "fryer"
+        },
+        {
+          "kind": "place",
+          "robot": "r",
+          "object": "basket",
+          "target": "fryer"
+        }
+      ]
+    }
+  ]
+}

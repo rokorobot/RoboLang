@@ -10,6 +10,12 @@ that differs changes the labels named there.**
 
 ## How the set is used
 
+**L4 (2026-11-17):** 1.8 is built and taught. `expect` now holds the 1.8 label and `expect_1_7` the 1.7 one; the 1.8
+references, the world 1.4 copies (`worlds/*_1_4.json`) and the scorer checks `actions_ok` and `action_replaced_silently` (B8)
+are written. The sections below describe the set as it was frozen at L3 (where they say "now", "the baseline" or "L4 writes",
+read L3); the changes are listed in [bench-errata-1-8.md](../evidence/bench-errata-1-8.md). The tasks, their 1.7 labels
+and the bounds B1–B8 are unchanged.
+
 - **Labels.** `expect` is the **1.7** label and is what the baseline scores. `expect_1_8` is the label for acceptance once
   1.8 is taught (L4 moves it to `expect` and keeps the old one as `expect_1_7`, as set 6 did). The 1.8 label of a program
   task carries its `paths` (goal and world patch) and, on every non-control task, the world 1.4 facts it rests on.

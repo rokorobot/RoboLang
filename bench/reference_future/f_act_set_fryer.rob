@@ -1,0 +1,15 @@
+// bench/reference_future/f_act_set_fryer.rob: hand-written reference
+robolang 1.8;
+
+task heat_then_fry(robot r, object basket, object oil, sensor probe, location src, location fryer) {
+    goal { in_state fryer "heating"; object_at basket fryer; }
+    plan {
+        move r to fryer;
+        do r set fryer to 175 degC;
+        wait until temperature of oil using probe >= 175 degC timeout 60 s else { fail "the oil did not reach 175"; }
+        move r to src;
+        grasp r basket;
+        move r to fryer;
+        place r basket at fryer;
+    }
+}

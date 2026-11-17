@@ -1,11 +1,42 @@
 {
   "id": "f_act_set_fryer",
   "prompt": "Set the fryer to 175 degrees Celsius, and once the oil reads 175 degrees, move basket_2 from the prep table to the fryer.",
-  "world": "bench/worlds/fry_station.json",
-  "group": "inexpressible",
+  "world": "bench/worlds/fry_station_hot_1_4.json",
+  "group": "action",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_7": {
     "decision": "cannot",
     "category": "inexpressible"
+  },
+  "expect_1_8": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "the oil reads above 175 degC at 20 s",
+        "goal": [
+          [
+            "rl:place:fryer",
+            "in_state",
+            "heating"
+          ],
+          [
+            "rl:thing:basket_2",
+            "located_in",
+            "rl:place:fryer"
+          ]
+        ],
+        "world_patch": {}
+      },
+      {
+        "when": "the oil never heats: the run stops",
+        "fails": true,
+        "world_patch": {
+          "events": []
+        }
+      }
+    ]
   },
   "activity": "ACT-HOS-001",
   "gap": "G-ACT",
@@ -14,6 +45,16 @@
     "set_value",
     "wait_until"
   ],
-  "why": "No command writes a value to a device: a plan has only move, grasp, place, inspect, measure, wait and communicate (language reference: 'setting a value (no command writes one)').",
-  "attempt_fails_with": "E203"
+  "why": "`set` takes a temperature (0040 A5); reaching it is a `wait until` on the reading, never assumed. The world copy has the oil read 176 degC at 20 s, so `>= 175` is true (a reading of 175 +/- 0.5 is unknown against it).",
+  "expected_actions": [
+    {
+      "robot": "flippy1",
+      "action": "set",
+      "target": "fryer",
+      "value": [
+        "175",
+        "degC"
+      ]
+    }
+  ]
 }

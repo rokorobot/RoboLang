@@ -1,0 +1,10 @@
+// bench/reference_actions/a08_charge_cart.rob: hand-written reference
+robolang 1.8;
+
+task charge_cart(robot r, location charger) {
+    goal { in_state charger "charging"; }
+    plan {
+        move r to charger;
+        do r charge charger;
+    }
+}

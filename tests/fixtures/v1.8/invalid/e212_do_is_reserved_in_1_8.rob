@@ -1,0 +1,10 @@
+// RoboLang v1.8 fixture: invalid
+// expect: error E212 (syntax) line 7
+// why: do is a reserved word in 1.8, so it cannot name a parameter
+
+robolang 1.8;
+
+task t(robot r, object do) {
+    goal { object_exists do; }
+    plan { wait for 1 s; }
+}

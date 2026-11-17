@@ -1,9 +1,13 @@
 {
   "id": "x01_hand_to_ana",
   "prompt": "Have moxi1 hand iv_kit_1 to Ana at room_412.",
-  "world": "bench/worlds/ward.json",
+  "world": "bench/worlds/ward_hand_1_4.json",
   "group": "inexpressible",
   "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_7": {
     "decision": "cannot",
     "category": "inexpressible"
   },

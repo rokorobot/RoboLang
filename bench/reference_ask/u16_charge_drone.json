@@ -1,0 +1,8 @@
+{
+  "task": "charge_then_fly",
+  "bindings": {
+    "r": "drone1",
+    "dock": "workshop",
+    "dst": "berth_1"
+  }
+}

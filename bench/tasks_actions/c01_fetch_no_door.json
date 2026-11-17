@@ -1,9 +1,12 @@
 {
   "id": "c01_fetch_no_door",
   "prompt": "With moxi1, take iv_kit_1 from the supply closet to room_412.",
-  "world": "bench/worlds/ward.json",
+  "world": "bench/worlds/ward_1_4.json",
   "group": "control",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_8": {
     "decision": "program"
   },
   "expected_goal": [
@@ -13,9 +16,6 @@
       "rl:place:room_412"
     ]
   ],
-  "expect_1_8": {
-    "decision": "program"
-  },
   "expected_actions": [],
   "tags": [
     "pick_place",

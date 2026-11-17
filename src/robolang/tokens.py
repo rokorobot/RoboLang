@@ -1,4 +1,4 @@
-"""Token definitions and word sets for RoboLang v1.1 to v1.7 (robolang-v1.1.md section 3, v1.2 2.2, v1.3 2.2)."""
+"""Token definitions and word sets for RoboLang v1.1 to v1.8 (robolang-v1.1.md section 3, v1.2 2.2, v1.3 2.2)."""
 
 from __future__ import annotations
 from dataclasses import dataclass
@@ -36,6 +36,7 @@ class Token:
 PARAM_TYPES = ("robot", "object", "location", "region")
 STATEMENTS = ("move", "grasp", "place", "inspect", "wait", "communicate")
 STATEMENTS_V1_6 = STATEMENTS + ("measure",)
+STATEMENTS_V1_8 = STATEMENTS_V1_6 + ("do",)  # RoboLang 1.8: a declared action (decision 0040 A1)
 CONDITIONS = ("robot_ready", "region_clear", "object_exists", "sensor_ok")
 
 KEYWORDS = frozenset(
@@ -58,6 +59,7 @@ RESERVED_V1_2 = RESERVED | frozenset(OPERATORS)
 # (spec/robolang-v1.3.md sections 2.2 and 3).
 PARAM_TYPES_V1_3 = PARAM_TYPES + ("sensor",)
 CONDITIONS_V1_3 = CONDITIONS + ("object_at", "robot_at", "holding")
+CONDITIONS_V1_8 = CONDITIONS_V1_3 + ("in_state",)  # RoboLang 1.8 (decision 0040 A2)
 RESERVED_V1_3 = RESERVED_V1_2 | frozenset(("goal", "sensor", "object_at", "robot_at", "holding"))
 
 # RoboLang 1.4 adds bounded branching (spec/robolang-v1.4.md, decision 0027 B9).
@@ -69,10 +71,13 @@ RESERVED_V1_4 = RESERVED_V1_3 | frozenset(("if", "else", "fail"))
 RESERVED_V1_6 = RESERVED_V1_4 | frozenset(("measure", "as"))
 # RoboLang 1.7 adds region limits (decision 0039 P1): `@safety no_go_region R;` and `@safety in_region R;`. Both words
 # have been reserved since 1.1, so there is no new word.
+# RoboLang 1.8 adds declared actions (decision 0040 A1, A2): `do` and `in_state` are reserved. An action name is a
+# name that the robot's profile declares; it is recognised by position and is not reserved.
+RESERVED_V1_8 = RESERVED_V1_6 | frozenset(("do", "in_state"))
 # Language version -> its reserved words. Versions not listed read as 1.1.
 RESERVED_BY_VERSION = {
     "1.2": RESERVED_V1_2, "1.3": RESERVED_V1_3, "1.4": RESERVED_V1_4, "1.5": RESERVED_V1_4, "1.6": RESERVED_V1_6,
-    "1.7": RESERVED_V1_6,
+    "1.7": RESERVED_V1_6, "1.8": RESERVED_V1_8,
 }
 
 # Recognized only in their grammatical position; not reserved.

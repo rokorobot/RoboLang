@@ -1,9 +1,12 @@
 {
   "id": "a06_two_cranes_lock",
   "prompt": "Have crane1 lock cont_101 and crane2 lock cont_102.",
-  "world": "bench/worlds/yard.json",
+  "world": "bench/worlds/yard_1_4.json",
   "group": "action",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_7": {
     "decision": "cannot",
     "category": "inexpressible"
   },

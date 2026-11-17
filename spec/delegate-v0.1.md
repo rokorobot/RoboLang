@@ -75,7 +75,7 @@ first task for which all of these hold:
 
 The record lists every task considered with one result: `matched`, `no_goal`, `world_E5xx`,
 `no_core_form`, `goal_differs`, `robot_not_bound`, `robots_unsupported` (v0.2: the task binds two or more other
-robots) or `measure_unsupported` (RoboLang 1.6: the task contains a `measure`; checked right after `no_goal`) or `region_limits_unsupported` (RoboLang 1.7: the task has a region limit, which Core carries no form for; checked after `measure_unsupported`). A task of the AI (`FILE`) with a region limit is refused before anything is sent, with `X605` (exit 6). Nothing else is compared: safety limits and
+robots) or `measure_unsupported` (RoboLang 1.6: the task contains a `measure`; checked right after `no_goal`) or `region_limits_unsupported` (RoboLang 1.7: the task has a region limit, which Core carries no form for; checked after `measure_unsupported`) or `in_state_unsupported` (RoboLang 1.8: the goal has an `in_state`, which Core has no triple for; checked before `region_limits_unsupported`). A task of the AI (`FILE`) whose goal has an `in_state` is refused before anything is sent, with `X606` (exit 6). A task of the AI (`FILE`) with a region limit is refused before anything is sent, with `X605` (exit 6). Nothing else is compared: safety limits and
 preconditions are the plan's own business, and a failing precondition is an outcome, not a rejection.
 
 ## 4. The delegate record
@@ -139,7 +139,7 @@ holds. Per-criterion `reason`: `evidence_missing`, `signature_invalid`, `criteri
 | `2` | Usage: bad arguments, `--bind` or `--lease`, unreadable file, unknown task, several tasks and no `--task`, invalid `--from` or `--to`, no `.rob` file under `--plans` |
 | `3` | A world file is not valid, or a `--bind` is wrong |
 | `4` | The planner recorded `failed`, `unknown` or `cancelled` |
-| `6` | The goal has no Core form (`X601`), an object lacks class or mass (`X602`) or the task has a region limit (`X605`) |
+| `6` | The goal has no Core form (`X601`), an object lacks class or mass (`X602`) the task has a region limit (`X605`) or the goal has an `in_state` (`X606`) |
 | `7` | The robot rejected the goal (no plan matches, or its peer declined), or a participant rejected a message (record on stdout) |
 
 ## 8. What is not shown

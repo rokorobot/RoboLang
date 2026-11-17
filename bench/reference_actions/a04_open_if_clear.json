@@ -1,0 +1,9 @@
+{
+  "task": "open_if_clear",
+  "bindings": {
+    "r": "chef_arm",
+    "door": "oven_door_1",
+    "oven": "oven",
+    "pass": "pass_area"
+  }
+}

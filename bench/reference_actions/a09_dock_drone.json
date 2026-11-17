@@ -1,0 +1,8 @@
+{
+  "task": "patrol_and_dock",
+  "bindings": {
+    "r": "drone1",
+    "out": "berth_1",
+    "home": "workshop"
+  }
+}

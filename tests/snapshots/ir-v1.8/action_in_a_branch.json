@@ -1,0 +1,73 @@
+{
+  "ir_schema": "robolang.task-ir",
+  "ir_schema_version": "1.7",
+  "language_version": "1.8",
+  "tasks": [
+    {
+      "name": "open_if_clear",
+      "parameters": [
+        {
+          "name": "r",
+          "type": "robot"
+        },
+        {
+          "name": "door",
+          "type": "object"
+        },
+        {
+          "name": "pass_area",
+          "type": "region"
+        }
+      ],
+      "safety": [],
+      "preconditions": [
+        {
+          "kind": "not",
+          "condition": {
+            "kind": "in_state",
+            "target": "door",
+            "label": "open"
+          }
+        }
+      ],
+      "goal": [],
+      "steps": [
+        {
+          "kind": "if",
+          "condition": {
+            "kind": "region_clear",
+            "region": "pass_area"
+          },
+          "then": [
+            {
+              "kind": "do",
+              "robot": "r",
+              "action": "open",
+              "target": "door"
+            }
+          ],
+          "else": [
+            {
+              "kind": "communicate",
+              "robot": "r",
+              "channel": "kitchen",
+              "message": "pass busy"
+            },
+            {
+              "kind": "fail",
+              "reason": "pass busy"
+            }
+          ],
+          "goal_then": [
+            {
+              "kind": "in_state",
+              "target": "door",
+              "label": "open"
+            }
+          ],
+          "goal_else": null
+        }
+      ]
+    }
+  ]
+}

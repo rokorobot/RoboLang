@@ -116,3 +116,17 @@ The closet carries a state: `"state": "closed"`.
 | C13 | Region limits and actions | A `do` with a location target counts as a target for `S004`. The robot has to move there (C2), so 1.7's checks apply as they do to `move` |
 | C14 | Charge and dock | In 1.8 the state is on the charger or the dock (a location target). The robot's own state is G-SELF (I8) |
 | C15 | `x03` and G-TEACH | `x03` is the first task of G-TEACH, as its scope note says |
+
+## Implementation note (L4–L5, 2026-11-17)
+
+Built in PR #151 and accepted on 2026-11-17 ([acceptance](../../docs/evidence/bench-1-8-acceptance.md)). New codes:
+
+- **Checked before the run:** `S006` (the robot does not declare the action), `S007` (the target kind), `S008` (the
+  value) and `S009` (no declared action produces the goal state, C7).
+- **Checked when the step runs:** `S271` (the robot is not at the target, C2).
+- **Checked in the world file:** `E517` (an unknown kind in an action declaration).
+- **Checked on export:** `X606` (`export-goal` and `delegate` refuse a goal with `in_state`).
+
+A wrong value kind is reported against the world (`S008`), not by `E319`. `S009` applies to an `in_state` the goal
+requires on every path. After the first acceptance run, erratum E5 added to the grammar and the reference what a
+`do` cannot say (A4, A10).

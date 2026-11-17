@@ -1,0 +1,10 @@
+// RoboLang v1.8 fixture: invalid
+// expect: error E307 (static) line 8
+// why: a state label is not empty
+
+robolang 1.8;
+
+task t(robot r, object door) {
+    goal { in_state door ""; }
+    plan { do r open door; }
+}

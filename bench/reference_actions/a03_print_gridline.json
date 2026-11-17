@@ -1,0 +1,7 @@
+{
+  "task": "print_marks",
+  "bindings": {
+    "r": "printer1",
+    "line": "gridline_c"
+  }
+}

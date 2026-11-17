@@ -1,0 +1,13 @@
+// bench/reference_ask/u15_open_oven.rob: hand-written reference
+robolang 1.8;
+
+task open_and_take_out(robot r, object door, object tray, location oven, location dst) {
+    goal { in_state door "open"; object_at tray dst; }
+    plan {
+        move r to oven;
+        do r open door;
+        grasp r tray;
+        move r to dst;
+        place r tray at dst;
+    }
+}

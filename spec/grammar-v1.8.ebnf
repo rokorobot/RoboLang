@@ -1,0 +1,41 @@
+(* RoboLang v1.8 grammar, implemented in src/robolang/parser.py.
+   RoboLang 1.7 plus declared actions (decision 0040). Differences from grammar-v1.7.ebnf are marked [1.8].
+   Everything not shown here is as in grammar-v1.7.ebnf (and grammar-v1.6.ebnf and those below it).
+   Normative text, diagnostics and static rules: spec/robolang-v1.8.md *)
+
+version_decl  = "robolang" , NUMBER , ";" ;                (* [1.8] NUMBER written exactly 1.8 *)
+
+statement     = ... | do_stmt ;                             (* [1.8] *)
+do_stmt       = "do" , NAME , NAME , NAME , [ "to" , value ] , end ;
+                                                            (* [1.8] robot, action, target; end is ";" or a handler *)
+value         = QUANTITY | STRING ;                         (* [1.8] QUANTITY = NUMBER UNIT, any unit of 1.6 *)
+
+atom          = ... | in_state ;                            (* [1.8] a condition in pre, goal, if and wait until *)
+in_state      = "in_state" , NAME , STRING ;                (* [1.8] *)
+
+(* [1.8] "do" and "in_state" are new reserved words. The action NAME is not reserved: it is a name the robot's profile
+   declares, so "do r move x;" is E212 (a reserved word) and "do r open x;" is read for any NAME.
+   A "do" may end with a failure handler "else { ... }" as move, grasp, place, inspect, measure and wait until do (1.5).
+   [1.8] Static rules the grammar does not express (spec/robolang-v1.8.md section 3):
+   - the first NAME is a robot parameter; the target is a parameter of type object or location;
+   - a string value and the label of in_state are not empty (E307); a quantity has a unit of 1.6 (E206).
+   [1.8] Meaning (spec/robolang-v1.8.md sections 2 and 5):
+   - whether the robot declares the action, whether the target is of the declared kind, and whether the value is of the
+     declared kind are checked against the world before the run (S006, S007, S008); a goal in_state that no declared
+     action produces is S009.
+   - "do" is a request to the robot's own controller. It sets the target's state to the action's declared result in
+     the simulation and is recorded as "requested"; success is decided by the goal, observed through in_state.
+   - the robot must be at the target (a location, or the location of the object), as for grasp (S271).
+   - in_state X "label" is true when the observed state of X is the label, false when it is another label, unknown when
+     there is none; unknown fails closed.
+   [1.8] What a "do" cannot say (decision 0040 A4, A10; erratum E5 of docs/evidence/bench-errata-1-8.md):
+   - one target only: there is no recipient or second thing ("hand the kit to Ana" cannot be written: a person is not
+     an entity, and "do r hand kit" drops her);
+   - the result is the declared state label of the target, not a value the action returns: "report the self-test
+     result" cannot be written, and sending the declared label as if it were the outcome is a half program;
+   - the action name must be one the robot's profile declares, for what the request asks; an action whose name only
+     resembles the request is not that action;
+   - a do runs once: "until it works", "every hour", "at 6 am" and "define a skill for later" are not a do.
+   A request that needs one of these is declined as inexpressible. *)
+
+(* Reserved words in a 1.8 file: those of grammar-v1.7.ebnf, and "do" and "in_state". *)

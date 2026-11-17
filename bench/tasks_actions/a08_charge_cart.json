@@ -1,9 +1,12 @@
 {
   "id": "a08_charge_cart",
   "prompt": "Send cart2 to the charger and have it charge there.",
-  "world": "bench/worlds/pharmacy.json",
+  "world": "bench/worlds/pharmacy_1_4.json",
   "group": "action",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_7": {
     "decision": "cannot",
     "category": "inexpressible"
   },
@@ -12,14 +15,28 @@
     "paths": [
       {
         "when": "the world as given",
-        "goal": [
+        "world_patch": {},
+        "goals": [
           [
-            "rl:place:charger",
-            "in_state",
-            "charging"
+            [
+              "rl:place:charger",
+              "in_state",
+              "charging"
+            ]
+          ],
+          [
+            [
+              "rl:place:charger",
+              "in_state",
+              "charging"
+            ],
+            [
+              "rl:robot:cart2",
+              "located_in",
+              "rl:place:charger"
+            ]
           ]
-        ],
-        "world_patch": {}
+        ]
       }
     ],
     "world_1_4": {

@@ -134,6 +134,8 @@ def _consider(plan: Plan, task: ir.Task, robot_world: bytes, world_name: str, ro
         return "no_goal", None
     if any(isinstance(step, ir.Measure) for _, step in ir.walk(task.steps)):
         return "measure_unsupported", None  # RoboLang 1.6 values are not delegated yet (spec/robolang-v1.6.md)
+    if task.goal_states:
+        return "in_state_unsupported", None  # Core 0.2 has no state triples (RoboLang 1.8, decision 0040 A8)
     if task.region_limits:
         return "region_limits_unsupported", None  # Core carries no region limit (RoboLang 1.7, decision 0039 P8)
     try:

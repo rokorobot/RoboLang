@@ -2,7 +2,7 @@
 Versioned task IR for RoboLang (spec/ir-schema-v1.0.md; schema 1.1 for RoboLang 1.2: ir-schema-v1.1.md;
 schema 1.2 for RoboLang 1.3: ir-schema-v1.2.md; schema 1.3 for RoboLang 1.4: ir-schema-v1.3.md; schema 1.4 for
 RoboLang 1.5: ir-schema-v1.4.md; schema 1.5 for RoboLang 1.6: ir-schema-v1.5.md; schema 1.6 for
-RoboLang 1.7: ir-schema-v1.6.md).
+RoboLang 1.7: ir-schema-v1.6.md; schema 1.7 for RoboLang 1.8: ir-schema-v1.7.md).
 
 The IR is a description of validated tasks with source details removed:
 no spans, comments or formatting. Two sources that differ only in layout
@@ -30,7 +30,8 @@ IR_SCHEMA = "robolang.task-ir"
 IR_SCHEMA_VERSION = "1.0"
 LANGUAGE_VERSION = DEFAULT_VERSION
 # Language version -> the IR schema version it compiles to (ir-schema-v1.1.md section 1).
-IR_SCHEMA_VERSIONS = {"1.1": "1.0", "1.2": "1.1", "1.3": "1.2", "1.4": "1.3", "1.5": "1.4", "1.6": "1.5", "1.7": "1.6"}
+IR_SCHEMA_VERSIONS = {"1.1": "1.0", "1.2": "1.1", "1.3": "1.2", "1.4": "1.3", "1.5": "1.4", "1.6": "1.5", "1.7": "1.6",
+                     "1.8": "1.7"}
 
 
 def _key(name: str):
@@ -203,6 +204,15 @@ Operand = Union[BindingRef, QuantityLit, TextLit, LiveReading]
 
 
 @dataclass(frozen=True)
+class InState:
+    """Schema 1.7 (RoboLang 1.8, decision 0040 A2): true when the observed state of `target` is `label`."""
+
+    KIND: ClassVar[str] = "in_state"
+    target: str
+    label: str
+
+
+@dataclass(frozen=True)
 class Compare:
     """Schema 1.5: `left op right`; `left` is a binding or a live reading, `right` a binding, quantity or text."""
 
@@ -212,7 +222,8 @@ class Compare:
     right: BindingRef | QuantityLit | TextLit
 
 
-Condition = Union[RobotReady, RegionClear, ObjectExists, SensorOk, ObjectAt, RobotAt, Holding, And, Or, Not, Compare]
+Condition = Union[RobotReady, RegionClear, ObjectExists, SensorOk, ObjectAt, RobotAt, Holding, And, Or, Not, Compare,
+                  InState]
 
 
 # -------- steps --------
@@ -267,6 +278,22 @@ class Measure:
 
 
 @dataclass(frozen=True)
+class Do:
+    """
+    Schema 1.7 (RoboLang 1.8, decision 0040 A1, A5): the robot is asked to do the action its profile declares, on
+    `target` (an object or a location), with `value` (a quantity or a text) when given. A request: the effect counts
+    only through an `in_state` condition.
+    """
+
+    KIND: ClassVar[str] = "do"
+    robot: str
+    action: str
+    target: str
+    value: QuantityLit | TextLit | None = field(default=None, metadata={"omit_none": True})
+    orelse: tuple[Step, ...] | None = _handler()
+
+
+@dataclass(frozen=True)
 class WaitFor:
     KIND: ClassVar[str] = "wait_for"
     duration: Quantity
@@ -314,8 +341,8 @@ class Fail:
     reason: str
 
 
-Step = Union[Move, Grasp, Place, Inspect, Measure, WaitFor, WaitUntil, Communicate, If, Fail]
-HANDLED = (Move, Grasp, Place, Inspect, Measure, WaitUntil)  # the step kinds that may have a failure handler (1.4, 1.5)
+Step = Union[Move, Grasp, Place, Inspect, Measure, Do, WaitFor, WaitUntil, Communicate, If, Fail]
+HANDLED = (Move, Grasp, Place, Inspect, Measure, Do, WaitUntil)  # the step kinds with a failure handler
 
 
 def handler_of(step: Step) -> tuple[Step, ...] | None:
@@ -342,6 +369,28 @@ class Task:
     @property
     def region_limits(self) -> tuple[RegionLimit, ...]:
         return tuple(s for s in self.safety if isinstance(s, RegionLimit))
+
+    @property
+    def goal_states(self) -> tuple[InState, ...]:
+        """Every `in_state` atom of the goal: the task's and each `if` branch's (RoboLang 1.8)."""
+        lists = [self.goal or ()]
+        for _, step in walk(self.steps):
+            if isinstance(step, If):
+                lists += [step.goal_then or (), step.goal_else or ()]
+        found: list[InState] = []
+
+        def visit(condition: Condition):
+            if isinstance(condition, InState):
+                found.append(condition)
+            if isinstance(condition, Not):
+                visit(condition.condition)
+            for inner in getattr(condition, "conditions", ()):
+                visit(inner)
+
+        for goals in lists:
+            for condition in goals:
+                visit(condition)
+        return tuple(found)
 
     @property
     def typed_sensors(self) -> bool:
@@ -426,6 +475,8 @@ def _condition(node: ast.Condition) -> Condition:
         return Holding(node.robot.text, node.obj.text)
     if isinstance(node, ast.Compare):
         return Compare(_operand(node.left), node.op, _operand(node.right))
+    if isinstance(node, ast.InState):
+        return InState(node.target.text, node.label.value)
     return SensorOk(_sensor(node.sensor))
 
 
@@ -475,6 +526,9 @@ def _plain_step(node: ast.Statement) -> Step:
         return Inspect(node.robot.text, node.obj.text, _sensor(node.sensor))
     if isinstance(node, ast.Measure):
         return Measure(node.robot.text, node.kind.text, node.obj.text, _sensor(node.sensor), node.binding.text)
+    if isinstance(node, ast.Do):
+        return Do(node.robot.text, node.action.text, node.target.text,
+                  None if node.value is None else _operand(node.value))
     if isinstance(node, ast.WaitFor):
         return WaitFor(_quantity(node.duration))
     if isinstance(node, ast.WaitUntil):
@@ -504,7 +558,7 @@ def _task(node: ast.Task, language: str) -> Task:
         ),
         preconditions=tuple(_condition(c) for c in node.pre.conditions) if node.pre else (),
         # 1.4 on: no task goal, the branches give them
-        goal=() if goal is None and language in ("1.4", "1.5", "1.6", "1.7") else goal,
+        goal=() if goal is None and language in ("1.4", "1.5", "1.6", "1.7", "1.8") else goal,
         steps=tuple(_step(s) for s in node.plan.statements),
         verify=_verify(node),
     )

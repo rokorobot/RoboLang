@@ -1,9 +1,13 @@
 {
   "id": "i03_fryer_in_kilograms",
   "prompt": "Have flippy1 set the fryer to 2 kg.",
-  "world": "bench/worlds/fry_station.json",
+  "world": "bench/worlds/fry_station_1_4.json",
   "group": "infeasible",
   "expect": {
+    "decision": "cannot",
+    "category": "infeasible"
+  },
+  "expect_1_7": {
     "decision": "cannot",
     "category": "inexpressible"
   },

@@ -1,0 +1,10 @@
+// bench/reference_ask/u16_charge_drone.rob: hand-written reference
+robolang 1.8;
+
+task charge_then_fly(robot r, location dock, location dst) {
+    goal { in_state dock "charging"; robot_at r dst; }
+    plan {
+        do r charge dock;
+        move r to dst;
+    }
+}

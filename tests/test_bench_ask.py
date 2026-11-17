@@ -27,7 +27,7 @@ from bench import lib, run, score
 SET3 = lib.load_set("ask")
 REFS = lib.ASK_REFERENCE_DIR
 BY_GROUP = {g: sorted(t for t, d in SET3.items() if d["group"] == g)
-            for g in ("feasible", "decoy", "value", "region", "infeasible", "inexpressible", "clarify")}
+            for g in ("feasible", "decoy", "value", "region", "action", "infeasible", "inexpressible", "clarify")}
 
 
 def answer(stem: str, decision="program") -> dict:
@@ -49,15 +49,18 @@ def run_in(task: dict, ans: dict, patch: dict | None = None):
 
 def test_the_mix_of_tasks():
     assert Counter(d["group"] for d in SET3.values()) == {"feasible": 12, "decoy": 11, "value": 4, "region": 2,
-                                                          "infeasible": 20, "inexpressible": 13, "clarify": 18}
+                                                          "action": 2, "infeasible": 20, "inexpressible": 11,
+                                                          "clarify": 18}
     for task in SET3.values():
         assert task["world"] in {"bench/worlds/pharmacy.json", "bench/worlds/yard.json", "bench/worlds/kitchen.json",
                                  "bench/worlds/kitchen_values.json",  # u06: knife_1 put down, so the arm can grasp
-                                 "bench/worlds/pharmacy_1_3.json", "bench/worlds/yard_1_3.json"}  # u09, u10 (0039)
+                                 "bench/worlds/pharmacy_1_3.json", "bench/worlds/yard_1_3.json",  # u09, u10 (0039)
+                                 "bench/worlds/kitchen_1_4.json", "bench/worlds/yard_1_4.json"}  # u15, u16 (0040)
         assert task["prompt"].endswith(".") and task["tags"]
         decision, category = lib.expectation(task)
         assert (decision, category) == {"feasible": ("program", "none"), "decoy": ("program", "none"),
                                         "value": ("program", "none"), "region": ("program", "none"),
+                                        "action": ("program", "none"),
                                         "infeasible": ("cannot", "infeasible"),
                                         "inexpressible": ("cannot", "inexpressible"),
                                         "clarify": ("clarify", "none")}[task["group"]]
@@ -69,7 +72,8 @@ def test_the_worlds_are_large(name):
     assert len(world["locations"]) + sum(len(world[k]) for k in ("regions", "robots", "objects", "sensors")) >= 25
 
 
-@pytest.mark.parametrize("task_id", BY_GROUP["feasible"] + BY_GROUP["decoy"] + BY_GROUP["value"] + BY_GROUP["region"])
+@pytest.mark.parametrize("task_id", BY_GROUP["feasible"] + BY_GROUP["decoy"] + BY_GROUP["value"] + BY_GROUP["region"]
+                         + BY_GROUP["action"])
 def test_feasible_reference_is_valid_reaches_its_goal_and_passes_its_checks(task_id):
     task = SET3[task_id]
     checked = lib.check_answer(task, answer(task_id))
@@ -253,13 +257,13 @@ def test_missing_entities_and_unsupported_operations_are_not_rescued_by_prose(tm
     duration = answer("a16_a_moment.reading1")
     duration["reason"] = "I chose a 2-second pause as a default."
     _, rows = score.load_rows(ask_run(tmp_path, {
-        "u15_open_oven": fake_open,
+        "u04_back_and_forth": fake_open,
         "i10_no_soup_pot": invented,
         "i09_no_morphine": other("cannot", "infeasible", ["invented_morphine"]),
         "a16_a_moment": duration,
     }))
     by = {r["task_id"]: r for r in rows}
-    assert by["u15_open_oven"]["false_program_undetected"] and not by["u15_open_oven"]["request_satisfied"]
+    assert by["u04_back_and_forth"]["false_program_undetected"] and not by["u04_back_and_forth"]["request_satisfied"]
     assert not by["i10_no_soup_pot"]["valid_after_repair"]
     assert by["i09_no_morphine"]["entities_correct"] is False
     assert by["a16_a_moment"]["unjustified_default"] and not by["a16_a_moment"]["silent_guess"]

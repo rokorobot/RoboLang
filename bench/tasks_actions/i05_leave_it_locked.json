@@ -1,9 +1,13 @@
 {
   "id": "i05_leave_it_locked",
   "prompt": "Have moxi1 leave closet_door locked.",
-  "world": "bench/worlds/ward.json",
+  "world": "bench/worlds/ward_close_1_4.json",
   "group": "infeasible",
   "expect": {
+    "decision": "cannot",
+    "category": "infeasible"
+  },
+  "expect_1_7": {
     "decision": "cannot",
     "category": "inexpressible"
   },

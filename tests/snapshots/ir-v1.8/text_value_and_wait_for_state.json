@@ -1,0 +1,63 @@
+{
+  "ir_schema": "robolang.task-ir",
+  "ir_schema_version": "1.7",
+  "language_version": "1.8",
+  "tasks": [
+    {
+      "name": "label_it",
+      "parameters": [
+        {
+          "name": "r",
+          "type": "robot"
+        },
+        {
+          "name": "box",
+          "type": "object"
+        },
+        {
+          "name": "dock",
+          "type": "location"
+        }
+      ],
+      "safety": [],
+      "preconditions": [],
+      "goal": [
+        {
+          "kind": "in_state",
+          "target": "box",
+          "label": "labelled"
+        }
+      ],
+      "steps": [
+        {
+          "kind": "do",
+          "robot": "r",
+          "action": "tag",
+          "target": "box",
+          "value": {
+            "kind": "text",
+            "value": "LOT-7"
+          }
+        },
+        {
+          "kind": "wait_until",
+          "condition": {
+            "kind": "in_state",
+            "target": "box",
+            "label": "labelled"
+          },
+          "timeout": {
+            "value": "5",
+            "unit": "s"
+          },
+          "else": [
+            {
+              "kind": "fail",
+              "reason": "not labelled"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

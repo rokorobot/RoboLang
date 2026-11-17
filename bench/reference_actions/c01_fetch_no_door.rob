@@ -1,5 +1,5 @@
 // bench/reference_actions/c01_fetch_no_door.rob: hand-written reference
-robolang 1.7;
+robolang 1.8;
 
 task fetch_kit(robot r, object kit, location src, location dst) {
     goal { object_at kit dst; }

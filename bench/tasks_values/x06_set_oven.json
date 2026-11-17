@@ -1,11 +1,10 @@
 {
   "id": "x06_set_oven",
   "prompt": "Set the oven to 180 °C.",
-  "world": "bench/worlds/kitchen_values.json",
-  "group": "inexpressible",
+  "world": "bench/worlds/kitchen_values_oven_1_4.json",
+  "group": "action",
   "expect": {
-    "decision": "cannot",
-    "category": "inexpressible"
+    "decision": "program"
   },
   "expect_1_5": {
     "decision": "cannot",
@@ -15,8 +14,39 @@
     "decision": "cannot",
     "category": "inexpressible"
   },
+  "expect_1_7": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_8": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "the world as given",
+        "goal": [
+          [
+            "rl:place:oven",
+            "in_state",
+            "heating"
+          ]
+        ],
+        "world_patch": {}
+      }
+    ]
+  },
   "tags": [
     "unknown_action"
   ],
-  "why": "No command writes a value to a device; RoboLang 1.6 only reads values."
+  "why": "`set` is a declared action that takes a temperature, on the oven location (0040 A5): the value is recorded, and `in_state` checks the result, not the temperature.",
+  "expected_actions": [
+    {
+      "robot": "chef_arm",
+      "action": "set",
+      "target": "oven",
+      "value": [
+        "180",
+        "degC"
+      ]
+    }
+  ]
 }

@@ -1,0 +1,7 @@
+{
+  "task": "print_wall",
+  "bindings": {
+    "r": "printer1",
+    "wall": "level_3_wall"
+  }
+}

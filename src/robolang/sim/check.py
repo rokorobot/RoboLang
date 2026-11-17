@@ -11,6 +11,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from .. import ir
+from .actions import action_problems
 from .executor import _sensor_id
 from .regions import limit_problems
 from .world import World
@@ -19,8 +20,8 @@ from .world import World
 @dataclass(frozen=True)
 class Finding:
     """
-    A certain run failure. `where` is ("safety", i) or ("steps", i): the task's i-th limit or top-level plan step,
-    from 0. `label` is the step's path label (ir.walk) when it is inside a branch, else "".
+    A certain run failure. `where` is ("safety", i), ("steps", i) or ("goal", i): the task's i-th limit, top-level plan
+    step or goal condition, from 0. `label` is the step's path label (ir.walk) when it is inside a branch, else "".
     """
 
     code: str
@@ -58,6 +59,14 @@ def check_task(task: ir.Task, world: World) -> list[Finding]:
                                                 f"of robot '{robot}' ({_speed(speeds[unit], unit)})",
                                         ("safety", index)))
                 break
+    for problem in action_problems(task, world, bound):  # section 16.3 (RoboLang 1.8), every problem
+        if problem.goal is not None:
+            findings.append(Finding(problem.code, problem.message, ("goal", problem.goal)))
+            continue
+        nested = "." in problem.label
+        findings.append(Finding(problem.code, f"{problem.message} (on path {_branch_of(problem.label)})" if nested
+                                else problem.message, ("steps", int(problem.label.split(".")[0]) - 1),
+                                problem.label if nested else ""))
     for label, step in ir.walk(task.steps):  # section 4.5; every step of every branch, each reported once
         where = ("steps", int(label.split(".")[0]) - 1)
         problem = _step_problem(task, world, bound, step)

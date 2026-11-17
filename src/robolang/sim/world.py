@@ -1,8 +1,8 @@
 """
-World file, schemas 1.0 to 1.3 (spec/simulation-v1.0.md sections 3, 14 and 15).
+World file, schemas 1.0 to 1.4 (spec/simulation-v1.0.md sections 3, 14, 15 and 16).
 
 `load_world` reads the bytes of a world file and returns a validated, immutable `World`,
-or raises `WorldError` for the first error found (codes E501 to E516, sections 3.9, 14.1 and 15.1).
+or raises `WorldError` for the first error found (codes E501 to E517, sections 3.9, 14.1, 15.1 and 16.1).
 Validation runs after the task is selected (3.8). Nothing here executes a task.
 """
 
@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 import re
 from collections.abc import Mapping
+import dataclasses
 from dataclasses import dataclass
 from decimal import Decimal
 from types import MappingProxyType
@@ -21,13 +22,16 @@ from .values import DURATION_UNITS, SPEED_UNITS, Speed, duration_ms, parse_decim
 
 WORLD_SCHEMA = "robolang.sim.world"
 WORLD_SCHEMA_VERSION = "1.0"
-# 1.1 adds `class` and `mass` to objects (3.3); 1.2 measured values (14); 1.3 region limits (15)
-WORLD_SCHEMA_VERSIONS = ("1.0", "1.1", "1.2", "1.3")
-_MEASURED = ("1.2", "1.3")  # the world files with measured values
+# 1.1 adds `class` and `mass` to objects (3.3); 1.2 measured values (14); 1.3 region limits (15); 1.4 actions (16)
+WORLD_SCHEMA_VERSIONS = ("1.0", "1.1", "1.2", "1.3", "1.4")
+_MEASURED = ("1.2", "1.3", "1.4")  # the world files with measured values
+_REGIONS = ("1.3", "1.4")  # the world files with `contains` and `honours`
 HONOURS = ("no_go_region", "in_region")  # what a robot profile may declare it honours (world file 1.3)
+ACTION_TARGETS = ("object", "location")  # what a declared action may act on (world file 1.4, decision 0040 A3)
 CLI_BINDINGS_SOURCE = "--bind"
 
 _ID = re.compile(r"[A-Za-z][A-Za-z0-9_]*")
+_ACTION_NAME = re.compile(r"[a-z][a-z0-9_]*")  # a declared action's name (world file 1.4)
 _CLASS = re.compile(r"[a-z][a-z_]{0,63}")  # a Core 0.1 thing class (core-v0.1.md section 5.5)
 _SIGNED_DECIMAL = re.compile(r"-?[0-9]+(\.[0-9]+)?")  # a property value may be below zero (a freezer: -18 degC)
 _FACT_KIND = {"robot_ready": "robot", "region_clear": "region", "sensor_available": "sensor"}
@@ -57,6 +61,20 @@ class Region:
 
 
 @dataclass(frozen=True)
+class Action:
+    """
+    World file 1.4 (decision 0040 A3): an action a robot's profile declares. `target` is "object" or "location";
+    `result` is the state label the action leaves its target in; `value` is the measured kind of the value it takes
+    (`temperature`, `mass`, `distance` or `label`), or None when it takes none.
+    """
+
+    name: str
+    target: str
+    result: str
+    value: str | None = None
+
+
+@dataclass(frozen=True)
 class Robot:
     id: str
     ready: bool | None
@@ -64,6 +82,10 @@ class Robot:
     gripper: bool
     max_speed: tuple[Speed, ...]
     honours: tuple[str, ...] = ()  # world file 1.3: the region limits it can honour; before 1.3 it honours none (C1)
+    actions: tuple[Action, ...] = ()  # world file 1.4: the actions it declares; before 1.4 it declares none
+
+    def action(self, name: str) -> Action | None:
+        return next((a for a in self.actions if a.name == name), None)
 
 
 @dataclass(frozen=True)
@@ -93,6 +115,7 @@ class WorldObject:
     object_class: str | None = None  # world file 1.1
     mass: Mass | None = None  # world file 1.1
     properties: tuple[Property, ...] = ()  # world file 1.2, in file order
+    state: str | None = None  # world file 1.4: its state label; None: no state is known (`in_state` is unknown)
 
 
 @dataclass(frozen=True)
@@ -146,6 +169,8 @@ class World:
     events: tuple[Event, ...]  # stably sorted by at_ms: equal times keep file order
     task: TaskScript
     schema_version: str = WORLD_SCHEMA_VERSION
+    # world file 1.4: location -> its state label (default_factory: Python 3.11 rejects a mappingproxy default)
+    location_states: Mapping[str, str] = dataclasses.field(default_factory=lambda: MappingProxyType({}))
 
     def kind_of(self, entity_id: str) -> str | None:
         if entity_id in self.locations:
@@ -328,7 +353,7 @@ class _Loader:
         top = (
             "world_schema", "world_schema_version", "locations", "regions", "robots",
             "objects", "sensors", "events", "tasks",
-        )
+        ) + (("location_states",) if self.version == "1.4" else ())
         self.obj(doc, "", top, "the world file")
         self.require(doc, "", "locations", "tasks")
         locations = self.locations(self.need(doc, "", "locations"))
@@ -346,6 +371,7 @@ class _Loader:
             self.fail("E504", "/tasks", "'tasks' must be an object")
 
         # Form of every section, in the document order of the fields above.
+        location_states = self.location_states(doc, locations)
         regions = {k: self.region(k, v) for k, v in regions_raw.items()}
         robots = {k: self.robot(k, v) for k, v in robots_raw.items()}
         objects = {k: self.object(k, v) for k, v in objects_raw.items()}
@@ -379,6 +405,7 @@ class _Loader:
             ordered,
             script,
             self.version,
+            MappingProxyType(location_states),
         )
 
     # -- sections: form --
@@ -392,9 +419,61 @@ class _Loader:
                 self.fail("E509", _pointer("locations", i), f"duplicate entity ID '{item}'")
         return out
 
+    def label(self, value, pointer, what="a state"):
+        """A state label (world file 1.4): a non-empty string."""
+        text = self.string(value, pointer, what)
+        if text == "":
+            self.fail("E504", pointer, f"{what} must not be empty")
+        return text
+
+    def location_states(self, doc, locations):
+        """`location_states: { LOCATION: "label" }` (world file 1.4, decision 0040 C5)."""
+        if "location_states" not in doc:
+            return {}
+        pointer = _pointer("location_states")
+        raw = doc["location_states"]
+        if not isinstance(raw, dict):
+            self.fail("E504", pointer, "'location_states' must be an object")
+        for key, label in raw.items():
+            self.entity_id(key, pointer + _pointer(key))
+            if key not in locations:
+                self.fail("E505", pointer + _pointer(key), f"'{key}' is not a declared location")
+            self.label(label, pointer + _pointer(key))
+        return dict(raw)
+
+    def actions(self, value, p):
+        """`actions: { NAME: { "target": "object"|"location", "result": "label", "value": KIND } }` (0040 A3)."""
+        if "actions" not in value:
+            return ()
+        ap = p + _pointer("actions")
+        raw = value["actions"]
+        if not isinstance(raw, dict):
+            self.fail("E504", ap, "'actions' must be an object")
+        out = []
+        for name, item in raw.items():
+            ip = ap + _pointer(name)
+            if not _ACTION_NAME.fullmatch(name):
+                self.fail("E504", ip, f"not an action name: {name!r}; use lowercase letters, digits and '_', "
+                                      "starting with a letter")
+            a = self.obj(item, ip, ("target", "result", "value"), "an action")
+            self.require(a, ip, "target", "result")
+            target = self.string(a["target"], ip + _pointer("target"), "a target")
+            if target not in ACTION_TARGETS:
+                self.fail("E517", ip + _pointer("target"), f"unknown action target '{target}'; an action acts on "
+                                                           f"{' or '.join(ACTION_TARGETS)}")
+            result = self.label(a["result"], ip + _pointer("result"), "a result")
+            kind = None
+            if "value" in a:
+                kind = self.string(a["value"], ip + _pointer("value"), "a value kind")
+                if kind not in KINDS:
+                    self.fail("E517", ip + _pointer("value"), f"unknown value kind '{kind}'; the kinds are "
+                                                               f"{', '.join(KINDS)}")
+            out.append(Action(name, target, result, kind))
+        return tuple(out)
+
     def region(self, name, value):
         p = _pointer("regions", name)
-        self.obj(value, p, ("clear",) + (("contains",) if self.version == "1.3" else ()), "a region")
+        self.obj(value, p, ("clear",) + (("contains",) if self.version in _REGIONS else ()), "a region")
         contains = None
         if "contains" in value:
             cp = p + _pointer("contains")
@@ -408,7 +487,8 @@ class _Loader:
 
     def robot(self, name, value):
         p = _pointer("robots", name)
-        allowed = ("ready", "location", "gripper", "max_speed") + (("honours",) if self.version == "1.3" else ())
+        allowed = ("ready", "location", "gripper", "max_speed") + (("honours",) if self.version in _REGIONS else ())
+        allowed += ("actions",) if self.version == "1.4" else ()
         self.obj(value, p, allowed, "a robot")
         self.require(value, p, "location", "gripper")
         ready = self.optional_bool(value, p, "ready")
@@ -436,12 +516,13 @@ class _Loader:
                 if item in honours:
                     self.fail("E504", hp + _pointer(i), f"'{item}' is listed twice")
                 honours.append(item)
-        return Robot(name, ready, location, gripper, tuple(speeds), tuple(honours))
+        return Robot(name, ready, location, gripper, tuple(speeds), tuple(honours), self.actions(value, p))
 
     def object(self, name, value):
         p = _pointer("objects", name)
         allowed = ("present", "location", "held_by") + (("class", "mass") if self.version != "1.0" else ())
         allowed += ("properties",) if self.version in _MEASURED else ()
+        allowed += ("state",) if self.version == "1.4" else ()
         self.obj(value, p, allowed, "an object")
         present = self.optional_bool(value, p, "present")
         refs = []
@@ -449,8 +530,9 @@ class _Loader:
             if field in value:
                 self.entity_id(value[field], p + _pointer(field))
             refs.append(value.get(field))
+        state = self.label(value["state"], p + _pointer("state")) if "state" in value else None
         return WorldObject(name, present, refs[0], refs[1], self.object_class(value, p), self.mass(value, p),
-                           self.properties(value, p))
+                           self.properties(value, p), state)
 
     def kind(self, kind, pointer):
         """A measured kind (E512)."""

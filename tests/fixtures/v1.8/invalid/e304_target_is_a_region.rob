@@ -1,0 +1,10 @@
+// RoboLang v1.8 fixture: invalid
+// expect: error E304 (static) line 9
+// why: the target of do is an object or a location, not a region
+
+robolang 1.8;
+
+task t(robot r, object door, region zone) {
+    goal { in_state door "open"; }
+    plan { do r open zone; }
+}

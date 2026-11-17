@@ -1,4 +1,4 @@
-# RoboLang simulation — semantics, world files 1.0 to 1.3 and run records 1.0 to 1.6
+# RoboLang simulation — semantics, world files 1.0 to 1.4 and run records 1.0 to 1.7
 
 **Status:** RL-BASIC-01a specification, **approved by the owner on 2026-10-26**. Every choice
 in it is recorded in [decision record 0004](decisions/0004-rl-basic-01a-simulation-semantics.md)
@@ -12,8 +12,8 @@ separately authorizes implementation.
 **IR:** Task IR 1.0 ([`ir-schema-v1.0.md`](ir-schema-v1.0.md)), unchanged.
 **Later languages:** RoboLang 1.2 sources are covered by [`robolang-v1.2.md`](robolang-v1.2.md) section 8;
 RoboLang 1.3 sources (goals, typed sensors, run record 1.2) by section 10 of this document. RoboLang 1.4 (branching), 1.5 (failure handlers), 1.6 (measured
-values, world file 1.2, run record 1.5) and 1.7 (region limits, world file 1.3, run record 1.6) by sections 12, 13, 14
-and 15.
+values, world file 1.2, run record 1.5), 1.7 (region limits, world file 1.3, run record 1.6) and 1.8 (declared actions,
+world file 1.4, run record 1.7) by sections 12, 13, 14, 15 and 16.
 **Fixtures:** [`tests/fixtures/simulation/`](../tests/fixtures/simulation/README.md)
 
 > **Simulation only.** This document defines what a RoboLang 1.1 task does in a symbolic,
@@ -174,7 +174,7 @@ A world file is a UTF-8 JSON document (RFC 8259) with one object at the top leve
 | Field | Required | Content |
 |---|---|---|
 | `world_schema` | yes | Exactly `"robolang.sim.world"` |
-| `world_schema_version` | yes | `"1.0"`, `"1.1"`, `"1.2"` (section 14.1) or `"1.3"` (section 15.1) |
+| `world_schema_version` | yes | `"1.0"`, `"1.1"`, `"1.2"` (section 14.1), `"1.3"` (section 15.1) or `"1.4"` (section 16.1) |
 | `locations` | yes | Array of location IDs |
 | `regions` | no | Object: region ID → region (3.3) |
 | `robots` | no | Object: robot ID → robot (3.3) |
@@ -309,6 +309,7 @@ bindings, fault indices and cancellation index depend on it.
 | `E514` | World file 1.2: a label with a unit or an uncertainty |
 | `E515` | World file 1.2: a `property` event whose target is not a declared entity |
 | `E516` | World file 1.3 (section 15.1): an unknown ability in a robot's `honours` |
+| `E517` | World file 1.4 (section 16.1): an unknown `target` or `value` kind in a robot's declared action |
 
 ## 4. Execution semantics
 
@@ -364,6 +365,9 @@ A RoboLang 1.7 task may also carry **region limits** (`@safety no_go_region R;`,
 the same list, in source order, and are examined by the same loop with the rules of section 15.3: a limit that passes
 has the status `checked_against_world_not_enforced`; one that fails has `failed_check` and the run fails with
 `S003`, `S004` or `S005` before `AUTHORIZED`. Limits after the failed one are `not_checked`.
+
+A RoboLang 1.8 task is also checked for its declared actions after the limits, by section 16.3: a failed check fails the
+run with `S006`, `S007`, `S008` or `S009` before `AUTHORIZED`.
 
 ### 4.4 Conditions
 
@@ -579,7 +583,7 @@ run_id            = "sim-" + lowercase hex SHA-256 of preimage
 
 ### 7.1 World-file errors
 
-Section 3.9 (`E501`–`E516`). They stop processing with exit status 3; no run is created.
+Section 3.9 (`E501`–`E517`). They stop processing with exit status 3; no run is created.
 
 ### 7.2 Run failures
 
@@ -590,6 +594,10 @@ Section 3.9 (`E501`–`E516`). They stop processing with exit status 3; no run i
 | `S003` | authorization | RoboLang 1.7: a robot that moves on some path does not declare that it honours a region limit (section 15.3) |
 | `S004` | authorization | RoboLang 1.7: a target of the task is inside a `no_go_region`, or outside an `in_region` that lists its locations (section 15.3) |
 | `S005` | authorization | RoboLang 1.7: a robot that moves starts inside a `no_go_region`, or outside an `in_region` that lists its locations (section 15.3) |
+| `S006` | authorization | RoboLang 1.8: a `do` names an action the bound robot does not declare (section 16.3) |
+| `S007` | authorization | RoboLang 1.8: the target of a `do` is not of the kind the action acts on (section 16.3) |
+| `S008` | authorization | RoboLang 1.8: the value of a `do` is missing, unexpected or not of the declared kind (section 16.3) |
+| `S009` | authorization | RoboLang 1.8: a goal `in_state` that no declared action of the task's robots produces and the world does not hold (section 16.3) |
 | `S101` | precondition | A `pre` condition is false |
 | `S102` | precondition | A `pre` condition is unknown |
 | `S201` | step | The robot is not ready |
@@ -607,6 +615,7 @@ Section 3.9 (`E501`–`E516`). They stop processing with exit status 3; no run i
 | `S234` | step | RoboLang 1.6 `measure`: the sensor does not measure the kind (section 14.2) |
 | `S235` | step | RoboLang 1.6 `measure`: a contact reading, and the robot is not at the object |
 | `S236` | step | RoboLang 1.6 `measure`: the object has no value for the kind |
+| `S271` | step | RoboLang 1.8 `do`: the robot is not at the target location, or at the location of the target object (section 16.4) |
 | `S241` | step | `wait until`: the timeout expired before the condition was true |
 | `S251` | step | A scripted fault |
 | `S261` | step | RoboLang 1.4: the condition of an `if` is unknown; no branch is taken (section 12) |
@@ -780,6 +789,7 @@ authoring error.
 |---|---|
 | `S001`, `S002` | Section 4.3, for **every** `max_speed` limit with a unit and every bound robot. The run stops at the first one; this check lists all of them |
 | `S003`, `S004`, `S005` | RoboLang 1.7, section 15.3, for **every** region limit; every problem of a limit is listed, not only the first |
+| `S006`, `S007`, `S008`, `S009` | RoboLang 1.8, section 16.3, for **every** `do` on every path and every required goal `in_state` |
 | `S211` | A `grasp` whose robot has no gripper (4.5) |
 | `S231` | An `inspect` or `measure` whose sensor is not declared, or not mounted on its robot (4.5, 14.2) |
 | `S234` | A `measure` of a kind its sensor does not measure (14.2): a sensor with no `measures` in the world file measures nothing |
@@ -1076,3 +1086,93 @@ region limit was *enforced*. Earlier sources write their records unchanged, byte
 
 `core_outcome` is unchanged. `export-goal` and `delegate` refuse a task with a region limit with `X605`; the ROS 2
 backend refuses it with `S508` ([robolang-v1.7.md](robolang-v1.7.md) section 6).
+
+## 16. RoboLang 1.8: declared actions
+
+Decision record [0040](decisions/0040-declared-actions.md); language in [robolang-v1.8.md](robolang-v1.8.md). A task of
+language 1.1 to 1.7 runs exactly as before, whatever the world file's version.
+
+A declared action is a **request to the robot's own controller** (A9). The simulation does not model what "open" does:
+`do` sets the target's state to the result the profile declares, records that it was *requested*, and the run succeeds
+only if the goal, observed through `in_state`, holds.
+
+### 16.1 World file 1.4
+
+`"world_schema_version": "1.4"` is 1.3 plus three optional fields. Files 1.0 to 1.3 are still accepted and unchanged;
+the new fields are unknown fields there (`E503`), and **a robot of a world file 1.3 or older declares no actions**.
+
+| Where | Field | Content |
+|---|---|---|
+| robot | `actions` | Object: action name (lowercase letters, digits and `_`, starting with a letter) → `{ "target": "object" \| "location", "result": "<label>", "value": "<kind>" }`. `value` is optional: `temperature`, `mass`, `distance` or `label`. Any other `target` or `value` is `E517`; a missing `target` or `result` is `E504` |
+| object | `state` | Its state label: a non-empty string |
+| top level | `location_states` | Object: a declared location (`E505` otherwise) → its state label. The list `locations` stays a list of IDs (C5) |
+
+```json
+"robots": { "moxi1": { "location": "ward", "gripper": true,
+                       "actions": { "open": { "target": "object", "result": "open" },
+                                    "set": { "target": "location", "result": "heating", "value": "temperature" } } } },
+"objects": { "closet_door": { "present": true, "location": "supply_closet", "state": "closed" } },
+"location_states": { "fryer": "off" }
+```
+
+An entity with no state label has **no known state**: `in_state` on it is *unknown*.
+
+### 16.2 What a `do` and an `in_state` mean
+
+- `in_state X "label"` is **true** when the state of `X` (an object's `state`, or the location's entry in
+  `location_states`, as changed by the run so far) is the label, **false** when it is another label, and **unknown**
+  when `X` has none. It follows the three-valued rules of section 4.4: an unknown `pre` is `S102`, an unknown `if` is
+  `S261`, a `wait until` keeps waiting, an unknown goal condition is `S302`.
+- `do r ACTION TARGET [to VALUE]` (a step) succeeds by setting the state of the target to the `result` of the action
+  the robot declares. Nothing else changes: not the position of anything, and not any reading. It takes no time. It
+  needs `robot_ready` as `move` does (`S201`, `S202`) and the robot at the target (section 16.4).
+- The value is recorded, never applied: a setpoint is not a reading (C4). `do r set fryer to 175 degC` leaves the fryer
+  in the declared `result` state, such as `heating`; whether the oil reaches 175 degC is a `wait until` on a reading.
+- A scripted fault for the step fails it with `S251` as for every step (C6), and a 1.5 failure handler catches it; the
+  failed `do` changed nothing.
+
+### 16.3 Checks before the run
+
+Before the run reaches `AUTHORIZED`, after the limits of section 4.3, and in `validate --world` (section 11) for every
+problem, not only the first: for each `do` on any path (branches and handlers included), in step order, and then for
+the goal.
+
+1. **`S006`**: the bound robot does not declare the action. (A world file 1.3 robot declares none.)
+2. **`S007`**: the target's kind (an object or a location) is not the `target` the action declares.
+3. **`S008`**: the action declares a `value` kind and the step gives none; or the action declares none and the step
+   gives one; or the value is not of the kind: a quantity must have a unit of that kind (`degC` or `K` for a
+   temperature, `g` or `kg` for a mass, `mm`, `cm` or `m` for a distance) and a `label` takes a string.
+4. **`S009`** (C7): a goal condition of the task that requires `in_state X "label"` on every path (directly in the goal,
+   or in an `and`) when **no** declared action of the robots of the task has that `result` for that kind of target, and
+   the world does not already hold that state of `X`. A goal such as "leave the door locked" with only `open` and
+   `close` declared can never hold, so it fails before anything moves. A goal in an `if` branch, in an `or` or under a
+   `not` concludes nothing here.
+
+A failure names the robot and (for `S006` to `S008`) the step. A 1.7 region limit comes first: limits are examined in
+source order, then actions. The `RegionProblem` rule of section 15.3 also counts a `do` whose target is a **location**
+as a target for `S004` (C13).
+
+### 16.4 `S271`: the robot at the target
+
+As for `grasp`, a `do` needs the robot where the action happens (C2): for a location target, the robot is at that
+location; for an object target, the robot holds the object or is at the object's location. Otherwise the step fails
+with `S271`, before any change. There are no remote actions in 1.8: a task that asks for one moves first.
+
+### 16.5 Run record 1.7
+
+A 1.8 source writes `run_record_schema_version` `1.7` and embeds Task IR 1.7. The key order is that of record 1.6 with:
+
+| Where | Added |
+|---|---|
+| `steps[]` | `action`, after `message`: for a `do`, `{ "robot", "action", "target", "value", "result", "status": "requested" }` (`value` is the quantity or text as in the IR, or `null`); otherwise `null` |
+| `final_world.objects.<id>` | `state`, after `held_by`: its state label, or `null` |
+| `final_world` | `location_states`, after `sensors`: location → state label for every location that has one |
+
+No record says an action *took effect*: the status is always `requested`, and the effect counts through the goal.
+Earlier sources write their records unchanged, byte for byte.
+
+### 16.6 Core, ROS 2, delegation
+
+`core_outcome` is `null` for a goal with `in_state` (it has no Core form), as for any goal that has none.
+`export-goal` and `delegate` refuse a goal with `in_state` with `X606`, never dropping it; the ROS 2 backend refuses a
+`do` or an `in_state` with `S508` ([robolang-v1.8.md](robolang-v1.8.md) section 7).

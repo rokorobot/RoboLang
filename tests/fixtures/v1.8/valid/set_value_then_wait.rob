@@ -1,0 +1,16 @@
+// RoboLang v1.8 fixture: valid
+// expect: ok
+// why: a do with a quantity value on a location, then a wait until on a live reading
+
+robolang 1.8;
+
+task fry(robot r, location fryer, object oil, object basket, sensor probe) {
+    goal { in_state fryer "heating"; object_at basket fryer; }
+    plan {
+        do r set fryer to 175 degC;
+        wait until temperature of oil using probe > 170 degC timeout 60 s else { fail "oil did not heat"; }
+        grasp r basket;
+        move r to fryer;
+        place r basket at fryer;
+    }
+}

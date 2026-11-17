@@ -1,0 +1,18 @@
+// RoboLang v1.8 fixture: valid
+// expect: ok
+// why: do and in_state inside an if, pre, and not
+
+robolang 1.8;
+
+task open_if_clear(robot r, object door, region pass_area) {
+    pre { not in_state door "open"; }
+    plan {
+        if region_clear pass_area {
+            goal { in_state door "open"; }
+            do r open door;
+        } else {
+            communicate r to "kitchen" with "pass busy";
+            fail "pass busy";
+        }
+    }
+}

@@ -1,0 +1,10 @@
+{
+  "task": "open_and_take_out",
+  "bindings": {
+    "r": "helper_arm",
+    "door": "oven_door_1",
+    "tray": "tray_a",
+    "oven": "oven",
+    "dst": "pass"
+  }
+}

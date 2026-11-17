@@ -1,9 +1,12 @@
 {
   "id": "a03_print_gridline",
   "prompt": "Have printer1 print the grid marks at gridline_c.",
-  "world": "bench/worlds/site.json",
+  "world": "bench/worlds/site_1_4.json",
   "group": "action",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_7": {
     "decision": "cannot",
     "category": "inexpressible"
   },

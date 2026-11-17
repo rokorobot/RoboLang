@@ -1,9 +1,12 @@
 {
   "id": "a01_open_then_fetch",
   "prompt": "Have moxi1 open closet_door, then take iv_kit_1 from the supply closet to room_412.",
-  "world": "bench/worlds/ward.json",
+  "world": "bench/worlds/ward_1_4.json",
   "group": "action",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_7": {
     "decision": "cannot",
     "category": "inexpressible"
   },

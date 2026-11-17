@@ -1,0 +1,12 @@
+// RoboLang v1.8 fixture: invalid
+// expect: error E203 (syntax) line 10
+// why: do is not a statement before 1.8
+
+robolang 1.7;
+
+task t(robot r, object door) {
+    goal { object_exists door; }
+    plan {
+        do r open door;
+    }
+}

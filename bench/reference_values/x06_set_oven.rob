@@ -1,0 +1,10 @@
+// bench/reference_values/x06_set_oven.rob: hand-written reference
+robolang 1.8;
+
+task set_oven(robot r, location oven) {
+    goal { in_state oven "heating"; }
+    plan {
+        move r to oven;
+        do r set oven to 180 degC;
+    }
+}

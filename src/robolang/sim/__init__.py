@@ -9,6 +9,7 @@ the `simulate` command is in robolang.cli.
 from __future__ import annotations
 
 from .executor import (
+    ActionRequest,
     AppliedEvent,
     Failure,
     FinalWorld,
@@ -32,6 +33,7 @@ from .world import (
     WORLD_SCHEMA,
     WORLD_SCHEMA_VERSION,
     WORLD_SCHEMA_VERSIONS,
+    Action,
     Event,
     Mass,
     Measures,
@@ -53,6 +55,7 @@ __all__ = [
     "sha256_normalized",
     "to_json",
     "to_record",
+    "ActionRequest",
     "AppliedEvent",
     "Failure",
     "FinalWorld",
@@ -74,6 +77,7 @@ __all__ = [
     "WORLD_SCHEMA",
     "WORLD_SCHEMA_VERSION",
     "WORLD_SCHEMA_VERSIONS",
+    "Action",
     "Event",
     "Measures",
     "Property",

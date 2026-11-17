@@ -1,0 +1,11 @@
+{
+  "task": "start_batch",
+  "bindings": {
+    "r": "flippy1",
+    "basket": "basket_2",
+    "oil": "oil_1",
+    "probe": "probe_flippy1",
+    "src": "prep_table",
+    "fryer": "fryer"
+  }
+}
