@@ -1,0 +1,17 @@
+// bench/reference_clock/k06_two_robots_at_2000.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 1.8;
+
+task two_totes(robot a, robot b, object t1, object t2, location src, location dst) {
+    goal { object_at t1 dst; object_at t2 dst; }
+    plan {
+        wait until clock_time >= 20:00 timeout 1 h else { fail "20:00 did not come in time"; }  // @clock
+        move a to src;
+        grasp a t1;
+        move a to dst;
+        place a t1 at dst;
+        move b to src;
+        grasp b t2;
+        move b to dst;
+        place b t2 at dst;
+    }
+}

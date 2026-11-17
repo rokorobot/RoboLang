@@ -1,0 +1,19 @@
+// bench/reference_clock/k07_time_and_open.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 1.8;
+
+task fetch_before_six(robot r, object door, object kit, location closet, location dst) {
+    goal { in_state door "open"; object_at kit dst; }
+    plan {
+        measure r time as now;                                          // @clock
+        if now < 18:00 {                                                // @clock
+            move r to closet;
+            do r open door;
+            grasp r kit;
+            move r to dst;
+            place r kit at dst;
+        } else {                                                        // @clock
+            communicate r to "charge_nurse" with "supplies closed";     // @clock
+            fail "supplies are closed";                                 // @clock
+        }                                                               // @clock
+    }
+}

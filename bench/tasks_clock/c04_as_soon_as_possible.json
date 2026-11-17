@@ -1,0 +1,25 @@
+{
+  "id": "c04_as_soon_as_possible",
+  "prompt": "As soon as possible, send cleaner1 from dock_2 to the lobby.",
+  "world": "bench/worlds/site.json",
+  "group": "control",
+  "expect": {
+    "decision": "program"
+  },
+  "expect_1_9": {
+    "decision": "program"
+  },
+  "expected_goal": [
+    [
+      "rl:robot:cleaner1",
+      "located_in",
+      "rl:place:lobby"
+    ]
+  ],
+  "expected_clock": [],
+  "tags": [
+    "move",
+    "no_clock",
+    "urgency_words"
+  ]
+}

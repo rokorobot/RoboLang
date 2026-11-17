@@ -1,0 +1,23 @@
+{
+  "id": "x03_time_between_scans",
+  "prompt": "With arm1, inspect box1 on shelf_a with camera_top, then inspect box2 on shelf_b with camera_top, and send channel \"lead\" how much time passed between the two scans.",
+  "world": "bench/worlds/warehouse.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_9": {
+    "decision": "cannot",
+    "category": "inexpressible",
+    "because": "0042 T11"
+  },
+  "tags": [
+    "clock_time",
+    "elapsed",
+    "arithmetic"
+  ],
+  "gap": "G-CALC",
+  "why": "A duration between two moments is a subtraction of two readings (0042 T11, G-CALC). `elapsed` counts from the start of the task only. The attempt sends the second reading, which is not the difference.",
+  "attempt_fails_with": "E217"
+}

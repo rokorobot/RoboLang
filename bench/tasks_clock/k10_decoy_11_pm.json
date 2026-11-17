@@ -1,0 +1,65 @@
+{
+  "id": "k10_decoy_11_pm",
+  "prompt": "At 11 pm tonight, send cleaner1 from dock_2 to the lobby. Wait up to 2 hours for 11 pm and, if it has not come by then, stop the job as failed.",
+  "world": "bench/worlds/site.json",
+  "group": "clock",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_9": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "the task starts at 22:20: it waits 40 minutes, then moves",
+        "goal": [
+          [
+            "rl:robot:cleaner1",
+            "located_in",
+            "rl:place:lobby"
+          ]
+        ],
+        "world_patch": {
+          "clock": {
+            "start": "2026-11-17T22:20:00",
+            "zone": "Europe/Prague"
+          }
+        }
+      },
+      {
+        "when": "the task starts at 20:00: 23:00 is more than 2 hours away, the wait times out",
+        "fails": true,
+        "world_patch": {
+          "clock": {
+            "start": "2026-11-17T20:00:00",
+            "zone": "Europe/Prague"
+          }
+        }
+      }
+    ],
+    "world_1_5": {
+      "clock": {
+        "start": "2026-11-17T22:20:00",
+        "zone": "Europe/Prague"
+      }
+    }
+  },
+  "expected_clock": [
+    {
+      "use": "wait",
+      "reading": "time",
+      "op": ">=",
+      "value": "23:00",
+      "timeout": "2 h"
+    }
+  ],
+  "tags": [
+    "clock_time",
+    "wait_until",
+    "decoy_12_hour",
+    "near_miss_time"
+  ],
+  "gap": "G-CLOCK",
+  "why": "The decoy is the 12-hour form: `11 pm` is 23:00, and a literal `11:00` is already true at 22:20, so the robot would move at once with no error (0042 T2: the author converts). The 1.9 label checks the literal.",
+  "attempt_fails_with": "E101"
+}

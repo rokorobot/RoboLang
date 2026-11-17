@@ -1,0 +1,64 @@
+{
+  "id": "k03_wait_for_0530",
+  "prompt": "At 05:30, send tug1 from gate_in to gate_out. Wait up to 90 minutes for 05:30 and, if it has not come by then, stop the job as failed.",
+  "world": "bench/worlds/yard.json",
+  "group": "clock",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_9": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "the task starts at 04:30: it waits 60 minutes, then moves",
+        "goal": [
+          [
+            "rl:robot:tug1",
+            "located_in",
+            "rl:place:gate_out"
+          ]
+        ],
+        "world_patch": {
+          "clock": {
+            "start": "2026-11-17T04:30:00",
+            "zone": "Europe/Prague"
+          }
+        }
+      },
+      {
+        "when": "the task starts at 02:00: 05:30 is more than 90 minutes away, the wait times out",
+        "fails": true,
+        "world_patch": {
+          "clock": {
+            "start": "2026-11-17T02:00:00",
+            "zone": "Europe/Prague"
+          }
+        }
+      }
+    ],
+    "world_1_5": {
+      "clock": {
+        "start": "2026-11-17T04:30:00",
+        "zone": "Europe/Prague"
+      }
+    }
+  },
+  "expected_clock": [
+    {
+      "use": "wait",
+      "reading": "time",
+      "op": ">=",
+      "value": "05:30",
+      "timeout": "90 min"
+    }
+  ],
+  "tags": [
+    "clock_time",
+    "wait_until",
+    "bounded_wait"
+  ],
+  "gap": "G-CLOCK",
+  "why": "Waits are relative durations only; 1.8 has no way to wait for a time of day. 1.9 reads the clock live in `wait until clock_time >= 05:30 timeout 90 min else { ... }` (0042 T5, T6), then the steps. The attempt writes that wait.",
+  "attempt_fails_with": "E101"
+}

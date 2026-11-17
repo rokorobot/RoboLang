@@ -1,0 +1,10 @@
+// bench/reference_clock/c01_plain_two_moves.rob: hand-written reference
+robolang 1.8;
+
+task two_stops(robot r, location a, location b) {
+    goal { robot_at r b; }
+    plan {
+        move r to a;
+        move r to b;
+    }
+}

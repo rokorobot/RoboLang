@@ -1,0 +1,16 @@
+// bench/reference_clock/k08_time_and_no_go.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 1.8;
+
+task go_dry(robot r, location dst, region wet) {
+    @safety no_go_region wet;
+    goal { robot_at r dst; }
+    plan {
+        measure r time as now;                           // @clock
+        if now < 17:00 {                                 // @clock
+            move r to dst;
+        } else {                                         // @clock
+            communicate r to "site" with "too late";     // @clock
+            fail "too late";                             // @clock
+        }                                                // @clock
+    }
+}

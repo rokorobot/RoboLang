@@ -1,0 +1,10 @@
+// bench/reference_clock/k10_decoy_11_pm.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 1.8;
+
+task night_round(robot r, location dst) {
+    goal { robot_at r dst; }
+    plan {
+        wait until clock_time >= 23:00 timeout 2 h else { fail "11 pm did not come in time"; }  // @clock
+        move r to dst;
+    }
+}

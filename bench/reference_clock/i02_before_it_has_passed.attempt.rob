@@ -1,0 +1,17 @@
+// bench/reference_clock/i02_before_it_has_passed.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 1.8;
+
+task before_eight(robot r, object part, location src, location dst) {
+    goal { object_at part dst; }
+    plan {
+        measure r time as now;                           // @clock
+        if now < 08:00 {                                 // @clock
+            move r to src;
+            grasp r part;
+            move r to dst;
+            place r part at dst;
+        } else {                                         // @clock
+            fail "08:00 has passed";                     // @clock
+        }                                                // @clock
+    }
+}

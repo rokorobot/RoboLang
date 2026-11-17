@@ -1,0 +1,22 @@
+{
+  "id": "x05_on_monday",
+  "prompt": "On Monday at 09:00, send cart1 from dispatch to intake.",
+  "world": "bench/worlds/pharmacy.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_9": {
+    "decision": "cannot",
+    "category": "inexpressible",
+    "because": "0042 T4"
+  },
+  "tags": [
+    "clock_time",
+    "date"
+  ],
+  "gap": "G-DATE",
+  "why": "A date or weekday is not a time of day: dates come with mission schedules (0042 T4, T11). The attempt waits for 09:00 on the start day, whatever day that is.",
+  "attempt_fails_with": "E101"
+}

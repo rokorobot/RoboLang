@@ -1,0 +1,32 @@
+{
+  "id": "i03_timeout_too_short",
+  "prompt": "At 23:00, send tug1 from gate_in to gate_out. Wait up to 10 minutes for 23:00 and, if it has not come by then, stop the job as failed.",
+  "world": "bench/worlds/yard.json",
+  "group": "infeasible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_9": {
+    "decision": "cannot",
+    "category": "infeasible",
+    "because": "0042 T5",
+    "world_1_5": {
+      "clock": {
+        "start": "2026-11-17T21:30:00",
+        "zone": "Europe/Prague"
+      }
+    }
+  },
+  "blockers": [
+    "it is 21:30 and 23:00 is 90 minutes away: the stated timeout is 10 minutes"
+  ],
+  "tags": [
+    "clock_time",
+    "wait_until",
+    "timeout_too_short"
+  ],
+  "gap": "G-CLOCK",
+  "why": "The wait needs 90 minutes (the clock starts at 21:30) and the request allows 10: a program times out and fails, so the request cannot be done as stated (0042 T5, T10). Compare `k03`, where the timeout covers the wait.",
+  "attempt_fails_with": "E101"
+}

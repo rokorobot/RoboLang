@@ -1,0 +1,12 @@
+// bench/reference_clock/i01_stamp_no_clock.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 1.8;
+
+task inspect_stamp(robot r, object vial, location bench, sensor scope) {
+    goal { robot_at r bench; }
+    plan {
+        move r to bench;
+        inspect r vial using scope;
+        measure r time as now;                           // @clock
+        communicate r to "log" with now;                 // @clock
+    }
+}

@@ -1,0 +1,75 @@
+{
+  "id": "k02_shift_cutoff",
+  "prompt": "With digit2, move tote_2 from inbound_conveyor to outbound_conveyor, but only if it is before 21:30. If it is 21:30 or later, move nothing, send \"after cutoff\" to channel \"lead\" from digit2 and stop the job as failed.",
+  "world": "bench/worlds/fulfilment.json",
+  "group": "clock",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_9": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "before 21:30: the tote is moved",
+        "goal": [
+          [
+            "rl:thing:tote_2",
+            "located_in",
+            "rl:place:outbound_conveyor"
+          ]
+        ],
+        "world_patch": {
+          "clock": {
+            "start": "2026-11-17T21:05:00",
+            "zone": "Europe/Prague"
+          }
+        }
+      },
+      {
+        "when": "21:30 or later: the message is sent, the run stops",
+        "fails": true,
+        "messages": [
+          [
+            "lead",
+            "after cutoff"
+          ]
+        ],
+        "world_patch": {
+          "clock": {
+            "start": "2026-11-17T21:50:00",
+            "zone": "Europe/Prague"
+          }
+        }
+      }
+    ],
+    "world_1_5": {
+      "clock": {
+        "start": "2026-11-17T21:05:00",
+        "zone": "Europe/Prague"
+      }
+    }
+  },
+  "expected_clock": [
+    {
+      "robot": "digit2",
+      "reading": "time",
+      "use": "if",
+      "conditions": [
+        [
+          "<",
+          "21:30"
+        ]
+      ]
+    }
+  ],
+  "tags": [
+    "clock_time",
+    "if",
+    "cutoff",
+    "communicate"
+  ],
+  "gap": "G-CLOCK",
+  "why": "An `if` tests the world or a measured value; 1.8 cannot read the time of day, so it cannot test it. 1.9 measures `time` once and tests the binding (0042 T1, T3). A start before and a start after the cutoff force the two paths. The attempt keeps the cutoff and drops nothing.",
+  "attempt_fails_with": "E101"
+}

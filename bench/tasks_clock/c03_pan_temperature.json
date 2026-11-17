@@ -1,0 +1,41 @@
+{
+  "id": "c03_pan_temperature",
+  "prompt": "With chef_arm, measure the temperature of pan_1 with its probe and send the reading to channel \"pass\".",
+  "world": "bench/worlds/kitchen_values.json",
+  "group": "control",
+  "expect": {
+    "decision": "program"
+  },
+  "expect_1_9": {
+    "decision": "program"
+  },
+  "expected_goal": [
+    [
+      "rl:robot:chef_arm",
+      "located_in",
+      "rl:place:stove"
+    ]
+  ],
+  "expected_readings": [
+    [
+      "chef_arm",
+      "temperature",
+      "pan_1"
+    ]
+  ],
+  "expected_messages": [
+    {
+      "channel": "pass",
+      "value_of": [
+        "pan_1",
+        "temperature"
+      ]
+    }
+  ],
+  "expected_clock": [],
+  "tags": [
+    "measure",
+    "value_message",
+    "no_clock"
+  ]
+}

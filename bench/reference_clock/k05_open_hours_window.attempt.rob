@@ -1,0 +1,18 @@
+// bench/reference_clock/k05_open_hours_window.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 1.8;
+
+task in_hours(robot r, object part, location src, location dst) {
+    goal { object_at part dst; }
+    plan {
+        measure r time as now;                           // @clock
+        if now >= 08:00 and now < 18:00 {                // @clock
+            move r to src;
+            grasp r part;
+            move r to dst;
+            place r part at dst;
+        } else {                                         // @clock
+            communicate r to "ops" with "outside hours"; // @clock
+            fail "outside the open hours";               // @clock
+        }                                                // @clock
+    }
+}

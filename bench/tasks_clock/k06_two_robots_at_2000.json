@@ -1,0 +1,73 @@
+{
+  "id": "k06_two_robots_at_2000",
+  "prompt": "Once it is 20:00, have digit1 move tote_1 and digit2 move tote_2 from inbound_conveyor to outbound_conveyor. Wait up to 1 hour for 20:00 and, if it has not come by then, stop the job as failed.",
+  "world": "bench/worlds/fulfilment.json",
+  "group": "clock",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_9": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "the task starts at 19:30: it waits, then both totes are moved",
+        "goal": [
+          [
+            "rl:thing:tote_1",
+            "located_in",
+            "rl:place:outbound_conveyor"
+          ],
+          [
+            "rl:thing:tote_2",
+            "located_in",
+            "rl:place:outbound_conveyor"
+          ]
+        ],
+        "world_patch": {
+          "clock": {
+            "start": "2026-11-17T19:30:00",
+            "zone": "Europe/Prague"
+          }
+        }
+      },
+      {
+        "when": "the task starts at 17:00: the wait times out",
+        "fails": true,
+        "world_patch": {
+          "clock": {
+            "start": "2026-11-17T17:00:00",
+            "zone": "Europe/Prague"
+          }
+        }
+      }
+    ],
+    "world_1_5": {
+      "clock": {
+        "start": "2026-11-17T19:30:00",
+        "zone": "Europe/Prague"
+      }
+    }
+  },
+  "expected_clock": [
+    {
+      "robot": [
+        "digit1",
+        "digit2"
+      ],
+      "use": "wait",
+      "reading": "time",
+      "op": ">=",
+      "value": "20:00",
+      "timeout": "1 h"
+    }
+  ],
+  "tags": [
+    "clock_time",
+    "wait_until",
+    "two_robots"
+  ],
+  "gap": "G-CLOCK",
+  "why": "Two robots wait for one time of day. 1.9 waits once on `clock_time >= 20:00` and then both robots act (0042 T5, T6). The attempt waits once, then moves with each robot.",
+  "attempt_fails_with": "E101"
+}

@@ -1,0 +1,53 @@
+{
+  "id": "k04_job_elapsed",
+  "prompt": "With arm1, move box1 from the shelf to the table, then send channel \"ops\" how long the whole job took.",
+  "world": "examples/world.json",
+  "group": "clock",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_9": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "the box is moved and the elapsed time is sent",
+        "goal": [
+          [
+            "rl:thing:box1",
+            "located_in",
+            "rl:place:table"
+          ]
+        ],
+        "messages": [
+          [
+            "ops",
+            null
+          ]
+        ],
+        "world_patch": {}
+      }
+    ],
+    "world_1_5": {
+      "clock": null,
+      "note": "no clock: `elapsed` needs none (0042 T7), so this is a program"
+    }
+  },
+  "expected_clock": [
+    {
+      "robot": "arm1",
+      "reading": "elapsed",
+      "use": "message",
+      "channel": "ops",
+      "after": "last step"
+    }
+  ],
+  "tags": [
+    "elapsed",
+    "communicate",
+    "no_world_clock"
+  ],
+  "gap": "G-CLOCK",
+  "why": "1.8 has no clock reading and no arithmetic, so the time the task took cannot be sent. 1.9 reads `elapsed` after the last step and sends it in seconds (0042 T1, T8). The world has no `clock`: `elapsed` still works (T7).",
+  "attempt_fails_with": "E217"
+}

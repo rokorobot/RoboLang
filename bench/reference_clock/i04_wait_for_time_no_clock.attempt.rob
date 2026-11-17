@@ -1,0 +1,13 @@
+// bench/reference_clock/i04_wait_for_time_no_clock.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 1.8;
+
+task at_two(robot r, object box, location src, location dst) {
+    goal { object_at box dst; }
+    plan {
+        wait until clock_time >= 14:00 timeout 12 h else { fail "14:00 did not come in time"; }  // @clock
+        move r to src;
+        grasp r box;
+        move r to dst;
+        place r box at dst;
+    }
+}

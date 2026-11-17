@@ -1,0 +1,9 @@
+{
+  "task": "before_eight",
+  "bindings": {
+    "r": "arm2",
+    "part": "part7",
+    "src": "table",
+    "dst": "shelf_b"
+  }
+}

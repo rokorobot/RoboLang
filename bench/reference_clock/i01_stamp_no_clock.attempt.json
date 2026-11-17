@@ -1,0 +1,9 @@
+{
+  "task": "inspect_stamp",
+  "bindings": {
+    "r": "arm1",
+    "vial": "vial1",
+    "bench": "bench",
+    "scope": "microscope"
+  }
+}

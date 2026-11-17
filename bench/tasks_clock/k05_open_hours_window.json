@@ -1,0 +1,96 @@
+{
+  "id": "k05_open_hours_window",
+  "prompt": "With arm2, move part7 from the table to shelf_b, but only within the open hours, 08:00 to 18:00. Outside them, send \"outside hours\" to channel \"ops\" from arm2 and stop the job as failed.",
+  "world": "bench/worlds/warehouse.json",
+  "group": "clock",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_9": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "09:40, inside the window: the part is moved",
+        "goal": [
+          [
+            "rl:thing:part7",
+            "located_in",
+            "rl:place:shelf_b"
+          ]
+        ],
+        "world_patch": {
+          "clock": {
+            "start": "2026-11-17T09:40:00",
+            "zone": "Europe/Prague"
+          }
+        }
+      },
+      {
+        "when": "19:15, after the window: the message is sent, the run stops",
+        "fails": true,
+        "messages": [
+          [
+            "ops",
+            "outside hours"
+          ]
+        ],
+        "world_patch": {
+          "clock": {
+            "start": "2026-11-17T19:15:00",
+            "zone": "Europe/Prague"
+          }
+        }
+      },
+      {
+        "when": "07:10, before the window: the message is sent, the run stops",
+        "fails": true,
+        "messages": [
+          [
+            "ops",
+            "outside hours"
+          ]
+        ],
+        "world_patch": {
+          "clock": {
+            "start": "2026-11-17T07:10:00",
+            "zone": "Europe/Prague"
+          }
+        }
+      }
+    ],
+    "world_1_5": {
+      "clock": {
+        "start": "2026-11-17T09:40:00",
+        "zone": "Europe/Prague"
+      }
+    }
+  },
+  "expected_clock": [
+    {
+      "robot": "arm2",
+      "reading": "time",
+      "use": "if",
+      "conditions": [
+        [
+          ">=",
+          "08:00"
+        ],
+        [
+          "<",
+          "18:00"
+        ]
+      ],
+      "join": "and"
+    }
+  ],
+  "tags": [
+    "clock_time",
+    "if",
+    "window",
+    "and"
+  ],
+  "gap": "G-CLOCK",
+  "why": "A window needs two comparisons on one reading. 1.9 compares a `time` binding with `and` (0042 T3). Paths that start before and after the window catch an `or`, or a single bound. The attempt writes the window.",
+  "attempt_fails_with": "E101"
+}

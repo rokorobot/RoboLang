@@ -1,0 +1,32 @@
+{
+  "id": "i05_window_already_closed",
+  "prompt": "With arm2, move part7 from the table to shelf_b, but only between 06:00 and 08:00 today.",
+  "world": "bench/worlds/warehouse.json",
+  "group": "infeasible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_9": {
+    "decision": "cannot",
+    "category": "infeasible",
+    "because": "0042 T4",
+    "world_1_5": {
+      "clock": {
+        "start": "2026-11-17T09:15:00",
+        "zone": "Europe/Prague"
+      }
+    }
+  },
+  "blockers": [
+    "it is 09:15: the window 06:00 to 08:00 today has closed"
+  ],
+  "tags": [
+    "clock_time",
+    "window",
+    "time_passed"
+  ],
+  "gap": "G-CLOCK",
+  "why": "The window lies wholly before the start of the task (09:15), and one day only (0042 T4) rules out tomorrow's window. Nothing in the request says what to do instead. Compare `k05`, where the start is inside the window.",
+  "attempt_fails_with": "E101"
+}

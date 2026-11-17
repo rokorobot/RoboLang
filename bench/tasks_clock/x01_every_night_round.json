@@ -1,0 +1,23 @@
+{
+  "id": "x01_every_night_round",
+  "prompt": "Every night at 23:30, send cleaner1 from dock_2 to the lobby and back to dock_2.",
+  "world": "bench/worlds/site.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_9": {
+    "decision": "cannot",
+    "category": "inexpressible",
+    "because": "0042 T11"
+  },
+  "tags": [
+    "clock_time",
+    "every",
+    "mission_trigger"
+  ],
+  "gap": "G-LOOP",
+  "why": "\"Every night\" repeats at a time: a mission trigger (0041 M6), not a wait. 1.9 can wait for 23:30 once; the repetition is the part that stays out (0042 T11). The attempt waits for 23:30 and runs once.",
+  "attempt_fails_with": "E101"
+}

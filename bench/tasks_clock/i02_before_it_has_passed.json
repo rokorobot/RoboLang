@@ -1,0 +1,32 @@
+{
+  "id": "i02_before_it_has_passed",
+  "prompt": "With arm2, move part7 from the table to shelf_b before 08:00 today.",
+  "world": "bench/worlds/warehouse.json",
+  "group": "infeasible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_9": {
+    "decision": "cannot",
+    "category": "infeasible",
+    "because": "0042 T4",
+    "world_1_5": {
+      "clock": {
+        "start": "2026-11-17T09:15:00",
+        "zone": "Europe/Prague"
+      }
+    }
+  },
+  "blockers": [
+    "it is 09:15, so 08:00 today has passed and the request has no else-path"
+  ],
+  "tags": [
+    "clock_time",
+    "time_passed",
+    "no_else"
+  ],
+  "gap": "G-CLOCK",
+  "why": "One day only: 08:00 means 08:00 on the day the task starts (0042 T4). The world's clock starts at 09:15, and the request says nothing to do instead, so no program does what it asks. The attempt tests `now < 08:00` and takes the else.",
+  "attempt_fails_with": "E101"
+}

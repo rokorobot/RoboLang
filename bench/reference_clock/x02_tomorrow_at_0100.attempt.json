@@ -1,0 +1,7 @@
+{
+  "task": "tugger_run",
+  "bindings": {
+    "r": "tugger_a",
+    "dst": "line_feed"
+  }
+}

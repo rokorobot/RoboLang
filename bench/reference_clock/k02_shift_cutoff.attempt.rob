@@ -1,0 +1,18 @@
+// bench/reference_clock/k02_shift_cutoff.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 1.8;
+
+task move_tote(robot r, object tote, location src, location dst) {
+    goal { object_at tote dst; }
+    plan {
+        measure r time as now;                           // @clock
+        if now < 21:30 {                                 // @clock
+            move r to src;
+            grasp r tote;
+            move r to dst;
+            place r tote at dst;
+        } else {                                         // @clock
+            communicate r to "lead" with "after cutoff"; // @clock
+            fail "after the cutoff";                     // @clock
+        }                                                // @clock
+    }
+}
