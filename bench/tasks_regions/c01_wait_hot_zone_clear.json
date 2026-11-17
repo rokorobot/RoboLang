@@ -1,0 +1,47 @@
+{
+  "id": "c01_wait_hot_zone_clear",
+  "prompt": "With the chef arm, take bowl_2 from the fridge to the pass, but wait for hot_zone to clear first. Give it 60 seconds, and if it has not cleared by then, do nothing more.",
+  "world": "bench/worlds/kitchen_values.json",
+  "group": "control",
+  "expect": {
+    "decision": "program"
+  },
+  "expected_goal": [
+    [
+      "rl:thing:bowl_2",
+      "located_in",
+      "rl:place:pass"
+    ]
+  ],
+  "expect_1_7": {
+    "decision": "program"
+  },
+  "tags": [
+    "wait_until",
+    "region",
+    "pick_place"
+  ],
+  "expect_1_6": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "hot_zone clears after 30 s",
+        "goal": [
+          [
+            "rl:thing:bowl_2",
+            "located_in",
+            "rl:place:pass"
+          ]
+        ],
+        "world_patch": {}
+      },
+      {
+        "when": "hot_zone never clears: the run stops",
+        "fails": true,
+        "world_patch": {
+          "events": []
+        }
+      }
+    ]
+  }
+}

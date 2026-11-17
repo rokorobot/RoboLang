@@ -1,0 +1,8 @@
+{
+  "task": "lay_out",
+  "bindings": {
+    "r": "printer1",
+    "dst": "gridline_c",
+    "zone": "layout_zone"
+  }
+}

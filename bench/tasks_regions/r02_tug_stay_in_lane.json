@@ -1,0 +1,49 @@
+{
+  "id": "r02_tug_stay_in_lane",
+  "prompt": "Drive tug1 from gate_in to gate_out, and keep it inside lane_1 the whole time.",
+  "world": "bench/worlds/yard.json",
+  "group": "region",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_7": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "the world as given",
+        "goal": [
+          [
+            "rl:robot:tug1",
+            "located_in",
+            "rl:place:gate_out"
+          ]
+        ],
+        "world_patch": {}
+      }
+    ],
+    "world_1_3": {
+      "robots": {
+        "tug1": {
+          "honours": [
+            "no_go_region",
+            "in_region"
+          ]
+        }
+      }
+    }
+  },
+  "expected_limits": [
+    [
+      "in_region",
+      "lane_1"
+    ]
+  ],
+  "tags": [
+    "in_region",
+    "stay_inside"
+  ],
+  "gap": "G-PATH",
+  "why": "RoboLang 1.6 has no way to say where a robot must stay while it moves: `in_region` is reserved and not implemented (language reference: reserved words). 1.7 states it as a task annotation (0039 P1).",
+  "attempt_fails_with": "E201"
+}

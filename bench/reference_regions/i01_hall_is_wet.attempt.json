@@ -1,0 +1,8 @@
+{
+  "task": "to_hall",
+  "bindings": {
+    "r": "cleaner1",
+    "dst": "hall",
+    "wet": "wet_floor"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "id": "x02_arm_over_wet",
+  "prompt": "Have installer1 put module_14 on the level 3 wall. Its arm must never swing over wet_floor while it works.",
+  "world": "bench/worlds/site.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_7": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "tags": [
+    "arm_workspace"
+  ],
+  "gap": "G-PATH",
+  "why": "A region limit covers the base and what it carries, not the arm's workspace (0039 P3, P9). An `in_region` or `no_go_region` on the robot says nothing about the arm: a half program.",
+  "attempt_fails_with": "E211"
+}

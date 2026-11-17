@@ -1,0 +1,36 @@
+{
+  "id": "i04_delegated_limit",
+  "prompt": "Hand this job to the delegated Core executor rather than running it here: send cleaner1 from dock_2 to dock_1, keeping it out of wet_floor.",
+  "world": "bench/worlds/site.json",
+  "group": "infeasible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_7": {
+    "decision": "cannot",
+    "category": "infeasible",
+    "because": "0039 P8",
+    "world_1_3": {
+      "robots": {
+        "cleaner1": {
+          "honours": [
+            "no_go_region",
+            "in_region"
+          ]
+        }
+      }
+    },
+    "delegated": true
+  },
+  "tags": [
+    "no_go_region",
+    "delegation"
+  ],
+  "gap": "G-PATH",
+  "why": "Core 0.2 carries no region limits, so `delegate` refuses a task that has one (a new code) instead of dropping it (0039 P8). 1.6 cannot state the limit at all.",
+  "blockers": [
+    "delegate refuses region limits"
+  ],
+  "attempt_fails_with": "E211"
+}

@@ -1,0 +1,10 @@
+{
+  "task": "to_row",
+  "bindings": {
+    "r": "weeder1",
+    "a": "row_14",
+    "b": "row_15",
+    "field": "field_zone",
+    "road": "road_zone"
+  }
+}

@@ -108,7 +108,22 @@
         "u10_inside_clean_room",
         "f_path_avoid_wet_floor",
         "f_path_stay_in_zone",
-        "f_path_keep_off_road"
+        "f_path_keep_off_road",
+        "i01_hall_is_wet",
+        "i02_hall_is_outside",
+        "i03_spot_cannot_honour",
+        "i04_delegated_limit",
+        "r01_runner_keep_off_hot",
+        "r02_tug_stay_in_lane",
+        "r03_field_not_road",
+        "r04_swap_carts",
+        "r05_slow_and_dry",
+        "r06_field_clear_or_other_row",
+        "r07_carry_module_dry",
+        "r08_decoy_door_zone2",
+        "r09_crate_around_aisle_and_cell",
+        "x01_first_leg_only",
+        "x02_arm_over_wet"
       ]
     },
     {
@@ -118,7 +133,8 @@
       "scope": "open",
       "scope_note": "needed by H4 (safety case G2, H05)",
       "tasks": [
-        "a15_nice_and_slow"
+        "a15_nice_and_slow",
+        "x04_grip_ten_newtons"
       ]
     },
     {
@@ -145,7 +161,8 @@
         "x_nearest_robot",
         "f_choose_nearest_tugger",
         "f_choose_nearest_dock",
-        "f_choose_nearer_cart"
+        "f_choose_nearer_cart",
+        "x05_avoid_busy_areas"
       ]
     },
     {
@@ -176,8 +193,10 @@
       "name": "Limits and reactions that depend on people nearby: slow, stop or yield when a person is within a distance",
       "direction": "safety",
       "scope": "open",
-      "scope_note": "from foresight pass 1, no benchmark task yet",
-      "tasks": []
+      "scope_note": "from foresight pass 1; one benchmark task since I1 L3 (set regions, 2026-11-17)",
+      "tasks": [
+        "x03_person_distance"
+      ]
     },
     {
       "id": "G-PREDICT",
@@ -1929,6 +1948,61 @@
     {
       "date": "2026-11-17",
       "note": "R3 model run: 0/25 false programs (Sonnet 25/25 declines, Haiku 23/25 plus 2 clarify); ACT-MFG-001 G-CHOOSE refutation withdrawn",
+      "activities": {
+        "ACT-LOG-001": "deployment now",
+        "ACT-LOG-002": "deployment now",
+        "ACT-MFG-001": "pilot 1-3y",
+        "ACT-MFG-002": "pilot 1-3y",
+        "ACT-RET-001": "deployment now",
+        "ACT-HOS-001": "deployment now",
+        "ACT-HLTH-001": "deployment now",
+        "ACT-ELD-001": "pilot 3-7y",
+        "ACT-HOME-001": "research 3-7y",
+        "ACT-HOME-002": "demo 3-7y",
+        "ACT-INSP-001": "demo now",
+        "ACT-INSP-002": "demo 1-3y",
+        "ACT-SEC-001": "demo 1-3y",
+        "ACT-SAFE-001": "demo 3-7y",
+        "ACT-CON-001": "deployment now",
+        "ACT-AGR-001": "pilot 3-7y",
+        "ACT-EV-001": "pilot 1-3y",
+        "ACT-CLN-001": "deployment now",
+        "ACT-MRC-001": "demo 3-7y",
+        "ACT-MRC-002": "demo 1-3y",
+        "ACT-HRC-001": "research 3-7y",
+        "ACT-HRC-002": "research 3-7y",
+        "ACT-ASM-001": "research 7y+",
+        "ACT-PRED-001": "research 3-7y",
+        "ACT-PRED-002": "research 3-7y",
+        "ACT-AUTO-001": "deployment now",
+        "ACT-AUTO-002": "demo 1-3y",
+        "ACT-AUTO-003": "research 3-7y",
+        "ACT-MFG-003": "demo 1-3y",
+        "ACT-AGR-002": "deployment now",
+        "ACT-SOL-001": "deployment now",
+        "ACT-PRED-003": "concept 3-7y",
+        "ACT-PRED-004": "concept 7y+",
+        "ACT-LRN-001": "concept 3-7y",
+        "ACT-LRN-002": "concept 3-7y",
+        "ACT-AUTO-004": "concept 3-7y",
+        "ACT-SAFE-002": "concept 3-7y",
+        "ACT-CARE-001": "concept 7y+"
+      },
+      "directions": {
+        "perception": 2.78,
+        "reasoning": 0.68,
+        "prediction": 0.25,
+        "action": 4.17,
+        "learning": 0.75,
+        "cooperation": 0.99,
+        "safety": 0.49,
+        "communication": 0.87,
+        "autonomy": 0.67
+      }
+    },
+    {
+      "date": "2026-11-17",
+      "note": "I1 L3: set 6 regions pre-registered (22 tasks)",
       "activities": {
         "ACT-LOG-001": "deployment now",
         "ACT-LOG-002": "deployment now",

@@ -1,0 +1,9 @@
+{
+  "task": "carry",
+  "bindings": {
+    "r": "helper_arm",
+    "c": "cup_1",
+    "src": "pantry",
+    "dst": "pass"
+  }
+}

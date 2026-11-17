@@ -1,0 +1,10 @@
+{
+  "task": "install",
+  "bindings": {
+    "r": "installer1",
+    "m": "module_14",
+    "src": "module_pallet",
+    "dst": "level_3_wall",
+    "wet": "wet_floor"
+  }
+}

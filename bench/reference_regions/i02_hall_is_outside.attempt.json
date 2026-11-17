@@ -1,0 +1,8 @@
+{
+  "task": "to_hall",
+  "bindings": {
+    "r": "printer1",
+    "dst": "hall",
+    "zone": "layout_zone"
+  }
+}

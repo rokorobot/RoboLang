@@ -40,6 +40,8 @@ VALUES_TASKS_DIR = BENCH / "tasks_values"  # set 5: measured values, pre-registe
 VALUES_REFERENCE_DIR = BENCH / "reference_values"
 FUTURE_TASKS_DIR = BENCH / "tasks_future"  # set 6: probes for the atlas's near language gaps (RSI-01 R3)
 FUTURE_REFERENCE_DIR = BENCH / "reference_future"
+REGIONS_TASKS_DIR = BENCH / "tasks_regions"  # set 6: region limits, pre-registered against 1.6 (decision 0039)
+REGIONS_REFERENCE_DIR = BENCH / "reference_regions"
 PROMPT_FILE = BENCH / "prompt.md"
 REFERENCE_FILE = ROOT / "docs" / "language-reference.md"
 MINIMAL_PROMPT_FILE = BENCH / "prompt_minimal.md"
@@ -57,7 +59,8 @@ SETS = {"1": (TASKS_DIR, REFERENCE_DIR), "hard": (HARD_TASKS_DIR, HARD_REFERENCE
         "branch": (BRANCH_TASKS_DIR, BRANCH_REFERENCE_DIR),
         "failure": (FAILURE_TASKS_DIR, FAILURE_REFERENCE_DIR),
         "values": (VALUES_TASKS_DIR, VALUES_REFERENCE_DIR),
-        "future": (FUTURE_TASKS_DIR, FUTURE_REFERENCE_DIR)}
+        "future": (FUTURE_TASKS_DIR, FUTURE_REFERENCE_DIR),
+        "regions": (REGIONS_TASKS_DIR, REGIONS_REFERENCE_DIR)}
 PROMPTS = ("full", "minimal")
 
 # $ per million tokens: (input, output, cache read). A cache write (5 minutes) costs 1.25 x input.

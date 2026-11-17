@@ -1,0 +1,8 @@
+// bench/reference_regions/i02_hall_is_outside.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 1.6;
+
+task to_hall(robot r, location dst, region zone) {
+    @safety in_region zone;
+    goal { robot_at r dst; }
+    plan { move r to dst; }
+}
