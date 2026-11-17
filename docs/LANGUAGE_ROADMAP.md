@@ -1,11 +1,14 @@
 # RoboLang language roadmap
 
-**Status:** PROVISIONAL, 2026-11-17. It is built from the atlas data of A1, A2 and R2. R3 confirms or refutes the
-gaps with tests (rule LE-7). This page is revised after R3, then with each monthly proposal (R4). It sits at level 3 of
-the [document map](LANGUAGE_EVOLUTION.md#document-map), next to [RSI-01](plans/rsi-01.md). It follows the
-[strategy](LANGUAGE_EVOLUTION.md) and the [rules](LANGUAGE_EVOLUTION_RULES.md). The order comes from the generated
+**Status:** PROVISIONAL, revised 2026-11-17 after R3. The tests of R3 confirm all nine near gaps, narrow
+G-PERCEIVE, G-CHOOSE and G-SELF, and refute three sub-activity claims
+([evidence](evidence/rsi-r3-gap-verification.md)). The second half of LE-7 still waits for the model run: models
+must decline the probes. This page sits at level 3 of the [document map](LANGUAGE_EVOLUTION.md#document-map), next
+to [RSI-01](plans/rsi-01.md). It follows the [strategy](LANGUAGE_EVOLUTION.md) and the
+[rules](LANGUAGE_EVOLUTION_RULES.md). The order comes from the generated
 [suggested order](plans/humanoid-activities.md#suggested-order-of-language-work) and is not chosen by hand. Each
-iteration still needs the owner's L1–L6 approvals.
+iteration still needs the owner's L1–L6 approvals. The version before R3 is frozen in
+[roadmap-snapshots/2026-11-17.md](roadmap-snapshots/2026-11-17.md).
 
 ## What the data says
 
@@ -15,27 +18,30 @@ iteration still needs the owner's L1–L6 approvals.
   Shift work, patrols and harvesting are all repetition. It is out of scope since N4, so it needs a decision record
   (LE-9). The recommended design is a **mission layer** above tasks: missions repeat and react, and every task stays
   bounded and verified.
-- **Perception and choice follow.** G-PERCEIVE (19 sub-activities) and G-CHOOSE (17) have the highest language need
-  of any direction.
+- **R3 moved perception down.** RoboLang 1.6 already expresses two of the perception claims with `measure … label`
+  and `measure … distance`. G-PERCEIVE is now narrower: values beyond the four kinds. It moves from third to sixth
+  place.
+- **Each iteration starts with its probes.** The R3 probe tasks of a gap become the core of that iteration's
+  pre-registered set (L3).
 
 ## Iterations
 
 One gap per iteration (LE-10), each a full L1–L6 cycle ending in a release. "Unlocked" counts the near sub-activities
 that are fully expressible once this gap and those above it are closed (13 near, 38 in total).
 
-| # | Version | Gap | What it adds | Design for (far needs it must not rule out) | Unlocked near / all |
+| # | Version | Gap | What it adds (R3 probes) | Design for (far needs it must not rule out) | Unlocked near / all |
 |---|---|---|---|---|---|
-| I1 | 1.7 | G-PATH | Stay inside or outside a region while moving. A request checked against the controller's envelope, never enforced by RoboLang (LE-13). First because H4 needs it (D5, safety case G2) | G-PROX (a zone around a person), G-FORCE (the same "checked request" mechanism) | 0 / 0 |
-| I2 | 1.8 | G-ACT | Actions beyond the seven: open, dock, charge, set a device. Declared per robot in its capability profile, typed, with a verified outcome | G-TEACH (a taught skill becomes a named action), G-SELF (dock and charge) | 0 / 0 |
-| I3 | 1.9 | G-PERCEIVE | Conditions on perceived properties (ripe, dirty, damaged) with confidence. Unknown fails closed, as readings do in 1.6 | G-PREDICT (a predicted property), G-CHOOSE (choosing by property) | 1 / 1 |
-| — | — | *decision record* | **Mission layer.** Written alongside I1 as design only; the owner decides whether to reopen G-LOOP | triggers for I5, I6, I8 | — |
-| I4 | 2.0 | G-LOOP | Missions repeat bounded, verified tasks until a stop condition holds. A new layer, hence 2.0 | clock, message and self-state triggers | 2 / 2 |
-| I5 | 2.1 | G-CLOCK | Clock readings and times of day, in conditions and as mission triggers | schedules across shifts | 3 / 4 |
-| I6 | 2.2 | G-MSG | Waiting for a message (`message_received`, reserved since 1.3) and confirmed delivery | negotiation between robots (cooperation) | 5 / 8 |
-| I7 | 2.3 | G-CHOOSE | Choosing objects or robots at run time (`detect`). Changes how goals name things: needs a Core decision | learned object categories | 9 / 15 |
-| I8 | 2.4 | G-SELF | The robot's own state as readings (battery, health, faults); acting on it and asking for service | G-PREDICT (time to failure) | 10 / 19 |
-| I9 | 2.5 | G-CALC | Minimal arithmetic, counting and text built from values | — | 12 / 22 |
-| I10 | 2.6 | G-CONC | Several robots acting at the same time. The largest semantic change (Core sequencing), so last | shared workspaces with people | 13 / 26 |
+| I1 | 1.7 | G-PATH | Stay inside or outside a region while moving (`avoid_wet_floor`, `stay_in_zone`, `keep_off_road`). A request checked against the controller's envelope, never enforced by RoboLang (LE-13). First because H4 needs it (D5, safety case G2) | G-PROX (a zone around a person), G-FORCE (the same "checked request" mechanism) | 0 / 0 |
+| I2 | 1.8 | G-ACT | Actions beyond the seven: set a device, open, print a layout (`set_fryer`, `open_closet`, `print_layout`). Declared per robot in its capability profile, typed, with a verified outcome | G-TEACH (a taught skill becomes a named action), G-SELF (dock and charge) | 1 / 1 |
+| I3 | 1.9 | G-CLOCK | Clock readings and times of day in conditions and messages (`scan_stamp`, `shift_cutoff`, `clean_at_2300`) | mission triggers by time (I4), schedules across shifts | 1 / 1 |
+| — | — | *decision record* | **Mission layer.** Written alongside I1 as design only; the owner decides whether to reopen G-LOOP | triggers by time, message and self-state | — |
+| I4 | 2.0 | G-LOOP | Missions repeat bounded, verified tasks until a stop condition holds. A new layer, hence 2.0 | the triggers of I3, I5, I8 | 2 / 2 |
+| I5 | 2.1 | G-MSG | Waiting for a message (`message_received`, reserved since 1.3) and confirmed delivery (`line_docked`, `nurse_confirm`, `wind_clear`) | negotiation between robots (cooperation) | 5 / 6 |
+| I6 | 2.2 | G-PERCEIVE | **Narrowed by R3:** perceived values beyond the four kinds of 1.6, such as a fill percentage or a detection confidence (`shelf_fill`, `weed_confidence`). Labels already cover classifications like "too dark" | G-PREDICT (a predicted property), G-CHOOSE (choosing by property) | 6 / 9 |
+| I7 | 2.3 | G-CHOOSE | **Narrowed by R3:** properties of robots and locations, and choosing the nearest or best by them (`nearest_tugger`, `nearest_dock`, `nearer_cart`). Changes how goals name things: needs a Core decision | learned object categories | 9 / 15 |
+| I8 | 2.4 | G-SELF | **Narrowed by R3:** the robot's battery as a reading and condition; acting on it and reporting it (`low_battery`, `enough_for_route`, `report_charge`). Own health is partly there (`sensor_ok`, `robot_ready`) | G-PREDICT (time to failure) | 10 / 19 |
+| I9 | 2.5 | G-CALC | Minimal arithmetic, counting and text built from values (`total_weight`, `over_limit`, `text_line`) | — | 12 / 22 |
+| I10 | 2.6 | G-CONC | Several robots acting at the same time (`carry_and_drive`, `two_hand_lift`). The largest semantic change (Core sequencing), so last | shared workspaces with people | 13 / 26 |
 
 The remaining 12 of the 38 sub-activities need far gaps (G-PROX, G-FORCE, G-TEACH, G-PREDICT). These get design
 sketches only (LE-8). They are promoted to iterations when their sub-activities reach pilot within three years.
@@ -58,5 +64,5 @@ Frozen, dated copies with a git tag: [roadmap-snapshots/](roadmap-snapshots/READ
 
 | # | State |
 |---|---|
-| I1–I10 | Not started; waiting for R3 |
+| I1–I10 | Not started; R3 done (tests), model run pending |
 | Mission layer decision record | Not started |

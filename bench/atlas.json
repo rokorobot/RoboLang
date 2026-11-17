@@ -102,7 +102,7 @@
       "name": "Staying inside or outside a region while moving",
       "direction": "safety",
       "scope": "open",
-      "scope_note": "`in_region`, `no_go_region` reserved (E211); needed by H4 (safety case G2)",
+      "scope_note": "`in_region`, `no_go_region` are reserved words; a condition using them is rejected (E201, R3 2026-11-17); needed by H4 (safety case G2)",
       "tasks": [
         "u09_avoid_quay",
         "u10_inside_clean_room",
