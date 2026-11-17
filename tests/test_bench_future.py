@@ -30,8 +30,9 @@ CANNOT = {"decision": "cannot", "category": "inexpressible"}
 PROBES = {t: d for t, d in SET.items() if d["group"] == "inexpressible"}
 CONTROLS = {t: d for t, d in SET.items() if d["group"] == "control"}
 # R3 refutations: (activity, gap) -> the control whose reference program expresses the claim
-REFUTED = {("ACT-HOS-001", "G-PERCEIVE"): "c_fries_too_dark", ("ACT-SOL-001", "G-PERCEIVE"): "c_table_out_of_tolerance",
-           ("ACT-MFG-001", "G-CHOOSE"): "c_parts_left_in_container"}
+REFUTED = {("ACT-HOS-001", "G-PERCEIVE"): "c_fries_too_dark", ("ACT-SOL-001", "G-PERCEIVE"): "c_table_out_of_tolerance"}
+# withdrawn after the model run: it held only for parts the world names; the task stays as a closed-world control
+WITHDRAWN = {("ACT-MFG-001", "G-CHOOSE"): "c_parts_left_in_container"}
 NEW_WORLDS = ["fry_station", "fulfilment", "site", "ward"]
 
 
@@ -98,6 +99,10 @@ def test_refuted_claims_are_removed_from_needs_and_recorded_with_a_control():
         act = ACTIVITIES[activity]
         assert gap not in act["needs"], (activity, gap)
         assert f"R3 (2026-11-17): {gap} refuted, 1.6 expresses it with" in act["basis"], activity
+        assert CONTROLS[control]["activity"] == activity
+    for (activity, gap), control in WITHDRAWN.items():
+        act = ACTIVITIES[activity]
+        assert gap in act["needs"] and "refutation is withdrawn" in act["basis"], (activity, gap)
         assert CONTROLS[control]["activity"] == activity
     # a refuted claim has no probe: a probe for it would have been a control (and every probe's pair is still claimed)
     assert not {(t["activity"], t["gap"]) for t in PROBES.values()} & set(REFUTED)

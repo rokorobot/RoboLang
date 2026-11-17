@@ -25,7 +25,7 @@ headed, and what a near design must not rule out. It never gives syntax by itsel
 | # | Direction | Priority | Language need | Future need | Sub-activities | Near gaps |
 |---|---|---|---|---|---|---|
 | 1 | action | 4.17 | 4.30 | 1.01 | 20 | G-ACT |
-| 2 | perception | 2.78 | 9.39 | 0.45 | 11 | G-CHOOSE, G-PERCEIVE |
+| 2 | perception | 2.78 | 9.81 | 0.45 | 11 | G-CHOOSE, G-PERCEIVE |
 | 3 | cooperation | 0.99 | 1.00 | 1.61 | 12 | G-CONC |
 | 4 | communication | 0.87 | 3.86 | 0.32 | 5 | G-MSG |
 | 5 | learning | 0.75 | 0.65 | 0.70 | 6 | — |
@@ -47,9 +47,9 @@ first (strategy D5). An `out` gap enters only through its own decision record (L
 | 2 | `G-ACT` | action | open | 4.30 | 0.45 | unlocks the most |
 | 3 | `G-CLOCK` | reasoning | open | 4.73 | 0.45 | unlocks the most |
 | 4 | `G-LOOP` | reasoning | out | 8.21 | 1.00 | unlocks the most |
-| 5 | `G-MSG` | communication | open | 3.86 | 2.79 | unlocks the most |
-| 6 | `G-PERCEIVE` | perception | open | 4.59 | 4.16 | unlocks the most |
-| 7 | `G-CHOOSE` | perception | open | 4.81 | 5.95 | unlocks the most |
+| 5 | `G-MSG` | communication | open | 3.86 | 2.37 | unlocks the most |
+| 6 | `G-PERCEIVE` | perception | open | 4.59 | 3.74 | unlocks the most |
+| 7 | `G-CHOOSE` | perception | open | 5.23 | 5.95 | unlocks the most |
 | 8 | `G-SELF` | autonomy | open | 1.33 | 7.29 | unlocks the most |
 | 9 | `G-CALC` | reasoning | open | 1.55 | 8.46 | unlocks the most |
 | 10 | `G-CONC` | cooperation | open | 1.00 | 9.46 | unlocks the most |
@@ -88,6 +88,7 @@ before.
 
 | Date | Note | Added | Removed | Changed | Ranking |
 |---|---|---|---|---|---|
+| 2026-11-17 | R3 model run: 0/25 false programs (Sonnet 25/25 declines, Haiku 23/25 plus 2 clarify); ACT-MFG-001 G-CHOOSE refutation withdrawn | — | — | — | 1. action 4.17 · 2. perception 2.78 · 3. cooperation 0.99 · 4. communication 0.87 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
 | 2026-11-17 | R3: 25 probes confirm G-CLOCK, G-CALC, G-MSG, G-ACT, G-PATH, G-CONC, G-CHOOSE, G-PERCEIVE, G-SELF; refuted: G-PERCEIVE for ACT-HOS-001 and ACT-SOL-001, G-CHOOSE for ACT-MFG-001 | — | — | — | 1. action 4.17 · 2. perception 2.78 · 3. cooperation 0.99 · 4. communication 0.87 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
 | 2026-11-17 | Orchestrator spot-check of A2: ACT-MFG-003 pilot announced, not running; ACT-SOL-001 basis corrected | — | — | ACT-MFG-003: pilot 1-3y → demo 1-3y | 1. action 4.17 · 2. perception 2.78 · 3. cooperation 0.99 · 4. communication 0.87 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
 | 2026-11-17 | Horizon scan 1 (A2): 35 leading signals (18 on 11 far activities, 17 on the new ones), 7 concept activities, 3 R2 holes filled (machine tending, weeding, solar); no changes to existing activities, no new gaps | ACT-AGR-002, ACT-AUTO-004, ACT-CARE-001, ACT-LRN-001, ACT-LRN-002, ACT-MFG-003, ACT-PRED-003, ACT-PRED-004, ACT-SAFE-002, ACT-SOL-001 | — | — | 1. action 4.17 · 2. perception 2.78 · 3. cooperation 0.99 (+1) · 4. communication 0.87 (-1) · 5. learning 0.75 · 6. reasoning 0.68 (+1) · 7. autonomy 0.67 (-1) · 8. safety 0.49 · 9. prediction 0.25 |
@@ -107,7 +108,7 @@ before.
 | `ACT-CON-001` Construction-site layout printing | deployment | now | 0.45 | 0.45 | G-PATH, G-LOOP, G-PERCEIVE, G-ACT | [1](https://www.dustyrobotics.com/discover/construction-robot) |
 | `ACT-HOS-001` Fry-station cooking in restaurant kitchens | deployment | now | 0.45 | 0.45 | G-ACT | [1](https://www.fastcasual.com/news/miso-robotics-flippy-fry-station-robot-surpasses-5m-baskets) |
 | `ACT-LOG-002` Autonomous trailer and container unloading | deployment | now | 0.45 | 0.45 | G-LOOP, G-PERCEIVE, G-CALC | [1](https://www.therobotreport.com/boston-dynamics-built-stretch-gen-2-for-reliable-consistent-performance/) |
-| `ACT-MFG-001` Parts sequencing for the assembly line | pilot | 1-3y | 0.60 | 0.42 | G-LOOP, G-MSG, G-CLOCK | [1](https://www.therobotreport.com/bmw-group-deploys-figure-03-humanoid-after-tests-previous-version/) |
+| `ACT-MFG-001` Parts sequencing for the assembly line | pilot | 1-3y | 0.60 | 0.42 | G-LOOP, G-MSG, G-CLOCK, G-CHOOSE | [1](https://www.therobotreport.com/bmw-group-deploys-figure-03-humanoid-after-tests-previous-version/) |
 | `ACT-AGR-002` Autonomous laser weeding between crop rows | deployment | now | 0.40 | 0.40 | G-PERCEIVE, G-LOOP, G-PATH, G-CHOOSE | [1](https://agfundernews.com/🎥-carbon-robotics-100m-revenue-new-machine-and-a-path-to-ipo) |
 | `ACT-AUTO-002` Battery swapping for whole-shift humanoid work | demo | 1-3y | 0.55 | 0.39 | G-SELF, G-LOOP, G-ACT | [1](https://newatlas.com/ai-humanoids/walker-s2-humanoid-robot-swaps-batteries) |
 | `ACT-EV-001` Robotic EV charging in garages and depots | pilot | 1-3y | 0.55 | 0.39 | G-ACT, G-MSG, G-CHOOSE, G-LOOP | [1](https://electrek.co/2026/02/23/china-overhead-rail-ev-charging-robots-parking-garages/) |
@@ -141,7 +142,7 @@ before.
 
 | Language gap | Scope | Priority | Near | Benchmark tasks |
 |---|---|---|---|---|
-| `G-CHOOSE` Choosing objects or robots at run time | open | 4.81 | yes | 5 |
+| `G-CHOOSE` Choosing objects or robots at run time | open | 5.23 | yes | 5 |
 | `G-PERCEIVE` Conditions on perceived properties (dirty, damaged) | open | 4.59 | yes | 4 |
 
 ## Cooperation
@@ -198,7 +199,7 @@ before.
 
 | Sub-activity | Maturity | Horizon | p | Priority | Needs | Sources |
 |---|---|---|---|---|---|---|
-| `ACT-MFG-001` Parts sequencing for the assembly line | pilot | 1-3y | 0.60 | 0.42 | G-LOOP, G-MSG, G-CLOCK | [1](https://www.therobotreport.com/bmw-group-deploys-figure-03-humanoid-after-tests-previous-version/) |
+| `ACT-MFG-001` Parts sequencing for the assembly line | pilot | 1-3y | 0.60 | 0.42 | G-LOOP, G-MSG, G-CLOCK, G-CHOOSE | [1](https://www.therobotreport.com/bmw-group-deploys-figure-03-humanoid-after-tests-previous-version/) |
 | `ACT-MFG-003` Humanoid machine tending at a machine builder's customer site | demo | 1-3y | 0.45 | 0.32 | G-LOOP, G-ACT, G-MSG, G-CLOCK | [1](https://roboticsandautomationnews.com/2026/05/15/hexagon-and-fill-maschinenbau-partner-to-advance-manufacturing-autonomy-using-humanoids/101578/) |
 | `ACT-HOME-002` General household chores by a home humanoid | demo | 3-7y | 0.40 | 0.16 | G-CLOCK, G-ACT, G-LOOP, G-CHOOSE, G-PATH, G-PERCEIVE | [1](https://heise.de/-11287205) |
 | `ACT-HRC-002` Following ambiguous and corrective instructions during shared work | research | 3-7y | 0.40 | 0.16 | G-MSG, G-CHOOSE, G-PERCEIVE | [1](https://arxiv.org/abs/2602.14551) |

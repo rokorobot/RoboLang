@@ -161,3 +161,36 @@ G-CLOCK for ACT-MFG-001 and ACT-HLTH-001; G-PATH for ACT-SOL-001. Those claims s
   in_region ...`), while `message_received` reports E211. The E211 text says "not part of v1.1" in a 1.6 file. The
   atlas's `scope_note` for G-PATH says E211. Harmless to R3: both are rejections.
 - A world file cannot give a robot or a location a property, so no world can offer "distance of a tugger".
+
+## Model run, 2026-11-17
+
+`Benchmark` with `future: true`, [run 43992454839](https://github.com/rokorobot/RoboLang/actions/runs/43992454839)
+(branch of PR #140), Sonnet 5.5 and Haiku 5.5, full prompt, 1 repeat, effort medium. Cost $0.20 ($0.18 Sonnet,
+$0.01 Haiku). The gate lines in the job summary are for information; this set is not gated.
+
+| Model | Probes declined | False programs | Probes answered `clarify` | Controls right | False refusals | Half-programs |
+|---|---|---|---|---|---|---|
+| Sonnet 5.5 | 25/25 | 0/25 | 0 | 6/8 | 2/8 | 1/8 |
+| Haiku 5.5 | 23/25 | 0/25 | 2 (`f_choose_nearer_cart`, `f_choose_nearest_tugger`) | 5/8 | 3/8 (one `clarify`) | 1/8 |
+
+**LE-7, second half: met for all nine gaps.** No model wrote a program for any probe. Haiku's two `clarify` answers on
+G-CHOOSE probes are safe non-programs (point 2 above: geometry read as missing information).
+
+**Controls:**
+
+- **False refusals by both models:** `c_count_two_totes` (a fixed count is a literal message) and
+  `c_retry_flag_carry_on` (three tries with a failure handler). The language expresses both. The models under-use
+  it, so this is a teaching gap (F01, fix in `docs/language-reference.md`), not a language gap.
+- **Half-programs by both models:** `c_parts_left_in_container`. The refutation of G-CHOOSE for ACT-MFG-001 held only
+  for parts the world names, and "whatever parts are left" asks for a choice at run time. **The refutation is
+  withdrawn:** G-CHOOSE is back in ACT-MFG-001's `needs`. The task stays as a control for the closed-world reading.
+- Haiku asked to clarify `c_table_out_of_tolerance`.
+- The other two refutations, `c_fries_too_dark` (`measure … label`) and `c_table_out_of_tolerance`
+  (`measure … distance`), were answered correctly by Sonnet. They stand.
+
+**Follow-ups:**
+
+1. Language reference: show a fixed count as a literal message, and a bounded retry with a handler. Both are F01
+   fixes. Re-run `c_count_two_totes` and `c_retry_flag_carry_on` afterwards.
+2. Label update for `u01_if_dirty` and `u02_if_damaged` (set "ask"): under 1.6 they are `infeasible` (S234).
+3. Text of the E211 message in 1.6 files.

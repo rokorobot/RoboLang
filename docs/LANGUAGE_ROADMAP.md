@@ -1,9 +1,9 @@
 # RoboLang language roadmap
 
 **Status:** PROVISIONAL, revised 2026-11-17 after R3. The tests of R3 confirm all nine near gaps, narrow
-G-PERCEIVE, G-CHOOSE and G-SELF, and refute three sub-activity claims
-([evidence](evidence/rsi-r3-gap-verification.md)). The second half of LE-7 still waits for the model run: models
-must decline the probes. This page sits at level 3 of the [document map](LANGUAGE_EVOLUTION.md#document-map), next
+G-PERCEIVE, G-CHOOSE and G-SELF, and refute two sub-activity claims; a third refutation was withdrawn after the model run
+([evidence](evidence/rsi-r3-gap-verification.md)). The model run meets the second half of LE-7: no model wrote a
+program for any of the 25 probes. This page sits at level 3 of the [document map](LANGUAGE_EVOLUTION.md#document-map), next
 to [RSI-01](plans/rsi-01.md). It follows the [strategy](LANGUAGE_EVOLUTION.md) and the
 [rules](LANGUAGE_EVOLUTION_RULES.md). The order comes from the generated
 [suggested order](plans/humanoid-activities.md#suggested-order-of-language-work) and is not chosen by hand. Each
@@ -36,8 +36,8 @@ that are fully expressible once this gap and those above it are closed (13 near,
 | I3 | 1.9 | G-CLOCK | Clock readings and times of day in conditions and messages (`scan_stamp`, `shift_cutoff`, `clean_at_2300`) | mission triggers by time (I4), schedules across shifts | 1 / 1 |
 | — | — | *decision record* | **Mission layer.** Written alongside I1 as design only; the owner decides whether to reopen G-LOOP | triggers by time, message and self-state | — |
 | I4 | 2.0 | G-LOOP | Missions repeat bounded, verified tasks until a stop condition holds. A new layer, hence 2.0 | the triggers of I3, I5, I8 | 2 / 2 |
-| I5 | 2.1 | G-MSG | Waiting for a message (`message_received`, reserved since 1.3) and confirmed delivery (`line_docked`, `nurse_confirm`, `wind_clear`) | negotiation between robots (cooperation) | 5 / 6 |
-| I6 | 2.2 | G-PERCEIVE | **Narrowed by R3:** perceived values beyond the four kinds of 1.6, such as a fill percentage or a detection confidence (`shelf_fill`, `weed_confidence`). Labels already cover classifications like "too dark" | G-PREDICT (a predicted property), G-CHOOSE (choosing by property) | 6 / 9 |
+| I5 | 2.1 | G-MSG | Waiting for a message (`message_received`, reserved since 1.3) and confirmed delivery (`line_docked`, `nurse_confirm`, `wind_clear`) | negotiation between robots (cooperation) | 4 / 5 |
+| I6 | 2.2 | G-PERCEIVE | **Narrowed by R3:** perceived values beyond the four kinds of 1.6, such as a fill percentage or a detection confidence (`shelf_fill`, `weed_confidence`). Labels already cover classifications like "too dark" | G-PREDICT (a predicted property), G-CHOOSE (choosing by property) | 5 / 8 |
 | I7 | 2.3 | G-CHOOSE | **Narrowed by R3:** properties of robots and locations, and choosing the nearest or best by them (`nearest_tugger`, `nearest_dock`, `nearer_cart`). Changes how goals name things: needs a Core decision | learned object categories | 9 / 15 |
 | I8 | 2.4 | G-SELF | **Narrowed by R3:** the robot's battery as a reading and condition; acting on it and reporting it (`low_battery`, `enough_for_route`, `report_charge`). Own health is partly there (`sensor_ok`, `robot_ready`) | G-PREDICT (time to failure) | 10 / 19 |
 | I9 | 2.5 | G-CALC | Minimal arithmetic, counting and text built from values (`total_weight`, `over_limit`, `text_line`) | — | 12 / 22 |
@@ -64,5 +64,5 @@ Frozen, dated copies with a git tag: [roadmap-snapshots/](roadmap-snapshots/READ
 
 | # | State |
 |---|---|
-| I1–I10 | Not started; R3 done (tests), model run pending |
+| I1–I10 | Not started; R3 done: tests and model run (0/25 false programs) |
 | Mission layer decision record | Not started |
