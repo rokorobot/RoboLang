@@ -15,14 +15,23 @@
     "paths": [
       {
         "when": "the scan is done and the time is sent",
-        "goal": [
+        "world_patch": {},
+        "goals": [
           [
-            "rl:robot:arm1",
-            "located_in",
-            "rl:place:shelf_a"
+            [
+              "rl:robot:arm1",
+              "located_in",
+              "rl:place:shelf_a"
+            ]
+          ],
+          [
+            [
+              "rl:thing:box1",
+              "located_in",
+              "rl:place:shelf_a"
+            ]
           ]
-        ],
-        "world_patch": {}
+        ]
       }
     ],
     "world_1_5": {

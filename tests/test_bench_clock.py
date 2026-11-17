@@ -114,7 +114,8 @@ def test_labels_are_1_9_in_expect_and_1_8_in_expect_1_8():
         assert lib.task_paths(task) == later["paths"]
         assert "world_1_5" in later and task["expected_clock"], task_id
         for path in later["paths"]:
-            assert path["when"] and ("goal" in path or path.get("fails")) and "world_patch" in path, task_id
+            has_goal = "goal" in path or "goals" in path  # "goals": defensible readings (erratum K2)
+            assert path["when"] and (has_goal or path.get("fails")) and "world_patch" in path, task_id
     for task_id, task in INFEASIBLE.items():
         later = task["expect_1_9"]
         assert task["expect"] == {"decision": "cannot", "category": "infeasible"}, task_id

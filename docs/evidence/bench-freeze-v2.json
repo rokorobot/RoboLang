@@ -1,5 +1,5 @@
 {
-  "sha256": "7ca075f8cd2345fb9216c8f7f82d81dfc5a07508df0ff6197227d744d7b291ca",
+  "sha256": "d786d4a7e08bd9b3da417e494203b26978d0a154d76987e9e1fee8901e2b2306",
   "schema": "robolang.bench.freeze.v2",
   "patterns": [
     "bench/tasks*/*.json",
@@ -960,7 +960,7 @@
     "bench/tasks_clock/i03_timeout_too_short.json": "28fa36e5fb9eb0b92b2d5c3c3f73a9504e3b08e6f393510feb15d2413802eae2",
     "bench/tasks_clock/i04_wait_for_time_no_clock.json": "ef10a397aacd86114bd7246ce5885109c1ac1c2fbbb709df3785cb5fa33aec33",
     "bench/tasks_clock/i05_window_already_closed.json": "15c5272a92c76490b16223f2956051dc59c6b9f8994332d7907ce34efe0a6ab2",
-    "bench/tasks_clock/k01_scan_stamp.json": "a10e7c13f302408da7f5678bdcfa47906b14ec5d603facf02e095e5762cff73d",
+    "bench/tasks_clock/k01_scan_stamp.json": "8df19f348d8db70b41776bb99b3890aad2076c3b782f0283824d49117a4efe2c",
     "bench/tasks_clock/k02_shift_cutoff.json": "95ec6867c848db5aa8327b9489629a626fc8c0f50bccac8e5c5a8551b4a82b41",
     "bench/tasks_clock/k03_wait_for_0530.json": "ae315503cc2cd7bcf6fd375c6352cb2a1ac0ff9bf128b24179422afcba14eaf8",
     "bench/tasks_clock/k04_job_elapsed.json": "1df3b01f0f5e7bf9a174394f97ef151ac9a4678d0bf3cd0a13b4c7ab25f4041f",
@@ -1009,7 +1009,7 @@
     "bench/tasks_future/f_choose_nearest_dock.json": "2bae37238c9ee89ec191d396cf2cc50f080bd7054ec8df3e649d5a2c4681f751",
     "bench/tasks_future/f_choose_nearest_tugger.json": "231aae9f1d6f36efe99a490df580e416f868101c57d9c9cfd008a290f1ae914d",
     "bench/tasks_future/f_clock_clean_at_2300.json": "d116b97139b43be7efa5bdfc6952827203e17d7355fc6baf4ef494d4df789fb5",
-    "bench/tasks_future/f_clock_scan_stamp.json": "bf09c631744e9eab682a840350266715268f79250fd0daf2a504311748ae03fc",
+    "bench/tasks_future/f_clock_scan_stamp.json": "b7d1bcac6917eb63b7c1a319f22531d49fd95811fe8a7267f588bb6d11ee3ba3",
     "bench/tasks_future/f_clock_shift_cutoff.json": "36c9ca68117b0bee9fa018905eb816de208b880c8ce02faf494c6ef3f638636b",
     "bench/tasks_future/f_conc_carry_and_drive.json": "c0b8aab049567427aed514f83870727aa2a50cf5921b07346c02fc07a1643350",
     "bench/tasks_future/f_conc_two_hand_lift.json": "269887e5941eb6e04d4e48871dbe39831fde53bb72e94c193e2355b1b0153a57",
@@ -1230,7 +1230,7 @@
     "tests/test_bench_ask.py": "d6683ca74f9bfead6ec09da0a636daf1d6f8744682f056a745b34bd6886fec2a",
     "tests/test_bench_branch.py": "2cd5b02565846ce16ccebaea0dcee49e284adadc61026ea678fd29e12b0321ab",
     "tests/test_bench_cascade.py": "5bb726f33ea9f6f23c2dfad8df07b43d551d9697e94409b4fb2798366f323e50",
-    "tests/test_bench_clock.py": "a90185042583e2045335ffc4e1405912abe2301c7b60e3cc468a1a0d028c4ce5",
+    "tests/test_bench_clock.py": "ec8765362381b3dde315e83ef86fe243a2c18eaa049e50e164b695a867c6065f",
     "tests/test_bench_failure.py": "0eaf64464bcc628431f079147266c73fd23ccb746894c0e7965c6db569633958",
     "tests/test_bench_future.py": "201748ef02b6d630fbbc9196bd4b8ee382233c9b40057a011be09bc26589e2ab",
     "tests/test_bench_gate.py": "653be1ae7d454b4b93d8df99b6a999214511d76bae37c1f147108dbe98d608b9",

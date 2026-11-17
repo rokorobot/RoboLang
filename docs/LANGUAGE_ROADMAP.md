@@ -66,6 +66,6 @@ Frozen, dated copies with a git tag: [roadmap-snapshots/](roadmap-snapshots/READ
 |---|---|
 | I1 G-PATH | L1–L5 done (accepted 2026-11-17, [acceptance](evidence/bench-1-7-acceptance.md): silent limit drops 3/27 → 0/27). **L6:** G-PATH closed in the atlas; release 0.4.0 with RoboLang 1.7 prepared, published by the owner (strategy D3) |
 | I2 G-ACT | L1–L5 done (accepted 2026-11-17, [acceptance](evidence/bench-1-8-acceptance.md): silent action replacement 3/30 → 0/30). **L6:** G-ACT closed in the atlas; release 0.5.0 with RoboLang 1.8 prepared, published by the owner (strategy D3) |
-| I3 G-CLOCK | L1–L2 done. **L3 done:** set 8 "clock" frozen; baseline on 1.8 without false programs ([evidence](evidence/bench-set8-baseline.md)); clarifications K1–K11 and bounds B1–B8 approved 2026-11-17; G-DATE opened (K11). **L4 done:** RoboLang 1.9 built and taught (the reference and both prompts, set 8 labelled with `clock_ok` and `time_replaced`, [errata](evidence/bench-errata-1-9.md)). **L5:** the acceptance run on set 8 is next |
+| I3 G-CLOCK | L1–L3 done. **L4 done** (PR #155). **L5:** acceptance run 2026-11-17 ([evidence](evidence/bench-1-9-acceptance.md)): every bound met on the full prompt; waiting for the owner |
 | I4–I10 | Not started (I4: the mission layer, [0041](../spec/decisions/0041-mission-layer.md) approved) |
 | Mission layer decision record | [0041](../spec/decisions/0041-mission-layer.md) **approved 2026-11-17**: G-LOOP reopened (LE-9), mission layer with a hard bound, `stop`/`continue`/`retry N`; built at I4 |

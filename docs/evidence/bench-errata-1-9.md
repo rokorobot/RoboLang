@@ -182,3 +182,11 @@ them changes). Each copy equals its base apart from the version and the `clock`;
 `bench/atlas.json`: G-CLOCK lists no task (everything 1.9 expresses left it, as G-ACT's list did at 0040 L4), with a scope
 note; it stays **open** and closes at L6, after the acceptance run (L5). Snapshot "I3 L4: RoboLang 1.9 built and taught" in
 the history; `docs/plans/humanoid-activities.md` regenerated.
+
+## Erratum K2 (2026-11-17, after the L5 run): `k01_scan_stamp` and `f_clock_scan_stamp` accept two readings
+
+"Inspect box1 on shelf_a …, then send the time of day" asks for no end state. The label required only the
+reference's `robot_at arm1 shelf_a`. `object_at box1 shelf_a` is equally defensible: the box stays where it was
+inspected. That is the reading of `k_inspect_thrice` in set 2. Both are now accepted as `goals`. Haiku wrote that
+reading in 3/3 answers, and Sonnet wrote `object_exists box1`, which stays wrong. The L5 answers are re-scored
+offline, with no new request. `docs/evidence/bench-freeze-v2.json` is regenerated.

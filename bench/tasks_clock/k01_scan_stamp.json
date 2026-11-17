@@ -15,13 +15,6 @@
     "paths": [
       {
         "when": "the scan is done and the time is sent",
-        "goal": [
-          [
-            "rl:robot:arm1",
-            "located_in",
-            "rl:place:shelf_a"
-          ]
-        ],
         "messages": [
           [
             "lead",
@@ -33,7 +26,23 @@
             "start": "2026-11-17T14:20:00",
             "zone": "Europe/Prague"
           }
-        }
+        },
+        "goals": [
+          [
+            [
+              "rl:robot:arm1",
+              "located_in",
+              "rl:place:shelf_a"
+            ]
+          ],
+          [
+            [
+              "rl:thing:box1",
+              "located_in",
+              "rl:place:shelf_a"
+            ]
+          ]
+        ]
       }
     ],
     "world_1_5": {
