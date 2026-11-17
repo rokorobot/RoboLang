@@ -1,0 +1,137 @@
+{
+  "ir_schema": "robolang.task-ir",
+  "ir_schema_version": "1.6",
+  "language_version": "1.7",
+  "tasks": [
+    {
+      "name": "t",
+      "parameters": [
+        {
+          "name": "r",
+          "type": "robot"
+        },
+        {
+          "name": "m",
+          "type": "robot"
+        },
+        {
+          "name": "a",
+          "type": "location"
+        },
+        {
+          "name": "b",
+          "type": "location"
+        },
+        {
+          "name": "c",
+          "type": "location"
+        },
+        {
+          "name": "d",
+          "type": "location"
+        },
+        {
+          "name": "zone",
+          "type": "region"
+        },
+        {
+          "name": "lane",
+          "type": "region"
+        },
+        {
+          "name": "open",
+          "type": "region"
+        },
+        {
+          "name": "g0",
+          "type": "region"
+        },
+        {
+          "name": "g1",
+          "type": "region"
+        },
+        {
+          "name": "g2",
+          "type": "region"
+        },
+        {
+          "name": "g3",
+          "type": "region"
+        },
+        {
+          "name": "g4",
+          "type": "region"
+        },
+        {
+          "name": "g5",
+          "type": "region"
+        },
+        {
+          "name": "g6",
+          "type": "region"
+        },
+        {
+          "name": "g7",
+          "type": "region"
+        },
+        {
+          "name": "g8",
+          "type": "region"
+        }
+      ],
+      "safety": [
+        {
+          "kind": "no_go_region",
+          "region": "g0"
+        },
+        {
+          "kind": "no_go_region",
+          "region": "g1"
+        },
+        {
+          "kind": "no_go_region",
+          "region": "g2"
+        },
+        {
+          "kind": "no_go_region",
+          "region": "g3"
+        },
+        {
+          "kind": "no_go_region",
+          "region": "g4"
+        },
+        {
+          "kind": "no_go_region",
+          "region": "g5"
+        },
+        {
+          "kind": "no_go_region",
+          "region": "g6"
+        },
+        {
+          "kind": "no_go_region",
+          "region": "g7"
+        },
+        {
+          "kind": "no_go_region",
+          "region": "g8"
+        }
+      ],
+      "preconditions": [],
+      "goal": [
+        {
+          "kind": "robot_at",
+          "robot": "r",
+          "location": "c"
+        }
+      ],
+      "steps": [
+        {
+          "kind": "move",
+          "robot": "r",
+          "target": "c"
+        }
+      ]
+    }
+  ]
+}

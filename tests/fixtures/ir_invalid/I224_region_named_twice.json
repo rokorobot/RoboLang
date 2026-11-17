@@ -1,0 +1,73 @@
+{
+  "ir_schema": "robolang.task-ir",
+  "ir_schema_version": "1.6",
+  "language_version": "1.7",
+  "tasks": [
+    {
+      "name": "t",
+      "parameters": [
+        {
+          "name": "r",
+          "type": "robot"
+        },
+        {
+          "name": "m",
+          "type": "robot"
+        },
+        {
+          "name": "a",
+          "type": "location"
+        },
+        {
+          "name": "b",
+          "type": "location"
+        },
+        {
+          "name": "c",
+          "type": "location"
+        },
+        {
+          "name": "d",
+          "type": "location"
+        },
+        {
+          "name": "zone",
+          "type": "region"
+        },
+        {
+          "name": "lane",
+          "type": "region"
+        },
+        {
+          "name": "open",
+          "type": "region"
+        }
+      ],
+      "safety": [
+        {
+          "kind": "no_go_region",
+          "region": "zone"
+        },
+        {
+          "kind": "in_region",
+          "region": "zone"
+        }
+      ],
+      "preconditions": [],
+      "goal": [
+        {
+          "kind": "robot_at",
+          "robot": "r",
+          "location": "c"
+        }
+      ],
+      "steps": [
+        {
+          "kind": "move",
+          "robot": "r",
+          "target": "c"
+        }
+      ]
+    }
+  ]
+}

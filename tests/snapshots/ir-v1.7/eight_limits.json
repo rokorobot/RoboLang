@@ -1,0 +1,101 @@
+{
+  "ir_schema": "robolang.task-ir",
+  "ir_schema_version": "1.6",
+  "language_version": "1.7",
+  "tasks": [
+    {
+      "name": "t",
+      "parameters": [
+        {
+          "name": "r",
+          "type": "robot"
+        },
+        {
+          "name": "d",
+          "type": "location"
+        },
+        {
+          "name": "a",
+          "type": "region"
+        },
+        {
+          "name": "b",
+          "type": "region"
+        },
+        {
+          "name": "c",
+          "type": "region"
+        },
+        {
+          "name": "e",
+          "type": "region"
+        },
+        {
+          "name": "f",
+          "type": "region"
+        },
+        {
+          "name": "g",
+          "type": "region"
+        },
+        {
+          "name": "h",
+          "type": "region"
+        },
+        {
+          "name": "i",
+          "type": "region"
+        }
+      ],
+      "safety": [
+        {
+          "kind": "no_go_region",
+          "region": "a"
+        },
+        {
+          "kind": "no_go_region",
+          "region": "b"
+        },
+        {
+          "kind": "no_go_region",
+          "region": "c"
+        },
+        {
+          "kind": "no_go_region",
+          "region": "e"
+        },
+        {
+          "kind": "in_region",
+          "region": "f"
+        },
+        {
+          "kind": "in_region",
+          "region": "g"
+        },
+        {
+          "kind": "in_region",
+          "region": "h"
+        },
+        {
+          "kind": "in_region",
+          "region": "i"
+        }
+      ],
+      "preconditions": [],
+      "goal": [
+        {
+          "kind": "robot_at",
+          "robot": "r",
+          "location": "d"
+        }
+      ],
+      "steps": [
+        {
+          "kind": "move",
+          "robot": "r",
+          "target": "d"
+        }
+      ]
+    }
+  ]
+}

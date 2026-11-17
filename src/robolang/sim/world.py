@@ -1,8 +1,8 @@
 """
-World file, schemas 1.0, 1.1 and 1.2 (spec/simulation-v1.0.md section 3 and section 14).
+World file, schemas 1.0 to 1.3 (spec/simulation-v1.0.md sections 3, 14 and 15).
 
 `load_world` reads the bytes of a world file and returns a validated, immutable `World`,
-or raises `WorldError` for the first error found (codes E501 to E515, section 3.9 and 14.1).
+or raises `WorldError` for the first error found (codes E501 to E516, sections 3.9, 14.1 and 15.1).
 Validation runs after the task is selected (3.8). Nothing here executes a task.
 """
 
@@ -21,7 +21,10 @@ from .values import DURATION_UNITS, SPEED_UNITS, Speed, duration_ms, parse_decim
 
 WORLD_SCHEMA = "robolang.sim.world"
 WORLD_SCHEMA_VERSION = "1.0"
-WORLD_SCHEMA_VERSIONS = ("1.0", "1.1", "1.2")  # 1.1 adds `class` and `mass` to objects (3.3); 1.2 measured values (14)
+# 1.1 adds `class` and `mass` to objects (3.3); 1.2 measured values (14); 1.3 region limits (15)
+WORLD_SCHEMA_VERSIONS = ("1.0", "1.1", "1.2", "1.3")
+_MEASURED = ("1.2", "1.3")  # the world files with measured values
+HONOURS = ("no_go_region", "in_region")  # what a robot profile may declare it honours (world file 1.3)
 CLI_BINDINGS_SOURCE = "--bind"
 
 _ID = re.compile(r"[A-Za-z][A-Za-z0-9_]*")
@@ -50,6 +53,7 @@ class WorldError(Exception):
 class Region:
     id: str
     clear: bool | None
+    contains: tuple[str, ...] | None = None  # world file 1.3: the locations inside it; None: not listed, so unknown
 
 
 @dataclass(frozen=True)
@@ -59,6 +63,7 @@ class Robot:
     location: str
     gripper: bool
     max_speed: tuple[Speed, ...]
+    honours: tuple[str, ...] = ()  # world file 1.3: the region limits it can honour; before 1.3 it honours none (C1)
 
 
 @dataclass(frozen=True)
@@ -358,6 +363,7 @@ class _Loader:
                 seen.add(entity)
 
         world = World(tuple(locations), regions, robots, objects, sensors, (), TaskScript(self.task.name, (), (), None))
+        self.check_regions(world)
         self.check_robots(world)
         self.check_objects(world)
         self.check_sensors(world)
@@ -388,12 +394,22 @@ class _Loader:
 
     def region(self, name, value):
         p = _pointer("regions", name)
-        self.obj(value, p, ("clear",), "a region")
-        return Region(name, self.optional_bool(value, p, "clear"))
+        self.obj(value, p, ("clear",) + (("contains",) if self.version == "1.3" else ()), "a region")
+        contains = None
+        if "contains" in value:
+            cp = p + _pointer("contains")
+            if not isinstance(value["contains"], list):
+                self.fail("E504", cp, "'contains' must be an array of location IDs")
+            contains = tuple(self.entity_id(item, cp + _pointer(i)) for i, item in enumerate(value["contains"]))
+            for i, item in enumerate(contains):
+                if item in contains[:i]:
+                    self.fail("E504", cp + _pointer(i), f"'{item}' is listed twice")
+        return Region(name, self.optional_bool(value, p, "clear"), contains)
 
     def robot(self, name, value):
         p = _pointer("robots", name)
-        self.obj(value, p, ("ready", "location", "gripper", "max_speed"), "a robot")
+        allowed = ("ready", "location", "gripper", "max_speed") + (("honours",) if self.version == "1.3" else ())
+        self.obj(value, p, allowed, "a robot")
         self.require(value, p, "location", "gripper")
         ready = self.optional_bool(value, p, "ready")
         location = self.entity_id(self.need(value, p, "location"), p + _pointer("location"))
@@ -406,12 +422,26 @@ class _Loader:
             for i, item in enumerate(value["max_speed"]):
                 number, unit = self.quantity(item, mp + _pointer(i), SPEED_UNITS, "a speed")
                 speeds.append(Speed(number, unit))
-        return Robot(name, ready, location, gripper, tuple(speeds))
+        honours = []
+        if "honours" in value:
+            hp = p + _pointer("honours")
+            if not isinstance(value["honours"], list):
+                self.fail("E504", hp, "'honours' must be an array")
+            for i, item in enumerate(value["honours"]):
+                if not isinstance(item, str):
+                    self.fail("E504", hp + _pointer(i), "an ability must be a string")
+                if item not in HONOURS:
+                    self.fail("E516", hp + _pointer(i), f"unknown ability '{item}'; a robot may honour "
+                                                        f"{', '.join(HONOURS)}")
+                if item in honours:
+                    self.fail("E504", hp + _pointer(i), f"'{item}' is listed twice")
+                honours.append(item)
+        return Robot(name, ready, location, gripper, tuple(speeds), tuple(honours))
 
     def object(self, name, value):
         p = _pointer("objects", name)
         allowed = ("present", "location", "held_by") + (("class", "mass") if self.version != "1.0" else ())
-        allowed += ("properties",) if self.version == "1.2" else ()
+        allowed += ("properties",) if self.version in _MEASURED else ()
         self.obj(value, p, allowed, "an object")
         present = self.optional_bool(value, p, "present")
         refs = []
@@ -492,7 +522,7 @@ class _Loader:
         p = _pointer("sensors", name)
         if name == "":
             self.fail("E504", p, "a sensor name must not be empty")
-        self.obj(value, p, ("robot", "available") + (("measures",) if self.version == "1.2" else ()), "a sensor")
+        self.obj(value, p, ("robot", "available") + (("measures",) if self.version in _MEASURED else ()), "a sensor")
         robot = None
         if "robot" in value:
             robot = self.entity_id(value["robot"], p + _pointer("robot"))
@@ -533,7 +563,7 @@ class _Loader:
 
     def event(self, index, value):
         p = _pointer("events", index)
-        allowed = ("at", "fact", "target", "value") + (("property",) if self.version == "1.2" else ())
+        allowed = ("at", "fact", "target", "value") + (("property",) if self.version in _MEASURED else ())
         self.obj(value, p, allowed, "an event")
         self.require(value, p, "at", "fact", "target", "value")
         at = self.need(value, p, "at")
@@ -541,7 +571,7 @@ class _Loader:
         target = self.need(value, p, "target")
         flag = self.need(value, p, "value")
         number, unit = self.quantity(at, p + _pointer("at"), tuple(DURATION_UNITS), "an event time")
-        facts = (*_FACT_KIND, *(("property",) if self.version == "1.2" else ()))
+        facts = (*_FACT_KIND, *(("property",) if self.version in _MEASURED else ()))
         if not isinstance(fact, str) or fact not in facts:
             self.fail("E504", p + _pointer("fact"), f"fact must be one of {', '.join(facts)}")
         self.string(target, p + _pointer("target"), "target")
@@ -583,6 +613,13 @@ class _Loader:
         return raw, faults, cancel
 
     # -- sections: meaning --
+
+    def check_regions(self, world):
+        for name, region in world.regions.items():
+            for i, location in enumerate(region.contains or ()):
+                if world.kind_of(location) != "location":
+                    self.fail("E505", _pointer("regions", name, "contains", i),
+                              f"'{location}' is not a declared location")
 
     def check_robots(self, world):
         for name, robot in world.robots.items():

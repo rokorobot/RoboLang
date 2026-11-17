@@ -1,5 +1,5 @@
 """
-Developer commands for RoboLang 1.1 to 1.6.
+Developer commands for RoboLang 1.1 to 1.7.
 
     reference              print the shipped RoboLang 1.6 language reference
     example [DIR]          write a sample task (fetch.rob) and world (world.json) to start from
@@ -13,7 +13,7 @@ Developer commands for RoboLang 1.1 to 1.6.
                            send the task's goal to a robot that runs its own plan; print the delegate record
 
 validate, inspect, simulate, export-goal and delegate take `--ir IR` instead of FILE: a Task IR JSON
-document (schema 1.0 to 1.5), read strictly and re-validated in full (spec/ir-reader-v0.1.md).
+document (schema 1.0 to 1.6), read strictly and re-validated in full (spec/ir-reader-v0.1.md).
     arch02 --scenario SCENARIO --cases CASES --case ID
                            run one case of the RFC-001 reference scenario in simulation
 
@@ -80,7 +80,7 @@ NOT_A_SAFETY_CHECK_IR = (
 NOTHING_EXECUTED = "This is a description only. Nothing was executed."
 
 _DESCRIPTION = f"""\
-Tools for RoboLang 1.1 to 1.6 task files.
+Tools for RoboLang 1.1 to 1.7 task files.
 
 reference prints the shipped 1.6 language reference. validate and inspect check and describe .rob
 files; they never execute anything.
@@ -412,7 +412,9 @@ def _plan_lines(steps, typed: bool, number: str = "") -> list[str]:
     return lines
 
 
-def _safety(limit: task_ir.SafetyLimit) -> str:
+def _safety(limit: task_ir.SafetyLimit | task_ir.RegionLimit) -> str:
+    if isinstance(limit, task_ir.RegionLimit):  # RoboLang 1.7
+        return f"{limit.kind} {limit.region}  (declared only; checked against the world, not enforced by this tool)"
     text = f"{limit.kind} {_quantity(limit.limit)}"
     if limit.limit.unit is None:
         return f"{text}  (no unit: deprecated; declared only, never treated as an enforced limit)"
@@ -483,6 +485,9 @@ def _inspect(args, out, err) -> int:
 _FAILURE_MEANING = {
     "S001": "a max_speed limit is above a bound robot's declared maximum",
     "S002": "a bound robot declares no maximum speed in the unit of a max_speed limit",
+    "S003": "a robot that moves in the task does not declare that it honours a region limit",
+    "S004": "a target of the task is inside a no_go_region, or outside an in_region",
+    "S005": "a robot that moves in the task starts inside a no_go_region, or outside an in_region",
     "S101": "a pre condition is false",
     "S102": "a pre condition is unknown in the world",
     "S201": "the robot is not ready",
@@ -804,7 +809,7 @@ def _input_arguments(command: argparse.ArgumentParser, what: str, note: str = ""
         "--ir",
         metavar="IR",
         help=(
-            "path to a Task IR JSON file (schema 1.0 to 1.5) instead of FILE. It is read strictly and "
+            "path to a Task IR JSON file (schema 1.0 to 1.6) instead of FILE. It is read strictly and "
             f"re-validated in full, whatever versions it claims (spec/ir-reader-v0.1.md){note}"
         ),
     )

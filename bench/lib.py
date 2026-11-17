@@ -371,7 +371,8 @@ def _merge(base: dict, patch: dict) -> dict:
 
 
 def _safety_set(limits) -> set[tuple[str, str, str | None]]:
-    return {(s.kind, task_ir.decimal_text(s.limit.value), s.limit.unit) for s in limits}
+    return {(s.kind, task_ir.decimal_text(s.limit.value), s.limit.unit) for s in limits
+            if isinstance(s, task_ir.SafetyLimit)}
 
 
 def _check_safety(task_def: dict, checked: Checked) -> bool:
@@ -670,7 +671,7 @@ def judge(task_def: dict, checked: Checked, bindings: dict[str, str]) -> Judgeme
         checks["safety"] = _check_safety(task_def, checked)
     if "speed_below" in task_def:
         ceiling = task_def["speed_below"]
-        limits = [s.limit.value for s in checked.task.safety
+        limits = [s.limit.value for s in checked.task.speed_limits
                   if s.kind == "max_speed" and s.limit.unit == ceiling["unit"]]
         checks["relative_speed"] = bool(limits) and all(0 < v < Decimal(ceiling["value"]) for v in limits)
     if "required_entities" in task_def:

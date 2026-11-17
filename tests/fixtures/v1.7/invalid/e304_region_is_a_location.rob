@@ -1,0 +1,11 @@
+// RoboLang v1.7 fixture: invalid
+// expect: error E304 (static) line 8
+// why: the name of a limit must be a region, not a location
+
+robolang 1.7;
+
+task t(robot r, location d, location hall) {
+    @safety no_go_region hall;
+    goal { robot_at r d; }
+    plan { move r to d; }
+}

@@ -1,0 +1,12 @@
+// RoboLang v1.7 fixture: invalid
+// expect: error E323 (static) line 9
+// why: a region cannot be both a no_go_region and an in_region
+
+robolang 1.7;
+
+task t(robot r, location d, region zone) {
+    @safety in_region zone;
+    @safety no_go_region zone;
+    goal { robot_at r d; }
+    plan { move r to d; }
+}

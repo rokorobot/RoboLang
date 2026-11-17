@@ -20,7 +20,9 @@ from .world import WORLD_SCHEMA_VERSION
 RUN_RECORD_SCHEMA = "robolang.sim.run"
 RUN_RECORD_SCHEMA_VERSION = "1.0"
 # Language version -> run record schema version (robolang-v1.2.md section 8.3; v1.3 section 8.3).
-RUN_RECORD_SCHEMA_VERSIONS = {"1.1": "1.0", "1.2": "1.1", "1.3": "1.2", "1.4": "1.3", "1.5": "1.4", "1.6": "1.5"}
+RUN_RECORD_SCHEMA_VERSIONS = {
+    "1.1": "1.0", "1.2": "1.1", "1.3": "1.2", "1.4": "1.3", "1.5": "1.4", "1.6": "1.5", "1.7": "1.6",
+}
 SEED = re.compile(r"[A-Za-z0-9._-]{1,64}")
 DEFAULT_SEED = "0"
 
@@ -192,7 +194,8 @@ def to_record(
     `decisions` after `goal`, a `path` on every step, a `from` on every goal entry, a `reason` on `failure`), 1.4 for
     a 1.5 source (adds `handled` after `status` on every step: the code of a failure a handler took over, or null),
     1.5 for a 1.6 source (adds `reading` after `observation` on every step, and `value` after `status` on every
-    message: the typed value of a measurement, or null).
+    message: the typed value of a measurement, or null), 1.6 for a 1.7 source (the same shape: it embeds Task IR 1.6,
+    and `safety_limits` may hold region limits with the status `checked_against_world_not_enforced`).
     """
     inputs = {
         "source_sha256": source_sha256,
@@ -206,9 +209,9 @@ def to_record(
     }
     if bindings_source != "world":  # a record without the key has world-file bindings (section 5.1)
         inputs["bindings_source"] = bindings_source
-    branching = language_version in ("1.4", "1.5", "1.6")
-    handlers = language_version in ("1.5", "1.6")
-    values = language_version == "1.6"
+    branching = language_version in ("1.4", "1.5", "1.6", "1.7")
+    handlers = language_version in ("1.5", "1.6", "1.7")
+    values = language_version in ("1.6", "1.7")
     return {
         "run_record_schema": RUN_RECORD_SCHEMA,
         "run_record_schema_version": RUN_RECORD_SCHEMA_VERSIONS[language_version],

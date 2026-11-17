@@ -34,7 +34,10 @@ def simulation_key(key_ref: str) -> Key:
 
 
 class ExportError(Exception):
-    """The goal cannot be exported. `code` is X601 (no Core form) or X602 (a thing lacks class or mass)."""
+    """
+    The goal cannot be exported. `code` is X601 (no Core form), X602 (a thing lacks class or mass) or X605 (the task
+    has a region limit, which Core carries no form for: RoboLang 1.7, decision 0039 P8).
+    """
 
     def __init__(self, code: str, message: str):
         super().__init__(message)
@@ -74,7 +77,7 @@ def _criterion(triple: bridge.Triple, verify: ir.Verify | None) -> dict:
 def _constraints(task: ir.Task) -> tuple[list[dict], list[str]]:
     """`max_speed` limits in m/s become constraints; the others have no Core form and give a warning."""
     constraints, warnings = [], []
-    for limit in task.safety:
+    for limit in task.speed_limits:
         if limit.limit.unit == "m/s":
             speed = {"value": ir.decimal_text(limit.limit.value), "unit": "m/s"}
             constraints.append({"kind": "max_speed", "limit": speed})
@@ -150,6 +153,10 @@ def export_goal(task: ir.Task, world: World, *, sender: str, recipient: str | No
     if recipient is None:
         raise ValueError("the task does not have exactly one robot parameter: name the recipient")
     sent_at = sent_at or bridge.core_time(0)
+    if task.region_limits:  # never dropped: a goal sent without its limit would be a silent limit (P8)
+        shown = ", ".join(f"{r.kind} {r.region}" for r in task.region_limits)
+        raise ExportError("X605", f"the task has region limits ({shown}); Core {core} carries no region limit, so "
+                                  "the task is refused rather than sent without them")
     constraints, warnings = _constraints(task)
     goal = {
         "kind": "goal",

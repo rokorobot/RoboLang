@@ -1,0 +1,19 @@
+// RoboLang v1.7 fixture: invalid
+// expect: error E324 (static) line 16
+// why: a task has at most 8 region limits
+
+robolang 1.7;
+
+task t(robot r, location d, region a, region b, region c, region e, region f, region g, region h, region i, region j) {
+    @safety no_go_region a;
+    @safety no_go_region b;
+    @safety no_go_region c;
+    @safety no_go_region e;
+    @safety in_region f;
+    @safety in_region g;
+    @safety in_region h;
+    @safety in_region i;
+    @safety in_region j;
+    goal { robot_at r d; }
+    plan { move r to d; }
+}

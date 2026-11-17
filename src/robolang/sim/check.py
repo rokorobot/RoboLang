@@ -12,6 +12,7 @@ from dataclasses import dataclass
 
 from .. import ir
 from .executor import _sensor_id
+from .regions import limit_problems
 from .world import World
 
 
@@ -38,6 +39,10 @@ def check_task(task: ir.Task, world: World) -> list[Finding]:
     robots = [bound[p.name] for p in task.parameters if p.type == "robot"]
     findings = []
     for index, limit in enumerate(task.safety):  # section 4.3, but every limit, not only the first that fails
+        if isinstance(limit, ir.RegionLimit):  # section 15.3, every problem
+            problems = limit_problems(task, world, bound, limit)
+            findings += [Finding(p.code, p.message, ("safety", index)) for p in problems]
+            continue
         unit = limit.limit.unit
         if unit is None:
             continue

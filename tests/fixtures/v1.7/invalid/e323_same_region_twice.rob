@@ -1,0 +1,12 @@
+// RoboLang v1.7 fixture: invalid
+// expect: error E323 (static) line 9
+// why: a region is named by one region limit only: the same kind twice
+
+robolang 1.7;
+
+task t(robot r, location d, region wet) {
+    @safety no_go_region wet;
+    @safety no_go_region wet;
+    goal { robot_at r d; }
+    plan { move r to d; }
+}

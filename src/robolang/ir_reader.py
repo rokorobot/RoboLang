@@ -29,14 +29,17 @@ from .tokens import (
     KIND_UNITS,
     RESERVED,
     RESERVED_BY_VERSION,
+    MAX_REGION_LIMITS,
+    REGION_LIMITS,
     SPEED_UNITS,
     VERIFY_KEYS,
 )
 from .validator import double_grasp_message, fail_reason_problem
 
-SCHEMA_VERSIONS = tuple(ir.IR_SCHEMA_VERSIONS.values())  # "1.0" to "1.5": the index is the schema's rank
+SCHEMA_VERSIONS = tuple(ir.IR_SCHEMA_VERSIONS.values())  # "1.0" to "1.6": the index is the schema's rank
 LANGUAGE_OF = {schema: language for language, schema in ir.IR_SCHEMA_VERSIONS.items()}
-SAFETY_KINDS = ("max_speed",)
+SAFETY_KINDS = ("max_speed", "no_go_region", "in_region")
+_REGION_RANK = 6  # the first schema with region limits (`no_go_region`, `in_region`)
 MAX_DECIMAL_CHARS = 64
 
 _READ_CODES = {"encoding": "I101", "json": "I102", "duplicate_key": "I103", "number": "I104", "depth": "I105"}
@@ -537,17 +540,22 @@ class _Reader:
         ok = True
         for i, limit in enumerate(value):
             at = _pointer(ptr, i)
-            ok = self.shape(limit, at, ("kind", "limit")) and ok
+            region = isinstance(limit, dict) and limit.get("kind") in REGION_LIMITS
+            ok = self.shape(limit, at, ("kind", "region") if region else ("kind", "limit")) and ok
             if not isinstance(limit, dict):
                 continue
             if "kind" in limit and self.string(limit["kind"], _pointer(at, "kind")):
                 if limit["kind"] not in SAFETY_KINDS:
                     self.error("I114", f"unknown safety kind '{limit['kind']}'", _pointer(at, "kind"))
                     ok = False
+                elif region:
+                    ok = self._needs(f"safety kind '{limit['kind']}'", _REGION_RANK, _pointer(at, "kind")) and ok
             elif "kind" in limit:
                 ok = False
             if "limit" in limit:
                 ok = self.quantity(limit["limit"], _pointer(at, "limit"), SPEED_UNITS, True) and ok
+            if "region" in limit:
+                ok = self.string(limit["region"], _pointer(at, "region")) and ok
         return ok
 
     def verify(self, value, ptr: str) -> bool:
@@ -622,10 +630,37 @@ class _Reader:
                 self.error("I214", "'fail' is allowed only as the last step of an if or else branch", at)
             self.step_meaning(step, at)
 
+    def region_limits(self, entry: dict, at: str, earlier: dict[str, tuple[int, str]], index: int):
+        """Schema 1.6 (E303, E304, E323, E324): a region parameter, named by one region limit only, at most 8."""
+        region = entry["region"]
+        declared = self._params.get(region)
+        here = _pointer(at, "region")
+        if declared is None:
+            self.error("I203", f"undeclared name '{region}': it is not a parameter of this task", here)
+            return
+        if declared != "region":
+            self.error("I204", f"'{region}' is {_article(declared)}, but '{entry['kind']}' expects a region here", here)
+            return
+        if region in earlier:
+            first, kind = earlier[region]
+            what = f"is already a {kind}" if kind == entry["kind"] else f"is already a {kind}, and cannot also be a " \
+                                                                        f"{entry['kind']}"
+            self.error("I224", f"region '{region}' {what} (at safety entry {first}); a task names a region in one "
+                               "region limit only", at)
+            return
+        if len(earlier) >= MAX_REGION_LIMITS:
+            self.error("I225", f"a task may declare at most {MAX_REGION_LIMITS} region limits", at)
+            return
+        earlier[region] = (index, entry["kind"])
+
     def limits(self, limits: list, ptr: str):
         earlier: dict[str | None, int] = {}
+        regions: dict[str, tuple[int, str]] = {}
         for i, entry in enumerate(limits):
             at = _pointer(ptr, i)
+            if entry["kind"] in REGION_LIMITS:
+                self.region_limits(entry, at, regions, i)
+                continue
             unit, value = entry["limit"]["unit"], entry["limit"]["value"]
             if unit in earlier:
                 kind = f"'{unit}'" if unit else "unitless"
@@ -913,7 +948,11 @@ def _task(node: dict, rank: int) -> ir.Task:
     return ir.Task(
         name=node["name"],
         parameters=tuple(ir.Parameter(p["name"], p["type"]) for p in node["parameters"]),
-        safety=tuple(ir.SafetyLimit(s["kind"], _quantity(s["limit"])) for s in node["safety"]),
+        safety=tuple(
+            ir.RegionLimit(s["kind"], s["region"]) if s["kind"] in REGION_LIMITS
+            else ir.SafetyLimit(s["kind"], _quantity(s["limit"]))
+            for s in node["safety"]
+        ),
         preconditions=tuple(_condition(c) for c in node["preconditions"]),
         goal=tuple(_condition(c) for c in node["goal"]) if rank >= 2 else None,
         verify=_verify(node.get("verify")),

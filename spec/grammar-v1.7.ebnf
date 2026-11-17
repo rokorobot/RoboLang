@@ -1,0 +1,21 @@
+(* RoboLang v1.7 grammar, implemented in src/robolang/parser.py.
+   RoboLang 1.6 plus region limits (decision 0039). Differences from grammar-v1.6.ebnf are marked [1.7].
+   Everything not shown here is as in grammar-v1.6.ebnf (and grammar-v1.5.ebnf and those below it).
+   Normative text, diagnostics and static rules: spec/robolang-v1.7.md *)
+
+version_decl  = "robolang" , NUMBER , ";" ;                (* [1.7] NUMBER written exactly 1.7 *)
+
+annotation    = "@safety" , safety_rule , ";" ;
+safety_rule   = "max_speed" , NUMBER , [ SPEED_UNIT ]
+              | region_limit ;                              (* [1.7] *)
+region_limit  = ( "no_go_region" | "in_region" ) , NAME ;   (* [1.7] NAME is a region parameter of the task *)
+
+(* [1.7] "no_go_region" and "in_region" have been reserved words since 1.1, so there is no new word.
+   In a 1.7 file they are accepted after "@safety" only; "move r to x in_region c" is still E211.
+   [1.7] Static rules the grammar does not express (spec/robolang-v1.7.md section 3):
+   - the NAME is a parameter of the task of type region (E303, E304);
+   - a region is named by one region limit only: not twice, not as both no_go_region and in_region (E323);
+   - a task has at most 8 region limits (E324).
+   Region limits and max_speed annotations may be mixed in any order, before "pre", "goal" and "plan". *)
+
+(* Reserved words in a 1.7 file: those of grammar-v1.6.ebnf. *)

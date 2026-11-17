@@ -1,6 +1,7 @@
 """
 Recursive-descent parser for RoboLang v1.1 (spec/grammar.ebnf), v1.2 (spec/grammar-v1.2.ebnf) and
-v1.3 (spec/grammar-v1.3.ebnf), v1.4 (spec/grammar-v1.4.ebnf), v1.5 (grammar-v1.5.ebnf) and v1.6 (grammar-v1.6.ebnf).
+v1.3 (spec/grammar-v1.3.ebnf), v1.4 (spec/grammar-v1.4.ebnf), v1.5 (grammar-v1.5.ebnf), v1.6 (grammar-v1.6.ebnf)
+and v1.7 (grammar-v1.7.ebnf).
 
 Produces the AST of `nodes.py` or raises RoboLangError carrying every syntax error found.
 After a syntax error the parser resynchronises (see `_resync`) and carries on, so independent
@@ -31,6 +32,7 @@ from .tokens import (
     KIND_UNITS,
     PARAM_TYPES,
     PARAM_TYPES_V1_3,
+    REGION_LIMITS,
     SAFETY_KEYS,
     SPEED_UNITS,
     STATEMENTS,
@@ -41,7 +43,7 @@ from .tokens import (
 )
 
 DEFAULT_VERSION = "1.1"  # the version of a file without a marker
-SUPPORTED_VERSIONS = ("1.1", "1.2", "1.3", "1.4", "1.5", "1.6")
+SUPPORTED_VERSIONS = ("1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7")
 SUPPORTED_VERSION = DEFAULT_VERSION  # kept for existing imports
 MAX_CONDITION_DEPTH = 8  # spec/robolang-v1.2.md section 3.3
 MAX_IF_DEPTH = 4  # spec/robolang-v1.4.md section 3.3 (E216)
@@ -107,23 +109,28 @@ class _Parser:
 
     @property
     def _typed(self) -> bool:
-        """True in 1.3 to 1.6 files: goal blocks, outcome atoms and sensor parameters."""
-        return self._language in ("1.3", "1.4", "1.5", "1.6")
+        """True in 1.3 to 1.7 files: goal blocks, outcome atoms and sensor parameters."""
+        return self._language in ("1.3", "1.4", "1.5", "1.6", "1.7")
 
     @property
     def _branching(self) -> bool:
-        """True in 1.4 to 1.6 files: `if`, `else` and `fail`."""
-        return self._language in ("1.4", "1.5", "1.6")
+        """True in 1.4 to 1.7 files: `if`, `else` and `fail`."""
+        return self._language in ("1.4", "1.5", "1.6", "1.7")
 
     @property
     def _handlers(self) -> bool:
-        """True in 1.5 and 1.6 files: a step may end with a failure handler `else { ... }`."""
-        return self._language in ("1.5", "1.6")
+        """True in 1.5 to 1.7 files: a step may end with a failure handler `else { ... }`."""
+        return self._language in ("1.5", "1.6", "1.7")
 
     @property
     def _values(self) -> bool:
-        """True in 1.6 files: `measure`, comparisons, live readings and sending a binding (decision 0036)."""
-        return self._language == "1.6"
+        """True in 1.6 and 1.7 files: `measure`, comparisons, live readings and sending a binding (decision 0036)."""
+        return self._language in ("1.6", "1.7")
+
+    @property
+    def _regions(self) -> bool:
+        """True in 1.7 files: `@safety no_go_region R;` and `@safety in_region R;` (decision 0039)."""
+        return self._language == "1.7"
 
     @property
     def _statements(self) -> tuple[str, ...]:
@@ -359,15 +366,21 @@ class _Parser:
         name = self._name("a parameter name")
         return ast.Param(ast.ParamType(token.text), name, token.span.to(name.span))
 
-    def _annotation(self) -> ast.SafetyAnnotation:
+    def _annotation(self) -> ast.SafetyAnnotation | ast.RegionAnnotation:
         start = self._advance()
         key = self._tok
+        keys = (*SAFETY_KEYS, *REGION_LIMITS) if self._regions else SAFETY_KEYS
+        if self._regions and self._at_keyword(*REGION_LIMITS):
+            self._advance()
+            region = self._name(f"a region name after '{key.text}'")
+            end = self._semicolon("the @safety annotation")
+            return ast.RegionAnnotation(ast.Name(key.text, key.span), region, start.span.to(end.span))
         if self._at_keyword("no_go_region", "require_guard"):
             self._error("E211", f"'@safety {key.text}' {_NOT_IN_V1_1}")
         if not self._at(TokenKind.IDENT):
-            self._error("E201", f"expected a @safety key ({_listed(SAFETY_KEYS)}), found {self._found()}")
+            self._error("E201", f"expected a @safety key ({_listed(keys)}), found {self._found()}")
         if key.text not in SAFETY_KEYS:
-            self._error("E207", f"unknown @safety key '{key.text}'; expected one of {_listed(SAFETY_KEYS)}")
+            self._error("E207", f"unknown @safety key '{key.text}'; expected one of {_listed(keys)}")
         self._advance()
 
         number = self._expect(TokenKind.NUMBER, f"a number after '{key.text}'")
@@ -711,6 +724,9 @@ class _Parser:
         self._expect_keyword("to", "after the robot name")
         target = self._name("a location name after 'to'")
         if self._at_keyword("with_approach", "in_region"):
+            if self._regions and self._at_keyword("in_region"):
+                self._error("E211", "'in_region' on one move is not part of RoboLang 1.7; a region limit is a task "
+                                    "annotation for the whole task: '@safety in_region R;' (decision 0039 P2)")
             self._error("E211", f"'{self._tok.text}' {_NOT_IN_V1_1}")
         handler, end = self._end("the move statement")
         return ast.Move(robot, target, start.span.to(end.span), handler)
@@ -815,7 +831,7 @@ def parse_recovering(source: str, filename: str = "<string>") -> Parsed:
 
 
 def parse(source: str, filename: str = "<string>") -> ParseResult:
-    """Parse RoboLang v1.1 to v1.6 source. Raises RoboLangError with every lexical or syntax error found."""
+    """Parse RoboLang v1.1 to v1.7 source. Raises RoboLangError with every lexical or syntax error found."""
     parsed = parse_recovering(source, filename)
     if parsed.errors:
         raise RoboLangError(parsed.errors, warnings=parsed.warnings)

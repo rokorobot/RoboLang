@@ -129,8 +129,8 @@ def check_install(artifact: Path, work: Path):
         expect(attempt.returncode == 2, f"'robolang {word}' is not a command (exit 2)")
 
     version = run([robolang, "--version"], cwd=outside, env=env).stdout.decode().strip()
-    languages = "1.1, 1.2, 1.3, 1.4, 1.5 and 1.6"
-    expected = f"robolang {VERSION} (language {languages}, IR schema 1.0, 1.1, 1.2, 1.3, 1.4 and 1.5)"
+    languages = "1.1, 1.2, 1.3, 1.4, 1.5, 1.6 and 1.7"
+    expected = f"robolang {VERSION} (language {languages}, IR schema 1.0, 1.1, 1.2, 1.3, 1.4, 1.5 and 1.6)"
     expect(version == expected, f"--version: {version}")
 
     reference = run([robolang, "reference"], cwd=outside, env=env).stdout

@@ -1,5 +1,5 @@
 """
-Abstract syntax tree for RoboLang v1.1 to v1.6 (robolang-v1.1.md section 7, v1.2 section 6, v1.3 section 6).
+Abstract syntax tree for RoboLang v1.1 to v1.7 (robolang-v1.1.md section 7, v1.2 section 6, v1.3 section 6).
 
 Nodes are immutable and record the source faithfully: names are unresolved,
 units are kept as written and nothing is normalized. Binding and type checks
@@ -326,6 +326,15 @@ class SafetyAnnotation:
 
 
 @dataclass(frozen=True)
+class RegionAnnotation:
+    """RoboLang 1.7 (decision 0039): `@safety no_go_region R;` or `@safety in_region R;`. `key.text` is the kind."""
+
+    key: Name
+    region: Name
+    span: Span
+
+
+@dataclass(frozen=True)
 class VerifyAnnotation:
     """RoboLang 1.3: `key.text` is "min_confidence" (`value` a Decimal) or "max_age" (`value` a Duration)."""
 
@@ -359,7 +368,7 @@ class PlanBlock:
 class Task:
     name: Name
     params: tuple[Param, ...]
-    annotations: tuple[SafetyAnnotation, ...]
+    annotations: tuple[SafetyAnnotation | RegionAnnotation, ...]
     pre: PreBlock | None
     plan: PlanBlock
     span: Span

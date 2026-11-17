@@ -184,7 +184,8 @@ Specifications: [1.1](https://github.com/rokorobot/RoboLang/blob/main/spec/robol
 [1.4](https://github.com/rokorobot/RoboLang/blob/main/spec/robolang-v1.4.md) ([grammar](https://github.com/rokorobot/RoboLang/blob/main/spec/grammar-v1.4.ebnf)),
 [1.5](https://github.com/rokorobot/RoboLang/blob/main/spec/robolang-v1.5.md) ([grammar](https://github.com/rokorobot/RoboLang/blob/main/spec/grammar-v1.5.ebnf)),
 [1.6](https://github.com/rokorobot/RoboLang/blob/main/spec/robolang-v1.6.md) ([grammar](https://github.com/rokorobot/RoboLang/blob/main/spec/grammar-v1.6.ebnf)),
-[Task IR](https://github.com/rokorobot/RoboLang/blob/main/spec/ir-schema-v1.5.md), [simulation, world file and run record](https://github.com/rokorobot/RoboLang/blob/main/spec/simulation-v1.0.md).
+[1.7](https://github.com/rokorobot/RoboLang/blob/main/spec/robolang-v1.7.md) ([grammar](https://github.com/rokorobot/RoboLang/blob/main/spec/grammar-v1.7.ebnf)),
+[Task IR](https://github.com/rokorobot/RoboLang/blob/main/spec/ir-schema-v1.6.md), [simulation, world file and run record](https://github.com/rokorobot/RoboLang/blob/main/spec/simulation-v1.0.md).
 
 ## How it fits together
 
@@ -248,6 +249,7 @@ See
 | Language 1.4 (bounded `if`/`else`, `fail`; [0027](https://github.com/rokorobot/RoboLang/blob/main/spec/decisions/0027-bounded-branching.md)): `validate`, `inspect`, Task IR 1.3 | Complete in code: front end, `simulate`, `export-goal` and `delegate` run branching tasks (record 1.3, [simulation 12](https://github.com/rokorobot/RoboLang/blob/main/spec/simulation-v1.0.md)), `validate --world` checks every path, language reference and benchmark scoring per path. Accepted 2026-10-30 on set 3 ([evidence](https://github.com/rokorobot/RoboLang/blob/main/docs/evidence/bench-set3-acceptance.md)) |
 | Language 1.5 (failure handlers `<step> else { ... }`; [0033](https://github.com/rokorobot/RoboLang/blob/main/spec/decisions/0033-step-failure-handlers.md)): `validate`, `inspect`, Task IR 1.4 | Front end and simulation complete in code (record 1.4, [simulation 13](https://github.com/rokorobot/RoboLang/blob/main/spec/simulation-v1.0.md)). Taught by the language reference and benchmark prompts; accepted 2026-11-09 on set 4 ([evidence](https://github.com/rokorobot/RoboLang/blob/main/docs/evidence/bench-1-5-acceptance.md)) |
 | Language 1.6 (measured values: `measure`, comparisons, live readings in `wait until`, typed `communicate`; [0036](https://github.com/rokorobot/RoboLang/blob/main/spec/decisions/0036-lang-4-measured-values.md)): `validate`, `inspect`, Task IR 1.5, world file 1.2 | Front end, IR reader, `simulate` (record 1.5, [simulation 14](https://github.com/rokorobot/RoboLang/blob/main/spec/simulation-v1.0.md)) and `validate --world` complete in code. `delegate` and the ROS 2 backend refuse a `measure`. The language reference and benchmark prompts teach 1.6 since 0036 PR 2; accepted 2026-11-10 on set 5 ([evidence](https://github.com/rokorobot/RoboLang/blob/main/docs/evidence/bench-1-6-acceptance.md)) |
+| Language 1.7 (region limits: `@safety no_go_region R;`, `@safety in_region R;`; [0039](https://github.com/rokorobot/RoboLang/blob/main/spec/decisions/0039-region-limits.md)): `validate`, `inspect`, Task IR 1.6, world file 1.3 | Front end, IR reader, `simulate` (record 1.6, [simulation 15](https://github.com/rokorobot/RoboLang/blob/main/spec/simulation-v1.0.md)) and `validate --world` complete in code. A region limit is a request, checked against the world and never enforced. `delegate`, `export-goal` and the ROS 2 backend refuse a task with one. Not yet taught by the language reference or the benchmark prompts |
 | Simulation-only execution (`simulate`) | Delivered, signed off 2026-10-27 ([evidence](https://github.com/rokorobot/RoboLang/blob/main/docs/evidence/rl-basic-01-exit-gate.md)) |
 | Core 0.1 reference simulation (`arch02`) | Implemented, gate 1 signed off 2026-10-27 ([evidence](https://github.com/rokorobot/RoboLang/blob/main/docs/evidence/rl-arch-02-exit-gate.md)) |
 | Core 0.2 (alternatives, `met_alternative`, `declared`; [0028](https://github.com/rokorobot/RoboLang/blob/main/spec/decisions/0028-core-0-2-scope.md), [spec](https://github.com/rokorobot/RoboLang/blob/main/spec/core-v0.2.md)) | **Frozen 2026-10-30**: schema, `robolang.core` checks, fixtures, and opt-in `--core 0.2` on `simulate`, `export-goal` and `delegate`. Core 0.1 output is unchanged and the default |
@@ -261,7 +263,7 @@ How the language evolves with robot activities: the [language evolution strategy
 and its [humanoid activity plan](https://github.com/rokorobot/RoboLang/blob/main/docs/plans/humanoid-activities.md).
 
 `robolang --version` prints three independent versions: the Python package (`0.3.1`, alpha),
-the language (`1.1` to `1.6`) and the Task IR schema (`1.0` to `1.5`, one for each language version).
+the language (`1.1` to `1.7`) and the Task IR schema (`1.0` to `1.6`, one for each language version).
 
 ## Contributing
 

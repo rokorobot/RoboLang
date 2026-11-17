@@ -12,6 +12,7 @@ from decimal import Decimal
 
 from .. import ir
 from ..measured import LABEL, Interval, compare_intervals, convert, reading_interval, to_base
+from .regions import CHECKED, limit_problems
 from .values import Truth, duration_ms_of
 from .world import Property, World
 
@@ -29,8 +30,10 @@ class Failure:
 
 @dataclass(frozen=True)
 class LimitResult:
-    limit: ir.SafetyLimit
-    status: str  # unit_unspecified_not_enforced, checked_against_profile_not_enforced, failed_check, not_checked
+    limit: ir.SafetyLimit | ir.RegionLimit
+    # unit_unspecified_not_enforced, checked_against_profile_not_enforced (max_speed),
+    # checked_against_world_not_enforced (a region limit, RoboLang 1.7), failed_check, not_checked
+    status: str
 
 
 @dataclass(frozen=True)
@@ -346,6 +349,14 @@ def _authorize(task: ir.Task, world: World, bindings: tuple[tuple[str, str], ...
     for index, limit in enumerate(task.safety, start=1):
         if failure is not None:
             statuses.append("not_checked")
+            continue
+        if isinstance(limit, ir.RegionLimit):  # section 15.3: the first problem fails the run
+            problems = limit_problems(task, world, bound, limit)
+            if problems:
+                statuses.append("failed_check")
+                failure = Failure(problems[0].code, "authorization", None, None, index, problems[0].robot)
+            else:
+                statuses.append(CHECKED)
             continue
         if limit.limit.unit is None:
             statuses.append("unit_unspecified_not_enforced")

@@ -1,0 +1,20 @@
+// RoboLang v1.7 fixture: valid
+// expect: ok
+// why: one limit covers every path of the task, branches and failure handlers included (P2, C6)
+
+robolang 1.7;
+
+task weed(robot w, location row_a, location row_b, region zone, region road) {
+    @safety no_go_region road;
+    goal { robot_at w row_a; }
+    plan {
+        if region_clear zone {
+            move w to row_a;
+        } else {
+            move w to row_b else {
+                move w to row_a;
+            }
+            move w to row_a;
+        }
+    }
+}
