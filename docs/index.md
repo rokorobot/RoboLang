@@ -83,6 +83,8 @@ simulation result is not evidence that a task is safe on hardware.
 - [Core 0.2](https://github.com/rokorobot/RoboLang/blob/main/spec/core-v0.2.md) and
   [`delegate`](https://github.com/rokorobot/RoboLang/blob/main/spec/delegate-v0.2.md)
 - [Strategy](STRATEGY.md) and [development plan](DEVELOPMENT_PLAN.md)
+- [Language evolution strategy](LANGUAGE_EVOLUTION.md), its [rules](LANGUAGE_EVOLUTION_RULES.md) and the
+  [humanoid activity plan](plans/humanoid-activities.md) by direction, which ranks what the language needs next
 - [Safety case draft](safety-case-draft.md) and
   [physical-run authorization](https://github.com/rokorobot/RoboLang/blob/main/spec/authorization-v0.1.md)
 - [Legacy RoboLang v1](legacy-v1.md): the original interpreter, the experimental ROS 2 adapter

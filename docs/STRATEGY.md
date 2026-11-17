@@ -3,7 +3,8 @@
 **Status:** **APPROVED by the owner, 2026-11-11**, with decisions D1–D4 and rule 6 as below. First proposed 2026-10-29;
 revised 2026-11-10/11 (state as of 2026-11-11).
 **Reviewed:** every month (section 5). The [development plan](DEVELOPMENT_PLAN.md) holds the detail;
-this page holds the direction.
+this page holds the direction. How the language evolves with robot activities: the
+[language evolution strategy](LANGUAGE_EVOLUTION.md) and its [rules](LANGUAGE_EVOLUTION_RULES.md) (since 2026-11-16).
 
 ## 1. Where we are going
 
@@ -21,7 +22,7 @@ Two measurable promises follow from it, and every release is judged against them
 
 | Pillar | What "done" looks like | Today |
 |---|---|---|
-| P1 **Expressive language** | The requests of today's robot activities and of those expected within three years ([activity atlas](plans/rsi-01.md)) fit RoboLang without silent loss: goals, bounded branching, typed values. Unbounded loops and schedules stay with the orchestrator | RoboLang 1.6: goals, bounded branching (1.4), step failure handlers (1.5), measured values with units and uncertainty (1.6). Not yet: choosing objects at run time (`detect`), arithmetic, structured data |
+| P1 **Expressive language** | The requests of today's robot activities and of those expected within three years ([activity atlas](plans/humanoid-activities.md)) fit RoboLang without silent loss: goals, bounded branching, typed values. Unbounded loops and schedules stay with the orchestrator | RoboLang 1.6: goals, bounded branching (1.4), step failure handlers (1.5), measured values with units and uncertainty (1.6). Not yet: choosing objects at run time (`detect`), arithmetic, structured data |
 | P2 **Safety by construction** | Errors are caught while the task is written, not when it runs. Authority is local and explicit, and success requires evidence | Validator with all diagnostics, `validate --world`, holder check, verified outcomes; uncertain readings and unknown conditions fail closed. The benchmark measures silent failures (`half_program`, `unsafe_continue`, `silent_substitution`) |
 | P3 **Interoperability through Core** | A stable Core version that an independent party implements from the spec alone | Core 0.2 frozen; gate 2 passed 2026-11-10: an independent Core 0.2 amr-07, written by a clean-room AI session from the frozen bundle, passes 25/25 cases ([evidence](interop/interop-4-run-2.md)). Network and search were not technically blocked. No human or outside implementer yet |
 | P4 **Path to real execution** | The same task runs in the symbolic simulator, then in a physics simulator through ROS 2, then on hardware behind a safety case | Symbolic simulation, plus a ROS 2 backend in Gazebo (UR5e, MoveIt 2) verified from sensor observations: 11 tasks × 3 runs pass. `robot_ready` from ROS 2 merged (#100). No hardware |
@@ -50,7 +51,8 @@ A horizon ends when its exit criteria hold, not on a date. Dates are targets.
   The owner publishes the GitHub release, which runs the PyPI workflow.
 - **D4. No new language work until H4 needs it.** The `detect` evidence set (set 5 `x03` is its first evidence) is
   deferred: it lies outside the current horizon (rule 3) and its evidence is thin. **Superseded 2026-11-16 by D5.**
-- **D5 (owner, 2026-11-16). New language work follows the ranked activity atlas** ([RSI-01](plans/rsi-01.md)).
+- **D5 (owner, 2026-11-16). New language work follows the ranked activity atlas**
+  ([language evolution strategy](LANGUAGE_EVOLUTION.md), [rules](LANGUAGE_EVOLUTION_RULES.md), [RSI-01](plans/rsi-01.md)).
   Near gaps needed by the current horizon come first; far gaps get design sketches only, no syntax.
 - **Follow-up, off the critical path:** a stronger gate 2 run, technically isolated or by a human team, would remove
   the recorded caveat of the 2026-11-10 pass (gate 2 spec section 2).
@@ -59,7 +61,7 @@ A horizon ends when its exit criteria hold, not on a date. Dates are targets.
 
 1. **Evidence before syntax.** A new language feature needs (a) benchmark tasks that fail without it,
    and (b) a re-run showing that it fixes them without raising false programs. A future task, derived from an atlas
-   activity of maturity `pilot` or `deployment` ([RSI-01](plans/rsi-01.md) section 4), counts as such a task
+   activity of maturity `pilot` or `deployment` ([rule LE-7](LANGUAGE_EVOLUTION_RULES.md)), counts as such a task
    (owner, 2026-11-16).
 2. **No regression on the two promises.** A change that lowers decision accuracy or raises false
    programs on the standing benchmark is not merged without an explicit owner decision.

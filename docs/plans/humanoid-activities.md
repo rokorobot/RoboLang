@@ -1,7 +1,8 @@
 # Humanoid activities and the direction of RoboLang
 
 **Generated** from [`bench/atlas.json`](../../bench/atlas.json) by `python bench/atlas_report.py`; do not edit by
-hand. Plan: [RSI-01](rsi-01.md). Sub-activities are added to the atlas as the foresight loop finds them; the
+hand. Strategy: [language evolution](../LANGUAGE_EVOLUTION.md); rules: [LE-1 to LE-15](../LANGUAGE_EVOLUTION_RULES.md);
+status: [RSI-01](rsi-01.md). Sub-activities are added to the atlas as the foresight loop finds them; the
 priorities below follow from them.
 
 <p align="center"><img src="capability-directions.svg" width="420" alt="The directions of the RoboLang Capability Atlas (eight in the diagram; autonomy, the ninth, was added later)"/></p>
@@ -65,6 +66,7 @@ Newest first. Ranking: the directions in order of priority, with the change of r
 
 | Date | Note | Added | Removed | Changed | Ranking |
 |---|---|---|---|---|---|
+| 2026-11-17 | Orchestrator spot-check of A2: ACT-MFG-003 pilot announced, not running; ACT-SOL-001 basis corrected | — | — | ACT-MFG-003: pilot 1-3y → demo 1-3y | 1. action 4.17 · 2. perception 2.78 · 3. cooperation 0.99 · 4. communication 0.87 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
 | 2026-11-17 | Horizon scan 1 (A2): 35 leading signals (18 on 11 far activities, 17 on the new ones), 7 concept activities, 3 R2 holes filled (machine tending, weeding, solar); no changes to existing activities, no new gaps | ACT-AGR-002, ACT-AUTO-004, ACT-CARE-001, ACT-LRN-001, ACT-LRN-002, ACT-MFG-003, ACT-PRED-003, ACT-PRED-004, ACT-SAFE-002, ACT-SOL-001 | — | — | 1. action 4.17 · 2. perception 2.78 · 3. cooperation 0.99 (+1) · 4. communication 0.87 (-1) · 5. learning 0.75 · 6. reasoning 0.68 (+1) · 7. autonomy 0.67 (-1) · 8. safety 0.49 · 9. prediction 0.25 |
 | 2026-11-17 | Ninth direction autonomy (owner): 3 sub-activities, new gap G-SELF | ACT-AUTO-001, ACT-AUTO-002, ACT-AUTO-003 | — | — | 1. action 3.43 · 2. perception 2.33 · 3. communication 0.87 · 4. cooperation 0.86 · 5. learning 0.62 · 6. autonomy 0.61 (+3) · 7. reasoning 0.45 (-1) · 8. safety 0.43 (-1) · 9. prediction 0.17 (-1) |
 | 2026-11-17 | Foresight pass 1 (R2): 25 sub-activities, 3 new gaps (G-PROX, G-PREDICT, G-TEACH) | ACT-AGR-001, ACT-ASM-001, ACT-CLN-001, ACT-CON-001, ACT-ELD-001, ACT-EV-001, ACT-HLTH-001, ACT-HOME-001, ACT-HOME-002, ACT-HOS-001, ACT-HRC-001, ACT-HRC-002, ACT-INSP-001, ACT-INSP-002, ACT-LOG-001, ACT-LOG-002, ACT-MFG-001, ACT-MFG-002, ACT-MRC-001, ACT-MRC-002, ACT-PRED-001, ACT-PRED-002, ACT-RET-001, ACT-SAFE-001, ACT-SEC-001 | — | — | 1. action 2.91 · 2. perception 2.33 · 3. communication 0.87 · 4. cooperation 0.86 · 5. learning 0.62 · 6. reasoning 0.45 · 7. safety 0.34 · 8. prediction 0.17 · others 0 |
@@ -86,7 +88,7 @@ Newest first. Ranking: the directions in order of priority, with the change of r
 | `ACT-AGR-002` Autonomous laser weeding between crop rows | deployment | now | 0.40 | 0.40 | G-PERCEIVE, G-LOOP, G-PATH, G-CHOOSE | [1](https://agfundernews.com/🎥-carbon-robotics-100m-revenue-new-machine-and-a-path-to-ipo) |
 | `ACT-AUTO-002` Battery swapping for whole-shift humanoid work | demo | 1-3y | 0.55 | 0.39 | G-SELF, G-LOOP, G-ACT | [1](https://newatlas.com/ai-humanoids/walker-s2-humanoid-robot-swaps-batteries) |
 | `ACT-EV-001` Robotic EV charging in garages and depots | pilot | 1-3y | 0.55 | 0.39 | G-ACT, G-MSG, G-CHOOSE, G-LOOP | [1](https://electrek.co/2026/02/23/china-overhead-rail-ev-charging-robots-parking-garages/) |
-| `ACT-MFG-003` Humanoid machine tending at a machine builder's customer site | pilot | 1-3y | 0.45 | 0.32 | G-LOOP, G-ACT, G-MSG, G-CLOCK | [1](https://roboticsandautomationnews.com/2026/05/15/hexagon-and-fill-maschinenbau-partner-to-advance-manufacturing-autonomy-using-humanoids/101578/) |
+| `ACT-MFG-003` Humanoid machine tending at a machine builder's customer site | demo | 1-3y | 0.45 | 0.32 | G-LOOP, G-ACT, G-MSG, G-CLOCK | [1](https://roboticsandautomationnews.com/2026/05/15/hexagon-and-fill-maschinenbau-partner-to-advance-manufacturing-autonomy-using-humanoids/101578/) |
 | `ACT-AGR-001` Greenhouse fruit harvesting | pilot | 3-7y | 0.60 | 0.24 | G-CHOOSE, G-PERCEIVE, G-LOOP, G-CLOCK, G-FORCE | [1](https://www.freshplaza.com/europe/article/9842754/japanese-agri-tech-startup-puts-cherry-tomato-harvesting-robot-into-routine-production-use/) |
 | `ACT-HOME-002` General household chores by a home humanoid | demo | 3-7y | 0.40 | 0.16 | G-CLOCK, G-ACT, G-LOOP, G-CHOOSE, G-PATH, G-PERCEIVE | [1](https://heise.de/-11287205) |
 | `ACT-LRN-001` Learning a new task from half an hour of a worker's video | concept | 3-7y | 0.35 | 0.14 | G-TEACH, G-PERCEIVE | [1](https://arxiv.org/abs/2605.24934) [2](https://dealroom.co/news/127095-robot-ai-startup-physical-intelligence-seeks-1b-at-11b-valuation/) |
@@ -174,7 +176,7 @@ Newest first. Ranking: the directions in order of priority, with the change of r
 | Sub-activity | Maturity | Horizon | p | Priority | Needs | Sources |
 |---|---|---|---|---|---|---|
 | `ACT-MFG-001` Parts sequencing for the assembly line | pilot | 1-3y | 0.60 | 0.42 | G-LOOP, G-CHOOSE, G-MSG, G-CLOCK | [1](https://www.therobotreport.com/bmw-group-deploys-figure-03-humanoid-after-tests-previous-version/) |
-| `ACT-MFG-003` Humanoid machine tending at a machine builder's customer site | pilot | 1-3y | 0.45 | 0.32 | G-LOOP, G-ACT, G-MSG, G-CLOCK | [1](https://roboticsandautomationnews.com/2026/05/15/hexagon-and-fill-maschinenbau-partner-to-advance-manufacturing-autonomy-using-humanoids/101578/) |
+| `ACT-MFG-003` Humanoid machine tending at a machine builder's customer site | demo | 1-3y | 0.45 | 0.32 | G-LOOP, G-ACT, G-MSG, G-CLOCK | [1](https://roboticsandautomationnews.com/2026/05/15/hexagon-and-fill-maschinenbau-partner-to-advance-manufacturing-autonomy-using-humanoids/101578/) |
 | `ACT-HOME-002` General household chores by a home humanoid | demo | 3-7y | 0.40 | 0.16 | G-CLOCK, G-ACT, G-LOOP, G-CHOOSE, G-PATH, G-PERCEIVE | [1](https://heise.de/-11287205) |
 | `ACT-HRC-002` Following ambiguous and corrective instructions during shared work | research | 3-7y | 0.40 | 0.16 | G-MSG, G-CHOOSE, G-PERCEIVE | [1](https://arxiv.org/abs/2602.14551) |
 | `ACT-MRC-001` Mixed robot teams on one workflow | demo | 3-7y | 0.35 | 0.14 | G-CONC, G-CHOOSE, G-MSG | [1](https://deepmind.google/blog/gemini-robotics-2-brings-whole-body-intelligence-to-robots/) |
