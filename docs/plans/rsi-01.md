@@ -134,7 +134,29 @@ than the baseline (rule 6).
 | R2 | First foresight pass, by hand-supervised agent: 15–25 activities with sources, maturity and forecasts | ~$5–15, once | Approve the spend |
 | R3 | Future tasks for the near activities (`bench/tasks_future/`), run once to measure today's gaps | ~$2 | No |
 | R4 | Cloudroom Loop for loop A (weekly): new sources, maturity changes, new activities in the atlas, then `python bench/atlas_report.py --snapshot DATE --note …` so [humanoid-activities.md](humanoid-activities.md) gets a dated development-log entry; as a PR | ~$1/week | Approve the loop |
-| R5 | Monthly ranked proposal (section 5); quarterly calibration (loop C) | ~$1/month | Each proposal |
+| R5 | Monthly ranked proposal (section 5), which feeds L1 (section 7a); quarterly calibration (loop C) | ~$1/month | Each proposal |
+
+## 7a. Language development phase (owner, 2026-11-17)
+
+R1–R4 exist to give language work trustworthy data. The language phase starts **after R3**, as soon as the first
+gaps are verified by tests, and runs alongside R4, which keeps the ranking current. Each iteration closes one gap and
+ends in a released RoboLang version:
+
+| Step | What | Output | Owner |
+|---|---|---|---|
+| L1 Choose | The top **near** gap of the ranking in [humanoid-activities.md](humanoid-activities.md), verified in R3 | The gap and its activities | Approves the choice |
+| L2 Design | Decision record (one page, as 0027, 0033, 0036): smallest construct that closes the gap, alternatives, what far activities it must not rule out (future need) | `spec/decisions/00NN-….md` | Approves the decisions |
+| L3 Pre-register | The R3 future tasks of that gap plus controls, with acceptance bounds set against the baseline (rule 6) before any code | A frozen benchmark set and baseline run | Confirms the paid run |
+| L4 Build | Spec, grammar, validator, simulation, Task IR, language reference, examples, in one branch | PRs with tests | Reviews |
+| L5 Accept | Re-run the set: the gap's tasks pass, false programs and decision accuracy no worse (rule 2); Economy recorded | Acceptance evidence | Accepts or rejects |
+| L6 Release | New RoboLang version on PyPI; the gap moves to "closed" in the atlas, its activities' `needs` drop it, the development log records it | Release | Publishes |
+
+Then L1 again with the next gap. A gap that is out of scope today (G-LOOP) enters L1 only through its own decision
+record; for G-LOOP the recommended design is a mission layer above tasks that keeps each task bounded and verified.
+
+**First candidates** on 2026-11-17 (near, by priority; R3 confirms or refutes them): G-PERCEIVE (conditions on
+perceived properties), G-CLOCK (clock readings), G-CHOOSE (choosing objects at run time), G-ACT (new actions),
+G-SELF (the robot's own state). G-PATH and G-FORCE remain the ones closest to the H4 safety case.
 
 ## 8. Proposed strategy amendment
 
