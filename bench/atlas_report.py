@@ -123,6 +123,8 @@ def render(atlas: dict) -> str:
         "hand. Plan: [RSI-01](rsi-01.md). Sub-activities are added to the atlas as the foresight loop finds them; the",
         "priorities below follow from them.",
         "",
+        '<p align="center"><img src="capability-directions.svg" width="420" alt="The eight directions of the RoboLang Capability Atlas"/></p>',
+        "",
         "**Priorities.** A sub-activity's priority is `p × nearness` (`p`: its forecast's probability; nearness: now 1,",
         "1–3y 0.7, 3–7y 0.4, 7y+ 0.1). A direction's priority is the sum of its sub-activities' priorities, each split",
         "evenly over the directions it names. A language gap's priority is the sum over the sub-activities that need it;",
