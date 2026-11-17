@@ -141,3 +141,12 @@ Built in PR #155. T2 and T5 write `1 h` and `12 h` "as durations are written tod
 and `min`. L4 did **not** add an hour unit, so the economy of B7 is unchanged. A request in hours is written in
 minutes (`720 min`), as the reference teaches; the scorer compares durations, so `1 h` in a label accepts `60 min`.
 **Owner, 2026-11-17: no `h` for now**; it is added only when a request needs it.
+
+Accepted on 2026-11-17 ([acceptance](../../docs/evidence/bench-1-9-acceptance.md)). New codes:
+
+- **Static:** `E105` (a malformed time literal).
+- **World file:** `E518` (a malformed `clock`).
+- **Before the run:** `S010` (a wait for a time that has already passed, K3).
+- **During the run:** `S237` (no world clock) and `S238` (a `time` reading past midnight).
+- **Backend:** `S510` (ROS 2 refuses clock readings).
+- **IR:** `I126` (an IR time operand that is not `HH:MM:SS`).

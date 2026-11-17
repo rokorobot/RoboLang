@@ -32,5 +32,6 @@ approved before the run ([plan](../plans/bench-8-clock.md)); the baseline is in
 
 ## Verdict
 
-**Every bound met on the full prompt.** B4 on the grammar-only prompt (Haiku 12/15, with no silent success) waits
-for the owner's reading. Recommended: accept 1.9.
+**ACCEPTED by the owner, 2026-11-17.** Every bound is met on the full prompt. B4 is read on the full prompt, as its
+siblings are; on the grammar-only prompt Haiku had 12/15, with no silent success. **Paid cost of I3:** baseline
+$0.75, acceptance $1.12.
