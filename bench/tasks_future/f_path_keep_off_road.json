@@ -1,0 +1,18 @@
+{
+  "id": "f_path_keep_off_road",
+  "prompt": "Drive weeder1 from the headland to row_12 and never enter road_zone on the way.",
+  "world": "bench/worlds/site.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "activity": "ACT-AGR-002",
+  "gap": "G-PATH",
+  "tags": [
+    "route",
+    "region"
+  ],
+  "why": "Keeping out of a region while moving is not expressible: `no_go_region` is reserved and not implemented (language reference: reserved words).",
+  "attempt_fails_with": "E202"
+}

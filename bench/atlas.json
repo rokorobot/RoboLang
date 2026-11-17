@@ -43,7 +43,10 @@
         "u17_at_1400",
         "u18_every_morning",
         "x05_cooling_time",
-        "x_report_duration"
+        "x_report_duration",
+        "f_clock_scan_stamp",
+        "f_clock_shift_cutoff",
+        "f_clock_clean_at_2300"
       ]
     },
     {
@@ -57,7 +60,10 @@
         "u11_wait_go",
         "u12_radio_clearance",
         "x_wait_ready_message",
-        "f12_message_delivery"
+        "f12_message_delivery",
+        "f_msg_line_docked",
+        "f_msg_nurse_confirm",
+        "f_msg_wind_clear"
       ]
     },
     {
@@ -70,7 +76,10 @@
         "x_count_report",
         "x01_average",
         "x02_formatted",
-        "x_count_and_send"
+        "x_count_and_send",
+        "f_calc_total_weight",
+        "f_calc_over_limit",
+        "f_calc_text_line"
       ]
     },
     {
@@ -82,7 +91,10 @@
       "tasks": [
         "u15_open_oven",
         "u16_charge_drone",
-        "x06_set_oven"
+        "x06_set_oven",
+        "f_act_set_fryer",
+        "f_act_open_closet",
+        "f_act_print_layout"
       ]
     },
     {
@@ -90,10 +102,13 @@
       "name": "Staying inside or outside a region while moving",
       "direction": "safety",
       "scope": "open",
-      "scope_note": "`in_region`, `no_go_region` reserved (E211); needed by H4 (safety case G2)",
+      "scope_note": "`in_region`, `no_go_region` are reserved words; a condition using them is rejected (E201, R3 2026-11-17); needed by H4 (safety case G2)",
       "tasks": [
         "u09_avoid_quay",
-        "u10_inside_clean_room"
+        "u10_inside_clean_room",
+        "f_path_avoid_wet_floor",
+        "f_path_stay_in_zone",
+        "f_path_keep_off_road"
       ]
     },
     {
@@ -114,7 +129,9 @@
       "scope_note": "",
       "tasks": [
         "u13_simultaneous_lift",
-        "u14_while_carrying"
+        "u14_while_carrying",
+        "f_conc_carry_and_drive",
+        "f_conc_two_hand_lift"
       ]
     },
     {
@@ -125,7 +142,10 @@
       "scope_note": "D4 deferred `detect`; D5 ranks it by the atlas",
       "tasks": [
         "x03_any_hot_pan",
-        "x_nearest_robot"
+        "x_nearest_robot",
+        "f_choose_nearest_tugger",
+        "f_choose_nearest_dock",
+        "f_choose_nearer_cart"
       ]
     },
     {
@@ -136,7 +156,9 @@
       "scope_note": "",
       "tasks": [
         "u01_if_dirty",
-        "u02_if_damaged"
+        "u02_if_damaged",
+        "f_perceive_shelf_fill",
+        "f_perceive_weed_confidence"
       ]
     },
     {
@@ -178,7 +200,11 @@
       "name": "The robot's own state as readings and conditions: battery level, health, faults; acting on them and asking for service",
       "scope": "open",
       "scope_note": "owner added the autonomy direction 2026-11-17, no benchmark task yet",
-      "tasks": [],
+      "tasks": [
+        "f_self_low_battery",
+        "f_self_enough_for_route",
+        "f_self_report_charge"
+      ],
       "direction": "autonomy"
     }
   ],
@@ -253,7 +279,7 @@
       ],
       "maturity": "pilot",
       "horizon": "1-3y",
-      "basis": "The Robot Report (2026-06-29): BMW is deploying Figure 03 at Plant Spartanburg to pick unsorted parts from large containers into a sequencing trolley, after an 11-month Figure 02 deployment there that supported more than 30,000 X3 vehicles. The article gives no Figure 03 unit count or duration.",
+      "basis": "The Robot Report (2026-06-29): BMW is deploying Figure 03 at Plant Spartanburg to pick unsorted parts from large containers into a sequencing trolley, after an 11-month Figure 02 deployment there that supported more than 30,000 X3 vehicles. The article gives no Figure 03 unit count or duration. R3 (2026-11-17): G-CHOOSE refuted, 1.6 expresses it with one `if object_at part bin` per part the world names (control c_parts_left_in_container). R3 model run (2026-11-17): the G-CHOOSE refutation is withdrawn. It held only for parts the world names, and both models wrote half-programs for the control c_parts_left_in_container; \"whatever parts are left\" needs a choice at run time.",
       "requests": [
         "Pick the parts for the next car from the bins into the sequencing trolley in order, then move the trolley to the collection point.",
         "Sort whatever parts are left in container 2 into the trolley, and message the tugger when it is full.",
@@ -261,9 +287,9 @@
       ],
       "needs": [
         "G-LOOP",
-        "G-CHOOSE",
         "G-MSG",
-        "G-CLOCK"
+        "G-CLOCK",
+        "G-CHOOSE"
       ],
       "forecast": {
         "claim": "BMW or Figure publicly confirms Figure humanoids in production logistics work at a second BMW plant by 2028-06-30.",
@@ -346,15 +372,14 @@
       ],
       "maturity": "deployment",
       "horizon": "now",
-      "basis": "Fast Casual (2026-03-26): Miso Robotics' Flippy Fry Station has produced over 5 million fried baskets in live restaurants across seven US states, including White Castle, Jack in the Box and Wing Zone sites.",
+      "basis": "Fast Casual (2026-03-26): Miso Robotics' Flippy Fry Station has produced over 5 million fried baskets in live restaurants across seven US states, including White Castle, Jack in the Box and Wing Zone sites. R3 (2026-11-17): G-PERCEIVE refuted, 1.6 expresses it with `measure r label of basket using camera as shade` and `if shade == \"too_dark\"`, when the world has a camera that measures label (control c_fries_too_dark).",
       "requests": [
         "Fry a basket of fries for 3 minutes, then tip it into the hot-holding tray.",
         "Set the fryer to 175 degrees and start the next basket when the oil reads 175.",
         "If the fries come out too dark, discard that basket and tell the kitchen lead."
       ],
       "needs": [
-        "G-ACT",
-        "G-PERCEIVE"
+        "G-ACT"
       ],
       "forecast": {
         "claim": "Miso Robotics reports at least 15 million cumulative fried baskets, or Flippy in at least 15 US states, by 2028-03-31.",
@@ -1231,7 +1256,7 @@
       ],
       "maturity": "deployment",
       "horizon": "now",
-      "basis": "eWeek (2026-03-31): a Maximo robot of AES has completed the installation of 100 MW of solar power; Maximo robots have worked at AES's Bellefield complex, still under construction. Version 3.0 installs up to one module a minute (a worker: up to 24 an hour). The article does not give the number of robots.",
+      "basis": "eWeek (2026-03-31): a Maximo robot of AES has completed the installation of 100 MW of solar power; Maximo robots have worked at AES's Bellefield complex, still under construction. Version 3.0 installs up to one module a minute (a worker: up to 24 an hour). The article does not give the number of robots. R3 (2026-11-17): G-PERCEIVE refuted, 1.6 expresses it with `measure r distance of table using laser as off` and `if off <= 5 mm`, when the world has a sensor that measures distance (control c_table_out_of_tolerance).",
       "requests": [
         "Install modules on table row 14 until the row is full, then move to row 15.",
         "If a table is out of tolerance, skip it and report which one.",
@@ -1239,7 +1264,6 @@
       ],
       "needs": [
         "G-LOOP",
-        "G-PERCEIVE",
         "G-PATH",
         "G-MSG"
       ],
@@ -1718,6 +1742,116 @@
     {
       "date": "2026-11-17",
       "note": "Orchestrator spot-check of A2: ACT-MFG-003 pilot announced, not running; ACT-SOL-001 basis corrected",
+      "activities": {
+        "ACT-LOG-001": "deployment now",
+        "ACT-LOG-002": "deployment now",
+        "ACT-MFG-001": "pilot 1-3y",
+        "ACT-MFG-002": "pilot 1-3y",
+        "ACT-RET-001": "deployment now",
+        "ACT-HOS-001": "deployment now",
+        "ACT-HLTH-001": "deployment now",
+        "ACT-ELD-001": "pilot 3-7y",
+        "ACT-HOME-001": "research 3-7y",
+        "ACT-HOME-002": "demo 3-7y",
+        "ACT-INSP-001": "demo now",
+        "ACT-INSP-002": "demo 1-3y",
+        "ACT-SEC-001": "demo 1-3y",
+        "ACT-SAFE-001": "demo 3-7y",
+        "ACT-CON-001": "deployment now",
+        "ACT-AGR-001": "pilot 3-7y",
+        "ACT-EV-001": "pilot 1-3y",
+        "ACT-CLN-001": "deployment now",
+        "ACT-MRC-001": "demo 3-7y",
+        "ACT-MRC-002": "demo 1-3y",
+        "ACT-HRC-001": "research 3-7y",
+        "ACT-HRC-002": "research 3-7y",
+        "ACT-ASM-001": "research 7y+",
+        "ACT-PRED-001": "research 3-7y",
+        "ACT-PRED-002": "research 3-7y",
+        "ACT-AUTO-001": "deployment now",
+        "ACT-AUTO-002": "demo 1-3y",
+        "ACT-AUTO-003": "research 3-7y",
+        "ACT-MFG-003": "demo 1-3y",
+        "ACT-AGR-002": "deployment now",
+        "ACT-SOL-001": "deployment now",
+        "ACT-PRED-003": "concept 3-7y",
+        "ACT-PRED-004": "concept 7y+",
+        "ACT-LRN-001": "concept 3-7y",
+        "ACT-LRN-002": "concept 3-7y",
+        "ACT-AUTO-004": "concept 3-7y",
+        "ACT-SAFE-002": "concept 3-7y",
+        "ACT-CARE-001": "concept 7y+"
+      },
+      "directions": {
+        "perception": 2.78,
+        "reasoning": 0.68,
+        "prediction": 0.25,
+        "action": 4.17,
+        "learning": 0.75,
+        "cooperation": 0.99,
+        "safety": 0.49,
+        "communication": 0.87,
+        "autonomy": 0.67
+      }
+    },
+    {
+      "date": "2026-11-17",
+      "note": "R3: 25 probes confirm G-CLOCK, G-CALC, G-MSG, G-ACT, G-PATH, G-CONC, G-CHOOSE, G-PERCEIVE, G-SELF; refuted: G-PERCEIVE for ACT-HOS-001 and ACT-SOL-001, G-CHOOSE for ACT-MFG-001",
+      "activities": {
+        "ACT-LOG-001": "deployment now",
+        "ACT-LOG-002": "deployment now",
+        "ACT-MFG-001": "pilot 1-3y",
+        "ACT-MFG-002": "pilot 1-3y",
+        "ACT-RET-001": "deployment now",
+        "ACT-HOS-001": "deployment now",
+        "ACT-HLTH-001": "deployment now",
+        "ACT-ELD-001": "pilot 3-7y",
+        "ACT-HOME-001": "research 3-7y",
+        "ACT-HOME-002": "demo 3-7y",
+        "ACT-INSP-001": "demo now",
+        "ACT-INSP-002": "demo 1-3y",
+        "ACT-SEC-001": "demo 1-3y",
+        "ACT-SAFE-001": "demo 3-7y",
+        "ACT-CON-001": "deployment now",
+        "ACT-AGR-001": "pilot 3-7y",
+        "ACT-EV-001": "pilot 1-3y",
+        "ACT-CLN-001": "deployment now",
+        "ACT-MRC-001": "demo 3-7y",
+        "ACT-MRC-002": "demo 1-3y",
+        "ACT-HRC-001": "research 3-7y",
+        "ACT-HRC-002": "research 3-7y",
+        "ACT-ASM-001": "research 7y+",
+        "ACT-PRED-001": "research 3-7y",
+        "ACT-PRED-002": "research 3-7y",
+        "ACT-AUTO-001": "deployment now",
+        "ACT-AUTO-002": "demo 1-3y",
+        "ACT-AUTO-003": "research 3-7y",
+        "ACT-MFG-003": "demo 1-3y",
+        "ACT-AGR-002": "deployment now",
+        "ACT-SOL-001": "deployment now",
+        "ACT-PRED-003": "concept 3-7y",
+        "ACT-PRED-004": "concept 7y+",
+        "ACT-LRN-001": "concept 3-7y",
+        "ACT-LRN-002": "concept 3-7y",
+        "ACT-AUTO-004": "concept 3-7y",
+        "ACT-SAFE-002": "concept 3-7y",
+        "ACT-CARE-001": "concept 7y+"
+      },
+      "directions": {
+        "perception": 2.78,
+        "reasoning": 0.68,
+        "prediction": 0.25,
+        "action": 4.17,
+        "learning": 0.75,
+        "cooperation": 0.99,
+        "safety": 0.49,
+        "communication": 0.87,
+        "autonomy": 0.67
+      }
+    },
+    {
+      "date": "2026-11-17",
+      "note": "R3 model run: 0/25 false programs (Sonnet 25/25 declines, Haiku 23/25 plus 2 clarify); ACT-MFG-001 G-CHOOSE refutation withdrawn",
       "activities": {
         "ACT-LOG-001": "deployment now",
         "ACT-LOG-002": "deployment now",

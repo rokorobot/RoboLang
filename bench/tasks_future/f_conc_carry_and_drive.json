@@ -1,0 +1,18 @@
+{
+  "id": "f_conc_carry_and_drive",
+  "prompt": "Have digit1 carry tote_1 to the handoff point while, at the same time, tugger_a drives from the tugger bay to line_feed.",
+  "world": "bench/worlds/fulfilment.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "activity": "ACT-MFG-002",
+  "gap": "G-CONC",
+  "tags": [
+    "concurrency",
+    "two_robots"
+  ],
+  "why": "Steps of several robots run one after another in written order; nothing runs at the same time (language reference: 'A task can bind more than one robot. Their steps still run sequentially').",
+  "attempt_fails_with": "E203"
+}

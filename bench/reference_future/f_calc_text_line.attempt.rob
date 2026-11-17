@@ -1,0 +1,11 @@
+// bench/reference_future/f_calc_text_line.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 1.6;
+
+task weigh_line(robot r, object c, sensor scale, location src) {
+    goal { robot_at r src; }
+    plan {
+        move r to src;
+        measure r mass of c using scale as m;
+        communicate r to "dock" with "case_2 weighs " + m + " kg";
+    }
+}

@@ -1,0 +1,19 @@
+{
+  "id": "f_act_set_fryer",
+  "prompt": "Set the fryer to 175 degrees Celsius, and once the oil reads 175 degrees, move basket_2 from the prep table to the fryer.",
+  "world": "bench/worlds/fry_station.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "activity": "ACT-HOS-001",
+  "gap": "G-ACT",
+  "tags": [
+    "device",
+    "set_value",
+    "wait_until"
+  ],
+  "why": "No command writes a value to a device: a plan has only move, grasp, place, inspect, measure, wait and communicate (language reference: 'setting a value (no command writes one)').",
+  "attempt_fails_with": "E203"
+}

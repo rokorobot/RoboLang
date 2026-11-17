@@ -1,0 +1,14 @@
+// bench/reference_future/f_conc_carry_and_drive.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 1.6;
+
+task carry_and_drive(robot r, robot tug, object tote, location src, location hold, location feed) {
+    goal { holding r tote; robot_at r hold; robot_at tug feed; }
+    plan {
+        move r to src;
+        grasp r tote;
+        parallel {
+            move r to hold;
+            move tug to feed;
+        }
+    }
+}

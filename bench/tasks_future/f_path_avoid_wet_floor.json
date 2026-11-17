@@ -1,0 +1,18 @@
+{
+  "id": "f_path_avoid_wet_floor",
+  "prompt": "Send cleaner1 from dock_2 to the lobby, and it must not drive through the wet-floor zone.",
+  "world": "bench/worlds/site.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "activity": "ACT-CLN-001",
+  "gap": "G-PATH",
+  "tags": [
+    "route",
+    "region"
+  ],
+  "why": "A `move` goes to a location; no construct limits the route. `in_region` and `no_go_region` are reserved and not implemented (language reference: reserved words).",
+  "attempt_fails_with": "E201"
+}

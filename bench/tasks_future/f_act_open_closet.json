@@ -1,0 +1,19 @@
+{
+  "id": "f_act_open_closet",
+  "prompt": "With moxi1, open the supply closet, take iv_kit_1 to ward_3 and tell channel \"charge_nurse\" it is there.",
+  "world": "bench/worlds/ward.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "activity": "ACT-HLTH-001",
+  "gap": "G-ACT",
+  "tags": [
+    "open",
+    "device",
+    "pick_place"
+  ],
+  "why": "Opening a door is an action the plan has no statement for: the six statements are move, grasp, place, inspect, wait and communicate, plus measure (language reference: 'Plan statements').",
+  "attempt_fails_with": "E203"
+}

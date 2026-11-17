@@ -1,0 +1,14 @@
+// bench/reference_future/c_whichever_tugger_ready.rob: hand-written reference
+robolang 1.6;
+
+task send_ready(robot ta, robot tb, location spot) {
+    plan {
+        if robot_ready ta {
+            goal { robot_at ta spot; }
+            move ta to spot;
+        } else {
+            goal { robot_at tb spot; }
+            move tb to spot;
+        }
+    }
+}

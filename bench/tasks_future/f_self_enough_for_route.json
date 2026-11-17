@@ -1,0 +1,19 @@
+{
+  "id": "f_self_enough_for_route",
+  "prompt": "Before the night round, check that spot1 has at least 60 percent charge; if it has not, move it to dock_1 and stop there.",
+  "world": "bench/worlds/site.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "activity": "ACT-AUTO-001",
+  "gap": "G-SELF",
+  "tags": [
+    "self",
+    "battery",
+    "if"
+  ],
+  "why": "No condition reads the robot's charge, and a percentage is not a unit (language reference: 'Conditions', 'Measured values').",
+  "attempt_fails_with": "E206"
+}

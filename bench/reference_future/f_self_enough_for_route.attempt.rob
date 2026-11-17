@@ -1,0 +1,14 @@
+// bench/reference_future/f_self_enough_for_route.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 1.6;
+
+task night_round(robot r, location dock, location start) {
+    plan {
+        if charge >= 60 percent {
+            goal { robot_at r start; }
+            move r to start;
+        } else {
+            goal { robot_at r dock; }
+            move r to dock;
+        }
+    }
+}

@@ -1,0 +1,20 @@
+// bench/reference_future/f_choose_nearer_cart.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 1.6;
+
+task to_closer(robot r, object tote, sensor lidar, location src, location a, location b) {
+    plan {
+        move r to src;
+        grasp r tote;
+        measure r distance of a using lidar as da;
+        measure r distance of b using lidar as db;
+        if da <= db {
+            goal { object_at tote a; }
+            move r to a;
+            place r tote at a;
+        } else {
+            goal { object_at tote b; }
+            move r to b;
+            place r tote at b;
+        }
+    }
+}

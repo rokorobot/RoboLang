@@ -1,0 +1,10 @@
+{
+  "task": "move_two",
+  "bindings": {
+    "r": "digit1",
+    "a": "tote_1",
+    "b": "tote_2",
+    "src": "inbound_conveyor",
+    "dst": "cart_3"
+  }
+}

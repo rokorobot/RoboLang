@@ -1,0 +1,31 @@
+// bench/reference_future/c_parts_left_in_container.rob: hand-written reference
+robolang 1.6;
+
+task sort_parts(robot r, object p1, object p2, object p3, location bin, location trolley) {
+    goal { robot_at r trolley; }
+    plan {
+        if object_at p1 bin {
+            goal { object_at p1 trolley; }
+            move r to bin;
+            grasp r p1;
+            move r to trolley;
+            place r p1 at trolley;
+        }
+        if object_at p2 bin {
+            goal { object_at p2 trolley; }
+            move r to bin;
+            grasp r p2;
+            move r to trolley;
+            place r p2 at trolley;
+        }
+        if object_at p3 bin {
+            goal { object_at p3 trolley; }
+            move r to bin;
+            grasp r p3;
+            move r to trolley;
+            place r p3 at trolley;
+        }
+        move r to trolley;
+        communicate r to "tugger" with "the trolley is ready";
+    }
+}

@@ -1,0 +1,10 @@
+{
+  "task": "check_basket",
+  "bindings": {
+    "r": "flippy1",
+    "basket": "basket_1",
+    "cam": "cam_flippy1",
+    "hot": "hot_tray",
+    "bin": "discard_bin"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "id": "f_self_report_charge",
+  "prompt": "With spot1, go to stop_b and tell channel \"lead\" how much charge you have left.",
+  "world": "bench/worlds/site.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "activity": "ACT-AUTO-001",
+  "gap": "G-SELF",
+  "tags": [
+    "self",
+    "battery",
+    "communicate"
+  ],
+  "why": "A message carries a fixed string or a measured reading; the robot's own charge is neither (language reference: 'Sending a value').",
+  "attempt_fails_with": "E317"
+}

@@ -1,0 +1,114 @@
+{
+  "id": "c_parts_left_in_container",
+  "prompt": "With digit1, move whichever of part_1, part_2 and part_3 are still in container_2 into the trolley, then tell channel \"tugger\" that the trolley is ready.",
+  "world": "bench/worlds/fulfilment.json",
+  "group": "control",
+  "expect": {
+    "decision": "program",
+    "category": "none"
+  },
+  "activity": "ACT-MFG-001",
+  "expected_goal": [
+    [
+      "rl:thing:part_1",
+      "located_in",
+      "rl:place:trolley"
+    ],
+    [
+      "rl:thing:part_2",
+      "located_in",
+      "rl:place:trolley"
+    ],
+    [
+      "rl:thing:part_3",
+      "located_in",
+      "rl:place:trolley"
+    ],
+    [
+      "rl:robot:digit1",
+      "located_in",
+      "rl:place:trolley"
+    ]
+  ],
+  "expect_1_6": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "all three parts are in the container",
+        "goal": [
+          [
+            "rl:thing:part_1",
+            "located_in",
+            "rl:place:trolley"
+          ],
+          [
+            "rl:thing:part_2",
+            "located_in",
+            "rl:place:trolley"
+          ],
+          [
+            "rl:thing:part_3",
+            "located_in",
+            "rl:place:trolley"
+          ],
+          [
+            "rl:robot:digit1",
+            "located_in",
+            "rl:place:trolley"
+          ]
+        ],
+        "messages": [
+          [
+            "tugger",
+            null
+          ]
+        ],
+        "world_patch": {
+          "events": []
+        }
+      },
+      {
+        "when": "part_2 is already gone",
+        "goal": [
+          [
+            "rl:thing:part_1",
+            "located_in",
+            "rl:place:trolley"
+          ],
+          [
+            "rl:thing:part_3",
+            "located_in",
+            "rl:place:trolley"
+          ],
+          [
+            "rl:robot:digit1",
+            "located_in",
+            "rl:place:trolley"
+          ]
+        ],
+        "messages": [
+          [
+            "tugger",
+            null
+          ]
+        ],
+        "world_patch": {
+          "events": [],
+          "objects": {
+            "part_2": {
+              "present": false,
+              "location": null
+            }
+          }
+        }
+      }
+    ]
+  },
+  "tags": [
+    "if",
+    "object_at",
+    "choose_among_named",
+    "communicate",
+    "pick_place"
+  ]
+}

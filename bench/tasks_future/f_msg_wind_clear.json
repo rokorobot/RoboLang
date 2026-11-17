@@ -1,0 +1,19 @@
+{
+  "id": "f_msg_wind_clear",
+  "prompt": "With installer1, take module_14 from the pallet and hold it until the site controller sends \"WIND CLEAR\" on channel \"site\", then place it on row_14.",
+  "world": "bench/worlds/site.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "activity": "ACT-SOL-001",
+  "gap": "G-MSG",
+  "tags": [
+    "message_wait",
+    "wait",
+    "pick_place"
+  ],
+  "why": "The program can send messages but cannot wait for one; no condition tests a received message (language reference: 'message waits').",
+  "attempt_fails_with": "E204"
+}

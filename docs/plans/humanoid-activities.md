@@ -25,7 +25,7 @@ headed, and what a near design must not rule out. It never gives syntax by itsel
 | # | Direction | Priority | Language need | Future need | Sub-activities | Near gaps |
 |---|---|---|---|---|---|---|
 | 1 | action | 4.17 | 4.30 | 1.01 | 20 | G-ACT |
-| 2 | perception | 2.78 | 10.76 | 0.45 | 11 | G-PERCEIVE, G-CHOOSE |
+| 2 | perception | 2.78 | 9.81 | 0.45 | 11 | G-CHOOSE, G-PERCEIVE |
 | 3 | cooperation | 0.99 | 1.00 | 1.61 | 12 | G-CONC |
 | 4 | communication | 0.87 | 3.86 | 0.32 | 5 | G-MSG |
 | 5 | learning | 0.75 | 0.65 | 0.70 | 6 | — |
@@ -44,11 +44,11 @@ first (strategy D5). An `out` gap enters only through its own decision record (L
 | # | Gap | Direction | Scope | Priority | Unlocked | Why here |
 |---|---|---|---|---|---|---|
 | 1 | `G-PATH` | safety | open | 2.86 | 0.00 | current horizon (D5) |
-| 2 | `G-ACT` | action | open | 4.30 | 0.00 | unlocks the most |
-| 3 | `G-PERCEIVE` | perception | open | 5.54 | 0.45 | unlocks the most |
-| 4 | `G-LOOP` | reasoning | out | 8.21 | 0.90 | unlocks the most |
-| 5 | `G-CLOCK` | reasoning | open | 4.73 | 2.25 | unlocks the most |
-| 6 | `G-MSG` | communication | open | 3.86 | 3.74 | unlocks the most |
+| 2 | `G-ACT` | action | open | 4.30 | 0.45 | unlocks the most |
+| 3 | `G-CLOCK` | reasoning | open | 4.73 | 0.45 | unlocks the most |
+| 4 | `G-LOOP` | reasoning | out | 8.21 | 1.00 | unlocks the most |
+| 5 | `G-MSG` | communication | open | 3.86 | 2.37 | unlocks the most |
+| 6 | `G-PERCEIVE` | perception | open | 4.59 | 3.74 | unlocks the most |
 | 7 | `G-CHOOSE` | perception | open | 5.23 | 5.95 | unlocks the most |
 | 8 | `G-SELF` | autonomy | open | 1.33 | 7.29 | unlocks the most |
 | 9 | `G-CALC` | reasoning | open | 1.55 | 8.46 | unlocks the most |
@@ -88,6 +88,8 @@ before.
 
 | Date | Note | Added | Removed | Changed | Ranking |
 |---|---|---|---|---|---|
+| 2026-11-17 | R3 model run: 0/25 false programs (Sonnet 25/25 declines, Haiku 23/25 plus 2 clarify); ACT-MFG-001 G-CHOOSE refutation withdrawn | — | — | — | 1. action 4.17 · 2. perception 2.78 · 3. cooperation 0.99 · 4. communication 0.87 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
+| 2026-11-17 | R3: 25 probes confirm G-CLOCK, G-CALC, G-MSG, G-ACT, G-PATH, G-CONC, G-CHOOSE, G-PERCEIVE, G-SELF; refuted: G-PERCEIVE for ACT-HOS-001 and ACT-SOL-001, G-CHOOSE for ACT-MFG-001 | — | — | — | 1. action 4.17 · 2. perception 2.78 · 3. cooperation 0.99 · 4. communication 0.87 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
 | 2026-11-17 | Orchestrator spot-check of A2: ACT-MFG-003 pilot announced, not running; ACT-SOL-001 basis corrected | — | — | ACT-MFG-003: pilot 1-3y → demo 1-3y | 1. action 4.17 · 2. perception 2.78 · 3. cooperation 0.99 · 4. communication 0.87 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
 | 2026-11-17 | Horizon scan 1 (A2): 35 leading signals (18 on 11 far activities, 17 on the new ones), 7 concept activities, 3 R2 holes filled (machine tending, weeding, solar); no changes to existing activities, no new gaps | ACT-AGR-002, ACT-AUTO-004, ACT-CARE-001, ACT-LRN-001, ACT-LRN-002, ACT-MFG-003, ACT-PRED-003, ACT-PRED-004, ACT-SAFE-002, ACT-SOL-001 | — | — | 1. action 4.17 · 2. perception 2.78 · 3. cooperation 0.99 (+1) · 4. communication 0.87 (-1) · 5. learning 0.75 · 6. reasoning 0.68 (+1) · 7. autonomy 0.67 (-1) · 8. safety 0.49 · 9. prediction 0.25 |
 | 2026-11-17 | Ninth direction autonomy (owner): 3 sub-activities, new gap G-SELF | ACT-AUTO-001, ACT-AUTO-002, ACT-AUTO-003 | — | — | 1. action 3.43 · 2. perception 2.33 · 3. communication 0.87 · 4. cooperation 0.86 · 5. learning 0.62 · 6. autonomy 0.61 (+3) · 7. reasoning 0.45 (-1) · 8. safety 0.43 (-1) · 9. prediction 0.17 (-1) |
@@ -101,12 +103,12 @@ before.
 | `ACT-LOG-001` Humanoid tote handling in fulfilment centres | deployment | now | 0.60 | 0.60 | G-LOOP, G-CLOCK, G-CALC, G-CHOOSE | [1](https://www.dcvelocity.com/material-handling/robotics/gxo-to-expand-use-of-humanoid-robots-from-agility) |
 | `ACT-CLN-001` Scheduled autonomous floor cleaning | deployment | now | 0.55 | 0.55 | G-CLOCK, G-LOOP, G-ACT, G-PATH | [1](https://www.roboticstomorrow.com/news/2026/04/07/brain-corp-launches-brainos-clean-20-with-selfpath-ai-advancing-adaptive-autonomy-for-tennant-company-floor-cleaning-robots/26371/) |
 | `ACT-HLTH-001` Hospital delivery and supply runs for nurses and pharmacy | deployment | now | 0.55 | 0.55 | G-ACT, G-MSG, G-LOOP, G-CLOCK | [1](https://www.therobotreport.com/five-years-operation-shape-diligent-robotics-rollout-moxi-2-0/) |
-| `ACT-SOL-001` Robotic solar module installation | deployment | now | 0.50 | 0.50 | G-LOOP, G-PERCEIVE, G-PATH, G-MSG | [1](https://www.eweek.com/news/robots-install-100mw-solar-power-maximo/) |
+| `ACT-SOL-001` Robotic solar module installation | deployment | now | 0.50 | 0.50 | G-LOOP, G-PATH, G-MSG | [1](https://www.eweek.com/news/robots-install-100mw-solar-power-maximo/) |
 | `ACT-MFG-002` Humanoid-to-tugger handoff of totes in a car plant | pilot | 1-3y | 0.65 | 0.45 | G-MSG, G-CONC, G-CHOOSE | [1](https://agilityrobotics.com/content/agility-robotics-announces-commercial-agreement-with-toyota-motor-manufacturing-canada) [2](https://www.therobotreport.com/bmw-group-deploys-figure-03-humanoid-after-tests-previous-version/) |
 | `ACT-CON-001` Construction-site layout printing | deployment | now | 0.45 | 0.45 | G-PATH, G-LOOP, G-PERCEIVE, G-ACT | [1](https://www.dustyrobotics.com/discover/construction-robot) |
-| `ACT-HOS-001` Fry-station cooking in restaurant kitchens | deployment | now | 0.45 | 0.45 | G-ACT, G-PERCEIVE | [1](https://www.fastcasual.com/news/miso-robotics-flippy-fry-station-robot-surpasses-5m-baskets) |
+| `ACT-HOS-001` Fry-station cooking in restaurant kitchens | deployment | now | 0.45 | 0.45 | G-ACT | [1](https://www.fastcasual.com/news/miso-robotics-flippy-fry-station-robot-surpasses-5m-baskets) |
 | `ACT-LOG-002` Autonomous trailer and container unloading | deployment | now | 0.45 | 0.45 | G-LOOP, G-PERCEIVE, G-CALC | [1](https://www.therobotreport.com/boston-dynamics-built-stretch-gen-2-for-reliable-consistent-performance/) |
-| `ACT-MFG-001` Parts sequencing for the assembly line | pilot | 1-3y | 0.60 | 0.42 | G-LOOP, G-CHOOSE, G-MSG, G-CLOCK | [1](https://www.therobotreport.com/bmw-group-deploys-figure-03-humanoid-after-tests-previous-version/) |
+| `ACT-MFG-001` Parts sequencing for the assembly line | pilot | 1-3y | 0.60 | 0.42 | G-LOOP, G-MSG, G-CLOCK, G-CHOOSE | [1](https://www.therobotreport.com/bmw-group-deploys-figure-03-humanoid-after-tests-previous-version/) |
 | `ACT-AGR-002` Autonomous laser weeding between crop rows | deployment | now | 0.40 | 0.40 | G-PERCEIVE, G-LOOP, G-PATH, G-CHOOSE | [1](https://agfundernews.com/🎥-carbon-robotics-100m-revenue-new-machine-and-a-path-to-ipo) |
 | `ACT-AUTO-002` Battery swapping for whole-shift humanoid work | demo | 1-3y | 0.55 | 0.39 | G-SELF, G-LOOP, G-ACT | [1](https://newatlas.com/ai-humanoids/walker-s2-humanoid-robot-swaps-batteries) |
 | `ACT-EV-001` Robotic EV charging in garages and depots | pilot | 1-3y | 0.55 | 0.39 | G-ACT, G-MSG, G-CHOOSE, G-LOOP | [1](https://electrek.co/2026/02/23/china-overhead-rail-ev-charging-robots-parking-garages/) |
@@ -120,7 +122,7 @@ before.
 
 | Language gap | Scope | Priority | Near | Benchmark tasks |
 |---|---|---|---|---|
-| `G-ACT` Actions beyond move, grasp, place, inspect, wait, communicate, measure: open, charge, set a device | open | 4.30 | yes | 3 |
+| `G-ACT` Actions beyond move, grasp, place, inspect, wait, communicate, measure: open, charge, set a device | open | 4.30 | yes | 6 |
 
 ## Perception
 
@@ -128,9 +130,9 @@ before.
 |---|---|---|---|---|---|---|
 | `ACT-INSP-001` Autonomous gauge and thermal inspection rounds | demo | now | 0.80 | 0.80 | G-PERCEIVE, G-LOOP, G-CLOCK | [1](https://www.therobotreport.com/boston-dynamics-releases-spot-and-orbit-5-1-with-new-spot-cam/) |
 | `ACT-RET-001` Store shelf scanning and out-of-stock reporting | deployment | now | 0.55 | 0.55 | G-CLOCK, G-LOOP, G-PERCEIVE, G-CHOOSE | [1](https://theshelbyreport.com/2026/09/21/simbe-surpasses-3000-units-in-shelf-intelligence-fleet/) |
-| `ACT-SOL-001` Robotic solar module installation | deployment | now | 0.50 | 0.50 | G-LOOP, G-PERCEIVE, G-PATH, G-MSG | [1](https://www.eweek.com/news/robots-install-100mw-solar-power-maximo/) |
+| `ACT-SOL-001` Robotic solar module installation | deployment | now | 0.50 | 0.50 | G-LOOP, G-PATH, G-MSG | [1](https://www.eweek.com/news/robots-install-100mw-solar-power-maximo/) |
 | `ACT-CON-001` Construction-site layout printing | deployment | now | 0.45 | 0.45 | G-PATH, G-LOOP, G-PERCEIVE, G-ACT | [1](https://www.dustyrobotics.com/discover/construction-robot) |
-| `ACT-HOS-001` Fry-station cooking in restaurant kitchens | deployment | now | 0.45 | 0.45 | G-ACT, G-PERCEIVE | [1](https://www.fastcasual.com/news/miso-robotics-flippy-fry-station-robot-surpasses-5m-baskets) |
+| `ACT-HOS-001` Fry-station cooking in restaurant kitchens | deployment | now | 0.45 | 0.45 | G-ACT | [1](https://www.fastcasual.com/news/miso-robotics-flippy-fry-station-robot-surpasses-5m-baskets) |
 | `ACT-LOG-002` Autonomous trailer and container unloading | deployment | now | 0.45 | 0.45 | G-LOOP, G-PERCEIVE, G-CALC | [1](https://www.therobotreport.com/boston-dynamics-built-stretch-gen-2-for-reliable-consistent-performance/) |
 | `ACT-SEC-001` Security patrol that reacts to people | demo | 1-3y | 0.60 | 0.42 | G-LOOP, G-CLOCK, G-PERCEIVE, G-PROX, G-PATH | [1](https://www.therobotreport.com/boston-dynamics-releases-spot-and-orbit-5-1-with-new-spot-cam/) |
 | `ACT-AGR-002` Autonomous laser weeding between crop rows | deployment | now | 0.40 | 0.40 | G-PERCEIVE, G-LOOP, G-PATH, G-CHOOSE | [1](https://agfundernews.com/🎥-carbon-robotics-100m-revenue-new-machine-and-a-path-to-ipo) |
@@ -140,8 +142,8 @@ before.
 
 | Language gap | Scope | Priority | Near | Benchmark tasks |
 |---|---|---|---|---|
-| `G-PERCEIVE` Conditions on perceived properties (dirty, damaged) | open | 5.54 | yes | 2 |
-| `G-CHOOSE` Choosing objects or robots at run time | open | 5.23 | yes | 2 |
+| `G-CHOOSE` Choosing objects or robots at run time | open | 5.23 | yes | 5 |
+| `G-PERCEIVE` Conditions on perceived properties (dirty, damaged) | open | 4.59 | yes | 4 |
 
 ## Cooperation
 
@@ -162,7 +164,7 @@ before.
 
 | Language gap | Scope | Priority | Near | Benchmark tasks |
 |---|---|---|---|---|
-| `G-CONC` Several robots acting at the same time | open | 1.00 | yes | 2 |
+| `G-CONC` Several robots acting at the same time | open | 1.00 | yes | 4 |
 
 ## Communication
 
@@ -176,7 +178,7 @@ before.
 
 | Language gap | Scope | Priority | Near | Benchmark tasks |
 |---|---|---|---|---|
-| `G-MSG` Waiting for an incoming message, or confirming delivery | open | 3.86 | yes | 5 |
+| `G-MSG` Waiting for an incoming message, or confirming delivery | open | 3.86 | yes | 8 |
 
 ## Learning
 
@@ -197,7 +199,7 @@ before.
 
 | Sub-activity | Maturity | Horizon | p | Priority | Needs | Sources |
 |---|---|---|---|---|---|---|
-| `ACT-MFG-001` Parts sequencing for the assembly line | pilot | 1-3y | 0.60 | 0.42 | G-LOOP, G-CHOOSE, G-MSG, G-CLOCK | [1](https://www.therobotreport.com/bmw-group-deploys-figure-03-humanoid-after-tests-previous-version/) |
+| `ACT-MFG-001` Parts sequencing for the assembly line | pilot | 1-3y | 0.60 | 0.42 | G-LOOP, G-MSG, G-CLOCK, G-CHOOSE | [1](https://www.therobotreport.com/bmw-group-deploys-figure-03-humanoid-after-tests-previous-version/) |
 | `ACT-MFG-003` Humanoid machine tending at a machine builder's customer site | demo | 1-3y | 0.45 | 0.32 | G-LOOP, G-ACT, G-MSG, G-CLOCK | [1](https://roboticsandautomationnews.com/2026/05/15/hexagon-and-fill-maschinenbau-partner-to-advance-manufacturing-autonomy-using-humanoids/101578/) |
 | `ACT-HOME-002` General household chores by a home humanoid | demo | 3-7y | 0.40 | 0.16 | G-CLOCK, G-ACT, G-LOOP, G-CHOOSE, G-PATH, G-PERCEIVE | [1](https://heise.de/-11287205) |
 | `ACT-HRC-002` Following ambiguous and corrective instructions during shared work | research | 3-7y | 0.40 | 0.16 | G-MSG, G-CHOOSE, G-PERCEIVE | [1](https://arxiv.org/abs/2602.14551) |
@@ -208,8 +210,8 @@ before.
 | Language gap | Scope | Priority | Near | Benchmark tasks |
 |---|---|---|---|---|
 | `G-LOOP` Repetition without a fixed bound: loops, retry until it works, schedules, event streams | out | 8.21 | yes | 12 |
-| `G-CLOCK` Clock readings and times of day | open | 4.73 | yes | 5 |
-| `G-CALC` Arithmetic, counting and text built from values | open | 1.55 | yes | 4 |
+| `G-CLOCK` Clock readings and times of day | open | 4.73 | yes | 8 |
+| `G-CALC` Arithmetic, counting and text built from values | open | 1.55 | yes | 7 |
 | `G-FALLBACK` A different end state counts as done | out | 0.00 | — | 1 |
 
 ## Autonomy
@@ -223,7 +225,7 @@ before.
 
 | Language gap | Scope | Priority | Near | Benchmark tasks |
 |---|---|---|---|---|
-| `G-SELF` The robot's own state as readings and conditions: battery level, health, faults; acting on them and asking for service | open | 1.33 | yes | 0 |
+| `G-SELF` The robot's own state as readings and conditions: battery level, health, faults; acting on them and asking for service | open | 1.33 | yes | 3 |
 
 ## Safety
 
@@ -237,7 +239,7 @@ before.
 
 | Language gap | Scope | Priority | Near | Benchmark tasks |
 |---|---|---|---|---|
-| `G-PATH` Staying inside or outside a region while moving | open | 2.86 | yes | 2 |
+| `G-PATH` Staying inside or outside a region while moving | open | 2.86 | yes | 5 |
 | `G-PROX` Limits and reactions that depend on people nearby: slow, stop or yield when a person is within a distance | open | 0.97 | — | 0 |
 | `G-FORCE` Force limits and gentle handling | open | 0.63 | — | 1 |
 

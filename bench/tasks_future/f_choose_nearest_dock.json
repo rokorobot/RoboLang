@@ -1,0 +1,19 @@
+{
+  "id": "f_choose_nearest_dock",
+  "prompt": "Move spot1 to whichever of dock_1, dock_2 and dock_3 is nearest to where it is now.",
+  "world": "bench/worlds/site.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "activity": "ACT-AUTO-001",
+  "gap": "G-CHOOSE",
+  "tags": [
+    "choose",
+    "distance",
+    "locations"
+  ],
+  "why": "Choosing by distance needs a reading of each candidate: `measure` takes an object, never a location, so the distance to a dock cannot be read (language reference: 'Measured values').",
+  "attempt_fails_with": "E304"
+}

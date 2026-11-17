@@ -1,0 +1,58 @@
+{
+  "id": "c_camera_fault_stop",
+  "prompt": "With spot1, first check that your camera works. If it does not, tell channel \"maint\" and stop. If it does, move to stop_b and inspect table_14 with the camera.",
+  "world": "bench/worlds/site.json",
+  "group": "control",
+  "expect": {
+    "decision": "program",
+    "category": "none"
+  },
+  "activity": "ACT-AUTO-001",
+  "expected_goal": [
+    [
+      "rl:robot:spot1",
+      "located_in",
+      "rl:place:stop_b"
+    ]
+  ],
+  "expect_1_6": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "the camera works",
+        "goal": [
+          [
+            "rl:robot:spot1",
+            "located_in",
+            "rl:place:stop_b"
+          ]
+        ],
+        "world_patch": {}
+      },
+      {
+        "when": "the camera is not available: reported, the run stops",
+        "fail": "camera",
+        "messages": [
+          [
+            "maint",
+            null
+          ]
+        ],
+        "world_patch": {
+          "sensors": {
+            "cam_spot": {
+              "available": false
+            }
+          }
+        }
+      }
+    ]
+  },
+  "tags": [
+    "sensor_ok",
+    "own_health",
+    "if",
+    "communicate",
+    "inspect"
+  ]
+}

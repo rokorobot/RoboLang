@@ -1,0 +1,19 @@
+{
+  "id": "f_calc_total_weight",
+  "prompt": "Weigh tote_1 and tote_2 with digit1's scale and tell channel \"lead\" their total weight.",
+  "world": "bench/worlds/fulfilment.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "activity": "ACT-LOG-001",
+  "gap": "G-CALC",
+  "tags": [
+    "arithmetic",
+    "measure",
+    "communicate"
+  ],
+  "why": "RoboLang 1.6 can read both weights but has no arithmetic: a sum of two readings cannot be computed or sent (language reference: 'Not in the language: arithmetic').",
+  "attempt_fails_with": "E101"
+}

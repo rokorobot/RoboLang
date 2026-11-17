@@ -1,0 +1,12 @@
+// bench/reference_future/f_perceive_weed_confidence.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 1.6;
+
+task check_weed(robot r, object plant, sensor cam, location row, location home) {
+    goal { robot_at r home; }
+    plan {
+        measure r confidence of plant using cam as c;
+        if c < 90 percent {
+            communicate r to "ops" with "row 12: not sure it is a weed";
+        }
+    }
+}
