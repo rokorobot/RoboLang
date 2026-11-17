@@ -1,7 +1,22 @@
 # Changelog
 
-The distribution version (this file) is independent of the language versions (1.1 to 1.8) and the Task IR schema
-versions (1.0 to 1.7). Decision records are in [`spec/decisions/`](https://github.com/rokorobot/RoboLang/tree/main/spec/decisions).
+The distribution version (this file) is independent of the language versions (1.1 to 1.9) and the Task IR schema
+versions (1.0 to 1.8). Decision records are in [`spec/decisions/`](https://github.com/rokorobot/RoboLang/tree/main/spec/decisions).
+
+## Unreleased
+
+- **RoboLang 1.9: clock readings** (decision 0042, step L4 of iteration I3; language, IR, world file and run record
+  only in the first commit: the reference and prompts are taught in the second). `measure r time as t;` reads the time
+  of day and `measure r elapsed as d;` the time since the task started; a time literal is `HH:MM` or `HH:MM:SS`
+  (24-hour; `24:00` is not a time); a comparison takes `<`, `<=`, `>`, `>=` and the kinds never mix; `clock_time` and
+  `clock_elapsed` read the live clock in `wait until` only (`E322` elsewhere). One day only: a time literal is on the day
+  the task starts. Two new reserved words, no new statement. `robolang 1.9;` builds Task IR 1.8 (`read_clock`, `time`
+  and `clock`) and run record 1.8; world file 1.5 adds `clock: {start, zone}` (worlds 1.4 and older have none). A `time`
+  reading with no world clock fails the step (`S237`), so does one after the end of the start day (`S238`); a
+  `wait until clock_time >= T` whose T has already passed fails before `AUTHORIZED` (`S010`, also in `validate --world`);
+  a wait ends at the exact instant. New codes `E105` (a malformed time of day), `E518` (world file), `S010`, `S237`,
+  `S238`, `S510` (the ROS 2 backend refuses a clock reading) and `I126` (the IR reader). Safety case hazard H21 ("a
+  wrong clock makes a time condition decide wrongly"). Files of 1.1 to 1.8 are unchanged.
 
 ## 0.5.0 (2026-11-17)
 

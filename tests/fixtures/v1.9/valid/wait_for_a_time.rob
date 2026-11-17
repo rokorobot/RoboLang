@@ -1,0 +1,14 @@
+// RoboLang v1.9 fixture: valid
+// expect: ok
+// why: a bounded wait for a time of day with the live clock (T5, T6)
+
+robolang 1.9;
+
+task at_0530(robot r, location a, location b) {
+    goal { robot_at r b; }
+    plan {
+        wait until clock_time >= 05:30 timeout 90 min else { fail "05:30 did not come in time"; }
+        move r to a;
+        move r to b;
+    }
+}

@@ -143,6 +143,10 @@
     "I125",
     "/tasks/0/steps/0/reading"
   ],
+  "I126_not_a_time_of_day.json": [
+    "I126",
+    "/tasks/0/steps/1/condition/right/value"
+  ],
   "I218_binding_before_its_measure.json": [
     "I218",
     "/tasks/0/steps/0/condition/left"

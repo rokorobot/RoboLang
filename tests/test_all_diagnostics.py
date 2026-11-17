@@ -231,3 +231,19 @@ def test_declared_action_errors_are_all_reported_with_the_others():
         "  }\n}\n"
     )
     assert errors(source) == [("E307", 3), ("E303", 5), ("E304", 6), ("E303", 7)]
+
+
+def test_clock_reading_errors_are_all_reported_with_the_others():
+    """RoboLang 1.9 (decision 0042): E318, E319, E322 and E320 in one task, each at its own line (E105 is lexical)."""
+    source = (
+        "robolang 1.9;\ntask t(robot r, location b) {\n"
+        "  goal { robot_at r b; }\n"
+        "  plan {\n"
+        "    measure r time as now;\n"
+        "    measure r elapsed as now;\n"  # 6: E318
+        "    if now < 22:00 { move r to b; } else { fail \"late\"; }\n"  # 7: E319 (the second `now` is elapsed)
+        "    if clock_time < 22:00 { move r to b; } else { fail \"late\"; }\n"  # 8: E322
+        "    wait until clock_time == 22:00 timeout 1 min else { fail \"x\"; }\n"  # 9: E320
+        "  }\n}\n"
+    )
+    assert errors(source) == [("E318", 6), ("E319", 7), ("E322", 8), ("E320", 9)]

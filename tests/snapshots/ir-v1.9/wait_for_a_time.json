@@ -1,0 +1,70 @@
+{
+  "ir_schema": "robolang.task-ir",
+  "ir_schema_version": "1.8",
+  "language_version": "1.9",
+  "tasks": [
+    {
+      "name": "at_0530",
+      "parameters": [
+        {
+          "name": "r",
+          "type": "robot"
+        },
+        {
+          "name": "a",
+          "type": "location"
+        },
+        {
+          "name": "b",
+          "type": "location"
+        }
+      ],
+      "safety": [],
+      "preconditions": [],
+      "goal": [
+        {
+          "kind": "robot_at",
+          "robot": "r",
+          "location": "b"
+        }
+      ],
+      "steps": [
+        {
+          "kind": "wait_until",
+          "condition": {
+            "kind": "compare",
+            "left": {
+              "kind": "clock",
+              "reading": "time"
+            },
+            "op": ">=",
+            "right": {
+              "kind": "time",
+              "value": "05:30:00"
+            }
+          },
+          "timeout": {
+            "value": "90",
+            "unit": "min"
+          },
+          "else": [
+            {
+              "kind": "fail",
+              "reason": "05:30 did not come in time"
+            }
+          ]
+        },
+        {
+          "kind": "move",
+          "robot": "r",
+          "target": "a"
+        },
+        {
+          "kind": "move",
+          "robot": "r",
+          "target": "b"
+        }
+      ]
+    }
+  ]
+}

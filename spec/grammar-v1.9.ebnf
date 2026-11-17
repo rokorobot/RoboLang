@@ -1,0 +1,50 @@
+(* RoboLang v1.9 grammar, implemented in src/robolang/parser.py.
+   RoboLang 1.8 plus clock readings (decision 0042). Differences from grammar-v1.8.ebnf are marked [1.9].
+   Everything not shown here is as in grammar-v1.8.ebnf (and grammar-v1.7.ebnf and those below it).
+   Normative text, diagnostics and static rules: spec/robolang-v1.9.md *)
+
+version_decl  = "robolang" , NUMBER , ";" ;                (* [1.9] NUMBER written exactly 1.9 *)
+
+statement     = ... | measure_clock ;                       (* [1.9] *)
+measure_clock = "measure" , NAME , clock_kind , "as" , NAME , end ;
+                                                            (* [1.9] robot, kind, binding; end is ";" or a handler.
+                                                               No "of" and no "using": a clock is not an object *)
+clock_kind    = "time" | "elapsed" ;                        (* [1.9] names recognised after the robot; not reserved *)
+
+time_lit      = HOURS , ":" , MINUTES , [ ":" , SECONDS ] ; (* [1.9] a token: two digits each, no spaces, 24-hour;
+                                                               HOURS 00..23, MINUTES and SECONDS 00..59. 24:00 is not
+                                                               a time. A malformed one is E105 *)
+duration      = NUMBER , ( "ms" | "s" | "min" ) ;           (* [1.9] a comparison also takes these (an elapsed value);
+                                                               there is no unit for hours *)
+
+comparison    = operand , COMPARE_OP , operand ;            (* [1.6] as before; [1.9] the operands below *)
+left          = ... | live_clock ;                          (* [1.9] a binding, a live reading or the live clock *)
+live_clock    = "clock_time" | "clock_elapsed" ;            (* [1.9] only in the condition of a "wait until" (E322) *)
+right         = ... | time_lit | duration ;                 (* [1.9] a time or a duration, per the kind of the left side *)
+
+(* [1.9] "clock_time" and "clock_elapsed" are new reserved words. "time" and "elapsed" are not.
+   A "measure" of a clock kind may end with a failure handler "else { ... }" as any measure does.
+   [1.9] Static rules the grammar does not express (spec/robolang-v1.9.md section 3):
+   - the first NAME is a robot parameter; the binding is a new name (E318);
+   - both sides of a comparison are the same kind: a time with a time literal or a time binding, an elapsed value with
+     a duration or an elapsed binding (E319); the operator is < <= > >= (E320: no == and no !=);
+   - a comparison stands in "if" and "wait until" only (E321); "clock_time" and "clock_elapsed" in "wait until" only
+     (E322).
+   [1.9] Meaning (spec/robolang-v1.9.md section 5, spec/simulation-v1.0.md section 17):
+   - "time" is the world clock's start plus the simulated time, in the world's zone, on the calendar day the task
+     starts; "elapsed" is the simulated time since the task started. A world with no clock fails a "time" reading
+     (S237). A "wait until clock_time >= T" whose T has already passed fails before the run (S010). Readings are exact.
+   - a time binding is sent as HH:MM:SS, an elapsed binding as seconds with the unit ("37 s").
+   [1.9] What the clock cannot say (decision 0042 T4, T11; K4, K7, K11; erratum E5 of docs/evidence/bench-errata-1-8.md
+   states why this belongs in the grammar file):
+   - another day: "tomorrow at 01:00", "at midnight tonight" (midnight is the next day), "on Monday" and every date.
+     There is no date literal, and "01:00" is a time on the day the task starts, so it is already past;
+   - repeating at a time: "every morning at 6", "every hour". A task runs once; repeating is a mission, not a step;
+   - arithmetic: the time between two readings ("how long between the two scans"), a time plus a duration ("two hours
+     after the scan"), a duration from a moment other than the start. "elapsed" is only the time since the task started;
+   - other formats: HH:MM only, 12-hour ("11 pm", write 23:00), minutes or a bare number of seconds in a message;
+   - a time zone in the request: the zone is the world's.
+   A request that needs one of these is declined as inexpressible. A guessed "wait for", a fixed message, or a dropped
+   time condition in place of the time is a false program, never an answer. *)
+
+(* Reserved words in a 1.9 file: those of grammar-v1.8.ebnf, and "clock_time" and "clock_elapsed". *)

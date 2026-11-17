@@ -1,7 +1,7 @@
 """
 Recursive-descent parser for RoboLang v1.1 (spec/grammar.ebnf), v1.2 (spec/grammar-v1.2.ebnf) and
 v1.3 (spec/grammar-v1.3.ebnf), v1.4 (spec/grammar-v1.4.ebnf), v1.5 (grammar-v1.5.ebnf), v1.6 (grammar-v1.6.ebnf),
-v1.7 (grammar-v1.7.ebnf) and v1.8 (grammar-v1.8.ebnf).
+v1.7 (grammar-v1.7.ebnf), v1.8 (grammar-v1.8.ebnf) and v1.9 (grammar-v1.9.ebnf).
 
 Produces the AST of `nodes.py` or raises RoboLangError carrying every syntax error found.
 After a syntax error the parser resynchronises (see `_resync`) and carries on, so independent
@@ -29,8 +29,10 @@ from .tokens import (
     CONDITIONS,
     CONDITIONS_V1_3,
     CONDITIONS_V1_8,
+    CLOCK_KINDS,
     DURATION_UNITS,
     KIND_UNITS,
+    LIVE_CLOCK,
     PARAM_TYPES,
     PARAM_TYPES_V1_3,
     REGION_LIMITS,
@@ -45,7 +47,7 @@ from .tokens import (
 )
 
 DEFAULT_VERSION = "1.1"  # the version of a file without a marker
-SUPPORTED_VERSIONS = ("1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8")
+SUPPORTED_VERSIONS = ("1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9")
 SUPPORTED_VERSION = DEFAULT_VERSION  # kept for existing imports
 MAX_CONDITION_DEPTH = 8  # spec/robolang-v1.2.md section 3.3
 MAX_IF_DEPTH = 4  # spec/robolang-v1.4.md section 3.3 (E216)
@@ -112,32 +114,37 @@ class _Parser:
     @property
     def _typed(self) -> bool:
         """True in 1.3 to 1.8 files: goal blocks, outcome atoms and sensor parameters."""
-        return self._language in ("1.3", "1.4", "1.5", "1.6", "1.7", "1.8")
+        return self._language in ("1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9")
 
     @property
     def _branching(self) -> bool:
         """True in 1.4 to 1.8 files: `if`, `else` and `fail`."""
-        return self._language in ("1.4", "1.5", "1.6", "1.7", "1.8")
+        return self._language in ("1.4", "1.5", "1.6", "1.7", "1.8", "1.9")
 
     @property
     def _handlers(self) -> bool:
         """True in 1.5 to 1.8 files: a step may end with a failure handler `else { ... }`."""
-        return self._language in ("1.5", "1.6", "1.7", "1.8")
+        return self._language in ("1.5", "1.6", "1.7", "1.8", "1.9")
 
     @property
     def _values(self) -> bool:
         """True in 1.6 to 1.8 files: `measure`, comparisons, live readings and sending a binding (decision 0036)."""
-        return self._language in ("1.6", "1.7", "1.8")
+        return self._language in ("1.6", "1.7", "1.8", "1.9")
 
     @property
     def _regions(self) -> bool:
         """True in 1.7 and 1.8 files: `@safety no_go_region R;` and `@safety in_region R;` (decision 0039)."""
-        return self._language in ("1.7", "1.8")
+        return self._language in ("1.7", "1.8", "1.9")
 
     @property
     def _actions(self) -> bool:
         """True in 1.8 files: `do` and `in_state` (decision 0040)."""
-        return self._language == "1.8"
+        return self._language in ("1.8", "1.9")
+
+    @property
+    def _clock(self) -> bool:
+        """True in 1.9 files: `measure r time as t;`, time literals and `clock_time` (decision 0042)."""
+        return self._language == "1.9"
 
     @property
     def _statements(self) -> tuple[str, ...]:
@@ -529,7 +536,7 @@ class _Parser:
         atoms = CONDITIONS_V1_8 if self._actions else CONDITIONS_V1_3 if self._typed else CONDITIONS
         if self._at_keyword("message_received"):
             self._error("E211", f"'message_received' {_NOT_IN_V1_1}")
-        if self._values and self._at(TokenKind.IDENT):
+        if self._values and (self._at(TokenKind.IDENT) or (self._clock and self._at_keyword(*LIVE_CLOCK))):
             return self._compare(atoms)
         if self._at(TokenKind.IDENT):
             self._error("E204", f"unknown condition '{token.text}'; expected one of {_listed(atoms)}")
@@ -560,7 +567,10 @@ class _Parser:
         """
         token, after = self._tok, self._peek()
         live = token.text in KIND_UNITS and after is not None and after.kind is TokenKind.IDENT and after.text == "of"
-        if live:
+        if self._clock and self._at_keyword(*LIVE_CLOCK):  # RoboLang 1.9 (decision 0042 T6)
+            self._advance()
+            left = ast.LiveClock(ast.Name(token.text, token.span), token.span)
+        elif live:
             left = self._live()
         elif after is not None and after.kind is TokenKind.OPERATOR:
             left = self._name("a binding name")
@@ -571,7 +581,9 @@ class _Parser:
             self._error("E201", f"expected a comparison operator ('<', '<=', '>', '>=', '==' or '!=') after "
                                 f"the live reading, found {self._found()}")
         op = self._advance()
-        if self._at(TokenKind.NUMBER):
+        if self._clock and self._at(TokenKind.TIME):  # RoboLang 1.9 (decision 0042 T2)
+            right = self._time_lit()
+        elif self._at(TokenKind.NUMBER):
             right = self._quantity()
         elif self._at(TokenKind.STRING):
             right = self._string("a string")
@@ -581,6 +593,12 @@ class _Parser:
             self._error("E201", f"expected a quantity such as '60 degC', a string or a binding name after "
                                 f"'{op.text}', found {self._found()}")
         return ast.Compare(left, op.text, right, left.span.to(right.span))
+
+    def _time_lit(self) -> ast.TimeLit:
+        """`HH:MM` or `HH:MM:SS`: the lexer has checked the form and the ranges (E105)."""
+        token = self._advance()
+        hours, minutes, *seconds = (int(part) for part in token.text.split(":"))
+        return ast.TimeLit(hours * 3600 + minutes * 60 + (seconds[0] if seconds else 0), token.span)
 
     def _live(self) -> ast.LiveReading:
         """`KIND of OBJECT using SENSOR`: a reading taken whenever the enclosing `wait until` is evaluated."""
@@ -595,7 +613,8 @@ class _Parser:
         """A measured kind: `temperature`, `mass`, `distance` or `label`. Kinds are names, recognised here only."""
         token = self._tok
         if self._at(TokenKind.IDENT) and token.text not in KIND_UNITS:
-            self._error("E217", f"unknown measured kind '{token.text}'; expected one of {_listed(KIND_UNITS)}")
+            kinds = (*KIND_UNITS, *CLOCK_KINDS) if self._clock else KIND_UNITS
+            self._error("E217", f"unknown measured kind '{token.text}'; expected one of {_listed(kinds)}")
         if not self._at(TokenKind.IDENT):
             self._error("E201", f"expected a measured kind ({_listed(KIND_UNITS)}), found {self._found()}")
         self._advance()
@@ -611,6 +630,8 @@ class _Parser:
         """`NUMBER UNIT` with a unit of any kind; whether it fits the compared kind is a static rule (E319)."""
         number = self._advance()
         units = [unit for each in KIND_UNITS.values() for unit in each]
+        if self._clock:  # RoboLang 1.9 (decision 0042 T2): an elapsed time compares with a duration
+            units += DURATION_UNITS
         if self._at(TokenKind.IDENT) and self._tok.text in units:
             unit = self._advance()
             return ast.QuantityLit(Decimal(number.text), unit.text, number.span.to(unit.span))
@@ -773,6 +794,13 @@ class _Parser:
     def _measure(self, start: Token) -> ast.Measure:
         """`measure r KIND of o using s as NAME;`, or with a failure handler (RoboLang 1.6, decision 0036 V2)."""
         robot = self._name("a robot name after 'measure'")
+        if self._clock and self._at(TokenKind.IDENT) and self._tok.text in CLOCK_KINDS:  # decision 0042 T1
+            kind = self._advance()
+            self._expect_keyword("as", "after the kind: a clock reading is bound to a name (it has no 'of' and no "
+                                       "'using')")
+            binding = self._name("a binding name after 'as'")
+            handler, end = self._end("the measure statement")
+            return ast.MeasureClock(robot, ast.Name(kind.text, kind.span), binding, start.span.to(end.span), handler)
         kind = self._kind()
         self._expect_word("of", "after the kind")
         obj = self._name("an object name after 'of'")
@@ -862,7 +890,7 @@ def parse_recovering(source: str, filename: str = "<string>") -> Parsed:
 
 
 def parse(source: str, filename: str = "<string>") -> ParseResult:
-    """Parse RoboLang v1.1 to v1.8 source. Raises RoboLangError with every lexical or syntax error found."""
+    """Parse RoboLang v1.1 to v1.9 source. Raises RoboLangError with every lexical or syntax error found."""
     parsed = parse_recovering(source, filename)
     if parsed.errors:
         raise RoboLangError(parsed.errors, warnings=parsed.warnings)

@@ -75,7 +75,7 @@ first task for which all of these hold:
 
 The record lists every task considered with one result: `matched`, `no_goal`, `world_E5xx`,
 `no_core_form`, `goal_differs`, `robot_not_bound`, `robots_unsupported` (v0.2: the task binds two or more other
-robots) or `measure_unsupported` (RoboLang 1.6: the task contains a `measure`; checked right after `no_goal`) or `region_limits_unsupported` (RoboLang 1.7: the task has a region limit, which Core carries no form for; checked after `measure_unsupported`) or `in_state_unsupported` (RoboLang 1.8: the goal has an `in_state`, which Core has no triple for; checked before `region_limits_unsupported`). A task of the AI (`FILE`) whose goal has an `in_state` is refused before anything is sent, with `X606` (exit 6). A task of the AI (`FILE`) with a region limit is refused before anything is sent, with `X605` (exit 6). Nothing else is compared: safety limits and
+robots) or `measure_unsupported` (RoboLang 1.6: the task contains a `measure`, a clock reading of 1.9 included; checked right after `no_goal`) or `region_limits_unsupported` (RoboLang 1.7: the task has a region limit, which Core carries no form for; checked after `measure_unsupported`) or `in_state_unsupported` (RoboLang 1.8: the goal has an `in_state`, which Core has no triple for; checked before `region_limits_unsupported`). A task of the AI (`FILE`) whose goal has an `in_state` is refused before anything is sent, with `X606` (exit 6). A task of the AI (`FILE`) with a region limit is refused before anything is sent, with `X605` (exit 6). Nothing else is compared: safety limits and
 preconditions are the plan's own business, and a failing precondition is an outcome, not a rejection.
 
 ## 4. The delegate record

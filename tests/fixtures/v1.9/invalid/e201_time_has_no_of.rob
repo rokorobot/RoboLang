@@ -1,0 +1,13 @@
+// RoboLang v1.9 fixture: invalid
+// expect: error E201 (syntax) line 10
+// why: a clock is not an object: no of and no using (T1)
+
+robolang 1.9;
+
+task t(robot r, object box, sensor cam) {
+    goal { object_exists box; }
+    plan {
+        measure r time of box using cam as now;
+        move r to box;
+    }
+}

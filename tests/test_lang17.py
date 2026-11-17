@@ -117,7 +117,7 @@ def test_version_1_7_selects_ir_schema_1_6_and_older_versions_keep_theirs():
     document = json.loads(to_json(compile_source(task("@safety no_go_region zone;")).ir))
     assert (document["language_version"], document["ir_schema_version"]) == ("1.7", "1.6")
     assert ir.IR_SCHEMA_VERSIONS == {"1.1": "1.0", "1.2": "1.1", "1.3": "1.2", "1.4": "1.3", "1.5": "1.4",
-                                     "1.6": "1.5", "1.7": "1.6", "1.8": "1.7"}
+                                     "1.6": "1.5", "1.7": "1.6", "1.8": "1.7", "1.9": "1.8"}
 
 
 @pytest.mark.parametrize("version", ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6"])

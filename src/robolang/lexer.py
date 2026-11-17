@@ -1,13 +1,14 @@
 """
-Lexer for RoboLang v1.1 to v1.8 (spec/robolang-v1.1.md, sections 2 and 3).
+Lexer for RoboLang v1.1 to v1.9 (spec/robolang-v1.1.md, sections 2 and 3).
 
 Tokens are produced on demand. The parser uses this to reject an unsupported
 language version (E213) without interpreting the rest of the file; after the
-version marker it lexes the remainder in one go. A `robolang 1.2;` to `1.8;` marker
+version marker it lexes the remainder in one go. A `robolang 1.2;` to `1.9;` marker
 switches the reserved words to that version's set before any later word is lexed.
 """
 
 from __future__ import annotations
+import re
 
 from .diagnostics import Diagnostic, RoboLangError
 from .nodes import Span
@@ -15,6 +16,8 @@ from .tokens import ESCAPES, RESERVED, RESERVED_BY_VERSION, SPEED_UNITS, Token, 
 
 _LETTERS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 _DIGITS = "0123456789"
+_TIMEISH = re.compile(r"[0-9][0-9.]*(?::[0-9.]*)*")  # what looks like a time of day, right or wrong
+_TIME = re.compile(r"([01][0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?")
 _WORD_CHARS = _LETTERS + _DIGITS + "_"
 _PUNCTUATION = {
     "(": TokenKind.LPAREN,
@@ -38,14 +41,16 @@ class Lexer:
         self._col = 1
         self.reserved = RESERVED  # RESERVED_BY_VERSION[...] after a `robolang 1.2;` to `1.7;` marker
         self.verify = False  # `@verify` is an annotation after a `robolang 1.3;` to `1.8;` marker only
-        self.values = False  # comparison operators are tokens after a `robolang 1.6;` to `1.8;` marker only
+        self.values = False  # comparison operators are tokens after a `robolang 1.6;` to `1.9;` marker only
+        self.clock = False  # time literals `22:00` are tokens after a `robolang 1.9;` marker only
 
     def set_language(self, version: str):
         """Switch to the words and annotations of language `version` (a `robolang` marker was read)."""
         if version in RESERVED_BY_VERSION:
             self.reserved = RESERVED_BY_VERSION[version]
-        self.verify = version in ("1.3", "1.4", "1.5", "1.6", "1.7", "1.8")
-        self.values = version in ("1.6", "1.7", "1.8")
+        self.verify = version in ("1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9")
+        self.values = version in ("1.6", "1.7", "1.8", "1.9")
+        self.clock = version == "1.9"
 
     # -------- helpers --------
 
@@ -147,7 +152,18 @@ class Lexer:
                 i += 1
             if self._peek(i) == ".":
                 self._error("E103", "malformed number: more than one decimal point", length=i + 1)
+        if self.clock and self._peek(i) == ":":
+            return self._time()
         return self._take(TokenKind.NUMBER, i)
+
+    def _time(self) -> Token:
+        """`HH:MM` or `HH:MM:SS` (RoboLang 1.9, decision 0042 T2): 24-hour, two digits each, hours 00 to 23."""
+        text = _TIMEISH.match(self._src, self._pos).group()
+        if _TIME.fullmatch(text) is None:
+            self._error("E105", f"not a time of day: '{text}'; write HH:MM or HH:MM:SS in 24-hour form, hours 00 to 23 "
+                                "and minutes and seconds 00 to 59 (there is no 24:00: the next day is not in 1.9)",
+                        length=len(text))
+        return self._take(TokenKind.TIME, len(text))
 
     def _operator(self) -> Token:
         """`<`, `<=`, `>`, `>=`, `==` or `!=` (RoboLang 1.6, decision 0036 V6); a lone `=` or `!` is an error."""

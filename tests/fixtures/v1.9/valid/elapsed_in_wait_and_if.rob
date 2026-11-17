@@ -1,0 +1,18 @@
+// RoboLang v1.9 fixture: valid
+// expect: ok
+// why: elapsed read and compared with a duration, live elapsed in a wait with a handler (K10)
+
+robolang 1.9;
+
+task patient(robot r, location a) {
+    goal { robot_at r a; }
+    plan {
+        measure r elapsed as d;
+        if d < 2 min {
+            wait until clock_elapsed >= 90 s timeout 5 min else { fail "too slow"; }
+        } else {
+            wait for 1 s;
+        }
+        move r to a;
+    }
+}

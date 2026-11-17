@@ -1,0 +1,13 @@
+// RoboLang v1.9 fixture: invalid
+// expect: error E105 (lexical) line 11
+// why: 21:60 is not a time of day
+
+robolang 1.9;
+
+task t(robot r, location a) {
+    goal { robot_at r a; }
+    plan {
+        measure r time as now;
+        if now < 21:60 { move r to a; } else { fail "x"; }
+    }
+}

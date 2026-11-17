@@ -2,7 +2,7 @@
 
 **Status:** implemented in `src/robolang/ir_reader.py` (CORE-1); decision record
 [0021](decisions/0021-core-1-ir-reader.md).
-**Reads:** Task IR schemas [1.0](ir-schema-v1.0.md) to [1.7](ir-schema-v1.7.md)
+**Reads:** Task IR schemas [1.0](ir-schema-v1.0.md) to [1.8](ir-schema-v1.8.md)
 **Duties implemented:** 1 and 2 of [ir-schema-v1.0.md](ir-schema-v1.0.md) section 2 (kernel rules K4 and K5
 of the domain contracts)
 
@@ -72,7 +72,8 @@ the whole document; a missing field is reported at the object that lacks it). Th
 | `I122` | `and` directly inside `and`, or `or` inside `or` (grouping not flattened) |
 | `I123` | `if` step, or in schema 1.4 a failure handler, nested deeper than 4 levels (E216) |
 | `I124` | Schema 1.5: an unknown comparison operator in a `compare` |
-| `I125` | Schema 1.5: an unknown measured kind (`reading`) |
+| `I125` | Schema 1.5: an unknown measured kind (`reading`); schema 1.8: an unknown clock kind in a `read_clock` or a `clock` operand |
+| `I126` | Schema 1.8: a `time` operand that is not the text `HH:MM:SS` (24-hour) |
 | `I201` | Duplicate task name (E301) |
 | `I202` | Duplicate parameter name (E302) |
 | `I203` | Undeclared name (E303) |
@@ -118,6 +119,9 @@ section 4), in the same order and with the same "one error per item" behaviour (
   parameter (`I203`, `I204`), once (`I224`), and a task has at most 8 (`I225`).
 - in schema 1.7 (RoboLang 1.8, [robolang-v1.8.md](robolang-v1.8.md) section 3): a `do` and an `in_state` name
   parameters of the right types (`I203`, `I204`), and a state label or a text value is not empty (`I207`).
+- in schema 1.8 (RoboLang 1.9, [robolang-v1.9.md](robolang-v1.9.md) section 3): the robot of a `read_clock` is a `robot`
+  parameter (`I203`, `I204`), a time literal is `HH:MM:SS` (`I126`), and the binding and kind rules of schema 1.5 extend to
+  the two clock kinds (`I218` to `I223`).
 
 Not re-checked, because the IR cannot express a violation: the optional `robolang` marker, `;`, block
 structure, the mixing of `and` and `or` without parentheses, the source depth of parentheses.

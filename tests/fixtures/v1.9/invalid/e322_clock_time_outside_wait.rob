@@ -1,0 +1,12 @@
+// RoboLang v1.9 fixture: invalid
+// expect: error E322 (static) line 10
+// why: the live clock is for wait until only (T6)
+
+robolang 1.9;
+
+task t(robot r, location a) {
+    goal { robot_at r a; }
+    plan {
+        if clock_time < 22:00 { move r to a; } else { fail "x"; }
+    }
+}

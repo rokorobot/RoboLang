@@ -132,7 +132,7 @@ def _consider(plan: Plan, task: ir.Task, robot_world: bytes, world_name: str, ro
     """How one library task relates to the proposed goal, and the match if it is one."""
     if task.goal is None:
         return "no_goal", None
-    if any(isinstance(step, ir.Measure) for _, step in ir.walk(task.steps)):
+    if any(isinstance(step, (ir.Measure, ir.ReadClock)) for _, step in ir.walk(task.steps)):
         return "measure_unsupported", None  # RoboLang 1.6 values are not delegated yet (spec/robolang-v1.6.md)
     if task.goal_states:
         return "in_state_unsupported", None  # Core 0.2 has no state triples (RoboLang 1.8, decision 0040 A8)
@@ -404,7 +404,8 @@ class _Exchange:
         self.robot_run = to_record(
             result, task=match.task, run_id=identifier, source_sha256=sha256_normalized(match.plan.source),
             world_sha256=sha256_normalized(self.robot_world), seed=DEFAULT_SEED,
-            language_version=match.plan.language_version, world_schema_version=match.world.schema_version)
+            language_version=match.plan.language_version, world_schema_version=match.world.schema_version,
+            world_clock=match.world.clock)
         end_ms = start_ms + pause_ms + floor(result.end_t_ms)
         self.event(end_ms, self.robot, "run_ended", state=result.state,
                    failure=result.failure.code if result.failure else None)

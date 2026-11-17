@@ -1,0 +1,17 @@
+// RoboLang v1.9 fixture: valid
+// expect: ok
+// why: elapsed time of the whole task, sent with its unit (T1, T8)
+
+robolang 1.9;
+
+task job_elapsed(robot arm, object box, location shelf, location table) {
+    goal { object_at box table; }
+    plan {
+        move arm to shelf;
+        grasp arm box;
+        move arm to table;
+        place arm box at table;
+        measure arm elapsed as took;
+        communicate arm to "ops" with took;
+    }
+}

@@ -164,6 +164,10 @@ def execute(task: ir.Task, bindings: dict[str, str], site: Site, ops: Operations
             raise BackendFailure("S507", "this site supports exactly its declared robot")
         if any(isinstance(step, ir.Measure) for _, step in ir.walk(task.steps)):
             raise BackendFailure("S509", "measure reads values, and this backend has no value sensors")
+        if any(isinstance(step, ir.ReadClock) for _, step in ir.walk(task.steps)):
+            raise BackendFailure("S510", "a clock reading (measure r time, measure r elapsed) is refused: this backend "
+                                         "has no wall clock, and `elapsed` from /clock needs value bindings it does "
+                                         "not have (RoboLang 1.9, decision 0042 T9)")
         if any(isinstance(step, ir.Do) for _, step in ir.walk(task.steps)) or task.goal_states:
             raise BackendFailure("S508", "declared actions (do) and states (in_state) can be neither run nor observed "
                                          "by this backend")
