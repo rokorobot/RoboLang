@@ -27,6 +27,15 @@ in_state      = "in_state" , NAME , STRING ;                (* [1.8] *)
      the simulation and is recorded as "requested"; success is decided by the goal, observed through in_state.
    - the robot must be at the target (a location, or the location of the object), as for grasp (S271).
    - in_state X "label" is true when the observed state of X is the label, false when it is another label, unknown when
-     there is none; unknown fails closed. *)
+     there is none; unknown fails closed.
+   [1.8] What a "do" cannot say (decision 0040 A4, A10; erratum E5 of docs/evidence/bench-errata-1-8.md):
+   - one target only: there is no recipient or second thing ("hand the kit to Ana" cannot be written: a person is not
+     an entity, and "do r hand kit" drops her);
+   - the result is the declared state label of the target, not a value the action returns: "report the self-test
+     result" cannot be written, and sending the declared label as if it were the outcome is a half program;
+   - the action name must be one the robot's profile declares, for what the request asks; an action whose name only
+     resembles the request is not that action;
+   - a do runs once: "until it works", "every hour", "at 6 am" and "define a skill for later" are not a do.
+   A request that needs one of these is declined as inexpressible. *)
 
 (* Reserved words in a 1.8 file: those of grammar-v1.7.ebnf, and "do" and "in_state". *)

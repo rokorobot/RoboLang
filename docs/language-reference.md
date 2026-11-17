@@ -326,7 +326,8 @@ levels deep. A fact the world does not state is unknown, and unknown is never tr
 - `@safety max_speed N m/s;` declares a linear limit and `@safety max_speed N rad/s;` an angular
   limit. The unit is required, each unit can appear once per task, and `N` must be above zero. Add a
   limit only when requested, converting units when needed (`30 cm/s` is `0.3 m/s`). A limit above a
-  bound robot's declared maximum, or in a unit that robot does not declare, fails the simulation.
+  bound robot's declared maximum, or in a unit that robot does not declare, fails the simulation: decline such a
+  request as infeasible instead of writing the limit (a robot that lists only `m/s` has no `rad/s` limit).
 - `@safety no_go_region R;` and `@safety in_region R;` ask the robots to stay out of or inside a region while they
   move: see "Region limits".
 - `@verify min_confidence 0.9;` (from 0 to 1) and `@verify max_age 5 s;` state how observations must

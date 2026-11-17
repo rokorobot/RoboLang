@@ -170,3 +170,18 @@ reference is unchanged. The L5 answers are re-scored offline, with no new reques
 `World.location_states` had a `mappingproxy` default, which Python 3.11 rejects when the dataclass is defined.
 Importing `robolang.sim` failed on 3.11 (CI on PR #151). It now uses `default_factory`. No behaviour changed.
 `docs/evidence/bench-freeze-v2.json` is regenerated for E3 and E4.
+
+## Erratum E5 (owner, 2026-11-17, after the L5 run): teaching what a `do` cannot say
+
+Approved by the owner after the acceptance run missed B3 (grammar-only) and B6 by one answer
+([acceptance](bench-1-8-acceptance.md)).
+
+- `spec/grammar-v1.8.ebnf`, which is the grammar-only prompt, gets a normative comment listing what a `do` cannot
+  say: one target and no recipient, a result that is a declared state and not a value, an exact action name, and one
+  run. Each point is already in 0040 (A4, A10) and the language reference.
+- `docs/language-reference.md`: a speed limit in a unit the robot does not declare is declined as infeasible. This is
+  Sonnet's first answer to `n_speed_unit` in both PR #151 runs.
+
+No label changed. The confirming runs decide B3 and B6: the 5 inexpressible tasks and 4 controls of set 7,
+grammar-only and full, both models, 3 repeats, plus the per-PR run of sets 1 and 2. `docs/evidence/bench-freeze-v2.json`
+is regenerated.
