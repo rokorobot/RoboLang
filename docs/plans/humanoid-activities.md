@@ -89,6 +89,7 @@ before.
 
 | Date | Note | Added | Removed | Changed | Ranking |
 |---|---|---|---|---|---|
+| 2026-11-17 | I1 L4: RoboLang 1.7 built and taught | — | — | — | 1. action 4.52 · 2. perception 2.78 · 3. cooperation 1.07 · 4. communication 0.95 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
 | 2026-11-17 | 0039 clarifications C1-C7 (owner); x05 moved from G-CHOOSE to G-PROX | — | — | — | 1. action 4.52 · 2. perception 2.78 · 3. cooperation 1.07 · 4. communication 0.95 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
 | 2026-11-17 | Weekly A1/A2: ACT-MFG-004 (Hexagon AEON at BMW Leipzig, demo) and ACT-HRC-003 (remote takeover and handback, concept); no maturity or horizon changes, no gap changes | ACT-HRC-003, ACT-MFG-004 | — | — | 1. action 4.52 · 2. perception 2.78 · 3. cooperation 1.07 · 4. communication 0.95 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
 | 2026-11-17 | I1 L3: set 6 regions pre-registered (22 tasks) | — | — | — | 1. action 4.17 · 2. perception 2.78 · 3. cooperation 0.99 · 4. communication 0.87 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
@@ -246,7 +247,7 @@ before.
 
 | Language gap | Scope | Priority | Near | Benchmark tasks |
 |---|---|---|---|---|
-| `G-PATH` Staying inside or outside a region while moving | open | 2.86 | yes | 20 |
+| `G-PATH` Staying inside or outside a region while moving | open | 2.86 | yes | 2 |
 | `G-FORCE` Force limits and gentle handling | open | 0.98 | — | 2 |
 | `G-PROX` Limits and reactions that depend on people nearby: slow, stop or yield when a person is within a distance | open | 0.97 | — | 2 |
 

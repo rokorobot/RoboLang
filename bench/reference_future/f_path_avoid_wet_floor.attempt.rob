@@ -1,9 +1,0 @@
-// bench/reference_future/f_path_avoid_wet_floor.attempt.rob: the obvious attempt; it does not do what the request asks
-robolang 1.6;
-
-task to_lobby(robot r, location lobby, region wet) {
-    goal { robot_at r lobby; not in_region r wet; }
-    plan {
-        move r to lobby;
-    }
-}

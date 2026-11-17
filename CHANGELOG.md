@@ -5,8 +5,9 @@ versions (1.0 to 1.6). Decision records are in [`spec/decisions/`](https://githu
 
 ## Unreleased
 
-- **RoboLang 1.7: region limits** (decision 0039, step L4 of iteration I1; language, IR, world file and run record
-  only, the reference and prompts are not yet taught). `@safety no_go_region R;` and `@safety in_region R;` for the
+- **RoboLang 1.7: region limits** (decision 0039, step L4 of iteration I1). `robolang reference` and the benchmark
+  prompts teach 1.7; set 6 (`--set regions`) is labelled for 1.7 with `limit_ok` and `limit_dropped_silently`
+  ([errata](docs/evidence/bench-errata-1-7.md)); five older probes became programs. `@safety no_go_region R;` and `@safety in_region R;` for the
   whole task, with no new keyword. `robolang 1.7;` builds Task IR 1.6 and run record 1.6; world file 1.3 adds a
   region's `contains` and a robot's `honours`. A region limit is a request, checked before the run against the world
   and the robot's declared abilities, never enforced (`checked_against_world_not_enforced`). New codes `E323`, `E324`

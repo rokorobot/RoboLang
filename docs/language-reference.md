@@ -1,24 +1,28 @@
-# RoboLang 1.6 language reference
+# RoboLang 1.7 language reference
 
 RoboLang is a small, checked language for robot tasks. A program describes a desired final state and
 a plan for reaching it in a symbolic world. A program is correct only when it validates, names the
 right entities, states the operator's requested outcome in `goal`, and reaches that goal.
 
-RoboLang 1.6 has bounded branching (`if`/`else`, see "Branching"), step failure handlers (a step
-`else { ... }` that runs when that step fails, see "Failure handlers") and measured values (`measure`
-reads a temperature, a mass, a distance or a label from a sensor, see "Measured values"). It has no loops
-("until it works"), counts, clocks, schedules, arithmetic, string formatting, message waits, or
+RoboLang 1.7 has bounded branching (`if`/`else`, see "Branching"), step failure handlers (a step
+`else { ... }` that runs when that step fails, see "Failure handlers"), measured values (`measure`
+reads a temperature, a mass, a distance or a label from a sensor, see "Measured values") and region
+limits (`@safety no_go_region R;`, `@safety in_region R;`: where the robots may be while they move, see
+"Region limits"). It has no loops
+("until it works"), counts, clocks, schedules, arithmetic, string formatting, message waits, limits on one
+step only, limits on an arm or a person, or
 variables beyond typed task parameters and the names that `measure` binds. Do not silently drop part of a request. If a request needs an unsupported construct, or the available
 world and robots cannot perform it, say that it cannot be represented or completed.
 
 ## File and task structure
 
-A file starts with `robolang 1.6;` and holds one or more tasks. `//` starts a comment. The language
+A file starts with `robolang 1.7;` and holds one or more tasks. `//` starts a comment. The language
 is case-sensitive. Whitespace only separates tokens.
 
 ```text
 task NAME(type param, type param, ...) {
     @safety max_speed 0.5 m/s;     // zero or more annotations, first
+    @safety no_go_region wet;      // region limits are annotations too (see "Region limits")
     pre  { condition; ... }        // optional
     goal { condition; ... }        // required unless every branch has its own goal
     plan { statement; ... }        // required, at least one statement
@@ -249,8 +253,62 @@ levels deep. A fact the world does not state is unknown, and unknown is never tr
   limit. The unit is required, each unit can appear once per task, and `N` must be above zero. Add a
   limit only when requested, converting units when needed (`30 cm/s` is `0.3 m/s`). A limit above a
   bound robot's declared maximum, or in a unit that robot does not declare, fails the simulation.
+- `@safety no_go_region R;` and `@safety in_region R;` ask the robots to stay out of or inside a region while they
+  move: see "Region limits".
 - `@verify min_confidence 0.9;` (from 0 to 1) and `@verify max_age 5 s;` state how observations must
   support a Core goal. Use them only when requested.
+
+## Region limits
+
+```text
+@safety no_go_region wet;    // every robot of the task stays out of region `wet`
+@safety in_region lane;      // every robot of the task stays inside region `lane`
+```
+
+Both words go after `@safety`, name a `region` parameter, and are written before `pre`, `goal` and `plan`, in any
+order with `max_speed`. Bind the parameter to the region of the world that the request names, by its exact ID.
+
+```rob
+robolang 1.7;
+
+task to_lobby(robot r, location lobby, region wet) {
+    @safety no_go_region wet;
+    goal { robot_at r lobby; }
+    plan { move r to lobby; }
+}
+```
+
+- **When to write one.** The request says where a robot may or may not be *while it moves*: "keep it out of the
+  hot zone", "never drive through the quay", "stay inside the lane the whole way", "it must not leave the field".
+  Write one limit for each region the request names, of the kind it asks for (`no_go_region` for out,
+  `in_region` for inside). A request that names two regions needs two limits; one that says "stay inside A and out of B"
+  needs one of each.
+- **Never drop a requested limit.** A `move` is a route, not a jump: a robot that "goes straight to the target" can
+  still cross the region on the way. A program that reaches the goal without the limit the request asked for is
+  a false program that every other check accepts; write the limit, or say that the request cannot be met.
+- **Do not add one the request did not ask for.** A request to wait for a region to clear (`wait until region_clear`),
+  or to do something only if a region is clear (`if region_clear`), is about the region's state, not about where the
+  robot may be. A plain move needs no limit. Add a limit only for a named region, never for "busy areas",
+  "crowded" or "dangerous" places that the request does not name.
+- **The whole task.** A limit holds for every `move` of every robot of the task, on every path, recovery moves in
+  failure handlers included. There is no limit on one step: a request that holds on one leg and not on another
+  ("on the way to the hall stay out of the wet floor, but on the way back you may cross it") cannot be represented.
+  Nor can a limit on a robot's arm or on what the arm swings over, a distance to a person, or a force: those are not region
+  limits. Say that they cannot be represented.
+- **At most 8 limits per task, and a region is named once.** The same region twice, or as both `no_go_region` and
+  `in_region`, is `E323`; a ninth limit is `E324`. The name must be a `region` parameter (`E303`, `E304`).
+- **A request, not an enforcement.** RoboLang checks the limit against the world before the run and records it as
+  checked, never as enforced. Keeping a robot out of a region is the job of the robot's planner and safety controller.
+  The program does not plan a route around a region and needs no extra moves for it.
+- **What the world says.** The world list may show, for a region, the locations it `contains`, and for a robot the
+  region limits it `honours`. A region with no list of locations is not known to hold any, so nothing is concluded from
+  it. A robot that does not honour a kind of limit cannot be asked to keep it. The run fails before anything moves
+  (`S003`, `S004`, `S005`), and the request is **infeasible**: the language can say it, this world cannot do it. Decline
+  with `"category": "infeasible"` when (1) a robot that must move does not honour the kind of limit asked (`S003`),
+  (2) a location the robot must go to lies inside the region it must stay out of, or outside the region it must stay
+  inside, where the world lists the region's locations (`S004`), (3) the robot starts there (`S005`), or (4) the request
+  hands the job to the delegated Core executor: Core carries no region limits, so a task with one cannot be
+  delegated.
 
 ## What symbolic simulation requires
 
@@ -299,6 +357,11 @@ are:
 | `E320` | `==` or `!=` on a quantity, or ordering on a label |
 | `E321` | a comparison in `pre` or `goal` |
 | `E322` | a live reading anywhere but the condition of a `wait until` |
+| `E323` | a region named by more than one region limit, or as both `no_go_region` and `in_region` |
+| `E324` | more than 8 region limits in a task |
+| `S003` | a robot that moves does not honour the kind of region limit (its `honours` in the world) |
+| `S004` | a target (a `move` or `place` location, or a `robot_at` goal) is inside a `no_go_region`, or outside an `in_region` whose locations the world lists |
+| `S005` | a robot that moves starts inside a `no_go_region`, or outside an `in_region` whose locations the world lists |
 | `S234` | `measure`: the sensor does not measure that kind |
 | `S235` | `measure` with a `contact` sensor: the robot is not at the object |
 | `S236` | `measure`: the object has no value of that kind |
@@ -310,7 +373,7 @@ records completion. Its parameters still
 need bindings to concrete world entities before simulation.
 
 ```rob
-robolang 1.6;
+robolang 1.7;
 
 task deliver(robot r, object box, location src, location dst, region cell, sensor camera) {
     @safety max_speed 0.5 m/s;
@@ -334,7 +397,7 @@ This task chooses at run time. If the cell is clear when the job reaches the `if
 `a`; otherwise it goes to `b`. Each path has its own goal.
 
 ```rob
-robolang 1.6;
+robolang 1.7;
 
 task route(robot r, object box, location src, location a, location b, region cell) {
     plan {
@@ -356,7 +419,7 @@ task route(robot r, object box, location src, location a, location b, region cel
 This task retries a failed grasp once. If the second grasp also fails, it reports and stops.
 
 ```rob
-robolang 1.6;
+robolang 1.7;
 
 task fetch(robot r, object box, location src, location dst) {
     goal { object_at box dst; }
@@ -380,7 +443,7 @@ reading to the "pass" channel, and moves the pan only if the reading is clearly 
 may be too hot.
 
 ```rob
-robolang 1.6;
+robolang 1.7;
 
 task check_pan(robot r, object pan, sensor probe, location src, location dst) {
     goal { object_at pan dst; }

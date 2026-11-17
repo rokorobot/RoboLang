@@ -1,0 +1,8 @@
+{
+  "task": "to_row",
+  "bindings": {
+    "r": "weeder1",
+    "dst": "row_12",
+    "road": "road_zone"
+  }
+}

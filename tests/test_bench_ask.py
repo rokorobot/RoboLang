@@ -27,7 +27,7 @@ from bench import lib, run, score
 SET3 = lib.load_set("ask")
 REFS = lib.ASK_REFERENCE_DIR
 BY_GROUP = {g: sorted(t for t, d in SET3.items() if d["group"] == g)
-            for g in ("feasible", "decoy", "value", "infeasible", "inexpressible", "clarify")}
+            for g in ("feasible", "decoy", "value", "region", "infeasible", "inexpressible", "clarify")}
 
 
 def answer(stem: str, decision="program") -> dict:
@@ -48,15 +48,17 @@ def run_in(task: dict, ans: dict, patch: dict | None = None):
 
 
 def test_the_mix_of_tasks():
-    assert Counter(d["group"] for d in SET3.values()) == {"feasible": 12, "decoy": 11, "value": 4, "infeasible": 20,
-                                                          "inexpressible": 15, "clarify": 18}
+    assert Counter(d["group"] for d in SET3.values()) == {"feasible": 12, "decoy": 11, "value": 4, "region": 2,
+                                                          "infeasible": 20, "inexpressible": 13, "clarify": 18}
     for task in SET3.values():
         assert task["world"] in {"bench/worlds/pharmacy.json", "bench/worlds/yard.json", "bench/worlds/kitchen.json",
-                                 "bench/worlds/kitchen_values.json"}  # u06: knife_1 put down, so the arm can grasp
+                                 "bench/worlds/kitchen_values.json",  # u06: knife_1 put down, so the arm can grasp
+                                 "bench/worlds/pharmacy_1_3.json", "bench/worlds/yard_1_3.json"}  # u09, u10 (0039)
         assert task["prompt"].endswith(".") and task["tags"]
         decision, category = lib.expectation(task)
         assert (decision, category) == {"feasible": ("program", "none"), "decoy": ("program", "none"),
-                                        "value": ("program", "none"), "infeasible": ("cannot", "infeasible"),
+                                        "value": ("program", "none"), "region": ("program", "none"),
+                                        "infeasible": ("cannot", "infeasible"),
                                         "inexpressible": ("cannot", "inexpressible"),
                                         "clarify": ("clarify", "none")}[task["group"]]
 
@@ -67,7 +69,7 @@ def test_the_worlds_are_large(name):
     assert len(world["locations"]) + sum(len(world[k]) for k in ("regions", "robots", "objects", "sensors")) >= 25
 
 
-@pytest.mark.parametrize("task_id", BY_GROUP["feasible"] + BY_GROUP["decoy"] + BY_GROUP["value"])
+@pytest.mark.parametrize("task_id", BY_GROUP["feasible"] + BY_GROUP["decoy"] + BY_GROUP["value"] + BY_GROUP["region"])
 def test_feasible_reference_is_valid_reaches_its_goal_and_passes_its_checks(task_id):
     task = SET3[task_id]
     checked = lib.check_answer(task, answer(task_id))
@@ -287,13 +289,13 @@ def test_scorer_on_canned_answers(tmp_path):
         "i01_picker2_not_ready": other("cannot", "infeasible", ["picker2"]),      # right, names the blocker
         "i04_cart_no_gripper": other("cannot", "infeasible", ["vial_a2"]),        # right decision, wrong blocker
         "i17_placed_and_held": other("clarify", entities=["pan_2"]),              # asked instead of declining
-        "u09_avoid_quay": answer("u09_avoid_quay.attempt"),                       # E211, repaired below
+        "u11_wait_go": answer("u11_wait_go.attempt"),                             # E211, repaired below
         "d1_bowl_in_fridge": other("clarify", entities=["bowl_1", "bowl_2"]),     # asked on a decoy: false refusal
         "f01_straddle_gate": answer("f01_straddle_gate"),                         # right
     }
-    without_limit = answer("u09_avoid_quay.attempt")
-    without_limit["rob"] = without_limit["rob"].replace("    @safety no_go_region z;\n", "")
-    out_dir = ask_run(tmp_path, replies, {"u09_avoid_quay": without_limit})  # the repair dropped the constraint
+    without_wait = answer("u11_wait_go.attempt")
+    without_wait["rob"] = without_wait["rob"].replace('        wait until message_received "GO" timeout 10 min;\n', "")
+    out_dir = ask_run(tmp_path, replies, {"u11_wait_go": without_wait})  # the repair dropped the wait for the message
     _, rows = score.load_rows(out_dir)
     by = {r["task_id"]: r for r in rows}
     assert by["a01_which_vial"]["decision_correct"] and by["a01_which_vial"]["entities_correct"] is True
@@ -303,8 +305,8 @@ def test_scorer_on_canned_answers(tmp_path):
     assert by["i01_picker2_not_ready"]["entities_correct"] is True
     assert by["i04_cart_no_gripper"]["entities_correct"] is False
     assert not by["i17_placed_and_held"]["decision_correct"] and not by["i17_placed_and_held"]["false_program"]
-    u09 = by["u09_avoid_quay"]
-    assert u09["false_program"] and u09["false_program_final"] and u09["false_program_undetected"]
+    u11 = by["u11_wait_go"]
+    assert u11["false_program"] and u11["false_program_final"] and u11["false_program_undetected"]
     assert by["d1_bowl_in_fridge"]["false_refusal"]
     assert by["f01_straddle_gate"]["decision_correct"] and by["f01_straddle_gate"]["goal_correct"]
     text = score.score_dir(out_dir)

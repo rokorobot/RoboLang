@@ -6,8 +6,8 @@ take, and safety limits. RoboLang checks the task statically and runs it in a de
 symbolic simulation. A run **succeeds only when the goal is verified** in the final world, not
 merely because the steps ran.
 
-- **Available today** (package `robolang` 0.3.1 on PyPI): RoboLang 1.1 to 1.6 with a validator,
-  Task IR 1.0 to 1.5, a symbolic simulator with reproducible run records, and RoboLang Core 0.1
+- **Available today** (package `robolang` 0.3.1 on PyPI): RoboLang 1.1 to 1.7 with a validator,
+  Task IR 1.0 to 1.6, a symbolic simulator with reproducible run records, and RoboLang Core 0.1
   and 0.2 messages: `export-goal` sends a task's goal, and `delegate` hands it to a robot and
   accepts success only after checking the signed evidence. All of it runs in simulation.
 - **Not available:** physical robot execution and network transport. Unreleased work on `main`
@@ -66,7 +66,7 @@ simulation result is not evidence that a task is safe on hardware.
 
 | Area | State |
 |---|---|
-| Language 1.1 to 1.6, validator, Task IR 1.0 to 1.5 | Delivered; 1.4, 1.5 and 1.6 accepted on benchmark sets 3, 4 and 5 |
+| Language 1.1 to 1.7, validator, Task IR 1.0 to 1.6 | Delivered; 1.4, 1.5 and 1.6 accepted on benchmark sets 3, 4 and 5; 1.7 (region limits) is built and taught, its acceptance run on set 6 is next |
 | Symbolic simulation (`simulate`, `validate --world`) | Delivered |
 | Core 0.1 reference simulation | Implemented, gate 1 signed off 2026-10-27 |
 | Core 0.2 | Frozen 2026-10-30, opt-in with `--core 0.2` |

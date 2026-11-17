@@ -1,8 +1,8 @@
 # RoboLang 1.7 (delta over 1.6)
 
 **Status:** front end, Task IR 1.6, simulation (world file 1.3, run record 1.6), `validate --world` and the IR reader
-complete in code. The shipped language reference and the benchmark prompts are taught in the step after this one
-(L4, second commit, decision 0039).
+complete in code. The shipped language reference and the benchmark prompts teach 1.7 (L4 of decision 0039); the
+acceptance run on benchmark set 6 is the next step (L5), and until it passes the bounds B1 to B8 1.7 is not accepted.
 Decision: [0039](decisions/0039-region-limits.md) (P1 to P10 and C1 to C7, approved 2026-11-17). Grammar:
 [grammar-v1.7.ebnf](grammar-v1.7.ebnf). IR: [schema 1.6](ir-schema-v1.6.md). Simulation:
 [section 15](simulation-v1.0.md). Everything not stated here is exactly as in [RoboLang 1.6](robolang-v1.6.md).

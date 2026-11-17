@@ -1,0 +1,9 @@
+// bench/reference_regions/r03_field_not_road.rob: hand-written reference
+robolang 1.7;
+
+task to_row(robot r, location dst, region field, region road) {
+    @safety in_region field;
+    @safety no_go_region road;
+    goal { robot_at r dst; }
+    plan { move r to dst; }
+}

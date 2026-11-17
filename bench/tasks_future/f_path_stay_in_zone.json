@@ -1,11 +1,30 @@
 {
   "id": "f_path_stay_in_zone",
   "prompt": "Move printer1 from gridline_a to gridline_c and keep it inside layout_zone the whole way.",
-  "world": "bench/worlds/site.json",
-  "group": "inexpressible",
+  "world": "bench/worlds/site_1_3.json",
+  "group": "region",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_6": {
     "decision": "cannot",
     "category": "inexpressible"
+  },
+  "expect_1_7": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "the world as given",
+        "goal": [
+          [
+            "rl:robot:printer1",
+            "located_in",
+            "rl:place:gridline_c"
+          ]
+        ],
+        "world_patch": {}
+      }
+    ]
   },
   "activity": "ACT-CON-001",
   "gap": "G-PATH",
@@ -13,6 +32,11 @@
     "route",
     "region"
   ],
-  "why": "A goal states the end state; nothing says where the robot may be on the way. `in_region` is reserved and not implemented (language reference: reserved words).",
-  "attempt_fails_with": "E201"
+  "expected_limits": [
+    [
+      "in_region",
+      "layout_zone"
+    ]
+  ],
+  "why": "A whole-task `@safety in_region zone;` keeps the robot inside the layout zone (0039 P1, P2). Both gridlines are listed in the zone."
 }

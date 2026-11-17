@@ -1,7 +1,7 @@
 {
   "id": "c03_layout_zone_clear_or_stop",
   "prompt": "Send printer1 to gridline_c if layout_zone is clear when the job starts. If it is not, send \"layout zone busy\" to channel \"site\" from printer1 and stop the job as failed.",
-  "world": "bench/worlds/site.json",
+  "world": "bench/worlds/site_1_3.json",
   "group": "control",
   "expect": {
     "decision": "program"
@@ -53,5 +53,6 @@
         }
       }
     ]
-  }
+  },
+  "expected_limits": []
 }

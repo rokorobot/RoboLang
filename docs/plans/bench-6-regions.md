@@ -6,6 +6,11 @@ Decision record: [0039](../../spec/decisions/0039-region-limits.md) (APPROVED by
 run with `python bench/run.py --set regions`. Modelled on set 5, [bench-5-values.md](bench-5-values.md). No model was run
 and no money was spent.
 
+**L4 (2026-11-17):** 1.7 is built and taught. `expect` now holds the 1.7 label and `expect_1_6` the 1.6 one; the 1.7
+references, the 1.3 world copies (`worlds/*_1_3.json`) and the scorer checks `limit_ok` and `limit_dropped_silently`
+(B8) are written. The bullets below describe the set as it was frozen at L3; the changes are listed in
+[bench-errata-1-7.md](../evidence/bench-errata-1-7.md). The tasks, their 1.6 labels and the bounds B1–B8 are unchanged.
+
 ## How the set is used
 
 - **Labels.** `expect` is the **1.6** label and is what the baseline scores. `expect_1_7` is the label for acceptance

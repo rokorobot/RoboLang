@@ -1,0 +1,8 @@
+// bench/reference_future/f_path_stay_in_zone.rob: hand-written reference
+robolang 1.7;
+
+task run_gridline(robot r, location dst, region zone) {
+    @safety in_region zone;
+    goal { robot_at r dst; }
+    plan { move r to dst; }
+}

@@ -1,7 +1,7 @@
 {
   "id": "c02_plain_move",
   "prompt": "Send weeder1 to row_14.",
-  "world": "bench/worlds/site.json",
+  "world": "bench/worlds/site_1_3.json",
   "group": "control",
   "expect": {
     "decision": "program"
@@ -18,5 +18,6 @@
   },
   "tags": [
     "plain_move"
-  ]
+  ],
+  "expected_limits": []
 }

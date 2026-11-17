@@ -1,9 +1,12 @@
 {
   "id": "r07_carry_module_dry",
   "prompt": "Have installer1 carry module_14 from the module pallet to the level 3 wall, without letting it, or the module, enter wet_floor.",
-  "world": "bench/worlds/site.json",
+  "world": "bench/worlds/site_1_3.json",
   "group": "region",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_6": {
     "decision": "cannot",
     "category": "inexpressible"
   },

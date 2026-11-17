@@ -1,7 +1,7 @@
 {
   "id": "x01_first_leg_only",
   "prompt": "Send cleaner1 to the hall and then on to dock_3. On the way to the hall it must stay out of wet_floor; on the way to dock_3 it may cross it.",
-  "world": "bench/worlds/site.json",
+  "world": "bench/worlds/site_1_3.json",
   "group": "inexpressible",
   "expect": {
     "decision": "cannot",

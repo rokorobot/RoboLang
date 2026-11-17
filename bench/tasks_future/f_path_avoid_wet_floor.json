@@ -1,11 +1,30 @@
 {
   "id": "f_path_avoid_wet_floor",
   "prompt": "Send cleaner1 from dock_2 to the lobby, and it must not drive through the wet-floor zone.",
-  "world": "bench/worlds/site.json",
-  "group": "inexpressible",
+  "world": "bench/worlds/site_1_3.json",
+  "group": "region",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_6": {
     "decision": "cannot",
     "category": "inexpressible"
+  },
+  "expect_1_7": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "the world as given",
+        "goal": [
+          [
+            "rl:robot:cleaner1",
+            "located_in",
+            "rl:place:lobby"
+          ]
+        ],
+        "world_patch": {}
+      }
+    ]
   },
   "activity": "ACT-CLN-001",
   "gap": "G-PATH",
@@ -13,6 +32,11 @@
     "route",
     "region"
   ],
-  "why": "A `move` goes to a location; no construct limits the route. `in_region` and `no_go_region` are reserved and not implemented (language reference: reserved words).",
-  "attempt_fails_with": "E201"
+  "expected_limits": [
+    [
+      "no_go_region",
+      "wet_floor"
+    ]
+  ],
+  "why": "A whole-task `@safety no_go_region wet;` keeps the robot out of the wet-floor zone (0039 P1, P2)."
 }

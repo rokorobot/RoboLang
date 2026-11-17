@@ -1,0 +1,8 @@
+{
+  "task": "to_gate",
+  "bindings": {
+    "r": "tug1",
+    "dst": "gate_out",
+    "lane": "lane_1"
+  }
+}

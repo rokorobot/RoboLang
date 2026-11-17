@@ -1,0 +1,15 @@
+// bench/reference_regions/r06_field_clear_or_other_row.rob: hand-written reference
+robolang 1.7;
+
+task to_row(robot r, location a, location b, region field, region road) {
+    @safety no_go_region road;
+    plan {
+        if region_clear field {
+            goal { robot_at r a; }
+            move r to a;
+        } else {
+            goal { robot_at r b; }
+            move r to b;
+        }
+    }
+}

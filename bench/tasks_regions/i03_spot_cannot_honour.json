@@ -1,9 +1,13 @@
 {
   "id": "i03_spot_cannot_honour",
   "prompt": "Walk spot1 from stop_a to stop_d, and keep it out of road_zone the whole way.",
-  "world": "bench/worlds/site.json",
+  "world": "bench/worlds/site_1_3.json",
   "group": "infeasible",
   "expect": {
+    "decision": "cannot",
+    "category": "infeasible"
+  },
+  "expect_1_6": {
     "decision": "cannot",
     "category": "inexpressible"
   },

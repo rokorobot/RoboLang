@@ -1,9 +1,13 @@
 {
   "id": "i04_delegated_limit",
   "prompt": "Hand this job to the delegated Core executor rather than running it here: send cleaner1 from dock_2 to dock_1, keeping it out of wet_floor.",
-  "world": "bench/worlds/site.json",
+  "world": "bench/worlds/site_1_3.json",
   "group": "infeasible",
   "expect": {
+    "decision": "cannot",
+    "category": "infeasible"
+  },
+  "expect_1_6": {
     "decision": "cannot",
     "category": "inexpressible"
   },

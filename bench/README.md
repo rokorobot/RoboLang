@@ -123,7 +123,8 @@ The owner approved the replacement plan, freeze, paid validation and merge. See 
 [original packet](../docs/plans/bench-2-label-review-baseline.md) and the freeze hash in decision 0025.
 Run `python tools/bench_freeze.py --check` to verify the recorded inputs against freeze v2
 (`docs/evidence/bench-freeze-v2.json`, decision 0035 E9; v1 is kept as history). Changes after the freeze require errata
-([errata for 1.5](../docs/evidence/bench-errata-1-5.md), [errata for 1.6](../docs/evidence/bench-errata-1-6.md)).
+([errata for 1.5](../docs/evidence/bench-errata-1-5.md), [errata for 1.6](../docs/evidence/bench-errata-1-6.md),
+[errata for 1.7](../docs/evidence/bench-errata-1-7.md)).
 A `decoy` looks impossible or unclear but is feasible. A `clarify` task
 expects `"decision": "clarify"`: the request could mean several entities (`candidates`) or omits a value, and the world
 does not decide. A request that leaves the choice to the model ("a shelf", "one of the vials", set 2's `ambiguous`
@@ -204,8 +205,8 @@ read from these numbers.
 
 Set 2 has the same for its three branching tasks (`x_route_by_cell`, `x_whichever_free`, `x_missing_box_branch`),
 group `branching`. The grammar-only prompt pastes `spec/grammar-v1.3.ebnf`, `spec/grammar-v1.4.ebnf`,
-`spec/grammar-v1.5.ebnf` and `spec/grammar-v1.6.ebnf`, each a delta over the one before. Since 0036 PR 2 the prompts teach
-RoboLang 1.6 (0035 PR 2 taught 1.5). In set 3,
+`spec/grammar-v1.5.ebnf`, `spec/grammar-v1.6.ebnf` and `spec/grammar-v1.7.ebnf`, each a delta over the one before. Since
+0039 L4 the prompts teach RoboLang 1.7 (0036 PR 2 taught 1.6, 0035 PR 2 taught 1.5). In set 3,
 `x_failover_on_fault` is now a program judged per path (group `recover`; `expect_1_4` keeps the old label).
 
 Run it on demand from GitHub Actions: `Benchmark`, `set3: true`. That runs full and grammar-only prompts with 3
@@ -263,7 +264,7 @@ Locally: `python bench/run.py --set values --repeats 3` (a paid run: confirm it 
 [rsi-r3-gap-verification.md](../docs/evidence/rsi-r3-gap-verification.md) (RSI-01 step R3, rule LE-7). 25 `inexpressible`
 **probes**, each needing exactly one open gap that a near activity of `atlas.json` claims (`activity`, `gap`), with an
 obvious attempt (`<id>.attempt.rob`) that RoboLang 1.6 rejects and `attempt_fails_with`, the first code `check_answer`
-reports; 8 `control` requests from near activities that 1.6 can express (`<id>.rob`, `<id>.json`), three of which
+reports (since 0039 L4: 22 probes; the three `G-PATH` probes are `region` programs with a 1.7 reference); 8 `control` requests from near activities that 1.6 can express (`<id>.rob`, `<id>.json`), three of which
 record an atlas claim that R3 refuted. Four new worlds (`worlds/fulfilment.json`, `site.json`, `ward.json`,
 `fry_station.json`) and `worlds/warehouse.json`. A probe belongs to exactly one gap in `atlas.json`;
 `tests/test_bench_future.py` checks the counts per group and per gap.
@@ -273,13 +274,25 @@ not gated). It is not in the per-PR or weekly runs. Locally: `python bench/run.p
 
 ## Set 6: region limits (`--set regions`)
 
-22 tasks in `tasks_regions/`, controls' references and the obvious attempts in `reference_regions/`, decision record
-[0039](../spec/decisions/0039-region-limits.md), plan and labels in [bench-6-regions.md](../docs/plans/bench-6-regions.md)
-(draft for the owner). Pre-registered against 1.6 before any 1.7 code (iteration I1, step L3): `expect` is the 1.6
-label (all 18 non-controls `cannot / inexpressible`, each with an attempt and `attempt_fails_with`), `expect_1_7` the
-label for acceptance (9 `region` programs, 4 `infeasible`, 5 `inexpressible`, 4 `control` programs in both versions).
-The 1.3 world facts a 1.7 label needs are a note in `expect_1_7.world_1_3`; no world file has them yet.
-`tests/test_bench_regions.py` checks the counts, the labels, the attempts and the controls. On demand from GitHub
-Actions: `Benchmark`, `regions: true` (full and minimal prompts, 3 repeats, Sonnet and Haiku, `--max-usd 3` each, not
-gated, not in the per-PR or weekly runs). Locally: `python bench/run.py --set regions --repeats 3` (a paid run: confirm
-it first).
+22 tasks in `tasks_regions/`, references (the 9 `region` programs and the 4 controls) and the obvious 1.6 attempts in
+`reference_regions/`, decision record [0039](../spec/decisions/0039-region-limits.md), plan and approved bounds in
+[bench-6-regions.md](../docs/plans/bench-6-regions.md), baseline under 1.6 in
+[bench-set6-baseline.md](../docs/evidence/bench-set6-baseline.md). Pre-registered against 1.6 (iteration I1, step L3) and
+labelled for 1.7 in L4 ([errata](../docs/evidence/bench-errata-1-7.md)): `expect` is the 1.7 label, `expect_1_6` keeps the
+1.6 one (`cannot / inexpressible` for every non-control), and `expect_1_7` holds the paths of a program and the 1.3 world
+facts it rests on (9 `region` programs, 4 `infeasible`, 5 `inexpressible`, 4 `control` programs). The tasks use world file
+1.3 copies (`worlds/*_1_3.json`, built from those facts); the prompt shows, for a 1.3 world, the locations a region
+`contains` and what a robot `honours`. Three older probes were relabelled the same way: `f_path_avoid_wet_floor`,
+`f_path_stay_in_zone`, `f_path_keep_off_road` (set future) and `u09_avoid_quay`, `u10_inside_clean_room` (set ask), group
+`region`.
+
+Two measures on top of the usual ones (0039 B1, B5, B8), in `report.md` and `scores.json`, per model:
+`limit_ok` (a task with `expected_limits: [[kind, region ID], ...]`, an empty list on a control: the valid program
+declares exactly those region limits, the right kind on the right region, none more and none fewer; with
+`expected_speed: [value, unit]` also exactly that `max_speed`; it is one of the task's checks, so `request_satisfied`
+needs it) and `limit_dropped_silently` (a valid program whose run ends SUCCEEDED but that lacks a region limit the
+request asked for, so no other check notices; counted over every answer to those tasks, like `silent_substitution`).
+`tests/test_bench_regions.py` checks the counts, the labels, the worlds, the references (valid, SUCCEEDED on every path,
+exactly their limits), the scorer and the controls. On demand from GitHub Actions: `Benchmark`, `regions: true` (full and
+minimal prompts, 3 repeats, Sonnet and Haiku, `--max-usd 3` each, not gated, not in the per-PR or weekly runs). Locally:
+`python bench/run.py --set regions --repeats 3` (a paid run: confirm it first; estimate ~$3.3 per prompt).

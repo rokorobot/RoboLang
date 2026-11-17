@@ -1,0 +1,8 @@
+{
+  "task": "to_bench",
+  "bindings": {
+    "r": "rover_1",
+    "dst": "bench_1",
+    "door": "door_zone2"
+  }
+}
