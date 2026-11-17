@@ -1,0 +1,72 @@
+{
+  "ir_schema": "robolang.task-ir",
+  "ir_schema_version": "1.8",
+  "language_version": "1.9",
+  "tasks": [
+    {
+      "name": "job_elapsed",
+      "parameters": [
+        {
+          "name": "arm",
+          "type": "robot"
+        },
+        {
+          "name": "box",
+          "type": "object"
+        },
+        {
+          "name": "shelf",
+          "type": "location"
+        },
+        {
+          "name": "table",
+          "type": "location"
+        }
+      ],
+      "safety": [],
+      "preconditions": [],
+      "goal": [
+        {
+          "kind": "object_at",
+          "object": "box",
+          "location": "table"
+        }
+      ],
+      "steps": [
+        {
+          "kind": "move",
+          "robot": "arm",
+          "target": "shelf"
+        },
+        {
+          "kind": "grasp",
+          "robot": "arm",
+          "object": "box"
+        },
+        {
+          "kind": "move",
+          "robot": "arm",
+          "target": "table"
+        },
+        {
+          "kind": "place",
+          "robot": "arm",
+          "object": "box",
+          "target": "table"
+        },
+        {
+          "kind": "read_clock",
+          "robot": "arm",
+          "reading": "elapsed",
+          "binding": "took"
+        },
+        {
+          "kind": "communicate",
+          "robot": "arm",
+          "channel": "ops",
+          "binding": "took"
+        }
+      ]
+    }
+  ]
+}

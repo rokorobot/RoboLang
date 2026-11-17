@@ -1,14 +1,16 @@
 """
 Benchmark set 8, "clock" (bench/tasks_clock/, decision record 0042, plan docs/plans/bench-8-clock.md): clock readings
 (`measure r time as t;`, `measure r elapsed as d;`, `HH:MM[:SS]` literals, `clock_time` / `clock_elapsed` in
-`wait until`), pre-registered against RoboLang 1.8 before any code (L3 of iteration I3). `expect` is the 1.8 label (the
-baseline), `expect_1_9` the label for acceptance.
+`wait until`), pre-registered against RoboLang 1.8 before any code (L3 of iteration I3) and labelled for 1.9 in L4
+(errata docs/evidence/bench-errata-1-9.md). `expect` is the 1.9 label, `expect_1_8` the 1.8 one (the baseline), and
+`expect_1_9` keeps the paths of a program and the world 1.5 facts it rests on.
 
-10 `clock` requests that become programs in 1.9, 5 `infeasible` in 1.9 (0042 T4, T5, T7), 5 `inexpressible` that stay
+10 `clock` requests that are programs in 1.9, 5 `infeasible` in 1.9 (0042 T4, T5, T7), 5 `inexpressible` that stay
 out (0042 T4, T11; G-DATE, G-LOOP, G-CALC), 4 `control` requests that are programs in both versions. 1.8 declines every
 non-control task, and every one has an obvious attempt that 1.8 rejects (`E101`: a time literal, or `E217`: the kind
-`time` / `elapsed`). Only the controls have a 1.8 reference; the 1.9 references wait for L4. No network and no SDK; the
-model run is the `Benchmark` workflow with `clock: true`.
+`time` / `elapsed`); those attempts stay as the evidence of the baseline. The 10 programs and the 4 controls have a 1.9
+reference. The tasks use world file 1.5 copies. No network and no SDK; the model run is the `Benchmark` workflow with
+`clock: true`.
 """
 
 from __future__ import annotations
@@ -36,6 +38,10 @@ CONTROLS = {t: d for t, d in SET.items() if d["group"] == "control"}
 DECLINED = {**PROGRAMS, **INFEASIBLE, **INEXPRESSIBLE}  # what 1.8 must decline: an attempt each, a gap each
 CLOCK_LINE = re.compile(r"^[^\n]*// @clock\n", re.M)  # an attempt marks every line that is the clock part
 WORLDS_NOT_1_5 = ("1.1", "1.2", "1.3", "1.4")
+COPIES = {"k01": "warehouse_1_5_1420", "k02": "fulfilment_1_5_2105", "k03": "yard_1_5_0430", "k04": "example_1_5",
+          "k05": "warehouse_1_5_0940", "k06": "fulfilment_1_5_1930", "k07": "ward_1_5_1630", "k08": "site_1_5_1540",
+          "k09": "fry_station_at_fryer_1_5", "k10": "site_1_5_2220", "i01": "lab_1_5", "i02": "warehouse_1_5_0915",
+          "i03": "yard_1_5_2130", "i04": "example_1_5", "i05": "warehouse_1_5_0915"}  # task prefix -> its world copy
 
 
 def read(path: Path) -> str:
@@ -88,30 +94,36 @@ def test_the_ids_are_new_ones_and_no_prompt_is_a_copy_of_a_standing_task():
     assert not {t["prompt"] for t in SET.values()} & {t["prompt"] for t in elsewhere.values()}
 
 
-def test_labels_are_1_8_in_expect_and_1_9_in_expect_1_9():
+def test_labels_are_1_9_in_expect_and_1_8_in_expect_1_8():
     for task_id, task in SET.items():
         assert task["expect_1_9"]["decision"] in ("program", "cannot"), task_id
         if task["group"] == "control":
             assert task["expect"] == {"decision": "program"} and lib.expected_goals(task), task_id
             assert task["expect_1_9"] == {"decision": "program"} and task["expected_clock"] == []
-            assert not {"why", "attempt_fails_with", "gap", "blockers"} & set(task)
+            assert not {"why", "attempt_fails_with", "gap", "blockers", "expect_1_8"} & set(task)
             continue
-        assert task["expect"] == CANNOT and lib.expectation(task) == ("cannot", "inexpressible"), task_id
+        assert task["expect_1_8"] == CANNOT, task_id  # the baseline label, as pre-registered
+        later = task["expect_1_9"]
+        assert task["expect"] == {k: later[k] for k in ("decision", "category") if k in later}, task_id
         assert len(task["why"]) > 40 and task["attempt_fails_with"] in ("E101", "E217"), task_id
-        assert not {"expected_goal", "expected_goals", "expect_1_8", "expect_1_7"} & set(task)
+        assert not {"expected_goal", "expected_goals", "expect_1_7"} & set(task)
     for task_id, task in PROGRAMS.items():
         later = task["expect_1_9"]
+        assert task["expect"] == {"decision": "program"} and lib.expectation(task) == ("program", "none"), task_id
         assert later["decision"] == "program" and later["paths"] and "category" not in later
+        assert lib.task_paths(task) == later["paths"]
         assert "world_1_5" in later and task["expected_clock"], task_id
         for path in later["paths"]:
-            assert path["when"] and ("goal" in path or path.get("fails")) and "world_patch" in path, task_id
+            has_goal = "goal" in path or "goals" in path  # "goals": defensible readings (erratum K2)
+            assert path["when"] and (has_goal or path.get("fails")) and "world_patch" in path, task_id
     for task_id, task in INFEASIBLE.items():
         later = task["expect_1_9"]
+        assert task["expect"] == {"decision": "cannot", "category": "infeasible"}, task_id
         assert later["decision"] == "cannot" and later["category"] == "infeasible", task_id
         assert later["because"] in ("0042 T4", "0042 T5", "0042 T7") and task["blockers"], task_id
     for task_id, task in INEXPRESSIBLE.items():
         later = task["expect_1_9"]
-        assert {k: later[k] for k in ("decision", "category")} == CANNOT, task_id
+        assert task["expect"] == CANNOT and {k: later[k] for k in ("decision", "category")} == CANNOT, task_id
         assert later["because"] in ("0042 T4", "0042 T11"), task_id
     reasons = sorted(t["expect_1_9"]["because"] for t in INFEASIBLE.values())
     assert reasons == ["0042 T4", "0042 T4", "0042 T5", "0042 T7", "0042 T7"]
@@ -185,26 +197,42 @@ def test_the_inexpressible_tasks_each_stay_out_for_one_reason_of_0042_t11():
     assert [d["gap"] for _, d in sorted(INEXPRESSIBLE.items())] == ["G-LOOP", "G-DATE", "G-CALC", "G-CALC", "G-DATE"]
 
 
-def test_no_new_world_1_4_file_and_at_most_two_new_world_files():
-    """1.5 facts (`clock`) are recorded in the labels only: L4 writes the world copies. The one new world is a 1.2
-    copy of fry_station with flippy1 at the fryer (k09: the wait is the first step)."""
-    existing = {p.name for p in (REPO / "bench" / "worlds").glob("*.json")}
-    worlds = {Path(t["world"]).name for t in SET.values()}
-    new = {"fry_station_at_fryer.json"}
-    assert new <= existing and len(new) <= 2
-    for name in worlds - new:
-        assert name in existing or (REPO / "examples" / name).is_file() or name == "world.json", name
+def test_the_worlds_are_1_5_copies_with_only_the_clock_added():
+    """The 1.5 facts of a label (`expect_1_9.world_1_5`) are written as world file 1.5 copies: the base world with the
+    version moved to 1.5 and a `clock` (or none), and nothing else. The controls and the inexpressible tasks keep their
+    worlds; `k09`'s base is the 1.2 copy of fry_station with flippy1 at the fryer."""
     for task_id, task in SET.items():
-        text = read(REPO / task["world"])
-        data = json.loads(text)
-        assert data["world_schema_version"] in WORLDS_NOT_1_5, task_id
-        assert '"clock"' not in text, task_id  # the 1.5 field: no world file has it yet
+        prefix = task_id[:3]
+        if prefix not in COPIES:
+            assert json.loads(read(REPO / task["world"]))["world_schema_version"] in WORLDS_NOT_1_5, task_id
+            assert "world_1_5" not in task["expect_1_9"] or task["group"] == "control", task_id
+            continue
+        assert task["world"] == f"bench/worlds/{COPIES[prefix]}.json", task_id
+        world = json.loads(read(REPO / task["world"]))
+        note = task["expect_1_9"]["world_1_5"]
+        assert world["world_schema_version"] == "1.5" and world["tasks"] == {}, task_id
+        assert world.get("clock") == note["clock"], task_id  # None: the world has no clock
         assert "world_1_5" not in task and "world_1_5" not in task["expect"], task_id
+    bases = {"lab_1_5": "bench/worlds/lab.json", "warehouse_1_5_1420": "bench/worlds/warehouse.json",
+             "warehouse_1_5_0940": "bench/worlds/warehouse.json", "warehouse_1_5_0915": "bench/worlds/warehouse.json",
+             "fulfilment_1_5_2105": "bench/worlds/fulfilment.json",
+             "fulfilment_1_5_1930": "bench/worlds/fulfilment.json",
+             "yard_1_5_0430": "bench/worlds/yard.json", "yard_1_5_2130": "bench/worlds/yard.json",
+             "example_1_5": "examples/world.json", "site_1_5_2220": "bench/worlds/site.json",
+             "ward_1_5_1630": "bench/worlds/ward_1_4.json", "site_1_5_1540": "bench/worlds/site_1_3.json",
+             "fry_station_at_fryer_1_5": "bench/worlds/fry_station_at_fryer.json"}
+    for name, base_file in bases.items():
+        copy, base = (json.loads(read(REPO / f"bench/worlds/{name}.json")), json.loads(read(REPO / base_file)))
+        copy.pop("clock", None)
+        copy["world_schema_version"] = base["world_schema_version"]
+        if base_file == "examples/world.json":  # the bench copy carries no task entries (the answer binds)
+            base["tasks"] = {}
+        assert copy == base, name
     base, copy = json.loads(read(REPO / "bench/worlds/fry_station.json")), json.loads(
         read(REPO / "bench/worlds/fry_station_at_fryer.json"))
     copy["robots"]["flippy1"]["location"] = "prep_table"
     assert copy == base
-    for task_id, task in DECLINED.items():  # the world note of a 1.9 label: a `clock`, or no clock at all
+    for task_id, task in SET.items():  # the world note of a 1.9 label: a `clock`, or no clock at all
         note = task["expect_1_9"].get("world_1_5")
         if note is None:
             continue
@@ -235,7 +263,7 @@ def test_references_and_attempts_are_where_they_should_be():
     names = [p.name for p in REF.iterdir()]
     refs = {n.split(".")[0] for n in names if ".attempt" not in n}
     attempts = {n.split(".")[0] for n in names if ".attempt." in n}
-    assert refs == set(CONTROLS) and attempts == set(DECLINED)  # no 1.9 reference yet: that is L4
+    assert refs == set(CONTROLS) | set(PROGRAMS) and attempts == set(DECLINED)  # the 1.8 attempts are the baseline
     for task_id in DECLINED:
         assert (REF / f"{task_id}.attempt.rob").is_file() and (REF / f"{task_id}.attempt.json").is_file()
     for name in names:
@@ -271,17 +299,20 @@ def test_each_attempt_uses_the_one_construct_the_request_needs():
 
 @pytest.mark.parametrize("task_id", sorted(DECLINED))
 def test_no_probe_is_a_bug_in_disguise(task_id):
-    """An attempt fails for its clock part: without it, it is a valid 1.8 program in the task's world that ends
-    SUCCEEDED. That program is the silent replacement a model may write (a guessed `wait for`, a fixed message, or
-    nothing in place of the time), and it is what the baseline counts as a false program (the plan's B8)."""
+    """An attempt fails under 1.8 for its clock part: without it, it is a valid 1.8 program in the task's world that
+    ends SUCCEEDED. That program is the silent replacement a model may write (a guessed `wait for`, a fixed message, or
+    nothing in place of the time), and the scorer counts it: `time_replaced` for a program task (the plan's B8)."""
+    task = DECLINED[task_id]
     answer = attempt_answer(task_id, strip=True)
     assert "clock_time" not in answer["rob"] and "measure r time" not in answer["rob"]
     assert "measure r elapsed" not in answer["rob"]
-    checked = lib.check_answer(DECLINED[task_id], answer)
+    checked = lib.check_answer(task, answer)
     assert checked.valid, (task_id, checked.report)
     assert checked.language_version == "1.8"
-    judgement = lib.judge(dict(DECLINED[task_id], goal_free=True), checked, answer["bindings"])
-    assert judgement.plan_succeeds, (task_id, judgement.state, judgement.failure_code)
+    judgement = lib.judge(dict(task, goal_free=True), checked, answer["bindings"])
+    assert judgement.state == "SUCCEEDED", (task_id, judgement.state, judgement.failure_code)
+    if task_id in PROGRAMS:
+        assert judgement.time_replaced and judgement.clock_ok is False, task_id
 
 
 def test_the_stripped_attempt_of_a_cutoff_task_drops_the_condition_and_the_else_path():
@@ -311,15 +342,15 @@ def test_the_attempt_binds_the_entities_the_request_names():
 def test_the_control_reference_is_valid_exports_an_accepted_goal_and_succeeds_on_every_path(task_id):
     task = CONTROLS[task_id]
     answer = reference(task_id)
-    assert answer["rob"].count("robolang 1.8;") == 1 and answer["rob"].isascii()
+    assert answer["rob"].count("robolang 1.9;") == 1 and answer["rob"].isascii()
     body = answer["rob"].split("\n", 1)[1]
     assert not re.search(r"clock_time|clock_elapsed|measure r (time|elapsed)|\d\d:\d\d", body)
     checked = lib.check_answer(task, answer)
     assert checked.valid, checked.report
-    assert checked.language_version == "1.8"
+    assert checked.language_version == "1.9"
     judgement = lib.judge(task, checked, answer["bindings"])
     assert judgement.goal_correct and judgement.plan_succeeds, (judgement.state, judgement.failure_code)
-    assert not judgement.half_program
+    assert not judgement.half_program and judgement.clock_ok is True and judgement.time_replaced is None
     if "expected_readings" in task:
         assert judgement.value_ok
 
@@ -338,15 +369,19 @@ def test_the_controls_are_a_move_a_wait_for_and_a_measure_and_want_no_clock_read
 
 # -------- the atlas --------
 
-def test_every_task_1_8_declines_is_in_exactly_one_atlas_gap_and_no_control_is():
+def test_the_atlas_keeps_what_1_9_still_declines_and_g_clock_stays_open_until_l6():
+    """As for set 7 at 0040 L4: a gap lists the tasks that are still inexpressible, so G-CLOCK, which 1.9 expresses,
+    lists none and stays open until the acceptance run (L5) and closes at L6; the five that stay out are in their own
+    gaps."""
     in_gaps = [(t, g["id"]) for g in ATLAS["gaps"] for t in g["tasks"] if t in SET]
-    assert len(in_gaps) == len({t for t, _ in in_gaps}) == len(DECLINED)
-    assert {t for t, _ in in_gaps} == set(DECLINED)
+    assert {t for t, _ in in_gaps} == set(INEXPRESSIBLE) and len(in_gaps) == len(INEXPRESSIBLE)
     for task_id, gap in in_gaps:
-        assert DECLINED[task_id]["gap"] == gap and GAPS[gap]["scope"] == "open"
-    assert Counter(gap for _, gap in in_gaps) == {"G-CLOCK": 15, "G-DATE": 2, "G-LOOP": 1, "G-CALC": 2}
-    assert {t["gap"] for t in INEXPRESSIBLE.values()} == {"G-DATE", "G-LOOP", "G-CALC"}
+        assert INEXPRESSIBLE[task_id]["gap"] == gap and GAPS[gap]["scope"] == "open"
+    assert Counter(gap for _, gap in in_gaps) == {"G-DATE": 2, "G-LOOP": 1, "G-CALC": 2}
     assert {t["gap"] for t in PROGRAMS.values()} | {t["gap"] for t in INFEASIBLE.values()} == {"G-CLOCK"}
+    assert GAPS["G-CLOCK"]["scope"] == "open" and GAPS["G-CLOCK"]["tasks"] == []
+    assert "L5" in GAPS["G-CLOCK"]["scope_note"] and "closes at L6" in GAPS["G-CLOCK"]["scope_note"]
+    assert not {c for c in CONTROLS} & {t for g in ATLAS["gaps"] for t in g["tasks"]}
 
 
 # -------- the scorer and the workflow --------
@@ -363,29 +398,160 @@ def clock_run(tmp_path: Path, replies: dict) -> Path:
     return out_dir
 
 
-def test_the_scorer_counts_a_silent_replacement_as_false_and_a_decline_of_a_control_as_a_refusal(tmp_path):
+def test_the_scorer_counts_clock_ok_time_replaced_and_a_decline_of_a_control_as_a_refusal(tmp_path):
     replies = {
-        "k01_scan_stamp": decline(),                                        # right under 1.8
-        "i01_stamp_no_clock": decline("infeasible"),                        # declined, category differs (reported only)
-        "k03_wait_for_0530": attempt_answer("k03_wait_for_0530", strip=True),  # a move for a wait: a false program
-        "c01_plain_two_moves": reference("c01_plain_two_moves"),            # right
-        "c02_wait_30_seconds": decline(),                                   # false refusal of a control
+        "k01_scan_stamp": reference("k01_scan_stamp"),                       # right: the time is read and sent
+        "i01_stamp_no_clock": decline("infeasible"),                         # right: the world has no clock
+        "k03_wait_for_0530": attempt_answer("k03_wait_for_0530", strip=True),  # the wait left out: time replaced
+        "k02_shift_cutoff": decline(),                                       # a false refusal of a program task
+        "c01_plain_two_moves": reference("c01_plain_two_moves"),             # right
+        "c02_wait_30_seconds": decline(),                                    # false refusal of a control
     }
     out_dir = clock_run(tmp_path, replies)
     meta, rows = score.load_rows(out_dir)
     by = {r["task_id"]: r for r in rows}
     assert meta["set"] == "clock" and meta["prompt"] == "full"
-    assert by["k01_scan_stamp"]["decision_correct"] and by["k01_scan_stamp"]["category_correct"]
+    assert by["k01_scan_stamp"]["decision_correct"] and by["k01_scan_stamp"]["clock_ok"] is True
+    assert by["k01_scan_stamp"]["time_replaced"] is False and by["k01_scan_stamp"]["request_satisfied"]
     declined = by["i01_stamp_no_clock"]
-    assert declined["decision_correct"] and declined["category_correct"] is False
-    assert by["k03_wait_for_0530"]["false_program"] and not by["k03_wait_for_0530"]["decision_correct"]
-    assert by["c01_plain_two_moves"]["decision_correct"] and by["c01_plain_two_moves"]["goal_correct"]
+    assert declined["decision_correct"] and declined["category_correct"] is True
+    assert declined["clock_ok"] is None and declined["time_replaced"] is None  # nothing asked of the clock
+    replaced = by["k03_wait_for_0530"]
+    assert replaced["clock_ok"] is False and replaced["time_replaced"] is True and not replaced["request_satisfied"]
+    assert by["k02_shift_cutoff"]["false_refusal"] and by["k02_shift_cutoff"]["clock_ok"] is False
+    assert by["c01_plain_two_moves"]["decision_correct"] and by["c01_plain_two_moves"]["clock_ok"] is True
+    assert by["c01_plain_two_moves"]["time_replaced"] is None
     assert by["c02_wait_30_seconds"]["false_refusal"] and not by["c02_wait_30_seconds"]["decision_correct"]
     text = score.score_dir(out_dir)
     assert "Task set clock, prompt full." in text
+    assert ("| clock_ok (exactly the clock readings asked, none on a control; all answers to those tasks) "
+            "| 2/5 |") in text
+    assert ("| time_replaced_silently (valid, SUCCEEDED, an asked time condition or wait missing; all answers to "
+            "tasks that ask for one) | 1/3 |") in text
     kinds = text.split("By kind of task:")[1]
     for kind in ("clock", "infeasible", "control"):
         assert f"| {kind} |" in kinds
+
+
+def judged(task_id: str, rob: str):
+    task = SET[task_id]
+    answer = reference(task_id)
+    answer["rob"] = rob
+    checked = lib.check_answer(task, answer)
+    assert checked.valid, (task_id, checked.report)
+    return lib.judge(task, checked, answer["bindings"])
+
+
+CUTOFF = read(REF / "k02_shift_cutoff.rob")
+SWAPPED = CUTOFF.replace("if now < 21:30 {", "if now >= 21:30 {").replace(
+    "            move r to src;\n            grasp r tote;\n            move r to dst;\n"
+    "            place r tote at dst;\n        } else {\n"
+    '            communicate r to "lead" with "after cutoff";\n            fail "after the cutoff";\n',
+    '            communicate r to "lead" with "after cutoff";\n            fail "after the cutoff";\n'
+    "        } else {\n"
+    "            move r to src;\n            grasp r tote;\n            move r to dst;\n"
+    "            place r tote at dst;\n")
+
+
+def test_clock_ok_accepts_the_test_with_its_branches_swapped_the_paths_decide():
+    assert SWAPPED != CUTOFF and "if now >= 21:30 {" in SWAPPED
+    for rob in (CUTOFF, SWAPPED):
+        j = judged("k02_shift_cutoff", rob)
+        assert j.clock_ok and j.goal_correct and j.plan_succeeds and not j.half_program
+
+
+def test_clock_ok_rejects_another_time_another_operator_a_second_reading_or_the_wrong_robot_channel_or_order():
+    assert not judged("k02_shift_cutoff", CUTOFF.replace("21:30", "21:45")).clock_ok
+    assert not judged("k02_shift_cutoff", CUTOFF.replace("now < 21:30", "now <= 21:30")).clock_ok
+    extra = CUTOFF.replace("measure r time as now;", "measure r time as now;\n        measure r elapsed as spare;")
+    assert not judged("k02_shift_cutoff", extra).clock_ok
+    scan = read(REF / "k01_scan_stamp.rob")
+    assert judged("k01_scan_stamp", scan).clock_ok
+    assert not judged("k01_scan_stamp", scan.replace('to "lead"', 'to "ops"')).clock_ok
+    assert not judged("k01_scan_stamp", scan.replace("measure r time as now;", "measure r elapsed as now;")).clock_ok
+    inspected = "        move r to shelf;\n        inspect r box using camera;\n"
+    early = scan.replace(f"{inspected}        measure r time as now;\n", f"        measure r time as now;\n{inspected}")
+    assert early != scan and not judged("k01_scan_stamp", early).clock_ok  # `after: inspect`
+
+
+def test_a_wait_is_compared_by_time_operator_and_timeout_in_durations_an_hour_is_60_min():
+    two = read(REF / "k06_two_robots_at_2000.rob")
+    assert judged("k06_two_robots_at_2000", two).clock_ok
+    assert not judged("k06_two_robots_at_2000", two.replace("timeout 60 min", "timeout 90 min")).clock_ok
+    assert not judged("k06_two_robots_at_2000", two.replace(">= 20:00", "> 20:00")).clock_ok
+    assert not judged("k06_two_robots_at_2000", two.replace("clock_time >= 20:00", "clock_time >= 20:00:30")).clock_ok
+    for name in ("k03_wait_for_0530", "k10_decoy_11_pm"):
+        assert judged(name, read(REF / f"{name}.rob")).clock_ok
+    assert not judged("k03_wait_for_0530", read(REF / "k03_wait_for_0530.rob").replace("05:30", "11:00")).clock_ok
+    # the 11 pm decoy: 23:00, never 11:00. At the 22:20 start 11:00 has passed, so the check before the run (K3,
+    # `S010`) stops it: it is not a program that moves at once with no error
+    decoy = reference("k10_decoy_11_pm")
+    decoy["rob"] = decoy["rob"].replace("23:00", "11:00")
+    caught = lib.check_answer(SET["k10_decoy_11_pm"], decoy)
+    assert not caught.valid and caught.codes == ("S010",)
+    assert lib._ms("1 h") == lib._ms("60 min") == 3600000 and lib._ms("2 h") == lib._ms("120 min")
+
+
+def test_a_clock_on_a_control_is_not_clock_ok_and_a_relative_wait_is_not_a_clock():
+    control = read(REF / "c01_plain_two_moves.rob")
+    with_time = control.replace("        move r to a;", "        measure r time as now;\n        move r to a;")
+    assert judged("c01_plain_two_moves", control).clock_ok is True
+    assert judged("c01_plain_two_moves", with_time).clock_ok is False
+    waited = read(REF / "c02_wait_30_seconds.rob")
+    assert "wait for 30 s;" in waited and judged("c02_wait_30_seconds", waited).clock_ok is True
+    live = waited.replace("wait for 30 s;", 'wait until clock_elapsed >= 30 s timeout 1 min else { fail "x"; }')
+    assert live != waited and judged("c02_wait_30_seconds", live).clock_ok is False
+
+
+def test_time_replaced_is_a_valid_succeeding_program_that_lacks_the_time_asked_b8():
+    none = ("robolang 1.9;\n\ntask move_tote(robot r, object tote, location src, location dst) {\n"
+            "    goal { object_at tote dst; }\n    plan {\n        move r to src;\n        grasp r tote;\n"
+            "        move r to dst;\n        place r tote at dst;\n    }\n}\n")
+    j = judged("k02_shift_cutoff", none)
+    assert j.time_replaced and not j.clock_ok and j.state == "SUCCEEDED"  # the first path moves the tote
+    wait = read(REF / "k03_wait_for_0530.rob")
+    guessed = wait.replace('wait until clock_time >= 05:30 timeout 90 min else { fail "05:30 did not come in time"; }',
+                           "wait for 60 min;")
+    assert guessed != wait and judged("k03_wait_for_0530", guessed).time_replaced
+    fixed = read(REF / "k01_scan_stamp.rob").replace("measure r time as now;", "").replace(
+        'communicate r to "lead" with now;', 'communicate r to "lead" with "14:20";')
+    assert judged("k01_scan_stamp", fixed).time_replaced
+    # a right program, or a wrong comparison of a time that is there, is not a replacement
+    assert judged("k02_shift_cutoff", CUTOFF).time_replaced is False
+    assert judged("k02_shift_cutoff", CUTOFF.replace("21:30", "21:45")).time_replaced is False
+    assert judged("c01_plain_two_moves", read(REF / "c01_plain_two_moves.rob")).time_replaced is None
+
+
+def test_every_1_9_reference_is_valid_exact_and_right_on_every_path_under_world_1_5():
+    for task_id, task in PROGRAMS.items():
+        answer = reference(task_id)
+        assert answer["rob"].count("robolang 1.9;") == 1 and answer["rob"].isascii(), task_id
+        body = answer["rob"].split("\n", 1)[1]
+        assert "// @clock" not in body and not re.search(r"timeout \d+ h\b", body), task_id
+        checked = lib.check_answer(task, answer)
+        assert checked.valid and checked.language_version == "1.9", (task_id, checked.report)
+        assert json.loads(read(REPO / task["world"]))["world_schema_version"] == "1.5"
+        j = lib.judge(task, checked, answer["bindings"])
+        assert j.goal_correct and j.plan_succeeds and j.clock_ok and j.time_replaced is False, task_id
+        assert len(j.paths) == len(task["expect_1_9"]["paths"])
+        for path, expected in zip(j.paths, task["expect_1_9"]["paths"]):
+            assert path["goal_ok"] and path["plan_ok"], (task_id, path)
+            assert (path["state"] == "FAILED") == bool(expected.get("fails")), (task_id, path)
+        assert not j.half_program
+        if task_id == "k07_time_and_open":
+            assert j.actions_ok
+        if task_id == "k08_time_and_no_go":
+            assert j.limit_ok
+
+
+def test_the_model_is_shown_the_clock_start_and_zone_or_that_the_world_has_none_k9():
+    shown = lib.user_message(SET["k03_wait_for_0530"])
+    assert "clock: the task starts at 2026-11-17 04:30:00 (Europe/Prague)" in shown
+    for task_id in ("i01_stamp_no_clock", "i04_wait_for_time_no_clock", "k04_job_elapsed", "k09_heating_time"):
+        assert "clock: none (this world has no clock)" in lib.user_message(SET[task_id]), task_id
+    for task_id in ("c01_plain_two_moves", "x02_tomorrow_at_0100"):  # a world file older than 1.5 shows no clock line
+        assert "clock:" not in lib.user_message(SET[task_id]), task_id
+    assert "can do no declared action" in lib.user_message(SET["k03_wait_for_0530"])
 
 
 def test_the_set_is_in_the_run_script_and_only_runs_on_demand_in_the_workflow():

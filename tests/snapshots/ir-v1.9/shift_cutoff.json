@@ -1,0 +1,97 @@
+{
+  "ir_schema": "robolang.task-ir",
+  "ir_schema_version": "1.8",
+  "language_version": "1.9",
+  "tasks": [
+    {
+      "name": "shift_cutoff",
+      "parameters": [
+        {
+          "name": "r",
+          "type": "robot"
+        },
+        {
+          "name": "tote",
+          "type": "object"
+        },
+        {
+          "name": "inb",
+          "type": "location"
+        },
+        {
+          "name": "outb",
+          "type": "location"
+        }
+      ],
+      "safety": [],
+      "preconditions": [],
+      "goal": [],
+      "steps": [
+        {
+          "kind": "read_clock",
+          "robot": "r",
+          "reading": "time",
+          "binding": "now"
+        },
+        {
+          "kind": "if",
+          "condition": {
+            "kind": "compare",
+            "left": {
+              "kind": "binding",
+              "name": "now"
+            },
+            "op": "<",
+            "right": {
+              "kind": "time",
+              "value": "21:30:00"
+            }
+          },
+          "then": [
+            {
+              "kind": "move",
+              "robot": "r",
+              "target": "inb"
+            },
+            {
+              "kind": "grasp",
+              "robot": "r",
+              "object": "tote"
+            },
+            {
+              "kind": "move",
+              "robot": "r",
+              "target": "outb"
+            },
+            {
+              "kind": "place",
+              "robot": "r",
+              "object": "tote",
+              "target": "outb"
+            }
+          ],
+          "else": [
+            {
+              "kind": "communicate",
+              "robot": "r",
+              "channel": "lead",
+              "message": "after cutoff"
+            },
+            {
+              "kind": "fail",
+              "reason": "the shift has ended"
+            }
+          ],
+          "goal_then": [
+            {
+              "kind": "object_at",
+              "object": "tote",
+              "location": "outb"
+            }
+          ],
+          "goal_else": null
+        }
+      ]
+    }
+  ]
+}

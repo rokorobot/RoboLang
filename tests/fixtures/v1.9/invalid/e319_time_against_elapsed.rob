@@ -1,0 +1,14 @@
+// RoboLang v1.9 fixture: invalid
+// expect: error E319 (static) line 12
+// why: kinds never mix: a time binding against an elapsed binding (T3)
+
+robolang 1.9;
+
+task t(robot r, location a) {
+    goal { robot_at r a; }
+    plan {
+        measure r time as now;
+        measure r elapsed as took;
+        if now < took { move r to a; } else { fail "x"; }
+    }
+}

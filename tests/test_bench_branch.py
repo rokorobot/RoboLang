@@ -6,7 +6,9 @@ labelled for RoboLang 1.4 in N4 PR 3.
 `expect_1_4.paths`: the goal and the world patch of every path; the reference is the 1.4 program), 8 requests that stay
 inexpressible in 1.4, and 8 conditional-sounding requests that 1.3 already expresses with `pre` or `wait until`.
 One of the 8, `x_failover_on_fault`, is a program in 1.5 (decision 0035 E2): group `recover`, `expect_1_4` keeps the
-old label and `expect_1_5` holds its paths.
+old label and `expect_1_5` holds its paths. Another, `x_report_duration`, is a program in 1.9 (decision 0042, errata
+docs/evidence/bench-errata-1-9.md): group `clock`, `expect_1_4` keeps the old label and `expect_1_9` holds its path and
+the world file 1.5 facts it rests on.
 No network and no SDK.
 """
 
@@ -52,7 +54,7 @@ def judged(task_id: str, answer: dict):
 def test_the_mix_of_tasks():
     assert len(SET) == 36
     groups = Counter(d["group"] for d in SET.values())
-    assert groups == {"branching": 20, "inexpressible": 7, "control": 8, "recover": 1}
+    assert groups == {"branching": 20, "inexpressible": 6, "control": 8, "recover": 1, "clock": 1}
     for task_id, task in SET.items():
         assert task["id"] == task_id and (REPO / task["world"]).is_file() and task["tags"]
         assert task["prompt"].endswith(".") and "expect_1_4" in task
@@ -80,6 +82,12 @@ def test_expectations_are_well_formed():
             assert (decision, category) == ("program", "none") and task["expect"] == {"decision": "program"}
             assert later == {"decision": "cannot", "category": "inexpressible"}
             assert task["expect_1_5"]["decision"] == "program" and len(task["expect_1_5"]["paths"]) >= 2
+            continue
+        if task["group"] == "clock":  # 0042: a program in 1.9 only
+            assert (decision, category) == ("program", "none") and task["expect"] == {"decision": "program"}
+            assert later == {"decision": "cannot", "category": "inexpressible"} and task["expect_1_8"] == later
+            assert task["expect_1_9"]["decision"] == "program" and len(task["expect_1_9"]["paths"]) == 1
+            assert task["world"] == "bench/worlds/example_1_5.json" and task["expected_clock"]
             continue
         if task["group"] == "inexpressible":
             assert (decision, category) == ("cannot", "inexpressible")

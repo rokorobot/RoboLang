@@ -1,0 +1,11 @@
+// bench/reference_actions/x05_open_at_six.rob: hand-written reference
+robolang 1.9;
+
+task open_oven_at_six(robot r, object door, location oven) {
+    goal { in_state door "open"; }
+    plan {
+        wait until clock_time >= 06:00 timeout 60 min else { fail "06:00 did not come in time"; }
+        move r to oven;
+        do r open door;
+    }
+}

@@ -14,6 +14,8 @@ from collections.abc import Mapping
 from .. import ir
 from .executor import RunResult
 from .outcome import core_outcome
+from ..tokens import CLOCK_KINDS
+from .clock import clock_text
 from .values import ms_text
 from .world import WORLD_SCHEMA_VERSION
 
@@ -22,7 +24,7 @@ RUN_RECORD_SCHEMA_VERSION = "1.0"
 # Language version -> run record schema version (robolang-v1.2.md section 8.3; v1.3 section 8.3).
 RUN_RECORD_SCHEMA_VERSIONS = {
     "1.1": "1.0", "1.2": "1.1", "1.3": "1.2", "1.4": "1.3", "1.5": "1.4", "1.6": "1.5", "1.7": "1.6",
-    "1.8": "1.7",
+    "1.8": "1.7", "1.9": "1.8",
 }
 SEED = re.compile(r"[A-Za-z0-9._-]{1,64}")
 DEFAULT_SEED = "0"
@@ -90,6 +92,7 @@ def _reading(reading) -> dict | None:
         **({"unit": reading.unit, "uncertainty": ir.decimal_text(reading.uncertainty)} if quantity else {}),
         "sensor": reading.sensor,
         "t_ms": ms_text(reading.t_ms),
+        **({"text": clock_text(reading.kind, reading.value)} if reading.kind in CLOCK_KINDS else {}),
     }
 
 
@@ -210,6 +213,7 @@ def to_record(
     world_schema_version: str = WORLD_SCHEMA_VERSION,
     source_kind: str = "source",
     core: str = "0.1",
+    world_clock=None,
 ) -> dict:
     """
     The run record (section 5) as a dict with the key order of the specification: schema 1.0
@@ -221,7 +225,9 @@ def to_record(
     message: the typed value of a measurement, or null), 1.6 for a 1.7 source (the same shape: it embeds Task IR 1.6,
     and `safety_limits` may hold region limits with the status `checked_against_world_not_enforced`), 1.7 for a 1.8
     source (adds `action` after `message` on every step: what a `do` requested, with the status `requested`, or null;
-    `state` on every `final_world` object, and `final_world.location_states`).
+    `state` on every `final_world` object, and `final_world.location_states`), 1.8 for a 1.9 source (embeds Task IR
+    1.8; `inputs.world_clock` after `world_schema_version`: the world's `start` and `zone`, or null; a reading of
+    `time` or `elapsed` has a `text` after `t_ms`, as it is sent in a message: `HH:MM:SS` or `37 s`).
     """
     inputs = {
         "source_sha256": source_sha256,
@@ -233,12 +239,14 @@ def to_record(
         "ir_schema_version": ir.IR_SCHEMA_VERSIONS[language_version],
         "world_schema_version": world_schema_version,
     }
+    if language_version == "1.9":
+        inputs["world_clock"] = None if world_clock is None else {"start": world_clock.start, "zone": world_clock.zone}
     if bindings_source != "world":  # a record without the key has world-file bindings (section 5.1)
         inputs["bindings_source"] = bindings_source
-    branching = language_version in ("1.4", "1.5", "1.6", "1.7", "1.8")
-    handlers = language_version in ("1.5", "1.6", "1.7", "1.8")
-    values = language_version in ("1.6", "1.7", "1.8")
-    actions = language_version == "1.8"
+    branching = language_version in ("1.4", "1.5", "1.6", "1.7", "1.8", "1.9")
+    handlers = language_version in ("1.5", "1.6", "1.7", "1.8", "1.9")
+    values = language_version in ("1.6", "1.7", "1.8", "1.9")
+    actions = language_version in ("1.8", "1.9")
     return {
         "run_record_schema": RUN_RECORD_SCHEMA,
         "run_record_schema_version": RUN_RECORD_SCHEMA_VERSIONS[language_version],

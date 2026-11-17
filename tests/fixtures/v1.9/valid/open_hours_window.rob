@@ -1,0 +1,20 @@
+// RoboLang v1.9 fixture: valid
+// expect: ok
+// why: a time window with and, seconds in a time literal (T2, T3)
+
+robolang 1.9;
+
+task open_hours(robot r, object part, location src, location dst) {
+    plan {
+        measure r time as now;
+        if now >= 08:00 and now < 18:00:00 {
+            goal { object_at part dst; }
+            move r to src;
+            grasp r part;
+            move r to dst;
+            place r part at dst;
+        } else {
+            fail "outside open hours";
+        }
+    }
+}

@@ -1,9 +1,13 @@
 {
   "id": "i04_wait_for_time_no_clock",
   "prompt": "At 14:00, have arm1 move box1 from the shelf to the table. Wait up to 12 hours for 14:00 and, if it has not come by then, stop the job as failed.",
-  "world": "examples/world.json",
+  "world": "bench/worlds/example_1_5.json",
   "group": "infeasible",
   "expect": {
+    "decision": "cannot",
+    "category": "infeasible"
+  },
+  "expect_1_8": {
     "decision": "cannot",
     "category": "inexpressible"
   },

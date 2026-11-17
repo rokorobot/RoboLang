@@ -66,7 +66,7 @@ simulation result is not evidence that a task is safe on hardware.
 
 | Area | State |
 |---|---|
-| Language 1.1 to 1.7, validator, Task IR 1.0 to 1.6 | Delivered; 1.4, 1.5 and 1.6 accepted on benchmark sets 3, 4 and 5; 1.7 (region limits) is accepted on set 6; 1.8 (declared actions) is built and taught in the repository, its acceptance run on set 7 is next |
+| Language 1.1 to 1.9, validator, Task IR 1.0 to 1.8 | Delivered; 1.4 to 1.8 accepted on benchmark sets 3 to 7 (1.8, declared actions, on set 7); 1.9 (clock readings) is built and taught in the repository, its acceptance run on set 8 is next |
 | Symbolic simulation (`simulate`, `validate --world`) | Delivered |
 | Core 0.1 reference simulation | Implemented, gate 1 signed off 2026-10-27 |
 | Core 0.2 | Frozen 2026-10-30, opt-in with `--core 0.2` |

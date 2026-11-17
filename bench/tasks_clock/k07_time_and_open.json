@@ -1,9 +1,12 @@
 {
   "id": "k07_time_and_open",
   "prompt": "With moxi1, open closet_door and take iv_kit_1 from the supply closet to room_412, but only if it is before 18:00. If it is 18:00 or later, send \"supplies closed\" to channel \"charge_nurse\" from moxi1 and stop the job as failed.",
-  "world": "bench/worlds/ward_1_4.json",
+  "world": "bench/worlds/ward_1_5_1630.json",
   "group": "clock",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_8": {
     "decision": "cannot",
     "category": "inexpressible"
   },

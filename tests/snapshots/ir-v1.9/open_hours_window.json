@@ -1,0 +1,108 @@
+{
+  "ir_schema": "robolang.task-ir",
+  "ir_schema_version": "1.8",
+  "language_version": "1.9",
+  "tasks": [
+    {
+      "name": "open_hours",
+      "parameters": [
+        {
+          "name": "r",
+          "type": "robot"
+        },
+        {
+          "name": "part",
+          "type": "object"
+        },
+        {
+          "name": "src",
+          "type": "location"
+        },
+        {
+          "name": "dst",
+          "type": "location"
+        }
+      ],
+      "safety": [],
+      "preconditions": [],
+      "goal": [],
+      "steps": [
+        {
+          "kind": "read_clock",
+          "robot": "r",
+          "reading": "time",
+          "binding": "now"
+        },
+        {
+          "kind": "if",
+          "condition": {
+            "kind": "and",
+            "conditions": [
+              {
+                "kind": "compare",
+                "left": {
+                  "kind": "binding",
+                  "name": "now"
+                },
+                "op": ">=",
+                "right": {
+                  "kind": "time",
+                  "value": "08:00:00"
+                }
+              },
+              {
+                "kind": "compare",
+                "left": {
+                  "kind": "binding",
+                  "name": "now"
+                },
+                "op": "<",
+                "right": {
+                  "kind": "time",
+                  "value": "18:00:00"
+                }
+              }
+            ]
+          },
+          "then": [
+            {
+              "kind": "move",
+              "robot": "r",
+              "target": "src"
+            },
+            {
+              "kind": "grasp",
+              "robot": "r",
+              "object": "part"
+            },
+            {
+              "kind": "move",
+              "robot": "r",
+              "target": "dst"
+            },
+            {
+              "kind": "place",
+              "robot": "r",
+              "object": "part",
+              "target": "dst"
+            }
+          ],
+          "else": [
+            {
+              "kind": "fail",
+              "reason": "outside open hours"
+            }
+          ],
+          "goal_then": [
+            {
+              "kind": "object_at",
+              "object": "part",
+              "location": "dst"
+            }
+          ],
+          "goal_else": null
+        }
+      ]
+    }
+  ]
+}

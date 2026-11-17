@@ -1,5 +1,5 @@
-// bench/reference_hard/x_elapsed_time.attempt.rob: the obvious attempt; it does not do what the request asks
-robolang 1.3;
+// bench/reference_hard/x_elapsed_time.rob: hand-written reference
+robolang 1.9;
 
 task timed(robot r, object box, location src, location dst) {
     goal { object_at box dst; }
@@ -8,6 +8,7 @@ task timed(robot r, object box, location src, location dst) {
         grasp r box;
         move r to dst;
         place r box at dst;
-        communicate r to "ops" with elapsed_seconds;
+        measure r elapsed as took;
+        communicate r to "ops" with took;
     }
 }

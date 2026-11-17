@@ -1,9 +1,12 @@
 {
   "id": "k06_two_robots_at_2000",
   "prompt": "Once it is 20:00, have digit1 move tote_1 and digit2 move tote_2 from inbound_conveyor to outbound_conveyor. Wait up to 1 hour for 20:00 and, if it has not come by then, stop the job as failed.",
-  "world": "bench/worlds/fulfilment.json",
+  "world": "bench/worlds/fulfilment_1_5_1930.json",
   "group": "clock",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_8": {
     "decision": "cannot",
     "category": "inexpressible"
   },

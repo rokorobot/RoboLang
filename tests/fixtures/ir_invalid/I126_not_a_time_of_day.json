@@ -1,0 +1,67 @@
+{
+  "ir_schema": "robolang.task-ir",
+  "ir_schema_version": "1.8",
+  "language_version": "1.9",
+  "tasks": [
+    {
+      "name": "t",
+      "parameters": [
+        {
+          "name": "r",
+          "type": "robot"
+        },
+        {
+          "name": "b",
+          "type": "location"
+        }
+      ],
+      "safety": [],
+      "preconditions": [],
+      "goal": [
+        {
+          "kind": "robot_at",
+          "robot": "r",
+          "location": "b"
+        }
+      ],
+      "steps": [
+        {
+          "kind": "read_clock",
+          "robot": "r",
+          "reading": "time",
+          "binding": "now"
+        },
+        {
+          "kind": "if",
+          "condition": {
+            "kind": "compare",
+            "left": {
+              "kind": "binding",
+              "name": "now"
+            },
+            "op": "<",
+            "right": {
+              "kind": "time",
+              "value": "24:00:00"
+            }
+          },
+          "then": [
+            {
+              "kind": "move",
+              "robot": "r",
+              "target": "b"
+            }
+          ],
+          "else": [
+            {
+              "kind": "fail",
+              "reason": "late"
+            }
+          ],
+          "goal_then": null,
+          "goal_else": null
+        }
+      ]
+    }
+  ]
+}

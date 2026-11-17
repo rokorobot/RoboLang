@@ -1,0 +1,13 @@
+// RoboLang v1.9 fixture: invalid
+// expect: error E105 (lexical) line 10
+// why: 24:00 is the next day, not a time of day (K4)
+
+robolang 1.9;
+
+task t(robot r, location a) {
+    goal { robot_at r a; }
+    plan {
+        wait until clock_time >= 24:00 timeout 1 min else { fail "x"; }
+        move r to a;
+    }
+}

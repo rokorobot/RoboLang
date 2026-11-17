@@ -24,6 +24,7 @@ from .measured import KINDS, Atom, Operand, Scopes, View
 from .parser import MAX_CONDITION_DEPTH, MAX_IF_DEPTH
 from .paths import double_grasps, goalless_path
 from .tokens import (
+    CLOCK_KINDS,
     COMPARISON_OPERATORS,
     DURATION_UNITS,
     KIND_UNITS,
@@ -36,16 +37,18 @@ from .tokens import (
 )
 from .validator import double_grasp_message, fail_reason_problem
 
-SCHEMA_VERSIONS = tuple(ir.IR_SCHEMA_VERSIONS.values())  # "1.0" to "1.7": the index is the schema's rank
+SCHEMA_VERSIONS = tuple(ir.IR_SCHEMA_VERSIONS.values())  # "1.0" to "1.8": the index is the schema's rank
 LANGUAGE_OF = {schema: language for language, schema in ir.IR_SCHEMA_VERSIONS.items()}
 SAFETY_KINDS = ("max_speed", "no_go_region", "in_region")
 _REGION_RANK = 6  # the first schema with region limits (`no_go_region`, `in_region`)
 _ACTIONS_RANK = 7  # the first schema with the step `do` and the condition `in_state` (RoboLang 1.8)
+_CLOCK_RANK = 8  # the first schema with the step `read_clock`, `time` and `clock` operands (RoboLang 1.9)
 MAX_DECIMAL_CHARS = 64
 
 _READ_CODES = {"encoding": "I101", "json": "I102", "duplicate_key": "I103", "number": "I104", "depth": "I105"}
 _NAME = re.compile(r"[A-Za-z][A-Za-z0-9_]*")
 _DECIMAL = re.compile(r"[0-9]+(\.[0-9]+)?")
+_TIME_TEXT = re.compile(r"([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]")  # a canonical time of day (schema 1.8)
 _SURROGATE = re.compile("[\ud800-\udfff]")
 
 # kind -> (first schema rank that has it, the string fields that name parameters)
@@ -70,9 +73,11 @@ _STEPS = {
 _MEASURE_KEYS = ("robot", "reading", "object", "sensor", "binding")  # schema 1.5 (rank 5)
 _VALUES_RANK = 5  # the first schema with `measure`, `compare` and a `binding` in `communicate`
 _OPERAND_KEYS = {"binding": ("name",), "quantity": ("value", "unit"), "text": ("value",),
-                 "live": ("reading", "object", "sensor")}
+                 "live": ("reading", "object", "sensor"), "time": ("value",), "clock": ("reading",)}
 _LEFT_OPERANDS, _RIGHT_OPERANDS = ("binding", "live"), ("binding", "quantity", "text")
 _QUANTITY_UNITS = tuple(unit for units in KIND_UNITS.values() for unit in units)
+_CLOCK_LEFT, _CLOCK_RIGHT = ("clock",), ("time",)  # the operands schema 1.8 adds to a comparison
+_CLOCK_UNITS = ("ms", "s", "min")  # a duration an `elapsed` value compares with (schema 1.8)
 _VALUE_CODES = {"scope": "I218", "clash": "I219", "kind": "I220", "operator": "I221", "goal": "I222", "live": "I223"}
 # kind -> (field, parameter type it must name): the uses E303 and E304 check
 _USES = {
@@ -89,6 +94,7 @@ _USES = {
     "place": (("robot", "robot"), ("object", "object"), ("target", "location")),
     "inspect": (("robot", "robot"), ("object", "object")),
     "measure": (("robot", "robot"), ("object", "object")),
+    "read_clock": (("robot", "robot"),),
     "communicate": (("robot", "robot"),),
     "do": (("robot", "robot"), ("target", ("object", "location"))),
     "in_state": (("target", ("object", "location")),),
@@ -96,7 +102,7 @@ _USES = {
 _PARAM_TYPES = {"robot": 0, "object": 0, "location": 0, "region": 0, "sensor": 2}
 _BRANCH_STEPS = {"if": 3, "fail": 3}  # kind -> first schema rank that has it
 # a failure handler: schema 1.4 (rank 4)
-_HANDLED = ("move", "grasp", "place", "inspect", "measure", "do", "wait_until")
+_HANDLED = ("move", "grasp", "place", "inspect", "measure", "read_clock", "do", "wait_until")
 _HANDLER_KEYS = ("else",)  # a handler has no goal (decision 0034)
 
 
@@ -289,12 +295,14 @@ class _Reader:
                 ok = False
         elif "op" in node:
             ok = False
-        for side, allowed in (("left", _LEFT_OPERANDS), ("right", _RIGHT_OPERANDS)):
+        clock = self._rank >= _CLOCK_RANK
+        for side, allowed in (("left", _LEFT_OPERANDS + (_CLOCK_LEFT if clock else ())),
+                              ("right", _RIGHT_OPERANDS + (_CLOCK_RIGHT if clock else ()))):
             if side in node:
-                ok = self.operand(node[side], _pointer(ptr, side), allowed) and ok
+                ok = self.operand(node[side], _pointer(ptr, side), allowed, durations=clock) and ok
         return ok
 
-    def operand(self, node, ptr: str, allowed: tuple[str, ...]) -> bool:
+    def operand(self, node, ptr: str, allowed: tuple[str, ...], durations: bool = False) -> bool:
         kind = self.kind(node, ptr)
         if kind is None:
             return False
@@ -313,24 +321,38 @@ class _Reader:
             elif key == "value" and kind == "quantity":
                 ok = self.decimal(node[key], at) and ok
             elif key == "unit":
-                unit = node[key]
-                if not (isinstance(unit, str) and unit in _QUANTITY_UNITS):
-                    self.error("I117", "unit not allowed here; expected one of "
-                                       + ", ".join(f"'{u}'" for u in _QUANTITY_UNITS), at)
+                unit, units = node[key], _QUANTITY_UNITS + (_CLOCK_UNITS if durations else ())
+                if not (isinstance(unit, str) and unit in units):
+                    listed = ", ".join(f"'{u}'" for u in units)
+                    self.error("I117", f"unit not allowed here; expected one of {listed}", at)
                     ok = False
+            elif kind == "time" and key == "value":
+                ok = self.time_text(node[key], at) and ok
+            elif kind == "clock" and key == "reading":
+                ok = self.reading(node[key], at, clock=True) and ok
             elif key == "reading":
                 ok = self.reading(node[key], at) and ok
             else:
                 ok = self.string(node[key], at) and ok
         return ok
 
-    def reading(self, value, ptr: str) -> bool:
-        """A measured kind: `temperature`, `mass`, `distance` or `label`."""
+    def reading(self, value, ptr: str, clock: bool = False) -> bool:
+        """A measured kind: `temperature`, `mass`, `distance` or `label`; for a clock reading `time` or `elapsed`."""
         if not self.string(value, ptr):
             return False
-        if value not in KINDS:
-            self.error("I125", "unknown measured kind '" + value + "'; expected one of "
-                       + ", ".join(f"'{k}'" for k in KINDS), ptr)
+        kinds = CLOCK_KINDS if clock else KINDS
+        if value not in kinds:
+            self.error("I125", f"unknown {'clock' if clock else 'measured'} kind '" + value + "'; expected one of "
+                       + ", ".join(f"'{k}'" for k in kinds), ptr)
+            return False
+        return True
+
+    def time_text(self, value, ptr: str) -> bool:
+        """Schema 1.8: a time of day is the text `HH:MM:SS`, 24-hour (E105)."""
+        if not self.string(value, ptr):
+            return False
+        if not _TIME_TEXT.fullmatch(value):
+            self.error("I126", f"not a time of day: {value!r}; the form is HH:MM:SS, 24-hour, hours 00 to 23", ptr)
             return False
         return True
 
@@ -431,6 +453,15 @@ class _Reader:
             ok = self.strings(node, ptr, ("kind", *_MEASURE_KEYS), ("robot", "object", "sensor"), handled)
             if "reading" in node:
                 ok = self.reading(node["reading"], _pointer(ptr, "reading")) and ok
+            if "binding" in node:
+                ok = self.name(node["binding"], _pointer(ptr, "binding")) and ok
+            return self.handler(node, ptr, ifs) and ok
+        if kind == "read_clock":
+            if not self._needs("step kind 'read_clock'", _CLOCK_RANK, _pointer(ptr, "kind")):
+                return False
+            ok = self.strings(node, ptr, ("kind", "robot", "reading", "binding"), ("robot", "binding"), handled)
+            if "reading" in node:
+                ok = self.reading(node["reading"], _pointer(ptr, "reading"), clock=True) and ok
             if "binding" in node:
                 ok = self.name(node["binding"], _pointer(ptr, "binding")) and ok
             return self.handler(node, ptr, ifs) and ok
@@ -828,6 +859,10 @@ def _operand_of(node: dict, ptr: str) -> Operand:
         return Operand("quantity", ptr, unit=node["unit"])
     if kind == "live":
         return Operand("live", ptr, kind=node["reading"])
+    if kind == "clock":
+        return Operand("clock", ptr, kind=node["reading"])
+    if kind == "time":
+        return Operand("time", ptr)
     return Operand("text", ptr)
 
 
@@ -857,7 +892,7 @@ def _view(handle: tuple) -> View:
                     then=_handles(step["then"], _pointer(ptr, "then")),
                     orelse=_handles(step["else"], _pointer(ptr, "else")))
     handler = _handles(step["else"], _pointer(ptr, "else")) if "else" in step else None
-    if kind == "measure":
+    if kind in ("measure", "read_clock"):
         return View(handler=handler, measure=(step["binding"], step["reading"], _pointer(ptr, "binding")))
     if kind == "wait_until":
         return View(condition=(step["condition"], _pointer(ptr, "condition")), live_ok=True, handler=handler)
@@ -887,7 +922,9 @@ def _operand(node: dict) -> ir.Operand:
     kind = node["kind"]
     if kind == "quantity":
         return ir.QuantityLit(Decimal(node["value"]), node["unit"])
-    return _of({"binding": ir.BindingRef, "text": ir.TextLit, "live": ir.LiveReading}[kind], node)
+    classes = {"binding": ir.BindingRef, "text": ir.TextLit, "live": ir.LiveReading, "time": ir.TimeLit,
+               "clock": ir.LiveClock}
+    return _of(classes[kind], node)
 
 
 def _of(cls, node: dict):
@@ -896,7 +933,7 @@ def _of(cls, node: dict):
 
 
 _CONDITIONS = (ir.RobotReady, ir.RegionClear, ir.ObjectExists, ir.SensorOk, ir.ObjectAt, ir.RobotAt, ir.Holding)
-_STEP_TYPES = {cls.KIND: cls for cls in (ir.Move, ir.Grasp, ir.Place, ir.Inspect, ir.Measure)}
+_STEP_TYPES = {cls.KIND: cls for cls in (ir.Move, ir.Grasp, ir.Place, ir.Inspect, ir.Measure, ir.ReadClock)}
 
 
 def _goal(node: list | None) -> tuple[ir.Condition, ...] | None:

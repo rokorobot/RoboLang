@@ -1,9 +1,12 @@
 {
   "id": "k09_heating_time",
   "prompt": "With flippy1, which is at the fryer, wait up to 2 minutes for the oil in oil_1 to read above 170 degrees Celsius. As soon as it does, send channel \"fry\" how long the job has taken so far, then move basket_2 from the prep_table to the fryer. If the oil does not get there, stop.",
-  "world": "bench/worlds/fry_station_at_fryer.json",
+  "world": "bench/worlds/fry_station_at_fryer_1_5.json",
   "group": "clock",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_8": {
     "decision": "cannot",
     "category": "inexpressible"
   },

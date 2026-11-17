@@ -1,0 +1,18 @@
+// bench/reference_clock/k02_shift_cutoff.rob: hand-written reference
+robolang 1.9;
+
+task move_tote(robot r, object tote, location src, location dst) {
+    goal { object_at tote dst; }
+    plan {
+        measure r time as now;
+        if now < 21:30 {
+            move r to src;
+            grasp r tote;
+            move r to dst;
+            place r tote at dst;
+        } else {
+            communicate r to "lead" with "after cutoff";
+            fail "after the cutoff";
+        }
+    }
+}

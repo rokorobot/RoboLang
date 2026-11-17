@@ -1,0 +1,14 @@
+// bench/reference_clock/k04_job_elapsed.rob: hand-written reference
+robolang 1.9;
+
+task relocate_timed(robot r, object box, location src, location dst) {
+    goal { object_at box dst; }
+    plan {
+        move r to src;
+        grasp r box;
+        move r to dst;
+        place r box at dst;
+        measure r elapsed as took;
+        communicate r to "ops" with took;
+    }
+}

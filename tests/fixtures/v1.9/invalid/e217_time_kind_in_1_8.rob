@@ -1,0 +1,13 @@
+// RoboLang v1.9 fixture: invalid
+// expect: error E217 (syntax) line 10
+// why: a 1.8 file has no clock kind: the kind is unknown
+
+robolang 1.8;
+
+task t(robot r, location a) {
+    goal { robot_at r a; }
+    plan {
+        measure r time as now;
+        move r to a;
+    }
+}

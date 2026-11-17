@@ -1,5 +1,5 @@
 """
-Abstract syntax tree for RoboLang v1.1 to v1.8 (robolang-v1.1.md section 7, v1.2 section 6, v1.3 section 6).
+Abstract syntax tree for RoboLang v1.1 to v1.9 (robolang-v1.1.md section 7, v1.2 section 6, v1.3 section 6).
 
 Nodes are immutable and record the source faithfully: names are unresolved,
 units are kept as written and nothing is normalized. Binding and type checks
@@ -185,15 +185,32 @@ class LiveReading:
 
 
 @dataclass(frozen=True)
+class TimeLit:
+    """RoboLang 1.9 (decision 0042 T2): `22:00` or `22:00:00`, a time of day. `seconds` is the second of the day."""
+
+    seconds: int
+    span: Span
+
+
+@dataclass(frozen=True)
+class LiveClock:
+    """RoboLang 1.9 (decision 0042 T6): `clock_time` or `clock_elapsed`, read when its `wait until` is evaluated."""
+
+    word: Name
+    span: Span
+
+
+@dataclass(frozen=True)
 class Compare:
     """
     RoboLang 1.6: `t < 60 degC`, `batch == "LOT-7"`, `a <= b`, `temperature of pan using probe < 60 degC`
-    (decision 0036 V6). `left` is a binding or a live reading; `right` a quantity, a string or a binding.
+    (decision 0036 V6). `left` is a binding or a live reading; `right` a quantity, a string or a binding. RoboLang 1.9
+    adds the live clock on the left and a time of day on the right (decision 0042 T3, T6).
     """
 
-    left: Name | LiveReading
+    left: Name | LiveReading | LiveClock
     op: str
-    right: Name | QuantityLit | StringLit
+    right: Name | QuantityLit | StringLit | TimeLit
     span: Span
 
 
@@ -254,6 +271,17 @@ class Measure:
     kind: Name
     obj: Name
     sensor: Name | StringLit  # a StringLit is E310, as for `inspect`
+    binding: Name
+    span: Span
+    handler: Branch | None = None
+
+
+@dataclass(frozen=True)
+class MeasureClock:
+    """RoboLang 1.9 (decision 0042 T1): `measure r time as t;` or `measure r elapsed as d;`. No object, no sensor."""
+
+    robot: Name
+    kind: Name
     binding: Name
     span: Span
     handler: Branch | None = None
@@ -328,8 +356,8 @@ class If:
     span: Span
 
 
-Statement = Union[Move, Grasp, Place, Inspect, Measure, Do, WaitFor, WaitUntil, Communicate, If, Fail]
-HANDLED = (Move, Grasp, Place, Inspect, Measure, Do, WaitUntil)  # the statements with a failure handler
+Statement = Union[Move, Grasp, Place, Inspect, Measure, MeasureClock, Do, WaitFor, WaitUntil, Communicate, If, Fail]
+HANDLED = (Move, Grasp, Place, Inspect, Measure, MeasureClock, Do, WaitUntil)  # the statements with a failure handler
 
 
 # -------- structure --------

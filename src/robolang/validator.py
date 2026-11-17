@@ -1,5 +1,5 @@
 """
-Static validation for RoboLang v1.1 to v1.8 (spec/robolang-v1.1.md, section 5; spec/robolang-v1.3.md, section 4;
+Static validation for RoboLang v1.1 to v1.9 (spec/robolang-v1.1.md, section 5; spec/robolang-v1.3.md, section 4;
 spec/robolang-v1.4.md, section 4; spec/robolang-v1.6.md, section 6 for bindings and kinds).
 
 Checks a parsed program for errors that the grammar cannot express: duplicate
@@ -25,7 +25,7 @@ from .measured import Atom, Operand, Scopes, View
 from .nodes import ParamType, Span
 from .paths import double_grasps, goalless_path
 from .parser import ParseResult, parse_recovering
-from .tokens import MAX_REGION_LIMITS
+from .tokens import LIVE_CLOCK, MAX_REGION_LIMITS
 
 
 def _parts(statement: ast.Statement):
@@ -83,6 +83,10 @@ def _operand(node) -> Operand:
         return Operand("quantity", node.span, unit=node.unit)
     if isinstance(node, ast.LiveReading):
         return Operand("live", node.span, kind=node.kind.text)
+    if isinstance(node, ast.LiveClock):  # RoboLang 1.9
+        return Operand("clock", node.span, kind=LIVE_CLOCK[node.word.text])
+    if isinstance(node, ast.TimeLit):
+        return Operand("time", node.span)
     return Operand("text", node.span)
 
 
@@ -107,7 +111,7 @@ def _view(statement: ast.Statement) -> View:
         return View("if", statement.condition, goals=goals, then=statement.then.statements,
                     orelse=statement.orelse.statements if statement.orelse else ())
     handler = statement.handler.statements if getattr(statement, "handler", None) is not None else None
-    if isinstance(statement, ast.Measure):
+    if isinstance(statement, (ast.Measure, ast.MeasureClock)):
         return View(handler=handler, measure=(statement.binding.text, statement.kind.text, statement.binding.span))
     if isinstance(statement, ast.WaitUntil):
         return View(condition=statement.condition, live_ok=True, handler=handler)
@@ -177,10 +181,10 @@ class _Validator:
     def _program(self, program: ast.Program):
         language = program.version.version if program.version is not None else None
         self._language = language
-        self._typed_sensors = language in ("1.3", "1.4", "1.5", "1.6", "1.7", "1.8")
-        self._branching = language in ("1.4", "1.5", "1.6", "1.7", "1.8")
-        self._handlers = language in ("1.5", "1.6", "1.7", "1.8")
-        self._values = language in ("1.6", "1.7", "1.8")
+        self._typed_sensors = language in ("1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9")
+        self._branching = language in ("1.4", "1.5", "1.6", "1.7", "1.8", "1.9")
+        self._handlers = language in ("1.5", "1.6", "1.7", "1.8", "1.9")
+        self._values = language in ("1.6", "1.7", "1.8", "1.9")
         seen: dict[str, ast.Name] = {}
         for task in program.tasks:
             first = seen.setdefault(task.name.text, task.name)
@@ -399,6 +403,8 @@ class _Validator:
             self._use(statement.robot, ParamType.ROBOT, "measure")
             self._use(statement.obj, ParamType.OBJECT, "measure")
             self._sensor(statement.sensor, "measure ... using")
+        elif isinstance(statement, ast.MeasureClock):  # RoboLang 1.9 (decision 0042 T1): the robot is recorded
+            self._use(statement.robot, ParamType.ROBOT, "measure")
         elif isinstance(statement, ast.Do):  # RoboLang 1.8 (decision 0040 A6): the action is checked against the world
             self._use(statement.robot, ParamType.ROBOT, "do")
             self._use_any(statement.target, f"do ... {statement.action.text}")

@@ -1,0 +1,13 @@
+// RoboLang v1.9 fixture: invalid
+// expect: error E105 (lexical) line 11
+// why: 9:30 is not HH:MM
+
+robolang 1.9;
+
+task t(robot r, location a) {
+    goal { robot_at r a; }
+    plan {
+        measure r time as now;
+        if now < 9:30 { move r to a; } else { fail "x"; }
+    }
+}

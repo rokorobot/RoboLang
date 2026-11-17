@@ -1,9 +1,12 @@
 {
   "id": "k01_scan_stamp",
   "prompt": "With arm1, inspect box1 on shelf_a with camera_top, then send channel \"lead\" the time of day the scan was done.",
-  "world": "bench/worlds/warehouse.json",
+  "world": "bench/worlds/warehouse_1_5_1420.json",
   "group": "clock",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_8": {
     "decision": "cannot",
     "category": "inexpressible"
   },
@@ -12,13 +15,6 @@
     "paths": [
       {
         "when": "the scan is done and the time is sent",
-        "goal": [
-          [
-            "rl:robot:arm1",
-            "located_in",
-            "rl:place:shelf_a"
-          ]
-        ],
         "messages": [
           [
             "lead",
@@ -30,7 +26,23 @@
             "start": "2026-11-17T14:20:00",
             "zone": "Europe/Prague"
           }
-        }
+        },
+        "goals": [
+          [
+            [
+              "rl:robot:arm1",
+              "located_in",
+              "rl:place:shelf_a"
+            ]
+          ],
+          [
+            [
+              "rl:thing:box1",
+              "located_in",
+              "rl:place:shelf_a"
+            ]
+          ]
+        ]
       }
     ],
     "world_1_5": {

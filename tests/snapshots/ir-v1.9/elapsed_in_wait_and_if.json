@@ -1,0 +1,97 @@
+{
+  "ir_schema": "robolang.task-ir",
+  "ir_schema_version": "1.8",
+  "language_version": "1.9",
+  "tasks": [
+    {
+      "name": "patient",
+      "parameters": [
+        {
+          "name": "r",
+          "type": "robot"
+        },
+        {
+          "name": "a",
+          "type": "location"
+        }
+      ],
+      "safety": [],
+      "preconditions": [],
+      "goal": [
+        {
+          "kind": "robot_at",
+          "robot": "r",
+          "location": "a"
+        }
+      ],
+      "steps": [
+        {
+          "kind": "read_clock",
+          "robot": "r",
+          "reading": "elapsed",
+          "binding": "d"
+        },
+        {
+          "kind": "if",
+          "condition": {
+            "kind": "compare",
+            "left": {
+              "kind": "binding",
+              "name": "d"
+            },
+            "op": "<",
+            "right": {
+              "kind": "quantity",
+              "value": "2",
+              "unit": "min"
+            }
+          },
+          "then": [
+            {
+              "kind": "wait_until",
+              "condition": {
+                "kind": "compare",
+                "left": {
+                  "kind": "clock",
+                  "reading": "elapsed"
+                },
+                "op": ">=",
+                "right": {
+                  "kind": "quantity",
+                  "value": "90",
+                  "unit": "s"
+                }
+              },
+              "timeout": {
+                "value": "5",
+                "unit": "min"
+              },
+              "else": [
+                {
+                  "kind": "fail",
+                  "reason": "too slow"
+                }
+              ]
+            }
+          ],
+          "else": [
+            {
+              "kind": "wait_for",
+              "duration": {
+                "value": "1",
+                "unit": "s"
+              }
+            }
+          ],
+          "goal_then": null,
+          "goal_else": null
+        },
+        {
+          "kind": "move",
+          "robot": "r",
+          "target": "a"
+        }
+      ]
+    }
+  ]
+}

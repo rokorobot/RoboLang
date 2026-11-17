@@ -1,0 +1,13 @@
+// RoboLang v1.9 fixture: invalid
+// expect: error E319 (static) line 11
+// why: a time never compares with a duration (T3)
+
+robolang 1.9;
+
+task t(robot r, location a) {
+    goal { robot_at r a; }
+    plan {
+        measure r time as now;
+        if now < 90 s { move r to a; } else { fail "x"; }
+    }
+}

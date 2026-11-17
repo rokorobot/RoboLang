@@ -1,9 +1,13 @@
 {
   "id": "i01_stamp_no_clock",
   "prompt": "With arm1, inspect vial1 with microscope, then send channel \"log\" the time of day the inspection was done.",
-  "world": "bench/worlds/lab.json",
+  "world": "bench/worlds/lab_1_5.json",
   "group": "infeasible",
   "expect": {
+    "decision": "cannot",
+    "category": "infeasible"
+  },
+  "expect_1_8": {
     "decision": "cannot",
     "category": "inexpressible"
   },

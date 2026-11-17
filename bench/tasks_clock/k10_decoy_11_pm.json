@@ -1,9 +1,12 @@
 {
   "id": "k10_decoy_11_pm",
   "prompt": "At 11 pm tonight, send cleaner1 from dock_2 to the lobby. Wait up to 2 hours for 11 pm and, if it has not come by then, stop the job as failed.",
-  "world": "bench/worlds/site.json",
+  "world": "bench/worlds/site_1_5_2220.json",
   "group": "clock",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_8": {
     "decision": "cannot",
     "category": "inexpressible"
   },

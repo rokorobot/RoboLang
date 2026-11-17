@@ -1,9 +1,12 @@
 {
   "id": "k08_time_and_no_go",
   "prompt": "With printer1, go to gridline_c and keep it out of wet_floor the whole way, but only if it is before 17:00. If it is 17:00 or later, send \"too late\" to channel \"site\" from printer1 and stop the job as failed.",
-  "world": "bench/worlds/site_1_3.json",
+  "world": "bench/worlds/site_1_5_1540.json",
   "group": "clock",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_8": {
     "decision": "cannot",
     "category": "inexpressible"
   },

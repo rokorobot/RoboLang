@@ -32,8 +32,21 @@ _UNITS = {
     "mm": ("distance", Decimal(1), Decimal(0)),
     "cm": ("distance", Decimal(10), Decimal(0)),
     "m": ("distance", Decimal(1000), Decimal(0)),
+    # RoboLang 1.9 (decision 0042 T2): an `elapsed` value compares with a duration; base unit ms. A `time` of day has no
+    # unit: it is a number of milliseconds since midnight (`time_ms`).
+    "ms": ("elapsed", Decimal(1), Decimal(0)),
+    "s": ("elapsed", Decimal(1000), Decimal(0)),
+    "min": ("elapsed", Decimal(60000), Decimal(0)),
 }
-assert {u for units in KIND_UNITS.values() for u in units} == set(_UNITS)
+assert {u for units in KIND_UNITS.values() for u in units} | {"ms", "s", "min"} == set(_UNITS)
+CLOCK_UNITS = {"time": (), "elapsed": ("ms", "s", "min")}  # the clock kinds (RoboLang 1.9) and their units
+TIME = "time"
+ELAPSED = "elapsed"
+
+
+def kind_units(kind: str) -> tuple[str, ...]:
+    """The units a kind compares with: a measured kind's, or a clock kind's."""
+    return KIND_UNITS[kind] if kind in KIND_UNITS else CLOCK_UNITS[kind]
 _EXACT = Context(prec=200)  # world and source numbers have at most a few dozen digits: arithmetic here is exact
 
 
@@ -97,11 +110,11 @@ def compare_intervals(op: str, a: Interval, b: Interval) -> bool | None:
 class Operand:
     """One side of a comparison, as the rules see it. `at` is whatever locates it in a diagnostic."""
 
-    form: str  # "binding", "quantity", "text" or "live"
+    form: str  # "binding", "quantity", "text", "live", and (RoboLang 1.9) "time" or "clock" (`clock_time`)
     at: object
     name: str | None = None  # binding: its name
     unit: str | None = None  # quantity: its unit
-    kind: str | None = None  # live: the measured kind
+    kind: str | None = None  # live or clock: the measured or clock kind
 
 
 @dataclass(frozen=True)
@@ -235,7 +248,13 @@ class Scopes:
 
     def _atom(self, atom: Atom, scope: dict[str, str], live_ok: bool):
         left, right = atom.left, atom.right
-        if left.form == "live":
+        if left.form == "clock":  # RoboLang 1.9 (decision 0042 T6): `clock_time` or `clock_elapsed`
+            if not live_ok:
+                self._report("live", f"a live clock reading ('clock_{left.kind}') is allowed only in the condition "
+                                     f"of a 'wait until'; elsewhere 'measure r {left.kind} as t;' it and compare the "
+                                     "binding", left.at)
+            kind = left.kind
+        elif left.form == "live":
             if not live_ok:
                 self._report("live", f"a live reading ('{left.kind} of ... using ...') is allowed only in the "
                                      "condition of a 'wait until'; elsewhere 'measure' it and compare the binding",
@@ -247,21 +266,27 @@ class Scopes:
             other = self._use(right.name, right.at, scope, "the right side of a comparison")
         elif right.form == "text":
             other = LABEL
+        elif right.form == "time":
+            other = TIME
         else:
             other = unit_kind(right.unit)
         if kind is None or other is None:
             return
         if right.form == "quantity" and kind != LABEL and other != kind:
             self._report("kind", f"'{right.unit}' is a unit of {other}, but the left side is {kind} "
-                                 f"(units of {kind}: {', '.join(KIND_UNITS[kind])})", right.at)
+                                 + (f"(units of {kind}: {', '.join(kind_units(kind))})" if kind_units(kind)
+                                    else "(a time of day compares with a time such as 22:00)"), right.at)
         elif other != kind:
             what = "a string" if right.form == "text" else "a quantity" if right.form == "quantity" \
-                else f"'{right.name}' ({other})"
+                else "a time of day" if right.form == "time" else f"'{right.name}' ({other})"
             self._report("kind", f"cannot compare {kind} with {what}: both sides must be the same kind "
                                  "(a label is compared with a string or another label)", right.at)
         elif kind == LABEL and atom.op in ORDERING:
             self._report("operator", f"a label is compared with '==' or '!=', not '{atom.op}': labels have no order",
                          atom.at)
+        elif kind in (TIME, ELAPSED) and atom.op not in ORDERING:
+            self._report("operator", f"{kind} is compared with '<', '<=', '>' or '>=', not '{atom.op}': two instants "
+                                     "are almost never equal at the moment they are checked", atom.at)
         elif kind != LABEL and atom.op not in ORDERING:
             self._report("operator", f"{kind} is compared with '<', '<=', '>' or '>=', not '{atom.op}': a reading "
                                      "has an uncertainty, so equality is almost never decidable", atom.at)

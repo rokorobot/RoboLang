@@ -1,4 +1,4 @@
-# RoboLang simulation — semantics, world files 1.0 to 1.4 and run records 1.0 to 1.7
+# RoboLang simulation — semantics, world files 1.0 to 1.5 and run records 1.0 to 1.8
 
 **Status:** RL-BASIC-01a specification, **approved by the owner on 2026-10-26**. Every choice
 in it is recorded in [decision record 0004](decisions/0004-rl-basic-01a-simulation-semantics.md)
@@ -13,7 +13,8 @@ separately authorizes implementation.
 **Later languages:** RoboLang 1.2 sources are covered by [`robolang-v1.2.md`](robolang-v1.2.md) section 8;
 RoboLang 1.3 sources (goals, typed sensors, run record 1.2) by section 10 of this document. RoboLang 1.4 (branching), 1.5 (failure handlers), 1.6 (measured
 values, world file 1.2, run record 1.5), 1.7 (region limits, world file 1.3, run record 1.6) and 1.8 (declared actions,
-world file 1.4, run record 1.7) by sections 12, 13, 14, 15 and 16.
+world file 1.4, run record 1.7) and 1.9 (clock readings, world file 1.5, run record 1.8) by sections 12, 13, 14, 15, 16
+and 17.
 **Fixtures:** [`tests/fixtures/simulation/`](../tests/fixtures/simulation/README.md)
 
 > **Simulation only.** This document defines what a RoboLang 1.1 task does in a symbolic,
@@ -174,7 +175,7 @@ A world file is a UTF-8 JSON document (RFC 8259) with one object at the top leve
 | Field | Required | Content |
 |---|---|---|
 | `world_schema` | yes | Exactly `"robolang.sim.world"` |
-| `world_schema_version` | yes | `"1.0"`, `"1.1"`, `"1.2"` (section 14.1), `"1.3"` (section 15.1) or `"1.4"` (section 16.1) |
+| `world_schema_version` | yes | `"1.0"`, `"1.1"`, `"1.2"` (section 14.1), `"1.3"` (section 15.1), `"1.4"` (section 16.1) or `"1.5"` (section 17.1) |
 | `locations` | yes | Array of location IDs |
 | `regions` | no | Object: region ID → region (3.3) |
 | `robots` | no | Object: robot ID → robot (3.3) |
@@ -310,6 +311,7 @@ bindings, fault indices and cancellation index depend on it.
 | `E515` | World file 1.2: a `property` event whose target is not a declared entity |
 | `E516` | World file 1.3 (section 15.1): an unknown ability in a robot's `honours` |
 | `E517` | World file 1.4 (section 16.1): an unknown `target` or `value` kind in a robot's declared action |
+| `E518` | World file 1.5 (section 17.1): a `clock` whose `start` is not a local date and time or whose `zone` is not a zone name |
 
 ## 4. Execution semantics
 
@@ -367,7 +369,8 @@ has the status `checked_against_world_not_enforced`; one that fails has `failed_
 `S003`, `S004` or `S005` before `AUTHORIZED`. Limits after the failed one are `not_checked`.
 
 A RoboLang 1.8 task is also checked for its declared actions after the limits, by section 16.3: a failed check fails the
-run with `S006`, `S007`, `S008` or `S009` before `AUTHORIZED`.
+run with `S006`, `S007`, `S008` or `S009` before `AUTHORIZED`. A RoboLang 1.9 task is checked after that for a wait for
+a time that has already passed, by section 17.3: `S010`.
 
 ### 4.4 Conditions
 
@@ -583,7 +586,7 @@ run_id            = "sim-" + lowercase hex SHA-256 of preimage
 
 ### 7.1 World-file errors
 
-Section 3.9 (`E501`–`E517`). They stop processing with exit status 3; no run is created.
+Section 3.9 (`E501`–`E518`). They stop processing with exit status 3; no run is created.
 
 ### 7.2 Run failures
 
@@ -598,6 +601,7 @@ Section 3.9 (`E501`–`E517`). They stop processing with exit status 3; no run i
 | `S007` | authorization | RoboLang 1.8: the target of a `do` is not of the kind the action acts on (section 16.3) |
 | `S008` | authorization | RoboLang 1.8: the value of a `do` is missing, unexpected or not of the declared kind (section 16.3) |
 | `S009` | authorization | RoboLang 1.8: a goal `in_state` that no declared action of the task's robots produces and the world does not hold (section 16.3) |
+| `S010` | authorization | RoboLang 1.9: a `wait until clock_time >= T` (or `> T`) whose T is before the clock's start: the time has already passed (section 17.3) |
 | `S101` | precondition | A `pre` condition is false |
 | `S102` | precondition | A `pre` condition is unknown |
 | `S201` | step | The robot is not ready |
@@ -615,6 +619,8 @@ Section 3.9 (`E501`–`E517`). They stop processing with exit status 3; no run i
 | `S234` | step | RoboLang 1.6 `measure`: the sensor does not measure the kind (section 14.2) |
 | `S235` | step | RoboLang 1.6 `measure`: a contact reading, and the robot is not at the object |
 | `S236` | step | RoboLang 1.6 `measure`: the object has no value for the kind |
+| `S237` | step | RoboLang 1.9: a `time` reading (`measure r time`, or `clock_time` in a `wait until`) and the world file has no `clock` (section 17.2) |
+| `S238` | step | RoboLang 1.9: a `time` reading when the clock has reached the end of the day the run started on (section 17.2) |
 | `S271` | step | RoboLang 1.8 `do`: the robot is not at the target location, or at the location of the target object (section 16.4) |
 | `S241` | step | `wait until`: the timeout expired before the condition was true |
 | `S251` | step | A scripted fault |
@@ -790,6 +796,7 @@ authoring error.
 | `S001`, `S002` | Section 4.3, for **every** `max_speed` limit with a unit and every bound robot. The run stops at the first one; this check lists all of them |
 | `S003`, `S004`, `S005` | RoboLang 1.7, section 15.3, for **every** region limit; every problem of a limit is listed, not only the first |
 | `S006`, `S007`, `S008`, `S009` | RoboLang 1.8, section 16.3, for **every** `do` on every path and every required goal `in_state` |
+| `S010` | RoboLang 1.9, section 17.3, for **every** `wait until clock_time >= T` (or `> T`) in the plan's own sequence whose T has passed at the start |
 | `S211` | A `grasp` whose robot has no gripper (4.5) |
 | `S231` | An `inspect` or `measure` whose sensor is not declared, or not mounted on its robot (4.5, 14.2) |
 | `S234` | A `measure` of a kind its sensor does not measure (14.2): a sensor with no `measures` in the world file measures nothing |
@@ -1176,3 +1183,84 @@ Earlier sources write their records unchanged, byte for byte.
 `core_outcome` is `null` for a goal with `in_state` (it has no Core form), as for any goal that has none.
 `export-goal` and `delegate` refuse a goal with `in_state` with `X606`, never dropping it; the ROS 2 backend refuses a
 `do` or an `in_state` with `S508` ([robolang-v1.8.md](robolang-v1.8.md) section 7).
+
+## 17. RoboLang 1.9: clock readings
+
+Decision record [0042](decisions/0042-clock-readings.md); language in [robolang-v1.9.md](robolang-v1.9.md). A task of
+language 1.1 to 1.8 runs exactly as before, whatever the world file's version.
+
+### 17.1 World file 1.5
+
+`"world_schema_version": "1.5"` is 1.4 plus one optional top-level field, `clock`. Files 1.0 to 1.4 are still accepted
+and unchanged; `clock` is an unknown field there (`E503`), and **a world of 1.4 or older has no clock**.
+
+```json
+"clock": { "start": "2026-11-17T21:30:00", "zone": "Europe/Prague" }
+```
+
+- `start` is a local date and time, `YYYY-MM-DDTHH:MM:SS`, with no offset: the wall-clock time in `zone` at the moment
+  the run reaches `RUNNING`, which is simulated time 0. A date that does not exist, or an hour, minute or second out of
+  range, is `E518`.
+- `zone` is an IANA zone name by form (`Europe/Prague`, `America/Argentina/Buenos_Aires`) or `UTC`; anything else is
+  `E518`. **No zone database is read**, so the same world file means the same on every platform. The zone is recorded
+  in the run, and it names the clock a person reads; the simulation does not model a change of the zone's offset (a
+  daylight-saving change) during a run. A world whose run could cross one must not start within a day of it.
+- A world with no `clock` has none: it is not "the host's time". `elapsed` still works there.
+
+### 17.2 Readings
+
+The clock is the world's, and in the simulation every robot has it (K1): `measure r time` and `clock_time` agree. The
+robot in `measure r time as t;` is recorded, not consulted.
+
+- **`time`** is `clock.start` plus the simulated time, as a time of day on the calendar day of `clock.start` (T4). With
+  no `clock` in the world a `time` reading fails the step with **`S237`** (T7, fail closed). Once the simulated time
+  has carried the clock to the end of that day (24:00 and later), a `time` reading fails the step with **`S238`**: the
+  next day is not in 1.9, and a wrapped value such as 00:10 would be silently wrong (`< 22:00` would be true).
+- **`elapsed`** is the simulated time since the run reached `RUNNING` (K6), before `pre` is checked: the time the
+  steps, waits and events have taken so far. It needs no `clock`.
+- Both are **exact**: the uncertainty is 0 (T7), and a comparison is decided on the exact values (section 14.2 intervals
+  of width 0). A `time` is compared in milliseconds since midnight, an `elapsed` in milliseconds.
+- **A `wait until` that reads the clock live** (`clock_time`, `clock_elapsed`) is evaluated at the start of the wait, at
+  every event, and at **the exact instant the clock changes what the condition decides** (K5): the compared time, the
+  millisecond after it (so that `>` is true at once after it), and the end of the day. A wait for `clock_time >= 23:00`
+  therefore ends at 23:00:00 exactly, and a following `measure r elapsed` reads that instant. `S241` is raised at the
+  timeout as for any wait, and `S237`/`S238` as for a reading, with the failure handler of the step taking over.
+- A reading costs no simulated time. A `time` reading is the same on every path of a plan that reaches it at the same
+  simulated time.
+- **Messages (T8, K8):** a `time` binding is sent as `HH:MM:SS` (a fraction of a second is cut off) and an `elapsed`
+  binding in seconds with the unit (`37 s`, `37.5 s`). The run record carries the exact reading and this text.
+
+### 17.3 `S010`: a time that has already passed
+
+A `wait until clock_time >= T` or `clock_time > T`, directly or as a member of an `and`, where T is a time literal
+before the clock's `start` time of day, is checked **before the run reaches `AUTHORIZED`** and in `validate --world`
+(for every such wait in the plan's own sequence, in step order, after the actions of section 16.3). It fails the run with `S010`:
+"at 09:00" must never silently mean "now" (K3). A time equal to the start is not before it. A wait inside an `if` branch or a failure handler is not checked, because the branch may not run (a time test around
+it is how "if it is already after 9, go now" is written). The wait is not checked
+under `or` or `not`, with a binding on the right (its value is not known before the run), or with no `clock` (the
+reading then fails the step, `S237`). A request "if it is already after 9, go now" is written with `measure` and `if`,
+which evaluate at run time and are not checked here.
+
+A wait for a time that is later on the same day is not checked: `wait until clock_time >= 23:00 timeout 12 h` run at
+21:30 waits 90 minutes. Whether the timeout reaches it is the task's business: a timeout shorter than the wait fails at
+run time with `S241` (and a handler decides what follows).
+
+### 17.4 Run record 1.8
+
+A 1.9 source writes `run_record_schema_version` `1.8` and embeds Task IR 1.8. The key order is that of record 1.7 with:
+
+| Where | Added |
+|---|---|
+| `inputs` | `world_clock`, after `world_schema_version`: `{ "start", "zone" }`, or `null` for a world with no clock |
+| `steps[].reading` | for a `measure r time` or `measure r elapsed`: `{ "subject": <robot>, "kind": "time" \| "elapsed", "value": <seconds, exact>, "unit": "s", "uncertainty": "0", "sensor": "clock", "t_ms", "text" }`. `value` of a `time` is the second of the day; `text` is `HH:MM:SS` or `37 s` |
+| `steps[].message.value` | the same reading, for a message that sends the binding |
+
+Earlier sources write their records unchanged, byte for byte. `core_outcome` is unchanged: goals never hold a clock
+reading (0036). `export-goal` and `delegate` are unaffected, and `delegate` does not delegate a plan that contains a
+`measure` of any kind (`measure_unsupported`).
+
+### 17.5 ROS 2
+
+The ROS 2 backend refuses `measure r time` and `measure r elapsed` with `S510` before any motion
+([ros2-backend-v0.1.md](ros2-backend-v0.1.md)); `wait until` and every step kind but `move`, `grasp`, `place` and
+`wait for` are refused already with `S508`.

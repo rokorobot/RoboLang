@@ -1,0 +1,62 @@
+{
+  "ir_schema": "robolang.task-ir",
+  "ir_schema_version": "1.8",
+  "language_version": "1.9",
+  "tasks": [
+    {
+      "name": "scan_stamp",
+      "parameters": [
+        {
+          "name": "arm",
+          "type": "robot"
+        },
+        {
+          "name": "box",
+          "type": "object"
+        },
+        {
+          "name": "shelf",
+          "type": "location"
+        },
+        {
+          "name": "cam",
+          "type": "sensor"
+        }
+      ],
+      "safety": [],
+      "preconditions": [],
+      "goal": [
+        {
+          "kind": "robot_at",
+          "robot": "arm",
+          "location": "shelf"
+        }
+      ],
+      "steps": [
+        {
+          "kind": "move",
+          "robot": "arm",
+          "target": "shelf"
+        },
+        {
+          "kind": "inspect",
+          "robot": "arm",
+          "object": "box",
+          "sensor": "cam"
+        },
+        {
+          "kind": "read_clock",
+          "robot": "arm",
+          "reading": "time",
+          "binding": "done_at"
+        },
+        {
+          "kind": "communicate",
+          "robot": "arm",
+          "channel": "lead",
+          "binding": "done_at"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+// RoboLang v1.9 fixture: invalid
+// expect: error E101 (lexical) line 10
+// why: a 1.8 file has no time literal: the colon is an unexpected character
+
+robolang 1.8;
+
+task t(robot r, location a) {
+    goal { robot_at r a; }
+    plan {
+        wait until robot_at r a timeout 22:00 else { fail "x"; }
+        move r to a;
+    }
+}

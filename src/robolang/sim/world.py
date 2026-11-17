@@ -1,12 +1,13 @@
 """
-World file, schemas 1.0 to 1.4 (spec/simulation-v1.0.md sections 3, 14, 15 and 16).
+World file, schemas 1.0 to 1.5 (spec/simulation-v1.0.md sections 3, 14, 15, 16 and 17).
 
 `load_world` reads the bytes of a world file and returns a validated, immutable `World`,
-or raises `WorldError` for the first error found (codes E501 to E517, sections 3.9, 14.1, 15.1 and 16.1).
+or raises `WorldError` for the first error found (codes E501 to E518, sections 3.9, 14.1, 15.1, 16.1 and 17.1).
 Validation runs after the task is selected (3.8). Nothing here executes a task.
 """
 
 from __future__ import annotations
+import datetime
 import json
 import re
 from collections.abc import Mapping
@@ -22,14 +23,18 @@ from .values import DURATION_UNITS, SPEED_UNITS, Speed, duration_ms, parse_decim
 
 WORLD_SCHEMA = "robolang.sim.world"
 WORLD_SCHEMA_VERSION = "1.0"
-# 1.1 adds `class` and `mass` to objects (3.3); 1.2 measured values (14); 1.3 region limits (15); 1.4 actions (16)
-WORLD_SCHEMA_VERSIONS = ("1.0", "1.1", "1.2", "1.3", "1.4")
-_MEASURED = ("1.2", "1.3", "1.4")  # the world files with measured values
-_REGIONS = ("1.3", "1.4")  # the world files with `contains` and `honours`
+# 1.1 adds `class` and `mass` to objects (3.3); 1.2 measured values (14); 1.3 region limits (15); 1.4 actions (16);
+# 1.5 the clock (17)
+WORLD_SCHEMA_VERSIONS = ("1.0", "1.1", "1.2", "1.3", "1.4", "1.5")
+_MEASURED = ("1.2", "1.3", "1.4", "1.5")  # the world files with measured values
+_REGIONS = ("1.3", "1.4", "1.5")  # the world files with `contains` and `honours`
+_ACTIONS = ("1.4", "1.5")  # the world files with `actions`, `state` and `location_states`
 HONOURS = ("no_go_region", "in_region")  # what a robot profile may declare it honours (world file 1.3)
 ACTION_TARGETS = ("object", "location")  # what a declared action may act on (world file 1.4, decision 0040 A3)
 CLI_BINDINGS_SOURCE = "--bind"
 
+_CLOCK_START = re.compile(r"([0-9]{4})-([0-9]{2})-([0-9]{2})T([0-9]{2}):([0-9]{2}):([0-9]{2})")  # local time, no offset
+_ZONE = re.compile(r"UTC|[A-Za-z][A-Za-z_]*(/[A-Za-z0-9_+-]+)+")  # an IANA zone name, by form: no database is read
 _ID = re.compile(r"[A-Za-z][A-Za-z0-9_]*")
 _ACTION_NAME = re.compile(r"[a-z][a-z0-9_]*")  # a declared action's name (world file 1.4)
 _CLASS = re.compile(r"[a-z][a-z_]{0,63}")  # a Core 0.1 thing class (core-v0.1.md section 5.5)
@@ -72,6 +77,23 @@ class Action:
     target: str
     result: str
     value: str | None = None
+
+
+@dataclass(frozen=True)
+class Clock:
+    """
+    World file 1.5 (decision 0042 T7): simulated time 0 is `start`, a local date and time in `zone`. The `time` of a
+    reading is `start` plus the simulated time, on the calendar day of `start` only (T4). The zone is recorded and
+    checked by form; no zone database is read, so a change of offset during a run is not modelled (section 17).
+    """
+
+    start: str  # as written: "2026-11-17T21:30:00"
+    zone: str  # "Europe/Prague"
+    start_s: int  # the second of the day `start` falls on
+
+    @property
+    def date(self) -> str:
+        return self.start[:10]
 
 
 @dataclass(frozen=True)
@@ -171,6 +193,7 @@ class World:
     schema_version: str = WORLD_SCHEMA_VERSION
     # world file 1.4: location -> its state label (default_factory: Python 3.11 rejects a mappingproxy default)
     location_states: Mapping[str, str] = dataclasses.field(default_factory=lambda: MappingProxyType({}))
+    clock: Clock | None = None  # world file 1.5: None is no clock (a `time` reading then fails the step)
 
     def kind_of(self, entity_id: str) -> str | None:
         if entity_id in self.locations:
@@ -353,7 +376,7 @@ class _Loader:
         top = (
             "world_schema", "world_schema_version", "locations", "regions", "robots",
             "objects", "sensors", "events", "tasks",
-        ) + (("location_states",) if self.version == "1.4" else ())
+        ) + (("location_states",) if self.version in _ACTIONS else ()) + (("clock",) if self.version == "1.5" else ())
         self.obj(doc, "", top, "the world file")
         self.require(doc, "", "locations", "tasks")
         locations = self.locations(self.need(doc, "", "locations"))
@@ -372,6 +395,7 @@ class _Loader:
 
         # Form of every section, in the document order of the fields above.
         location_states = self.location_states(doc, locations)
+        clock = self.clock(doc)
         regions = {k: self.region(k, v) for k, v in regions_raw.items()}
         robots = {k: self.robot(k, v) for k, v in robots_raw.items()}
         objects = {k: self.object(k, v) for k, v in objects_raw.items()}
@@ -406,6 +430,7 @@ class _Loader:
             script,
             self.version,
             MappingProxyType(location_states),
+            clock,
         )
 
     # -- sections: form --
@@ -440,6 +465,31 @@ class _Loader:
                 self.fail("E505", pointer + _pointer(key), f"'{key}' is not a declared location")
             self.label(label, pointer + _pointer(key))
         return dict(raw)
+
+    def clock(self, doc) -> Clock | None:
+        """`clock: { "start": "2026-11-17T21:30:00", "zone": "Europe/Prague" }` (world file 1.5, decision 0042 T7)."""
+        if "clock" not in doc:
+            return None
+        pointer = _pointer("clock")
+        raw = self.obj(doc["clock"], pointer, ("start", "zone"), "the clock")
+        self.require(raw, pointer, "start", "zone")
+        start = self.string(raw["start"], pointer + _pointer("start"), "the clock start")
+        found = _CLOCK_START.fullmatch(start)
+        try:
+            if found is None:
+                raise ValueError
+            year, month, day, hour, minute, second = (int(part) for part in found.groups())
+            datetime.date(year, month, day)
+            if hour > 23 or minute > 59 or second > 59:
+                raise ValueError
+        except ValueError:
+            self.fail("E518", pointer + _pointer("start"), f"not a start time: {start!r}; write a local date and time "
+                                                           "such as '2026-11-17T21:30:00' (no offset)")
+        zone = self.string(raw["zone"], pointer + _pointer("zone"), "the clock zone")
+        if _ZONE.fullmatch(zone) is None:
+            self.fail("E518", pointer + _pointer("zone"), f"not a time zone name: {zone!r}; write an IANA name such "
+                                                          "as 'Europe/Prague', or 'UTC'")
+        return Clock(start, zone, hour * 3600 + minute * 60 + second)
 
     def actions(self, value, p):
         """`actions: { NAME: { "target": "object"|"location", "result": "label", "value": KIND } }` (0040 A3)."""
@@ -488,7 +538,7 @@ class _Loader:
     def robot(self, name, value):
         p = _pointer("robots", name)
         allowed = ("ready", "location", "gripper", "max_speed") + (("honours",) if self.version in _REGIONS else ())
-        allowed += ("actions",) if self.version == "1.4" else ()
+        allowed += ("actions",) if self.version in _ACTIONS else ()
         self.obj(value, p, allowed, "a robot")
         self.require(value, p, "location", "gripper")
         ready = self.optional_bool(value, p, "ready")
@@ -522,7 +572,7 @@ class _Loader:
         p = _pointer("objects", name)
         allowed = ("present", "location", "held_by") + (("class", "mass") if self.version != "1.0" else ())
         allowed += ("properties",) if self.version in _MEASURED else ()
-        allowed += ("state",) if self.version == "1.4" else ()
+        allowed += ("state",) if self.version in _ACTIONS else ()
         self.obj(value, p, allowed, "an object")
         present = self.optional_bool(value, p, "present")
         refs = []

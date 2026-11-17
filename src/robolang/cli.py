@@ -1,7 +1,7 @@
 """
-Developer commands for RoboLang 1.1 to 1.8.
+Developer commands for RoboLang 1.1 to 1.9.
 
-    reference              print the shipped RoboLang 1.7 language reference
+    reference              print the shipped RoboLang 1.9 language reference
     example [DIR]          write a sample task (fetch.rob) and world (world.json) to start from
     validate FILE          check a .rob file against the language contract
     inspect  FILE          show what a validated file describes (text or JSON IR)
@@ -13,7 +13,7 @@ Developer commands for RoboLang 1.1 to 1.8.
                            send the task's goal to a robot that runs its own plan; print the delegate record
 
 validate, inspect, simulate, export-goal and delegate take `--ir IR` instead of FILE: a Task IR JSON
-document (schema 1.0 to 1.7), read strictly and re-validated in full (spec/ir-reader-v0.1.md).
+document (schema 1.0 to 1.8), read strictly and re-validated in full (spec/ir-reader-v0.1.md).
     arch02 --scenario SCENARIO --cases CASES --case ID
                            run one case of the RFC-001 reference scenario in simulation
 
@@ -80,9 +80,9 @@ NOT_A_SAFETY_CHECK_IR = (
 NOTHING_EXECUTED = "This is a description only. Nothing was executed."
 
 _DESCRIPTION = f"""\
-Tools for RoboLang 1.1 to 1.8 task files.
+Tools for RoboLang 1.1 to 1.9 task files.
 
-reference prints the shipped 1.7 language reference. validate and inspect check and describe .rob
+reference prints the shipped 1.9 language reference. validate and inspect check and describe .rob
 files; they never execute anything.
 simulate runs a validated task in a symbolic, deterministic simulation only: it never loads a
 robot adapter or connects to ROS 2 or hardware, and its result is not evidence that a task is
@@ -335,6 +335,10 @@ def _value(operand: task_ir.Operand, typed: bool) -> str:
         return f"{task_ir.decimal_text(operand.value)} {operand.unit}"
     if isinstance(operand, task_ir.TextLit):
         return _quoted(operand.value)
+    if isinstance(operand, task_ir.TimeLit):
+        return operand.value
+    if isinstance(operand, task_ir.LiveClock):
+        return f"clock_{operand.reading}"
     return f"{operand.reading} of {operand.obj} using {_sensor(operand.sensor, typed)}"
 
 
@@ -380,6 +384,8 @@ def _step(step: task_ir.Step, typed: bool = False) -> str:
     if isinstance(step, task_ir.Measure):
         return (f"measure {step.robot} {step.reading} of {step.obj} using {_sensor(step.sensor, typed)} "
                 f"as {step.binding}")
+    if isinstance(step, task_ir.ReadClock):
+        return f"measure {step.robot} {step.reading} as {step.binding}"
     if isinstance(step, task_ir.Do):
         value = "" if step.value is None else f" to {_value(step.value, typed)}"
         return f"do {step.robot} {step.action} {step.target}{value}"
@@ -499,6 +505,7 @@ _FAILURE_MEANING = {
     "S007": "the target of a do step is not of the kind (object or location) the robot's action acts on",
     "S008": "the value of a do step is missing, unexpected or not of the kind the robot's action takes",
     "S009": "a goal in_state that no declared action of the task's robots produces and the world does not hold",
+    "S010": "a wait until clock_time names a time that has already passed at the start (the wait would not wait)",
     "S101": "a pre condition is false",
     "S102": "a pre condition is unknown in the world",
     "S201": "the robot is not ready",
@@ -516,6 +523,8 @@ _FAILURE_MEANING = {
     "S234": "measure: the sensor does not measure that kind",
     "S235": "measure: a contact reading, and the robot is not at the object",
     "S236": "measure: the object has no value for that kind",
+    "S237": "a time reading needs the world's clock, and the world file has none",
+    "S238": "the clock has reached the end of the day the task started on (RoboLang 1.9 knows one day)",
     "S271": "do: the robot is not at the target (or at the object's location)",
     "S241": "wait until: the timeout expired before the condition was true",
     "S251": "a scripted fault from the world file",
@@ -612,6 +621,7 @@ def _simulate(args, out, err) -> int:
         world_schema_version=world.schema_version,
         source_kind=inputs.source_kind,
         core=args.core,
+        world_clock=world.clock,
     )
     out.write(to_json(record))
     summary = f"simulation only: run {identifier}: {run_result.state}"
@@ -821,7 +831,7 @@ def _input_arguments(command: argparse.ArgumentParser, what: str, note: str = ""
         "--ir",
         metavar="IR",
         help=(
-            "path to a Task IR JSON file (schema 1.0 to 1.7) instead of FILE. It is read strictly and "
+            "path to a Task IR JSON file (schema 1.0 to 1.8) instead of FILE. It is read strictly and "
             f"re-validated in full, whatever versions it claims (spec/ir-reader-v0.1.md){note}"
         ),
     )
@@ -844,8 +854,8 @@ def _parser(prog: str) -> argparse.ArgumentParser:
 
     reference = commands.add_parser(
         "reference",
-        help="print the shipped RoboLang 1.7 language reference",
-        description="Print the exact RoboLang 1.7 reference shipped with this installation. Nothing is executed.",
+        help="print the shipped RoboLang 1.9 language reference",
+        description="Print the exact RoboLang 1.9 reference shipped with this installation. Nothing is executed.",
     )
     reference.set_defaults(run=_reference)
 

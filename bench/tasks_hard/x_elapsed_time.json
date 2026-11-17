@@ -1,16 +1,47 @@
 {
   "id": "x_elapsed_time",
   "prompt": "Move box1 to the table with arm1, then send channel \"ops\" a message saying how many seconds the job took, as measured by the program itself.",
-  "world": "examples/world.json",
-  "group": "inexpressible",
+  "world": "bench/worlds/example_1_5.json",
+  "group": "clock",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_8": {
     "decision": "cannot",
     "category": "inexpressible"
+  },
+  "expect_1_9": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "the box is moved and the elapsed time is sent",
+        "goal": [
+          [
+            "rl:thing:box1",
+            "located_in",
+            "rl:place:table"
+          ]
+        ],
+        "world_patch": {}
+      }
+    ],
+    "world_1_5": {
+      "clock": null,
+      "note": "no clock: `elapsed` needs none (0042 T7), so this is a program"
+    }
   },
   "tags": [
     "arithmetic",
     "communicate"
   ],
-  "why": "There is no clock reading and no arithmetic; message text is a fixed string, so a measured duration cannot be reported.",
-  "attempt_fails_with": "E201"
+  "expected_clock": [
+    {
+      "robot": "arm1",
+      "reading": "elapsed",
+      "use": "message",
+      "channel": "ops",
+      "after": "last step"
+    }
+  ],
+  "why": "The time the job took is `measure r elapsed as took;` after the last step, sent as the binding (0042 T1, T8). `elapsed` needs no clock: the world copy has none."
 }

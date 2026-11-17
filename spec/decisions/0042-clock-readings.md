@@ -134,3 +134,19 @@ task tote_if_open(robot r, object tote, location inb, location outb) {
 | K9 | Worlds with no clock | The world shown to the model says "no clock", so `i01` and `i04` can be solved |
 | K10 | `clock_elapsed` in `wait until` | Kept as approved (T6), with no task of its own. `==` stays excluded (T3) |
 | K11 | Atlas gaps for `x02` (tomorrow) and `x05` (Monday) | A new far gap, **G-DATE** (dates and times on another day), so that G-CLOCK can close at L6 |
+
+## Implementation note (L4, 2026-11-17; for the owner)
+
+Built in PR #155. T2 and T5 write `1 h` and `12 h` "as durations are written today", but 1.1–1.8 have only `ms`, `s`
+and `min`. L4 did **not** add an hour unit, so the economy of B7 is unchanged. A request in hours is written in
+minutes (`720 min`), as the reference teaches; the scorer compares durations, so `1 h` in a label accepts `60 min`.
+**Owner, 2026-11-17: no `h` for now**; it is added only when a request needs it.
+
+Accepted on 2026-11-17 ([acceptance](../../docs/evidence/bench-1-9-acceptance.md)). New codes:
+
+- **Static:** `E105` (a malformed time literal).
+- **World file:** `E518` (a malformed `clock`).
+- **Before the run:** `S010` (a wait for a time that has already passed, K3).
+- **During the run:** `S237` (no world clock) and `S238` (a `time` reading past midnight).
+- **Backend:** `S510` (ROS 2 refuses clock readings).
+- **IR:** `I126` (an IR time operand that is not `HH:MM:SS`).

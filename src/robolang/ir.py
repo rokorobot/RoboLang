@@ -2,7 +2,8 @@
 Versioned task IR for RoboLang (spec/ir-schema-v1.0.md; schema 1.1 for RoboLang 1.2: ir-schema-v1.1.md;
 schema 1.2 for RoboLang 1.3: ir-schema-v1.2.md; schema 1.3 for RoboLang 1.4: ir-schema-v1.3.md; schema 1.4 for
 RoboLang 1.5: ir-schema-v1.4.md; schema 1.5 for RoboLang 1.6: ir-schema-v1.5.md; schema 1.6 for
-RoboLang 1.7: ir-schema-v1.6.md; schema 1.7 for RoboLang 1.8: ir-schema-v1.7.md).
+RoboLang 1.7: ir-schema-v1.6.md; schema 1.7 for RoboLang 1.8: ir-schema-v1.7.md; schema 1.8 for RoboLang 1.9:
+ir-schema-v1.8.md).
 
 The IR is a description of validated tasks with source details removed:
 no spans, comments or formatting. Two sources that differ only in layout
@@ -24,6 +25,7 @@ from typing import ClassVar, Union
 from . import nodes as ast
 from .diagnostics import Diagnostic
 from .parser import DEFAULT_VERSION
+from .tokens import LIVE_CLOCK
 from .validator import check, validate
 
 IR_SCHEMA = "robolang.task-ir"
@@ -31,7 +33,7 @@ IR_SCHEMA_VERSION = "1.0"
 LANGUAGE_VERSION = DEFAULT_VERSION
 # Language version -> the IR schema version it compiles to (ir-schema-v1.1.md section 1).
 IR_SCHEMA_VERSIONS = {"1.1": "1.0", "1.2": "1.1", "1.3": "1.2", "1.4": "1.3", "1.5": "1.4", "1.6": "1.5", "1.7": "1.6",
-                     "1.8": "1.7"}
+                     "1.8": "1.7", "1.9": "1.8"}
 
 
 def _key(name: str):
@@ -200,7 +202,23 @@ class LiveReading:
     sensor: str = _key("sensor")
 
 
-Operand = Union[BindingRef, QuantityLit, TextLit, LiveReading]
+@dataclass(frozen=True)
+class TimeLit:
+    """Schema 1.8 (RoboLang 1.9, decision 0042 T2): a time of day, always `HH:MM:SS` (`22:00` is `22:00:00`)."""
+
+    KIND: ClassVar[str] = "time"
+    value: str
+
+
+@dataclass(frozen=True)
+class LiveClock:
+    """Schema 1.8: `clock_time` (`reading` "time") or `clock_elapsed` ("elapsed"), read when the wait is evaluated."""
+
+    KIND: ClassVar[str] = "clock"
+    reading: str
+
+
+Operand = Union[BindingRef, QuantityLit, TextLit, LiveReading, TimeLit, LiveClock]
 
 
 @dataclass(frozen=True)
@@ -217,9 +235,9 @@ class Compare:
     """Schema 1.5: `left op right`; `left` is a binding or a live reading, `right` a binding, quantity or text."""
 
     KIND: ClassVar[str] = "compare"
-    left: BindingRef | LiveReading
+    left: BindingRef | LiveReading | LiveClock
     op: str
-    right: BindingRef | QuantityLit | TextLit
+    right: BindingRef | QuantityLit | TextLit | TimeLit
 
 
 Condition = Union[RobotReady, RegionClear, ObjectExists, SensorOk, ObjectAt, RobotAt, Holding, And, Or, Not, Compare,
@@ -273,6 +291,20 @@ class Measure:
     reading: str
     obj: str = _key("object")
     sensor: str = _key("sensor")
+    binding: str = _key("binding")
+    orelse: tuple[Step, ...] | None = _handler()
+
+
+@dataclass(frozen=True)
+class ReadClock:
+    """
+    Schema 1.8 (RoboLang 1.9, decision 0042 T1): read the clock of `robot` (`reading` "time", the time of day, or
+    "elapsed", the time since the task started) and bind it to `binding`. It reads no object and no sensor.
+    """
+
+    KIND: ClassVar[str] = "read_clock"
+    robot: str
+    reading: str
     binding: str = _key("binding")
     orelse: tuple[Step, ...] | None = _handler()
 
@@ -341,8 +373,8 @@ class Fail:
     reason: str
 
 
-Step = Union[Move, Grasp, Place, Inspect, Measure, Do, WaitFor, WaitUntil, Communicate, If, Fail]
-HANDLED = (Move, Grasp, Place, Inspect, Measure, Do, WaitUntil)  # the step kinds with a failure handler
+Step = Union[Move, Grasp, Place, Inspect, Measure, ReadClock, Do, WaitFor, WaitUntil, Communicate, If, Fail]
+HANDLED = (Move, Grasp, Place, Inspect, Measure, ReadClock, Do, WaitUntil)  # the step kinds with a failure handler
 
 
 def handler_of(step: Step) -> tuple[Step, ...] | None:
@@ -487,7 +519,16 @@ def _operand(node) -> Operand:
         return QuantityLit(node.value, node.unit)
     if isinstance(node, ast.LiveReading):
         return LiveReading(node.kind.text, node.obj.text, _sensor(node.sensor))
+    if isinstance(node, ast.LiveClock):
+        return LiveClock(LIVE_CLOCK[node.word.text])
+    if isinstance(node, ast.TimeLit):
+        return TimeLit(time_text(node.seconds))
     return TextLit(node.value)
+
+
+def time_text(seconds: int) -> str:
+    """The canonical `HH:MM:SS` of a second of the day."""
+    return f"{seconds // 3600:02d}:{seconds // 60 % 60:02d}:{seconds % 60:02d}"
 
 
 def _sensor(node: ast.StringLit | ast.Name) -> str:
@@ -526,6 +567,8 @@ def _plain_step(node: ast.Statement) -> Step:
         return Inspect(node.robot.text, node.obj.text, _sensor(node.sensor))
     if isinstance(node, ast.Measure):
         return Measure(node.robot.text, node.kind.text, node.obj.text, _sensor(node.sensor), node.binding.text)
+    if isinstance(node, ast.MeasureClock):
+        return ReadClock(node.robot.text, node.kind.text, node.binding.text)
     if isinstance(node, ast.Do):
         return Do(node.robot.text, node.action.text, node.target.text,
                   None if node.value is None else _operand(node.value))
@@ -558,7 +601,7 @@ def _task(node: ast.Task, language: str) -> Task:
         ),
         preconditions=tuple(_condition(c) for c in node.pre.conditions) if node.pre else (),
         # 1.4 on: no task goal, the branches give them
-        goal=() if goal is None and language in ("1.4", "1.5", "1.6", "1.7", "1.8") else goal,
+        goal=() if goal is None and language in ("1.4", "1.5", "1.6", "1.7", "1.8", "1.9") else goal,
         steps=tuple(_step(s) for s in node.plan.statements),
         verify=_verify(node),
     )

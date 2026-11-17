@@ -21,8 +21,10 @@ from robolang import tokens
 
 REPO = Path(__file__).resolve().parent.parent
 HARD = lib.load_set("hard")
-FEASIBLE = {t: d for t, d in HARD.items() if lib.expectation(d)[0] == "program" and d["group"] != "branching"}
+FEASIBLE = {t: d for t, d in HARD.items() if lib.expectation(d)[0] == "program" and d["group"] not in (
+    "branching", "clock")}
 BRANCHING = {t: d for t, d in HARD.items() if d["group"] == "branching"}  # 1.3 declined them, 1.4 expresses them
+CLOCK = {t: d for t, d in HARD.items() if d["group"] == "clock"}  # 1.8 declined it, 1.9 expresses it (0042)
 CANNOT = {t: d for t, d in HARD.items() if lib.expectation(d)[0] == "cannot"}
 INEXPRESSIBLE = {t for t, d in CANNOT.items() if lib.expectation(d)[1] == "inexpressible"}
 INFEASIBLE = {t for t, d in CANNOT.items() if lib.expectation(d)[1] == "infeasible"}
@@ -51,23 +53,23 @@ def decline(category: str, reason: str = "cannot be done") -> dict:
 
 def test_the_mix_of_tasks():
     assert len(HARD) == 40
-    assert Counter(d["group"] for d in HARD.values()) == {"inexpressible": 7, "branching": 3, "infeasible": 8,
-                                                          "decoy": 8, "ambiguous": 5, "control": 9}
-    assert len(INEXPRESSIBLE) == 7 and len(INFEASIBLE) == 8
-    assert (len(FEASIBLE) + len(BRANCHING)) / len(HARD) >= 0.35  # refusing everything must score badly
+    assert Counter(d["group"] for d in HARD.values()) == {"inexpressible": 6, "branching": 3, "infeasible": 8,
+                                                          "decoy": 8, "ambiguous": 5, "control": 9, "clock": 1}
+    assert len(INEXPRESSIBLE) == 6 and len(INFEASIBLE) == 8 and set(CLOCK) == {"x_elapsed_time"}
+    assert (len(FEASIBLE) + len(BRANCHING) + len(CLOCK)) / len(HARD) >= 0.35  # refusing everything must score badly
     for task_id, task in HARD.items():
         assert task["id"] == task_id and (lib.HARD_TASKS_DIR / f"{task_id}.json").is_file()
         assert (REPO / task["world"]).is_file() and task["tags"] and task["prompt"].endswith((".", "?"))
-        assert task["group"] in {"inexpressible", "branching", "infeasible", "decoy", "ambiguous", "control"}
+        assert task["group"] in {"inexpressible", "branching", "infeasible", "decoy", "ambiguous", "control", "clock"}
 
 
 def test_references_and_attempts_are_where_they_should_be():
     files = list(lib.HARD_REFERENCE_DIR.iterdir())
     refs = {p.name.split(".")[0] for p in files if p.name.endswith((".rob", ".json")) and ".attempt" not in p.name}
     attempts = {p.name.split(".")[0] for p in files if ".attempt." in p.name}
-    assert refs == set(FEASIBLE) | set(BRANCHING) and attempts == set(CANNOT)
+    assert refs == set(FEASIBLE) | set(BRANCHING) | set(CLOCK) and attempts == set(CANNOT)
     assert {p.stem for p in lib.HARD_REFERENCE_DIR.glob("*.rob") if ".attempt" not in p.stem} \
-        == set(FEASIBLE) | set(BRANCHING)
+        == set(FEASIBLE) | set(BRANCHING) | set(CLOCK)
 
 
 def test_expectations_are_well_formed():
@@ -80,6 +82,12 @@ def test_expectations_are_well_formed():
             paths = task["expect_1_4"]["paths"]
             assert task["expect_1_4"]["decision"] == "program" and len(paths) == 2
             assert all(p["world_patch"]["events"] == [] and p["when"] and ("goal" in p) != ("fail" in p) for p in paths)
+        elif task["group"] == "clock":  # relabelled for 1.9 (0042): a program, judged on its path and its clock use
+            assert (decision, category) == ("program", "none") and task["expect_1_8"] == {
+                "decision": "cannot", "category": "inexpressible"}
+            assert not {"expected_goal", "expected_goals"} & set(task) and len(task["why"]) > 40
+            assert task["expect_1_9"]["decision"] == "program" and len(task["expect_1_9"]["paths"]) == 1
+            assert task["world"] == "bench/worlds/example_1_5.json" and task["expected_clock"]
         elif decision == "program":
             assert category == "none" and "why" not in task and "attempt_fails_with" not in task
             goals = lib.expected_goals(task)
@@ -563,3 +571,20 @@ def test_a_disjunction_of_compound_readings_is_correct():
     assert checked.valid, checked.report
     judgement = lib.judge(task, checked, answer["bindings"])
     assert judgement.goal_correct and not judgement.goal_exact and judgement.plan_succeeds
+
+
+def test_the_1_9_reference_of_x_elapsed_time_is_valid_right_and_reads_the_clock_as_asked():
+    """Decision 0042: the relabelled standing task is a program: `measure r elapsed` after the last step, sent to ops,
+    in a world file 1.5 copy with no clock (`elapsed` needs none)."""
+    task = HARD["x_elapsed_time"]
+    answer = hard_reference("x_elapsed_time")
+    checked = lib.check_answer(task, answer)
+    assert checked.valid and checked.language_version == "1.9", checked.report
+    judgement = lib.judge(task, checked, answer["bindings"])
+    assert judgement.goal_correct and judgement.plan_succeeds and judgement.clock_ok and not judgement.time_replaced
+    assert all(p["goal_ok"] and p["plan_ok"] for p in judgement.paths)
+    assert json.loads((REPO / task["world"]).read_text(encoding="utf-8")).get("clock") is None
+    without = dict(answer, rob=re.sub(r"\s*measure r elapsed as took;\n\s*communicate r to \"ops\" with took;", "",
+                                      answer["rob"]))
+    stripped = lib.judge(task, lib.check_answer(task, without), answer["bindings"])
+    assert stripped.plan_succeeds and not stripped.clock_ok and stripped.time_replaced  # nothing in place of the time

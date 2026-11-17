@@ -1,0 +1,12 @@
+// bench/reference_future/f_clock_scan_stamp.rob: hand-written reference
+robolang 1.9;
+
+task scan(robot r, object box, location shelf, sensor camera) {
+    goal { robot_at r shelf; }
+    plan {
+        move r to shelf;
+        inspect r box using camera;
+        measure r time as done_at;
+        communicate r to "lead" with done_at;
+    }
+}

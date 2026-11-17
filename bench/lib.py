@@ -46,16 +46,17 @@ REGIONS_TASKS_DIR = BENCH / "tasks_regions"  # set 6: region limits, pre-registe
 REGIONS_REFERENCE_DIR = BENCH / "reference_regions"
 ACTIONS_TASKS_DIR = BENCH / "tasks_actions"  # set 7: declared actions, pre-registered against 1.7, labelled for 1.8
 ACTIONS_REFERENCE_DIR = BENCH / "reference_actions"
-CLOCK_TASKS_DIR = BENCH / "tasks_clock"  # set 8: clock readings, pre-registered against 1.8 (decision 0042)
+CLOCK_TASKS_DIR = BENCH / "tasks_clock"  # set 8: clock readings, pre-registered against 1.8, labelled for 1.9
 CLOCK_REFERENCE_DIR = BENCH / "reference_clock"
 PROMPT_FILE = BENCH / "prompt.md"
 REFERENCE_FILE = ROOT / "docs" / "language-reference.md"
 MINIMAL_PROMPT_FILE = BENCH / "prompt_minimal.md"
-# 1.8 is a delta over 1.7, over 1.6, over 1.5, over 1.4, over 1.3: the grammar-only prompt pastes all six
-GRAMMAR_FILE = ROOT / "spec" / "grammar-v1.8.ebnf"
+# 1.9 is a delta over 1.8, over 1.7, over 1.6, over 1.5, over 1.4, over 1.3: the grammar-only prompt pastes all seven
+GRAMMAR_FILE = ROOT / "spec" / "grammar-v1.9.ebnf"
 BASE_GRAMMAR_FILE = ROOT / "spec" / "grammar-v1.3.ebnf"
 GRAMMAR_FILES = (BASE_GRAMMAR_FILE, ROOT / "spec" / "grammar-v1.4.ebnf", ROOT / "spec" / "grammar-v1.5.ebnf",
-                 ROOT / "spec" / "grammar-v1.6.ebnf", ROOT / "spec" / "grammar-v1.7.ebnf", GRAMMAR_FILE)
+                 ROOT / "spec" / "grammar-v1.6.ebnf", ROOT / "spec" / "grammar-v1.7.ebnf",
+                 ROOT / "spec" / "grammar-v1.8.ebnf", GRAMMAR_FILE)
 GRAMMAR_MARK = "{{GRAMMAR}}"  # in prompt_minimal.md: replaced by the text of the grammar file
 REFERENCE_MARK = "{{LANGUAGE_REFERENCE}}"  # in prompt.md: replaced by the shipped, tested reference
 
@@ -105,7 +106,7 @@ ANSWER_SCHEMA = {
         "entities": {"type": "array", "items": {"type": "string"},
                      "description": "World entity IDs: for cannot, the ones that block the request; for clarify, every "
                                     "candidate the request could mean. Empty for a program."},
-        "rob": {"type": "string", "description": "The complete RoboLang 1.8 source. Empty when decision is cannot."},
+        "rob": {"type": "string", "description": "The complete RoboLang 1.9 source. Empty when decision is cannot."},
         "task": {"type": "string", "description": "The name of the task in the source to run. Empty when cannot."},
         "bindings": {  # a list of pairs: structured outputs require additionalProperties false on objects
             "type": "array",
@@ -199,10 +200,18 @@ def _declared(actions: dict) -> str:
     return "; ".join(shown)
 
 
+def _clock(world: dict) -> str:
+    """World file 1.5 (0042 K9): when the task starts and in which zone, or that the world has no clock."""
+    clock = world.get("clock")
+    if not clock:
+        return "clock: none (this world has no clock)"
+    return f"clock: the task starts at {clock['start'].replace('T', ' ')} ({clock['zone']})"
+
+
 def _facts(world: dict) -> list[str]:
-    lines = []
+    lines = [_clock(world)] if world.get("world_schema_version") == "1.5" else []
     # 0039: what a region holds, what a robot honours (shown only where the file says; a file 1.4 may omit both)
-    limits = world.get("world_schema_version") in ("1.3", "1.4") and (
+    limits = world.get("world_schema_version") in ("1.3", "1.4", "1.5") and (
         any("honours" in r for r in world.get("robots", {}).values())
         or any("contains" in r for r in world.get("regions", {}).values()))
     regions = world.get("regions", {})
@@ -220,7 +229,7 @@ def _facts(world: dict) -> list[str]:
             parts.append(f"max speed {speeds}")
         if limits:
             parts.append(f"honours {', '.join(r['honours'])}" if r.get("honours") else "honours no region limit")
-        if world.get("world_schema_version") == "1.4":  # 0040 C12: names match exactly, so they are all listed
+        if world.get("world_schema_version") in ("1.4", "1.5"):  # 0040 C12: names match exactly, so they are all listed
             parts.append(f"can do: {_declared(r['actions'])}" if r.get("actions") else "can do no declared action")
         robots.append(f"{name} ({', '.join(parts)})")
     if robots:
@@ -392,6 +401,8 @@ class Judgement:
     limit_dropped: bool | None = None   # 0039 (B8): valid, SUCCEEDED, an asked region limit missing; None: none asked
     actions_ok: bool | None = None      # decision 0040 (B1, B5): exactly the declared actions asked; None: not asked
     action_replaced: bool | None = None  # 0040 (B8): valid, SUCCEEDED, an asked `do` missing; None: none asked
+    clock_ok: bool | None = None        # decision 0042 (B1, B5): exactly the clock readings asked; None: not asked
+    time_replaced: bool | None = None   # 0042 (B8): valid, SUCCEEDED, an asked time condition or wait missing
 
 
 def _merge(base: dict, patch: dict) -> dict:
@@ -428,10 +439,10 @@ def _check_probe(task_def: dict, checked: Checked, probe: dict, bindings: dict[s
 def task_paths(task_def: dict) -> list[dict] | None:
     """
     The paths of a branching task (set 2 and 3, `expect_1_4.paths`; set 4 and pre-registered 1.5 labels,
-    `expect_1_5.paths`; sets that teach 1.6, `expect_1_6.paths`; 1.7, `expect_1_7.paths`; 1.8, `expect_1_8.paths`),
-    each with the world that forces it, or None.
+    `expect_1_5.paths`; sets that teach 1.6, `expect_1_6.paths`; 1.7, `expect_1_7.paths`; 1.8, `expect_1_8.paths`; 1.9,
+    `expect_1_9.paths`), each with the world that forces it, or None.
     """
-    for key in ("expect_1_8", "expect_1_7", "expect_1_6", "expect_1_5", "expect_1_4"):
+    for key in ("expect_1_9", "expect_1_8", "expect_1_7", "expect_1_6", "expect_1_5", "expect_1_4"):
         paths = (task_def.get(key) or {}).get("paths")
         if paths:
             return paths
@@ -573,6 +584,149 @@ def action_replaced(task_def: dict, checked: Checked, bindings: dict[str, str], 
     if not expected:
         return None
     return state == "SUCCEEDED" and bool(expected - _declared_actions(checked, bindings))
+
+
+_DURATION_MS = {"ms": 1, "s": 1000, "min": 60000, "h": 3600000}  # `h` is for the labels only: the language has none
+
+
+def _ms(duration: str) -> Decimal:
+    value, unit = duration.split()
+    return Decimal(value) * _DURATION_MS[unit]
+
+
+def _hhmmss(text: str) -> str:
+    return text if text.count(":") == 2 else text + ":00"
+
+
+_SAME_TEST = {"<": "<", ">=": "<", "<=": "<=", ">": "<="}  # `now >= T` is `now < T` with the branches swapped
+
+
+def _test(op: str, value: str) -> tuple[str, str]:
+    """A comparison of an `if` modulo its complement: the paths decide which branch does what (0042, set 8 plan)."""
+    return _SAME_TEST[op], value
+
+
+def _clock_uses(checked: Checked, bindings: dict[str, str]) -> tuple[list[tuple], int]:
+    """
+    Every use the program makes of the clock, on any path, and the number of `measure r time|elapsed` steps. A use is
+    ("message", reading, robot, channel), ("if", reading, robot, frozenset of (op, HH:MM:SS)) or ("wait", reading, op,
+    HH:MM:SS or elapsed ms, timeout ms). Decision 0042.
+    """
+    reads: dict[str, tuple[str, str]] = {}
+    steps = [step for _, step in task_ir.walk(checked.task.steps)]
+    for step in steps:
+        if isinstance(step, task_ir.ReadClock):
+            reads[step.binding] = (step.reading, bindings.get(step.robot, step.robot))
+    uses: list[tuple] = []
+
+    def atoms(condition):
+        if isinstance(condition, (task_ir.And, task_ir.Or)):
+            for inner in condition.conditions:
+                yield from atoms(inner)
+        elif isinstance(condition, task_ir.Not):
+            yield from atoms(condition.condition)
+        elif isinstance(condition, task_ir.Compare):
+            yield condition
+
+    def value_of(operand) -> str:
+        return operand.value if isinstance(operand, task_ir.TimeLit) else f"{to_base(operand.value, operand.unit)} ms"
+
+    for step in steps:
+        if isinstance(step, task_ir.Communicate) and step.binding in reads:
+            uses.append(("message", reads[step.binding][0], reads[step.binding][1], step.channel))
+        elif isinstance(step, task_ir.If):
+            found = [a for a in atoms(step.condition) if isinstance(a.left, task_ir.BindingRef) and a.left.name in reads
+                     and isinstance(a.right, (task_ir.TimeLit, task_ir.QuantityLit))]
+            if found:
+                reading, robot = reads[found[0].left.name]
+                uses.append(("if", reading, robot, frozenset(_test(a.op, value_of(a.right)) for a in found)))
+        elif isinstance(step, task_ir.WaitUntil):
+            for a in atoms(step.condition):
+                if isinstance(a.left, task_ir.LiveClock):
+                    value = value_of(a.right) if not isinstance(a.right, task_ir.BindingRef) else "binding"
+                    uses.append(("wait", a.left.reading, a.op, value, duration_ms_of(step.timeout)))
+    return uses, len(reads)
+
+
+def _expected_clock(task_def: dict) -> list[tuple]:
+    out = []
+    for entry in task_def.get("expected_clock", []):
+        robots = entry.get("robot", [])
+        robots = frozenset(robots if isinstance(robots, list) else [robots])
+        if entry["use"] == "message":
+            out.append(("message", entry["reading"], robots, entry["channel"]))
+        elif entry["use"] == "if":
+            conditions = frozenset(_test(op, _hhmmss(value)) for op, value in entry["conditions"])
+            out.append(("if", entry["reading"], robots, conditions))
+        else:
+            timeout = _ms(entry["timeout"]) if "timeout" in entry else None  # None: the request sets no limit
+            out.append(("wait", entry["reading"], entry["op"], _hhmmss(entry["value"]), timeout))
+    return out
+
+
+def _matches(found: tuple, wanted: tuple) -> bool:
+    if found[:2] != wanted[:2]:  # the use and the kind of reading
+        return False
+    if found[0] == "wait":
+        return found[2:4] == wanted[2:4] and wanted[4] in (None, found[4])
+    return found[2] in wanted[2] and found[3] == wanted[3]
+
+
+def _pair_off(found: list[tuple], wanted: list[tuple]) -> bool:
+    """True when every found use is a wanted one and the other way round (each used once)."""
+    rest = list(wanted)
+    for use in found:
+        match = next((w for w in rest if _matches(use, w)), None)
+        if match is None:
+            return False
+        rest.remove(match)
+    return not rest
+
+
+def _clock_order_ok(task_def: dict, checked: Checked) -> bool:
+    """`after`: the reading comes after an `inspect`, after the last move/grasp/place ("last step"), or after a wait."""
+    walked = [step for _, step in task_ir.walk(checked.task.steps)]
+    for entry in task_def.get("expected_clock", []):
+        after = entry.get("after")
+        if after is None:
+            continue
+        reads = [i for i, s in enumerate(walked) if isinstance(s, task_ir.ReadClock) and s.reading == entry["reading"]]
+        kinds = {"inspect": (task_ir.Inspect,), "wait until": (task_ir.WaitUntil,),
+                 "last step": (task_ir.Move, task_ir.Grasp, task_ir.Place)}[after]
+        before = [i for i, s in enumerate(walked) if isinstance(s, kinds)]
+        if not reads or not before or (min(reads) < max(before) if after == "last step" else min(reads) < min(before)):
+            return False
+    return True
+
+
+def clock_ok(task_def: dict, checked: Checked, bindings: dict[str, str]) -> bool | None:
+    """
+    Decision 0042 (B1, B5). A task with `expected_clock: [{reading, use, ...}, ...]` (an empty list on a control) is
+    judged on how the program reads the clock: exactly the readings asked (`time` or `elapsed`), each sent in a message
+    to the channel asked, compared as asked (the operators and times of an `if`) or waited for as asked (the time and
+    the timeout, compared as durations, so 60 min is 1 h), by a robot the label lists; no clock reading more and none
+    fewer, and none at all on a control. None when the task has no `expected_clock`.
+    """
+    if "expected_clock" not in task_def:
+        return None
+    found, reads = _clock_uses(checked, bindings)
+    wanted = _expected_clock(task_def)
+    reading_uses = sum(1 for w in wanted if w[0] != "wait")
+    return reads == reading_uses and _pair_off(found, wanted) and _clock_order_ok(task_def, checked)
+
+
+def time_replaced(task_def: dict, checked: Checked, bindings: dict[str, str], state: str) -> bool | None:
+    """
+    Decision 0042 (B8): a valid program whose run ends SUCCEEDED but that lacks a time condition or a wait for a time
+    the request asked for, as when a guessed `wait for`, a fixed message or nothing stands in its place, so every other
+    check passes. None when the task asks for no clock use.
+    """
+    wanted = _expected_clock(task_def)
+    if not wanted:
+        return None
+    found, _ = _clock_uses(checked, bindings)
+    have = Counter((u[0], u[1]) for u in found)
+    return state == "SUCCEEDED" and bool(Counter((w[0], w[1]) for w in wanted) - have)
 
 
 def _do_faults(checked: Checked, bindings: dict[str, str], fault: dict) -> list[dict]:
@@ -864,6 +1018,10 @@ def judge(task_def: dict, checked: Checked, bindings: dict[str, str]) -> Judgeme
     judgement.action_replaced = action_replaced(task_def, checked, bindings, result.state)
     if judgement.actions_ok is not None:
         judgement.checks["declared_actions"] = judgement.actions_ok
+    judgement.clock_ok = clock_ok(task_def, checked, bindings)
+    judgement.time_replaced = time_replaced(task_def, checked, bindings, result.state)
+    if judgement.clock_ok is not None:
+        judgement.checks["clock"] = judgement.clock_ok
     return judgement
 
 

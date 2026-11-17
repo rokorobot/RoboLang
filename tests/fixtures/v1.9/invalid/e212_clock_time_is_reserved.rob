@@ -1,0 +1,10 @@
+// RoboLang v1.9 fixture: invalid
+// expect: error E212 (syntax) line 7
+// why: clock_time is a reserved word in 1.9 (T6)
+
+robolang 1.9;
+
+task t(robot r, location clock_time) {
+    goal { robot_at r clock_time; }
+    plan { move r to clock_time; }
+}

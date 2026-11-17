@@ -1,0 +1,15 @@
+// RoboLang v1.9 fixture: valid
+// expect: ok
+// why: a time of day is read after a step and sent in a message (T1, T8)
+
+robolang 1.9;
+
+task scan_stamp(robot arm, object box, location shelf, sensor cam) {
+    goal { robot_at arm shelf; }
+    plan {
+        move arm to shelf;
+        inspect arm box using cam;
+        measure arm time as done_at;
+        communicate arm to "lead" with done_at;
+    }
+}

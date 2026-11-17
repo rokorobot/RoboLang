@@ -1,0 +1,21 @@
+// RoboLang v1.9 fixture: valid
+// expect: ok
+// why: a cutoff with if: a time binding against a time literal (T3)
+
+robolang 1.9;
+
+task shift_cutoff(robot r, object tote, location inb, location outb) {
+    plan {
+        measure r time as now;
+        if now < 21:30 {
+            goal { object_at tote outb; }
+            move r to inb;
+            grasp r tote;
+            move r to outb;
+            place r tote at outb;
+        } else {
+            communicate r to "lead" with "after cutoff";
+            fail "the shift has ended";
+        }
+    }
+}

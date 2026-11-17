@@ -1,0 +1,15 @@
+// bench/reference_clock/k09_heating_time.rob: hand-written reference
+robolang 1.9;
+
+task heat_time(robot r, object oil, sensor probe, object basket, location src, location fryer) {
+    goal { object_at basket fryer; }
+    plan {
+        wait until temperature of oil using probe > 170 degC timeout 2 min else { fail "the oil did not heat"; }
+        measure r elapsed as took;
+        communicate r to "fry" with took;
+        move r to src;
+        grasp r basket;
+        move r to fryer;
+        place r basket at fryer;
+    }
+}

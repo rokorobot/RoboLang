@@ -13,6 +13,7 @@ from decimal import Decimal
 from .. import ir
 from ..measured import LABEL, Interval, compare_intervals, convert, reading_interval, to_base
 from .actions import action_problems
+from .clock import DAY_S, clock_problems
 from .regions import CHECKED, limit_problems
 from .values import Truth, duration_ms_of
 from .world import Property, World
@@ -309,13 +310,37 @@ def _take(state: _State, sensor_id: str, kind: str, obj: str, robot: str | None)
                    sensor_id, state.clock)
 
 
+def _clock_reading(state: _State, kind: str, robot: str | None) -> Reading:
+    """
+    One reading of the world clock now (RoboLang 1.9, decision 0042). `time` is the clock's start plus the simulated
+    time, in seconds since midnight of the start day (S237 with no clock, S238 once the day has ended: T4, T7);
+    `elapsed` is the simulated time since the run reached `RUNNING` (K6). Exact: uncertainty 0 (T7).
+    """
+    if kind == "elapsed":
+        return Reading(robot or "clock", kind, state.clock / 1000, "s", Decimal(0), "clock", state.clock)
+    clock = state.world.clock
+    if clock is None:
+        raise _StepFailed("S237")
+    seconds = clock.start_s + state.clock / 1000
+    if seconds >= DAY_S:
+        raise _StepFailed("S238")
+    return Reading(robot or "clock", kind, seconds, "s", Decimal(0), "clock", state.clock)
+
+
 def _side(task: ir.Task, state: _State, bound: dict[str, str], operand: ir.Operand) -> Interval | str | None:
     """A comparison operand as an interval (a quantity) or text (a label); None when a live reading cannot be taken."""
     if isinstance(operand, ir.QuantityLit):
         point = to_base(operand.value, operand.unit)
         return Interval(point, point)
+    if isinstance(operand, ir.TimeLit):  # RoboLang 1.9: milliseconds since midnight, as a reading of `time` is
+        hours, minutes, seconds = (int(part) for part in operand.value.split(":"))
+        point = Decimal((hours * 3600 + minutes * 60 + seconds) * 1000)
+        return Interval(point, point)
     if isinstance(operand, ir.TextLit):
         return operand.value
+    if isinstance(operand, ir.LiveClock):  # not taken with no clock or after the day's end: the step fails (T7, T4)
+        reading = _clock_reading(state, operand.reading, None)
+        return reading_interval(reading.value, reading.uncertainty, reading.unit)
     if isinstance(operand, ir.LiveReading):
         try:
             reading = _take(state, _sensor_id(task, bound, operand.sensor), operand.reading, bound[operand.obj], None)
@@ -405,7 +430,7 @@ def _authorize(task: ir.Task, world: World, bindings: tuple[tuple[str, str], ...
             statuses.append("failed_check")
             failure = Failure(code, "authorization", None, None, index, culprit)
     if failure is None:  # RoboLang 1.8: the declared actions, after the limits (decision 0040 A6, C7)
-        problems = action_problems(task, world, bound)
+        problems = action_problems(task, world, bound) or clock_problems(task, world, bound)
         if problems:
             failure = Failure(problems[0].code, "authorization", problems[0].step, None, None, problems[0].robot)
     return tuple(LimitResult(lim, status) for lim, status in zip(task.safety, statuses)), failure
@@ -469,6 +494,10 @@ def _execute(task: ir.Task, state: _State, bound: dict[str, str], step: ir.Step)
         reading = _take(state, _sensor_id(task, bound, step.sensor), step.reading, bound[step.obj], bound[step.robot])
         state.values[step.binding] = reading
         return None, None, None, reading
+    elif isinstance(step, ir.ReadClock):  # RoboLang 1.9 (decision 0042 T1): the robot is recorded, not consulted (K1)
+        reading = _clock_reading(state, step.reading, bound[step.robot])
+        state.values[step.binding] = reading
+        return None, None, None, reading
     elif isinstance(step, ir.WaitFor):
         state.advance(state.clock + duration_ms_of(step.duration))
     elif isinstance(step, ir.WaitUntil):
@@ -477,10 +506,11 @@ def _execute(task: ir.Task, state: _State, bound: dict[str, str], step: ir.Step)
         value = _evaluate(task, state, bound, step.condition)
         while value is not Truth.TRUE:
             pending = [e.at_ms for e in state.world.events[state.next_event:] if t0 < e.at_ms <= deadline]
+            pending += [m for m in _clock_marks(state, step.condition) if state.clock < m <= deadline]
             if not pending:
                 state.advance(deadline)
                 raise _StepFailed("S241", value)
-            state.advance(pending[0])
+            state.advance(min(pending))
             value = _evaluate(task, state, bound, step.condition)
         return None, None, value, None
     else:
@@ -488,6 +518,33 @@ def _execute(task: ir.Task, state: _State, bound: dict[str, str], step: ir.Step)
             return None, Message(bound[step.robot], step.channel, None, value=state.values[step.binding]), None, None
         return None, Message(bound[step.robot], step.channel, step.message), None, None
     return None, None, None, None
+
+
+def _clock_marks(state: _State, condition: ir.Condition) -> list[Decimal]:
+    """
+    The simulated times at which a live clock in `condition` can change what it decides (K5): each compared time, the
+    millisecond after it (for `>` and `<=`), and the end of the day. A wait ends at the first of these, or of an event,
+    where the condition is true: at the exact instant, not at the next look.
+    """
+    marks: list[Decimal] = []
+    stack = [condition]
+    while stack:
+        node = stack.pop()
+        if isinstance(node, (ir.And, ir.Or)):
+            stack.extend(node.conditions)
+        elif isinstance(node, ir.Not):
+            stack.append(node.condition)
+        elif isinstance(node, ir.Compare) and isinstance(node.left, ir.LiveClock):
+            if isinstance(node.right, ir.BindingRef):
+                reading = state.values[node.right.name]
+                limit = to_base(reading.value, reading.unit)
+            else:
+                limit = _side(None, state, {}, node.right).lo
+            at = limit - state.world.clock.start_s * 1000 if node.left.reading == "time" else limit
+            marks += [at, at + 1]
+            if node.left.reading == "time":
+                marks.append(Decimal(DAY_S - state.world.clock.start_s) * 1000)
+    return marks
 
 
 def _names(node, typed_sensors: bool) -> list[str]:

@@ -1,4 +1,4 @@
-"""Token definitions and word sets for RoboLang v1.1 to v1.8 (robolang-v1.1.md section 3, v1.2 2.2, v1.3 2.2)."""
+"""Token definitions and word sets for RoboLang v1.1 to v1.9 (robolang-v1.1.md section 3, v1.2 2.2, v1.3 2.2)."""
 
 from __future__ import annotations
 from dataclasses import dataclass
@@ -11,6 +11,7 @@ class TokenKind(Enum):
     IDENT = "identifier"
     KEYWORD = "keyword"
     NUMBER = "number"
+    TIME = "time of day"  # RoboLang 1.9 files only: 22:00 or 22:00:00
     STRING = "string"
     SPEED_UNIT = "speed unit"
     OPERATOR = "comparison operator"  # RoboLang 1.6 files only
@@ -74,10 +75,15 @@ RESERVED_V1_6 = RESERVED_V1_4 | frozenset(("measure", "as"))
 # RoboLang 1.8 adds declared actions (decision 0040 A1, A2): `do` and `in_state` are reserved. An action name is a
 # name that the robot's profile declares; it is recognised by position and is not reserved.
 RESERVED_V1_8 = RESERVED_V1_6 | frozenset(("do", "in_state"))
+# RoboLang 1.9 adds clock readings (decision 0042 T1, T6): `clock_time` and `clock_elapsed` are reserved. The kind names
+# `time` and `elapsed` are recognised by position (after `measure r`) and are not reserved.
+CLOCK_KINDS = ("time", "elapsed")
+LIVE_CLOCK = {"clock_time": "time", "clock_elapsed": "elapsed"}  # the live names (T6) -> the kind they read
+RESERVED_V1_9 = RESERVED_V1_8 | frozenset(LIVE_CLOCK)
 # Language version -> its reserved words. Versions not listed read as 1.1.
 RESERVED_BY_VERSION = {
     "1.2": RESERVED_V1_2, "1.3": RESERVED_V1_3, "1.4": RESERVED_V1_4, "1.5": RESERVED_V1_4, "1.6": RESERVED_V1_6,
-    "1.7": RESERVED_V1_6, "1.8": RESERVED_V1_8,
+    "1.7": RESERVED_V1_6, "1.8": RESERVED_V1_8, "1.9": RESERVED_V1_9,
 }
 
 # Recognized only in their grammatical position; not reserved.

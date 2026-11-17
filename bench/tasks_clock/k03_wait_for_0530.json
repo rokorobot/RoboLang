@@ -1,9 +1,12 @@
 {
   "id": "k03_wait_for_0530",
   "prompt": "At 05:30, send tug1 from gate_in to gate_out. Wait up to 90 minutes for 05:30 and, if it has not come by then, stop the job as failed.",
-  "world": "bench/worlds/yard.json",
+  "world": "bench/worlds/yard_1_5_0430.json",
   "group": "clock",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_8": {
     "decision": "cannot",
     "category": "inexpressible"
   },

@@ -1,11 +1,52 @@
 {
   "id": "f_clock_shift_cutoff",
   "prompt": "With digit1, move tote_1 from the inbound conveyor to the outbound conveyor, but only if the shift has not ended; the shift ends at 22:00. If it has ended, move nothing and tell channel \"lead\" the shift is over.",
-  "world": "bench/worlds/fulfilment.json",
-  "group": "inexpressible",
+  "world": "bench/worlds/fulfilment_1_5_2115.json",
+  "group": "clock",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_8": {
     "decision": "cannot",
     "category": "inexpressible"
+  },
+  "expect_1_9": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "the shift has not ended at 21:15: the tote is moved",
+        "goal": [
+          [
+            "rl:thing:tote_1",
+            "located_in",
+            "rl:place:outbound_conveyor"
+          ]
+        ],
+        "world_patch": {}
+      },
+      {
+        "when": "the shift has ended at 22:30: nothing moves, the lead is told",
+        "goal": [
+          [
+            "rl:thing:tote_1",
+            "located_in",
+            "rl:place:inbound_conveyor"
+          ]
+        ],
+        "world_patch": {
+          "clock": {
+            "start": "2026-11-17T22:30:00",
+            "zone": "Europe/Prague"
+          }
+        }
+      }
+    ],
+    "world_1_5": {
+      "clock": {
+        "start": "2026-11-17T21:15:00",
+        "zone": "Europe/Prague"
+      }
+    }
   },
   "activity": "ACT-LOG-001",
   "gap": "G-CLOCK",
@@ -14,6 +55,18 @@
     "if",
     "communicate"
   ],
-  "why": "An `if` tests the world (ready, clear, at, holding) or a measured value; it cannot test the time of day, and there is no clock reading (language reference: 'Not in the language: ... clock readings').",
-  "attempt_fails_with": "E101"
+  "expected_clock": [
+    {
+      "robot": "digit1",
+      "reading": "time",
+      "use": "if",
+      "conditions": [
+        [
+          "<",
+          "22:00"
+        ]
+      ]
+    }
+  ],
+  "why": "An `if` on a measured time (0042 T1, T3): `now < 22:00` moves the tote, otherwise nothing moves and the message goes to the lead. Each path has its goal; the else path has none to reach but the tote where it was. The world copy starts at 21:15, and the second path starts at 22:30."
 }
