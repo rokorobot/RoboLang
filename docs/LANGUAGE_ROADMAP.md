@@ -64,6 +64,6 @@ Frozen, dated copies with a git tag: [roadmap-snapshots/](roadmap-snapshots/READ
 
 | # | State |
 |---|---|
-| I1 G-PATH | **L1 done** (owner, 2026-11-17). **L2 done:** decision record [0039](../spec/decisions/0039-region-limits.md) approved 2026-11-17 (P3–P10 after review). **L3:** set 6 "regions" (22 tasks) pre-registered against 1.6 ([plan](plans/bench-6-regions.md), draft for the owner); clarifications C1–C7 settled by the owner; baseline on 1.6 done 2026-11-17 ([evidence](evidence/bench-set6-baseline.md)): Sonnet drops the limit silently in 3/27 region answers; bounds B1–B8 approved by the owner 2026-11-17: **L3 done**. **L4 done:** RoboLang 1.7 built and taught (reference, prompts, set 6 labels, errata [bench-errata-1-7](evidence/bench-errata-1-7.md)); **L5 acceptance run next** |
+| I1 G-PATH | L1–L3 done. **L4 done** (PR #147). **L5 done: accepted 2026-11-17** with two recorded exceptions ([acceptance](evidence/bench-1-7-acceptance.md)): silent limit drops 3/27 → 0/27. **L6:** release 1.7 next |
 | I2–I10 | Not started; R3 done: tests and model run (0/25 false programs) |
 | Mission layer decision record | Not started |

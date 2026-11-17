@@ -38,7 +38,13 @@ the right limit.
 
 ## Verdict
 
-**Pending the owner's decision.** By its rule ("if a bound fails, 1.7 stays in code only"), 1.7 is not accepted as
-pre-registered. Recommended: accept 1.7 and record the two exceptions. For B3, issue an erratum that rewords `x05`
-("…whichever areas become busy while it drives"), then run a confirming run of `x05` alone (Haiku, grammar-only,
-3 repeats, about $0.01), as erratum G2 did for 1.6. For B7, record the code count against the decision.
+**ACCEPTED by the owner, 2026-11-17, with two recorded exceptions:**
+
+1. **B3:** erratum E1 rewords `x05` ([errata](bench-errata-1-7.md)). The confirming run,
+   [run 44049519088](https://github.com/rokorobot/RoboLang/actions/runs/44049519088) (Haiku, grammar-only, 3 repeats,
+   under $0.01), declined `x05` as `inexpressible` 3/3. With it, B3 is 0/15 for every model and prompt.
+2. **B7:** 9 new diagnostic codes instead of about 4. The count is recorded in
+   [0039](../../spec/decisions/0039-region-limits.md). There is no new keyword.
+
+All other bounds were met as pre-registered. 1.7 is taught (PR #147). Total paid cost of I1: baseline $0.73,
+acceptance $0.84, confirming run under $0.01.
