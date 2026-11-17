@@ -140,4 +140,4 @@ task tote_if_open(robot r, object tote, location inb, location outb) {
 Built in PR #155. T2 and T5 write `1 h` and `12 h` "as durations are written today", but 1.1–1.8 have only `ms`, `s`
 and `min`. L4 did **not** add an hour unit, so the economy of B7 is unchanged. A request in hours is written in
 minutes (`720 min`), as the reference teaches; the scorer compares durations, so `1 h` in a label accepts `60 min`.
-Adding `h` is one token and waits for the owner's decision.
+**Owner, 2026-11-17: no `h` for now**; it is added only when a request needs it.
