@@ -1,0 +1,10 @@
+{
+  "task": "lock_pair",
+  "bindings": {
+    "a": "crane1",
+    "b": "crane2",
+    "x": "cont_101",
+    "y": "cont_102",
+    "berth": "berth_1"
+  }
+}

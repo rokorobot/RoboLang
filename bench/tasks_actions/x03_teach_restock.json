@@ -1,9 +1,13 @@
 {
   "id": "x03_teach_restock",
   "prompt": "Teach moxi1 a skill called restock: open closet_door, then take iv_kit_1 to ward_3. Do not run it now.",
-  "world": "bench/worlds/ward.json",
+  "world": "bench/worlds/ward_1_4.json",
   "group": "inexpressible",
   "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_7": {
     "decision": "cannot",
     "category": "inexpressible"
   },

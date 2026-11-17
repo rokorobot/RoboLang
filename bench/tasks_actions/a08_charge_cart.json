@@ -1,9 +1,12 @@
 {
   "id": "a08_charge_cart",
   "prompt": "Send cart2 to the charger and have it charge there.",
-  "world": "bench/worlds/pharmacy.json",
+  "world": "bench/worlds/pharmacy_1_4.json",
   "group": "action",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_7": {
     "decision": "cannot",
     "category": "inexpressible"
   },

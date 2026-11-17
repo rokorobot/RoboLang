@@ -20,9 +20,11 @@ from pathlib import Path
 from robolang import bridge
 from robolang import ir as task_ir
 from robolang.cli import main as robolang_cli
+from robolang.measured import to_base
 from robolang.sim import World, WorldError, load_world
 from robolang.sim import run as simulate_task
 from robolang.sim.values import duration_ms_of
+from robolang.tokens import KIND_UNITS
 
 ROOT = Path(__file__).resolve().parent.parent
 BENCH = ROOT / "bench"
@@ -42,16 +44,16 @@ FUTURE_TASKS_DIR = BENCH / "tasks_future"  # set 6: probes for the atlas's near 
 FUTURE_REFERENCE_DIR = BENCH / "reference_future"
 REGIONS_TASKS_DIR = BENCH / "tasks_regions"  # set 6: region limits, pre-registered against 1.6, labelled for 1.7 (0039)
 REGIONS_REFERENCE_DIR = BENCH / "reference_regions"
-ACTIONS_TASKS_DIR = BENCH / "tasks_actions"  # set 7: declared actions, pre-registered against 1.7 (decision 0040)
+ACTIONS_TASKS_DIR = BENCH / "tasks_actions"  # set 7: declared actions, pre-registered against 1.7, labelled for 1.8
 ACTIONS_REFERENCE_DIR = BENCH / "reference_actions"
 PROMPT_FILE = BENCH / "prompt.md"
 REFERENCE_FILE = ROOT / "docs" / "language-reference.md"
 MINIMAL_PROMPT_FILE = BENCH / "prompt_minimal.md"
-# 1.7 is a delta over 1.6, over 1.5, over 1.4, over 1.3: the grammar-only prompt pastes all five, the base first
-GRAMMAR_FILE = ROOT / "spec" / "grammar-v1.7.ebnf"
+# 1.8 is a delta over 1.7, over 1.6, over 1.5, over 1.4, over 1.3: the grammar-only prompt pastes all six
+GRAMMAR_FILE = ROOT / "spec" / "grammar-v1.8.ebnf"
 BASE_GRAMMAR_FILE = ROOT / "spec" / "grammar-v1.3.ebnf"
 GRAMMAR_FILES = (BASE_GRAMMAR_FILE, ROOT / "spec" / "grammar-v1.4.ebnf", ROOT / "spec" / "grammar-v1.5.ebnf",
-                 ROOT / "spec" / "grammar-v1.6.ebnf", GRAMMAR_FILE)
+                 ROOT / "spec" / "grammar-v1.6.ebnf", ROOT / "spec" / "grammar-v1.7.ebnf", GRAMMAR_FILE)
 GRAMMAR_MARK = "{{GRAMMAR}}"  # in prompt_minimal.md: replaced by the text of the grammar file
 REFERENCE_MARK = "{{LANGUAGE_REFERENCE}}"  # in prompt.md: replaced by the shipped, tested reference
 
@@ -100,7 +102,7 @@ ANSWER_SCHEMA = {
         "entities": {"type": "array", "items": {"type": "string"},
                      "description": "World entity IDs: for cannot, the ones that block the request; for clarify, every "
                                     "candidate the request could mean. Empty for a program."},
-        "rob": {"type": "string", "description": "The complete RoboLang 1.7 source. Empty when decision is cannot."},
+        "rob": {"type": "string", "description": "The complete RoboLang 1.8 source. Empty when decision is cannot."},
         "task": {"type": "string", "description": "The name of the task in the source to run. Empty when cannot."},
         "bindings": {  # a list of pairs: structured outputs require additionalProperties false on objects
             "type": "array",
@@ -184,9 +186,22 @@ def _measures(sensor: dict) -> str:
     return f"; measures {'; '.join(kinds)}" if kinds else ""
 
 
+def _declared(actions: dict) -> str:
+    """World file 1.4 (0040 C12): the actions a robot declares, by exact name, with target, result and value kind."""
+    shown = []
+    for name, a in actions.items():
+        value = f", takes a {a['value']}" if a.get("value") else ""
+        article = "an" if a["target"] == "object" else "a"
+        shown.append(f"{name} (on {article} {a['target']}, leaves it {a['result']}{value})")
+    return "; ".join(shown)
+
+
 def _facts(world: dict) -> list[str]:
     lines = []
-    limits = world.get("world_schema_version") == "1.3"  # 0039: what a region holds, what a robot honours
+    # 0039: what a region holds, what a robot honours (shown only where the file says; a file 1.4 may omit both)
+    limits = world.get("world_schema_version") in ("1.3", "1.4") and (
+        any("honours" in r for r in world.get("robots", {}).values())
+        or any("contains" in r for r in world.get("regions", {}).values()))
     regions = world.get("regions", {})
     if regions:
         shown = [f"{n} ({'clear' if r.get('clear') else 'not clear'}"
@@ -202,6 +217,8 @@ def _facts(world: dict) -> list[str]:
             parts.append(f"max speed {speeds}")
         if limits:
             parts.append(f"honours {', '.join(r['honours'])}" if r.get("honours") else "honours no region limit")
+        if world.get("world_schema_version") == "1.4":  # 0040 C12: names match exactly, so they are all listed
+            parts.append(f"can do: {_declared(r['actions'])}" if r.get("actions") else "can do no declared action")
         robots.append(f"{name} ({', '.join(parts)})")
     if robots:
         lines.append(f"robots: {'; '.join(robots)}")
@@ -212,9 +229,12 @@ def _facts(world: dict) -> list[str]:
             where = f"at {o['location']}"
         elif "held_by" in o:
             where = f"held by {o['held_by']}"
-        objects.append(f"{name} ({o.get('class', 'object')}, {where})")
+        state = f", state {o['state']}" if o.get("state") else ""
+        objects.append(f"{name} ({o.get('class', 'object')}, {where}{state})")
     if objects:
         lines.append(f"objects: {'; '.join(objects)}")
+    if world.get("location_states"):  # world file 1.4
+        lines.append("location states: " + ", ".join(f"{n} is {s}" for n, s in world["location_states"].items()))
     sensors = [f"{n} (on {s['robot']}, {'available' if s.get('available') else 'not available'}{_measures(s)})"
                for n, s in world.get("sensors", {}).items()]
     if sensors:
@@ -367,6 +387,8 @@ class Judgement:
     silent_substitution: bool | None = None  # 0036 V13, amendment 1: `inspect` for a reading; None: not asked
     limit_ok: bool | None = None        # decision 0039 (B1, B5): exactly the region limits asked; None: not asked
     limit_dropped: bool | None = None   # 0039 (B8): valid, SUCCEEDED, an asked region limit missing; None: none asked
+    actions_ok: bool | None = None      # decision 0040 (B1, B5): exactly the declared actions asked; None: not asked
+    action_replaced: bool | None = None  # 0040 (B8): valid, SUCCEEDED, an asked `do` missing; None: none asked
 
 
 def _merge(base: dict, patch: dict) -> dict:
@@ -403,10 +425,10 @@ def _check_probe(task_def: dict, checked: Checked, probe: dict, bindings: dict[s
 def task_paths(task_def: dict) -> list[dict] | None:
     """
     The paths of a branching task (set 2 and 3, `expect_1_4.paths`; set 4 and pre-registered 1.5 labels,
-    `expect_1_5.paths`; sets that teach 1.6, `expect_1_6.paths`; 1.7, `expect_1_7.paths`), each with the world that
-    forces it, or None.
+    `expect_1_5.paths`; sets that teach 1.6, `expect_1_6.paths`; 1.7, `expect_1_7.paths`; 1.8, `expect_1_8.paths`),
+    each with the world that forces it, or None.
     """
-    for key in ("expect_1_7", "expect_1_6", "expect_1_5", "expect_1_4"):
+    for key in ("expect_1_8", "expect_1_7", "expect_1_6", "expect_1_5", "expect_1_4"):
         paths = (task_def.get(key) or {}).get("paths")
         if paths:
             return paths
@@ -500,6 +522,63 @@ def limit_dropped(task_def: dict, checked: Checked, bindings: dict[str, str], st
     return state == "SUCCEEDED" and bool(expected - _declared_limits(checked, bindings))
 
 
+def _value_key(value) -> tuple | None:
+    """A `do` value for comparison: a quantity as (kind, exact value in the base unit), a text as itself."""
+    if value is None:
+        return None
+    if isinstance(value, task_ir.TextLit):
+        return ("text", value.value)
+    kind = next(k for k, units in KIND_UNITS.items() if value.unit in units)
+    return (kind, to_base(value.value, value.unit))
+
+
+def _declared_actions(checked: Checked, bindings: dict[str, str]) -> set[tuple]:
+    """The `do` steps the program has on any path, as (robot, action, target, value key), entities bound."""
+    return {(bindings.get(s.robot, s.robot), s.action, bindings.get(s.target, s.target), _value_key(s.value))
+            for _, s in task_ir.walk(checked.task.steps) if isinstance(s, task_ir.Do)}
+
+
+def _expected_actions(task_def: dict) -> set[tuple]:
+    out = set()
+    for a in task_def.get("expected_actions", []):
+        value = a.get("value")
+        if value is not None:
+            value = ("text", value) if isinstance(value, str) else _value_key(
+                task_ir.QuantityLit(Decimal(value[0]), value[1]))
+        out.add((a["robot"], a["action"], a["target"], value))
+    return out
+
+
+def actions_ok(task_def: dict, checked: Checked, bindings: dict[str, str]) -> bool | None:
+    """
+    Decision 0040 (B1, B5). A task with `expected_actions: [{robot, action, target[, value]}, ...]` (an empty list on a
+    control) is judged on its `do` steps: the program has exactly those, the right action by the right robot on the
+    right target with the right value (a quantity is compared in the base unit), none more and none fewer. None when
+    the task has no `expected_actions`.
+    """
+    if "expected_actions" not in task_def:
+        return None
+    return _declared_actions(checked, bindings) == _expected_actions(task_def)
+
+
+def action_replaced(task_def: dict, checked: Checked, bindings: dict[str, str], state: str) -> bool | None:
+    """
+    Decision 0040 (B8): a valid program whose run ends SUCCEEDED but that lacks an action the request asked for, as
+    when a `move`, an `inspect` or nothing stands in its place. None when the task asks for no action.
+    """
+    expected = _expected_actions(task_def)
+    if not expected:
+        return None
+    return state == "SUCCEEDED" and bool(expected - _declared_actions(checked, bindings))
+
+
+def _do_faults(checked: Checked, bindings: dict[str, str], fault: dict) -> list[dict]:
+    """The world's fault script for `{"step": "do", "action", "target"}`: every `do` of that action on that entity."""
+    return [{"step": index} for index, (_, step) in enumerate(task_ir.walk(checked.task.steps), start=1)
+            if isinstance(step, task_ir.Do) and step.action == fault["action"]
+            and bindings.get(step.target, step.target) == fault["target"]]
+
+
 def judge_paths(task_def: dict, checked: Checked, bindings: dict[str, str]) -> list[dict]:
     """
     Run the answer once per expected path, in that path's patched world (decision 0027 B6, N4 PR 3).
@@ -515,6 +594,9 @@ def judge_paths(task_def: dict, checked: Checked, bindings: dict[str, str]) -> l
         entry = {"when": path["when"], "goal_ok": False, "plan_ok": False, "state": None, "failure_code": None,
                  "value_ok": None}
         patched = _merge(json.loads(world_bytes(task_def)), path["world_patch"])
+        if "scripted_fault" in path:  # 0040 C6: fail the program's `do` steps that match, as the world's fault script
+            faults = _do_faults(checked, bindings, path["scripted_fault"])
+            patched["tasks"] = {**patched.get("tasks", {}), checked.task.name: {"faults": faults}}
         try:
             world = load_world(json.dumps(patched).encode("utf-8"), "world.json", checked.task, bindings)
             result = simulate_task(checked.task, world)
@@ -607,6 +689,8 @@ def _goal_formula(condition: task_ir.Condition, bindings: dict[str, str]):
     """A goal condition as a formula: ("atom", key), ("and" | "or", parts) or ("not", part).
 
     An outcome atom's key is its Core triple; any other condition (robot_ready, ...) is a free proposition."""
+    if isinstance(condition, task_ir.InState):  # 0040 C1: a fact [X, "in_state", label], its own subject (a state)
+        return "atom", (_state_subject(bindings.get(condition.target, condition.target)), "in_state", condition.label)
     triple = bridge.triple_of(condition, bindings)
     if triple is not None:
         return "atom", (triple.subject, triple.property, triple.value)
@@ -615,6 +699,18 @@ def _goal_formula(condition: task_ir.Condition, bindings: dict[str, str]):
     if isinstance(condition, task_ir.Not):
         return "not", _goal_formula(condition.condition, bindings)
     return "atom", ("?", repr(condition), "")
+
+
+def _state_subject(entity: str) -> str:
+    """The subject of a state fact: an object's or a location's state is not where it is, so it has its own key."""
+    return f"rl:state:{entity}"
+
+
+def _reading_atom(triple: tuple[str, str, str]) -> tuple[str, str, str]:
+    """An expected triple as a goal atom: `[rl:thing:door, "in_state", "open"]` is a fact about the state of `door`."""
+    if triple[1] == "in_state":
+        return (_state_subject(triple[0].rsplit(":", 1)[-1]), *triple[1:])
+    return triple
 
 
 def _atoms(formula, out: set) -> set:
@@ -648,7 +744,7 @@ def goal_means(task: task_ir.Task, bindings: dict[str, str], readings: list[set[
     if task.goal is None or not readings:
         return None
     goal = ("and", tuple(_goal_formula(c, bindings) for c in task.goal))
-    expected = [("and", tuple(("atom", t) for t in sorted(r))) for r in readings]
+    expected = [("and", tuple(("atom", _reading_atom(t)) for t in sorted(r))) for r in readings]
     candidates = expected + ([("or", tuple(expected))] if len(expected) > 1 else [])
     domains: dict = {}
     for atom in _atoms(goal, set()).union(*(_atoms(f, set()) for f in expected)):
@@ -761,6 +857,10 @@ def judge(task_def: dict, checked: Checked, bindings: dict[str, str]) -> Judgeme
     judgement.limit_dropped = limit_dropped(task_def, checked, bindings, result.state)
     if judgement.limit_ok is not None:
         judgement.checks["limits"] = judgement.limit_ok
+    judgement.actions_ok = actions_ok(task_def, checked, bindings)
+    judgement.action_replaced = action_replaced(task_def, checked, bindings, result.state)
+    if judgement.actions_ok is not None:
+        judgement.checks["declared_actions"] = judgement.actions_ok
     return judgement
 
 

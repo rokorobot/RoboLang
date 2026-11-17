@@ -1,9 +1,13 @@
 {
   "id": "x02_selftest_result",
   "prompt": "Have flippy1 run the fryer's self-test and tell channel \"fry\" the result.",
-  "world": "bench/worlds/fry_station.json",
+  "world": "bench/worlds/fry_station_selftest_1_4.json",
   "group": "inexpressible",
   "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_7": {
     "decision": "cannot",
     "category": "inexpressible"
   },

@@ -1,9 +1,12 @@
 {
   "id": "a02_set_then_wait_reading",
   "prompt": "With flippy1, set the fryer to 175 degrees Celsius. Once the oil in oil_1 reads above 170 degrees Celsius (give it 60 seconds), move basket_2 from the prep_table to the fryer. If the oil does not get there, stop.",
-  "world": "bench/worlds/fry_station.json",
+  "world": "bench/worlds/fry_station_1_4.json",
   "group": "action",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_7": {
     "decision": "cannot",
     "category": "inexpressible"
   },

@@ -1,14 +1,15 @@
-# RoboLang 1.7 language reference
+# RoboLang 1.8 language reference
 
 RoboLang is a small, checked language for robot tasks. A program describes a desired final state and
 a plan for reaching it in a symbolic world. A program is correct only when it validates, names the
 right entities, states the operator's requested outcome in `goal`, and reaches that goal.
 
-RoboLang 1.7 has bounded branching (`if`/`else`, see "Branching"), step failure handlers (a step
+RoboLang 1.8 has bounded branching (`if`/`else`, see "Branching"), step failure handlers (a step
 `else { ... }` that runs when that step fails, see "Failure handlers"), measured values (`measure`
-reads a temperature, a mass, a distance or a label from a sensor, see "Measured values") and region
+reads a temperature, a mass, a distance or a label from a sensor, see "Measured values"), region
 limits (`@safety no_go_region R;`, `@safety in_region R;`: where the robots may be while they move, see
-"Region limits"). It has no loops
+"Region limits") and declared actions (`do r open door;` asks a robot for an action its profile declares, and
+`in_state door "open"` checks the result, see "Declared actions"). It has no loops
 ("until it works"), counts, clocks, schedules, arithmetic, string formatting, message waits, limits on one
 step only, limits on an arm or a person, or
 variables beyond typed task parameters and the names that `measure` binds. Do not silently drop part of a request. If a request needs an unsupported construct, or the available
@@ -16,7 +17,7 @@ world and robots cannot perform it, say that it cannot be represented or complet
 
 ## File and task structure
 
-A file starts with `robolang 1.7;` and holds one or more tasks. `//` starts a comment. The language
+A file starts with `robolang 1.8;` and holds one or more tasks. `//` starts a comment. The language
 is case-sensitive. Whitespace only separates tokens.
 
 ```text
@@ -40,7 +41,7 @@ and `_`, starting with a letter. These words are reserved and cannot be names:
 robolang task pre plan goal robot object location region sensor move grasp place inspect wait communicate
 to at using with for until timeout robot_ready region_clear object_exists sensor_ok object_at robot_at holding
 and or not in_region with_approach no_go_region require_guard message_received scalar duration
-if else fail measure as
+if else fail measure as do in_state
 ```
 
 Numbers are unsigned decimals (`2`, `0.5`); there is no sign or exponent. A duration is a number
@@ -55,14 +56,16 @@ grasp r obj;
 place r obj at dst;
 inspect r obj using camera;
 measure r temperature of obj using probe as t;
+do r open door;
+do r set fryer to 175 degC;
 wait for 2 s;
 wait until region_clear cell timeout 30 s else { fail "cell not clear"; }
 communicate r to "channel" with "message";
 communicate r to "channel" with t;
 ```
 
-Here `r` is a robot, `obj` an object, `dst` a location, `camera` and `probe` sensor parameters, and `t` a name bound by
-`measure` ("Measured values"). A sensor is
+Here `r` is a robot, `obj` an object, `dst` a location, `camera` and `probe` sensor parameters, `t` a name bound by
+`measure` ("Measured values"), and `door` an object or `fryer` a location that a `do` acts on ("Declared actions"). A sensor is
 never a quoted string. `wait until` always needs a timeout and a failure handler (`E316`). Strings cannot contain a literal
 line break; the only escapes are `\"`, `\\`, `\n`, and `\t`.
 
@@ -213,8 +216,78 @@ program uses the value afterwards.
   uncertainty. "Tell the channel the value you measured" is this, never a literal text. There is no formatting: a
   message cannot be built from a value ("Pan 1 is at <reading> degC"), and the request is then not representable.
 - **Not in the language:** arithmetic (an average, a difference, a sum of readings), formatting a value into text,
-  counting, clock readings, setting a value (no command writes one), and choosing an object at run time ("any pan
+  counting, clock readings, and choosing an object at run time ("any pan
   above 80 degC": there is no way to search; name the objects). Say that these cannot be represented.
+
+## Declared actions
+
+```text
+do r open door;                     // the robot r does the action `open`, which its profile declares, on `door`
+do r set fryer to 175 degC;         // an action that takes a value (a quantity with a unit, or a text)
+do r open door else { fail "door stuck"; }
+goal { in_state door "open"; }      // the result is checked, never assumed
+```
+
+```rob
+robolang 1.8;
+
+task restock(robot r, object closet, object kit, location ward, location store) {
+    goal { in_state closet "open"; object_at kit ward; }
+    plan {
+        move r to store;
+        do r open closet;
+        grasp r kit;
+        move r to ward;
+        place r kit at ward;
+    }
+}
+```
+
+A robot can do more than the seven statements: open a door, set a temperature, print, lock, charge, dock. It can do
+exactly the **actions its profile declares**, and the world list shows them for each robot, for example
+`moxi1 (... can do: open (on an object, leaves it open); set (on a location, leaves it heating, takes a temperature))`.
+An action is a **name**, not a keyword: write it exactly as the world lists it (`open_door` is not `open`).
+
+- **When to write `do`.** The request asks a robot for something that is not moving, grasping, placing, inspecting,
+  measuring, waiting or sending a message: "open the closet", "set the fryer to 175", "print the layout", "lock the
+  container", "charge it", "dock it". Write `do r ACTION TARGET;`, with the robot, the action the world lists for it and
+  **one** target: an object or a location, of the kind the world says the action acts on (`on an object` or
+  `on a location`).
+- **A value.** An action that "takes a temperature" (or a mass, a distance, a text) needs `to VALUE`, written as the
+  request says it with its unit: `do r set fryer to 175 degC;` (`degC` and `K`, `g` and `kg`, `mm`, `cm` and `m`, or a
+  string for a text). An action that takes no value takes none. The value is recorded and **never assumed reached**: if
+  the request wants the oil at 175 before the next step, follow with a `measure` or a `wait until` on the reading
+  ("Measured values"), with a timeout and a failure handler as always.
+- **Always check the result.** A `do` is a request to the robot's own controller: the run records `requested`, and
+  nothing more. State the result the request wants in `goal` with `in_state x "label"`, using the result label the
+  world lists ("leaves it open" is `in_state door "open"`). A program with the `do` and no `in_state` verifies nothing,
+  and a program with the `in_state` and no `do` fails its goal. Never replace an action with a `move`, an `inspect` or
+  a `communicate`: that does less than was asked and every other check accepts it.
+- **Add no action the request did not ask for.** A world may list actions the request does not mention (a closed door
+  the task does not need, a printer that could print). Do not use them. A request to fetch something does not ask to
+  open the door of the room.
+- **The robot has to be at the target.** As for `grasp`, move the robot to the target location, or to the location of
+  the target object, before the `do` (`S271`). A robot that holds the object is at it. There are no actions from afar.
+- **A `do` is a step like the others.** It takes a failure handler (`else { ... }`), may stand in an `if` or in a
+  handler, and a failed `do` changes nothing. `in_state` is a condition: use it in `pre`, `goal`, `if` and
+  `wait until`, combined with `not`, `and`, `or`. It is true when the state is that label, false for another
+  label, and **unknown** when the world gives the object or location no state, and unknown fails closed.
+- **One target only.** An action has one object or one location. Handing something to a person, or an action with two
+  targets, cannot be represented. Nor can an action that returns a value (running a self-test and reporting its result:
+  that would be a `measure`, which needs a sensor), a reusable skill with a name ("teach the robot a skill called
+  restock"), an action repeated until it works, or one triggered at a clock time. Say that these cannot be represented.
+  A duration is not a value: "fry for 3 minutes" is a `do`, then `wait for 3 min`.
+- **Charge and dock.** The state is on the charger or the dock, a location: `do r charge charger;`,
+  `in_state charger "charging"`. The robot's own state (its battery) cannot be asked for.
+- **Regions.** A `do` on a location counts as a target for a region limit, as a `move` does: the robot has to be there.
+- **Infeasible, not inexpressible.** The language can say it and this world cannot do it. Decline with
+  `"category": "infeasible"` when (1) the robot the request names does not list the action (`S006`), (2) the target is
+  the wrong kind for the action, an action on an object given a location or the reverse (`S007`), (3) the request gives
+  a value the action does not take, a value of the wrong kind (2 kg for a temperature) or none where one is needed
+  (`S008`), or (4) the request needs a result no listed action of the robots leaves, such as "keep the door locked"
+  when the robot can only open and close (`S009`). Do not write a program for these.
+- **Never in a delegated goal.** `export-goal` and `delegate` refuse a goal with `in_state` (`X606`), and the ROS 2
+  backend refuses `do` and `in_state`: Core carries no states.
 
 ## Conditions
 
@@ -227,6 +300,7 @@ program uses the value afterwards.
 | `object_at o l` | object `o` is present, not held, and at location `l` |
 | `robot_at r l` | robot `r` is at location `l` |
 | `holding r o` | robot `r` holds object `o` |
+| `in_state x "open"` | the state of object or location `x` is that label (see "Declared actions"; unknown when the world gives `x` no state) |
 | `t < 60 degC`, `lot == "A"` | a measured value compares as stated (only in `if` and `wait until`; see "Measured values") |
 
 Combine conditions with `not`, `and`, `or`, and parentheses:
@@ -269,7 +343,7 @@ Both words go after `@safety`, name a `region` parameter, and are written before
 order with `max_speed`. Bind the parameter to the region of the world that the request names, by its exact ID.
 
 ```rob
-robolang 1.7;
+robolang 1.8;
 
 task to_lobby(robot r, location lobby, region wet) {
     @safety no_go_region wet;
@@ -325,6 +399,9 @@ task to_lobby(robot r, location lobby, region wet) {
   reads no value.
 - `wait until C timeout T` checks `C` immediately and whenever the world changes during `T`. It
   fails if `C` is not true by the timeout, and its handler runs. Only waits advance simulated time.
+- `do r ACTION TARGET` requires `r` to be ready, to list the action in the world, and to be at the target (a location, or the
+  location of the object). It sets the state of the target to the result the action lists, records `requested` and
+  changes nothing else. It takes no time.
 - `communicate` records a message and changes no other state.
 - A task can bind more than one robot. Their steps still run sequentially in written order.
 
@@ -357,6 +434,11 @@ are:
 | `E320` | `==` or `!=` on a quantity, or ordering on a label |
 | `E321` | a comparison in `pre` or `goal` |
 | `E322` | a live reading anywhere but the condition of a `wait until` |
+| `S006` | a `do` names an action the robot does not list in the world |
+| `S007` | the target of a `do` is an object where the action acts on a location, or the reverse |
+| `S008` | a `do` gives a value the action does not take, no value where it takes one, or a value of the wrong kind |
+| `S009` | the goal needs an `in_state` that no action of the task's robots leaves, and the world does not already hold |
+| `S271` | `do`: the robot is not at the target location, or at the target object's location |
 | `E323` | a region named by more than one region limit, or as both `no_go_region` and `in_region` |
 | `E324` | more than 8 region limits in a task |
 | `S003` | a robot that moves does not honour the kind of region limit (its `honours` in the world) |
@@ -373,7 +455,7 @@ records completion. Its parameters still
 need bindings to concrete world entities before simulation.
 
 ```rob
-robolang 1.7;
+robolang 1.8;
 
 task deliver(robot r, object box, location src, location dst, region cell, sensor camera) {
     @safety max_speed 0.5 m/s;
@@ -397,7 +479,7 @@ This task chooses at run time. If the cell is clear when the job reaches the `if
 `a`; otherwise it goes to `b`. Each path has its own goal.
 
 ```rob
-robolang 1.7;
+robolang 1.8;
 
 task route(robot r, object box, location src, location a, location b, region cell) {
     plan {
@@ -419,7 +501,7 @@ task route(robot r, object box, location src, location a, location b, region cel
 This task retries a failed grasp once. If the second grasp also fails, it reports and stops.
 
 ```rob
-robolang 1.7;
+robolang 1.8;
 
 task fetch(robot r, object box, location src, location dst) {
     goal { object_at box dst; }
@@ -443,7 +525,7 @@ reading to the "pass" channel, and moves the pan only if the reading is clearly 
 may be too hot.
 
 ```rob
-robolang 1.7;
+robolang 1.8;
 
 task check_pan(robot r, object pan, sensor probe, location src, location dst) {
     goal { object_at pan dst; }

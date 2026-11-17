@@ -1,9 +1,12 @@
 {
   "id": "a09_dock_drone",
   "prompt": "Fly drone1 to berth_1 and back to the workshop, then dock it there.",
-  "world": "bench/worlds/yard.json",
+  "world": "bench/worlds/yard_1_4.json",
   "group": "action",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_7": {
     "decision": "cannot",
     "category": "inexpressible"
   },

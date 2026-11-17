@@ -1,9 +1,12 @@
 {
   "id": "a07_print_dry",
   "prompt": "Have printer1 print the layout at level_3_wall, and keep it out of wet_floor the whole way.",
-  "world": "bench/worlds/site_1_3.json",
+  "world": "bench/worlds/site_limits_1_4.json",
   "group": "action",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_7": {
     "decision": "cannot",
     "category": "inexpressible"
   },

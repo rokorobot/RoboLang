@@ -1,0 +1,11 @@
+// bench/reference_actions/a06_two_cranes_lock.rob: hand-written reference
+robolang 1.8;
+
+task lock_pair(robot a, robot b, object x, object y, location berth) {
+    goal { in_state x "locked"; in_state y "locked"; }
+    plan {
+        do a lock x;
+        move b to berth;
+        do b lock y;
+    }
+}

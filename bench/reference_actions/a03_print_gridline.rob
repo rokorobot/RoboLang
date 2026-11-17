@@ -1,0 +1,10 @@
+// bench/reference_actions/a03_print_gridline.rob: hand-written reference
+robolang 1.8;
+
+task print_marks(robot r, location line) {
+    goal { in_state line "printed"; }
+    plan {
+        move r to line;
+        do r print line;
+    }
+}

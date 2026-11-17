@@ -1,14 +1,45 @@
 {
   "id": "u16_charge_drone",
   "prompt": "Charge the drone at the workshop, then fly it to berth 1.",
-  "world": "bench/worlds/yard.json",
-  "group": "inexpressible",
+  "world": "bench/worlds/yard_1_4.json",
+  "group": "action",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_7": {
     "decision": "cannot",
     "category": "inexpressible"
+  },
+  "expect_1_8": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "the world as given",
+        "goal": [
+          [
+            "rl:place:workshop",
+            "in_state",
+            "charging"
+          ],
+          [
+            "rl:robot:drone1",
+            "located_in",
+            "rl:place:berth_1"
+          ]
+        ],
+        "world_patch": {}
+      }
+    ]
   },
   "tags": [
     "unknown_action"
   ],
-  "why": "The plan has six statements: move, grasp, place, inspect, wait, communicate."
+  "why": "`charge` is a declared action on the dock, a location (0040 C14): the state is on the workshop, and the drone then flies to berth_1.",
+  "expected_actions": [
+    {
+      "robot": "drone1",
+      "action": "charge",
+      "target": "workshop"
+    }
+  ]
 }

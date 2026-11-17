@@ -1,4 +1,4 @@
-"""The shipped RoboLang 1.7 reference, CLI command, examples, vocabulary and benchmark integration."""
+"""The shipped RoboLang 1.8 reference, CLI command, examples, vocabulary and benchmark integration."""
 
 from __future__ import annotations
 import io
@@ -35,7 +35,7 @@ def test_every_complete_rob_example_compiles():
     assert examples
     for index, source in enumerate(examples, start=1):
         result = compile_source(source, f"language-reference-example-{index}.rob")
-        assert result.ir.language_version == "1.7"
+        assert result.ir.language_version == "1.8"
 
 
 def test_reference_names_every_reserved_word_and_annotation_key():
@@ -52,10 +52,10 @@ def test_every_diagnostic_code_in_the_reference_exists_in_the_implementation():
     assert cited and cited <= implemented
 
 
-def test_reference_is_1_7_and_teaches_branching_handlers_and_what_stays_out():
+def test_reference_is_1_8_and_teaches_branching_handlers_and_what_stays_out():
     text = reference()
-    assert text.startswith("# RoboLang 1.7 language reference")
-    for old in ("robolang 1.3;", "robolang 1.4;", "robolang 1.5;", "robolang 1.6;"):
+    assert text.startswith("# RoboLang 1.8 language reference")
+    for old in ("robolang 1.3;", "robolang 1.4;", "robolang 1.5;", "robolang 1.6;", "robolang 1.7;"):
         assert old not in text, old
     for new in ("`if", "`else if", "fail \"", "E216", "E307", "E309", "E313", "S261", "S262",
                 "else {", "E201", "E316"):
@@ -97,7 +97,7 @@ def test_reference_teaches_measured_values():
                    "**The value is read when the program runs.**", "Never settle a comparison from a description",
                    "arithmetic (an average", "choosing an object at run time"):
         assert phrase in text, phrase
-    assert "robolang 1.7;" in text and "measure r" in text
+    assert "robolang 1.8;" in text and "measure r" in text
 
 
 def test_reference_teaches_that_a_run_time_condition_is_decided_by_an_if_never_by_the_description():
@@ -108,17 +108,18 @@ def test_reference_teaches_that_a_run_time_condition_is_decided_by_an_if_never_b
         assert phrase in text, phrase
 
 
-def test_the_prompts_are_for_1_7():
+def test_the_prompts_are_for_1_8():
     full, minimal = bench.load_prompt("full"), bench.load_prompt("minimal")
     for prompt in (full, minimal):
-        assert prompt.startswith("You write RoboLang 1.7 programs.") and "RoboLang 1.6 programs" not in prompt
-        assert "RoboLang 1.6 cannot say it" not in prompt and "RoboLang 1.7 cannot say it" in prompt
-    assert "measure" in full and "robolang 1.7;" in full and "robolang 1.6;" not in full and "robolang 1.4;" not in full
-    # 1.7 is a delta over 1.6, over 1.5, over 1.4, over 1.3: the grammar-only prompt pastes all five, the base first
-    assert "spec/grammar-v1.7.ebnf" in minimal and '"measure"' in minimal and '"if"' in minimal and "handler" in minimal
+        assert prompt.startswith("You write RoboLang 1.8 programs.") and "RoboLang 1.7 programs" not in prompt
+        assert "RoboLang 1.7 cannot say it" not in prompt and "RoboLang 1.8 cannot say it" in prompt
+    assert "measure" in full and "robolang 1.8;" in full and "robolang 1.7;" not in full and "robolang 1.4;" not in full
+    # 1.8 is a delta over 1.7, over 1.6, over 1.5, over 1.4, over 1.3: the grammar-only prompt pastes all six
+    assert "spec/grammar-v1.8.ebnf" in minimal and '"measure"' in minimal and '"if"' in minimal and "handler" in minimal
     assert '"no_go_region"' in minimal and "S003" in minimal and "X605" in minimal
+    assert '"do"' in minimal and '"in_state"' in minimal and "S006" in minimal
     assert [f.name for f in bench.GRAMMAR_FILES] == ["grammar-v1.3.ebnf", "grammar-v1.4.ebnf", "grammar-v1.5.ebnf",
-                                                     "grammar-v1.6.ebnf", "grammar-v1.7.ebnf"]
+                                                     "grammar-v1.6.ebnf", "grammar-v1.7.ebnf", "grammar-v1.8.ebnf"]
     texts = [f.read_text(encoding="utf-8").strip() for f in bench.GRAMMAR_FILES]
     assert all(t in minimal for t in texts)
     assert [minimal.index(t) for t in texts] == sorted(minimal.index(t) for t in texts)
@@ -155,3 +156,22 @@ def test_reference_teaches_region_limits():
         assert phrase in text, phrase
     assert "E323" in text and "S005" in text and tokens.REGION_LIMITS == ("no_go_region", "in_region")
     assert set(tokens.REGION_LIMITS) <= set(tokens.RESERVED_V1_6)  # no new word: both have been reserved since 1.1
+
+
+def test_reference_teaches_declared_actions():
+    """Decision 0040 (L4): when to write `do`, always check the result, no replacing, no extra, at the target,
+    one target, infeasible, never delegated."""
+    text = " ".join(reference().split())
+    assert "## Declared actions" in text
+    for phrase in ("do r open door;", "do r set fryer to 175 degC;", 'in_state door "open"',
+                   "exactly the **actions its profile declares**", "An action is a **name**, not a keyword",
+                   "`open_door` is not `open`", "**When to write `do`.**", "**one** target", "**A value.**",
+                   "never assumed reached", "**Always check the result.**", "`requested`",
+                   "Never replace an action with a `move`, an `inspect` or a `communicate`",
+                   "**Add no action the request did not ask for.**", "**The robot has to be at the target.**",
+                   "(`S271`)", "**One target only.**", "cannot be represented", "`do`, then `wait for 3 min`",
+                   "**Infeasible, not inexpressible.**", "(`S006`)", "(`S007`)", "(`S008`)", "(`S009`)",
+                   "unknown fails closed", "`X606`", "**Charge and dock.**", "`in_state charger \"charging\"`"):
+        assert phrase in text, phrase
+    assert {"do", "in_state"} <= set(tokens.RESERVED_V1_8) - set(tokens.RESERVED_V1_6)
+    assert "do in_state" in text and "| `in_state x \"open\"` |" in text

@@ -1,0 +1,7 @@
+{
+  "task": "set_oven",
+  "bindings": {
+    "r": "chef_arm",
+    "oven": "oven"
+  }
+}

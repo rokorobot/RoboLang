@@ -1,0 +1,10 @@
+// bench/reference_future/f_act_print_layout.rob: hand-written reference
+robolang 1.8;
+
+task print_wall(robot r, location wall) {
+    goal { in_state wall "printed"; }
+    plan {
+        move r to wall;
+        do r print wall;
+    }
+}

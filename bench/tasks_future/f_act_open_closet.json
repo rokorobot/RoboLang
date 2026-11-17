@@ -1,11 +1,41 @@
 {
   "id": "f_act_open_closet",
   "prompt": "With moxi1, open the supply closet, take iv_kit_1 to ward_3 and tell channel \"charge_nurse\" it is there.",
-  "world": "bench/worlds/ward.json",
-  "group": "inexpressible",
+  "world": "bench/worlds/ward_1_4.json",
+  "group": "action",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_7": {
     "decision": "cannot",
     "category": "inexpressible"
+  },
+  "expect_1_8": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "the world as given",
+        "goal": [
+          [
+            "rl:thing:closet_door",
+            "in_state",
+            "open"
+          ],
+          [
+            "rl:thing:iv_kit_1",
+            "located_in",
+            "rl:place:ward_3"
+          ]
+        ],
+        "messages": [
+          [
+            "charge_nurse",
+            null
+          ]
+        ],
+        "world_patch": {}
+      }
+    ]
   },
   "activity": "ACT-HLTH-001",
   "gap": "G-ACT",
@@ -14,6 +44,12 @@
     "device",
     "pick_place"
   ],
-  "why": "Opening a door is an action the plan has no statement for: the six statements are move, grasp, place, inspect, wait and communicate, plus measure (language reference: 'Plan statements').",
-  "attempt_fails_with": "E203"
+  "why": "`open` is a declared action on an object (0040): the door is the object `closet_door`, the closet is only the location it stands at.",
+  "expected_actions": [
+    {
+      "robot": "moxi1",
+      "action": "open",
+      "target": "closet_door"
+    }
+  ]
 }

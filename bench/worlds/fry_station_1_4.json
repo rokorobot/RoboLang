@@ -1,0 +1,110 @@
+{
+  "world_schema": "robolang.sim.world",
+  "world_schema_version": "1.4",
+  "locations": [
+    "discard_bin",
+    "fryer",
+    "hot_tray",
+    "pass",
+    "prep_table"
+  ],
+  "regions": {
+    "fry_zone": {
+      "clear": true
+    }
+  },
+  "robots": {
+    "flippy1": {
+      "ready": true,
+      "location": "prep_table",
+      "gripper": true,
+      "max_speed": [
+        {
+          "value": "0.5",
+          "unit": "m/s"
+        }
+      ],
+      "actions": {
+        "set": {
+          "target": "location",
+          "result": "heating",
+          "value": "temperature"
+        }
+      }
+    }
+  },
+  "objects": {
+    "basket_1": {
+      "present": true,
+      "location": "prep_table",
+      "class": "basket",
+      "properties": {
+        "label": {
+          "value": "too_dark"
+        }
+      }
+    },
+    "basket_2": {
+      "present": true,
+      "location": "prep_table",
+      "class": "basket",
+      "properties": {
+        "label": {
+          "value": "golden"
+        }
+      }
+    },
+    "oil_1": {
+      "present": true,
+      "location": "fryer",
+      "class": "oil",
+      "properties": {
+        "temperature": {
+          "value": "160",
+          "unit": "degC"
+        }
+      }
+    }
+  },
+  "sensors": {
+    "cam_flippy1": {
+      "robot": "flippy1",
+      "available": true,
+      "measures": {
+        "label": {
+          "contact": false
+        }
+      }
+    },
+    "probe_flippy1": {
+      "robot": "flippy1",
+      "available": true,
+      "measures": {
+        "temperature": {
+          "unit": "degC",
+          "uncertainty": "0.5",
+          "contact": true
+        }
+      }
+    }
+  },
+  "events": [
+    {
+      "at": {
+        "value": "20",
+        "unit": "s"
+      },
+      "fact": "property",
+      "target": "oil_1",
+      "property": "temperature",
+      "value": {
+        "value": "175",
+        "unit": "degC"
+      }
+    }
+  ],
+  "tasks": {},
+  "location_states": {
+    "fryer": "off"
+  }
+}

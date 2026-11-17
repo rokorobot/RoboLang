@@ -10,6 +10,10 @@ no SDK; the model run is the `Benchmark` workflow with `future: true`.
 RoboLang 1.7 (decision 0039, errata docs/evidence/bench-errata-1-7.md) relabelled the three `G-PATH` probes as programs
 (group `region`): `expect` is the 1.7 label, `expect_1_6` keeps the 1.6 one, and their attempts are replaced by 1.7
 references. So 22 probes remain `inexpressible`.
+
+RoboLang 1.8 (decision 0040, errata docs/evidence/bench-errata-1-8.md) relabelled the three `G-ACT` probes as programs
+(group `action`): `expect` is the 1.8 label, `expect_1_7` keeps the 1.7 one, their attempts are replaced by 1.8
+references, and their worlds are world file 1.4 copies. So 19 probes remain `inexpressible`.
 """
 
 from __future__ import annotations
@@ -33,6 +37,7 @@ ACTIVITIES = {a["id"]: a for a in ATLAS["activities"]}
 CANNOT = {"decision": "cannot", "category": "inexpressible"}
 PROBES = {t: d for t, d in SET.items() if d["group"] == "inexpressible"}
 REGIONS = {t: d for t, d in SET.items() if d["group"] == "region"}  # 1.7: programs with a region limit (0039)
+ACTIONS = {t: d for t, d in SET.items() if d["group"] == "action"}  # 1.8: programs with declared actions (0040)
 CONTROLS = {t: d for t, d in SET.items() if d["group"] == "control"}
 # R3 refutations: (activity, gap) -> the control whose reference program expresses the claim
 REFUTED = {("ACT-HOS-001", "G-PERCEIVE"): "c_fries_too_dark", ("ACT-SOL-001", "G-PERCEIVE"): "c_table_out_of_tolerance"}
@@ -65,12 +70,14 @@ def decline(category: str = "inexpressible") -> dict:
 
 def test_the_mix_of_tasks():
     assert len(SET) == 33
-    assert Counter(d["group"] for d in SET.values()) == {"inexpressible": 22, "control": 8, "region": 3}
+    assert Counter(d["group"] for d in SET.values()) == {"inexpressible": 19, "control": 8, "region": 3,
+                                                           "action": 3}
     assert set(REGIONS) == {"f_path_avoid_wet_floor", "f_path_stay_in_zone", "f_path_keep_off_road"}
+    assert set(ACTIONS) == {"f_act_set_fryer", "f_act_open_closet", "f_act_print_layout"}
     # probes per gap: change on purpose (R3 evidence, docs/evidence/rsi-r3-gap-verification.md)
     assert Counter(d["gap"] for d in PROBES.values()) == {
-        "G-CLOCK": 3, "G-CALC": 3, "G-MSG": 3, "G-ACT": 3, "G-CONC": 2, "G-CHOOSE": 3, "G-PERCEIVE": 2,
-        "G-SELF": 3}  # G-PATH: its three probes are 1.7 programs now (REGIONS)
+        "G-CLOCK": 3, "G-CALC": 3, "G-MSG": 3, "G-CONC": 2, "G-CHOOSE": 3, "G-PERCEIVE": 2,
+        "G-SELF": 3}  # G-PATH and G-ACT: their probes are 1.7 and 1.8 programs now (REGIONS, ACTIONS)
     for task_id, task in SET.items():
         assert task["id"] == task_id and (lib.FUTURE_TASKS_DIR / f"{task_id}.json").is_file()
         assert (REPO / task["world"]).is_file() and task["tags"] and task["prompt"].endswith(".")
@@ -94,13 +101,14 @@ def test_every_task_names_a_near_activity_and_every_probe_an_open_gap_that_activ
         assert (task_id in gap["tasks"]) == (task["group"] == "inexpressible"), task_id
     # each of the nine gaps has probes from the activities that claim it, in the atlas, and nowhere else
     in_atlas = {t for g in GAPS.values() for t in g["tasks"]}
-    assert set(PROBES) <= in_atlas and not (set(CONTROLS) | set(REGIONS)) & in_atlas
+    assert set(PROBES) <= in_atlas and not (set(CONTROLS) | set(REGIONS) | set(ACTIONS)) & in_atlas
 
 
 def test_every_gap_a_near_activity_claims_is_probed_except_the_proven_loop():
     claimed = {g for a in ATLAS["activities"] if atlas_report.is_near(a) for g in a["needs"]
                if GAPS[g]["scope"] == "open" and g != "G-LOOP"}  # G-LOOP: 12 standing tasks prove it; reopened by 0041
-    assert claimed == {t["gap"] for t in PROBES.values()}
+    assert claimed == {t["gap"] for t in (*PROBES.values(), *ACTIONS.values())}
+    assert {t["gap"] for t in ACTIONS.values()} == {"G-ACT"} and GAPS["G-ACT"]["scope"] == "open"  # closes at L6
     assert {t["gap"] for t in REGIONS.values()} == {"G-PATH"} and GAPS["G-PATH"]["scope"] == "closed"
     assert {g for g, v in GAPS.items() if v["scope"] == "out"} == {"G-FALLBACK"}
     assert GAPS["G-LOOP"]["scope"] == "open" and "0041" in GAPS["G-LOOP"]["scope_note"]
@@ -124,9 +132,10 @@ def test_references_and_attempts_are_where_they_should_be():
     names = [p.name for p in REF.iterdir()]
     refs = {n.split(".")[0] for n in names if n.endswith((".rob", ".json")) and ".attempt" not in n}
     attempts = {n.split(".")[0] for n in names if ".attempt." in n}
-    assert refs == set(CONTROLS) | set(REGIONS) and attempts == set(PROBES)
-    assert {p.stem for p in REF.glob("*.rob") if ".attempt" not in p.stem} == set(CONTROLS) | set(REGIONS)
-    assert {p.stem for p in REF.glob("*.json") if ".attempt" not in p.stem} == set(CONTROLS) | set(REGIONS)
+    programs = set(CONTROLS) | set(REGIONS) | set(ACTIONS)
+    assert refs == programs and attempts == set(PROBES)
+    assert {p.stem for p in REF.glob("*.rob") if ".attempt" not in p.stem} == programs
+    assert {p.stem for p in REF.glob("*.json") if ".attempt" not in p.stem} == programs
     assert {p.name for p in REF.glob("*.attempt.*")} >= {f"{t}.attempt.rob" for t in PROBES}
     assert {p.name for p in REF.glob("*.attempt.json")} <= {f"{t}.attempt.json" for t in PROBES}
     for name in names:
@@ -145,6 +154,12 @@ def test_expectations_are_well_formed():
         assert task["expect_1_7"]["decision"] == "program" and len(lib.task_paths(task)) == 1
         assert task["world"] == "bench/worlds/site_1_3.json" and len(task["why"]) > 40
         assert not {"attempt_fails_with", "expected_goal"} & set(task)
+    for task_id, task in ACTIONS.items():  # decision 0040: a program with its declared actions, on a world file 1.4
+        assert task["expect"] == {"decision": "program"} and task["expect_1_7"] == CANNOT, task_id
+        assert lib.expectation(task) == ("program", "none") and task["expect_1_8"]["decision"] == "program"
+        assert 1 <= len(task["expected_actions"]) <= 1 and lib.task_paths(task) == task["expect_1_8"]["paths"]
+        assert json.loads((REPO / task["world"]).read_text(encoding="utf-8"))["world_schema_version"] == "1.4"
+        assert len(task["why"]) > 40 and not {"attempt_fails_with", "expected_goal"} & set(task)
     for task_id, task in CONTROLS.items():
         assert lib.expectation(task) == ("program", "none") and lib.expected_goals(task), task_id
         assert not {"why", "attempt_fails_with", "gap"} & set(task)
@@ -181,8 +196,6 @@ def test_no_probe_is_a_bug_in_disguise():
         "f_calc_text_line": ('"case_2 weighs " + m + " kg"', "m", {"r": "stretch1", "c": "case_2",
                                                                     "scale": "scale_stretch1", "src": "trailer_4"}),
         "f_self_report_charge": ("battery_level", '"low"', {"r": "spot1", "spot": "stop_b"}),
-        "f_act_print_layout": ("print r layout at wall;", "communicate r to \"x\" with \"y\";",
-                               {"r": "printer1", "wall": "level_3_wall"}),
     }
     for task_id, (bad, good, bindings) in stand_ins.items():
         answer = attempt_answer(task_id)
@@ -192,6 +205,30 @@ def test_no_probe_is_a_bug_in_disguise():
         answer["bindings"] = bindings
         checked = lib.check_answer(PROBES[task_id], answer)
         assert checked.valid, (task_id, checked.report)
+
+
+@pytest.mark.parametrize("task_id", sorted(ACTIONS))
+def test_the_1_8_reference_does_exactly_the_action_asked_on_every_path(task_id):
+    """Decision 0040: the relabelled probe is a program with one declared action. Its reference is valid, right on
+    every path, `actions_ok`; the same program with the `do` left out and its `in_state` kept fails the goal, and with
+    both left out it is a program that succeeds without the action (`action_replaced`)."""
+    task = ACTIONS[task_id]
+    answer = reference(task_id)
+    assert answer["rob"].count("robolang 1.8;") == 1 and answer["rob"].isascii()
+    checked = lib.check_answer(task, answer)
+    assert checked.valid and checked.language_version == "1.8", checked.report
+    judgement = lib.judge(task, checked, answer["bindings"])
+    assert judgement.goal_correct and judgement.plan_succeeds and judgement.actions_ok
+    assert not judgement.action_replaced and all(p["goal_ok"] and p["plan_ok"] for p in judgement.paths)
+    no_do = dict(answer, rob=re.sub(r"^\s*do [^\n]*\n", "", answer["rob"], flags=re.M))
+    missing = lib.judge(task, lib.check_answer(task, no_do), answer["bindings"])
+    assert not missing.plan_succeeds and not missing.actions_ok and missing.goal_correct  # S301: the state is not there
+    stand_in = {"f_act_set_fryer": ('in_state fryer "heating";', "robot_at r fryer;"),  # a `move` for the action
+                "f_act_open_closet": ('in_state door "open"; ', ""),
+                "f_act_print_layout": ('in_state wall "printed";', "robot_at r wall;")}[task_id]
+    no_state = dict(no_do, rob=no_do["rob"].replace(*stand_in))
+    replaced = lib.judge(task, lib.check_answer(task, no_state), answer["bindings"])
+    assert replaced.plan_succeeds and not replaced.goal_correct and replaced.action_replaced and not replaced.actions_ok
 
 
 @pytest.mark.parametrize("task_id", sorted(REGIONS))
@@ -256,7 +293,9 @@ def test_the_new_worlds_are_world_1_2_files_and_nothing_else_new_is_added():
     worlds = {p.stem for p in (REPO / "bench" / "worlds").glob("*.json") if ".notes" not in p.name}
     assert set(NEW_WORLDS) <= worlds
     used = {t["world"] for t in SET.values()}
-    assert {Path(w).stem for w in used} <= set(NEW_WORLDS) | {"warehouse", "site_1_3"}  # site_1_3: 0039 world copy
+    # site_1_3: a 0039 world copy; the 1_4 files: 0040 world copies
+    assert {Path(w).stem for w in used} <= set(NEW_WORLDS) | {"warehouse", "site_1_3", "ward_1_4", "site_1_4",
+                                                              "fry_station_hot_1_4"}
     for name in NEW_WORLDS:
         world = json.loads((REPO / f"bench/worlds/{name}.json").read_text(encoding="utf-8"))
         assert world["world_schema_version"] == "1.2" and world["tasks"] == {}
@@ -305,7 +344,7 @@ def test_the_scorer_counts_a_program_for_a_probe_as_false_and_a_decline_for_a_co
     sequential["rob"] = sequential["rob"].replace("parallel {", "{")  # still not valid: the point is a program at all
     replies = {
         "f_msg_nurse_confirm": decline(),                          # right
-        "f_act_open_closet": decline("infeasible"),                # declined, wrong category
+        "f_clock_shift_cutoff": decline("infeasible"),             # declined, wrong category
         "f_conc_carry_and_drive": sequential,                      # a program for a probe: false program
         "c_count_two_totes": reference("c_count_two_totes"),       # right
         "c_fries_too_dark": decline(),                             # false refusal of a control
@@ -315,7 +354,7 @@ def test_the_scorer_counts_a_program_for_a_probe_as_false_and_a_decline_for_a_co
     by = {r["task_id"]: r for r in rows}
     assert meta["set"] == "future" and meta["prompt"] == "full"
     assert by["f_msg_nurse_confirm"]["decision_correct"] and by["f_msg_nurse_confirm"]["category_correct"] is True
-    assert by["f_act_open_closet"]["decision_correct"] and by["f_act_open_closet"]["category_correct"] is False
+    assert by["f_clock_shift_cutoff"]["decision_correct"] and by["f_clock_shift_cutoff"]["category_correct"] is False
     assert by["f_conc_carry_and_drive"]["false_program"] and not by["f_conc_carry_and_drive"]["decision_correct"]
     assert by["c_count_two_totes"]["decision_correct"] and by["c_count_two_totes"]["goal_correct"]
     assert by["c_fries_too_dark"]["false_refusal"] and not by["c_fries_too_dark"]["decision_correct"]

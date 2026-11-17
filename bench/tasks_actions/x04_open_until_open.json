@@ -1,9 +1,13 @@
 {
   "id": "x04_open_until_open",
   "prompt": "Have chef_arm keep trying to open oven_door_1 until it is open.",
-  "world": "bench/worlds/kitchen_values.json",
+  "world": "bench/worlds/kitchen_values_1_4.json",
   "group": "inexpressible",
   "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_1_7": {
     "decision": "cannot",
     "category": "inexpressible"
   },

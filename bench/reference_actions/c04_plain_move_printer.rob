@@ -1,5 +1,5 @@
 // bench/reference_actions/c04_plain_move_printer.rob: hand-written reference
-robolang 1.7;
+robolang 1.8;
 
 task go(robot r, location dst) {
     goal { robot_at r dst; }

@@ -1,9 +1,13 @@
 {
   "id": "i02_lock_a_berth",
   "prompt": "Have crane1 lock berth_2.",
-  "world": "bench/worlds/yard.json",
+  "world": "bench/worlds/yard_1_4.json",
   "group": "infeasible",
   "expect": {
+    "decision": "cannot",
+    "category": "infeasible"
+  },
+  "expect_1_7": {
     "decision": "cannot",
     "category": "inexpressible"
   },

@@ -25,7 +25,8 @@ REPO = Path(__file__).resolve().parent.parent
 SET = lib.load_set("values")
 REF = lib.VALUES_REFERENCE_DIR
 CANNOT = {"decision": "cannot", "category": "inexpressible"}
-PROGRAMS = sorted(t for t, d in SET.items() if lib.expectation(d)[0] == "program")
+PROGRAMS = sorted(t for t, d in SET.items() if lib.expectation(d)[0] == "program" and d["group"] != "action")
+ACTIONS = sorted(t for t, d in SET.items() if d["group"] == "action")  # RoboLang 1.8 (0040): x06_set_oven
 
 
 def reference(task_id: str, directory: Path = REF) -> dict:
@@ -42,7 +43,8 @@ def judged(task_id: str, answer: dict):
 
 def test_the_mix_of_tasks():
     assert len(SET) == 26
-    assert Counter(d["group"] for d in SET.values()) == {"value": 15, "inexpressible": 6, "infeasible": 3, "control": 2}
+    assert Counter(d["group"] for d in SET.values()) == {"value": 15, "inexpressible": 5, "infeasible": 3, "control": 2,
+                                                          "action": 1}
     for task_id, task in SET.items():
         assert task["id"] == task_id and (REPO / task["world"]).is_file() and task["tags"]
         assert task["prompt"].endswith(".") and "expect_1_6" in task and "expect_1_5" in task
@@ -51,6 +53,10 @@ def test_the_mix_of_tasks():
 def test_expectations_are_labelled_for_1_6_and_keep_the_1_5_label():
     for task_id, task in SET.items():
         later = task["expect_1_6"]
+        if task["group"] == "action":  # 0040 relabelled it: a 1.8 program, errata docs/evidence/bench-errata-1-8.md
+            assert task["expect_1_5"] == later == task["expect_1_7"] == CANNOT
+            assert task["expect"] == {"decision": "program"} and task["expect_1_8"]["decision"] == "program"
+            continue
         assert task["expect_1_5"] == ({"decision": "program"} if task["group"] == "control" else CANNOT), task_id
         assert lib.expectation(task) == (later["decision"], later.get("category", "none")), task_id
         if task["group"] == "control":
@@ -142,8 +148,21 @@ def test_the_reference_is_a_1_6_program_and_is_right_on_every_path(task_id):
 
 
 def test_reference_files_exist_only_for_programs():
-    assert {p.name.split(".")[0] for p in REF.iterdir()} == set(PROGRAMS)
-    assert len(PROGRAMS) == 17
+    assert {p.name.split(".")[0] for p in REF.iterdir()} == set(PROGRAMS) | set(ACTIONS)
+    assert len(PROGRAMS) == 17 and ACTIONS == ["x06_set_oven"]
+
+
+def test_x06_set_oven_is_a_1_8_program_with_one_declared_action():
+    """0040 A5: `set` takes a temperature, on the oven location; the goal checks the state, not the reading."""
+    task = SET["x06_set_oven"]
+    answer = reference("x06_set_oven")
+    assert answer["rob"].count("robolang 1.8;") == 1 and answer["rob"].isascii()
+    checked, judgement = judged("x06_set_oven", answer)
+    assert checked.language_version == "1.8" and task["world"] == "bench/worlds/kitchen_values_oven_1_4.json"
+    assert judgement.goal_correct and judgement.plan_succeeds and judgement.actions_ok and not judgement.action_replaced
+    assert [p["goal_ok"] and p["plan_ok"] for p in judgement.paths] == [True]
+    assert task["expected_actions"] == [
+        {"robot": "chef_arm", "action": "set", "target": "oven", "value": ["180", "degC"]}]
 
 
 def test_the_stop_paths_really_stop_and_the_probe_values_are_the_planned_ones():

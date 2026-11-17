@@ -1,0 +1,8 @@
+{
+  "task": "print_layout",
+  "bindings": {
+    "r": "printer1",
+    "wall": "level_3_wall",
+    "wet": "wet_floor"
+  }
+}

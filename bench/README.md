@@ -124,7 +124,7 @@ The owner approved the replacement plan, freeze, paid validation and merge. See 
 Run `python tools/bench_freeze.py --check` to verify the recorded inputs against freeze v2
 (`docs/evidence/bench-freeze-v2.json`, decision 0035 E9; v1 is kept as history). Changes after the freeze require errata
 ([errata for 1.5](../docs/evidence/bench-errata-1-5.md), [errata for 1.6](../docs/evidence/bench-errata-1-6.md),
-[errata for 1.7](../docs/evidence/bench-errata-1-7.md)).
+[errata for 1.7](../docs/evidence/bench-errata-1-7.md), [errata for 1.8](../docs/evidence/bench-errata-1-8.md)).
 A `decoy` looks impossible or unclear but is feasible. A `clarify` task
 expects `"decision": "clarify"`: the request could mean several entities (`candidates`) or omits a value, and the world
 does not decide. A request that leaves the choice to the model ("a shelf", "one of the vials", set 2's `ambiguous`
@@ -205,8 +205,8 @@ read from these numbers.
 
 Set 2 has the same for its three branching tasks (`x_route_by_cell`, `x_whichever_free`, `x_missing_box_branch`),
 group `branching`. The grammar-only prompt pastes `spec/grammar-v1.3.ebnf`, `spec/grammar-v1.4.ebnf`,
-`spec/grammar-v1.5.ebnf`, `spec/grammar-v1.6.ebnf` and `spec/grammar-v1.7.ebnf`, each a delta over the one before. Since
-0039 L4 the prompts teach RoboLang 1.7 (0036 PR 2 taught 1.6, 0035 PR 2 taught 1.5). In set 3,
+`spec/grammar-v1.5.ebnf`, `spec/grammar-v1.6.ebnf`, `spec/grammar-v1.7.ebnf` and `spec/grammar-v1.8.ebnf`, each a delta
+over the one before. Since 0040 L4 the prompts teach RoboLang 1.8 (0039 L4 taught 1.7, 0036 PR 2 taught 1.6, 0035 PR 2 taught 1.5). In set 3,
 `x_failover_on_fault` is now a program judged per path (group `recover`; `expect_1_4` keeps the old label).
 
 Run it on demand from GitHub Actions: `Benchmark`, `set3: true`. That runs full and grammar-only prompts with 3
@@ -264,7 +264,8 @@ Locally: `python bench/run.py --set values --repeats 3` (a paid run: confirm it 
 [rsi-r3-gap-verification.md](../docs/evidence/rsi-r3-gap-verification.md) (RSI-01 step R3, rule LE-7). 25 `inexpressible`
 **probes**, each needing exactly one open gap that a near activity of `atlas.json` claims (`activity`, `gap`), with an
 obvious attempt (`<id>.attempt.rob`) that RoboLang 1.6 rejects and `attempt_fails_with`, the first code `check_answer`
-reports (since 0039 L4: 22 probes; the three `G-PATH` probes are `region` programs with a 1.7 reference); 8 `control` requests from near activities that 1.6 can express (`<id>.rob`, `<id>.json`), three of which
+reports (since 0040 L4: 19 probes; the three `G-PATH` probes are `region` programs with a 1.7 reference and the three `G-ACT`
+probes `action` programs with a 1.8 reference); 8 `control` requests from near activities that 1.6 can express (`<id>.rob`, `<id>.json`), three of which
 record an atlas claim that R3 refuted. Four new worlds (`worlds/fulfilment.json`, `site.json`, `ward.json`,
 `fry_station.json`) and `worlds/warehouse.json`. A probe belongs to exactly one gap in `atlas.json`;
 `tests/test_bench_future.py` checks the counts per group and per gap.
@@ -299,15 +300,30 @@ minimal prompts, 3 repeats, Sonnet and Haiku, `--max-usd 3` each, not gated, not
 
 ## Set 7: declared actions (`--set actions`)
 
-24 tasks in `tasks_actions/`, controls' references and the obvious attempts in `reference_actions/`, decision record
-[0040](../spec/decisions/0040-declared-actions.md), plan, proposed bounds and open points in
-[bench-7-actions.md](../docs/plans/bench-7-actions.md) (draft for the owner). Pre-registered against 1.7 before any 1.8 code
-(iteration I2, step L3): `expect` is the 1.7 label (all 20 non-controls `cannot / inexpressible`, each with an attempt that
-fails with `E203`), `expect_1_8` the label for acceptance (10 `action` programs, 5 `infeasible`, 5 `inexpressible`, 4
-`control` programs) and `expected_actions` the calls a 1.8 program must make (`[]` on a control). The world 1.4 facts a
-1.8 label needs (`actions`, `state`) are a note in `expect_1_8.world_1_4`; no world file has them yet. Without its `do`, every
-attempt is a valid 1.7 program that ends SUCCEEDED: that is the silent replacement the plan's B8 counts.
-`tests/test_bench_actions.py` checks the counts, the labels, the attempts and the controls. On demand from GitHub Actions:
-`Benchmark`, `actions: true` (full and minimal prompts, 3 repeats, Sonnet and Haiku, `--max-usd 3` each, not gated, not in
-the per-PR or weekly runs). Locally: `python bench/run.py --set actions --repeats 3` (a paid run: confirm it first;
-estimate ~$3.6 per prompt).
+24 tasks in `tasks_actions/`, references (the 10 `action` programs and the 4 controls) and the obvious 1.7 attempts in
+`reference_actions/`, decision record [0040](../spec/decisions/0040-declared-actions.md), plan and approved bounds in
+[bench-7-actions.md](../docs/plans/bench-7-actions.md), baseline under 1.7 in
+[bench-set7-baseline.md](../docs/evidence/bench-set7-baseline.md). Pre-registered against 1.7 (iteration I2, step L3) and
+labelled for 1.8 in L4 ([errata](../docs/evidence/bench-errata-1-8.md)): `expect` is the 1.8 label, `expect_1_7` keeps the
+1.7 one (`cannot / inexpressible` for every non-control, each with an attempt that fails with `E203`), and `expect_1_8`
+holds the paths of a program and the world 1.4 facts it rests on (10 `action` programs, 5 `infeasible`, 5
+`inexpressible`, 4 `control` programs). `expected_actions` is the calls a 1.8 program must make (`[]` on a control). The
+tasks use world file 1.4 copies (`worlds/*_1_4.json`, built from those facts, one file for each profile a request
+needs); the prompt shows, for a 1.4 world, each robot's declared actions with target, result and value kind, each
+object's state and the location states (0040 C12). Four older probes were relabelled the same way: `f_act_set_fryer`,
+`f_act_open_closet`, `f_act_print_layout` (set future), `u15_open_oven`, `u16_charge_drone` (set ask) and `x06_set_oven`
+(set values), group `action`. A path may script a failing `do` (`scripted_fault: {step: "do", action, target}`): the
+benchmark writes the world's fault for each `do` of that action on that entity (0040 C6).
+
+Two measures on top of the usual ones (0040 B1, B5, B8), in `report.md` and `scores.json`, per model: `actions_ok` (a
+task with `expected_actions: [{robot, action, target[, value]}, ...]`, an empty list on a control: the valid program has
+exactly those `do` steps, the right action by the right robot on the right target with the right value, a quantity
+compared in the base unit, none more and none fewer; it is one of the task's checks, so `request_satisfied` needs it) and
+`action_replaced_silently` (a valid program whose run ends SUCCEEDED but that lacks an action the request asked for, as when a
+`move`, an `inspect` or nothing stands in its place, so no other check notices; counted over every answer to those tasks,
+like `limit_dropped_silently`). A goal `in_state` is compared by meaning as a fact `[X, "in_state", label]` about the
+state of `X`, separate from where `X` is (0040 C1). `tests/test_bench_actions.py` checks the counts, the labels, the
+worlds, the references (valid, SUCCEEDED on every path, exactly their actions), the 1.7 attempts, the scorer and the
+controls. On demand from GitHub Actions: `Benchmark`, `actions: true` (full and minimal prompts, 3 repeats, Sonnet and
+Haiku, `--max-usd 3` each, not gated, not in the per-PR or weekly runs). Locally: `python bench/run.py --set actions
+--repeats 3 --models claude-sonnet-5-5,claude-haiku-5-5` (a paid run: confirm it first; estimate ~$3.6 per prompt).

@@ -1,0 +1,13 @@
+// bench/reference_actions/a05_open_or_report.rob: hand-written reference
+robolang 1.8;
+
+task open_or_report(robot r, object door, location closet) {
+    goal { in_state door "open"; }
+    plan {
+        move r to closet;
+        do r open door else {
+            communicate r to "charge_nurse" with "closet stuck";
+            fail "closet stuck";
+        }
+    }
+}

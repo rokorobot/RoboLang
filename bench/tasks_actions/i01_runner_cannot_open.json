@@ -1,9 +1,13 @@
 {
   "id": "i01_runner_cannot_open",
   "prompt": "Have the runner open oven_door_1.",
-  "world": "bench/worlds/kitchen_values.json",
+  "world": "bench/worlds/kitchen_values_1_4.json",
   "group": "infeasible",
   "expect": {
+    "decision": "cannot",
+    "category": "infeasible"
+  },
+  "expect_1_7": {
     "decision": "cannot",
     "category": "inexpressible"
   },

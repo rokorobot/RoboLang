@@ -1,9 +1,12 @@
 {
   "id": "a04_open_if_clear",
   "prompt": "If pass_area is clear when the job starts, have chef_arm open oven_door_1. If it is not, send \"pass busy\" to channel \"kitchen\" from chef_arm and stop the job as failed.",
-  "world": "bench/worlds/kitchen_values.json",
+  "world": "bench/worlds/kitchen_values_1_4.json",
   "group": "action",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_7": {
     "decision": "cannot",
     "category": "inexpressible"
   },

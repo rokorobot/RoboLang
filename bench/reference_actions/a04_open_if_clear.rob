@@ -1,0 +1,15 @@
+// bench/reference_actions/a04_open_if_clear.rob: hand-written reference
+robolang 1.8;
+
+task open_if_clear(robot r, object door, location oven, region pass) {
+    plan {
+        if region_clear pass {
+            goal { in_state door "open"; }
+            move r to oven;
+            do r open door;
+        } else {
+            communicate r to "kitchen" with "pass busy";
+            fail "the pass is busy";
+        }
+    }
+}

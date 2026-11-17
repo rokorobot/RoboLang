@@ -1,5 +1,5 @@
 // bench/reference_actions/c02_oil_reading.rob: hand-written reference
-robolang 1.7;
+robolang 1.8;
 
 task read_oil(robot r, object oil, sensor probe, location fryer) {
     goal { robot_at r fryer; }

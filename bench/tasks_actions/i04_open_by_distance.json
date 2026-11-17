@@ -1,9 +1,13 @@
 {
   "id": "i04_open_by_distance",
   "prompt": "Have moxi1 open closet_door to 30 cm.",
-  "world": "bench/worlds/ward.json",
+  "world": "bench/worlds/ward_1_4.json",
   "group": "infeasible",
   "expect": {
+    "decision": "cannot",
+    "category": "infeasible"
+  },
+  "expect_1_7": {
     "decision": "cannot",
     "category": "inexpressible"
   },

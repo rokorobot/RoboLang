@@ -1,5 +1,5 @@
 // bench/reference_actions/c03_wait_oil_by_itself.rob: hand-written reference
-robolang 1.7;
+robolang 1.8;
 
 task fill_when_hot(robot r, object basket, object oil, sensor probe, location src, location fryer) {
     goal { object_at basket fryer; }

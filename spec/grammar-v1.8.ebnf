@@ -17,7 +17,7 @@ in_state      = "in_state" , NAME , STRING ;                (* [1.8] *)
    declares, so "do r move x;" is E212 (a reserved word) and "do r open x;" is read for any NAME.
    A "do" may end with a failure handler "else { ... }" as move, grasp, place, inspect, measure and wait until do (1.5).
    [1.8] Static rules the grammar does not express (spec/robolang-v1.8.md section 3):
-   - the first NAME is a robot parameter; the target is a parameter of type object or location (E303, E304);
+   - the first NAME is a robot parameter; the target is a parameter of type object or location;
    - a string value and the label of in_state are not empty (E307); a quantity has a unit of 1.6 (E206).
    [1.8] Meaning (spec/robolang-v1.8.md sections 2 and 5):
    - whether the robot declares the action, whether the target is of the declared kind, and whether the value is of the

@@ -1,0 +1,8 @@
+{
+  "task": "open_closet",
+  "bindings": {
+    "r": "moxi1",
+    "door": "closet_door",
+    "closet": "supply_closet"
+  }
+}

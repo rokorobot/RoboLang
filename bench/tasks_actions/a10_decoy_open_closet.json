@@ -1,9 +1,12 @@
 {
   "id": "a10_decoy_open_closet",
   "prompt": "Have moxi1 open the supply closet.",
-  "world": "bench/worlds/ward.json",
+  "world": "bench/worlds/ward_door_1_4.json",
   "group": "action",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_7": {
     "decision": "cannot",
     "category": "inexpressible"
   },

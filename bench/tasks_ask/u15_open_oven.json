@@ -1,14 +1,45 @@
 {
   "id": "u15_open_oven",
   "prompt": "Open oven_door_1, then have the helper arm take tray A out to the pass.",
-  "world": "bench/worlds/kitchen.json",
-  "group": "inexpressible",
+  "world": "bench/worlds/kitchen_1_4.json",
+  "group": "action",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_7": {
     "decision": "cannot",
     "category": "inexpressible"
+  },
+  "expect_1_8": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "the world as given",
+        "goal": [
+          [
+            "rl:thing:oven_door_1",
+            "in_state",
+            "open"
+          ],
+          [
+            "rl:thing:tray_a",
+            "located_in",
+            "rl:place:pass"
+          ]
+        ],
+        "world_patch": {}
+      }
+    ]
   },
   "tags": [
     "unknown_action"
   ],
-  "why": "The plan has six statements: move, grasp, place, inspect, wait, communicate."
+  "why": "`open` is declared for the helper arm only (0040): it opens the door and takes the tray out.",
+  "expected_actions": [
+    {
+      "robot": "helper_arm",
+      "action": "open",
+      "target": "oven_door_1"
+    }
+  ]
 }

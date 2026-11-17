@@ -1,9 +1,12 @@
 {
   "id": "a05_open_or_report",
   "prompt": "Have moxi1 open closet_door. If it will not open, tell channel \"charge_nurse\" \"closet stuck\" and stop the job as failed.",
-  "world": "bench/worlds/ward.json",
+  "world": "bench/worlds/ward_1_4.json",
   "group": "action",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_7": {
     "decision": "cannot",
     "category": "inexpressible"
   },

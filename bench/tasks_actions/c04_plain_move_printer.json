@@ -1,9 +1,12 @@
 {
   "id": "c04_plain_move_printer",
   "prompt": "Send printer1 to gridline_c.",
-  "world": "bench/worlds/site.json",
+  "world": "bench/worlds/site_1_4.json",
   "group": "control",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_8": {
     "decision": "program"
   },
   "expected_goal": [
@@ -13,9 +16,6 @@
       "rl:place:gridline_c"
     ]
   ],
-  "expect_1_8": {
-    "decision": "program"
-  },
   "expected_actions": [],
   "tags": [
     "plain_move",

@@ -1,0 +1,13 @@
+// bench/reference_actions/a01_open_then_fetch.rob: hand-written reference
+robolang 1.8;
+
+task fetch_kit(robot r, object door, object kit, location closet, location dst) {
+    goal { in_state door "open"; object_at kit dst; }
+    plan {
+        move r to closet;
+        do r open door;
+        grasp r kit;
+        move r to dst;
+        place r kit at dst;
+    }
+}
