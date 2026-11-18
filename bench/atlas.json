@@ -39,9 +39,10 @@
       "id": "G-CLOCK",
       "name": "Clock readings and times of day",
       "direction": "reasoning",
-      "scope": "open",
-      "scope_note": "RoboLang 1.9 clock readings are built and taught (0042, I3 L4, 2026-11-17); the gap stays open until the acceptance run on set 8 (L5) and closes at L6. Nothing is left inexpressible in it: set 8's x02 and x05 moved to G-DATE (0042 K11), x05_cooling_time to G-CALC (K7), u18_every_morning to G-LOOP",
-      "tasks": []
+      "scope": "closed",
+      "scope_note": "Closed 2026-11-17 at L6 of iteration I3: RoboLang 1.9 clock readings (`measure r time`, `measure r elapsed`, `clock_time`, decision 0042), accepted on set 8 (docs/evidence/bench-1-9-acceptance.md). What stays out: dates and other days (G-DATE), repeating at a time (mission triggers, G-LOOP), arithmetic on times (G-CALC)",
+      "tasks": [],
+      "closed_in": "RoboLang 1.9"
     },
     {
       "id": "G-MSG",
@@ -243,7 +244,7 @@
       ],
       "maturity": "deployment",
       "horizon": "now",
-      "basis": "DC Velocity (2026-10-26): Agility's Digit has moved over 100,000 totes at GXO's Flowery Branch, Georgia site under a robots-as-a-service contract, and GXO adds Statesville NC and Lebanon TN from early 2027. Agility's CEO calls GXO the first customer to run Digit in live operations under a commercial agreement.",
+      "basis": "DC Velocity (2026-10-26): Agility's Digit has moved over 100,000 totes at GXO's Flowery Branch, Georgia site under a robots-as-a-service contract, and GXO adds Statesville NC and Lebanon TN from early 2027. Agility's CEO calls GXO the first customer to run Digit in live operations under a commercial agreement. L6 (2026-11-17): G-CLOCK closed by RoboLang 1.9 clock readings.",
       "requests": [
         "Move every tote from the inbound conveyor to the outbound conveyor until the shift ends.",
         "Move the totes on the inbound conveyor to cart 3, then tell the shift lead how many you moved.",
@@ -251,7 +252,6 @@
       ],
       "needs": [
         "G-LOOP",
-        "G-CLOCK",
         "G-CALC",
         "G-CHOOSE"
       ],
@@ -304,7 +304,7 @@
       ],
       "maturity": "pilot",
       "horizon": "1-3y",
-      "basis": "The Robot Report (2026-06-29): BMW is deploying Figure 03 at Plant Spartanburg to pick unsorted parts from large containers into a sequencing trolley, after an 11-month Figure 02 deployment there that supported more than 30,000 X3 vehicles. The article gives no Figure 03 unit count or duration. R3 (2026-11-17): G-CHOOSE refuted, 1.6 expresses it with one `if object_at part bin` per part the world names (control c_parts_left_in_container). R3 model run (2026-11-17): the G-CHOOSE refutation is withdrawn. It held only for parts the world names, and both models wrote half-programs for the control c_parts_left_in_container; \"whatever parts are left\" needs a choice at run time.",
+      "basis": "The Robot Report (2026-06-29): BMW is deploying Figure 03 at Plant Spartanburg to pick unsorted parts from large containers into a sequencing trolley, after an 11-month Figure 02 deployment there that supported more than 30,000 X3 vehicles. The article gives no Figure 03 unit count or duration. R3 (2026-11-17): G-CHOOSE refuted, 1.6 expresses it with one `if object_at part bin` per part the world names (control c_parts_left_in_container). R3 model run (2026-11-17): the G-CHOOSE refutation is withdrawn. It held only for parts the world names, and both models wrote half-programs for the control c_parts_left_in_container; \"whatever parts are left\" needs a choice at run time. L6 (2026-11-17): G-CLOCK closed by RoboLang 1.9 clock readings.",
       "requests": [
         "Pick the parts for the next car from the bins into the sequencing trolley in order, then move the trolley to the collection point.",
         "Sort whatever parts are left in container 2 into the trolley, and message the tugger when it is full.",
@@ -313,7 +313,6 @@
       "needs": [
         "G-LOOP",
         "G-MSG",
-        "G-CLOCK",
         "G-CHOOSE"
       ],
       "forecast": {
@@ -366,14 +365,13 @@
       ],
       "maturity": "deployment",
       "horizon": "now",
-      "basis": "The Shelby Report (2026-09-21): Simbe announced more than 3,000 autonomous units under contract across more than 75 retail banners in nearly a dozen countries; the robots digitise shelves (availability, location, prices, promotions) and work alongside other sensors.",
+      "basis": "The Shelby Report (2026-09-21): Simbe announced more than 3,000 autonomous units under contract across more than 75 retail banners in nearly a dozen countries; the robots digitise shelves (availability, location, prices, promotions) and work alongside other sensors. L6 (2026-11-17): G-CLOCK closed by RoboLang 1.9 clock readings.",
       "requests": [
         "Scan aisle 5 and tell the store lead which products are out of stock.",
         "Every morning at 6, scan all aisles and report any price that does not match its label.",
         "If the aisle is blocked by a pallet, skip it and tell the lead which aisle you missed."
       ],
       "needs": [
-        "G-CLOCK",
         "G-LOOP",
         "G-PERCEIVE",
         "G-CHOOSE"
@@ -423,7 +421,7 @@
       ],
       "maturity": "deployment",
       "horizon": "now",
-      "basis": "The Robot Report (2026): Diligent's Moxi (acquired by Serve Robotics in January 2026) runs in more than 25 US hospitals; Children's Hospital Los Angeles reports over 40,000 deliveries and 16,000 hours of work and has grown from two to three robots. Moxi 2.0 rollout was announced on 2026-08-17. L6 (2026-11-17): G-ACT closed by RoboLang 1.8 declared actions.",
+      "basis": "The Robot Report (2026): Diligent's Moxi (acquired by Serve Robotics in January 2026) runs in more than 25 US hospitals; Children's Hospital Los Angeles reports over 40,000 deliveries and 16,000 hours of work and has grown from two to three robots. Moxi 2.0 rollout was announced on 2026-08-17. L6 (2026-11-17): G-ACT closed by RoboLang 1.8 declared actions. L6 (2026-11-17): G-CLOCK closed by RoboLang 1.9 clock readings.",
       "requests": [
         "Take the medication from the pharmacy to room 412 and wait for the nurse to confirm before leaving.",
         "Open the supply closet, take the IV kit to the ward, and tell the charge nurse it is there.",
@@ -431,8 +429,7 @@
       ],
       "needs": [
         "G-MSG",
-        "G-LOOP",
-        "G-CLOCK"
+        "G-LOOP"
       ],
       "forecast": {
         "claim": "Serve Robotics or Diligent reports Moxi in at least 50 US hospitals by 2028-06-30.",
@@ -453,14 +450,13 @@
       ],
       "maturity": "pilot",
       "horizon": "3-7y",
-      "basis": "UC Davis Health (2026-05-28): a yearlong, non-interventional study of Andromeda Robotics' humanoid companion Abi with up to 25 residents in the memory care neighbourhood of Eskaton Village, Carmichael. Abi holds conversations, plays music and runs shared activities; the study is about companionship, not physical care. L6 (2026-11-17): G-ACT closed by RoboLang 1.8 declared actions.",
+      "basis": "UC Davis Health (2026-05-28): a yearlong, non-interventional study of Andromeda Robotics' humanoid companion Abi with up to 25 residents in the memory care neighbourhood of Eskaton Village, Carmichael. Abi holds conversations, plays music and runs shared activities; the study is about companionship, not physical care. L6 (2026-11-17): G-ACT closed by RoboLang 1.8 declared actions. L6 (2026-11-17): G-CLOCK closed by RoboLang 1.9 clock readings.",
       "requests": [
         "At 3 pm play music for Mrs Lee in the lounge, and stay until the song ends.",
         "Stay with Mr Kim until he falls asleep, and tell the nurse if he gets upset.",
         "If a resident asks for the nurse, send the message and wait for the nurse to answer."
       ],
       "needs": [
-        "G-CLOCK",
         "G-LOOP",
         "G-PERCEIVE",
         "G-MSG"
@@ -539,14 +535,13 @@
       ],
       "maturity": "demo",
       "horizon": "3-7y",
-      "basis": "heise (2026-05-08): 1X plans first NEO deliveries to US private customers by end of 2026, price from 20,000 USD or about 500 USD/month, with a first-year batch of 10,000 reportedly sold out; early units help with internal logistics in the factory. No source I opened confirms robots working in customer homes. L6 (2026-11-17): G-PATH closed by RoboLang 1.7 region limits. L6 (2026-11-17): G-ACT closed by RoboLang 1.8 declared actions.",
+      "basis": "heise (2026-05-08): 1X plans first NEO deliveries to US private customers by end of 2026, price from 20,000 USD or about 500 USD/month, with a first-year batch of 10,000 reportedly sold out; early units help with internal logistics in the factory. No source I opened confirms robots working in customer homes. L6 (2026-11-17): G-PATH closed by RoboLang 1.7 region limits. L6 (2026-11-17): G-ACT closed by RoboLang 1.8 declared actions. L6 (2026-11-17): G-CLOCK closed by RoboLang 1.9 clock readings.",
       "requests": [
         "At 8 pm vacuum the living room unless someone is in it.",
         "Put every toy on the floor into the toy box, but stay out of the nursery.",
         "After dinner, load the dishwasher and start it."
       ],
       "needs": [
-        "G-CLOCK",
         "G-LOOP",
         "G-CHOOSE",
         "G-PERCEIVE"
@@ -581,7 +576,7 @@
       ],
       "maturity": "demo",
       "horizon": "now",
-      "basis": "The Robot Report (2026-01-21): Boston Dynamics' Orbit 5.1 lets operators author gauge-reading and thermal inspection actions for Spot, and Spot Cam 2 adds a radiometric thermal camera. The article names no customer for these features, so no named site is confirmed.",
+      "basis": "The Robot Report (2026-01-21): Boston Dynamics' Orbit 5.1 lets operators author gauge-reading and thermal inspection actions for Spot, and Spot Cam 2 adds a radiometric thermal camera. The article names no customer for these features, so no named site is confirmed. L6 (2026-11-17): G-CLOCK closed by RoboLang 1.9 clock readings.",
       "requests": [
         "Read the gauge on pump 3 and tell me if it is above 6 bar.",
         "Walk the boiler-room route every hour and report any gauge that is out of range.",
@@ -589,8 +584,7 @@
       ],
       "needs": [
         "G-PERCEIVE",
-        "G-LOOP",
-        "G-CLOCK"
+        "G-LOOP"
       ],
       "forecast": {
         "claim": "A named industrial customer publicly reports routine use of Spot automated gauge reading by 2027-12-31.",
@@ -641,7 +635,7 @@
       ],
       "maturity": "demo",
       "horizon": "1-3y",
-      "basis": "The Robot Report (2026-01-21): Orbit 5.1 adds a security patrol mission type for Spot. When Spot detects a person it pauses, switches on lights, captures PTZ, panoramic and thermal images, triggers an alert and resumes its path. No customer is named. L6 (2026-11-17): G-PATH closed by RoboLang 1.7 region limits.",
+      "basis": "The Robot Report (2026-01-21): Orbit 5.1 adds a security patrol mission type for Spot. When Spot detects a person it pauses, switches on lights, captures PTZ, panoramic and thermal images, triggers an alert and resumes its path. No customer is named. L6 (2026-11-17): G-PATH closed by RoboLang 1.7 region limits. L6 (2026-11-17): G-CLOCK closed by RoboLang 1.9 clock readings.",
       "requests": [
         "Patrol the north perimeter after 10 pm; if you see a person, stop, take a picture and alert security, then continue.",
         "Stay out of the lab corridor during the patrol.",
@@ -649,7 +643,6 @@
       ],
       "needs": [
         "G-LOOP",
-        "G-CLOCK",
         "G-PERCEIVE",
         "G-PROX"
       ],
@@ -743,7 +736,7 @@
       ],
       "maturity": "pilot",
       "horizon": "3-7y",
-      "basis": "FreshPlaza (2026): Tokuiten's suction-type cherry-tomato robot has been in full production use on its own 2,000 m2 farm in Aichi, Japan since 2026-05-25, picking about half of what one human picker does; a 1-hectare facility with six robots is scheduled for March 2027. The company seeks pilot partners.",
+      "basis": "FreshPlaza (2026): Tokuiten's suction-type cherry-tomato robot has been in full production use on its own 2,000 m2 farm in Aichi, Japan since 2026-05-25, picking about half of what one human picker does; a 1-hectare facility with six robots is scheduled for March 2027. The company seeks pilot partners. L6 (2026-11-17): G-CLOCK closed by RoboLang 1.9 clock readings.",
       "requests": [
         "Harvest the ripe cherry tomatoes in row 4 and put them in the crate.",
         "Harvest on Tuesday and Thursday evenings.",
@@ -753,7 +746,6 @@
         "G-CHOOSE",
         "G-PERCEIVE",
         "G-LOOP",
-        "G-CLOCK",
         "G-FORCE"
       ],
       "forecast": {
@@ -816,14 +808,13 @@
       ],
       "maturity": "deployment",
       "horizon": "now",
-      "basis": "Robotics Tomorrow (2026-04-07): Brain Corp says more than 40,000 robots are deployed across six continents; BrainOS Clean 2.0 for Tennant floor cleaners adds SelfPath AI (no manual route training), schedule-based operation and automatic charging, with fleet-wide rollout planned for May 2026. L6 (2026-11-17): G-PATH closed by RoboLang 1.7 region limits. L6 (2026-11-17): G-ACT closed by RoboLang 1.8 declared actions.",
+      "basis": "Robotics Tomorrow (2026-04-07): Brain Corp says more than 40,000 robots are deployed across six continents; BrainOS Clean 2.0 for Tennant floor cleaners adds SelfPath AI (no manual route training), schedule-based operation and automatic charging, with fleet-wide rollout planned for May 2026. L6 (2026-11-17): G-PATH closed by RoboLang 1.7 region limits. L6 (2026-11-17): G-ACT closed by RoboLang 1.8 declared actions. L6 (2026-11-17): G-CLOCK closed by RoboLang 1.9 clock readings.",
       "requests": [
         "Clean the lobby every night at 11 pm, then go back to the dock to charge.",
         "Do not clean the wet-floor zone.",
         "If an aisle is blocked, clean the next one and tell the supervisor."
       ],
       "needs": [
-        "G-CLOCK",
         "G-LOOP"
       ],
       "forecast": {
@@ -1202,7 +1193,7 @@
       ],
       "maturity": "demo",
       "horizon": "1-3y",
-      "basis": "Robotics and Automation News (2026-05-15): Hexagon Robotics' AEON humanoid will be piloted at one of machine builder Fill's client use cases in Gurten, Austria, on selected machine tending, inspection and operational tasks. Duration, metrics and the customer are not stated. Orchestrator check 2026-11-17: the pilot is announced, not yet running, so demo (LE-3). L6 (2026-11-17): G-ACT closed by RoboLang 1.8 declared actions.",
+      "basis": "Robotics and Automation News (2026-05-15): Hexagon Robotics' AEON humanoid will be piloted at one of machine builder Fill's client use cases in Gurten, Austria, on selected machine tending, inspection and operational tasks. Duration, metrics and the customer are not stated. Orchestrator check 2026-11-17: the pilot is announced, not yet running, so demo (LE-3). L6 (2026-11-17): G-ACT closed by RoboLang 1.8 declared actions. L6 (2026-11-17): G-CLOCK closed by RoboLang 1.9 clock readings.",
       "requests": [
         "Load a blank into CNC 2, start the program, and unload the finished part when the machine reports it is done.",
         "If a part is rejected twice, stop loading and call the shift lead.",
@@ -1210,8 +1201,7 @@
       ],
       "needs": [
         "G-LOOP",
-        "G-MSG",
-        "G-CLOCK"
+        "G-MSG"
       ],
       "forecast": {
         "claim": "Hexagon or Fill publishes results of the Gurten AEON machine-tending pilot, or a follow-on paid deployment at a named customer, by 2027-12-31.",
@@ -2668,6 +2658,63 @@
     {
       "date": "2026-11-17",
       "note": "I3 L4: RoboLang 1.9 built and taught",
+      "activities": {
+        "ACT-LOG-001": "deployment now",
+        "ACT-LOG-002": "deployment now",
+        "ACT-MFG-001": "pilot 1-3y",
+        "ACT-MFG-002": "pilot 1-3y",
+        "ACT-RET-001": "deployment now",
+        "ACT-HOS-001": "deployment now",
+        "ACT-HLTH-001": "deployment now",
+        "ACT-ELD-001": "pilot 3-7y",
+        "ACT-HOME-001": "research 3-7y",
+        "ACT-HOME-002": "demo 3-7y",
+        "ACT-INSP-001": "demo now",
+        "ACT-INSP-002": "demo 1-3y",
+        "ACT-SEC-001": "demo 1-3y",
+        "ACT-SAFE-001": "demo 3-7y",
+        "ACT-CON-001": "deployment now",
+        "ACT-AGR-001": "pilot 3-7y",
+        "ACT-EV-001": "pilot 1-3y",
+        "ACT-CLN-001": "deployment now",
+        "ACT-MRC-001": "demo 3-7y",
+        "ACT-MRC-002": "demo 1-3y",
+        "ACT-HRC-001": "research 3-7y",
+        "ACT-HRC-002": "research 3-7y",
+        "ACT-ASM-001": "research 7y+",
+        "ACT-PRED-001": "research 3-7y",
+        "ACT-PRED-002": "research 3-7y",
+        "ACT-AUTO-001": "deployment now",
+        "ACT-AUTO-002": "demo 1-3y",
+        "ACT-AUTO-003": "research 3-7y",
+        "ACT-MFG-003": "demo 1-3y",
+        "ACT-AGR-002": "deployment now",
+        "ACT-SOL-001": "deployment now",
+        "ACT-PRED-003": "concept 3-7y",
+        "ACT-PRED-004": "concept 7y+",
+        "ACT-LRN-001": "concept 3-7y",
+        "ACT-LRN-002": "concept 3-7y",
+        "ACT-AUTO-004": "concept 3-7y",
+        "ACT-SAFE-002": "concept 3-7y",
+        "ACT-CARE-001": "concept 7y+",
+        "ACT-MFG-004": "demo 1-3y",
+        "ACT-HRC-003": "concept 3-7y"
+      },
+      "directions": {
+        "perception": 2.78,
+        "reasoning": 0.68,
+        "prediction": 0.25,
+        "action": 4.52,
+        "learning": 0.75,
+        "cooperation": 1.07,
+        "safety": 0.49,
+        "communication": 0.95,
+        "autonomy": 0.67
+      }
+    },
+    {
+      "date": "2026-11-17",
+      "note": "L6 of I3: G-CLOCK closed by RoboLang 1.9 clock readings",
       "activities": {
         "ACT-LOG-001": "deployment now",
         "ACT-LOG-002": "deployment now",

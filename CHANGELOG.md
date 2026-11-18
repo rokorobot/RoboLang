@@ -3,7 +3,10 @@
 The distribution version (this file) is independent of the language versions (1.1 to 1.9) and the Task IR schema
 versions (1.0 to 1.8). Decision records are in [`spec/decisions/`](https://github.com/rokorobot/RoboLang/tree/main/spec/decisions).
 
-## Unreleased
+## 0.6.0 (2026-11-17)
+
+RoboLang 1.9 (clock readings), iteration I3 of the [roadmap](docs/LANGUAGE_ROADMAP.md). Accepted on benchmark set 8
+([acceptance](docs/evidence/bench-1-9-acceptance.md)).
 
 - **RoboLang 1.9: clock readings** (decision 0042, step L4 of iteration I3). `robolang reference` and the benchmark
   prompts teach 1.9; set 8 (`--set clock`) is labelled for 1.9 with `clock_ok` and `time_replaced_silently`
