@@ -1,0 +1,118 @@
+{
+  "id": "m03_second_box_if_asked",
+  "prompt": "With arm1, carry box1 from shelf_a to the table once the aisle is clear. Wait up to 20 seconds for the aisle and, if it is not clear by then, stop the job as failed. Afterwards, if channel \"ops\" has sent \"ALSO BOX2\", carry box2 from shelf_b to the table as well; if it has not, you are done.",
+  "world": "bench/worlds/warehouse.json",
+  "group": "message",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_1": {
+    "decision": "program",
+    "expected_message_waits": [
+      {
+        "use": "if",
+        "channel": "ops",
+        "text": "ALSO BOX2",
+        "timeout": null
+      }
+    ],
+    "paths": [
+      {
+        "when": "ALSO BOX2 arrives at 5 seconds, before the aisle clears at 8 seconds: the `if` sees it (S2)",
+        "goal": [
+          [
+            "rl:thing:box1",
+            "located_in",
+            "rl:place:table"
+          ],
+          [
+            "rl:thing:box2",
+            "located_in",
+            "rl:place:table"
+          ]
+        ],
+        "world_patch": {
+          "messages": [
+            {
+              "at": {
+                "value": "5",
+                "unit": "s"
+              },
+              "channel": "ops",
+              "text": "ALSO BOX2",
+              "from": "rl:agent:ops-ctl"
+            }
+          ]
+        },
+        "end_ms": "8000"
+      },
+      {
+        "when": "no message: box1 only",
+        "goal": [
+          [
+            "rl:thing:box1",
+            "located_in",
+            "rl:place:table"
+          ]
+        ],
+        "world_patch": {
+          "messages": []
+        },
+        "end_ms": "8000"
+      },
+      {
+        "when": "ALSO BOX2 arrives at 30 seconds, after the `if` was reached: it does not count",
+        "goal": [
+          [
+            "rl:thing:box1",
+            "located_in",
+            "rl:place:table"
+          ]
+        ],
+        "world_patch": {
+          "messages": [
+            {
+              "at": {
+                "value": "30",
+                "unit": "s"
+              },
+              "channel": "ops",
+              "text": "ALSO BOX2",
+              "from": "rl:agent:ops-ctl"
+            }
+          ]
+        },
+        "end_ms": "8000"
+      },
+      {
+        "when": "the aisle never clears: the wait for the aisle times out",
+        "fails": true,
+        "world_patch": {
+          "messages": [],
+          "events": []
+        },
+        "end_ms": "20000"
+      }
+    ],
+    "world_2_1": {
+      "channels": {
+        "ops": {
+          "from": [
+            "rl:agent:ops-ctl"
+          ]
+        }
+      }
+    }
+  },
+  "gap": "G-MSG",
+  "tags": [
+    "message_if",
+    "if",
+    "latched",
+    "message_before_the_if",
+    "two_paths"
+  ],
+  "why": "An `if message_received` (0043 S1) decided once when it is reached. The message arrives at 5 seconds, while the program still waits for the aisle (8 seconds): S2 counts it (latched). A message at 30 seconds comes too late for the `if`.",
+  "attempt_fails_with": "E211"
+}

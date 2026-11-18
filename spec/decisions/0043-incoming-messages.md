@@ -96,3 +96,22 @@ task feed(robot r, object tote, location handoff, location line) {
 
 The owner accepted every recommendation: S2 from the start of the run, S4 senders in the world, and S7 delivery
 out of 2.1. S1–S11 are accepted.
+
+## Clarifications (APPROVED by the owner 2026-11-18, from writing the L3 set)
+
+| # | Question | Recommended |
+|---|---|---|
+| C1 | S4 against S5 | A world with no `channels` has no message service (S5): every `message_received` is unknown and fails closed. In a world that declares channels, naming an undeclared one fails before the run (S4). Both are `cannot / infeasible` |
+| C2 | Does the world shown to the model list scheduled messages? | Yes, with channel, text and sender, as scheduled events are listed today, so `i02`, `i03` and `i05` can be solved |
+| C3 | Infeasible, or a program that fails? | Infeasible when the world shows that the message never comes in time and the request gives no way on. A program that fails at the wait counts as a wrong decision, but not as a silent success (as in set 8) |
+| C4 | A message at `at: 0` | Counts: it arrived at the start of the run |
+| C5 | A message exactly at the timeout | Counts (inclusive). A wait ends at the message's `at`, or at once if the message has already arrived |
+| C6 | Senders | An agent or a world robot may be a declared sender. A message is only ever a world event; a task's own `communicate` is never a received message (S10) |
+| C7 | Can a latched message be used again? | Yes: once counted, it stays true for the rest of the run |
+| C8 | "Each run starts fresh" | As S2 says. L4 adds a test that a message from run 1 does not satisfy a wait in run 2 |
+| C9 | A request that names no text or no channel | No text means any message. No channel means the channel the world declares for that party, if exactly one; otherwise `clarify` |
+| C10 | `not message_received` | Allowed. With no service it is unknown and fails closed (S5) |
+| C11 | Trimming (S3) | Spaces are trimmed at both ends of both texts |
+| C12 | Message waits inside handlers or a mission's task | Allowed, like any wait |
+| C13 | Gaps | `f12_message_delivery` and `x01` go to the far gap **G-DELIVERY**, scope `out` (S7: delivery is the transport's job). Set 9's `x03_for_each_go_message` goes to G-TRIGGER (S10). `x03_forward_the_order_number` stays in G-CALC |
+| C14 | `x05`, a message as an end state | **Becomes a program**: a final bounded `wait until message_received … else { fail … }`, with the world part in the goal, is how RoboLang verifies "the message has arrived". Declining it would be over-declining. It leaves the atlas |

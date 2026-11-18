@@ -1,0 +1,86 @@
+{
+  "id": "m08_open_the_door_when_unlocked",
+  "prompt": "With moxi1, take iv_kit_1 from the supply_closet to room_412, but only after channel \"supply\" has sent \"DOOR UNLOCKED\". Wait up to 10 minutes for it; then open closet_door, take the kit and bring it to room_412. If the message does not come, stop the job as failed.",
+  "world": "bench/worlds/ward_1_4.json",
+  "group": "message",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_1": {
+    "decision": "program",
+    "expected_message_waits": [
+      {
+        "use": "wait",
+        "channel": "supply",
+        "text": "DOOR UNLOCKED",
+        "timeout": "10 min"
+      }
+    ],
+    "paths": [
+      {
+        "when": "DOOR UNLOCKED arrives at 200 seconds",
+        "goal": [
+          [
+            "rl:thing:iv_kit_1",
+            "located_in",
+            "rl:place:room_412"
+          ],
+          [
+            "rl:thing:closet_door",
+            "in_state",
+            "open"
+          ]
+        ],
+        "world_patch": {
+          "messages": [
+            {
+              "at": {
+                "value": "200",
+                "unit": "s"
+              },
+              "channel": "supply",
+              "text": "DOOR UNLOCKED",
+              "from": "rl:agent:supply-ctl"
+            }
+          ]
+        },
+        "end_ms": "200000"
+      },
+      {
+        "when": "no message arrives: the wait times out after 10 minutes",
+        "fails": true,
+        "world_patch": {
+          "messages": []
+        },
+        "end_ms": "600000"
+      }
+    ],
+    "world_2_1": {
+      "channels": {
+        "supply": {
+          "from": [
+            "rl:agent:supply-ctl"
+          ]
+        }
+      }
+    },
+    "expected_actions": [
+      {
+        "robot": "moxi1",
+        "action": "open",
+        "target": "closet_door"
+      }
+    ]
+  },
+  "gap": "G-MSG",
+  "tags": [
+    "message_wait",
+    "declared_action",
+    "do",
+    "in_state",
+    "timeout"
+  ],
+  "why": "A message wait together with a 1.8 `do`: the door is opened only after the message, and the goal states the door open. The 2.0 attempt without the message line opens the door at once.",
+  "attempt_fails_with": "E211"
+}

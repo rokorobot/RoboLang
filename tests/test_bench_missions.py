@@ -303,9 +303,10 @@ def test_the_inexpressible_tasks_each_stay_out_for_one_reason_of_0041():
                        "x03_for_each_go_message": {"message_trigger", "no_message_waits"},
                        "x04_rounds_inside_rounds": {"nested", "repeat_in_repeat"},
                        "x05_every_new_part": {"stream", "choose_object"}}
-    # G-TRIGGER (clarification 14): the time trigger moved out of G-LOOP; the message one stays in G-MSG
+    # G-TRIGGER (clarification 14; 0043 C13): the time and the message triggers
     assert {t: d["gap"] for t, d in INEXPRESSIBLE.items()} == {
-        "x01_never_stop": "G-UNBOUNDED", "x02_every_hour_on_the_hour": "G-TRIGGER", "x03_for_each_go_message": "G-MSG",
+        "x01_never_stop": "G-UNBOUNDED", "x02_every_hour_on_the_hour": "G-TRIGGER",
+        "x03_for_each_go_message": "G-TRIGGER",
         "x04_rounds_inside_rounds": "G-UNBOUNDED", "x05_every_new_part": "G-CHOOSE"}
     # no bound is stated in x01; a bound is stated in the others, so only the named construct stays out
     assert not re.search(r"\d", SET["x01_never_stop"]["prompt"].replace("tug1", ""))
@@ -462,7 +463,7 @@ def test_every_inexpressible_task_is_in_exactly_one_atlas_gap_and_nothing_else_i
     assert {t for t, _ in in_gaps} == set(INEXPRESSIBLE)
     for task_id, gap in in_gaps:
         assert INEXPRESSIBLE[task_id]["gap"] == gap and GAPS[gap]["scope"] in ("open", "out")
-    assert Counter(gap for _, gap in in_gaps) == {"G-UNBOUNDED": 2, "G-TRIGGER": 1, "G-MSG": 1, "G-CHOOSE": 1}
+    assert Counter(gap for _, gap in in_gaps) == {"G-UNBOUNDED": 2, "G-TRIGGER": 2, "G-CHOOSE": 1}
     assert GAPS["G-TRIGGER"]["scope"] == "open" and GAPS["G-TRIGGER"]["direction"] == "reasoning"
     assert {t["gap"] for t in PROGRAMS.values()} | {t["gap"] for t in INFEASIBLE.values()} == {"G-LOOP"}
     assert "I4 L4: RoboLang 2.0 built and taught" in [h["note"] for h in ATLAS["history"]]
@@ -471,9 +472,10 @@ def test_every_inexpressible_task_is_in_exactly_one_atlas_gap_and_nothing_else_i
 def test_the_standing_g_loop_tasks_are_relabelled_by_what_the_request_bounds():
     """None states a bound it can use, so none is a program; the triggers moved to G-TRIGGER (clarification 14), and
     x_shuttle_until_five, whose 17:00 is a bound, needs the next part chosen at run time like x05 (G-CHOOSE)."""
-    assert set(GAPS["G-TRIGGER"]["tasks"]) == {
+    assert {  # later sets add their own triggers (set 10: x02_each_time_the_line_says_ready)
         "x_every_hour", "x_keep_feeding", "u03_until_stop", "u18_every_morning", "x_all_parts_ever",
-        "x01_every_night_round", "x02_every_hour_on_the_hour", "x04_every_minute", "f13_retry_every_minute"}
+        "x01_every_night_round", "x02_every_hour_on_the_hour", "x04_every_minute", "f13_retry_every_minute"
+    } <= set(GAPS["G-TRIGGER"]["tasks"])
     assert set(GAPS["G-UNBOUNDED"]["tasks"]) == {  # L6 of I4: out by 0041 M2/M7; G-LOOP closed
         "x_retry_grasp", "x_wait_forever", "u04_back_and_forth", "x_retry_until_grasped", "f10_retry_until_works",
         "x04_open_until_open", "x01_never_stop", "x04_rounds_inside_rounds"}

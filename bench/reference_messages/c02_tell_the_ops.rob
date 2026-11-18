@@ -1,0 +1,13 @@
+// bench/reference_messages/c02_tell_the_ops.rob: hand-written reference
+robolang 2.0;
+
+task carry_and_tell(robot r, object item, location src, location dst) {
+    goal { object_at item dst; }
+    plan {
+        move r to src;
+        grasp r item;
+        move r to dst;
+        place r item at dst;
+        communicate r to "ops" with "box1 is on the table";
+    }
+}

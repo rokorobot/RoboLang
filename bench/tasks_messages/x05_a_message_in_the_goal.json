@@ -1,0 +1,31 @@
+{
+  "id": "x05_a_message_in_the_goal",
+  "prompt": "With digit1, move tote_1 from the inbound_conveyor to line_feed. The job is done only when tote_1 is on line_feed and channel \"line\" has sent \"RECEIVED\": state both as the goal of the job.",
+  "world": "bench/worlds/fulfilment.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_1": {
+    "decision": "cannot",
+    "category": "inexpressible",
+    "because": "0043 S1",
+    "world_2_1": {
+      "channels": {
+        "line": {
+          "from": [
+            "rl:agent:line-ctl"
+          ]
+        }
+      }
+    }
+  },
+  "gap": "G-MSG",
+  "tags": [
+    "message_in_goal",
+    "end_state"
+  ],
+  "why": "A message is not an end state of the world, so `message_received` is never allowed in a `goal` (0043 S1), and a goal is what Core receives (`export-goal`). A wait for the message in the plan is a different request: the goal does not hold the message.",
+  "attempt_fails_with": "E211"
+}

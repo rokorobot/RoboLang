@@ -1,0 +1,14 @@
+// bench/reference_messages/m08_open_the_door_when_unlocked.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 2.0;
+
+task fetch_kit(robot r, object kit, object door, location closet, location room) {
+    goal { object_at kit room; in_state door "open"; }
+    plan {
+        wait until message_received "supply" with "DOOR UNLOCKED" timeout 10 min else { fail "the door was not unlocked"; }  // @message
+        move r to closet;
+        do r open door;
+        grasp r kit;
+        move r to room;
+        place r kit at room;
+    }
+}

@@ -1,0 +1,9 @@
+{
+  "task": "release_part",
+  "bindings": {
+    "r": "arm_b",
+    "part": "p4",
+    "src": "station3",
+    "dst": "bin"
+  }
+}

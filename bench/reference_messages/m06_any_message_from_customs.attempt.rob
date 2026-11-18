@@ -1,0 +1,13 @@
+// bench/reference_messages/m06_any_message_from_customs.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 2.0;
+
+task release_container(robot r, object box, location src, location dst) {
+    goal { object_at box dst; }
+    plan {
+        move r to src;
+        grasp r box;
+        wait until message_received "customs" timeout 15 min else { fail "customs sent nothing"; }  // @message
+        move r to dst;
+        place r box at dst;
+    }
+}

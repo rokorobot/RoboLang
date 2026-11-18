@@ -1,0 +1,46 @@
+{
+  "id": "i03_thirty_seconds_for_a_late_message",
+  "prompt": "With installer1, take module_14 from the module_pallet and place it on row_14 within 30 seconds of the start, but only after the site controller has sent \"WIND CLEAR\" on channel \"site\".",
+  "world": "bench/worlds/site.json",
+  "group": "infeasible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_1": {
+    "decision": "cannot",
+    "category": "infeasible",
+    "because": "0043 S6",
+    "world_2_1": {
+      "channels": {
+        "site": {
+          "from": [
+            "rl:agent:site-ctl"
+          ]
+        }
+      },
+      "messages": [
+        {
+          "at": {
+            "value": "300",
+            "unit": "s"
+          },
+          "channel": "site",
+          "text": "WIND CLEAR",
+          "from": "rl:agent:site-ctl"
+        }
+      ]
+    }
+  },
+  "blockers": [
+    "\"WIND CLEAR\" arrives at 300 seconds; the request allows 30"
+  ],
+  "gap": "G-MSG",
+  "tags": [
+    "message_wait",
+    "timeout_too_short",
+    "no_else_path"
+  ],
+  "why": "The message arrives 5 minutes after the start and the request allows 30 seconds with no other way to finish: the wait cannot succeed. (A request that says what to do when the message is late is a program that ends in `fail`.)",
+  "attempt_fails_with": "E211"
+}

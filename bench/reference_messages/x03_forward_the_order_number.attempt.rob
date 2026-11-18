@@ -1,0 +1,14 @@
+// bench/reference_messages/x03_forward_the_order_number.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 2.0;
+
+task forward_order(robot r, object tote, location src, location dst) {
+    goal { object_at tote dst; }
+    plan {
+        wait until message_received "orders" as n timeout 5 min else { fail "no order number"; }  // @message
+        communicate r to "labels" with n;                                                          // @message
+        move r to src;
+        grasp r tote;
+        move r to dst;
+        place r tote at dst;
+    }
+}

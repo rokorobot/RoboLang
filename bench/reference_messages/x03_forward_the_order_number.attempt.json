@@ -1,0 +1,9 @@
+{
+  "task": "forward_order",
+  "bindings": {
+    "r": "digit1",
+    "tote": "tote_1",
+    "src": "inbound_conveyor",
+    "dst": "outbound_conveyor"
+  }
+}

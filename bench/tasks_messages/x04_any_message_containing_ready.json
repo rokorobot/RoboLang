@@ -1,0 +1,33 @@
+{
+  "id": "x04_any_message_containing_ready",
+  "prompt": "With digit1, take tote_3 from the inbound_conveyor to the handoff_point and hold it there until channel \"line\" sends any message that contains the word READY (for example \"READY\" or \"LINE READY\"), then place it on line_feed. Wait up to 10 minutes for it and, if it does not come, stop the job as failed.",
+  "world": "bench/worlds/fulfilment.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_1": {
+    "decision": "cannot",
+    "category": "inexpressible",
+    "because": "0043 S3",
+    "world_2_1": {
+      "channels": {
+        "line": {
+          "from": [
+            "rl:agent:line-ctl"
+          ]
+        }
+      }
+    }
+  },
+  "gap": "G-CALC",
+  "tags": [
+    "message_wait",
+    "pattern",
+    "contains",
+    "exact_narrowed"
+  ],
+  "why": "A text match is exact (0043 S3): there are no patterns and no \"contains\". Writing the wait for the exact text \"READY\" silently narrows the request, since \"LINE READY\" would not release the tote.",
+  "attempt_fails_with": "E211"
+}

@@ -1,0 +1,122 @@
+{
+  "id": "m10_door_open_and_lane_clear",
+  "prompt": "With stretch1, take case_1 from trailer_4 to staging, but only after channel \"dock\" has sent \"DOOR OPEN\" and channel \"safety\" has sent \"LANE CLEAR\". Wait up to 10 minutes for each of them and, if one does not come, stop the job as failed.",
+  "world": "bench/worlds/fulfilment.json",
+  "group": "message",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_1": {
+    "decision": "program",
+    "expected_message_waits": [
+      {
+        "use": "wait",
+        "channel": "dock",
+        "text": "DOOR OPEN",
+        "timeout": "10 min"
+      },
+      {
+        "use": "wait",
+        "channel": "safety",
+        "text": "LANE CLEAR",
+        "timeout": "10 min"
+      }
+    ],
+    "paths": [
+      {
+        "when": "LANE CLEAR arrives at 30 seconds and DOOR OPEN at 200 seconds: both are there when needed",
+        "goal": [
+          [
+            "rl:thing:case_1",
+            "located_in",
+            "rl:place:staging"
+          ]
+        ],
+        "world_patch": {
+          "messages": [
+            {
+              "at": {
+                "value": "30",
+                "unit": "s"
+              },
+              "channel": "safety",
+              "text": "LANE CLEAR",
+              "from": "rl:agent:safety-ctl"
+            },
+            {
+              "at": {
+                "value": "200",
+                "unit": "s"
+              },
+              "channel": "dock",
+              "text": "DOOR OPEN",
+              "from": "rl:agent:dock-ctl"
+            }
+          ]
+        },
+        "end_ms": "200000"
+      },
+      {
+        "when": "DOOR OPEN arrives at 60 seconds and LANE CLEAR never: the second wait times out",
+        "fails": true,
+        "world_patch": {
+          "messages": [
+            {
+              "at": {
+                "value": "60",
+                "unit": "s"
+              },
+              "channel": "dock",
+              "text": "DOOR OPEN",
+              "from": "rl:agent:dock-ctl"
+            }
+          ]
+        },
+        "end_ms": "660000"
+      },
+      {
+        "when": "DOOR OPEN never arrives: the first wait times out",
+        "fails": true,
+        "world_patch": {
+          "messages": [
+            {
+              "at": {
+                "value": "30",
+                "unit": "s"
+              },
+              "channel": "safety",
+              "text": "LANE CLEAR",
+              "from": "rl:agent:safety-ctl"
+            }
+          ]
+        },
+        "end_ms": "600000"
+      }
+    ],
+    "world_2_1": {
+      "channels": {
+        "dock": {
+          "from": [
+            "rl:agent:dock-ctl"
+          ]
+        },
+        "safety": {
+          "from": [
+            "rl:agent:safety-ctl"
+          ]
+        }
+      }
+    }
+  },
+  "gap": "G-MSG",
+  "tags": [
+    "message_wait",
+    "two_channels",
+    "two_waits",
+    "latched",
+    "timeout"
+  ],
+  "why": "Two message waits for two channels. The messages may come in either order: LANE CLEAR at 30 seconds is already there when the wait for it starts (S2), after DOOR OPEN at 200 seconds.",
+  "attempt_fails_with": "E211"
+}

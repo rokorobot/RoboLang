@@ -1,0 +1,9 @@
+{
+  "task": "carry_box",
+  "bindings": {
+    "r": "arm1",
+    "item": "box2",
+    "src": "shelf_b",
+    "dst": "table"
+  }
+}

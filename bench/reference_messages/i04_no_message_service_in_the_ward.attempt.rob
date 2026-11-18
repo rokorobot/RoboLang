@@ -1,0 +1,13 @@
+// bench/reference_messages/i04_no_message_service_in_the_ward.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 2.0;
+
+task bring_kit(robot r, object kit, location src, location dst) {
+    goal { object_at kit dst; }
+    plan {
+        wait until message_received "nurse" with "ROOM CLEAN" timeout 5 min else { fail "the room was not declared clean"; }  // @message
+        move r to src;
+        grasp r kit;
+        move r to dst;
+        place r kit at dst;
+    }
+}

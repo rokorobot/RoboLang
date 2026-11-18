@@ -1,0 +1,33 @@
+{
+  "id": "x02_each_time_the_line_says_ready",
+  "prompt": "Each time channel \"line\" sends \"TOTE READY\", send tugger_a from tugger_bay to line_feed and back to tugger_bay. Do this for the next 4 hours.",
+  "world": "bench/worlds/fulfilment.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_1": {
+    "decision": "cannot",
+    "category": "inexpressible",
+    "because": "0043 S10",
+    "world_2_1": {
+      "channels": {
+        "line": {
+          "from": [
+            "rl:agent:line-ctl"
+          ]
+        }
+      }
+    }
+  },
+  "gap": "G-TRIGGER",
+  "tags": [
+    "message_trigger",
+    "mission",
+    "duration_bound",
+    "for_each_message"
+  ],
+  "why": "A message trigger (0043 S10, S11): a run starts when a message arrives. 2.1 has the condition, not the trigger: a mission starts a run when the previous one is done (0041 M6). The bound is stated; the trigger is what stays out.",
+  "attempt_fails_with": "E201"
+}

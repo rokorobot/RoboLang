@@ -1,0 +1,9 @@
+{
+  "task": "release_container",
+  "bindings": {
+    "r": "straddle1",
+    "box": "cont_204",
+    "src": "stack_b",
+    "dst": "gate_out"
+  }
+}

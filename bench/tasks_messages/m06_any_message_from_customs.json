@@ -1,0 +1,92 @@
+{
+  "id": "m06_any_message_from_customs",
+  "prompt": "With straddle1, take cont_204 from stack_b to gate_out, but only after channel \"customs\" has sent a message, whatever it says. Wait up to 15 minutes for it and, if nothing comes, stop the job as failed.",
+  "world": "bench/worlds/yard.json",
+  "group": "message",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_1": {
+    "decision": "program",
+    "expected_message_waits": [
+      {
+        "use": "wait",
+        "channel": "customs",
+        "text": null,
+        "timeout": "15 min"
+      }
+    ],
+    "paths": [
+      {
+        "when": "customs sends \"CLEARED 7731\" at 300 seconds",
+        "goal": [
+          [
+            "rl:thing:cont_204",
+            "located_in",
+            "rl:place:gate_out"
+          ]
+        ],
+        "world_patch": {
+          "messages": [
+            {
+              "at": {
+                "value": "300",
+                "unit": "s"
+              },
+              "channel": "customs",
+              "text": "CLEARED 7731",
+              "from": "rl:agent:customs-office"
+            }
+          ]
+        },
+        "end_ms": "300000"
+      },
+      {
+        "when": "the only message comes at 100 seconds from a sender the channel does not allow: ignored, the wait times out",
+        "fails": true,
+        "world_patch": {
+          "messages": [
+            {
+              "at": {
+                "value": "100",
+                "unit": "s"
+              },
+              "channel": "customs",
+              "text": "CLEARED 7731",
+              "from": "rl:agent:broker-9"
+            }
+          ]
+        },
+        "end_ms": "900000"
+      },
+      {
+        "when": "no message arrives: the wait times out after 15 minutes",
+        "fails": true,
+        "world_patch": {
+          "messages": []
+        },
+        "end_ms": "900000"
+      }
+    ],
+    "world_2_1": {
+      "channels": {
+        "customs": {
+          "from": [
+            "rl:agent:customs-office"
+          ]
+        }
+      }
+    }
+  },
+  "gap": "G-MSG",
+  "tags": [
+    "message_wait",
+    "any_message",
+    "no_text",
+    "sender_not_allowed",
+    "timeout"
+  ],
+  "why": "`message_received \"customs\"` with no text (0043 S1): any message on the channel counts. A message from a sender that the channel does not allow is ignored (S4).",
+  "attempt_fails_with": "E211"
+}

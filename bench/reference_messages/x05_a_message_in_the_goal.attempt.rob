@@ -1,0 +1,15 @@
+// bench/reference_messages/x05_a_message_in_the_goal.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 2.0;
+
+task move_and_confirm(robot r, object tote, location src, location dst) {
+    goal {
+        object_at tote dst;
+        message_received "line" with "RECEIVED";  // @message
+    }
+    plan {
+        move r to src;
+        grasp r tote;
+        move r to dst;
+        place r tote at dst;
+    }
+}

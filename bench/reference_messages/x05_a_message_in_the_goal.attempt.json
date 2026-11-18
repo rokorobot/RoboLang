@@ -1,0 +1,9 @@
+{
+  "task": "move_and_confirm",
+  "bindings": {
+    "r": "digit1",
+    "tote": "tote_1",
+    "src": "inbound_conveyor",
+    "dst": "line_feed"
+  }
+}

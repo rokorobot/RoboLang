@@ -1,0 +1,9 @@
+{
+  "task": "place_module",
+  "bindings": {
+    "r": "installer1",
+    "module": "module_14",
+    "src": "module_pallet",
+    "dst": "row_14"
+  }
+}

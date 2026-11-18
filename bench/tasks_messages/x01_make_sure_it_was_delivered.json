@@ -1,0 +1,32 @@
+{
+  "id": "x01_make_sure_it_was_delivered",
+  "prompt": "With moxi1, send \"MEDS READY\" to channel \"nurse\" and make sure the message was delivered before taking medication_1 from the pharmacy to room_412 and placing it there. If it was not delivered, move nothing.",
+  "world": "bench/worlds/ward.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_1": {
+    "decision": "cannot",
+    "category": "inexpressible",
+    "because": "0043 S7",
+    "world_2_1": {
+      "channels": {
+        "nurse": {
+          "from": [
+            "rl:agent:nurse-1"
+          ]
+        }
+      }
+    }
+  },
+  "gap": "G-DELIVERY",
+  "tags": [
+    "message",
+    "delivery",
+    "no_handler_on_communicate"
+  ],
+  "why": "Delivery of what the robot sends stays out of 2.1 (0043 S7): it is the transport's job and `communicate` takes no handler (E201). \"Wait until the nurse confirms\" is a reply message and is expressible; \"make sure it was delivered\" is not.",
+  "attempt_fails_with": "E201"
+}

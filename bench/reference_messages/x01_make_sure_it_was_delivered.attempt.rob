@@ -1,0 +1,13 @@
+// bench/reference_messages/x01_make_sure_it_was_delivered.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 2.0;
+
+task notify_and_deliver(robot r, object med, location src, location dst) {
+    goal { object_at med dst; }
+    plan {
+        communicate r to "nurse" with "MEDS READY" else { fail "not delivered"; }  // @message-tail
+        move r to src;
+        grasp r med;
+        move r to dst;
+        place r med at dst;
+    }
+}

@@ -1,0 +1,120 @@
+{
+  "id": "m04_rounds_until_shift_end",
+  "prompt": "With tug1, drive from gate_in to gate_out, wait 20 seconds and drive back to gate_in. Repeat that round until channel \"ops\" sends \"SHIFT END\", but for at most 12 rounds.",
+  "world": "bench/worlds/yard.json",
+  "group": "message",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_1": {
+    "decision": "program",
+    "expected_message_waits": [
+      {
+        "use": "until",
+        "channel": "ops",
+        "text": "SHIFT END",
+        "timeout": null
+      }
+    ],
+    "paths": [
+      {
+        "when": "SHIFT END arrives at 50 seconds: after run 3 (60 seconds) the until holds",
+        "world_patch": {
+          "messages": [
+            {
+              "at": {
+                "value": "50",
+                "unit": "s"
+              },
+              "channel": "ops",
+              "text": "SHIFT END",
+              "from": "rl:agent:ops-ctl"
+            }
+          ]
+        },
+        "outcome": "completed",
+        "runs": 3,
+        "runs_verified": 3
+      },
+      {
+        "when": "no message arrives: the bound of 12 runs is reached",
+        "world_patch": {
+          "messages": []
+        },
+        "outcome": "bounded",
+        "runs": 12,
+        "runs_verified": 12
+      },
+      {
+        "when": "SHIFT END arrives at 30 seconds from a sender the channel does not allow: ignored, the bound is reached",
+        "world_patch": {
+          "messages": [
+            {
+              "at": {
+                "value": "30",
+                "unit": "s"
+              },
+              "channel": "ops",
+              "text": "SHIFT END",
+              "from": "rl:agent:visitor"
+            }
+          ]
+        },
+        "outcome": "bounded",
+        "runs": 12,
+        "runs_verified": 12
+      }
+    ],
+    "world_2_1": {
+      "channels": {
+        "ops": {
+          "from": [
+            "rl:agent:ops-ctl"
+          ]
+        }
+      }
+    },
+    "expected_mission": {
+      "runs": [
+        {
+          "task": "round",
+          "entities": [
+            "tug1",
+            "gate_in",
+            "gate_out"
+          ],
+          "goal": [
+            [
+              "rl:robot:tug1",
+              "located_in",
+              "rl:place:gate_in"
+            ]
+          ]
+        }
+      ],
+      "repeat": {
+        "max_runs": 12,
+        "max_duration": null
+      },
+      "until": {
+        "condition": "message_received \"ops\" with \"SHIFT END\"",
+        "triples": []
+      },
+      "on_failure": "stop",
+      "policy_stated": false
+    }
+  },
+  "gap": "G-MSG",
+  "tags": [
+    "message_until",
+    "mission",
+    "repeat",
+    "until",
+    "count_bound",
+    "wait_in_task",
+    "sender_not_allowed"
+  ],
+  "why": "A mission `until message_received` (0043 S1, S2): the mission's `until` sees the messages since the mission started. A message from a sender the channel does not allow is ignored (S4), so that path runs to the bound.",
+  "attempt_fails_with": "E211"
+}

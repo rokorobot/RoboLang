@@ -1,0 +1,9 @@
+{
+  "task": "release_crate",
+  "bindings": {
+    "r": "amr1",
+    "crate": "crate1",
+    "src": "dock",
+    "dst": "table"
+  }
+}

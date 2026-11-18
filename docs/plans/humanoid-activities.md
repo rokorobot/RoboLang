@@ -85,6 +85,8 @@ before.
 
 | Date | Note | Added | Removed | Changed | Ranking |
 |---|---|---|---|---|---|
+| 2026-11-18 | I5 L3 done: set 10 frozen; bounds and clarifications approved; G-DELIVERY out (C13) | — | — | — | 1. action 4.52 · 2. perception 2.78 · 3. cooperation 1.07 · 4. communication 0.95 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
+| 2026-11-18 | I5 L3: set 10 messages pre-registered (24 tasks) | — | — | — | 1. action 4.52 · 2. perception 2.78 · 3. cooperation 1.07 · 4. communication 0.95 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
 | 2026-11-18 | L6 of I4: G-LOOP closed by RoboLang 2.0 missions; G-UNBOUNDED (out, 0041 M2/M7) split off | — | — | — | 1. action 4.52 · 2. perception 2.78 · 3. cooperation 1.07 · 4. communication 0.95 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
 | 2026-11-18 | I4 L5: 2.0 accepted with one exception; G-OBSERVE opened | — | — | — | 1. action 4.52 · 2. perception 2.78 · 3. cooperation 1.07 · 4. communication 0.95 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
 | 2026-11-18 | I4 L4: RoboLang 2.0 built and taught | — | — | — | 1. action 4.52 · 2. perception 2.78 · 3. cooperation 1.07 · 4. communication 0.95 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
@@ -197,7 +199,8 @@ before.
 
 | Language gap | Scope | Priority | Near | Benchmark tasks |
 |---|---|---|---|---|
-| `G-MSG` Waiting for an incoming message, or confirming delivery | open | 4.02 | yes | 9 |
+| `G-MSG` Waiting for an incoming message, or confirming delivery | open | 4.02 | yes | 23 |
+| `G-DELIVERY` Confirming that a message the robot sent was delivered | out | 0.00 | — | 2 |
 
 ## Learning
 
@@ -228,12 +231,12 @@ before.
 
 | Language gap | Scope | Priority | Near | Benchmark tasks |
 |---|---|---|---|---|
-| `G-CALC` Arithmetic, counting and text built from values | open | 1.55 | yes | 10 |
+| `G-CALC` Arithmetic, counting and text built from values | open | 1.55 | yes | 12 |
 | `G-CLOCK` Clock readings and times of day | closed | 0.00 | — | 0 |
 | `G-DATE` Dates and times on another day: tomorrow, a weekday, a calendar date | open | 0.00 | — | 2 |
 | `G-FALLBACK` A different end state counts as done | out | 0.00 | — | 1 |
 | `G-LOOP` Repetition without a fixed bound: loops, retry until it works, schedules, event streams | closed | 0.00 | — | 0 |
-| `G-TRIGGER` Triggers on missions: every hour, at a time, on a message or an event, on the robot's own state | open | 0.00 | — | 9 |
+| `G-TRIGGER` Triggers on missions: every hour, at a time, on a message or an event, on the robot's own state | open | 0.00 | — | 11 |
 | `G-UNBOUNDED` Repetition with no bound (forever, until it works with no limit) and nested repetition | out | 0.00 | — | 8 |
 
 ## Autonomy

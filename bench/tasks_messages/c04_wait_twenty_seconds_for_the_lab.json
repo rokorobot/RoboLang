@@ -1,0 +1,38 @@
+{
+  "id": "c04_wait_twenty_seconds_for_the_lab",
+  "prompt": "With moxi1, take samples_1 from ward_3 to the lab and, after waiting 20 seconds there for the lab to be ready, place them at the lab.",
+  "world": "bench/worlds/ward.json",
+  "group": "control",
+  "expect": {
+    "decision": "program"
+  },
+  "expect_2_0": {
+    "decision": "program"
+  },
+  "expect_2_1": {
+    "decision": "program",
+    "expected_message_waits": [],
+    "world_2_1": {
+      "channels": {
+        "nurse": {
+          "from": [
+            "rl:agent:nurse-1"
+          ]
+        }
+      }
+    }
+  },
+  "expected_goal": [
+    [
+      "rl:thing:samples_1",
+      "located_in",
+      "rl:place:lab"
+    ]
+  ],
+  "tags": [
+    "wait_for",
+    "fixed_wait",
+    "no_message_wait"
+  ],
+  "expected_end_ms": "20000"
+}

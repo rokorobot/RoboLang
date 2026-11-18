@@ -1,0 +1,79 @@
+{
+  "id": "m07_lobby_when_it_opens",
+  "prompt": "With cleaner1, drive from dock_2 to the lobby without ever entering wet_floor, but only after channel \"facility\" has sent \"LOBBY OPEN\". Wait up to 10 minutes for it and, if it does not come, stay where cleaner1 is and stop the job as failed.",
+  "world": "bench/worlds/site_1_3.json",
+  "group": "message",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_1": {
+    "decision": "program",
+    "expected_message_waits": [
+      {
+        "use": "wait",
+        "channel": "facility",
+        "text": "LOBBY OPEN",
+        "timeout": "10 min"
+      }
+    ],
+    "paths": [
+      {
+        "when": "LOBBY OPEN arrives at 120 seconds",
+        "goal": [
+          [
+            "rl:robot:cleaner1",
+            "located_in",
+            "rl:place:lobby"
+          ]
+        ],
+        "world_patch": {
+          "messages": [
+            {
+              "at": {
+                "value": "120",
+                "unit": "s"
+              },
+              "channel": "facility",
+              "text": "LOBBY OPEN",
+              "from": "rl:agent:facility-ctl"
+            }
+          ]
+        },
+        "end_ms": "120000"
+      },
+      {
+        "when": "no message arrives: the wait times out after 10 minutes",
+        "fails": true,
+        "world_patch": {
+          "messages": []
+        },
+        "end_ms": "600000"
+      }
+    ],
+    "world_2_1": {
+      "channels": {
+        "facility": {
+          "from": [
+            "rl:agent:facility-ctl"
+          ]
+        }
+      }
+    },
+    "expected_limits": [
+      [
+        "no_go_region",
+        "wet_floor"
+      ]
+    ]
+  },
+  "gap": "G-MSG",
+  "tags": [
+    "message_wait",
+    "region_limit",
+    "no_go_region",
+    "timeout"
+  ],
+  "why": "A message wait together with a 1.7 region limit: `@safety no_go_region wet_floor;` stays in the task. The 2.0 attempt without the message line is a valid program that drives at once.",
+  "attempt_fails_with": "E211"
+}
