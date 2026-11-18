@@ -46,20 +46,26 @@ that are fully expressible once this gap and those above it are closed (13 near,
 | I12 | 2.8 | G-FORCE | **Proposed.** Grip and contact force limits, with the same "checked request" mechanism as I1 and I11 | taught skills (G-TEACH) that carry their own force limits | not computed |
 | I13 | 2.9 | *G-TRIGGER* (new) | **Proposed.** A mission that starts by itself: at a time of day, on a message, or on the robot's own state. Left out of 2.0 (0041 M6); each trigger starts one bounded, approved mission | the "design for" of I3, I5 and I8 | not computed |
 | I14 | 2.10 | *G-SHIFT* (new) | **Proposed.** Schedules beyond one day and across shifts. 1.9 reads one day only (`S238`, 0042 T4) | daylight-saving changes, calendars | not computed |
+| I15 | 2.11 | G-TEACH | **Proposed.** A skill, object or route taught by demonstration, then used by name. A taught skill becomes a declared action (I2), so it stays typed, checked and verified | skills shared across a fleet, learned object categories (I17) | not computed |
+| I16 | 2.12 | G-QUALITY | **Proposed.** Judgements of appearance or condition that no sensor kind declares ("the packaging looks worn"). Split off from G-PERCEIVE at I6 (0044 D14); a judgement carries its confidence and fails closed when unsure, as a reading does | G-PREDICT (a predicted condition) | not computed |
+| I17 | 2.13 | *G-CATEGORY* (new) | **Proposed.** Object categories the robot learns at run time rather than the world file declaring them. The "design for" of I7 | G-TEACH (a taught object), G-QUALITY | not computed |
+| I18 | 2.14 | G-PREDICT | **Proposed.** Acting on a prediction and its confidence: a person's next move, time to failure, or a plan checked with a world model before acting. Plan section 9 keeps probabilistic prediction out of `.rob` today, so it needs a decision record first | the "design for" of I6 and I8 | not computed |
+| I19 | 2.15 | *G-NEGOTIATE* (new) | **Proposed.** Robots that agree on who does what (claim, offer, accept) beyond the plain messages of I5. The "design for" of I5 | shared workspaces (I20) | not computed |
+| I20 | 3.0 | *G-SHARED* (new) | **Proposed.** Robots and people working in one space at the same time. Builds on I10, I11 and I12 and changes the safety model, hence 3.0. The "design for" of I10 | — | not computed |
 
 The remaining 12 of the 38 sub-activities need far gaps (G-PROX, G-FORCE, G-TEACH, G-PREDICT). These get design
 sketches only (LE-8). They are promoted to iterations when their sub-activities reach pilot within three years.
 
-**I11–I14 are proposed by the owner (2026-11-18), not generated.** Unlike I1–I10 they are not taken from the
+**I11–I20 are proposed by the owner (2026-11-18), not generated.** Unlike I1–I10 they are not taken from the
 [suggested order](plans/humanoid-activities.md#suggested-order-of-language-work), so they stay proposals until the
 research confirms them:
 
-- G-PROX and G-FORCE are far gaps in the atlas (R2 priority 0.84 and 0.50; G-FORCE 0.98 in the weekly R4 of
-  2026-11-17). No near sub-activity needs them yet, so under LE-8 they get design sketches until one does.
-- G-TRIGGER and G-SHIFT are not in the atlas. A foresight pass must add them, with probe tasks (R3), before L1.
+- G-PROX, G-FORCE, G-TEACH, G-PREDICT and G-QUALITY are far gaps in the atlas (R2 priority 0.84, 0.50, 0.39 and
+  0.34 for the first four; G-FORCE 0.98 in the weekly R4 of 2026-11-17). No near sub-activity needs them yet, so under
+  LE-8 they get design sketches until one does.
+- G-TRIGGER, G-SHIFT, G-CATEGORY, G-NEGOTIATE and G-SHARED are not in the atlas. A foresight pass must add them, with
+  probe tasks (R3), before L1.
 - "Unlocked" is computed once the gaps are in the atlas.
-- Candidates after I14, not yet on this page: G-TEACH, G-QUALITY (split off at I6), learned object categories,
-  G-PREDICT, negotiation between robots, and shared workspaces with people.
 
 ## How this page changes
 
@@ -86,5 +92,5 @@ Frozen, dated copies with a git tag: [roadmap-snapshots/](roadmap-snapshots/READ
 | I5 G-MSG | L1–L5 done (accepted 2026-11-18, [acceptance](evidence/bench-2-1-acceptance.md): every bound met). **L6:** G-MSG closed in the atlas; release 0.8.0 with RoboLang 2.1, published after the owner approves the PyPI upload |
 | I6 G-PERCEIVE | L1–L5 done (accepted 2026-11-18 with erratum P7, [acceptance](evidence/bench-2-2-acceptance.md): no reading replaced or changed, 0/30). **L6:** G-PERCEIVE closed in the atlas, G-QUALITY split off (far); release 0.9.0 with RoboLang 2.2, published after the owner approves the PyPI upload |
 | I7–I10 | Not started |
-| I11–I14 | Proposed 2026-11-18; not in the suggested order yet (see above) |
+| I11–I20 | Proposed 2026-11-18; not in the suggested order yet (see above) |
 | Mission layer decision record | [0041](../spec/decisions/0041-mission-layer.md) **approved 2026-11-17**: G-LOOP reopened (LE-9), mission layer with a hard bound, `stop`/`continue`/`retry N`; built at I4 |
