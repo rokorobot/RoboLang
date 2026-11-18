@@ -99,6 +99,7 @@ Exit 6 prints one diagnostic, `FILE: error[CODE]: task 'T': …`:
 | `X605` | RoboLang 1.7: the task has a region limit (`@safety no_go_region` or `in_region`). Core 0.1 and 0.2 carry no region limit, so the task is refused rather than exported without it (decision 0039 P8) |
 | `X606` | RoboLang 1.8: the goal has an `in_state`. Core 0.1 and 0.2 have no state triples, so the task is refused rather than exported without it (decision 0040 A8) |
 | `X607` | RoboLang 2.0: `--task` or `--mission` names a mission. A mission runs on the planner's side and a robot is sent tasks only, one task run at a time (decision 0041 M8), so a mission is refused; export one of its tasks instead |
+| `X608` | RoboLang 2.1: **`delegate` only**: the task has a `message_received`; the robot would need the channel's trust configuration (decision 0043 S8). `export-goal` never raises it: a goal holds no message, so a task with a message wait exports as before |
 
 Warnings (skipped limits) never change the exit status.
 

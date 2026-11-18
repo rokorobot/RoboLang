@@ -1,0 +1,51 @@
+{
+  "ir_schema": "robolang.task-ir",
+  "ir_schema_version": "1.9",
+  "language_version": "2.1",
+  "tasks": [
+    {
+      "name": "start_on_go",
+      "parameters": [
+        {
+          "name": "r",
+          "type": "robot"
+        },
+        {
+          "name": "a",
+          "type": "location"
+        },
+        {
+          "name": "b",
+          "type": "location"
+        }
+      ],
+      "safety": [],
+      "preconditions": [
+        {
+          "kind": "message_received",
+          "channel": "ops",
+          "text": "GO"
+        }
+      ],
+      "goal": [
+        {
+          "kind": "robot_at",
+          "robot": "r",
+          "location": "b"
+        }
+      ],
+      "steps": [
+        {
+          "kind": "move",
+          "robot": "r",
+          "target": "a"
+        },
+        {
+          "kind": "move",
+          "robot": "r",
+          "target": "b"
+        }
+      ]
+    }
+  ]
+}

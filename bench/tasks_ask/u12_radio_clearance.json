@@ -1,15 +1,71 @@
 {
   "id": "u12_radio_clearance",
   "prompt": "Leave container 305 where it is until the port authority radios clearance, then have straddle1 take it to the out gate.",
-  "world": "bench/worlds/yard.json",
-  "group": "inexpressible",
+  "world": "bench/worlds/msg_u12_radio_clearance.json",
+  "group": "message",
   "expect": {
+    "decision": "program"
+  },
+  "expect_2_0": {
     "decision": "cannot",
     "category": "inexpressible"
   },
   "tags": [
     "message_wait"
   ],
-  "why": "Waiting for an incoming message needs message_received, deferred (E211).",
-  "attempt_fails_with": "E211"
+  "why": "RoboLang 2.1 (0043): a `wait until message_received ...` with the world's channel and sender (a program). Before L4 (2.0): Waiting for an incoming message needs message_received, deferred (E211).",
+  "attempt_fails_with": "E211",
+  "expect_2_1": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "the port authority sends a message at 600 seconds",
+        "goal": [
+          [
+            "rl:thing:cont_305",
+            "located_in",
+            "rl:place:gate_out"
+          ]
+        ],
+        "world_patch": {
+          "messages": [
+            {
+              "at": {
+                "value": "600",
+                "unit": "s"
+              },
+              "channel": "port_authority",
+              "text": "CLEARED",
+              "from": "rl:agent:port-authority"
+            }
+          ]
+        },
+        "end_ms": "600000"
+      },
+      {
+        "when": "no clearance arrives: the wait times out and the run fails",
+        "fails": true,
+        "world_patch": {
+          "messages": []
+        }
+      }
+    ],
+    "world_2_1": {
+      "channels": {
+        "port_authority": {
+          "from": [
+            "rl:agent:port-authority"
+          ]
+        }
+      }
+    }
+  },
+  "expected_message_waits": [
+    {
+      "use": "wait",
+      "channel": "port_authority",
+      "text": null,
+      "timeout": null
+    }
+  ]
 }

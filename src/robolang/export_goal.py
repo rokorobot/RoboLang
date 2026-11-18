@@ -37,7 +37,8 @@ class ExportError(Exception):
     """
     The goal cannot be exported. `code` is X601 (no Core form), X602 (a thing lacks class or mass), X605 (the task
     has a region limit, which Core carries no form for: RoboLang 1.7, decision 0039 P8) or X606 (the goal has an
-    `in_state`: Core 0.2 has no state triples, RoboLang 1.8, decision 0040 A8).
+    `in_state`: Core 0.2 has no state triples, RoboLang 1.8, decision 0040 A8). `delegate` also raises X608 (the task
+    waits for a message: RoboLang 2.1, decision 0043 S8); `export-goal` never does, as a goal holds no message.
     """
 
     def __init__(self, code: str, message: str):

@@ -48,9 +48,9 @@ class Lexer:
         """Switch to the words and annotations of language `version` (a `robolang` marker was read)."""
         if version in RESERVED_BY_VERSION:
             self.reserved = RESERVED_BY_VERSION[version]
-        self.verify = version in ("1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "2.0")
-        self.values = version in ("1.6", "1.7", "1.8", "1.9", "2.0")
-        self.clock = version in ("1.9", "2.0")
+        self.verify = version in ("1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "2.0", "2.1")
+        self.values = version in ("1.6", "1.7", "1.8", "1.9", "2.0", "2.1")
+        self.clock = version in ("1.9", "2.0", "2.1")
 
     # -------- helpers --------
 

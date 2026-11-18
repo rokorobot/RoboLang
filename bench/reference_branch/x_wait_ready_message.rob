@@ -1,0 +1,13 @@
+// bench/reference_branch/x_wait_ready_message.rob: hand-written reference (RoboLang 2.1)
+robolang 2.1;
+
+task after_ready(robot r, object box, location src, location dst) {
+    goal { object_at box dst; }
+    plan {
+        wait until message_received "handoff" with "READY" timeout 10 min else { fail "amr1 did not send READY"; }
+        move r to src;
+        grasp r box;
+        move r to dst;
+        place r box at dst;
+    }
+}

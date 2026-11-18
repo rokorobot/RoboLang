@@ -1,22 +1,17 @@
 {
   "id": "m08_open_the_door_when_unlocked",
   "prompt": "With moxi1, take iv_kit_1 from the supply_closet to room_412, but only after channel \"supply\" has sent \"DOOR UNLOCKED\". Wait up to 10 minutes for it; then open closet_door, take the kit and bring it to room_412. If the message does not come, stop the job as failed.",
-  "world": "bench/worlds/ward_1_4.json",
+  "world": "bench/worlds/msg_m08_open_the_door_when_unlocked.json",
   "group": "message",
   "expect": {
+    "decision": "program"
+  },
+  "expect_2_0": {
     "decision": "cannot",
     "category": "inexpressible"
   },
   "expect_2_1": {
     "decision": "program",
-    "expected_message_waits": [
-      {
-        "use": "wait",
-        "channel": "supply",
-        "text": "DOOR UNLOCKED",
-        "timeout": "10 min"
-      }
-    ],
     "paths": [
       {
         "when": "DOOR UNLOCKED arrives at 200 seconds",
@@ -64,15 +59,23 @@
           ]
         }
       }
-    },
-    "expected_actions": [
-      {
-        "robot": "moxi1",
-        "action": "open",
-        "target": "closet_door"
-      }
-    ]
+    }
   },
+  "expected_message_waits": [
+    {
+      "use": "wait",
+      "channel": "supply",
+      "text": "DOOR UNLOCKED",
+      "timeout": "10 min"
+    }
+  ],
+  "expected_actions": [
+    {
+      "robot": "moxi1",
+      "action": "open",
+      "target": "closet_door"
+    }
+  ],
   "gap": "G-MSG",
   "tags": [
     "message_wait",

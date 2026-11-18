@@ -1,0 +1,14 @@
+// bench/reference_future/f_msg_line_docked.rob: hand-written reference (RoboLang 2.1)
+robolang 2.1;
+
+task hand_to_line(robot r, object tote, location src, location hold, location dst) {
+    goal { object_at tote dst; }
+    plan {
+        move r to src;
+        grasp r tote;
+        move r to hold;
+        wait until message_received "line" with "TUGGER DOCKED" timeout 10 min else { fail "no dock signal"; }
+        move r to dst;
+        place r tote at dst;
+    }
+}

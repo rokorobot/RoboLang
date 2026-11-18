@@ -1,5 +1,5 @@
 """
-Abstract syntax tree for RoboLang v1.1 to v2.0 (robolang-v1.1.md section 7, v1.2 section 6, v1.3 section 6).
+Abstract syntax tree for RoboLang v1.1 to v2.1 (robolang-v1.1.md section 7, v1.2 section 6, v1.3 section 6).
 
 Nodes are immutable and record the source faithfully: names are unresolved,
 units are kept as written and nothing is normalized. Binding and type checks
@@ -223,8 +223,17 @@ class InState:
     span: Span
 
 
+@dataclass(frozen=True)
+class MessageReceived:
+    """RoboLang 2.1 (decision 0043 S1): `message_received "CH" with "TEXT"`; `text` is None without the `with`."""
+
+    channel: StringLit
+    text: StringLit | None
+    span: Span
+
+
 Condition = Union[RobotReady, RegionClear, ObjectExists, SensorOk, ObjectAt, RobotAt, Holding, And, Or, Not, Compare,
-                  InState]
+                  InState, MessageReceived]
 
 
 # -------- statements --------

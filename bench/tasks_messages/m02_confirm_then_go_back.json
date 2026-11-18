@@ -1,22 +1,17 @@
 {
   "id": "m02_confirm_then_go_back",
   "prompt": "With moxi1, take medication_1 from the pharmacy to room_412 and place it there. Then wait up to 15 minutes for the nurse to send \"CONFIRMED\" on channel \"nurse\", and send moxi1 back to the nurse_station. If no confirmation comes, tell channel \"alerts\" \"no confirmation\" and stop the job as failed.",
-  "world": "bench/worlds/ward.json",
+  "world": "bench/worlds/msg_m02_confirm_then_go_back.json",
   "group": "message",
   "expect": {
+    "decision": "program"
+  },
+  "expect_2_0": {
     "decision": "cannot",
     "category": "inexpressible"
   },
   "expect_2_1": {
     "decision": "program",
-    "expected_message_waits": [
-      {
-        "use": "wait",
-        "channel": "nurse",
-        "text": "CONFIRMED",
-        "timeout": "15 min"
-      }
-    ],
     "paths": [
       {
         "when": "the nurse confirms at 4 minutes",
@@ -77,6 +72,14 @@
       }
     }
   },
+  "expected_message_waits": [
+    {
+      "use": "wait",
+      "channel": "nurse",
+      "text": "CONFIRMED",
+      "timeout": "15 min"
+    }
+  ],
   "gap": "G-MSG",
   "tags": [
     "message_wait",

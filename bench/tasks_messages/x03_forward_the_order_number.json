@@ -1,9 +1,13 @@
 {
   "id": "x03_forward_the_order_number",
   "prompt": "With digit1, wait up to 5 minutes for channel \"orders\" to send an order number, send that number on to channel \"labels\", and then move tote_1 from the inbound_conveyor to the outbound_conveyor.",
-  "world": "bench/worlds/fulfilment.json",
+  "world": "bench/worlds/msg_x03_forward_the_order_number.json",
   "group": "inexpressible",
   "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_0": {
     "decision": "cannot",
     "category": "inexpressible"
   },

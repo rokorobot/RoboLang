@@ -1,0 +1,11 @@
+// RoboLang v2.1 fixture: valid
+// expect: ok
+// why: a message in pre: true only for a message from the start of the run (S2, C4)
+
+robolang 2.1;
+
+task start_on_go(robot r, location a, location b) {
+    pre { message_received "ops" with "GO"; }
+    goal { robot_at r b; }
+    plan { move r to a; move r to b; }
+}

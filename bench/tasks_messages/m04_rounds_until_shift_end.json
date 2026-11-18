@@ -1,22 +1,17 @@
 {
   "id": "m04_rounds_until_shift_end",
   "prompt": "With tug1, drive from gate_in to gate_out, wait 20 seconds and drive back to gate_in. Repeat that round until channel \"ops\" sends \"SHIFT END\", but for at most 12 rounds.",
-  "world": "bench/worlds/yard.json",
+  "world": "bench/worlds/msg_m04_rounds_until_shift_end.json",
   "group": "message",
   "expect": {
+    "decision": "program"
+  },
+  "expect_2_0": {
     "decision": "cannot",
     "category": "inexpressible"
   },
   "expect_2_1": {
     "decision": "program",
-    "expected_message_waits": [
-      {
-        "use": "until",
-        "channel": "ops",
-        "text": "SHIFT END",
-        "timeout": null
-      }
-    ],
     "paths": [
       {
         "when": "SHIFT END arrives at 50 seconds: after run 3 (60 seconds) the until holds",
@@ -105,6 +100,14 @@
       "policy_stated": false
     }
   },
+  "expected_message_waits": [
+    {
+      "use": "until",
+      "channel": "ops",
+      "text": "SHIFT END",
+      "timeout": null
+    }
+  ],
   "gap": "G-MSG",
   "tags": [
     "message_until",

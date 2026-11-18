@@ -27,6 +27,7 @@ from .executor import (
     StepResult,
     run,
 )
+from .messages import ReceivedMessage
 from .mission import MissionFailure, MissionResult, TaskRun, mission_task, run_mission
 from .record import (
     DEFAULT_SEED, SEED, mission_run_id, run_id, sha256_normalized, to_json, to_mission_record, to_record,
@@ -38,6 +39,7 @@ from .world import (
     WORLD_SCHEMA_VERSIONS,
     Action,
     Event,
+    Incoming,
     Mass,
     Measures,
     Property,
@@ -89,6 +91,8 @@ __all__ = [
     "WORLD_SCHEMA_VERSIONS",
     "Action",
     "Event",
+    "Incoming",
+    "ReceivedMessage",
     "Measures",
     "Property",
     "Region",

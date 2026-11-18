@@ -1,0 +1,14 @@
+// bench/reference_messages/m10_door_open_and_lane_clear.rob: hand-written reference (RoboLang 2.1)
+robolang 2.1;
+
+task unload_case(robot r, object item, location src, location dst) {
+    goal { object_at item dst; }
+    plan {
+        wait until message_received "dock" with "DOOR OPEN" timeout 10 min else { fail "the dock door did not open"; }
+        wait until message_received "safety" with "LANE CLEAR" timeout 10 min else { fail "the lane was not cleared"; }
+        move r to src;
+        grasp r item;
+        move r to dst;
+        place r item at dst;
+    }
+}

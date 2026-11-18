@@ -115,3 +115,8 @@ out of 2.1. S1–S11 are accepted.
 | C12 | Message waits inside handlers or a mission's task | Allowed, like any wait |
 | C13 | Gaps | `f12_message_delivery` and `x01` go to the far gap **G-DELIVERY**, scope `out` (S7: delivery is the transport's job). Set 9's `x03_for_each_go_message` goes to G-TRIGGER (S10). `x03_forward_the_order_number` stays in G-CALC |
 | C14 | `x05`, a message as an end state | **Becomes a program**: a final bounded `wait until message_received … else { fail … }`, with the world part in the goal, is how RoboLang verifies "the message has arrived". Declining it would be over-declining. It leaves the atlas |
+
+## Owner's decision at L4 (2026-11-18)
+
+Physical-mode sender authentication (S9) is not built in 2.1. 2.1 is simulation only. Hazard H23 stays open in the
+safety case until real sender identity exists (G4).

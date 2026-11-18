@@ -1,9 +1,13 @@
 {
   "id": "i02_the_wrong_sender",
   "prompt": "With digit1, take tote_2 from the inbound_conveyor to the handoff_point and hold it there until the line controller has sent \"TUGGER DOCKED\" on channel \"line\", then place it on line_feed.",
-  "world": "bench/worlds/fulfilment.json",
+  "world": "bench/worlds/msg_i02_the_wrong_sender.json",
   "group": "infeasible",
   "expect": {
+    "decision": "cannot",
+    "category": "infeasible"
+  },
+  "expect_2_0": {
     "decision": "cannot",
     "category": "inexpressible"
   },
@@ -32,6 +36,14 @@
       ]
     }
   },
+  "expected_message_waits": [
+    {
+      "use": "wait",
+      "channel": "line",
+      "text": "TUGGER DOCKED",
+      "timeout": null
+    }
+  ],
   "blockers": [
     "the only \"TUGGER DOCKED\" comes at 60 seconds from rl:agent:contractor-3, which channel \"line\" does not allow"
   ],

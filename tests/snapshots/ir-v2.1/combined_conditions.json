@@ -1,0 +1,103 @@
+{
+  "ir_schema": "robolang.task-ir",
+  "ir_schema_version": "1.9",
+  "language_version": "2.1",
+  "tasks": [
+    {
+      "name": "hold_for_two",
+      "parameters": [
+        {
+          "name": "r",
+          "type": "robot"
+        },
+        {
+          "name": "lane",
+          "type": "region"
+        },
+        {
+          "name": "hold",
+          "type": "location"
+        }
+      ],
+      "safety": [],
+      "preconditions": [],
+      "goal": [
+        {
+          "kind": "robot_at",
+          "robot": "r",
+          "location": "hold"
+        }
+      ],
+      "steps": [
+        {
+          "kind": "move",
+          "robot": "r",
+          "target": "hold"
+        },
+        {
+          "kind": "wait_until",
+          "condition": {
+            "kind": "and",
+            "conditions": [
+              {
+                "kind": "message_received",
+                "channel": "dock",
+                "text": "DOOR OPEN"
+              },
+              {
+                "kind": "message_received",
+                "channel": "safety",
+                "text": "LANE CLEAR"
+              },
+              {
+                "kind": "region_clear",
+                "region": "lane"
+              }
+            ]
+          },
+          "timeout": {
+            "value": "10",
+            "unit": "min"
+          },
+          "else": [
+            {
+              "kind": "fail",
+              "reason": "not released"
+            }
+          ]
+        },
+        {
+          "kind": "wait_until",
+          "condition": {
+            "kind": "or",
+            "conditions": [
+              {
+                "kind": "message_received",
+                "channel": "ops",
+                "text": "GO"
+              },
+              {
+                "kind": "not",
+                "condition": {
+                  "kind": "message_received",
+                  "channel": "ops",
+                  "text": "STOP"
+                }
+              }
+            ]
+          },
+          "timeout": {
+            "value": "1",
+            "unit": "min"
+          },
+          "else": [
+            {
+              "kind": "fail",
+              "reason": "stopped"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

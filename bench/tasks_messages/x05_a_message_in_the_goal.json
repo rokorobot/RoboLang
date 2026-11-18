@@ -1,16 +1,52 @@
 {
   "id": "x05_a_message_in_the_goal",
   "prompt": "With digit1, move tote_1 from the inbound_conveyor to line_feed. The job is done only when tote_1 is on line_feed and channel \"line\" has sent \"RECEIVED\": state both as the goal of the job.",
-  "world": "bench/worlds/fulfilment.json",
-  "group": "inexpressible",
+  "world": "bench/worlds/msg_x05_a_message_in_the_goal.json",
+  "group": "message_goal",
   "expect": {
     "decision": "cannot",
     "category": "inexpressible"
   },
-  "expect_2_1": {
+  "expect_2_0": {
     "decision": "cannot",
-    "category": "inexpressible",
-    "because": "0043 S1",
+    "category": "inexpressible"
+  },
+  "expect_2_1": {
+    "decision": "program",
+    "because": "0043 C14",
+    "paths": [
+      {
+        "when": "RECEIVED arrives from the line controller at 60 seconds",
+        "goal": [
+          [
+            "rl:thing:tote_1",
+            "located_in",
+            "rl:place:line_feed"
+          ]
+        ],
+        "world_patch": {
+          "messages": [
+            {
+              "at": {
+                "value": "60",
+                "unit": "s"
+              },
+              "channel": "line",
+              "text": "RECEIVED",
+              "from": "rl:agent:line-ctl"
+            }
+          ]
+        },
+        "end_ms": "60000"
+      },
+      {
+        "when": "no message arrives: the final wait times out and the run fails",
+        "fails": true,
+        "world_patch": {
+          "messages": []
+        }
+      }
+    ],
     "world_2_1": {
       "channels": {
         "line": {
@@ -21,11 +57,27 @@
       }
     }
   },
-  "gap": "G-MSG",
+  "expected_message_waits": [
+    {
+      "use": "wait",
+      "channel": "line",
+      "text": "RECEIVED",
+      "timeout": null
+    }
+  ],
+  "expected_goal": [
+    [
+      "rl:thing:tote_1",
+      "located_in",
+      "rl:place:line_feed"
+    ]
+  ],
+  "gap": "G-EVENTGOAL",
   "tags": [
     "message_in_goal",
     "end_state"
   ],
-  "why": "A message is not an end state of the world, so `message_received` is never allowed in a `goal` (0043 S1), and a goal is what Core receives (`export-goal`). A wait for the message in the plan is a different request: the goal does not hold the message.",
-  "attempt_fails_with": "E211"
+  "why": "A message is not an end state of the world, so `message_received` is never in a `goal` (0043 S1, E327), and a goal is what Core receives (`export-goal`). \"The job is done only when the line has sent RECEIVED\" is written as a final bounded wait in the plan, with the world part in the goal (0043 C14): it is a program, not a decline. The program that puts the message in the goal is a 2.1 error.",
+  "attempt_fails_with": "E211",
+  "erratum": "N3 (owner, 2026-11-18): reverted to cannot / inexpressible; the 2.1 label of C14 stays in expect_2_1 as pre-registered"
 }

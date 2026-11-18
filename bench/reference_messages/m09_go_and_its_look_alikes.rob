@@ -1,0 +1,13 @@
+// bench/reference_messages/m09_go_and_its_look_alikes.rob: hand-written reference (RoboLang 2.1)
+robolang 2.1;
+
+task take_tray(robot r, object tray, location src, location dst) {
+    goal { object_at tray dst; }
+    plan {
+        move r to src;
+        grasp r tray;
+        wait until message_received "pharmacy_west" with "GO" timeout 10 min else { fail "no go"; }
+        move r to dst;
+        place r tray at dst;
+    }
+}

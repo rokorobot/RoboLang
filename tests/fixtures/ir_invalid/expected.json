@@ -186,5 +186,9 @@
   "I227_run_names_no_task.json": [
     "I227",
     "/missions/0/runs/0/task"
+  ],
+  "I228_message_in_a_goal.json": [
+    "I228",
+    "/tasks/0/goal/1"
   ]
 }

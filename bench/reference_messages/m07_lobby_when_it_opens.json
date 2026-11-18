@@ -1,0 +1,8 @@
+{
+  "task": "clean_to_lobby",
+  "bindings": {
+    "r": "cleaner1",
+    "lobby": "lobby",
+    "wet": "wet_floor"
+  }
+}

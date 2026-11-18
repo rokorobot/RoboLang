@@ -1,7 +1,8 @@
 """
 Recursive-descent parser for RoboLang v1.1 (spec/grammar.ebnf), v1.2 (spec/grammar-v1.2.ebnf) and
 v1.3 (spec/grammar-v1.3.ebnf), v1.4 (spec/grammar-v1.4.ebnf), v1.5 (grammar-v1.5.ebnf), v1.6 (grammar-v1.6.ebnf),
-v1.7 (grammar-v1.7.ebnf), v1.8 (grammar-v1.8.ebnf), v1.9 (grammar-v1.9.ebnf) and v2.0 (grammar-v2.0.ebnf).
+v1.7 (grammar-v1.7.ebnf), v1.8 (grammar-v1.8.ebnf), v1.9 (grammar-v1.9.ebnf), v2.0 (grammar-v2.0.ebnf) and
+v2.1 (grammar-v2.1.ebnf).
 
 Produces the AST of `nodes.py` or raises RoboLangError carrying every syntax error found.
 After a syntax error the parser resynchronises (see `_resync`) and carries on, so independent
@@ -29,6 +30,7 @@ from .tokens import (
     CONDITIONS,
     CONDITIONS_V1_3,
     CONDITIONS_V1_8,
+    CONDITIONS_V2_1,
     CLOCK_KINDS,
     DURATION_UNITS,
     KIND_UNITS,
@@ -47,7 +49,7 @@ from .tokens import (
 )
 
 DEFAULT_VERSION = "1.1"  # the version of a file without a marker
-SUPPORTED_VERSIONS = ("1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "2.0")
+SUPPORTED_VERSIONS = ("1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "2.0", "2.1")
 SUPPORTED_VERSION = DEFAULT_VERSION  # kept for existing imports
 MAX_CONDITION_DEPTH = 8  # spec/robolang-v1.2.md section 3.3
 MAX_IF_DEPTH = 4  # spec/robolang-v1.4.md section 3.3 (E216)
@@ -114,42 +116,47 @@ class _Parser:
     @property
     def _typed(self) -> bool:
         """True in 1.3 to 1.8 files: goal blocks, outcome atoms and sensor parameters."""
-        return self._language in ("1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "2.0")
+        return self._language in ("1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "2.0", "2.1")
 
     @property
     def _branching(self) -> bool:
         """True in 1.4 to 1.8 files: `if`, `else` and `fail`."""
-        return self._language in ("1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "2.0")
+        return self._language in ("1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "2.0", "2.1")
 
     @property
     def _handlers(self) -> bool:
         """True in 1.5 to 1.8 files: a step may end with a failure handler `else { ... }`."""
-        return self._language in ("1.5", "1.6", "1.7", "1.8", "1.9", "2.0")
+        return self._language in ("1.5", "1.6", "1.7", "1.8", "1.9", "2.0", "2.1")
 
     @property
     def _values(self) -> bool:
         """True in 1.6 to 1.8 files: `measure`, comparisons, live readings and sending a binding (decision 0036)."""
-        return self._language in ("1.6", "1.7", "1.8", "1.9", "2.0")
+        return self._language in ("1.6", "1.7", "1.8", "1.9", "2.0", "2.1")
 
     @property
     def _regions(self) -> bool:
         """True in 1.7 and 1.8 files: `@safety no_go_region R;` and `@safety in_region R;` (decision 0039)."""
-        return self._language in ("1.7", "1.8", "1.9", "2.0")
+        return self._language in ("1.7", "1.8", "1.9", "2.0", "2.1")
 
     @property
     def _actions(self) -> bool:
         """True in 1.8 files: `do` and `in_state` (decision 0040)."""
-        return self._language in ("1.8", "1.9", "2.0")
+        return self._language in ("1.8", "1.9", "2.0", "2.1")
 
     @property
     def _clock(self) -> bool:
         """True in 1.9 files: `measure r time as t;`, time literals and `clock_time` (decision 0042)."""
-        return self._language in ("1.9", "2.0")
+        return self._language in ("1.9", "2.0", "2.1")
+
+    @property
+    def _messages(self) -> bool:
+        """True in 2.1 files: the condition `message_received` (decision 0043)."""
+        return self._language == "2.1"
 
     @property
     def _missions(self) -> bool:
         """True in 2.0 files: the top-level `mission` (decision 0041)."""
-        return self._language == "2.0"
+        return self._language in ("2.0", "2.1")
 
     @property
     def _statements(self) -> tuple[str, ...]:
@@ -663,8 +670,9 @@ class _Parser:
 
     def _atom(self, expected: str) -> ast.Condition:
         token = self._tok
-        atoms = CONDITIONS_V1_8 if self._actions else CONDITIONS_V1_3 if self._typed else CONDITIONS
-        if self._at_keyword("message_received"):
+        atoms = CONDITIONS_V2_1 if self._messages else CONDITIONS_V1_8 if self._actions \
+            else CONDITIONS_V1_3 if self._typed else CONDITIONS
+        if self._at_keyword("message_received") and not self._messages:
             self._error("E211", f"'message_received' {_NOT_IN_V1_1}")
         if self._values and (self._at(TokenKind.IDENT) or (self._clock and self._at_keyword(*LIVE_CLOCK))):
             return self._compare(atoms)
@@ -674,6 +682,13 @@ class _Parser:
             self._error("E201", f"expected {expected}, found {self._found()}")
         self._advance()
 
+        if token.text == "message_received":  # RoboLang 2.1 (decision 0043 S1)
+            channel = self._string("a channel name in quotes after 'message_received'")
+            if not self._at_keyword("with"):
+                return ast.MessageReceived(channel, None, token.span.to(channel.span))
+            self._advance()
+            text = self._string("the message text in quotes after 'with'")
+            return ast.MessageReceived(channel, text, token.span.to(text.span))
         if token.text == "in_state":  # RoboLang 1.8 (decision 0040 A2)
             target = self._name("an object or location name after 'in_state'")
             label = self._string("a state label in quotes after the name")

@@ -1,22 +1,17 @@
 {
   "id": "m09_go_and_its_look_alikes",
   "prompt": "With picker1, take tray_1 from packing to dispatch, but only after the pharmacist on channel \"pharmacy_west\" has sent \"GO\". Wait up to 10 minutes for it and, if it does not come, stop the job as failed.",
-  "world": "bench/worlds/pharmacy.json",
+  "world": "bench/worlds/msg_m09_go_and_its_look_alikes.json",
   "group": "message",
   "expect": {
+    "decision": "program"
+  },
+  "expect_2_0": {
     "decision": "cannot",
     "category": "inexpressible"
   },
   "expect_2_1": {
     "decision": "program",
-    "expected_message_waits": [
-      {
-        "use": "wait",
-        "channel": "pharmacy_west",
-        "text": "GO",
-        "timeout": "10 min"
-      }
-    ],
     "paths": [
       {
         "when": "the decoys arrive first (30, 60 and 90 seconds); the real GO arrives at 200 seconds",
@@ -121,6 +116,14 @@
       }
     }
   },
+  "expected_message_waits": [
+    {
+      "use": "wait",
+      "channel": "pharmacy_west",
+      "text": "GO",
+      "timeout": "10 min"
+    }
+  ],
   "gap": "G-MSG",
   "tags": [
     "message_wait",

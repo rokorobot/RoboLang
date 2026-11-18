@@ -1,0 +1,13 @@
+// bench/reference_future/f_msg_wind_clear.rob: hand-written reference (RoboLang 2.1)
+robolang 2.1;
+
+task place_when_clear(robot r, object module, location src, location dst) {
+    goal { object_at module dst; }
+    plan {
+        move r to src;
+        grasp r module;
+        wait until message_received "site" with "WIND CLEAR" timeout 30 min else { fail "the wind did not clear"; }
+        move r to dst;
+        place r module at dst;
+    }
+}

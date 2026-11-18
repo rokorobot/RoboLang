@@ -1,9 +1,13 @@
 {
   "id": "i01_a_channel_the_world_does_not_have",
   "prompt": "With picker1, take tray_2 from packing to dispatch, but only after channel \"packing\" has sent \"BAG READY\". Wait up to 5 minutes for it and, if it does not come, stop the job as failed.",
-  "world": "bench/worlds/pharmacy.json",
+  "world": "bench/worlds/msg_i01_a_channel_the_world_does_not_have.json",
   "group": "infeasible",
   "expect": {
+    "decision": "cannot",
+    "category": "infeasible"
+  },
+  "expect_2_0": {
     "decision": "cannot",
     "category": "inexpressible"
   },
@@ -21,6 +25,14 @@
       }
     }
   },
+  "expected_message_waits": [
+    {
+      "use": "wait",
+      "channel": "packing",
+      "text": "BAG READY",
+      "timeout": "5 min"
+    }
+  ],
   "blockers": [
     "the world declares the channel \"pharmacy\" only; \"packing\" is a location, not a channel"
   ],

@@ -1,0 +1,63 @@
+(* RoboLang v2.1 grammar, implemented in src/robolang/parser.py.
+   RoboLang 2.0 plus incoming messages (decision 0043). Differences from grammar-v2.0.ebnf are marked [2.1].
+   Everything not shown here is as in grammar-v2.0.ebnf (and the grammars below it): a task and a mission are unchanged.
+   Normative text, diagnostics and static rules: spec/robolang-v2.1.md *)
+
+version_decl  = "robolang" , NUMBER , ";" ;                (* [2.1] NUMBER written exactly 2.1 *)
+
+atom          = ... | message ;                            (* [2.1] one more atom, in every place a condition stands:
+                                                               a "pre" block, an "if", a "wait until", a mission's "until" *)
+message       = "message_received" , STRING                (* [2.1] any message on the channel *)
+              | "message_received" , STRING , "with" , STRING ;
+                                                            (* [2.1] the exact text. "message_received" has been reserved
+                                                               since 1.1 and "with" is a keyword already: no new reserved
+                                                               word. Both strings are literals, not names or values *)
+
+(* [2.1] A message condition combines with and, or and not like any other atom:
+       wait until message_received "line" with "TUGGER DOCKED" timeout 10 min else { fail "no dock signal"; }
+       if message_received "ops" with "ALSO BOX2" { ... } else { ... }
+       } until message_received "ops" with "SHIFT END";
+   [2.1] Static rules the grammar does not express (spec/robolang-v2.1.md section 3):
+   - never in a "goal" block, nor in the "goal" of an "if" branch (E327): a message is not an end state of the world. "The
+     job is done only when the line has sent RECEIVED" is a last wait in the plan for that message (with "else { fail ...; }"),
+     and the world part stays in the goal;
+   - the channel and the text are not empty, and a text of spaces only is empty (E307);
+   - in a file below 2.1 "message_received" is E211.
+   [2.1] Meaning (spec/robolang-v2.1.md section 2, spec/simulation-v1.0.md section 19):
+   - it is true once a message has arrived on the channel (with exactly that text, when there is a "with"), at or after the
+     start of the task run, and stays true for the rest of the run. The text is exact and case-sensitive, after trimming
+     spaces at both ends of both texts;
+   - only a sender that the WORLD allows on that channel counts: who to trust is declared by the world, never by the task.
+     A message from anyone else is ignored. There is no "from" in the task;
+   - a channel that has had no message yet is false. A world with no message service makes every message condition
+     unknown, and an unknown condition fails closed (the wait times out, the "if" fails, the "pre" fails);
+   - a wait ends when the message arrives (a message at exactly the timeout counts), or at once if it has arrived already;
+     it always has a timeout and an else, as every wait has;
+   - in a mission each task run starts fresh (a message from an earlier run does not count in it), and the mission's
+     "until" sees every message since the mission started;
+   - a task that names a channel which a world with channels does not declare fails before the run (S011).
+   [2.1] A "message_received" with no "with" is right when the request names the channel and no text ("until the nurse
+   confirms", "once the customs office has sent a message, whatever it says"): any message. A request that names no channel
+   uses the channel the world declares for that party, if there is exactly one; otherwise ask, do not guess. When the request
+   names a text, copy it exactly: do not change its case, and do not make up a text for a request that names none.
+   [2.1] What incoming messages cannot say (decision 0043 S7, S10; erratum E5 of docs/evidence/bench-errata-1-8.md states why
+   this belongs in the grammar file):
+   - delivery: "make sure it was delivered", "check that it was received", "confirm the message got through" about what the
+     robot SENDS. A task cannot see whether its own "communicate" arrived: delivery is the transport's job. (A reply from
+     the other side, "wait until the nurse confirms", is a message and can be waited for.) Decline it as inexpressible;
+   - "for each message" and triggers: "each time the line says READY", "whenever a message comes", "on every new message". A
+     mission starts a run when the previous one is done, never when a message arrives. Decline it as inexpressible;
+   - the content of a message as a value: "forward the order number it sends", "read the number in the message", "do what it
+     says". A message is matched against an exact text, never read, and nothing binds it. Decline it as inexpressible;
+   - patterns: "any message containing READY", "starts with GO", "like DOCKED". The text is exact: one exact text per
+     condition. A wait for an exact text in place of a pattern is a false program. Decline it as inexpressible;
+   - a message as an end state in a goal (E327), and messages between robots of one task: a robot's own "communicate" is
+     never a received message;
+   - choosing whom to trust: the sender is the world's. A request whose only message comes from a sender that the world does
+     not allow on that channel, or on a channel that the world does not declare, or later than the request's timeout, with no
+     other way to go on, is infeasible, not a program.
+   [2.1] Do not replace a message wait: a request to wait for a message is never a "wait for" of a guessed time, a
+   "region_clear" or "sensor_ok" in its place, or no wait at all. Either use message_received, or decline.
+*)
+
+(* Reserved words in a 2.1 file: those of grammar-v2.0.ebnf. "message_received" and "with" are in the list already. *)

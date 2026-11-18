@@ -1,22 +1,17 @@
 {
   "id": "m05_release_after_the_clock_wait",
   "prompt": "With amr1, carry crate1 from the dock to the table, but not before 09:20 and only after channel \"ops\" has sent \"RELEASE\". Wait up to 10 minutes for 09:20, then up to 5 minutes for the message; if either does not come, stop the job as failed.",
-  "world": "bench/worlds/warehouse_1_5_0915.json",
+  "world": "bench/worlds/msg_m05_release_after_the_clock_wait.json",
   "group": "message",
   "expect": {
+    "decision": "program"
+  },
+  "expect_2_0": {
     "decision": "cannot",
     "category": "inexpressible"
   },
   "expect_2_1": {
     "decision": "program",
-    "expected_message_waits": [
-      {
-        "use": "wait",
-        "channel": "ops",
-        "text": "RELEASE",
-        "timeout": "5 min"
-      }
-    ],
     "paths": [
       {
         "when": "RELEASE arrives at 120 seconds, while the program still waits for 09:20: it counts (S2)",
@@ -83,17 +78,25 @@
           ]
         }
       }
-    },
-    "expected_clock": [
-      {
-        "use": "wait",
-        "reading": "time",
-        "op": ">=",
-        "value": "09:20",
-        "timeout": "10 min"
-      }
-    ]
+    }
   },
+  "expected_message_waits": [
+    {
+      "use": "wait",
+      "channel": "ops",
+      "text": "RELEASE",
+      "timeout": "5 min"
+    }
+  ],
+  "expected_clock": [
+    {
+      "use": "wait",
+      "reading": "time",
+      "op": ">=",
+      "value": "09:20",
+      "timeout": "10 min"
+    }
+  ],
   "gap": "G-MSG",
   "tags": [
     "message_wait",

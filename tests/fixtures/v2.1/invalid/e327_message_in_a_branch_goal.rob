@@ -1,0 +1,18 @@
+// RoboLang v2.1 fixture: invalid
+// expect: error E327 (static) line 11
+// why: the goal of an if branch is a goal too: no message in it (S1)
+
+robolang 2.1;
+
+task t(robot r, location a, location b) {
+    plan {
+        move r to a;
+        if robot_ready r {
+            goal { robot_at r b; not message_received "ops"; }
+            move r to b;
+        } else {
+            goal { robot_at r a; }
+            communicate r to "ops" with "stay";
+        }
+    }
+}

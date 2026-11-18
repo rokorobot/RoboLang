@@ -48,6 +48,7 @@ SAFETY_KINDS = ("max_speed", "no_go_region", "in_region")
 _REGION_RANK = 6  # the first schema with region limits (`no_go_region`, `in_region`)
 _ACTIONS_RANK = 7  # the first schema with the step `do` and the condition `in_state` (RoboLang 1.8)
 _CLOCK_RANK = 8  # the first schema with the step `read_clock`, `time` and `clock` operands (RoboLang 1.9)
+_MESSAGE_RANK = 9  # the first schema with the condition `message_received` (RoboLang 2.1)
 MAX_DECIMAL_CHARS = 64
 _POLICIES = ("stop", "continue", "retry")  # a mission's failure policy (Mission IR 1.0)
 
@@ -68,6 +69,7 @@ _ATOMS = {
     "holding": (2, ("robot", "object")),
     "in_state": (_ACTIONS_RANK, ("target", "label")),
 }
+_MESSAGE_KEYS = ("kind", "channel")  # `message_received`: a channel, and optionally the exact `text`
 _COMPOUND = {"and": 1, "or": 1, "not": 1}
 _STEPS = {
     "move": ("robot", "target"),
@@ -104,6 +106,7 @@ _USES = {
     "communicate": (("robot", "robot"),),
     "do": (("robot", "robot"), ("target", ("object", "location"))),
     "in_state": (("target", ("object", "location")),),
+    "message_received": (),
 }
 _PARAM_TYPES = {"robot": 0, "object": 0, "location": 0, "region": 0, "sensor": 2}
 _BRANCH_STEPS = {"if": 3, "fail": 3}  # kind -> first schema rank that has it
@@ -269,6 +272,10 @@ class _Reader:
         kind = self.kind(node, ptr)
         if kind is None:
             return False
+        if kind == "message_received":
+            if not self._needs(f"condition kind '{kind}'", _MESSAGE_RANK, _pointer(ptr, "kind")):
+                return False
+            return self.strings(node, ptr, _MESSAGE_KEYS, ("channel", "text"), ("text",))
         if kind in _ATOMS:
             since, keys = _ATOMS[kind]
             if not self._needs(f"condition kind '{kind}'", since, _pointer(ptr, "kind")):
@@ -638,7 +645,7 @@ class _Reader:
             self.verify_meaning(task["verify"], _pointer(ptr, "verify"))
         self.condition_list(task["preconditions"], _pointer(ptr, "preconditions"))
         if self._rank >= 2:
-            self.condition_list(task.get("goal", []), _pointer(ptr, "goal"))
+            self.goal_list(task.get("goal", []), _pointer(ptr, "goal"))
         before = len(self.errors)
         self.steps_meaning(task["steps"], _pointer(ptr, "steps"), branch=False)
         if self._rank >= _VALUES_RANK:
@@ -741,6 +748,20 @@ class _Reader:
         for i, condition in enumerate(conditions):
             self.condition_meaning(condition, _pointer(ptr, i))
 
+    def goal_list(self, conditions: list, ptr: str):
+        """A goal (of a task or of an `if` branch): its conditions, and never a message (I228, the form of E327)."""
+        self.condition_list(conditions, ptr)
+        stack = [(c, _pointer(ptr, i)) for i, c in enumerate(conditions)]
+        while stack:
+            node, at = stack.pop()
+            if node["kind"] in ("and", "or"):
+                stack.extend((c, _pointer(_pointer(at, "conditions"), i)) for i, c in enumerate(node["conditions"]))
+            elif node["kind"] == "not":
+                stack.append((node["condition"], _pointer(at, "condition")))
+            elif node["kind"] == "message_received":
+                self.error("I228", "'message_received' cannot be in a goal: a message is not an end state of the "
+                                   "world (decision 0043 S1)", at)
+
     def condition_meaning(self, node: dict, ptr: str):
         kind = node["kind"]
         if kind in ("and", "or"):
@@ -750,6 +771,11 @@ class _Reader:
         elif kind == "compare":
             if node["left"]["kind"] == "live":
                 self.live(node["left"], _pointer(ptr, "left"))
+        elif kind == "message_received":  # schema 1.9 (E307 for an empty channel or text)
+            self.not_empty(node["channel"], "channel name", _pointer(ptr, "channel"))
+            if "text" in node and node["text"].strip(" ") == "":
+                self.error("I207", "empty string: a message text must not be empty, or only spaces, which are "
+                                   "trimmed (decision 0043 S3)", _pointer(ptr, "text"))
         else:
             self.uses(node, ptr)
             if kind == "sensor_ok":
@@ -773,7 +799,7 @@ class _Reader:
             self.condition_meaning(node["condition"], _pointer(ptr, "condition"))
             for side, key in (("then", "then"), ("else", "else")):
                 if node[f"goal_{side}"] is not None:
-                    self.condition_list(node[f"goal_{side}"], _pointer(ptr, f"goal_{side}"))
+                    self.goal_list(node[f"goal_{side}"], _pointer(ptr, f"goal_{side}"))
                 self.steps_meaning(node[key], _pointer(ptr, key), branch=True)
         elif kind == "fail":
             self.not_empty(node["reason"], "reason", _pointer(ptr, "reason"))
@@ -1038,20 +1064,27 @@ class _Reader:
                        "/language_version")
 
     def mission_header(self, document: dict) -> bool:
-        """Mission IR 1.0: its own version, the Task IR version of its tasks (1.8), and RoboLang 2.0."""
+        """
+        Mission IR 1.0 (RoboLang 2.0: Task IR 1.8 tasks) or 1.1 (RoboLang 2.1: Task IR 1.9 tasks): its own version, the
+        Task IR version of its tasks, and the language.
+        """
         self.shape(document, "", ("ir_schema", "ir_schema_version", "task_ir_schema_version", "language_version",
                                   "tasks", "missions"))
-        if document.get("ir_schema_version") != ir.MISSION_IR_SCHEMA_VERSION:
-            self.error("I113", f"unsupported ir_schema_version for a Mission IR document; this reader knows "
-                               f"'{ir.MISSION_IR_SCHEMA_VERSION}'", "/ir_schema_version")
+        known = {schema: language for language, schema in ir.MISSION_IR_SCHEMA_VERSIONS.items()}
+        if document.get("ir_schema_version") not in known:
+            listed = " and ".join(f"'{v}'" for v in known)
+            self.error("I113", f"unsupported ir_schema_version for a Mission IR document; this reader knows {listed}",
+                       "/ir_schema_version")
             return False
-        version = ir.IR_SCHEMA_VERSIONS["2.0"]
+        language = known[document["ir_schema_version"]]
+        version = ir.IR_SCHEMA_VERSIONS[language]
         if document.get("task_ir_schema_version") != version:
-            self.error("I113", f"task_ir_schema_version must be '{version}': the tasks of Mission IR 1.0 are Task IR "
-                               f"{version}", "/task_ir_schema_version")
-        if document.get("language_version") != "2.0":
-            self.error("I113", "language_version must be '2.0' for a Mission IR document", "/language_version")
-        self._task_header({"language_version": "2.0"}, version)
+            self.error("I113", f"task_ir_schema_version must be '{version}': the tasks of Mission IR "
+                               f"{document['ir_schema_version']} are Task IR {version}", "/task_ir_schema_version")
+        if document.get("language_version") != language:
+            self.error("I113", f"language_version must be '{language}' for a Mission IR document "
+                               f"{document['ir_schema_version']}", "/language_version")
+        self._task_header({"language_version": language}, version)
         return True
 
 
@@ -1168,6 +1201,8 @@ def _condition(node: dict) -> ir.Condition:
         return ir.Compare(_operand(node["left"]), node["op"], _operand(node["right"]))
     if kind == "in_state":
         return ir.InState(node["target"], node["label"])
+    if kind == "message_received":
+        return ir.MessageReceived(node["channel"], node.get("text"))
     return _of(next(c for c in _CONDITIONS if c.KIND == kind), node)
 
 
@@ -1302,7 +1337,7 @@ def read_ir(data: bytes, filename: str = "<string>") -> ir.TaskIR:
         raise IRError(reader.errors)
     assert clean
     if document["ir_schema"] == ir.MISSION_IR_SCHEMA:
-        schema, language = document["task_ir_schema_version"], "2.0"
+        schema, language = document["task_ir_schema_version"], document["language_version"]
     else:
         schema, language = document["ir_schema_version"], document["language_version"]
     rank = SCHEMA_VERSIONS.index(schema)

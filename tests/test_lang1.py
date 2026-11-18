@@ -54,9 +54,9 @@ def test_combined_conditions_need_the_v1_2_marker():
 
 
 def test_unsupported_versions_name_every_supported_one():
-    raised = error("robolang 2.1;\n" + task(version=None))
+    raised = error("robolang 2.2;\n" + task(version=None))
     assert (raised.code, raised.line, raised.column) == ("E213", 1, 10)
-    assert "1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9 and 2.0" in str(raised)
+    assert "1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0 and 2.1" in str(raised)
 
 
 def test_ir_and_language_versions_follow_the_marker():

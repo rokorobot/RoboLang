@@ -1,7 +1,7 @@
 """
-Developer commands for RoboLang 1.1 to 2.0.
+Developer commands for RoboLang 1.1 to 2.1.
 
-    reference              print the shipped RoboLang 2.0 language reference
+    reference              print the shipped RoboLang 2.1 language reference
     example [DIR]          write a sample task (fetch.rob) and world (world.json) to start from
     validate FILE          check a .rob file against the language contract
     inspect  FILE          show what a validated file describes (text or JSON IR)
@@ -13,7 +13,7 @@ Developer commands for RoboLang 1.1 to 2.0.
                            send the task's goal to a robot that runs its own plan; print the delegate record
 
 validate, inspect, simulate, export-goal and delegate take `--ir IR` instead of FILE: a Task IR JSON
-document (schema 1.0 to 1.8) or a Mission IR document (1.0), read strictly and re-validated in full
+document (schema 1.0 to 1.9) or a Mission IR document (1.0, 1.1), read strictly and re-validated in full
 (spec/ir-reader-v0.1.md). export-goal and delegate never take a mission: a robot is sent tasks only (X607).
     arch02 --scenario SCENARIO --cases CASES --case ID
                            run one case of the RFC-001 reference scenario in simulation
@@ -83,9 +83,9 @@ NOT_A_SAFETY_CHECK_IR = (
 NOTHING_EXECUTED = "This is a description only. Nothing was executed."
 
 _DESCRIPTION = f"""\
-Tools for RoboLang 1.1 to 2.0 task and mission files.
+Tools for RoboLang 1.1 to 2.1 task and mission files.
 
-reference prints the shipped 2.0 language reference. validate and inspect check and describe .rob
+reference prints the shipped 2.1 language reference. validate and inspect check and describe .rob
 files; they never execute anything.
 simulate runs a validated task in a symbolic, deterministic simulation only: it never loads a
 robot adapter or connects to ROS 2 or hardware, and its result is not evidence that a task is
@@ -176,7 +176,7 @@ def version_text() -> str:
         f"robolang {distribution} "
         f"(language {_joined(task_ir.IR_SCHEMA_VERSIONS)}, "
         f"IR schema {_joined(dict.fromkeys(task_ir.IR_SCHEMA_VERSIONS.values()))}, "
-        f"mission IR {task_ir.MISSION_IR_SCHEMA_VERSION})"
+        f"mission IR {_joined(task_ir.MISSION_IR_SCHEMA_VERSIONS.values())})"
     )
 
 
@@ -284,6 +284,8 @@ def _world_diagnostic(args, inputs: _RunInputs, finding: Finding):
     node = next(t for t in inputs.loaded.program.tasks if t.name.text == inputs.task.name)
     if part == "goal":
         return Diagnostic(finding.code, finding.message, node.goal.conditions[index].span, filename=args.file)
+    if part == "preconditions":
+        return Diagnostic(finding.code, finding.message, node.pre.conditions[index].span, filename=args.file)
     statement = (node.annotations if part == "safety" else node.plan.statements)[index]
     for side, position in zip(parts[1::2], parts[2::2]):  # into the branch, then to the statement in it
         branch = statement.then if side == "then" else statement.orelse if hasattr(statement, "then") \
@@ -312,7 +314,7 @@ def _validate(args, out, err) -> int:
     if loaded.warnings:
         summary += f", {_plural(loaded.warnings, 'warning')}"
     if loaded.kind == "ir":
-        kind = f"Mission IR {task_ir.MISSION_IR_SCHEMA_VERSION}" if document.missions \
+        kind = f"Mission IR {task_ir.MISSION_IR_SCHEMA_VERSIONS[document.language_version]}" if document.missions \
             else f"Task IR {document.ir_schema_version}"
         print(f"{args.file}: valid {kind} (RoboLang {document.language_version}, {summary})", file=out)
         print(NOT_A_SAFETY_CHECK_IR, file=out)
@@ -384,6 +386,9 @@ def _condition(condition: task_ir.Condition, typed: bool = False) -> str:
         return f"holding {condition.robot} {condition.obj}"
     if isinstance(condition, task_ir.InState):
         return f"in_state {condition.target} {_quoted(condition.label)}"
+    if isinstance(condition, task_ir.MessageReceived):
+        with_text = "" if condition.text is None else f" with {_quoted(condition.text)}"
+        return f"message_received {_quoted(condition.channel)}{with_text}"
     if isinstance(condition, task_ir.Compare):
         return f"{_value(condition.left, typed)} {condition.op} {_value(condition.right, typed)}"
     # A new condition kind must be rendered here explicitly, never shown as another kind.
@@ -557,6 +562,7 @@ _FAILURE_MEANING = {
     "S007": "the target of a do step is not of the kind (object or location) the robot's action acts on",
     "S008": "the value of a do step is missing, unexpected or not of the kind the robot's action takes",
     "S009": "a goal in_state that no declared action of the task's robots produces and the world does not hold",
+    "S011": "a message_received names a channel that the world does not declare (the world has channels)",
     "S010": "a wait until clock_time names a time that has already passed at the start (the wait would not wait)",
     "S101": "a pre condition is false",
     "S102": "a pre condition is unknown in the world",
@@ -955,7 +961,7 @@ def _input_arguments(command: argparse.ArgumentParser, what: str, note: str = ""
         "--ir",
         metavar="IR",
         help=(
-            "path to a Task IR JSON file (schema 1.0 to 1.8) instead of FILE. It is read strictly and "
+            "path to a Task IR JSON file (schema 1.0 to 1.9) instead of FILE. It is read strictly and "
             f"re-validated in full, whatever versions it claims (spec/ir-reader-v0.1.md){note}"
         ),
     )
@@ -978,8 +984,8 @@ def _parser(prog: str) -> argparse.ArgumentParser:
 
     reference = commands.add_parser(
         "reference",
-        help="print the shipped RoboLang 2.0 language reference",
-        description="Print the exact RoboLang 2.0 reference shipped with this installation. Nothing is executed.",
+        help="print the shipped RoboLang 2.1 language reference",
+        description="Print the exact RoboLang 2.1 reference shipped with this installation. Nothing is executed.",
     )
     reference.set_defaults(run=_reference)
 

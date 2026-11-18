@@ -1,0 +1,17 @@
+// bench/reference_messages/m02_confirm_then_go_back.rob: hand-written reference (RoboLang 2.1)
+robolang 2.1;
+
+task deliver_and_return(robot r, object med, location src, location room, location base) {
+    goal { object_at med room; robot_at r base; }
+    plan {
+        move r to src;
+        grasp r med;
+        move r to room;
+        place r med at room;
+        wait until message_received "nurse" with "CONFIRMED" timeout 15 min else {
+            communicate r to "alerts" with "no confirmation";
+            fail "the nurse did not confirm";
+        }
+        move r to base;
+    }
+}

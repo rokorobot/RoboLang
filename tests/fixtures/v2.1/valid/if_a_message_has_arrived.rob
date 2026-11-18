@@ -1,0 +1,18 @@
+// RoboLang v2.1 fixture: valid
+// expect: ok
+// why: a message in an if, with not: a decision on what has arrived (S1, C10)
+
+robolang 2.1;
+
+task second_box(robot r, object a, object b, location shelf_a, location shelf_b, location table) {
+    plan {
+        move r to shelf_a; grasp r a; move r to table; place r a at table;
+        if message_received "ops" with "ALSO BOX2" {
+            goal { object_at b table; }
+            move r to shelf_b; grasp r b; move r to table; place r b at table;
+        } else {
+            goal { object_at a table; }
+            communicate r to "ops" with "no second box";
+        }
+    }
+}

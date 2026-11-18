@@ -1,9 +1,13 @@
 {
   "id": "x04_any_message_containing_ready",
   "prompt": "With digit1, take tote_3 from the inbound_conveyor to the handoff_point and hold it there until channel \"line\" sends any message that contains the word READY (for example \"READY\" or \"LINE READY\"), then place it on line_feed. Wait up to 10 minutes for it and, if it does not come, stop the job as failed.",
-  "world": "bench/worlds/fulfilment.json",
+  "world": "bench/worlds/msg_x04_any_message_containing_ready.json",
   "group": "inexpressible",
   "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_0": {
     "decision": "cannot",
     "category": "inexpressible"
   },

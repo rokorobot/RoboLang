@@ -1,9 +1,12 @@
 {
   "id": "f_msg_nurse_confirm",
   "prompt": "With moxi1, take medication_1 from the pharmacy to room_412 and place it there, then wait until the nurse confirms on channel \"nurse\" before moxi1 goes back to the nurse station.",
-  "world": "bench/worlds/ward.json",
-  "group": "inexpressible",
+  "world": "bench/worlds/msg_f_msg_nurse_confirm.json",
+  "group": "message",
   "expect": {
+    "decision": "program"
+  },
+  "expect_2_0": {
     "decision": "cannot",
     "category": "inexpressible"
   },
@@ -14,6 +17,64 @@
     "wait",
     "pick_place"
   ],
-  "why": "Nothing can wait for a message: a condition tests world facts only, and no world fact says the nurse confirmed (language reference: 'message waits').",
-  "attempt_fails_with": "E204"
+  "why": "RoboLang 2.1 (0043): a `wait until message_received ...` with the world's channel and sender (a program). Before L4 (2.0): Nothing can wait for a message: a condition tests world facts only, and no world fact says the nurse confirmed (language reference: 'message waits').",
+  "attempt_fails_with": "E204",
+  "expect_2_1": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "the nurse sends a message at 120 seconds",
+        "goal": [
+          [
+            "rl:thing:medication_1",
+            "located_in",
+            "rl:place:room_412"
+          ],
+          [
+            "rl:robot:moxi1",
+            "located_in",
+            "rl:place:nurse_station"
+          ]
+        ],
+        "world_patch": {
+          "messages": [
+            {
+              "at": {
+                "value": "120",
+                "unit": "s"
+              },
+              "channel": "nurse",
+              "text": "OK",
+              "from": "rl:agent:nurse-1"
+            }
+          ]
+        },
+        "end_ms": "120000"
+      },
+      {
+        "when": "the nurse never confirms: the wait times out and the run fails",
+        "fails": true,
+        "world_patch": {
+          "messages": []
+        }
+      }
+    ],
+    "world_2_1": {
+      "channels": {
+        "nurse": {
+          "from": [
+            "rl:agent:nurse-1"
+          ]
+        }
+      }
+    }
+  },
+  "expected_message_waits": [
+    {
+      "use": "wait",
+      "channel": "nurse",
+      "text": null,
+      "timeout": null
+    }
+  ]
 }

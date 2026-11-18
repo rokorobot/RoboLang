@@ -1,0 +1,13 @@
+// bench/reference_messages/x05_a_message_in_the_goal.rob: hand-written reference (RoboLang 2.1)
+robolang 2.1;
+
+task move_and_confirm(robot r, object tote, location src, location dst) {
+    goal { object_at tote dst; }
+    plan {
+        move r to src;
+        grasp r tote;
+        move r to dst;
+        place r tote at dst;
+        wait until message_received "line" with "RECEIVED" timeout 10 min else { fail "the line did not confirm"; }
+    }
+}

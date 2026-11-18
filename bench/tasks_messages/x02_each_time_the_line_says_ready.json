@@ -1,9 +1,13 @@
 {
   "id": "x02_each_time_the_line_says_ready",
   "prompt": "Each time channel \"line\" sends \"TOTE READY\", send tugger_a from tugger_bay to line_feed and back to tugger_bay. Do this for the next 4 hours.",
-  "world": "bench/worlds/fulfilment.json",
+  "world": "bench/worlds/msg_x02_each_time_the_line_says_ready.json",
   "group": "inexpressible",
   "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_0": {
     "decision": "cannot",
     "category": "inexpressible"
   },

@@ -1,8 +1,8 @@
 """
-World file, schemas 1.0 to 1.5 (spec/simulation-v1.0.md sections 3, 14, 15, 16 and 17).
+World file, schemas 1.0 to 1.6 (spec/simulation-v1.0.md sections 3, 14, 15, 16, 17 and 19).
 
 `load_world` reads the bytes of a world file and returns a validated, immutable `World`,
-or raises `WorldError` for the first error found (codes E501 to E518, sections 3.9, 14.1, 15.1, 16.1 and 17.1).
+or raises `WorldError` for the first error found (codes E501 to E519, sections 3.9, 14.1, 15.1, 16.1, 17.1 and 19.1).
 Validation runs after the task is selected (3.8). Nothing here executes a task.
 """
 
@@ -24,11 +24,14 @@ from .values import DURATION_UNITS, SPEED_UNITS, Speed, duration_ms, parse_decim
 WORLD_SCHEMA = "robolang.sim.world"
 WORLD_SCHEMA_VERSION = "1.0"
 # 1.1 adds `class` and `mass` to objects (3.3); 1.2 measured values (14); 1.3 region limits (15); 1.4 actions (16);
-# 1.5 the clock (17)
-WORLD_SCHEMA_VERSIONS = ("1.0", "1.1", "1.2", "1.3", "1.4", "1.5")
-_MEASURED = ("1.2", "1.3", "1.4", "1.5")  # the world files with measured values
-_REGIONS = ("1.3", "1.4", "1.5")  # the world files with `contains` and `honours`
-_ACTIONS = ("1.4", "1.5")  # the world files with `actions`, `state` and `location_states`
+# 1.5 the clock (17); 1.6 channels and incoming messages (19)
+WORLD_SCHEMA_VERSIONS = ("1.0", "1.1", "1.2", "1.3", "1.4", "1.5", "1.6")
+_MEASURED = ("1.2", "1.3", "1.4", "1.5", "1.6")  # the world files with measured values
+_REGIONS = ("1.3", "1.4", "1.5", "1.6")  # the world files with `contains` and `honours`
+_ACTIONS = ("1.4", "1.5", "1.6")  # the world files with `actions`, `state` and `location_states`
+_CLOCKS = ("1.5", "1.6")  # the world files with a `clock`
+SENDER = re.compile(r"rl:(agent|robot):[A-Za-z0-9][A-Za-z0-9._:@-]{0,127}")  # a sender of a message (world file 1.6)
+FACT_MESSAGE = "message"  # the fact of a `messages` entry, which is an event like the others (decision 0043 S6)
 HONOURS = ("no_go_region", "in_region")  # what a robot profile may declare it honours (world file 1.3)
 ACTION_TARGETS = ("object", "location")  # what a declared action may act on (world file 1.4, decision 0040 A3)
 CLI_BINDINGS_SOURCE = "--bind"
@@ -162,13 +165,24 @@ class Sensor:
 
 
 @dataclass(frozen=True)
+class Incoming:
+    """World file 1.6 (decision 0043 S6): the `value` of a `message` event; the event's `target` is the channel."""
+
+    text: str
+    sender: str  # `rl:agent:NAME`, or `rl:robot:ID` for a robot of the world (C6)
+
+
+@dataclass(frozen=True)
 class Event:
-    """`value` is a Property for the fact `property` (world file 1.2, `target` an object), else a flag."""
+    """
+    `value` is a Property for the fact `property` (world file 1.2, `target` an object), an Incoming for the fact
+    `message` (world file 1.6, `target` a channel), else a flag.
+    """
 
     at_ms: Decimal
     fact: str
     target: str
-    value: bool | Property
+    value: bool | Property | Incoming
 
 
 @dataclass(frozen=True)
@@ -194,6 +208,8 @@ class World:
     # world file 1.4: location -> its state label (default_factory: Python 3.11 rejects a mappingproxy default)
     location_states: Mapping[str, str] = dataclasses.field(default_factory=lambda: MappingProxyType({}))
     clock: Clock | None = None  # world file 1.5: None is no clock (a `time` reading then fails the step)
+    # world file 1.6: channel -> its allowed senders; empty is no message service (message conditions are unknown)
+    channels: Mapping[str, tuple[str, ...]] = dataclasses.field(default_factory=lambda: MappingProxyType({}))
 
     def kind_of(self, entity_id: str) -> str | None:
         if entity_id in self.locations:
@@ -330,7 +346,7 @@ class _Loader:
             self.fail("E504", pointer, "must be a positive integer")
         return value
 
-    def quantity(self, value, pointer, units, what):
+    def quantity(self, value, pointer, units, what, zero_ok=False):
         q = self.obj(value, pointer, ("value", "unit"), what)
         self.require(q, pointer, "value", "unit")
         text = self.need(q, pointer, "value")
@@ -341,8 +357,9 @@ class _Loader:
             self.fail("E504", pointer + _pointer("value"), "must be a decimal string such as \"2.5\"")
         if not isinstance(unit, str) or unit not in units:
             self.fail("E504", pointer + _pointer("unit"), f"unit must be one of {', '.join(units)}")
-        if number <= 0:
-            self.fail("E504", pointer + _pointer("value"), "must be greater than zero")
+        if number < 0 or (number == 0 and not zero_ok):
+            self.fail("E504", pointer + _pointer("value"),
+                      "must be zero or more" if zero_ok else "must be greater than zero")
         return number, unit
 
     def mapping(self, doc, name):
@@ -376,7 +393,8 @@ class _Loader:
         top = (
             "world_schema", "world_schema_version", "locations", "regions", "robots",
             "objects", "sensors", "events", "tasks",
-        ) + (("location_states",) if self.version in _ACTIONS else ()) + (("clock",) if self.version == "1.5" else ())
+        ) + (("location_states",) if self.version in _ACTIONS else ()) + (("clock",) if self.version in _CLOCKS else ())
+        top += ("channels", "messages") if self.version == "1.6" else ()
         self.obj(doc, "", top, "the world file")
         self.require(doc, "", "locations", "tasks")
         locations = self.locations(self.need(doc, "", "locations"))
@@ -401,6 +419,8 @@ class _Loader:
         objects = {k: self.object(k, v) for k, v in objects_raw.items()}
         sensors = {k: self.sensor(k, v) for k, v in sensors_raw.items()}
         events = [self.event(i, v) for i, v in enumerate(events_raw)]
+        channels = self.channels(doc)
+        events += self.messages(doc)
         entries = {k: self.task_entry(k, v) for k, v in tasks_raw.items()}
 
         # Identity: IDs are unique across the four kinds (3.2). Duplicates inside
@@ -418,6 +438,7 @@ class _Loader:
         self.check_objects(world)
         self.check_sensors(world)
         self.check_events(world, events)
+        self.check_channels(world, channels, events)
         script = self.check_task(world, entries)
         ordered = tuple(sorted(events, key=lambda e: e.at_ms))  # stable: ties keep file order
         return World(
@@ -431,6 +452,7 @@ class _Loader:
             self.version,
             MappingProxyType(location_states),
             clock,
+            MappingProxyType(channels),
         )
 
     # -- sections: form --
@@ -490,6 +512,62 @@ class _Loader:
             self.fail("E518", pointer + _pointer("zone"), f"not a time zone name: {zone!r}; write an IANA name such "
                                                           "as 'Europe/Prague', or 'UTC'")
         return Clock(start, zone, hour * 3600 + minute * 60 + second)
+
+    def channels(self, doc) -> dict[str, tuple[str, ...]]:
+        """`channels: { "line": { "from": ["rl:agent:line-ctl"] } }` (world file 1.6, decision 0043 S4)."""
+        if "channels" not in doc:
+            return {}
+        pointer = _pointer("channels")
+        raw = doc["channels"]
+        if not isinstance(raw, dict):
+            self.fail("E504", pointer, "'channels' must be an object")
+        if not raw:
+            self.fail("E519", pointer, "'channels' declares no channel: leave it out for a world with no message "
+                                       "service, or declare at least one channel")
+        out = {}
+        for name, value in raw.items():
+            cp = pointer + _pointer(name)
+            if name == "" or name != name.strip():
+                self.fail("E519", cp, f"not a channel name: {name!r}; use text without spaces at either end")
+            self.obj(value, cp, ("from",), "a channel")
+            senders = self.need(value, cp, "from")
+            if not isinstance(senders, list):
+                self.fail("E504", cp + _pointer("from"), "'from' must be an array of senders")
+            if not senders:
+                self.fail("E519", cp + _pointer("from"), "a channel needs at least one allowed sender")
+            for i, sender in enumerate(senders):
+                self.sender(sender, cp + _pointer("from", i))
+            if len(set(senders)) != len(senders):
+                self.fail("E519", cp + _pointer("from"), "a sender is listed twice")
+            out[name] = tuple(senders)
+        return out
+
+    def sender(self, value, pointer):
+        """`rl:agent:NAME`, or `rl:robot:ID` for a robot of the world (checked in `check_channels`)."""
+        if not isinstance(value, str) or SENDER.fullmatch(value) is None:
+            self.fail("E504", pointer, f"not a sender: {value!r}; write 'rl:agent:NAME' or 'rl:robot:ROBOT_ID'")
+        return value
+
+    def messages(self, doc) -> list[Event]:
+        """`messages: [ { "at", "channel", "text", "from" } ]`: incoming messages, events like the others (0043 S6)."""
+        if "messages" not in doc:
+            return []
+        if not isinstance(doc["messages"], list):
+            self.fail("E504", "/messages", "'messages' must be an array")
+        events = []
+        for i, value in enumerate(doc["messages"]):
+            p = _pointer("messages", i)
+            self.obj(value, p, ("at", "channel", "text", "from"), "a message")
+            self.require(value, p, "at", "channel", "text", "from")
+            number, unit = self.quantity(value["at"], p + _pointer("at"), tuple(DURATION_UNITS), "a message time",
+                                         zero_ok=True)
+            channel = self.string(value["channel"], p + _pointer("channel"), "channel")
+            text = self.string(value["text"], p + _pointer("text"), "text")
+            if text == "":
+                self.fail("E519", p + _pointer("text"), "a message has text")
+            events.append(Event(duration_ms(number, unit), FACT_MESSAGE, channel,
+                                Incoming(text, self.sender(value["from"], p + _pointer("from")))))
+        return events
 
     def actions(self, value, p):
         """`actions: { NAME: { "target": "object"|"location", "result": "label", "value": KIND } }` (0040 A3)."""
@@ -790,8 +868,28 @@ class _Loader:
             if sensor.robot is not None and world.kind_of(sensor.robot) != "robot":
                 self.fail("E505", _pointer("sensors", name, "robot"), f"'{sensor.robot}' is not a declared robot")
 
+    def check_channels(self, world, channels, events):
+        """Meaning of the channels and the messages: robot senders are robots of the world, a message has a channel."""
+        for name, senders in channels.items():
+            for i, sender in enumerate(senders):
+                if sender.startswith("rl:robot:") and sender[len("rl:robot:"):] not in world.robots:
+                    self.fail("E519", _pointer("channels", name, "from", i),
+                              f"'{sender}' is not a robot of this world (declared robots: "
+                              f"{', '.join(sorted(world.robots)) or 'none'})")
+        numbered = [e for e in events if e.fact == FACT_MESSAGE]
+        for i, event in enumerate(numbered):
+            if event.target not in channels:
+                declared = ", ".join(sorted(channels)) or "none"
+                self.fail("E519", _pointer("messages", i, "channel"),
+                          f"'{event.target}' is not a channel of this world (declared channels: {declared})")
+            sender = event.value.sender
+            if sender.startswith("rl:robot:") and sender[len("rl:robot:"):] not in world.robots:
+                self.fail("E519", _pointer("messages", i, "from"), f"'{sender}' is not a robot of this world")
+
     def check_events(self, world, events):
         for i, event in enumerate(events):
+            if event.fact == FACT_MESSAGE:  # checked by check_channels
+                continue
             p = _pointer("events", i, "target")
             if event.fact == "property":  # the target is a declared object (E515 if it is not declared at all)
                 if event.target not in world.objects:

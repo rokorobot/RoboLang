@@ -23,6 +23,7 @@ from robolang.cli import main as robolang_cli
 from robolang.measured import to_base
 from robolang.sim import World, WorldError, load_world, mission_task, run_mission
 from robolang.sim import run as simulate_task
+from robolang.sim.messages import atoms as message_atoms
 from robolang.sim.values import duration_ms_of
 from robolang.tokens import KIND_UNITS
 
@@ -55,13 +56,14 @@ MESSAGES_REFERENCE_DIR = BENCH / "reference_messages"
 PROMPT_FILE = BENCH / "prompt.md"
 REFERENCE_FILE = ROOT / "docs" / "language-reference.md"
 MINIMAL_PROMPT_FILE = BENCH / "prompt_minimal.md"
-# 2.0 is a delta over 1.9, over 1.8, over 1.7, over 1.6, over 1.5, over 1.4, over 1.3: the grammar-only prompt pastes
-# all eight
-GRAMMAR_FILE = ROOT / "spec" / "grammar-v2.0.ebnf"
+# 2.1 is a delta over 2.0, over 1.9, over 1.8, over 1.7, over 1.6, over 1.5, over 1.4, over 1.3: the grammar-only prompt
+# pastes all nine
+GRAMMAR_FILE = ROOT / "spec" / "grammar-v2.1.ebnf"
 BASE_GRAMMAR_FILE = ROOT / "spec" / "grammar-v1.3.ebnf"
 GRAMMAR_FILES = (BASE_GRAMMAR_FILE, ROOT / "spec" / "grammar-v1.4.ebnf", ROOT / "spec" / "grammar-v1.5.ebnf",
                  ROOT / "spec" / "grammar-v1.6.ebnf", ROOT / "spec" / "grammar-v1.7.ebnf",
-                 ROOT / "spec" / "grammar-v1.8.ebnf", ROOT / "spec" / "grammar-v1.9.ebnf", GRAMMAR_FILE)
+                 ROOT / "spec" / "grammar-v1.8.ebnf", ROOT / "spec" / "grammar-v1.9.ebnf",
+                 ROOT / "spec" / "grammar-v2.0.ebnf", GRAMMAR_FILE)
 GRAMMAR_MARK = "{{GRAMMAR}}"  # in prompt_minimal.md: replaced by the text of the grammar file
 REFERENCE_MARK = "{{LANGUAGE_REFERENCE}}"  # in prompt.md: replaced by the shipped, tested reference
 
@@ -107,13 +109,13 @@ ANSWER_SCHEMA = {
                      "description": "\"program\" to answer with RoboLang source, \"cannot\" to decline the request, "
                                     "\"clarify\" to ask which reading is meant."},
         "category": {"type": "string", "enum": list(CATEGORIES),
-                     "description": "Why it cannot be done: \"inexpressible\" (RoboLang 2.0 cannot say it) or "
+                     "description": "Why it cannot be done: \"inexpressible\" (RoboLang 2.1 cannot say it) or "
                                     "\"infeasible\" (this world or robot cannot do it). \"none\" for a program."},
         "reason": {"type": "string", "description": "One sentence: what the program does, or why it cannot be done."},
         "entities": {"type": "array", "items": {"type": "string"},
                      "description": "World entity IDs: for cannot, the ones that block the request; for clarify, every "
                                     "candidate the request could mean. Empty for a program."},
-        "rob": {"type": "string", "description": "The complete RoboLang 2.0 source. Empty when decision is cannot."},
+        "rob": {"type": "string", "description": "The complete RoboLang 2.1 source. Empty when decision is cannot."},
         "task": {"type": "string", "description": "The name of the task in the source to run. Empty when cannot, "
                                                   "and when the answer is a mission."},
         "bindings": {  # a list of pairs: structured outputs require additionalProperties false on objects
@@ -220,10 +222,22 @@ def _clock(world: dict) -> str:
     return f"clock: the task starts at {clock['start'].replace('T', ' ')} ({clock['zone']})"
 
 
+def _channels(world: dict) -> str:
+    """World file 1.6 (0043 C1, C2): each channel and the senders it accepts, or that there is no message service."""
+    channels = world.get("channels")
+    if not channels:
+        return "channels: none (this world has no message service)"
+    shown = [f"{name} (accepts messages from {', '.join(c['from'])})" for name, c in channels.items()]
+    return f"channels: {'; '.join(shown)}"
+
+
 def _facts(world: dict) -> list[str]:
-    lines = [_clock(world)] if world.get("world_schema_version") == "1.5" else []
+    version = world.get("world_schema_version")
+    lines = [_clock(world)] if version in ("1.5", "1.6") else []
+    if version == "1.6":
+        lines.append(_channels(world))
     # 0039: what a region holds, what a robot honours (shown only where the file says; a file 1.4 may omit both)
-    limits = world.get("world_schema_version") in ("1.3", "1.4", "1.5") and (
+    limits = world.get("world_schema_version") in ("1.3", "1.4", "1.5", "1.6") and (
         any("honours" in r for r in world.get("robots", {}).values())
         or any("contains" in r for r in world.get("regions", {}).values()))
     regions = world.get("regions", {})
@@ -241,7 +255,7 @@ def _facts(world: dict) -> list[str]:
             parts.append(f"max speed {speeds}")
         if limits:
             parts.append(f"honours {', '.join(r['honours'])}" if r.get("honours") else "honours no region limit")
-        if world.get("world_schema_version") in ("1.4", "1.5"):  # 0040 C12: names match exactly, so they are all listed
+        if world.get("world_schema_version") in ("1.4", "1.5", "1.6"):  # 0040 C12: exact names, so all are listed
             parts.append(f"can do: {_declared(r['actions'])}" if r.get("actions") else "can do no declared action")
         robots.append(f"{name} ({', '.join(parts)})")
     if robots:
@@ -270,6 +284,10 @@ def _facts(world: dict) -> list[str]:
         state = "true" if event["value"] else "false"
         when = f"{at['value']} {at['unit']}"
         lines.append(f"scheduled: after {when}, {event['fact']} of {event['target']} becomes {state}")
+    for message in world.get("messages", []):  # world file 1.6 (0043 C2): channel, text and sender are shown
+        at = message["at"]
+        lines.append(f"scheduled: after {at['value']} {at['unit']}, a message \"{message['text']}\" arrives on channel "
+                     f"{message['channel']} from {message['from']}")
     return lines
 
 
@@ -441,6 +459,10 @@ class Judgement:
     action_replaced: bool | None = None  # 0040 (B8): valid, SUCCEEDED, an asked `do` missing; None: none asked
     clock_ok: bool | None = None        # decision 0042 (B1, B5): exactly the clock readings asked; None: not asked
     time_replaced: bool | None = None   # 0042 (B8): valid, SUCCEEDED, an asked time condition or wait missing
+    message_ok: bool | None = None      # decision 0043 (B1, B5): exactly the message conditions asked; None: not asked
+    message_wait_replaced: bool | None = None  # 0043 (B4, B8): valid, SUCCEEDED, the asked message wait missing
+    channel_or_text_changed: bool | None = None  # 0043 (B9): a message wait on another channel or text than asked
+    message_added: bool | None = None   # 0043 (B5): a message condition where the request asks for none (a control)
     mission_ok: bool | None = None      # decision 0041 (B1): the runs, bound, until and policy asked; None: no mission
     repetition_replaced: bool | None = None  # 0041 (B8): a valid, succeeding 1.x program for a mission task
     bound_dropped_or_invented: bool | None = None  # 0041 (B9): a mission without a stated bound, or with another
@@ -483,12 +505,16 @@ def task_paths(task_def: dict) -> list[dict] | None:
     """
     The paths of a branching task (set 2 and 3, `expect_1_4.paths`; set 4 and pre-registered 1.5 labels,
     `expect_1_5.paths`; sets that teach 1.6, `expect_1_6.paths`; 1.7, `expect_1_7.paths`; 1.8, `expect_1_8.paths`; 1.9,
-    `expect_1_9.paths`; set 10, pre-registered against 2.0, `expect_2_0.paths` of a task that is no mission), each with
+    `expect_1_9.paths`; set 10, `expect_2_0.paths` of a control and `expect_2_1.paths` of a message program that is no
+    mission), each with
     the world that forces it, or None.
     """
     label = task_def.get("expect_2_0") or {}
     if label.get("paths") and not label.get("expected_mission"):  # set 10 (0043): the 2.0 paths of a control
         return label["paths"]
+    later = task_def.get("expect_2_1") or {}  # RoboLang 2.1 (0043): the paths of a message program, none for a mission
+    if later.get("paths") and not later.get("expected_mission"):
+        return later["paths"]
     for key in ("expect_1_9", "expect_1_8", "expect_1_7", "expect_1_6", "expect_1_5", "expect_1_4"):
         paths = (task_def.get(key) or {}).get("paths")
         if paths:
@@ -1002,6 +1028,103 @@ def _sequence_matches(actions: list[dict], sequence: dict) -> bool:
     return all(any(_action_matches(a, e) for a in remaining) for e in expected)
 
 
+# -------- incoming messages (decision 0043, RoboLang 2.1) --------
+
+def message_uses(checked: Checked) -> list[tuple]:
+    """
+    Every `message_received` the answer holds, as (use, channel, text, timeout in ms): `use` is `pre`, `if`, `wait` (a
+    `wait until`, with its timeout) or `until` (a mission's); `text` is the text trimmed at both ends, or None for any
+    message on the channel. A task the answer's mission runs is read once, however many times it is run.
+    """
+    if checked.mission is None:
+        tasks = [checked.task]
+    else:
+        names = list(dict.fromkeys(r.task for r in checked.mission.runs))
+        tasks = [checked.document.task(name) for name in names]
+    found: list[tuple] = []
+
+    def add(use: str, condition: task_ir.Condition, timeout=None) -> None:
+        for atom in message_atoms(condition):
+            found.append((use, atom.channel, None if atom.text is None else atom.text.strip(" "), timeout))
+
+    for task in tasks:
+        for condition in task.preconditions:
+            add("pre", condition)
+        for _, step in task_ir.walk(task.steps):
+            if isinstance(step, task_ir.If):
+                add("if", step.condition)
+            elif isinstance(step, task_ir.WaitUntil):
+                add("wait", step.condition, int(duration_ms_of(step.timeout)))
+    repeat = None if checked.mission is None else checked.mission.repeat
+    if repeat is not None and repeat.until is not None:
+        add("until", repeat.until)
+    return found
+
+
+def _expected_message_uses(task_def: dict) -> list[tuple]:
+    return [(w["use"], w["channel"], None if w.get("text") is None else w["text"].strip(" "),
+             int(_ms(w["timeout"])) if w.get("timeout") else None) for w in task_def.get("expected_message_waits", [])]
+
+
+def message_ok(task_def: dict, checked: Checked) -> bool | None:
+    """
+    Decision 0043 (B1, B5). A task with `expected_message_waits` (an empty list on a control) is judged on its message
+    conditions: exactly those asked, each in the place asked (`wait`, `if`, `until`), on the channel asked, with the
+    exact text asked (or none, for any message on the channel) and, for a wait, the timeout asked (any, when the
+    request gives none); none more and none fewer, and none at all on a control. None when the task has no
+    `expected_message_waits`.
+    """
+    if "expected_message_waits" not in task_def:
+        return None
+    found, wanted = message_uses(checked), _expected_message_uses(task_def)
+    if len(found) != len(wanted):
+        return False
+    for want in wanted:  # a wait whose label has no timeout (the request gives none) takes any timeout
+        match = next((i for i, use in enumerate(found) if use[:3] == want[:3] and want[3] in (None, use[3])), None)
+        if match is None:
+            return False
+        del found[match]
+    return True
+
+
+def message_wait_replaced(task_def: dict, checked: Checked, ok_when_run: bool) -> bool | None:
+    """
+    Decision 0043 (B4, B8): a valid program whose run (in the world as given, where no message arrives unless the
+    world lists it) ends well but that lacks the message condition the request asked for: the wait dropped, a guessed
+    `wait for`, or a `region_clear` or `sensor_ok` in its place. It holds when no message condition of the answer is
+    on a channel the request names. None when the request asks for no message condition.
+    """
+    wanted = _expected_message_uses(task_def)
+    if not wanted:
+        return None
+    channels = {w[1] for w in wanted}
+    return ok_when_run and not any(use[1] in channels for use in message_uses(checked))
+
+
+def channel_or_text_changed(task_def: dict, checked: Checked) -> bool | None:
+    """
+    Decision 0043 (B9): a message condition whose channel or text is not one the request asks for: a decoy channel or
+    text taken, a case change, any message where a text is named, a text invented where the request says "whatever it
+    says". For a request that asks for a pattern (a task tagged `pattern`, which 2.1 cannot say) any message
+    condition is a change. None when the request asks for no message condition and is no pattern.
+    """
+    wanted = {(w[1], w[2]) for w in _expected_message_uses(task_def)}
+    if not wanted and "pattern" not in task_def.get("tags", []):
+        return None
+    return any((use[1], use[2]) not in wanted for use in message_uses(checked))
+
+
+def judge_messages(task_def: dict, checked: Checked, ok_when_run: bool, judgement: Judgement) -> None:
+    """Set the 2.1 message measures of a judgement (a task or a mission answer)."""
+    judgement.message_ok = message_ok(task_def, checked)
+    judgement.message_wait_replaced = message_wait_replaced(task_def, checked, ok_when_run)
+    judgement.channel_or_text_changed = channel_or_text_changed(task_def, checked)
+    if "expected_message_waits" in task_def and not task_def["expected_message_waits"]:
+        judgement.message_added = bool(message_uses(checked))
+    if judgement.message_ok is not None and (task_def.get("expect") or {}).get("decision") == "program":
+        judgement.checks["message_waits"] = judgement.message_ok
+
+
 # -------- missions (decision 0041, RoboLang 2.0) --------
 
 MISSION_OUTCOMES_OK = ("completed", "bounded")  # ended without failing: B4 allows no valid mission that succeeds
@@ -1013,10 +1136,11 @@ def mission_label(task_def: dict) -> dict | None:
     with the `paths` of `expect_2_0`; or, for a fixed count that may be a task or a mission (clarification 10),
     `expect_2_0.accepted_mission` (the same, with its own `paths`). None for every other task.
     """
-    label = task_def.get("expect_2_0") or {}
-    if label.get("expected_mission"):
-        return {**label["expected_mission"], "paths": label.get("paths", [])}
-    return label.get("accepted_mission")
+    for key in ("expect_2_0", "expect_2_1"):  # set 9 labels the mission in 2.0, set 10 (0043) in 2.1
+        label = task_def.get(key) or {}
+        if label.get("expected_mission"):
+            return {**label["expected_mission"], "paths": label.get("paths", [])}
+    return (task_def.get("expect_2_0") or {}).get("accepted_mission")
 
 
 def _entity_text(name: str, bindings: dict[str, str]) -> str:
@@ -1048,6 +1172,9 @@ def condition_text(condition: task_ir.Condition, bindings: dict[str, str]) -> st
         return f"{operand(condition.left)} {condition.op} {operand(condition.right)}"
     if isinstance(condition, task_ir.InState):
         return f"in_state {_entity_text(condition.target, bindings)} {json.dumps(condition.label)}"
+    if isinstance(condition, task_ir.MessageReceived):  # RoboLang 2.1: the text is compared trimmed (0043 C11)
+        with_text = "" if condition.text is None else f" with {json.dumps(condition.text.strip(' '))}"
+        return f"message_received {json.dumps(condition.channel)}{with_text}"
     parts = [_entity_text(getattr(condition, f.name), bindings) for f in fields(condition)]
     return f"{condition.KIND} {' '.join(parts)}"
 
@@ -1223,12 +1350,14 @@ def judge_mission(task_def: dict, checked: Checked, bindings: dict[str, str]) ->
     judgement = Judgement(False, result.outcome in MISSION_OUTCOMES_OK, result.outcome,
                           result.failure.code if result.failure else None, {})
     if label is None:
+        judge_messages(task_def, checked, judgement.plan_succeeds, judgement)
         expect = task_def.get("expect_2_0") or {}
         judgement.mission_added = expect.get("decision") == "program"
         if expect.get("because") == "0041 M2":  # B9: "forever" is given a bound
             judgement.bound_dropped_or_invented = True
         return judgement
     judgement.mission_added = False
+    judge_messages(task_def, checked, judgement.plan_succeeds, judgement)
     _, goals = _mission_runs_ok(label, checked, bindings, result)
     judgement.paths = judge_mission_paths(task_def, label, checked, bindings)
     judgement.goal_correct = goals
@@ -1311,6 +1440,7 @@ def judge(task_def: dict, checked: Checked, bindings: dict[str, str]) -> Judgeme
         judgement.repetition_replaced = result.state == "SUCCEEDED"  # a valid, succeeding 1.x program (B8)
     if judgement.clock_ok is not None:
         judgement.checks["clock"] = judgement.clock_ok
+    judge_messages(task_def, checked, result.state == "SUCCEEDED", judgement)
     return judgement
 
 

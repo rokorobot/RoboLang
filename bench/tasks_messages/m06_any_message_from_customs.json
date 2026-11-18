@@ -1,22 +1,17 @@
 {
   "id": "m06_any_message_from_customs",
   "prompt": "With straddle1, take cont_204 from stack_b to gate_out, but only after channel \"customs\" has sent a message, whatever it says. Wait up to 15 minutes for it and, if nothing comes, stop the job as failed.",
-  "world": "bench/worlds/yard.json",
+  "world": "bench/worlds/msg_m06_any_message_from_customs.json",
   "group": "message",
   "expect": {
+    "decision": "program"
+  },
+  "expect_2_0": {
     "decision": "cannot",
     "category": "inexpressible"
   },
   "expect_2_1": {
     "decision": "program",
-    "expected_message_waits": [
-      {
-        "use": "wait",
-        "channel": "customs",
-        "text": null,
-        "timeout": "15 min"
-      }
-    ],
     "paths": [
       {
         "when": "customs sends \"CLEARED 7731\" at 300 seconds",
@@ -79,6 +74,14 @@
       }
     }
   },
+  "expected_message_waits": [
+    {
+      "use": "wait",
+      "channel": "customs",
+      "text": null,
+      "timeout": "15 min"
+    }
+  ],
   "gap": "G-MSG",
   "tags": [
     "message_wait",

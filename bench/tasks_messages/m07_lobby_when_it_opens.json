@@ -1,22 +1,17 @@
 {
   "id": "m07_lobby_when_it_opens",
   "prompt": "With cleaner1, drive from dock_2 to the lobby without ever entering wet_floor, but only after channel \"facility\" has sent \"LOBBY OPEN\". Wait up to 10 minutes for it and, if it does not come, stay where cleaner1 is and stop the job as failed.",
-  "world": "bench/worlds/site_1_3.json",
+  "world": "bench/worlds/msg_m07_lobby_when_it_opens.json",
   "group": "message",
   "expect": {
+    "decision": "program"
+  },
+  "expect_2_0": {
     "decision": "cannot",
     "category": "inexpressible"
   },
   "expect_2_1": {
     "decision": "program",
-    "expected_message_waits": [
-      {
-        "use": "wait",
-        "channel": "facility",
-        "text": "LOBBY OPEN",
-        "timeout": "10 min"
-      }
-    ],
     "paths": [
       {
         "when": "LOBBY OPEN arrives at 120 seconds",
@@ -59,14 +54,22 @@
           ]
         }
       }
-    },
-    "expected_limits": [
-      [
-        "no_go_region",
-        "wet_floor"
-      ]
-    ]
+    }
   },
+  "expected_message_waits": [
+    {
+      "use": "wait",
+      "channel": "facility",
+      "text": "LOBBY OPEN",
+      "timeout": "10 min"
+    }
+  ],
+  "expected_limits": [
+    [
+      "no_go_region",
+      "wet_floor"
+    ]
+  ],
   "gap": "G-MSG",
   "tags": [
     "message_wait",

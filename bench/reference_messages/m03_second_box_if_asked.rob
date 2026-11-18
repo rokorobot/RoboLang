@@ -1,0 +1,20 @@
+// bench/reference_messages/m03_second_box_if_asked.rob: hand-written reference (RoboLang 2.1)
+robolang 2.1;
+
+task carry_box(robot r, object box, object extra, location src, location src2, location dst, region lane) {
+    goal { object_at box dst; }
+    plan {
+        wait until region_clear lane timeout 20 s else { fail "the aisle did not clear"; }
+        move r to src;
+        grasp r box;
+        move r to dst;
+        place r box at dst;
+        if message_received "ops" with "ALSO BOX2" {
+            goal { object_at extra dst; }
+            move r to src2;
+            grasp r extra;
+            move r to dst;
+            place r extra at dst;
+        }
+    }
+}

@@ -291,7 +291,7 @@ def test_a_file_of_tasks_only_in_2_0_is_task_ir_1_8_with_language_2_0():
 
 def test_the_reader_checks_the_header_of_a_mission_document():
     document = document_of()
-    for key, value in (("ir_schema_version", "1.1"), ("task_ir_schema_version", "1.7"), ("language_version", "1.9")):
+    for key, value in (("ir_schema_version", "1.2"), ("task_ir_schema_version", "1.7"), ("language_version", "1.9")):
         bad = copy.deepcopy(document)
         bad[key] = value
         assert problems(bad)[0] == ("I113", f"/{key}")
