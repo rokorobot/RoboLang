@@ -34,7 +34,7 @@
   "tags": [
     "repeat_until"
   ],
-  "gap": "G-LOOP",
+  "gap": "G-UNBOUNDED",
   "why": "\"Until it is open\" is a loop with no fixed bound: it needs the mission layer (G-LOOP, 0041). A fixed number of tries is a nested handler, which is a different request.",
   "attempt_fails_with": "E203"
 }

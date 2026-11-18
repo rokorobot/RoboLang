@@ -162,3 +162,14 @@ The acceptance run ([bench-2-0-acceptance.md](bench-2-0-acceptance.md)) missed B
 
 A confirming run of `m03`, `m09`, `m10`, `c01` and `c04` (both prompts, both models, 3 repeats) replaces those
 tasks' answers for B1, B5 and B8. `docs/evidence/bench-freeze-v2.json` is regenerated.
+
+## Erratum M3 (2026-11-18, L6): G-LOOP closed; G-UNBOUNDED split off
+
+G-LOOP is closed by RoboLang 2.0. What it still held cannot be said by design, so it moved to new gaps:
+
+- the 8 tasks with no bound or with nesting go to **G-UNBOUNDED**, scope `out` (0041 M2 and M7: a decline is the
+  right answer);
+- `x04_every_minute` and `f13_retry_every_minute` go to G-TRIGGER.
+
+The `gap` fields of `x04_open_until_open`, `x01_never_stop` and `x04_rounds_inside_rounds` follow, and the tests of
+sets "future", 7 and 9 expect the new gaps. No label changed. `docs/evidence/bench-freeze-v2.json` is regenerated.

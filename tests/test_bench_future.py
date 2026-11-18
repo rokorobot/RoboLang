@@ -113,8 +113,8 @@ def test_every_gap_a_near_activity_claims_is_probed_except_the_proven_loop():
     assert {t["gap"] for t in CLOCKS.values()} == {"G-CLOCK"} and GAPS["G-CLOCK"]["scope"] == "closed"  # L6 of I3
     assert {t["gap"] for t in ACTIONS.values()} == {"G-ACT"} and GAPS["G-ACT"]["scope"] == "closed"  # L6 of I2
     assert {t["gap"] for t in REGIONS.values()} == {"G-PATH"} and GAPS["G-PATH"]["scope"] == "closed"
-    assert {g for g, v in GAPS.items() if v["scope"] == "out"} == {"G-FALLBACK"}
-    assert GAPS["G-LOOP"]["scope"] == "open" and "0041" in GAPS["G-LOOP"]["scope_note"]
+    assert {g for g, v in GAPS.items() if v["scope"] == "out"} == {"G-FALLBACK", "G-UNBOUNDED"}  # 0041 M2/M7
+    assert GAPS["G-LOOP"]["scope"] == "closed" and GAPS["G-LOOP"]["closed_in"] == "RoboLang 2.0"  # L6 of I4
 
 
 def test_refuted_claims_are_removed_from_needs_and_recorded_with_a_control():
