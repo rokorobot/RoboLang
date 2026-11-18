@@ -1,0 +1,144 @@
+{
+  "id": "p05_any_part_from_the_conveyor",
+  "prompt": "With arm_a, move one part from conveyor_in to the bin: take whichever part is on the conveyor when the job starts. If the conveyor is empty, stop the job as failed.",
+  "world": "bench/worlds/parts_line.json",
+  "group": "choose",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_3": {
+    "decision": "program",
+    "world_2_3": {
+      "objects_at": {
+        "conveyor_in": [
+          "p1",
+          "p2",
+          "p3",
+          "p4"
+        ]
+      }
+    },
+    "choices": [
+      {
+        "type": "object",
+        "from": {
+          "objects_at": "conveyor_in"
+        },
+        "where": null,
+        "order": null
+      }
+    ],
+    "paths": [
+      {
+        "when": "four parts are on the conveyor: any of them",
+        "chosen": [
+          "p1"
+        ],
+        "goals": [
+          [
+            [
+              "rl:thing:p1",
+              "located_in",
+              "rl:place:bin"
+            ]
+          ],
+          [
+            [
+              "rl:thing:p2",
+              "located_in",
+              "rl:place:bin"
+            ]
+          ],
+          [
+            [
+              "rl:thing:p3",
+              "located_in",
+              "rl:place:bin"
+            ]
+          ],
+          [
+            [
+              "rl:thing:p4",
+              "located_in",
+              "rl:place:bin"
+            ]
+          ]
+        ],
+        "messages": [],
+        "world_patch": {}
+      },
+      {
+        "when": "p1 was taken away: a part that is not there is not a candidate",
+        "chosen": [
+          "p2"
+        ],
+        "goals": [
+          [
+            [
+              "rl:thing:p2",
+              "located_in",
+              "rl:place:bin"
+            ]
+          ],
+          [
+            [
+              "rl:thing:p3",
+              "located_in",
+              "rl:place:bin"
+            ]
+          ],
+          [
+            [
+              "rl:thing:p4",
+              "located_in",
+              "rl:place:bin"
+            ]
+          ]
+        ],
+        "messages": [],
+        "world_patch": {
+          "objects": {
+            "p1": {
+              "location": "station2"
+            }
+          }
+        }
+      },
+      {
+        "when": "the conveyor is empty: no candidate, `else` runs",
+        "chosen": [
+          null
+        ],
+        "fails": true,
+        "messages": [],
+        "world_patch": {
+          "objects": {
+            "p1": {
+              "location": "station2"
+            },
+            "p2": {
+              "location": "station2"
+            },
+            "p3": {
+              "location": "station2"
+            },
+            "p4": {
+              "location": "station2"
+            }
+          }
+        }
+      }
+    ]
+  },
+  "gap": "G-CHOOSE",
+  "tags": [
+    "choose",
+    "objects_at",
+    "named_in_goal",
+    "else_runs",
+    "state_at_the_choice"
+  ],
+  "why": "An object chosen from what is at a place when the choice is made. The request names no part; a program that names p1 is right only while p1 is still there. 2.2 has no `choose` (E203): without it the attempt moves one part fixed in advance.",
+  "attempt_fails_with": "E203"
+}

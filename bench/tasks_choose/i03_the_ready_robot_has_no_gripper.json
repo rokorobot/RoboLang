@@ -1,0 +1,66 @@
+{
+  "id": "i03_the_ready_robot_has_no_gripper",
+  "prompt": "Use whichever of digit2 and tugger_a is ready and closer to inbound_conveyor to carry tote_1 from inbound_conveyor to outbound_conveyor.",
+  "world": "bench/worlds/fulfilment.json",
+  "group": "infeasible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_3": {
+    "decision": "cannot",
+    "category": "infeasible",
+    "because": "S211",
+    "choices": [
+      {
+        "type": "robot",
+        "from": [
+          "digit2",
+          "tugger_a"
+        ],
+        "where": "robot_ready",
+        "order": {
+          "nearest_to": "inbound_conveyor"
+        }
+      }
+    ],
+    "world_2_3": {
+      "positions": {
+        "staging": [
+          20,
+          10
+        ],
+        "tugger_bay": [
+          0,
+          0
+        ],
+        "inbound_conveyor": [
+          10,
+          20
+        ],
+        "outbound_conveyor": [
+          50,
+          5
+        ]
+      },
+      "robots": {
+        "digit2": {
+          "ready": false
+        }
+      }
+    }
+  },
+  "blockers": [
+    "tugger_a"
+  ],
+  "gap": "G-CHOOSE",
+  "tags": [
+    "choose",
+    "robots",
+    "where",
+    "no_gripper",
+    "existing_infeasibility"
+  ],
+  "why": "Infeasible in 2.3: digit2 is not ready, so the only candidate is tugger_a, which has no gripper (S211, as in 1.x). The request names no other way to carry the tote.",
+  "attempt_fails_with": "E203"
+}

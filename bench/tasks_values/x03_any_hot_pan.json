@@ -19,5 +19,8 @@
     "detect",
     "iteration"
   ],
+  "gap": "G-EACH",
+  "gap_before": "G-CHOOSE",
+  "erratum": "Q2 (0045 C9, 2026-11-18): acting on each member of a run-time set stays out of 2.3; the old gap is kept here as history",
   "why": "Choosing objects at run time and iterating over them: no detect and no loop, though RoboLang 1.6 can read a value."
 }

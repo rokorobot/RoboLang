@@ -1,0 +1,13 @@
+// bench/reference_choose/p03_nearer_cart_for_tote_2.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 2.2;
+
+task to_closer(robot r, object tote, location src, location a, location b, location ref) {
+    goal { object_at tote dst; }
+    plan {
+        move r to src;
+        grasp r tote;
+        choose location dst from (a, b) nearest to ref else { fail "no place"; }                    // @choice dst=a
+        move r to dst;
+        place r tote at dst;
+    }
+}

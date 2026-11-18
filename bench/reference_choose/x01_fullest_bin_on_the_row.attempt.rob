@@ -1,0 +1,13 @@
+// bench/reference_choose/x01_fullest_bin_on_the_row.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 2.2;
+
+task take_fullest(robot r, location row, location dst) {
+    goal { object_at bin dst; }
+    plan {
+        choose object bin from objects at row else { fail "no bin on the row"; }                    // @choice bin=bin_1
+        move r to row;
+        grasp r bin;
+        move r to dst;
+        place r bin at dst;
+    }
+}

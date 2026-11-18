@@ -1,0 +1,10 @@
+// bench/reference_choose/i01_no_tugger_is_ready.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 2.2;
+
+task send_ready(robot a, robot b, location spot) {
+    goal { robot_at tug spot; }
+    plan {
+        choose robot tug from (a, b) where robot_ready tug nearest to spot else { fail "no tugger is ready"; } // @choice tug=a
+        move tug to spot;
+    }
+}

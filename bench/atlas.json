@@ -105,16 +105,54 @@
       "name": "Choosing objects or robots at run time",
       "direction": "perception",
       "scope": "open",
-      "scope_note": "D4 deferred `detect`; D5 ranks it by the atlas",
+      "scope_note": "D4 deferred `detect`; D5 ranks it by the atlas. I7 L3 (2026-11-18, decision 0045): set 12 \"choose\" holds the 16 tasks 2.2 declines and 2.3 is meant to do or to decline as infeasible; what stays out of 2.3 (a reading of each candidate, acting on each member, unlisted objects) moved to G-EACH and G-DETECT (erratum Q2)",
       "tasks": [
-        "x03_any_hot_pan",
         "x_nearest_robot",
         "f_choose_nearest_tugger",
         "f_choose_nearest_dock",
         "f_choose_nearer_cart",
         "x05_every_new_part",
         "x_shuttle_until_five",
-        "x03_carry_as_many_as_counted"
+        "i01_no_tugger_is_ready",
+        "i02_the_wall_has_no_position",
+        "i03_the_ready_robot_has_no_gripper",
+        "i04_nothing_at_the_rework_bench",
+        "i05_the_ready_scanbot_has_the_wrong_camera",
+        "p01_nearer_tugger_to_the_trailer",
+        "p02_nearest_dock_to_the_hall",
+        "p03_nearer_cart_for_tote_2",
+        "p04_ready_amr_nearer_to_shelf_a",
+        "p05_any_part_from_the_conveyor",
+        "p06_closest_robot_to_the_lobby",
+        "p07_equally_near_docks",
+        "p08_farthest_spot_from_the_trailer",
+        "p09_parts_for_six_minutes",
+        "p10_dock_near_stop_c_around_the_wet_floor",
+        "p11_parts_until_five"
+      ]
+    },
+    {
+      "id": "G-EACH",
+      "name": "Acting on each member of a set chosen at run time, by a reading of each or by a count",
+      "direction": "reasoning",
+      "scope": "open",
+      "scope_note": "Far (decision 0045, I7 L3, 2026-11-18): RoboLang 2.3 chooses one entity from a finite set by world facts and an order; it never reads each candidate (C3, C9) and never repeats an action as many times as a reading or a count says. A decline is the right answer; G-EACH builds on missions that choose afresh (C10) and `where` on readings",
+      "tasks": [
+        "x03_any_hot_pan",
+        "x03_carry_as_many_as_counted",
+        "x01_fullest_bin_on_the_row",
+        "x02_every_pan_above_75",
+        "x03_carry_as_many_as_there_are_bins"
+      ]
+    },
+    {
+      "id": "G-DETECT",
+      "name": "Objects the world does not list: detecting what a sensor finds and acting on it",
+      "direction": "perception",
+      "scope": "open",
+      "scope_note": "Far (decision 0045, I7 L3, 2026-11-18): `objects at L` yields only the objects the world declares (C2), so an object the world does not know is never a candidate. A decline is the right answer; a later decision may add detection with learned categories (0045 C12)",
+      "tasks": [
+        "x05_an_object_the_list_does_not_know"
       ]
     },
     {
@@ -156,7 +194,8 @@
         "x03_person_distance",
         "x05_avoid_busy_areas",
         "x01_hand_to_ana",
-        "x05_nearest_person"
+        "x05_nearest_person",
+        "x04_the_robot_nearest_the_caller"
       ]
     },
     {
@@ -3392,6 +3431,63 @@
     {
       "date": "2026-11-18",
       "note": "L6 of I6: G-PERCEIVE closed by RoboLang 2.2 measured kinds",
+      "activities": {
+        "ACT-LOG-001": "deployment now",
+        "ACT-LOG-002": "deployment now",
+        "ACT-MFG-001": "pilot 1-3y",
+        "ACT-MFG-002": "pilot 1-3y",
+        "ACT-RET-001": "deployment now",
+        "ACT-HOS-001": "deployment now",
+        "ACT-HLTH-001": "deployment now",
+        "ACT-ELD-001": "pilot 3-7y",
+        "ACT-HOME-001": "research 3-7y",
+        "ACT-HOME-002": "demo 3-7y",
+        "ACT-INSP-001": "demo now",
+        "ACT-INSP-002": "demo 1-3y",
+        "ACT-SEC-001": "demo 1-3y",
+        "ACT-SAFE-001": "demo 3-7y",
+        "ACT-CON-001": "deployment now",
+        "ACT-AGR-001": "pilot 3-7y",
+        "ACT-EV-001": "pilot 1-3y",
+        "ACT-CLN-001": "deployment now",
+        "ACT-MRC-001": "demo 3-7y",
+        "ACT-MRC-002": "demo 1-3y",
+        "ACT-HRC-001": "research 3-7y",
+        "ACT-HRC-002": "research 3-7y",
+        "ACT-ASM-001": "research 7y+",
+        "ACT-PRED-001": "research 3-7y",
+        "ACT-PRED-002": "research 3-7y",
+        "ACT-AUTO-001": "deployment now",
+        "ACT-AUTO-002": "demo 1-3y",
+        "ACT-AUTO-003": "research 3-7y",
+        "ACT-MFG-003": "demo 1-3y",
+        "ACT-AGR-002": "deployment now",
+        "ACT-SOL-001": "deployment now",
+        "ACT-PRED-003": "concept 3-7y",
+        "ACT-PRED-004": "concept 7y+",
+        "ACT-LRN-001": "concept 3-7y",
+        "ACT-LRN-002": "concept 3-7y",
+        "ACT-AUTO-004": "concept 3-7y",
+        "ACT-SAFE-002": "concept 3-7y",
+        "ACT-CARE-001": "concept 7y+",
+        "ACT-MFG-004": "demo 1-3y",
+        "ACT-HRC-003": "concept 3-7y"
+      },
+      "directions": {
+        "perception": 2.78,
+        "reasoning": 0.68,
+        "prediction": 0.25,
+        "action": 4.52,
+        "learning": 0.75,
+        "cooperation": 1.07,
+        "safety": 0.49,
+        "communication": 0.95,
+        "autonomy": 0.67
+      }
+    },
+    {
+      "date": "2026-11-18",
+      "note": "I7 L3: set 12 choose pre-registered (25 tasks)",
       "activities": {
         "ACT-LOG-001": "deployment now",
         "ACT-LOG-002": "deployment now",

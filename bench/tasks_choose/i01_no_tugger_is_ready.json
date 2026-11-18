@@ -1,0 +1,66 @@
+{
+  "id": "i01_no_tugger_is_ready",
+  "prompt": "Send whichever of tugger_a and tugger_b is ready and nearer to handoff_point to handoff_point.",
+  "world": "bench/worlds/fulfilment.json",
+  "group": "infeasible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_3": {
+    "decision": "cannot",
+    "category": "infeasible",
+    "because": "0045 C6 (no candidate is left: every candidate is excluded by `where`, so `else` runs and the request names no fallback)",
+    "choices": [
+      {
+        "type": "robot",
+        "from": [
+          "tugger_a",
+          "tugger_b"
+        ],
+        "where": "robot_ready",
+        "order": {
+          "nearest_to": "handoff_point"
+        }
+      }
+    ],
+    "world_2_3": {
+      "positions": {
+        "tugger_bay": [
+          0,
+          0
+        ],
+        "line_feed": [
+          40,
+          0
+        ],
+        "handoff_point": [
+          38,
+          6
+        ]
+      },
+      "robots": {
+        "tugger_a": {
+          "ready": false
+        },
+        "tugger_b": {
+          "ready": false
+        }
+      }
+    }
+  },
+  "blockers": [
+    "tugger_a",
+    "tugger_b"
+  ],
+  "gap": "G-CHOOSE",
+  "tags": [
+    "choose",
+    "robots",
+    "where",
+    "no_candidate_left",
+    "no_fallback"
+  ],
+  "why": "Infeasible in 2.3: in the world of the job neither tugger is ready, so `where` leaves no candidate and `else` runs; the request names no fallback, so the job cannot be done. Under 2.2 the attempt fails earlier, at the `choose` (E203).",
+  "attempt_fails_with": "E203"
+}

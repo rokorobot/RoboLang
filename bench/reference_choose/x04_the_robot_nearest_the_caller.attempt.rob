@@ -1,0 +1,10 @@
+// bench/reference_choose/x04_the_robot_nearest_the_caller.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 2.2;
+
+task send_nearest(location person) {
+    goal { robot_at who person; }
+    plan {
+        choose robot who from robots nearest to person else { fail "no robot"; }                    // @choice who=arm1
+        move who to person;
+    }
+}

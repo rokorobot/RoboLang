@@ -1,0 +1,7 @@
+{
+  "task": "look_for_unknown",
+  "bindings": {
+    "r": "scanbot1",
+    "aisle": "aisle_2"
+  }
+}

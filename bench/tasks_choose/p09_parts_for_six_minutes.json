@@ -1,0 +1,106 @@
+{
+  "id": "p09_parts_for_six_minutes",
+  "prompt": "With arm_a, move parts from conveyor_in to the bin one at a time, taking whichever part is on the conveyor when each one starts, and wait 2 minutes after each. Stop after 6 minutes. If the conveyor is empty when a part is due, stop the job as failed.",
+  "world": "bench/worlds/parts_line.json",
+  "group": "choose",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_3": {
+    "decision": "program",
+    "world_2_3": {
+      "objects_at": {
+        "conveyor_in": [
+          "p1",
+          "p2",
+          "p3",
+          "p4"
+        ]
+      }
+    },
+    "choices": [
+      {
+        "type": "object",
+        "from": {
+          "objects_at": "conveyor_in"
+        },
+        "where": null,
+        "order": null
+      }
+    ],
+    "expected_mission": {
+      "runs": [
+        {
+          "task": "a task that chooses a part from `objects at conveyor_in`, moves it to the bin and waits 2 min",
+          "entities": [
+            "arm_a",
+            "conveyor_in",
+            "bin"
+          ],
+          "wait_min": 2
+        }
+      ],
+      "repeat": {
+        "max_runs": null,
+        "max_duration": {
+          "value": 6,
+          "unit": "min"
+        }
+      },
+      "until": null,
+      "on_failure": "stop",
+      "policy_stated": true
+    },
+    "paths": [
+      {
+        "when": "four parts: runs at 0, 2 and 4 minutes, each moves a part that is still on the conveyor; 6 minutes end it",
+        "chosen": [
+          "p1",
+          "p2",
+          "p3"
+        ],
+        "messages": [],
+        "world_patch": {},
+        "outcome": "bounded",
+        "runs": 3,
+        "runs_verified": 3,
+        "parts_moved": 3
+      },
+      {
+        "when": "two parts only: the third run finds the conveyor empty, `else` fails the run and the mission stops",
+        "chosen": [
+          "p1",
+          "p2",
+          null
+        ],
+        "messages": [],
+        "world_patch": {
+          "objects": {
+            "p3": {
+              "location": "station2"
+            },
+            "p4": {
+              "location": "station2"
+            }
+          }
+        },
+        "outcome": "failed",
+        "runs": 3,
+        "runs_verified": 2,
+        "parts_moved": 2
+      }
+    ]
+  },
+  "gap": "G-CHOOSE",
+  "tags": [
+    "choose",
+    "objects_at",
+    "mission",
+    "duration_bound",
+    "choose_afresh",
+    "else_runs"
+  ],
+  "why": "A choice inside a mission (0045 C10): every run chooses afresh, and a part that has been moved is no longer a candidate. The bound is a duration the request states (0041): no count of runs is invented. 2.2 has no `choose` (E203); fixing one part makes the second run fail, and naming the parts the world lists is the silent replacement.",
+  "attempt_fails_with": "E203"
+}

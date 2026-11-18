@@ -1,0 +1,24 @@
+{
+  "id": "x04_the_robot_nearest_the_caller",
+  "prompt": "Send whichever robot is closest to the person who just called for help to that person.",
+  "world": "bench/worlds/warehouse.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_3": {
+    "decision": "cannot",
+    "category": "inexpressible",
+    "because": "0045 C9 (choosing a person: G-PROX)"
+  },
+  "gap": "G-PROX",
+  "tags": [
+    "person",
+    "robots",
+    "nearest",
+    "proximity"
+  ],
+  "why": "A person is no entity of the world and has no position in it, so the robot nearest to them cannot be chosen (0045 C9, G-PROX). A stand-in place for the person (the handoff) is the silent replacement.",
+  "attempt_fails_with": "E203"
+}

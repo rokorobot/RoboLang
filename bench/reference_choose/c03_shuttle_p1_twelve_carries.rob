@@ -1,0 +1,20 @@
+// bench/reference_choose/c03_shuttle_p1_twelve_carries.rob: hand-written reference (RoboLang 2.2)
+robolang 2.2;
+
+task carry(robot r, object item, location src, location dst) {
+    goal { object_at item dst; }
+    plan {
+        move r to src;
+        grasp r item;
+        move r to dst;
+        place r item at dst;
+    }
+}
+
+mission shuttle(robot r, object item, location a, location b) {
+    repeat at most 12 runs {
+        run carry(r, item, a, b);
+        run carry(r, item, b, a);
+    };
+    on failure { stop; }
+}

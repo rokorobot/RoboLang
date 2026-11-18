@@ -1,0 +1,55 @@
+{
+  "id": "c04_carry_at_nine",
+  "prompt": "With picker_s, wait until 09:00, for at most 20 minutes, and then carry carton_1 from the backroom to the checkout. If 09:00 does not come in time, stop the job as failed.",
+  "world": "bench/worlds/stockroom.json",
+  "group": "control",
+  "expect": {
+    "decision": "program"
+  },
+  "expect_2_2": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "the clock starts at 08:50: 09:00 comes after 10 minutes",
+        "goal": [
+          [
+            "rl:thing:carton_1",
+            "located_in",
+            "rl:place:checkout"
+          ]
+        ],
+        "messages": [],
+        "world_patch": {}
+      },
+      {
+        "when": "the clock starts at 08:20: 09:00 is 40 minutes away and the wait times out",
+        "fails": true,
+        "messages": [],
+        "world_patch": {
+          "clock": {
+            "start": "2026-11-18T08:20:00"
+          }
+        }
+      }
+    ]
+  },
+  "expect_2_3": {
+    "decision": "program"
+  },
+  "tags": [
+    "clock_wait",
+    "pick_place",
+    "fixed_entities",
+    "no_choice",
+    "1_9_feature"
+  ],
+  "expected_clock": [
+    {
+      "use": "wait",
+      "reading": "time",
+      "op": ">=",
+      "value": "09:00",
+      "timeout": "20 min"
+    }
+  ]
+}
