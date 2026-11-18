@@ -157,11 +157,11 @@ def test_labels_are_2_1_in_expect_and_2_0_in_expect_2_0():
         assert task["attempt_fails_with"] == "E211"
         # a task's own paths are read by the scorer, except a mission's, which are read as set 9's are
         assert (lib.task_paths(task) is None) == (task_id == "m04_rounds_until_shift_end")
-    for task_id, task in GOAL.items():  # x05 (C14): a program with a final bounded wait, the world part in the goal
+    for task_id, task in GOAL.items():  # x05: C14 made it a program; erratum N3 declines it again (S1)
         later = task["expect_2_1"]
-        assert task["expect"] == {"decision": "program"} and later["because"] == "0043 C14", task_id
+        assert task["expect"] == CANNOT and later["because"] == "0043 C14" and "N3" in task["erratum"], task_id
         assert [w["use"] for w in task["expected_message_waits"]] == ["wait"] and len(later["paths"]) == 2
-        assert lib.expected_goals(task) and task["gap"] == "G-MSG" and task["expect_2_0"] == CANNOT
+        assert task["gap"] == "G-EVENTGOAL" and task["expect_2_0"] == CANNOT
     for task_id, task in INFEASIBLE.items():
         later = task["expect_2_1"]
         assert task["expect"] == {"decision": "cannot", "category": "infeasible"}, task_id
@@ -547,10 +547,11 @@ def test_the_standing_tasks_that_name_no_text_or_no_channel_follow_c9():
 
 def test_after_l4_only_what_2_1_still_declines_is_in_an_atlas_gap_and_g_msg_stays_open_until_l6():
     in_gaps = [(t, g["id"]) for g in ATLAS["gaps"] for t in g["tasks"] if t in SET]
-    assert {t for t, _ in in_gaps} == set(INEXPRESSIBLE) and len(in_gaps) == len(INEXPRESSIBLE)
+    declined = {**INEXPRESSIBLE, **GOAL}  # x05 is declined again (erratum N3)
+    assert {t for t, _ in in_gaps} == set(declined) and len(in_gaps) == len(declined)
     for task_id, gap in in_gaps:
-        assert INEXPRESSIBLE[task_id]["gap"] == gap and GAPS[gap]["scope"] in ("open", "out")
-    assert Counter(gap for _, gap in in_gaps) == {"G-TRIGGER": 1, "G-CALC": 2, "G-DELIVERY": 1}
+        assert declined[task_id]["gap"] == gap and GAPS[gap]["scope"] in ("open", "out")
+    assert Counter(gap for _, gap in in_gaps) == {"G-TRIGGER": 1, "G-CALC": 2, "G-DELIVERY": 1, "G-EVENTGOAL": 1}
     assert GAPS["G-MSG"]["scope"] == "open" and GAPS["G-MSG"]["tasks"] == []  # closes at L6, after the acceptance run
     assert "2.1" in GAPS["G-MSG"]["scope_note"] and "L6" in GAPS["G-MSG"]["scope_note"]
     assert GAPS["G-DELIVERY"]["direction"] == "communication" and GAPS["G-DELIVERY"]["scope"] == "out"  # C13
@@ -559,7 +560,7 @@ def test_after_l4_only_what_2_1_still_declines_is_in_an_atlas_gap_and_g_msg_stay
     assert "I5 L3: set 10 messages pre-registered (24 tasks)" in notes
     assert "I5 L4: RoboLang 2.1 built and taught" in notes
     # the tasks that were in G-MSG before are programs now, and still name the gap (as set 9's tasks name G-LOOP)
-    for task_id, task in {**PROGRAMS, **GOAL, **INFEASIBLE}.items():
+    for task_id, task in {**PROGRAMS, **INFEASIBLE}.items():
         assert task["gap"] == "G-MSG" and task_id not in GAPS["G-MSG"]["tasks"]
 
 
@@ -591,7 +592,7 @@ def judged(task_id: str, answer: dict):
     return lib.judge(task, checked, answer["bindings"])
 
 
-@pytest.mark.parametrize("task_id", sorted(set(PROGRAMS) | set(GOAL)))
+@pytest.mark.parametrize("task_id", sorted(PROGRAMS))  # x05's reference stays as C14's evidence (erratum N3)
 def test_the_reference_of_a_message_program_passes_every_check_on_every_path(task_id):
     task = SET[task_id]
     answer = reference(task_id)

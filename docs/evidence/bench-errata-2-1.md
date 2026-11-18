@@ -74,3 +74,11 @@ the 2.0 labels and the bounds are unchanged.
 ## Freeze (L4)
 
 `docs/evidence/bench-freeze-v2.json` is regenerated for all of the above (the previous manifest, `5336c21e…`, is in git history).
+
+## Erratum N3 (owner, 2026-11-18, after the L5 run): `x05_a_message_in_the_goal` declined again
+
+C14 relabelled `x05` as a program, a final bounded wait plus the world part in the goal. Both models declined it in
+5 of 6 full-prompt answers, because the request says "state both as the goal" and 2.1 forbids a message in a goal
+(S1, `E327`). The literal reading is right. `x05` is `cannot / inexpressible` again, and C14's label stays in
+`expect_2_1` as pre-registered. It is in the new far gap **G-EVENTGOAL**, scope `out` (S1). No bound covered `x05`,
+so no verdict changes, and the L5 answers are not re-run. `docs/evidence/bench-freeze-v2.json` is regenerated.

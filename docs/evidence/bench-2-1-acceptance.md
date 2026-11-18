@@ -32,4 +32,4 @@ B6 comes from the per-PR run on PR #163 (sets 1 and 2, 1 repeat).
 
 ## Verdict
 
-**Every bound met.** Recommended: accept 2.1. **Paid cost of I5:** baseline $0.99, acceptance $1.37.
+**ACCEPTED by the owner, 2026-11-18.** Every bound is met. `x05` is declined again (erratum N3). **Paid cost of I5:** baseline $0.99, acceptance $1.37.

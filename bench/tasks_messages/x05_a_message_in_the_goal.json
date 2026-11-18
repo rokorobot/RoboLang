@@ -4,7 +4,8 @@
   "world": "bench/worlds/msg_x05_a_message_in_the_goal.json",
   "group": "message_goal",
   "expect": {
-    "decision": "program"
+    "decision": "cannot",
+    "category": "inexpressible"
   },
   "expect_2_0": {
     "decision": "cannot",
@@ -71,11 +72,12 @@
       "rl:place:line_feed"
     ]
   ],
-  "gap": "G-MSG",
+  "gap": "G-EVENTGOAL",
   "tags": [
     "message_in_goal",
     "end_state"
   ],
   "why": "A message is not an end state of the world, so `message_received` is never in a `goal` (0043 S1, E327), and a goal is what Core receives (`export-goal`). \"The job is done only when the line has sent RECEIVED\" is written as a final bounded wait in the plan, with the world part in the goal (0043 C14): it is a program, not a decline. The program that puts the message in the goal is a 2.1 error.",
-  "attempt_fails_with": "E211"
+  "attempt_fails_with": "E211",
+  "erratum": "N3 (owner, 2026-11-18): reverted to cannot / inexpressible; the 2.1 label of C14 stays in expect_2_1 as pre-registered"
 }
