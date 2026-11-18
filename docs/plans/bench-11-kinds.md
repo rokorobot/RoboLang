@@ -127,7 +127,10 @@ present (S213); `i05` the reading is possible and the carry is not (no gripper).
 | `u01_if_dirty`, `u02_if_damaged` (set "ask") | **`cannot / infeasible`** (erratum P2 now) | the same | K6: their worlds have no label sensor (S234), so under 1.6 the 1.3 reason is false. The old label is kept as `expect_1_3`; each has an attempt that fails with `S234` and a `fix_patch` (a label sensor and a label) that makes it succeed. They leave G-PERCEIVE (an infeasible task is in no gap) |
 | `f_perceive_shelf_fill`, `f_perceive_weed_confidence` (R3 probes) | `cannot / inexpressible` | L4 relabels (programs, or infeasible: open point 1) | they stay in set "future" and in G-PERCEIVE until then |
 
-## Acceptance bounds (placeholders, to be fixed with the baseline in hand, rule 6)
+## Acceptance bounds (proposed with the baseline in hand, rule 6; for the owner)
+
+Baseline: [bench-set11-baseline.md](../evidence/bench-set11-baseline.md) (2026-11-18, 2.1, 3 repeats). Full prompt: no false
+programs; grammar-only: `k04` written as a label check alone (2/30 for each model).
 
 Baseline: not yet run (2.1, 3 repeats, full and grammar-only prompts). The smallest step is one answer (rule 6). The acceptance
 run repeats the baseline under 2.2. A bound that the baseline makes pointless (for instance a rate that 2.1 cannot reach) is

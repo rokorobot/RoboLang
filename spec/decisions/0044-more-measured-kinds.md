@@ -81,3 +81,22 @@ The owner accepted every recommendation:
 - K3: `==` on `count`;
 - K6: `u01` and `u02` are relabelled in L3;
 - K1–K9 are accepted.
+
+## Clarifications (PROPOSED 2026-11-18, from writing the L3 set; for the owner)
+
+| # | Question | Recommended |
+|---|---|---|
+| D1 | `fill` or `count` of a shelf, which is a location | **`fill` and `count` may be read of an object or a location** ("bay 3 is empty", "aisle 5 out of stock"). The R3 shelf probe becomes a program as written |
+| D2 | Uncertainty of a count | None: a world may not give a `count` sensor an uncertainty (an error in the world file). A count literal is a whole number; `n < 2.5` is an error |
+| D3 | `%` across kinds | `fill` and `confidence` are different kinds, so comparing one with the other is `E319`. A bare `0.3` or the word `percent` is not a fraction (`E206`: the unit is required). Readings near a threshold follow 1.6: an unknown comparison fails closed |
+| D4 | `confidence` without `label` | Allowed: it is the sensor's confidence in the label it reports for that object. Pairing a label from one sensor with a confidence from another is a wrong program (B1), not a static error |
+| D5 | "Measured, but not of that object" | No task: the world shown to the model does not show it (as in 1.6). Dropped from the infeasible list |
+| D6 | `psi`, live readings | `psi` is not a unit; the author converts, as with °F. Live readings of the new kinds in `wait until` are allowed, as in 1.6 |
+| D7 | `x03`, "carry as many as counted" | Stays inexpressible (K8: acting on each counted object is G-CHOOSE), even though two cartons could be unrolled |
+| D8 | `x05`, the nearest person | Stays inexpressible (G-PROX) |
+| D9 | `measure r fill of r` | A robot is not an object or a location: the existing type error |
+| D10 | Kind names | Not reserved: as in 1.6 and 1.9, they are recognised by position after `measure r`, so no program that uses `count` as a name breaks |
+| D11 | The `k10` decoy | Near-miss sensors, as written |
+| D12 | `i04` and `i05` | Kept: they test the decision inside a reading request |
+| D13 | 2.1 attempt codes | As recorded (`E101` before `E217` where `%` comes first) |
+| D14 | `x01`, "the packaging looks worn" | A new far gap, **G-QUALITY** (judgements of appearance or quality that no sensor kind declares), so that G-PERCEIVE can close at L6 |
