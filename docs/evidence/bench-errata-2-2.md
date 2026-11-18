@@ -109,6 +109,24 @@ gate's decision accuracy for the L5 comparison.
 Their world files have no label sensor and 2.2 adds no label to them, so they stay `cannot / infeasible` (S234). Listed here so that
 no relabel of L4 is missing.
 
+## Erratum P7 (2026-11-18, L5, approved by the owner): goal labels widened to what the requests say
+
+Found in the acceptance run ([bench-2-2-acceptance.md](bench-2-2-acceptance.md)). Every B1 miss read and compared exactly
+what was asked and failed only the goal check:
+
+- `k04_weed_and_ninety_percent_sure`, `k10_the_right_camera`, `c03_weigh_a_carton`, `c04_label_the_plant`: the request names
+  no end state, so the tasks are `goal_free`, as set 5 marks such requests (`v08_warmer_of_two`). Before, the label required
+  `robot_at` the robot's start location.
+- `k08_open_the_relief_valve`, path "not above 6 bar": "leave the valve closed" is an end state, so the path has `goals`: the
+  robot at `pump_3`, with or without `in_state relief_valve_3 "closed"`.
+
+The answers do not change, so the saved answers were rescored with no new paid run: B1 is 30/30 (Sonnet) and 29/30 (Haiku).
+
+## Erratum P8 (2026-11-18, L6): G-PERCEIVE closed
+
+G-PERCEIVE is closed in the atlas by RoboLang 2.2 and leaves the `needs` of 18 activities. The tests of sets "future" and 11
+now expect it closed. No task or label changed.
+
 ## Freeze
 
 `docs/evidence/bench-freeze-v2.json` is regenerated for all of the above (the old manifest deleted, then

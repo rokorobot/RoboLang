@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://img.shields.io/badge/version-v0.8.0-blue?style=for-the-badge" alt="version"/>
+  <img src="https://img.shields.io/badge/version-v0.9.0-blue?style=for-the-badge" alt="version"/>
   <img src="https://img.shields.io/badge/python-3.11%2B-brightgreen?style=for-the-badge" alt="python"/>
   <img src="https://img.shields.io/github/license/rokorobot/RoboLang?style=for-the-badge" alt="license"/>
   <img src="https://img.shields.io/github/stars/rokorobot/RoboLang?style=for-the-badge" alt="stars"/>
@@ -272,7 +272,7 @@ Every implementation item needs owner approval. The full plan and history are in
 How the language evolves with robot activities: the [language evolution strategy](https://github.com/rokorobot/RoboLang/blob/main/docs/LANGUAGE_EVOLUTION.md)
 and its [humanoid activity plan](https://github.com/rokorobot/RoboLang/blob/main/docs/plans/humanoid-activities.md).
 
-`robolang --version` prints three independent versions: the Python package (`0.8.0`, alpha),
+`robolang --version` prints three independent versions: the Python package (`0.9.0`, alpha),
 the language (`1.1` to `2.2`), the Task IR schema (`1.0` to `1.10`) and the Mission IR schema (`1.0` to `1.2`).
 
 ## Contributing

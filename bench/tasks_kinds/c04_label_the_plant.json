@@ -66,5 +66,6 @@
     "if",
     "no_new_kind",
     "no_confidence"
-  ]
+  ],
+  "goal_free": true
 }

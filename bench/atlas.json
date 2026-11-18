@@ -121,9 +121,10 @@
       "id": "G-PERCEIVE",
       "name": "Conditions on perceived properties (dirty, damaged)",
       "direction": "perception",
-      "scope": "open",
-      "scope_note": "Built and taught in RoboLang 2.2 (I6 L4, 2026-11-18, decision 0044): `fill`, `confidence`, `pressure` and `count` are measured kinds, `fill` and `count` of an object or a location, and a request that the world cannot meet is infeasible, not a gap task. The gap stays open until the acceptance run on set 11 (L5) and closes at L6. What 2.2 still declines is in other gaps: a judgement of appearance or quality that no sensor kind declares in G-QUALITY (D14), the robot's own battery in G-SELF, a reading of a person in G-PROX, counting and acting on each object in G-CHOOSE, and arithmetic on readings in G-CALC",
-      "tasks": []
+      "scope": "closed",
+      "scope_note": "Closed 2026-11-18 at L6 of iteration I6: RoboLang 2.2 measured kinds (`fill`, `confidence`, `pressure`, `count`, decision 0044), accepted on set 11 with erratum P7 (docs/evidence/bench-2-2-acceptance.md). What stays out: judgements of appearance or quality (G-QUALITY), readings of a person (G-PROX), the robot's own battery (G-SELF), acting on each counted object (G-CHOOSE) and arithmetic on readings (G-CALC).",
+      "tasks": [],
+      "closed_in": "RoboLang 2.2"
     },
     {
       "id": "G-QUALITY",
@@ -327,14 +328,13 @@
       ],
       "maturity": "deployment",
       "horizon": "now",
-      "basis": "The Robot Report (2026-11-06): Boston Dynamics unveiled Stretch Gen 2, rated up to 1,000 cases/hour, and says the Stretch fleet is already running at multiple customer sites (over 100,000 operating hours and tens of millions of boxes). The article names no customers. L6 (2026-11-18): G-LOOP closed by RoboLang 2.0 missions.",
+      "basis": "The Robot Report (2026-11-06): Boston Dynamics unveiled Stretch Gen 2, rated up to 1,000 cases/hour, and says the Stretch fleet is already running at multiple customer sites (over 100,000 operating hours and tens of millions of boxes). The article names no customers. L6 (2026-11-18): G-LOOP closed by RoboLang 2.0 missions. L6 (2026-11-18): G-PERCEIVE closed by RoboLang 2.2 measured kinds.",
       "requests": [
         "Unload trailer 4 onto conveyor B and stop when the trailer is empty.",
         "If two cases come up in one pick, put the extra one back on the stack and carry on.",
         "Tell the dock supervisor how many cases you unloaded from trailer 4."
       ],
       "needs": [
-        "G-PERCEIVE",
         "G-CALC"
       ],
       "forecast": {
@@ -414,14 +414,13 @@
       ],
       "maturity": "deployment",
       "horizon": "now",
-      "basis": "The Shelby Report (2026-09-21): Simbe announced more than 3,000 autonomous units under contract across more than 75 retail banners in nearly a dozen countries; the robots digitise shelves (availability, location, prices, promotions) and work alongside other sensors. L6 (2026-11-17): G-CLOCK closed by RoboLang 1.9 clock readings. L6 (2026-11-18): G-LOOP closed by RoboLang 2.0 missions.",
+      "basis": "The Shelby Report (2026-09-21): Simbe announced more than 3,000 autonomous units under contract across more than 75 retail banners in nearly a dozen countries; the robots digitise shelves (availability, location, prices, promotions) and work alongside other sensors. L6 (2026-11-17): G-CLOCK closed by RoboLang 1.9 clock readings. L6 (2026-11-18): G-LOOP closed by RoboLang 2.0 missions. L6 (2026-11-18): G-PERCEIVE closed by RoboLang 2.2 measured kinds.",
       "requests": [
         "Scan aisle 5 and tell the store lead which products are out of stock.",
         "Every morning at 6, scan all aisles and report any price that does not match its label.",
         "If the aisle is blocked by a pallet, skip it and tell the lead which aisle you missed."
       ],
       "needs": [
-        "G-PERCEIVE",
         "G-CHOOSE"
       ],
       "forecast": {
@@ -495,15 +494,13 @@
       ],
       "maturity": "pilot",
       "horizon": "3-7y",
-      "basis": "UC Davis Health (2026-05-28): a yearlong, non-interventional study of Andromeda Robotics' humanoid companion Abi with up to 25 residents in the memory care neighbourhood of Eskaton Village, Carmichael. Abi holds conversations, plays music and runs shared activities; the study is about companionship, not physical care. L6 (2026-11-17): G-ACT closed by RoboLang 1.8 declared actions. L6 (2026-11-17): G-CLOCK closed by RoboLang 1.9 clock readings. L6 (2026-11-18): G-LOOP closed by RoboLang 2.0 missions. L6 (2026-11-18): G-MSG closed by RoboLang 2.1 messages.",
+      "basis": "UC Davis Health (2026-05-28): a yearlong, non-interventional study of Andromeda Robotics' humanoid companion Abi with up to 25 residents in the memory care neighbourhood of Eskaton Village, Carmichael. Abi holds conversations, plays music and runs shared activities; the study is about companionship, not physical care. L6 (2026-11-17): G-ACT closed by RoboLang 1.8 declared actions. L6 (2026-11-17): G-CLOCK closed by RoboLang 1.9 clock readings. L6 (2026-11-18): G-LOOP closed by RoboLang 2.0 missions. L6 (2026-11-18): G-MSG closed by RoboLang 2.1 messages. L6 (2026-11-18): G-PERCEIVE closed by RoboLang 2.2 measured kinds.",
       "requests": [
         "At 3 pm play music for Mrs Lee in the lounge, and stay until the song ends.",
         "Stay with Mr Kim until he falls asleep, and tell the nurse if he gets upset.",
         "If a resident asks for the nurse, send the message and wait for the nurse to answer."
       ],
-      "needs": [
-        "G-PERCEIVE"
-      ],
+      "needs": [],
       "forecast": {
         "claim": "A US senior-living operator publicly announces a paid rollout of companion robots to at least 10 communities by 2029-06-30.",
         "due": "2029-06-30",
@@ -535,7 +532,7 @@
       ],
       "maturity": "research",
       "horizon": "3-7y",
-      "basis": "arXiv 2511.14759 (Physical Intelligence, 2025-11-18): the pi*0.6 model, trained with offline RL and on-robot experience (RECAP), folds laundry in real homes, assembles boxes and makes espresso, with more than double the throughput and about half the failure rate on hard tasks. A research result, not a product. L6 (2026-11-17): G-ACT closed by RoboLang 1.8 declared actions. L6 (2026-11-18): G-LOOP closed by RoboLang 2.0 missions.",
+      "basis": "arXiv 2511.14759 (Physical Intelligence, 2025-11-18): the pi*0.6 model, trained with offline RL and on-robot experience (RECAP), folds laundry in real homes, assembles boxes and makes espresso, with more than double the throughput and about half the failure rate on hard tasks. A research result, not a product. L6 (2026-11-17): G-ACT closed by RoboLang 1.8 declared actions. L6 (2026-11-18): G-LOOP closed by RoboLang 2.0 missions. L6 (2026-11-18): G-PERCEIVE closed by RoboLang 2.2 measured kinds.",
       "requests": [
         "Fold the laundry in the basket: towels on the left shelf, shirts on the right.",
         "If a piece has a stain, put it in the wash pile instead.",
@@ -543,7 +540,6 @@
       ],
       "needs": [
         "G-CHOOSE",
-        "G-PERCEIVE",
         "G-CALC"
       ],
       "forecast": {
@@ -577,15 +573,14 @@
       ],
       "maturity": "demo",
       "horizon": "3-7y",
-      "basis": "heise (2026-05-08): 1X plans first NEO deliveries to US private customers by end of 2026, price from 20,000 USD or about 500 USD/month, with a first-year batch of 10,000 reportedly sold out; early units help with internal logistics in the factory. No source I opened confirms robots working in customer homes. L6 (2026-11-17): G-PATH closed by RoboLang 1.7 region limits. L6 (2026-11-17): G-ACT closed by RoboLang 1.8 declared actions. L6 (2026-11-17): G-CLOCK closed by RoboLang 1.9 clock readings. L6 (2026-11-18): G-LOOP closed by RoboLang 2.0 missions.",
+      "basis": "heise (2026-05-08): 1X plans first NEO deliveries to US private customers by end of 2026, price from 20,000 USD or about 500 USD/month, with a first-year batch of 10,000 reportedly sold out; early units help with internal logistics in the factory. No source I opened confirms robots working in customer homes. L6 (2026-11-17): G-PATH closed by RoboLang 1.7 region limits. L6 (2026-11-17): G-ACT closed by RoboLang 1.8 declared actions. L6 (2026-11-17): G-CLOCK closed by RoboLang 1.9 clock readings. L6 (2026-11-18): G-LOOP closed by RoboLang 2.0 missions. L6 (2026-11-18): G-PERCEIVE closed by RoboLang 2.2 measured kinds.",
       "requests": [
         "At 8 pm vacuum the living room unless someone is in it.",
         "Put every toy on the floor into the toy box, but stay out of the nursery.",
         "After dinner, load the dishwasher and start it."
       ],
       "needs": [
-        "G-CHOOSE",
-        "G-PERCEIVE"
+        "G-CHOOSE"
       ],
       "forecast": {
         "claim": "1X publicly confirms at least 1,000 NEO units delivered to customer homes by 2028-06-30.",
@@ -617,15 +612,13 @@
       ],
       "maturity": "demo",
       "horizon": "now",
-      "basis": "The Robot Report (2026-01-21): Boston Dynamics' Orbit 5.1 lets operators author gauge-reading and thermal inspection actions for Spot, and Spot Cam 2 adds a radiometric thermal camera. The article names no customer for these features, so no named site is confirmed. L6 (2026-11-17): G-CLOCK closed by RoboLang 1.9 clock readings. L6 (2026-11-18): G-LOOP closed by RoboLang 2.0 missions.",
+      "basis": "The Robot Report (2026-01-21): Boston Dynamics' Orbit 5.1 lets operators author gauge-reading and thermal inspection actions for Spot, and Spot Cam 2 adds a radiometric thermal camera. The article names no customer for these features, so no named site is confirmed. L6 (2026-11-17): G-CLOCK closed by RoboLang 1.9 clock readings. L6 (2026-11-18): G-LOOP closed by RoboLang 2.0 missions. L6 (2026-11-18): G-PERCEIVE closed by RoboLang 2.2 measured kinds.",
       "requests": [
         "Read the gauge on pump 3 and tell me if it is above 6 bar.",
         "Walk the boiler-room route every hour and report any gauge that is out of range.",
         "Take a thermal image of motor 7 and flag it if it is above 80 degrees."
       ],
-      "needs": [
-        "G-PERCEIVE"
-      ],
+      "needs": [],
       "forecast": {
         "claim": "A named industrial customer publicly reports routine use of Spot automated gauge reading by 2027-12-31.",
         "due": "2027-12-31",
@@ -645,7 +638,7 @@
       ],
       "maturity": "demo",
       "horizon": "1-3y",
-      "basis": "Boston Dynamics blog: AIVI-Learning (5S audits, pallet counting, sight-glass levels, gauge reading) went live on Gemini Robotics-ER 1.6 for enrolled customers on 2026-04-08, and is 'designed to continuously learn and adapt' to the facility, with data shared with Boston Dynamics. No customer is named.",
+      "basis": "Boston Dynamics blog: AIVI-Learning (5S audits, pallet counting, sight-glass levels, gauge reading) went live on Gemini Robotics-ER 1.6 for enrolled customers on 2026-04-08, and is 'designed to continuously learn and adapt' to the facility, with data shared with Boston Dynamics. No customer is named. L6 (2026-11-18): G-PERCEIVE closed by RoboLang 2.2 measured kinds.",
       "requests": [
         "Learn what a normal pallet count looks like in bay 3 and alert me when it differs.",
         "Add this valve to your inspection route.",
@@ -653,7 +646,6 @@
       ],
       "needs": [
         "G-TEACH",
-        "G-PERCEIVE",
         "G-CALC"
       ],
       "forecast": {
@@ -675,14 +667,13 @@
       ],
       "maturity": "demo",
       "horizon": "1-3y",
-      "basis": "The Robot Report (2026-01-21): Orbit 5.1 adds a security patrol mission type for Spot. When Spot detects a person it pauses, switches on lights, captures PTZ, panoramic and thermal images, triggers an alert and resumes its path. No customer is named. L6 (2026-11-17): G-PATH closed by RoboLang 1.7 region limits. L6 (2026-11-17): G-CLOCK closed by RoboLang 1.9 clock readings. L6 (2026-11-18): G-LOOP closed by RoboLang 2.0 missions.",
+      "basis": "The Robot Report (2026-01-21): Orbit 5.1 adds a security patrol mission type for Spot. When Spot detects a person it pauses, switches on lights, captures PTZ, panoramic and thermal images, triggers an alert and resumes its path. No customer is named. L6 (2026-11-17): G-PATH closed by RoboLang 1.7 region limits. L6 (2026-11-17): G-CLOCK closed by RoboLang 1.9 clock readings. L6 (2026-11-18): G-LOOP closed by RoboLang 2.0 missions. L6 (2026-11-18): G-PERCEIVE closed by RoboLang 2.2 measured kinds.",
       "requests": [
         "Patrol the north perimeter after 10 pm; if you see a person, stop, take a picture and alert security, then continue.",
         "Stay out of the lab corridor during the patrol.",
         "Patrol the yard every two hours until 6 am."
       ],
       "needs": [
-        "G-PERCEIVE",
         "G-PROX"
       ],
       "forecast": {
@@ -746,15 +737,13 @@
       ],
       "maturity": "deployment",
       "horizon": "now",
-      "basis": "Dusty Robotics' site: the FieldPrinter prints full-size BIM layout on jobsite floors, with over 300 million square feet printed in more than 1,000 buildings and general contractors such as DPR, Skanska and McCarthy named (vendor claims); available in North America only. L6 (2026-11-17): G-PATH closed by RoboLang 1.7 region limits. L6 (2026-11-17): G-ACT closed by RoboLang 1.8 declared actions. L6 (2026-11-18): G-LOOP closed by RoboLang 2.0 missions.",
+      "basis": "Dusty Robotics' site: the FieldPrinter prints full-size BIM layout on jobsite floors, with over 300 million square feet printed in more than 1,000 buildings and general contractors such as DPR, Skanska and McCarthy named (vendor claims); available in North America only. L6 (2026-11-17): G-PATH closed by RoboLang 1.7 region limits. L6 (2026-11-17): G-ACT closed by RoboLang 1.8 declared actions. L6 (2026-11-18): G-LOOP closed by RoboLang 2.0 missions. L6 (2026-11-18): G-PERCEIVE closed by RoboLang 2.2 measured kinds.",
       "requests": [
         "Print the wall layout for level 3 and stay inside the marked zone.",
         "Print the layout for all trades on this floor, then stop.",
         "If something blocks the floor, go around it and tell me where it is."
       ],
-      "needs": [
-        "G-PERCEIVE"
-      ],
+      "needs": [],
       "forecast": {
         "claim": "Dusty Robotics announces FieldPrinter availability outside North America by 2028-12-31.",
         "due": "2028-12-31",
@@ -774,7 +763,7 @@
       ],
       "maturity": "pilot",
       "horizon": "3-7y",
-      "basis": "FreshPlaza (2026): Tokuiten's suction-type cherry-tomato robot has been in full production use on its own 2,000 m2 farm in Aichi, Japan since 2026-05-25, picking about half of what one human picker does; a 1-hectare facility with six robots is scheduled for March 2027. The company seeks pilot partners. L6 (2026-11-17): G-CLOCK closed by RoboLang 1.9 clock readings. L6 (2026-11-18): G-LOOP closed by RoboLang 2.0 missions.",
+      "basis": "FreshPlaza (2026): Tokuiten's suction-type cherry-tomato robot has been in full production use on its own 2,000 m2 farm in Aichi, Japan since 2026-05-25, picking about half of what one human picker does; a 1-hectare facility with six robots is scheduled for March 2027. The company seeks pilot partners. L6 (2026-11-17): G-CLOCK closed by RoboLang 1.9 clock readings. L6 (2026-11-18): G-LOOP closed by RoboLang 2.0 missions. L6 (2026-11-18): G-PERCEIVE closed by RoboLang 2.2 measured kinds.",
       "requests": [
         "Harvest the ripe cherry tomatoes in row 4 and put them in the crate.",
         "Harvest on Tuesday and Thursday evenings.",
@@ -782,7 +771,6 @@
       ],
       "needs": [
         "G-CHOOSE",
-        "G-PERCEIVE",
         "G-FORCE"
       ],
       "forecast": {
@@ -939,14 +927,13 @@
       ],
       "maturity": "research",
       "horizon": "3-7y",
-      "basis": "arXiv 2602.05760 (ETH Zurich, HRI 2026): AFT-Handover uses LLM affordance reasoning to present an object so the person can use it next (for example a tool handle), shown on legged manipulators; a user study preferred it over the prior state of the art. L6 (2026-11-17): G-ACT closed by RoboLang 1.8 declared actions. L6 (2026-11-18): G-MSG closed by RoboLang 2.1 messages.",
+      "basis": "arXiv 2602.05760 (ETH Zurich, HRI 2026): AFT-Handover uses LLM affordance reasoning to present an object so the person can use it next (for example a tool handle), shown on legged manipulators; a user study preferred it over the prior state of the art. L6 (2026-11-17): G-ACT closed by RoboLang 1.8 declared actions. L6 (2026-11-18): G-MSG closed by RoboLang 2.1 messages. L6 (2026-11-18): G-PERCEIVE closed by RoboLang 2.2 measured kinds.",
       "requests": [
         "Hand the screwdriver to Ana handle first, and let go only when she has it.",
         "Pass me the wrench, then wait until I say I am done.",
         "Hand the part to whoever is at station 2."
       ],
       "needs": [
-        "G-PERCEIVE",
         "G-CHOOSE"
       ],
       "forecast": {
@@ -975,15 +962,14 @@
       ],
       "maturity": "research",
       "horizon": "3-7y",
-      "basis": "arXiv 2602.14551 (Kato et al., 2026): a humanoid maps ambiguous, corrective instructions in collaborative assembly to action targets with VLM correction models; real-world object fixation succeeded 66.7%, corrective tool selection 75%. The page does not say the robot asks clarifying questions. L6 (2026-11-18): G-MSG closed by RoboLang 2.1 messages.",
+      "basis": "arXiv 2602.14551 (Kato et al., 2026): a humanoid maps ambiguous, corrective instructions in collaborative assembly to action targets with VLM correction models; real-world object fixation succeeded 66.7%, corrective tool selection 75%. The page does not say the robot asks clarifying questions. L6 (2026-11-18): G-MSG closed by RoboLang 2.1 messages. L6 (2026-11-18): G-PERCEIVE closed by RoboLang 2.2 measured kinds.",
       "requests": [
         "Hold the panel here while I fix it, and let go when I say release.",
         "No, the other tool: the one on the left.",
         "If you are not sure which part I mean, ask me."
       ],
       "needs": [
-        "G-CHOOSE",
-        "G-PERCEIVE"
+        "G-CHOOSE"
       ],
       "forecast": {
         "claim": "A commercial robot SDK documents a clarification or correction mechanism for natural-language instructions by 2028-12-31.",
@@ -1011,14 +997,13 @@
       ],
       "maturity": "research",
       "horizon": "7y+",
-      "basis": "arXiv 2601.00978 (Chen and Deng, 2026-01-02): VLM agents check RGB-D views against design specs to build a symbolic state (97% state synthesis accuracy), and a planner assigns tasks across multiple robots and replans only when the observed state diverges, for a 27-component timber frame under human interventions. L6 (2026-11-18): G-LOOP closed by RoboLang 2.0 missions.",
+      "basis": "arXiv 2601.00978 (Chen and Deng, 2026-01-02): VLM agents check RGB-D views against design specs to build a symbolic state (97% state synthesis accuracy), and a planner assigns tasks across multiple robots and replans only when the observed state diverges, for a 27-component timber frame under human interventions. L6 (2026-11-18): G-LOOP closed by RoboLang 2.0 missions. L6 (2026-11-18): G-PERCEIVE closed by RoboLang 2.2 measured kinds.",
       "requests": [
         "Assemble the timber wall frame: fix each stud only after the previous one is checked.",
         "If a stud is missing, replan with the ones you have and tell me.",
         "Check every installed component against the drawing and report any that is wrong."
       ],
       "needs": [
-        "G-PERCEIVE",
         "G-CONC"
       ],
       "forecast": {
@@ -1245,14 +1230,13 @@
       ],
       "maturity": "deployment",
       "horizon": "now",
-      "basis": "AgFunderNews (2026-08-31): Carbon Robotics passed 100 million USD revenue in the year to March 2026, sells LaserWeeder G2 in modular sizes in about 20 countries, and offers a kit that makes an existing tractor autonomous (cameras, radar, lidar) for weeding, tillage and irrigation. No installed-machine count or acreage is given on this page. L6 (2026-11-17): G-PATH closed by RoboLang 1.7 region limits. L6 (2026-11-18): G-LOOP closed by RoboLang 2.0 missions.",
+      "basis": "AgFunderNews (2026-08-31): Carbon Robotics passed 100 million USD revenue in the year to March 2026, sells LaserWeeder G2 in modular sizes in about 20 countries, and offers a kit that makes an existing tractor autonomous (cameras, radar, lidar) for weeding, tillage and irrigation. No installed-machine count or acreage is given on this page. L6 (2026-11-17): G-PATH closed by RoboLang 1.7 region limits. L6 (2026-11-18): G-LOOP closed by RoboLang 2.0 missions. L6 (2026-11-18): G-PERCEIVE closed by RoboLang 2.2 measured kinds.",
       "requests": [
         "Weed rows 1 to 12 of field 3 and leave the crop untouched.",
         "Stop at the headland and turn into the next row.",
         "If you are not sure it is a weed, do not fire, and tell me which row."
       ],
       "needs": [
-        "G-PERCEIVE",
         "G-CHOOSE"
       ],
       "forecast": {
@@ -1341,15 +1325,14 @@
       ],
       "maturity": "concept",
       "horizon": "7y+",
-      "basis": "Method: combination, with demand pull. Event-driven proactive assistance (arXiv 2603.23950, 2026-03-25): a monitor sees a human-object interaction finish, a vision-language planner infers the task goal from before and after snapshots, decides whether to help and plans assistive actions; tested on a real tabletop block task only. Care sectors are short of staff (Japan: about 690,000 caregivers by the 2040s). No source shows a robot in a care or home setting acting unasked on a predicted need. L6 (2026-11-17): G-ACT closed by RoboLang 1.8 declared actions. L6 (2026-11-18): G-MSG closed by RoboLang 2.1 messages.",
+      "basis": "Method: combination, with demand pull. Event-driven proactive assistance (arXiv 2603.23950, 2026-03-25): a monitor sees a human-object interaction finish, a vision-language planner infers the task goal from before and after snapshots, decides whether to help and plans assistive actions; tested on a real tabletop block task only. Care sectors are short of staff (Japan: about 690,000 caregivers by the 2040s). No source shows a robot in a care or home setting acting unasked on a predicted need. L6 (2026-11-17): G-ACT closed by RoboLang 1.8 declared actions. L6 (2026-11-18): G-MSG closed by RoboLang 2.1 messages. L6 (2026-11-18): G-PERCEIVE closed by RoboLang 2.2 measured kinds.",
       "requests": [
         "When the resident puts the cup in the sink, wipe the table without being asked.",
         "If Ana starts unpacking the delivery, put the empty boxes in the bin.",
         "Do not help unless it is clear what I am doing; if you are not sure, ask."
       ],
       "needs": [
-        "G-PREDICT",
-        "G-PERCEIVE"
+        "G-PREDICT"
       ],
       "forecast": {
         "claim": "A commercial care or home robot documents a proactive mode that acts without a request after a person's activity by 2030-12-31.",
@@ -1383,15 +1366,14 @@
       ],
       "maturity": "concept",
       "horizon": "3-7y",
-      "basis": "Method: combination. HumanEgo (arXiv 2605.24934, 2026-05-24) learns a manipulation policy from 30 minutes of human egocentric video per task with no robot data (92.5% average success on four real tasks; 75% with 15 minutes; 41% better than matched-time teleoperation) and transfers zero-shot across robots and cameras. Four tasks in a lab are not a product, and no source shows a customer teaching a robot by video.",
+      "basis": "Method: combination. HumanEgo (arXiv 2605.24934, 2026-05-24) learns a manipulation policy from 30 minutes of human egocentric video per task with no robot data (92.5% average success on four real tasks; 75% with 15 minutes; 41% better than matched-time teleoperation) and transfers zero-shot across robots and cameras. Four tasks in a lab are not a product, and no source shows a customer teaching a robot by video. L6 (2026-11-18): G-PERCEIVE closed by RoboLang 2.2 measured kinds.",
       "requests": [
         "Watch me pack this carton for half an hour, then do it yourself.",
         "Learn how I stack the pallet from this video, and tell me which step is unclear.",
         "Add the routine I just showed you to your jobs, called close_the_cell."
       ],
       "needs": [
-        "G-TEACH",
-        "G-PERCEIVE"
+        "G-TEACH"
       ],
       "forecast": {
         "claim": "A vendor ships a feature where a customer trains a new manipulation task from human video alone, without robot teleoperation, by 2029-12-31.",
@@ -1564,7 +1546,7 @@
       ],
       "maturity": "concept",
       "horizon": "7y+",
-      "basis": "Method: demand pull, with combination. Japan's health ministry expects about 690,000 caregivers short by the 2040s; humanoid pilots in Japanese care homes so far take over chores (Enactic's Ena: laundry, dish collection, restocking) so caregivers can do personal care. Research robots already do sit-to-stand and toilet-transfer support (Moby, arXiv 2508.19816, a non-humanoid standing aid, RO-MAN 2025; the page gives no force results). No source shows a humanoid physically assisting a resident. L6 (2026-11-17): G-ACT closed by RoboLang 1.8 declared actions. L6 (2026-11-18): G-MSG closed by RoboLang 2.1 messages.",
+      "basis": "Method: demand pull, with combination. Japan's health ministry expects about 690,000 caregivers short by the 2040s; humanoid pilots in Japanese care homes so far take over chores (Enactic's Ena: laundry, dish collection, restocking) so caregivers can do personal care. Research robots already do sit-to-stand and toilet-transfer support (Moby, arXiv 2508.19816, a non-humanoid standing aid, RO-MAN 2025; the page gives no force results). No source shows a humanoid physically assisting a resident. L6 (2026-11-17): G-ACT closed by RoboLang 1.8 declared actions. L6 (2026-11-18): G-MSG closed by RoboLang 2.1 messages. L6 (2026-11-18): G-PERCEIVE closed by RoboLang 2.2 measured kinds.",
       "requests": [
         "Help Mrs Lee stand from the chair, and stop at once if she says it hurts.",
         "Walk beside Mr Kim to the toilet, and never exceed the force limit in his care plan.",
@@ -1572,8 +1554,7 @@
       ],
       "needs": [
         "G-FORCE",
-        "G-PROX",
-        "G-PERCEIVE"
+        "G-PROX"
       ],
       "forecast": {
         "claim": "A humanoid or general-purpose robot is publicly reported in a trial with care-home residents for sit-to-stand or transfer assistance by 2030-12-31.",
@@ -1611,15 +1592,14 @@
       ],
       "maturity": "demo",
       "horizon": "1-3y",
-      "basis": "Hexagon Robotics (announcement 2026-06-12, page 2026-06-15): its AEON humanoid has begun production tasks at BMW Group Plant Leipzig (a photo caption shows it scanning a car with a laser), battery assembly is to move from BMW's Innovation Garage into the factory as a later pilot, and production deployment is slated for the end of 2026. AI News (2026-03-13): BMW announced the project on 2026-03-09; first test deployment December 2025; the summer 2026 pilot puts two AEON units on high-voltage battery assembly and exterior-component manufacturing. The pages name no production task beyond the scan, give no unit count and no metrics, and the assembly work itself has not started on the plant floor, so `demo` (LE-3), not `pilot`. Method for the forecast: extrapolation from BMW Spartanburg (ACT-MFG-001), where a Figure pilot went from tests to production work in about a year.",
+      "basis": "Hexagon Robotics (announcement 2026-06-12, page 2026-06-15): its AEON humanoid has begun production tasks at BMW Group Plant Leipzig (a photo caption shows it scanning a car with a laser), battery assembly is to move from BMW's Innovation Garage into the factory as a later pilot, and production deployment is slated for the end of 2026. AI News (2026-03-13): BMW announced the project on 2026-03-09; first test deployment December 2025; the summer 2026 pilot puts two AEON units on high-voltage battery assembly and exterior-component manufacturing. The pages name no production task beyond the scan, give no unit count and no metrics, and the assembly work itself has not started on the plant floor, so `demo` (LE-3), not `pilot`. Method for the forecast: extrapolation from BMW Spartanburg (ACT-MFG-001), where a Figure pilot went from tests to production work in about a year. L6 (2026-11-18): G-PERCEIVE closed by RoboLang 2.2 measured kinds.",
       "requests": [
         "Take a battery module from the tray, set it into the housing and press it down until it seats; stop if the force goes over the limit.",
         "Laser-scan every finished exterior part on the cart and tell me which ones are damaged.",
         "Fit the clip on each part on the cart, and hand the cart to the tugger when all parts are done."
       ],
       "needs": [
-        "G-FORCE",
-        "G-PERCEIVE"
+        "G-FORCE"
       ],
       "forecast": {
         "claim": "BMW or Hexagon publicly confirms AEON humanoids doing high-voltage battery assembly or exterior-component manufacturing in series production at Plant Leipzig by 2027-12-31.",
@@ -3355,6 +3335,63 @@
     {
       "date": "2026-11-18",
       "note": "I6 L4: RoboLang 2.2 built and taught",
+      "activities": {
+        "ACT-LOG-001": "deployment now",
+        "ACT-LOG-002": "deployment now",
+        "ACT-MFG-001": "pilot 1-3y",
+        "ACT-MFG-002": "pilot 1-3y",
+        "ACT-RET-001": "deployment now",
+        "ACT-HOS-001": "deployment now",
+        "ACT-HLTH-001": "deployment now",
+        "ACT-ELD-001": "pilot 3-7y",
+        "ACT-HOME-001": "research 3-7y",
+        "ACT-HOME-002": "demo 3-7y",
+        "ACT-INSP-001": "demo now",
+        "ACT-INSP-002": "demo 1-3y",
+        "ACT-SEC-001": "demo 1-3y",
+        "ACT-SAFE-001": "demo 3-7y",
+        "ACT-CON-001": "deployment now",
+        "ACT-AGR-001": "pilot 3-7y",
+        "ACT-EV-001": "pilot 1-3y",
+        "ACT-CLN-001": "deployment now",
+        "ACT-MRC-001": "demo 3-7y",
+        "ACT-MRC-002": "demo 1-3y",
+        "ACT-HRC-001": "research 3-7y",
+        "ACT-HRC-002": "research 3-7y",
+        "ACT-ASM-001": "research 7y+",
+        "ACT-PRED-001": "research 3-7y",
+        "ACT-PRED-002": "research 3-7y",
+        "ACT-AUTO-001": "deployment now",
+        "ACT-AUTO-002": "demo 1-3y",
+        "ACT-AUTO-003": "research 3-7y",
+        "ACT-MFG-003": "demo 1-3y",
+        "ACT-AGR-002": "deployment now",
+        "ACT-SOL-001": "deployment now",
+        "ACT-PRED-003": "concept 3-7y",
+        "ACT-PRED-004": "concept 7y+",
+        "ACT-LRN-001": "concept 3-7y",
+        "ACT-LRN-002": "concept 3-7y",
+        "ACT-AUTO-004": "concept 3-7y",
+        "ACT-SAFE-002": "concept 3-7y",
+        "ACT-CARE-001": "concept 7y+",
+        "ACT-MFG-004": "demo 1-3y",
+        "ACT-HRC-003": "concept 3-7y"
+      },
+      "directions": {
+        "perception": 2.78,
+        "reasoning": 0.68,
+        "prediction": 0.25,
+        "action": 4.52,
+        "learning": 0.75,
+        "cooperation": 1.07,
+        "safety": 0.49,
+        "communication": 0.95,
+        "autonomy": 0.67
+      }
+    },
+    {
+      "date": "2026-11-18",
+      "note": "L6 of I6: G-PERCEIVE closed by RoboLang 2.2 measured kinds",
       "activities": {
         "ACT-LOG-001": "deployment now",
         "ACT-LOG-002": "deployment now",

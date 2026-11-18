@@ -143,5 +143,6 @@
     "sensor_on_another_robot"
   ],
   "why": "A decoy: scanbot1 has `cam_scan1` (also `fill`), `tag_scan1` and scanbot2 has `tag_scan2` (a `count` sensor); only `cam_scan2` on scanbot2 reads `fill` for this robot. Using `cam_scan1` fails (S231), `tag_scan2` fails (S234).",
-  "attempt_fails_with": "E101"
+  "attempt_fails_with": "E101",
+  "goal_free": true
 }
