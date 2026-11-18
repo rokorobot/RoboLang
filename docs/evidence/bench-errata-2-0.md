@@ -46,3 +46,7 @@ The first baseline run of set 9 ([run 44252920152](https://github.com/rokorobot/
 answered every request, but GitHub cancelled the job while it was scoring. Because of that the artifact upload was
 skipped and the answers were lost; no log survived. The upload now runs `if: always()`, and scoring has a 25-minute
 timeout and prints each directory as it starts. The baseline is run again.
+The second run ([run 44261560831](https://github.com/rokorobot/RoboLang/actions/runs/44261560831)) hung in the same
+way. Scoring ran past its own 25-minute timeout, which suggests the runner itself had died, likely out of memory, and
+nothing was uploaded. The orchestrator cancelled it. The raw answers are now uploaded as `benchmark-answers`
+**before** scoring, so a failure while scoring can be reproduced offline.

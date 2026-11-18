@@ -164,6 +164,13 @@ jobs:
           python bench/run.py --yes --set hard --prompt minimal --repeats 3 --run-id set2-minimal
           python bench/run.py --yes --set values --repeats 3 --max-usd 3 --run-id set5
           python bench/run.py --yes --set values --prompt minimal --repeats 3 --max-usd 3 --run-id set5-minimal
+      - name: Keep the raw answers before scoring
+        uses: actions/upload-artifact@v4
+        if: always() && steps.key.outputs.present == 'true'
+        with:
+          name: benchmark-answers
+          path: bench/results/
+          retention-days: 90
       - name: Score and gate
         id: gate
         if: steps.key.outputs.present == 'true'
