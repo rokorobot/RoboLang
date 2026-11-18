@@ -591,22 +591,22 @@ def test_erratum_k6_relabels_the_two_ask_tasks_as_infeasible_and_keeps_the_old_l
 
 # -------- the atlas --------
 
-def test_only_what_2_2_still_declines_is_in_an_atlas_gap_and_g_perceive_stays_open_until_l6():
+def test_only_what_2_2_still_declines_is_in_an_atlas_gap_and_g_perceive_is_closed():
     in_gaps = [(t, g["id"]) for g in ATLAS["gaps"] for t in g["tasks"] if t in SET]
     assert len(in_gaps) == len({t for t, _ in in_gaps}) == len(INEXPRESSIBLE) == 5
     assert {t for t, _ in in_gaps} == set(INEXPRESSIBLE)  # the programs and the infeasible tasks are in no gap
     for task_id, gap in in_gaps:
         assert INEXPRESSIBLE[task_id]["gap"] == gap and GAPS[gap]["scope"] == "open"
     assert Counter(gap for _, gap in in_gaps) == {"G-QUALITY": 1, "G-SELF": 1, "G-CHOOSE": 1, "G-CALC": 1, "G-PROX": 1}
-    assert GAPS["G-PERCEIVE"]["scope"] == "open" and GAPS["G-PERCEIVE"]["tasks"] == []  # closes at L6 of I6
-    assert "RoboLang 2.2" in GAPS["G-PERCEIVE"]["scope_note"]
+    assert GAPS["G-PERCEIVE"]["scope"] == "closed" and GAPS["G-PERCEIVE"]["tasks"] == []  # L6 of I6
+    assert GAPS["G-PERCEIVE"]["closed_in"] == "RoboLang 2.2"
     quality = GAPS["G-QUALITY"]  # D14: far, open
     assert quality["scope"] == "open" and quality["tasks"] == ["x01_packaging_looks_worn"]
     assert quality["direction"] == "perception" and "no sensor kind declares" in quality["name"]
     assert not {"x_count_report", "x_count_and_send"} & set(GAPS["G-CALC"]["tasks"])  # relabelled: programs now
     notes = [h["note"] for h in ATLAS["history"]]
     assert "I6 L3: set 11 kinds pre-registered (24 tasks)" in notes
-    assert notes[-1] == "I6 L4: RoboLang 2.2 built and taught"
+    assert "I6 L4: RoboLang 2.2 built and taught" in notes
 
 
 # -------- the scorer and the workflow --------

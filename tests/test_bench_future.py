@@ -98,11 +98,8 @@ def test_every_task_names_a_near_activity_and_every_probe_an_open_gap_that_activ
             assert "gap" not in task
             continue
         gap = GAPS[task["gap"]]
-        if task["group"] in ("region", "action", "clock", "message"):  # 1.7-2.1 programs: gaps closed at L6
+        if task["group"] in ("region", "action", "clock", "message", "kind"):  # 1.7-2.2 programs: gaps closed at L6
             assert gap["scope"] == "closed" and task_id not in gap["tasks"], task_id
-            continue
-        if task["group"] == "kind":  # a 2.2 program (0044): its gap is open until L6 of I6, and it left the atlas
-            assert gap["scope"] == "open" and task_id not in gap["tasks"] and task["gap"] == "G-PERCEIVE", task_id
             continue
         assert gap["scope"] == "open" and task["gap"] != "G-LOOP", task_id
         assert task["gap"] in activity["needs"], f"{task_id}: {task['activity']} does not claim {task['gap']}"
@@ -117,10 +114,9 @@ def test_every_task_names_a_near_activity_and_every_probe_an_open_gap_that_activ
 def test_every_gap_a_near_activity_claims_is_probed_except_the_proven_loop():
     claimed = {g for a in ATLAS["activities"] if atlas_report.is_near(a) for g in a["needs"]
                if GAPS[g]["scope"] == "open" and g != "G-LOOP"}  # G-LOOP: 12 standing tasks prove it; reopened by 0041
-    # G-MSG: built in 2.1, closes at L6 of I5; G-PERCEIVE: built in 2.2, open until L6 of I6 (no probe is left in it)
-    assert claimed - {"G-MSG", "G-PERCEIVE"} == {t["gap"] for t in PROBES.values()}
+    assert claimed == {t["gap"] for t in PROBES.values()}
     assert {t["gap"] for t in MESSAGES.values()} == {"G-MSG"} and GAPS["G-MSG"]["scope"] == "closed"  # L6 of I5
-    assert {t["gap"] for t in KINDS.values()} == {"G-PERCEIVE"} and GAPS["G-PERCEIVE"]["scope"] == "open"
+    assert {t["gap"] for t in KINDS.values()} == {"G-PERCEIVE"} and GAPS["G-PERCEIVE"]["scope"] == "closed"  # L6 of I6
     assert {t["gap"] for t in CLOCKS.values()} == {"G-CLOCK"} and GAPS["G-CLOCK"]["scope"] == "closed"  # L6 of I3
     assert {t["gap"] for t in ACTIONS.values()} == {"G-ACT"} and GAPS["G-ACT"]["scope"] == "closed"  # L6 of I2
     assert {t["gap"] for t in REGIONS.values()} == {"G-PATH"} and GAPS["G-PATH"]["scope"] == "closed"

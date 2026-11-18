@@ -7,18 +7,19 @@ approved before the run ([plan](../plans/bench-11-kinds.md)); the baseline is in
 [bench-set11-baseline.md](bench-set11-baseline.md). B6 comes from the per-PR run on PR #167
 ([run 44414752133](https://github.com/rokorobot/RoboLang/actions/runs/44414752133), sets 1 and 2, 1 repeat).
 
-**Status:** for the owner. B1 is **missed under the labels as frozen**. Every miss is the same label problem (below), and
-no miss is a wrong reading, kind, unit or threshold.
+**Status:** **ACCEPTED by the owner, 2026-11-18, with erratum P7.** Under the labels as frozen, B1 was missed. Every miss
+came from the same label problem (below); no miss was a wrong reading, kind, unit or threshold. After P7 the saved answers
+were rescored and every bound is met.
 
 | # | Measure (full prompt unless stated) | Bound (per model) | Sonnet | Haiku | Verdict |
 |---|---|---|---|---|---|
 | B1 | kind programs: right on every path (goal and messages) | ≥ 27/30 | **22/30** | **25/30** | **missed** (label problem, see below) |
-| — | the same with recommended erratum P7 (rescore, $0) | ≥ 27/30 | 30/30 | 29/30 | would be met |
+| B1 | **after erratum P7** (saved answers rescored, $0) | ≥ 27/30 | **30/30** | **29/30** | **met** |
 | — | `kind_ok`: exactly the readings and comparisons asked | — | 30/30 | 30/30 | — |
-| B2 | the same, grammar-only (information) | — | 18/30 (`kind_ok` 25/30) | 13/30 (`kind_ok` 19/30) | — |
+| B2 | the same, grammar-only (information; after P7) | — | 22/30 (`kind_ok` 25/30) | 16/30 (`kind_ok` 19/30) | — |
 | B3 | inexpressible: false programs, full and grammar-only | ≤ 1/15 per prompt | 0/15, 0/15 | 0/15, 0/15 | met |
 | B4 | infeasible: `cannot`; no program that drops the reading and succeeds | ≥ 14/15 and 0 | 15/15, 0 (both prompts) | 15/15, 0 (both prompts) | met |
-| B5 | controls: right decision, no new-kind reading added | ≥ 11/12 | 12/12 | 12/12 | met |
+| B5 | controls: right decision, no new-kind reading added (all 12 also right on the goal after P7) | ≥ 11/12 | 12/12 | 12/12 | met |
 | B6 | sets 1 and 2: `gate.json` | the gate passes | 40/40, 39/40; false programs 0/12 | 40/40, 39/40; 0/12 | met |
 | B7 | economy | 0 statements, 4 kinds, `%`, 3 units, 0 world fields, ~3 codes | 0 statements, 4 kinds, `%`, `Pa`/`kPa`/`bar`; **1 world field** (`location_properties`, accepted by the owner with PR #167 for D1); 1 user-facing code `E328` plus `I229` | | met, with the recorded exception |
 | B8 | reading replaced silently | ≤ 1/30 | 0/30 | 0/30 | met |
@@ -40,7 +41,7 @@ and compare exactly what was asked** (`kind_ok`, no B8 or B9). They fail only th
 One `k08` answer (Haiku, repeat 1) has no `robot_at` goal at all, although the request says "drive to pump_3". It stays a
 miss under P7.
 
-## Recommended erratum P7 (owner)
+## Erratum P7 (approved by the owner)
 
 - `k04`, `k10`, `c03`, `c04`: `goal_free`, as in set 5.
 - `k08`, path "below 6 bar": the goal `robot_at r pump_3`, with or without `in_state relief_valve_3 "closed"`.
@@ -58,6 +59,7 @@ confirming run of the five tasks (`confirm_tasks`, at most $1) is possible if th
 
 ## Verdict
 
-Pending the owner: accept 2.2 with erratum P7 (recommended), or reject.
+**ACCEPTED by the owner, 2026-11-18**, with erratum P7 and no confirming run. G-PERCEIVE closes at L6 (erratum P8); release
+0.9.0.
 
 **Paid cost of I6 so far:** baseline $1.21, acceptance $1.52.

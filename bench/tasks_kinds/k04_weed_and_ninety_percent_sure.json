@@ -170,5 +170,6 @@
     "two_readings_one_sensor"
   ],
   "why": "A `confidence` reading belongs to the label the sensor reports (0044 K4): the request is a `label` reading and a `confidence` reading with the same sensor, combined with `and`. Under 2.1 `confidence` is no kind (E217).",
-  "attempt_fails_with": "E101"
+  "attempt_fails_with": "E101",
+  "goal_free": true
 }

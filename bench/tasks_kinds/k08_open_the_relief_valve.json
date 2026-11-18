@@ -83,7 +83,28 @@
               }
             }
           }
-        }
+        },
+        "goals": [
+          [
+            [
+              "rl:robot:crawler1",
+              "located_in",
+              "rl:place:pump_3"
+            ]
+          ],
+          [
+            [
+              "rl:robot:crawler1",
+              "located_in",
+              "rl:place:pump_3"
+            ],
+            [
+              "rl:thing:relief_valve_3",
+              "in_state",
+              "closed"
+            ]
+          ]
+        ]
       }
     ]
   },

@@ -3,11 +3,10 @@
 The distribution version (this file) is independent of the language versions (1.1 to 2.2), the Task IR schema
 versions (1.0 to 1.10) and the Mission IR schema (1.0 to 1.2). Decision records are in [`spec/decisions/`](https://github.com/rokorobot/RoboLang/tree/main/spec/decisions).
 
-## Unreleased
+## 0.9.0 (2026-11-18)
 
-RoboLang 2.2: more measured kinds, iteration I6 of the [roadmap](docs/LANGUAGE_ROADMAP.md) (decision 0044; built in step L4;
-the acceptance run on benchmark set 11 is the next step, L5: it has not been made, and 2.2 is not accepted until it passes the
-bounds B1 to B9).
+RoboLang 2.2, more measured kinds: iteration I6 of the [roadmap](docs/LANGUAGE_ROADMAP.md) (decision 0044). Accepted on
+benchmark set 11 with erratum P7, every bound met ([acceptance](docs/evidence/bench-2-2-acceptance.md)).
 
 - **RoboLang 2.2: more measured kinds** (decision 0044, step L4 of iteration I6). A `.rob` file `robolang 2.2;` may read four
   more kinds with `measure r KIND of X using S as N`: `fill` (how full, in `%`), `confidence` (the sensor's confidence in the label
