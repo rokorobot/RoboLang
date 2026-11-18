@@ -27,7 +27,7 @@ headed, and what a near design must not rule out. It never gives syntax by itsel
 | 1 | action | 4.52 | 0.00 | 1.01 | 21 | — |
 | 2 | perception | 2.78 | 10.16 | 0.45 | 11 | G-CHOOSE, G-PERCEIVE |
 | 3 | cooperation | 1.07 | 1.00 | 1.81 | 13 | G-CONC |
-| 4 | communication | 0.95 | 4.02 | 0.52 | 6 | G-MSG |
+| 4 | communication | 0.95 | 0.00 | 0.52 | 6 | — |
 | 5 | learning | 0.75 | 0.65 | 0.70 | 6 | — |
 | 6 | reasoning | 0.68 | 1.55 | 0.88 | 7 | G-CALC |
 | 7 | autonomy | 0.67 | 1.50 | 0.38 | 4 | G-SELF |
@@ -43,12 +43,11 @@ first (strategy D5). An `out` gap enters only through its own decision record (L
 
 | # | Gap | Direction | Scope | Priority | Unlocked | Why here |
 |---|---|---|---|---|---|---|
-| 1 | `G-MSG` | communication | open | 4.02 | 2.37 | unlocks the most |
-| 2 | `G-PERCEIVE` | perception | open | 4.94 | 3.74 | unlocks the most |
-| 3 | `G-CHOOSE` | perception | open | 5.23 | 5.95 | unlocks the most |
-| 4 | `G-SELF` | autonomy | open | 1.50 | 7.45 | unlocks the most |
-| 5 | `G-CALC` | reasoning | open | 1.55 | 8.62 | unlocks the most |
-| 6 | `G-CONC` | cooperation | open | 1.00 | 9.62 | unlocks the most |
+| 1 | `G-PERCEIVE` | perception | open | 4.94 | 3.74 | unlocks the most |
+| 2 | `G-CHOOSE` | perception | open | 5.23 | 5.95 | unlocks the most |
+| 3 | `G-SELF` | autonomy | open | 1.50 | 7.45 | unlocks the most |
+| 4 | `G-CALC` | reasoning | open | 1.55 | 8.62 | unlocks the most |
+| 5 | `G-CONC` | cooperation | open | 1.00 | 9.62 | unlocks the most |
 
 ## Future direction
 
@@ -62,21 +61,21 @@ roadmap, funding, standard, demand, forecast.
 | `ACT-AUTO-003` Self-diagnosis, safe degradation and service requests | autonomy, safety | research | 3-7y | 0.45 | G-SELF | [research](https://arxiv.org/abs/2602.01515) [roadmap](https://en.edaily.co.kr/news/eda202606185436/) |
 | `ACT-PRED-002` Checking a plan with a world model before acting | prediction, learning | research | 3-7y | 0.45 | G-PREDICT, G-CHOOSE | [research](https://arxiv.org/abs/2606.13672) |
 | `ACT-HOME-002` General household chores by a home humanoid | action, reasoning | demo | 3-7y | 0.40 | G-CHOOSE, G-PERCEIVE | [research](https://arxiv.org/abs/2604.15483) [forecast](https://humanoid.guide/goldman-raises-2035-humanoid-robot-forecast-to-6-5-million/) |
-| `ACT-HRC-002` Following ambiguous and corrective instructions during shared work | reasoning, cooperation | research | 3-7y | 0.40 | G-MSG, G-CHOOSE, G-PERCEIVE | [research](https://arxiv.org/abs/2602.14551) |
-| `ACT-HRC-003` Handing a stuck job to a remote operator and taking it back | cooperation, communication | concept | 3-7y | 0.40 | G-SELF, G-MSG | [roadmap](https://roadtovr.com/helper-robot-neo-vr-telepresence/) [roadmap](https://sacra.com/chat/h/93dc70de-7775-4bc2-b477-ce4cd741da03/) [research](https://arxiv.org/abs/2605.00416) |
+| `ACT-HRC-002` Following ambiguous and corrective instructions during shared work | reasoning, cooperation | research | 3-7y | 0.40 | G-CHOOSE, G-PERCEIVE | [research](https://arxiv.org/abs/2602.14551) |
+| `ACT-HRC-003` Handing a stuck job to a remote operator and taking it back | cooperation, communication | concept | 3-7y | 0.40 | G-SELF | [roadmap](https://roadtovr.com/helper-robot-neo-vr-telepresence/) [roadmap](https://sacra.com/chat/h/93dc70de-7775-4bc2-b477-ce4cd741da03/) [research](https://arxiv.org/abs/2605.00416) |
 | `ACT-PRED-001` Anticipating a coworker's next movement | prediction, cooperation | research | 3-7y | 0.40 | G-PREDICT, G-PROX | [research](https://arxiv.org/abs/2604.03065) |
-| `ACT-HRC-001` Task-oriented object handover to a person | cooperation, communication | research | 3-7y | 0.35 | G-PERCEIVE, G-MSG, G-CHOOSE | [research](https://arxiv.org/abs/2602.05760v1) |
+| `ACT-HRC-001` Task-oriented object handover to a person | cooperation, communication | research | 3-7y | 0.35 | G-PERCEIVE, G-CHOOSE | [research](https://arxiv.org/abs/2602.05760v1) |
 | `ACT-LRN-001` Learning a new task from half an hour of a worker's video | learning, action | concept | 3-7y | 0.35 | G-TEACH, G-PERCEIVE | [research](https://arxiv.org/abs/2605.24934) [funding](https://dealroom.co/news/127095-robot-ai-startup-physical-intelligence-seeks-1b-at-11b-valuation/) |
-| `ACT-MRC-001` Mixed robot teams on one workflow | cooperation, reasoning | demo | 3-7y | 0.35 | G-CONC, G-CHOOSE, G-MSG | [roadmap](https://deepmind.google/blog/gemini-robotics-2-brings-whole-body-intelligence-to-robots/) [standard](https://www.therobotreport.com/new-iso-interoperability-standard-covers-collaboration-among-mobile-robots-from-multiple-vendors/) |
-| `ACT-PRED-003` Forecasting its own failure and asking before it happens | prediction, reasoning | concept | 3-7y | 0.35 | G-PREDICT, G-MSG | [research](https://arxiv.org/abs/2604.16677) [roadmap](https://deepmind.google/blog/gemini-robotics-2-brings-whole-body-intelligence-to-robots/) |
-| `ACT-AUTO-004` Mid-shift relief: a low-battery robot hands its job to a peer | autonomy, cooperation | concept | 3-7y | 0.30 | G-SELF, G-MSG, G-CHOOSE | [research](https://arxiv.org/abs/2603.22731) [roadmap](https://newatlas.com/ai-humanoids/walker-s2-humanoid-robot-swaps-batteries) [standard](https://www.therobotreport.com/new-iso-interoperability-standard-covers-collaboration-among-mobile-robots-from-multiple-vendors/) |
-| `ACT-ELD-001` Companion robot in dementia and memory care | communication, perception | pilot | 3-7y | 0.30 | G-PERCEIVE, G-MSG | [demand](https://e27.co/when-the-carer-has-dementia-too-japan-turns-to-physical-ai-to-rescue-eldercare-20261007/) [roadmap](https://e27.co/when-the-carer-has-dementia-too-japan-turns-to-physical-ai-to-rescue-eldercare-20261007/) |
+| `ACT-MRC-001` Mixed robot teams on one workflow | cooperation, reasoning | demo | 3-7y | 0.35 | G-CONC, G-CHOOSE | [roadmap](https://deepmind.google/blog/gemini-robotics-2-brings-whole-body-intelligence-to-robots/) [standard](https://www.therobotreport.com/new-iso-interoperability-standard-covers-collaboration-among-mobile-robots-from-multiple-vendors/) |
+| `ACT-PRED-003` Forecasting its own failure and asking before it happens | prediction, reasoning | concept | 3-7y | 0.35 | G-PREDICT | [research](https://arxiv.org/abs/2604.16677) [roadmap](https://deepmind.google/blog/gemini-robotics-2-brings-whole-body-intelligence-to-robots/) |
+| `ACT-AUTO-004` Mid-shift relief: a low-battery robot hands its job to a peer | autonomy, cooperation | concept | 3-7y | 0.30 | G-SELF, G-CHOOSE | [research](https://arxiv.org/abs/2603.22731) [roadmap](https://newatlas.com/ai-humanoids/walker-s2-humanoid-robot-swaps-batteries) [standard](https://www.therobotreport.com/new-iso-interoperability-standard-covers-collaboration-among-mobile-robots-from-multiple-vendors/) |
+| `ACT-ELD-001` Companion robot in dementia and memory care | communication, perception | pilot | 3-7y | 0.30 | G-PERCEIVE | [demand](https://e27.co/when-the-carer-has-dementia-too-japan-turns-to-physical-ai-to-rescue-eldercare-20261007/) [roadmap](https://e27.co/when-the-carer-has-dementia-too-japan-turns-to-physical-ai-to-rescue-eldercare-20261007/) |
 | `ACT-HOME-001` Laundry folding in the home | learning, action | research | 3-7y | 0.30 | G-CHOOSE, G-PERCEIVE, G-CALC | [research](https://arxiv.org/abs/2604.15483) [funding](https://dealroom.co/news/127095-robot-ai-startup-physical-intelligence-seeks-1b-at-11b-valuation/) |
 | `ACT-LRN-002` One taught skill, any robot on the site | learning, cooperation | concept | 3-7y | 0.30 | G-TEACH, G-CHOOSE | [roadmap](https://deepmind.google/blog/gemini-robotics-2-brings-whole-body-intelligence-to-robots/) [research](https://arxiv.org/abs/2605.24934) |
 | `ACT-SAFE-002` A safety layer under a learned policy that vetoes unsafe moves | safety, action | concept | 3-7y | 0.30 | G-PROX, G-FORCE | [research](https://arxiv.org/abs/2606.09749) [standard](https://www.din.de/en/getting-involved/standards-committees/nam/projects/wdc-proj:din21:400666335) [roadmap](https://letsdatascience.com/news/agility-robotics-previews-cage-free-digit-v5-847ce6a1) |
 | `ACT-ASM-001` Robot-team structural assembly with symbolic replanning | reasoning, cooperation | research | 7y+ | 0.25 | G-PERCEIVE, G-CONC | [research](https://arxiv.org/abs/2601.00978v1) [demand](https://ecmweb.com/construction/news/55344103/construction-industry-must-attract-349000-workers-in-2026) |
-| `ACT-PRED-004` Helping before being asked: acting on a predicted need | prediction, cooperation | concept | 7y+ | 0.15 | G-PREDICT, G-PERCEIVE, G-MSG | [research](https://arxiv.org/abs/2603.23950) [demand](https://e27.co/when-the-carer-has-dementia-too-japan-turns-to-physical-ai-to-rescue-eldercare-20261007/) |
-| `ACT-CARE-001` Physical help with standing and transfers in care homes | safety, action, cooperation | concept | 7y+ | 0.12 | G-FORCE, G-PROX, G-PERCEIVE, G-MSG | [demand](https://e27.co/when-the-carer-has-dementia-too-japan-turns-to-physical-ai-to-rescue-eldercare-20261007/) [roadmap](https://e27.co/when-the-carer-has-dementia-too-japan-turns-to-physical-ai-to-rescue-eldercare-20261007/) [research](https://arxiv.org/abs/2508.19816) |
+| `ACT-PRED-004` Helping before being asked: acting on a predicted need | prediction, cooperation | concept | 7y+ | 0.15 | G-PREDICT, G-PERCEIVE | [research](https://arxiv.org/abs/2603.23950) [demand](https://e27.co/when-the-carer-has-dementia-too-japan-turns-to-physical-ai-to-rescue-eldercare-20261007/) |
+| `ACT-CARE-001` Physical help with standing and transfers in care homes | safety, action, cooperation | concept | 7y+ | 0.12 | G-FORCE, G-PROX, G-PERCEIVE | [demand](https://e27.co/when-the-carer-has-dementia-too-japan-turns-to-physical-ai-to-rescue-eldercare-20261007/) [roadmap](https://e27.co/when-the-carer-has-dementia-too-japan-turns-to-physical-ai-to-rescue-eldercare-20261007/) [research](https://arxiv.org/abs/2508.19816) |
 
 ## Development log
 
@@ -85,6 +84,7 @@ before.
 
 | Date | Note | Added | Removed | Changed | Ranking |
 |---|---|---|---|---|---|
+| 2026-11-18 | L6 of I5: G-MSG closed by RoboLang 2.1 messages | — | — | — | 1. action 4.52 · 2. perception 2.78 · 3. cooperation 1.07 · 4. communication 0.95 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
 | 2026-11-18 | I5 L5: 2.1 accepted; x05 declined again (erratum N3, G-EVENTGOAL out) | — | — | — | 1. action 4.52 · 2. perception 2.78 · 3. cooperation 1.07 · 4. communication 0.95 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
 | 2026-11-18 | I5 L4: RoboLang 2.1 built and taught | — | — | — | 1. action 4.52 · 2. perception 2.78 · 3. cooperation 1.07 · 4. communication 0.95 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
 | 2026-11-18 | I5 L3 done: set 10 frozen; bounds and clarifications approved; G-DELIVERY out (C13) | — | — | — | 1. action 4.52 · 2. perception 2.78 · 3. cooperation 1.07 · 4. communication 0.95 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
@@ -121,24 +121,24 @@ before.
 | `ACT-AUTO-001` Self-charging on long inspection missions | deployment | now | 0.65 | 0.65 | G-SELF, G-CHOOSE | [1](https://bostondynamics.com/blog/making-every-step-count-with-spot/) |
 | `ACT-LOG-001` Humanoid tote handling in fulfilment centres | deployment | now | 0.60 | 0.60 | G-CALC, G-CHOOSE | [1](https://www.dcvelocity.com/material-handling/robotics/gxo-to-expand-use-of-humanoid-robots-from-agility) |
 | `ACT-CLN-001` Scheduled autonomous floor cleaning | deployment | now | 0.55 | 0.55 | — | [1](https://www.roboticstomorrow.com/news/2026/04/07/brain-corp-launches-brainos-clean-20-with-selfpath-ai-advancing-adaptive-autonomy-for-tennant-company-floor-cleaning-robots/26371/) |
-| `ACT-HLTH-001` Hospital delivery and supply runs for nurses and pharmacy | deployment | now | 0.55 | 0.55 | G-MSG | [1](https://www.therobotreport.com/five-years-operation-shape-diligent-robotics-rollout-moxi-2-0/) |
-| `ACT-SOL-001` Robotic solar module installation | deployment | now | 0.50 | 0.50 | G-MSG | [1](https://www.eweek.com/news/robots-install-100mw-solar-power-maximo/) |
-| `ACT-MFG-002` Humanoid-to-tugger handoff of totes in a car plant | pilot | 1-3y | 0.65 | 0.45 | G-MSG, G-CONC, G-CHOOSE | [1](https://agilityrobotics.com/content/agility-robotics-announces-commercial-agreement-with-toyota-motor-manufacturing-canada) [2](https://www.therobotreport.com/bmw-group-deploys-figure-03-humanoid-after-tests-previous-version/) |
+| `ACT-HLTH-001` Hospital delivery and supply runs for nurses and pharmacy | deployment | now | 0.55 | 0.55 | — | [1](https://www.therobotreport.com/five-years-operation-shape-diligent-robotics-rollout-moxi-2-0/) |
+| `ACT-SOL-001` Robotic solar module installation | deployment | now | 0.50 | 0.50 | — | [1](https://www.eweek.com/news/robots-install-100mw-solar-power-maximo/) |
+| `ACT-MFG-002` Humanoid-to-tugger handoff of totes in a car plant | pilot | 1-3y | 0.65 | 0.45 | G-CONC, G-CHOOSE | [1](https://agilityrobotics.com/content/agility-robotics-announces-commercial-agreement-with-toyota-motor-manufacturing-canada) [2](https://www.therobotreport.com/bmw-group-deploys-figure-03-humanoid-after-tests-previous-version/) |
 | `ACT-CON-001` Construction-site layout printing | deployment | now | 0.45 | 0.45 | G-PERCEIVE | [1](https://www.dustyrobotics.com/discover/construction-robot) |
 | `ACT-HOS-001` Fry-station cooking in restaurant kitchens | deployment | now | 0.45 | 0.45 | — | [1](https://www.fastcasual.com/news/miso-robotics-flippy-fry-station-robot-surpasses-5m-baskets) |
 | `ACT-LOG-002` Autonomous trailer and container unloading | deployment | now | 0.45 | 0.45 | G-PERCEIVE, G-CALC | [1](https://www.therobotreport.com/boston-dynamics-built-stretch-gen-2-for-reliable-consistent-performance/) |
-| `ACT-MFG-001` Parts sequencing for the assembly line | pilot | 1-3y | 0.60 | 0.42 | G-MSG, G-CHOOSE | [1](https://www.therobotreport.com/bmw-group-deploys-figure-03-humanoid-after-tests-previous-version/) |
+| `ACT-MFG-001` Parts sequencing for the assembly line | pilot | 1-3y | 0.60 | 0.42 | G-CHOOSE | [1](https://www.therobotreport.com/bmw-group-deploys-figure-03-humanoid-after-tests-previous-version/) |
 | `ACT-AGR-002` Autonomous laser weeding between crop rows | deployment | now | 0.40 | 0.40 | G-PERCEIVE, G-CHOOSE | [1](https://agfundernews.com/🎥-carbon-robotics-100m-revenue-new-machine-and-a-path-to-ipo) |
 | `ACT-AUTO-002` Battery swapping for whole-shift humanoid work | demo | 1-3y | 0.55 | 0.39 | G-SELF | [1](https://newatlas.com/ai-humanoids/walker-s2-humanoid-robot-swaps-batteries) |
-| `ACT-EV-001` Robotic EV charging in garages and depots | pilot | 1-3y | 0.55 | 0.39 | G-MSG, G-CHOOSE | [1](https://electrek.co/2026/02/23/china-overhead-rail-ev-charging-robots-parking-garages/) |
+| `ACT-EV-001` Robotic EV charging in garages and depots | pilot | 1-3y | 0.55 | 0.39 | G-CHOOSE | [1](https://electrek.co/2026/02/23/china-overhead-rail-ev-charging-robots-parking-garages/) |
 | `ACT-MFG-004` Humanoid assembly and component work in a car plant | demo | 1-3y | 0.50 | 0.35 | G-FORCE, G-PERCEIVE | [1](https://robotics.hexagon.com/?p=720) [2](https://www.artificialintelligence-news.com/news/bmw-humanoid-robots-manufacturing-europe-leipzig/) |
-| `ACT-MFG-003` Humanoid machine tending at a machine builder's customer site | demo | 1-3y | 0.45 | 0.32 | G-MSG | [1](https://roboticsandautomationnews.com/2026/05/15/hexagon-and-fill-maschinenbau-partner-to-advance-manufacturing-autonomy-using-humanoids/101578/) |
+| `ACT-MFG-003` Humanoid machine tending at a machine builder's customer site | demo | 1-3y | 0.45 | 0.32 | — | [1](https://roboticsandautomationnews.com/2026/05/15/hexagon-and-fill-maschinenbau-partner-to-advance-manufacturing-autonomy-using-humanoids/101578/) |
 | `ACT-AGR-001` Greenhouse fruit harvesting | pilot | 3-7y | 0.60 | 0.24 | G-CHOOSE, G-PERCEIVE, G-FORCE | [1](https://www.freshplaza.com/europe/article/9842754/japanese-agri-tech-startup-puts-cherry-tomato-harvesting-robot-into-routine-production-use/) |
 | `ACT-HOME-002` General household chores by a home humanoid | demo | 3-7y | 0.40 | 0.16 | G-CHOOSE, G-PERCEIVE | [1](https://heise.de/-11287205) |
 | `ACT-LRN-001` Learning a new task from half an hour of a worker's video | concept | 3-7y | 0.35 | 0.14 | G-TEACH, G-PERCEIVE | [1](https://arxiv.org/abs/2605.24934) [2](https://dealroom.co/news/127095-robot-ai-startup-physical-intelligence-seeks-1b-at-11b-valuation/) |
 | `ACT-HOME-001` Laundry folding in the home | research | 3-7y | 0.30 | 0.12 | G-CHOOSE, G-PERCEIVE, G-CALC | [1](https://arxiv.org/abs/2511.14759) |
 | `ACT-SAFE-002` A safety layer under a learned policy that vetoes unsafe moves | concept | 3-7y | 0.30 | 0.12 | G-PROX, G-FORCE | [1](https://arxiv.org/abs/2606.09749) [2](https://www.din.de/en/getting-involved/standards-committees/nam/projects/wdc-proj:din21:400666335) [3](https://letsdatascience.com/news/agility-robotics-previews-cage-free-digit-v5-847ce6a1) |
-| `ACT-CARE-001` Physical help with standing and transfers in care homes | concept | 7y+ | 0.12 | 0.01 | G-FORCE, G-PROX, G-PERCEIVE, G-MSG | [1](https://e27.co/when-the-carer-has-dementia-too-japan-turns-to-physical-ai-to-rescue-eldercare-20261007/) [2](https://arxiv.org/abs/2508.19816) |
+| `ACT-CARE-001` Physical help with standing and transfers in care homes | concept | 7y+ | 0.12 | 0.01 | G-FORCE, G-PROX, G-PERCEIVE | [1](https://e27.co/when-the-carer-has-dementia-too-japan-turns-to-physical-ai-to-rescue-eldercare-20261007/) [2](https://arxiv.org/abs/2508.19816) |
 
 | Language gap | Scope | Priority | Near | Benchmark tasks |
 |---|---|---|---|---|
@@ -150,7 +150,7 @@ before.
 |---|---|---|---|---|---|---|
 | `ACT-INSP-001` Autonomous gauge and thermal inspection rounds | demo | now | 0.80 | 0.80 | G-PERCEIVE | [1](https://www.therobotreport.com/boston-dynamics-releases-spot-and-orbit-5-1-with-new-spot-cam/) |
 | `ACT-RET-001` Store shelf scanning and out-of-stock reporting | deployment | now | 0.55 | 0.55 | G-PERCEIVE, G-CHOOSE | [1](https://theshelbyreport.com/2026/09/21/simbe-surpasses-3000-units-in-shelf-intelligence-fleet/) |
-| `ACT-SOL-001` Robotic solar module installation | deployment | now | 0.50 | 0.50 | G-MSG | [1](https://www.eweek.com/news/robots-install-100mw-solar-power-maximo/) |
+| `ACT-SOL-001` Robotic solar module installation | deployment | now | 0.50 | 0.50 | — | [1](https://www.eweek.com/news/robots-install-100mw-solar-power-maximo/) |
 | `ACT-CON-001` Construction-site layout printing | deployment | now | 0.45 | 0.45 | G-PERCEIVE | [1](https://www.dustyrobotics.com/discover/construction-robot) |
 | `ACT-HOS-001` Fry-station cooking in restaurant kitchens | deployment | now | 0.45 | 0.45 | — | [1](https://www.fastcasual.com/news/miso-robotics-flippy-fry-station-robot-surpasses-5m-baskets) |
 | `ACT-LOG-002` Autonomous trailer and container unloading | deployment | now | 0.45 | 0.45 | G-PERCEIVE, G-CALC | [1](https://www.therobotreport.com/boston-dynamics-built-stretch-gen-2-for-reliable-consistent-performance/) |
@@ -158,7 +158,7 @@ before.
 | `ACT-AGR-002` Autonomous laser weeding between crop rows | deployment | now | 0.40 | 0.40 | G-PERCEIVE, G-CHOOSE | [1](https://agfundernews.com/🎥-carbon-robotics-100m-revenue-new-machine-and-a-path-to-ipo) |
 | `ACT-INSP-002` Inspection that learns the facility | demo | 1-3y | 0.55 | 0.39 | G-TEACH, G-PERCEIVE, G-CALC | [1](https://bostondynamics.com/blog/aivi-learning-now-powered-google-gemini-robotics/) |
 | `ACT-AGR-001` Greenhouse fruit harvesting | pilot | 3-7y | 0.60 | 0.24 | G-CHOOSE, G-PERCEIVE, G-FORCE | [1](https://www.freshplaza.com/europe/article/9842754/japanese-agri-tech-startup-puts-cherry-tomato-harvesting-robot-into-routine-production-use/) |
-| `ACT-ELD-001` Companion robot in dementia and memory care | pilot | 3-7y | 0.30 | 0.12 | G-PERCEIVE, G-MSG | [1](https://health.ucdavis.edu/medical-center/news/headlines/uc-davis-launches-first-long-term-us-study-led-by-nurses-on-humanoid-robots-in-dementia-care/2026/05) |
+| `ACT-ELD-001` Companion robot in dementia and memory care | pilot | 3-7y | 0.30 | 0.12 | G-PERCEIVE | [1](https://health.ucdavis.edu/medical-center/news/headlines/uc-davis-launches-first-long-term-us-study-led-by-nurses-on-humanoid-robots-in-dementia-care/2026/05) |
 
 | Language gap | Scope | Priority | Near | Benchmark tasks |
 |---|---|---|---|---|
@@ -170,19 +170,19 @@ before.
 
 | Sub-activity | Maturity | Horizon | p | Priority | Needs | Sources |
 |---|---|---|---|---|---|---|
-| `ACT-MFG-002` Humanoid-to-tugger handoff of totes in a car plant | pilot | 1-3y | 0.65 | 0.45 | G-MSG, G-CONC, G-CHOOSE | [1](https://agilityrobotics.com/content/agility-robotics-announces-commercial-agreement-with-toyota-motor-manufacturing-canada) [2](https://www.therobotreport.com/bmw-group-deploys-figure-03-humanoid-after-tests-previous-version/) |
-| `ACT-MRC-002` Multi-vendor fleet interoperability | demo | 1-3y | 0.55 | 0.39 | G-MSG, G-CHOOSE, G-CONC | [1](https://www.therobotreport.com/new-iso-interoperability-standard-covers-collaboration-among-mobile-robots-from-multiple-vendors/) |
+| `ACT-MFG-002` Humanoid-to-tugger handoff of totes in a car plant | pilot | 1-3y | 0.65 | 0.45 | G-CONC, G-CHOOSE | [1](https://agilityrobotics.com/content/agility-robotics-announces-commercial-agreement-with-toyota-motor-manufacturing-canada) [2](https://www.therobotreport.com/bmw-group-deploys-figure-03-humanoid-after-tests-previous-version/) |
+| `ACT-MRC-002` Multi-vendor fleet interoperability | demo | 1-3y | 0.55 | 0.39 | G-CHOOSE, G-CONC | [1](https://www.therobotreport.com/new-iso-interoperability-standard-covers-collaboration-among-mobile-robots-from-multiple-vendors/) |
 | `ACT-SAFE-001` Fence-free humanoid work beside people | demo | 3-7y | 0.65 | 0.26 | G-PROX, G-FORCE | [1](https://letsdatascience.com/news/agility-robotics-previews-cage-free-digit-v5-847ce6a1) [2](https://www.i-scoop.eu/iso-25785-1-explained-and-what-it-means-for-humanoid-robot-safety/) |
-| `ACT-HRC-002` Following ambiguous and corrective instructions during shared work | research | 3-7y | 0.40 | 0.16 | G-MSG, G-CHOOSE, G-PERCEIVE | [1](https://arxiv.org/abs/2602.14551) |
-| `ACT-HRC-003` Handing a stuck job to a remote operator and taking it back | concept | 3-7y | 0.40 | 0.16 | G-SELF, G-MSG | [1](https://roadtovr.com/helper-robot-neo-vr-telepresence/) [2](https://sacra.com/chat/h/93dc70de-7775-4bc2-b477-ce4cd741da03/) [3](https://arxiv.org/abs/2605.00416) |
+| `ACT-HRC-002` Following ambiguous and corrective instructions during shared work | research | 3-7y | 0.40 | 0.16 | G-CHOOSE, G-PERCEIVE | [1](https://arxiv.org/abs/2602.14551) |
+| `ACT-HRC-003` Handing a stuck job to a remote operator and taking it back | concept | 3-7y | 0.40 | 0.16 | G-SELF | [1](https://roadtovr.com/helper-robot-neo-vr-telepresence/) [2](https://sacra.com/chat/h/93dc70de-7775-4bc2-b477-ce4cd741da03/) [3](https://arxiv.org/abs/2605.00416) |
 | `ACT-PRED-001` Anticipating a coworker's next movement | research | 3-7y | 0.40 | 0.16 | G-PREDICT, G-PROX | [1](https://arxiv.org/abs/2604.03065) |
-| `ACT-HRC-001` Task-oriented object handover to a person | research | 3-7y | 0.35 | 0.14 | G-PERCEIVE, G-MSG, G-CHOOSE | [1](https://arxiv.org/abs/2602.05760v1) |
-| `ACT-MRC-001` Mixed robot teams on one workflow | demo | 3-7y | 0.35 | 0.14 | G-CONC, G-CHOOSE, G-MSG | [1](https://deepmind.google/blog/gemini-robotics-2-brings-whole-body-intelligence-to-robots/) |
-| `ACT-AUTO-004` Mid-shift relief: a low-battery robot hands its job to a peer | concept | 3-7y | 0.30 | 0.12 | G-SELF, G-MSG, G-CHOOSE | [1](https://arxiv.org/abs/2603.22731) [2](https://newatlas.com/ai-humanoids/walker-s2-humanoid-robot-swaps-batteries) [3](https://www.therobotreport.com/new-iso-interoperability-standard-covers-collaboration-among-mobile-robots-from-multiple-vendors/) |
+| `ACT-HRC-001` Task-oriented object handover to a person | research | 3-7y | 0.35 | 0.14 | G-PERCEIVE, G-CHOOSE | [1](https://arxiv.org/abs/2602.05760v1) |
+| `ACT-MRC-001` Mixed robot teams on one workflow | demo | 3-7y | 0.35 | 0.14 | G-CONC, G-CHOOSE | [1](https://deepmind.google/blog/gemini-robotics-2-brings-whole-body-intelligence-to-robots/) |
+| `ACT-AUTO-004` Mid-shift relief: a low-battery robot hands its job to a peer | concept | 3-7y | 0.30 | 0.12 | G-SELF, G-CHOOSE | [1](https://arxiv.org/abs/2603.22731) [2](https://newatlas.com/ai-humanoids/walker-s2-humanoid-robot-swaps-batteries) [3](https://www.therobotreport.com/new-iso-interoperability-standard-covers-collaboration-among-mobile-robots-from-multiple-vendors/) |
 | `ACT-LRN-002` One taught skill, any robot on the site | concept | 3-7y | 0.30 | 0.12 | G-TEACH, G-CHOOSE | [1](https://deepmind.google/blog/gemini-robotics-2-brings-whole-body-intelligence-to-robots/) [2](https://arxiv.org/abs/2605.24934) |
 | `ACT-ASM-001` Robot-team structural assembly with symbolic replanning | research | 7y+ | 0.25 | 0.03 | G-PERCEIVE, G-CONC | [1](https://arxiv.org/abs/2601.00978v1) |
-| `ACT-PRED-004` Helping before being asked: acting on a predicted need | concept | 7y+ | 0.15 | 0.01 | G-PREDICT, G-PERCEIVE, G-MSG | [1](https://arxiv.org/abs/2603.23950) [2](https://e27.co/when-the-carer-has-dementia-too-japan-turns-to-physical-ai-to-rescue-eldercare-20261007/) |
-| `ACT-CARE-001` Physical help with standing and transfers in care homes | concept | 7y+ | 0.12 | 0.01 | G-FORCE, G-PROX, G-PERCEIVE, G-MSG | [1](https://e27.co/when-the-carer-has-dementia-too-japan-turns-to-physical-ai-to-rescue-eldercare-20261007/) [2](https://arxiv.org/abs/2508.19816) |
+| `ACT-PRED-004` Helping before being asked: acting on a predicted need | concept | 7y+ | 0.15 | 0.01 | G-PREDICT, G-PERCEIVE | [1](https://arxiv.org/abs/2603.23950) [2](https://e27.co/when-the-carer-has-dementia-too-japan-turns-to-physical-ai-to-rescue-eldercare-20261007/) |
+| `ACT-CARE-001` Physical help with standing and transfers in care homes | concept | 7y+ | 0.12 | 0.01 | G-FORCE, G-PROX, G-PERCEIVE | [1](https://e27.co/when-the-carer-has-dementia-too-japan-turns-to-physical-ai-to-rescue-eldercare-20261007/) [2](https://arxiv.org/abs/2508.19816) |
 
 | Language gap | Scope | Priority | Near | Benchmark tasks |
 |---|---|---|---|---|
@@ -192,18 +192,18 @@ before.
 
 | Sub-activity | Maturity | Horizon | p | Priority | Needs | Sources |
 |---|---|---|---|---|---|---|
-| `ACT-HLTH-001` Hospital delivery and supply runs for nurses and pharmacy | deployment | now | 0.55 | 0.55 | G-MSG | [1](https://www.therobotreport.com/five-years-operation-shape-diligent-robotics-rollout-moxi-2-0/) |
+| `ACT-HLTH-001` Hospital delivery and supply runs for nurses and pharmacy | deployment | now | 0.55 | 0.55 | — | [1](https://www.therobotreport.com/five-years-operation-shape-diligent-robotics-rollout-moxi-2-0/) |
 | `ACT-RET-001` Store shelf scanning and out-of-stock reporting | deployment | now | 0.55 | 0.55 | G-PERCEIVE, G-CHOOSE | [1](https://theshelbyreport.com/2026/09/21/simbe-surpasses-3000-units-in-shelf-intelligence-fleet/) |
-| `ACT-MRC-002` Multi-vendor fleet interoperability | demo | 1-3y | 0.55 | 0.39 | G-MSG, G-CHOOSE, G-CONC | [1](https://www.therobotreport.com/new-iso-interoperability-standard-covers-collaboration-among-mobile-robots-from-multiple-vendors/) |
-| `ACT-HRC-003` Handing a stuck job to a remote operator and taking it back | concept | 3-7y | 0.40 | 0.16 | G-SELF, G-MSG | [1](https://roadtovr.com/helper-robot-neo-vr-telepresence/) [2](https://sacra.com/chat/h/93dc70de-7775-4bc2-b477-ce4cd741da03/) [3](https://arxiv.org/abs/2605.00416) |
-| `ACT-HRC-001` Task-oriented object handover to a person | research | 3-7y | 0.35 | 0.14 | G-PERCEIVE, G-MSG, G-CHOOSE | [1](https://arxiv.org/abs/2602.05760v1) |
-| `ACT-ELD-001` Companion robot in dementia and memory care | pilot | 3-7y | 0.30 | 0.12 | G-PERCEIVE, G-MSG | [1](https://health.ucdavis.edu/medical-center/news/headlines/uc-davis-launches-first-long-term-us-study-led-by-nurses-on-humanoid-robots-in-dementia-care/2026/05) |
+| `ACT-MRC-002` Multi-vendor fleet interoperability | demo | 1-3y | 0.55 | 0.39 | G-CHOOSE, G-CONC | [1](https://www.therobotreport.com/new-iso-interoperability-standard-covers-collaboration-among-mobile-robots-from-multiple-vendors/) |
+| `ACT-HRC-003` Handing a stuck job to a remote operator and taking it back | concept | 3-7y | 0.40 | 0.16 | G-SELF | [1](https://roadtovr.com/helper-robot-neo-vr-telepresence/) [2](https://sacra.com/chat/h/93dc70de-7775-4bc2-b477-ce4cd741da03/) [3](https://arxiv.org/abs/2605.00416) |
+| `ACT-HRC-001` Task-oriented object handover to a person | research | 3-7y | 0.35 | 0.14 | G-PERCEIVE, G-CHOOSE | [1](https://arxiv.org/abs/2602.05760v1) |
+| `ACT-ELD-001` Companion robot in dementia and memory care | pilot | 3-7y | 0.30 | 0.12 | G-PERCEIVE | [1](https://health.ucdavis.edu/medical-center/news/headlines/uc-davis-launches-first-long-term-us-study-led-by-nurses-on-humanoid-robots-in-dementia-care/2026/05) |
 
 | Language gap | Scope | Priority | Near | Benchmark tasks |
 |---|---|---|---|---|
-| `G-MSG` Waiting for an incoming message, or confirming delivery | open | 4.02 | yes | 0 |
 | `G-DELIVERY` Confirming that a message the robot sent was delivered | out | 0.00 | — | 2 |
 | `G-EVENTGOAL` An event, such as a received message, stated as an end state of a task | out | 0.00 | — | 1 |
+| `G-MSG` Waiting for an incoming message, or confirming delivery | closed | 0.00 | — | 0 |
 
 ## Learning
 
@@ -224,12 +224,12 @@ before.
 
 | Sub-activity | Maturity | Horizon | p | Priority | Needs | Sources |
 |---|---|---|---|---|---|---|
-| `ACT-MFG-001` Parts sequencing for the assembly line | pilot | 1-3y | 0.60 | 0.42 | G-MSG, G-CHOOSE | [1](https://www.therobotreport.com/bmw-group-deploys-figure-03-humanoid-after-tests-previous-version/) |
-| `ACT-MFG-003` Humanoid machine tending at a machine builder's customer site | demo | 1-3y | 0.45 | 0.32 | G-MSG | [1](https://roboticsandautomationnews.com/2026/05/15/hexagon-and-fill-maschinenbau-partner-to-advance-manufacturing-autonomy-using-humanoids/101578/) |
+| `ACT-MFG-001` Parts sequencing for the assembly line | pilot | 1-3y | 0.60 | 0.42 | G-CHOOSE | [1](https://www.therobotreport.com/bmw-group-deploys-figure-03-humanoid-after-tests-previous-version/) |
+| `ACT-MFG-003` Humanoid machine tending at a machine builder's customer site | demo | 1-3y | 0.45 | 0.32 | — | [1](https://roboticsandautomationnews.com/2026/05/15/hexagon-and-fill-maschinenbau-partner-to-advance-manufacturing-autonomy-using-humanoids/101578/) |
 | `ACT-HOME-002` General household chores by a home humanoid | demo | 3-7y | 0.40 | 0.16 | G-CHOOSE, G-PERCEIVE | [1](https://heise.de/-11287205) |
-| `ACT-HRC-002` Following ambiguous and corrective instructions during shared work | research | 3-7y | 0.40 | 0.16 | G-MSG, G-CHOOSE, G-PERCEIVE | [1](https://arxiv.org/abs/2602.14551) |
-| `ACT-MRC-001` Mixed robot teams on one workflow | demo | 3-7y | 0.35 | 0.14 | G-CONC, G-CHOOSE, G-MSG | [1](https://deepmind.google/blog/gemini-robotics-2-brings-whole-body-intelligence-to-robots/) |
-| `ACT-PRED-003` Forecasting its own failure and asking before it happens | concept | 3-7y | 0.35 | 0.14 | G-PREDICT, G-MSG | [1](https://arxiv.org/abs/2604.16677) [2](https://deepmind.google/blog/gemini-robotics-2-brings-whole-body-intelligence-to-robots/) |
+| `ACT-HRC-002` Following ambiguous and corrective instructions during shared work | research | 3-7y | 0.40 | 0.16 | G-CHOOSE, G-PERCEIVE | [1](https://arxiv.org/abs/2602.14551) |
+| `ACT-MRC-001` Mixed robot teams on one workflow | demo | 3-7y | 0.35 | 0.14 | G-CONC, G-CHOOSE | [1](https://deepmind.google/blog/gemini-robotics-2-brings-whole-body-intelligence-to-robots/) |
+| `ACT-PRED-003` Forecasting its own failure and asking before it happens | concept | 3-7y | 0.35 | 0.14 | G-PREDICT | [1](https://arxiv.org/abs/2604.16677) [2](https://deepmind.google/blog/gemini-robotics-2-brings-whole-body-intelligence-to-robots/) |
 | `ACT-ASM-001` Robot-team structural assembly with symbolic replanning | research | 7y+ | 0.25 | 0.03 | G-PERCEIVE, G-CONC | [1](https://arxiv.org/abs/2601.00978v1) |
 
 | Language gap | Scope | Priority | Near | Benchmark tasks |
@@ -249,7 +249,7 @@ before.
 | `ACT-AUTO-001` Self-charging on long inspection missions | deployment | now | 0.65 | 0.65 | G-SELF, G-CHOOSE | [1](https://bostondynamics.com/blog/making-every-step-count-with-spot/) |
 | `ACT-AUTO-002` Battery swapping for whole-shift humanoid work | demo | 1-3y | 0.55 | 0.39 | G-SELF | [1](https://newatlas.com/ai-humanoids/walker-s2-humanoid-robot-swaps-batteries) |
 | `ACT-AUTO-003` Self-diagnosis, safe degradation and service requests | research | 3-7y | 0.45 | 0.18 | G-SELF | [1](https://en.edaily.co.kr/news/eda202606185436/) [2](https://arxiv.org/abs/2602.01515) |
-| `ACT-AUTO-004` Mid-shift relief: a low-battery robot hands its job to a peer | concept | 3-7y | 0.30 | 0.12 | G-SELF, G-MSG, G-CHOOSE | [1](https://arxiv.org/abs/2603.22731) [2](https://newatlas.com/ai-humanoids/walker-s2-humanoid-robot-swaps-batteries) [3](https://www.therobotreport.com/new-iso-interoperability-standard-covers-collaboration-among-mobile-robots-from-multiple-vendors/) |
+| `ACT-AUTO-004` Mid-shift relief: a low-battery robot hands its job to a peer | concept | 3-7y | 0.30 | 0.12 | G-SELF, G-CHOOSE | [1](https://arxiv.org/abs/2603.22731) [2](https://newatlas.com/ai-humanoids/walker-s2-humanoid-robot-swaps-batteries) [3](https://www.therobotreport.com/new-iso-interoperability-standard-covers-collaboration-among-mobile-robots-from-multiple-vendors/) |
 
 | Language gap | Scope | Priority | Near | Benchmark tasks |
 |---|---|---|---|---|
@@ -263,7 +263,7 @@ before.
 | `ACT-SAFE-001` Fence-free humanoid work beside people | demo | 3-7y | 0.65 | 0.26 | G-PROX, G-FORCE | [1](https://letsdatascience.com/news/agility-robotics-previews-cage-free-digit-v5-847ce6a1) [2](https://www.i-scoop.eu/iso-25785-1-explained-and-what-it-means-for-humanoid-robot-safety/) |
 | `ACT-AUTO-003` Self-diagnosis, safe degradation and service requests | research | 3-7y | 0.45 | 0.18 | G-SELF | [1](https://en.edaily.co.kr/news/eda202606185436/) [2](https://arxiv.org/abs/2602.01515) |
 | `ACT-SAFE-002` A safety layer under a learned policy that vetoes unsafe moves | concept | 3-7y | 0.30 | 0.12 | G-PROX, G-FORCE | [1](https://arxiv.org/abs/2606.09749) [2](https://www.din.de/en/getting-involved/standards-committees/nam/projects/wdc-proj:din21:400666335) [3](https://letsdatascience.com/news/agility-robotics-previews-cage-free-digit-v5-847ce6a1) |
-| `ACT-CARE-001` Physical help with standing and transfers in care homes | concept | 7y+ | 0.12 | 0.01 | G-FORCE, G-PROX, G-PERCEIVE, G-MSG | [1](https://e27.co/when-the-carer-has-dementia-too-japan-turns-to-physical-ai-to-rescue-eldercare-20261007/) [2](https://arxiv.org/abs/2508.19816) |
+| `ACT-CARE-001` Physical help with standing and transfers in care homes | concept | 7y+ | 0.12 | 0.01 | G-FORCE, G-PROX, G-PERCEIVE | [1](https://e27.co/when-the-carer-has-dementia-too-japan-turns-to-physical-ai-to-rescue-eldercare-20261007/) [2](https://arxiv.org/abs/2508.19816) |
 
 | Language gap | Scope | Priority | Near | Benchmark tasks |
 |---|---|---|---|---|
@@ -279,8 +279,8 @@ before.
 |---|---|---|---|---|---|---|
 | `ACT-PRED-002` Checking a plan with a world model before acting | research | 3-7y | 0.45 | 0.18 | G-PREDICT, G-CHOOSE | [1](https://arxiv.org/abs/2606.13672) |
 | `ACT-PRED-001` Anticipating a coworker's next movement | research | 3-7y | 0.40 | 0.16 | G-PREDICT, G-PROX | [1](https://arxiv.org/abs/2604.03065) |
-| `ACT-PRED-003` Forecasting its own failure and asking before it happens | concept | 3-7y | 0.35 | 0.14 | G-PREDICT, G-MSG | [1](https://arxiv.org/abs/2604.16677) [2](https://deepmind.google/blog/gemini-robotics-2-brings-whole-body-intelligence-to-robots/) |
-| `ACT-PRED-004` Helping before being asked: acting on a predicted need | concept | 7y+ | 0.15 | 0.01 | G-PREDICT, G-PERCEIVE, G-MSG | [1](https://arxiv.org/abs/2603.23950) [2](https://e27.co/when-the-carer-has-dementia-too-japan-turns-to-physical-ai-to-rescue-eldercare-20261007/) |
+| `ACT-PRED-003` Forecasting its own failure and asking before it happens | concept | 3-7y | 0.35 | 0.14 | G-PREDICT | [1](https://arxiv.org/abs/2604.16677) [2](https://deepmind.google/blog/gemini-robotics-2-brings-whole-body-intelligence-to-robots/) |
+| `ACT-PRED-004` Helping before being asked: acting on a predicted need | concept | 7y+ | 0.15 | 0.01 | G-PREDICT, G-PERCEIVE | [1](https://arxiv.org/abs/2603.23950) [2](https://e27.co/when-the-carer-has-dementia-too-japan-turns-to-physical-ai-to-rescue-eldercare-20261007/) |
 
 | Language gap | Scope | Priority | Near | Benchmark tasks |
 |---|---|---|---|---|

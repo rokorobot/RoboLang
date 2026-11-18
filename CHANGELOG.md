@@ -3,7 +3,10 @@
 The distribution version (this file) is independent of the language versions (1.1 to 2.1), the Task IR schema
 versions (1.0 to 1.9) and the Mission IR schema (1.0 and 1.1). Decision records are in [`spec/decisions/`](https://github.com/rokorobot/RoboLang/tree/main/spec/decisions).
 
-## Unreleased
+## 0.8.0 (2026-11-18)
+
+RoboLang 2.1, incoming messages: iteration I5 of the [roadmap](docs/LANGUAGE_ROADMAP.md). Accepted on benchmark set 10 with
+every bound met ([acceptance](docs/evidence/bench-2-1-acceptance.md)).
 
 RoboLang 2.1: incoming messages, iteration I5 of the [roadmap](docs/LANGUAGE_ROADMAP.md) (decision 0043; built, taught and
 relabelled in step L4; the acceptance run on benchmark set 10 is the next step: it has not been made, and 2.1 is not

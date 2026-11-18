@@ -82,3 +82,8 @@ C14 relabelled `x05` as a program, a final bounded wait plus the world part in t
 (S1, `E327`). The literal reading is right. `x05` is `cannot / inexpressible` again, and C14's label stays in
 `expect_2_1` as pre-registered. It is in the new far gap **G-EVENTGOAL**, scope `out` (S1). No bound covered `x05`,
 so no verdict changes, and the L5 answers are not re-run. `docs/evidence/bench-freeze-v2.json` is regenerated.
+
+## Erratum N4 (2026-11-18, L6): G-MSG closed
+
+G-MSG is closed in the atlas by RoboLang 2.1. The tests of sets "future" and 10 now expect it closed. No task or
+label changed. `docs/evidence/bench-freeze-v2.json` is regenerated.
