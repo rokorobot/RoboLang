@@ -115,7 +115,7 @@ def test_labels_are_2_0_in_expect_1_9_is_the_baseline_and_expect_2_0_keeps_the_p
         assert task["expect_1_9"] == CANNOT, task_id  # the baseline: 1.9 declines every task that is not a control
         assert len(task["why"]) > 40 and task["attempt_fails_with"] == "E201", task_id
         assert not {"expected_goal", "expected_goals", "paths"} & set(task)
-        assert task["gap"] in GAPS and GAPS[task["gap"]]["scope"] == "open", task_id
+        assert task["gap"] in GAPS and GAPS[task["gap"]]["scope"] in ("open", "out", "closed"), task_id
     for task_id, task in {**PROGRAMS, **UNTIL}.items():
         assert task["expect"] == {"decision": "program"} and lib.expectation(task) == ("program", "none"), task_id
         assert task["expect_2_0"]["expected_mission"] and task["expect_2_0"]["paths"], task_id
@@ -305,8 +305,8 @@ def test_the_inexpressible_tasks_each_stay_out_for_one_reason_of_0041():
                        "x05_every_new_part": {"stream", "choose_object"}}
     # G-TRIGGER (clarification 14): the time trigger moved out of G-LOOP; the message one stays in G-MSG
     assert {t: d["gap"] for t, d in INEXPRESSIBLE.items()} == {
-        "x01_never_stop": "G-LOOP", "x02_every_hour_on_the_hour": "G-TRIGGER", "x03_for_each_go_message": "G-MSG",
-        "x04_rounds_inside_rounds": "G-LOOP", "x05_every_new_part": "G-CHOOSE"}
+        "x01_never_stop": "G-UNBOUNDED", "x02_every_hour_on_the_hour": "G-TRIGGER", "x03_for_each_go_message": "G-MSG",
+        "x04_rounds_inside_rounds": "G-UNBOUNDED", "x05_every_new_part": "G-CHOOSE"}
     # no bound is stated in x01; a bound is stated in the others, so only the named construct stays out
     assert not re.search(r"\d", SET["x01_never_stop"]["prompt"].replace("tug1", ""))
     for task_id in ("x03_for_each_go_message", "x04_rounds_inside_rounds", "x05_every_new_part"):
@@ -461,8 +461,8 @@ def test_every_inexpressible_task_is_in_exactly_one_atlas_gap_and_nothing_else_i
     assert len(in_gaps) == len({t for t, _ in in_gaps}) == len(INEXPRESSIBLE)
     assert {t for t, _ in in_gaps} == set(INEXPRESSIBLE)
     for task_id, gap in in_gaps:
-        assert INEXPRESSIBLE[task_id]["gap"] == gap and GAPS[gap]["scope"] == "open"
-    assert Counter(gap for _, gap in in_gaps) == {"G-LOOP": 2, "G-TRIGGER": 1, "G-MSG": 1, "G-CHOOSE": 1}
+        assert INEXPRESSIBLE[task_id]["gap"] == gap and GAPS[gap]["scope"] in ("open", "out")
+    assert Counter(gap for _, gap in in_gaps) == {"G-UNBOUNDED": 2, "G-TRIGGER": 1, "G-MSG": 1, "G-CHOOSE": 1}
     assert GAPS["G-TRIGGER"]["scope"] == "open" and GAPS["G-TRIGGER"]["direction"] == "reasoning"
     assert {t["gap"] for t in PROGRAMS.values()} | {t["gap"] for t in INFEASIBLE.values()} == {"G-LOOP"}
     assert "I4 L4: RoboLang 2.0 built and taught" in [h["note"] for h in ATLAS["history"]]
@@ -473,11 +473,11 @@ def test_the_standing_g_loop_tasks_are_relabelled_by_what_the_request_bounds():
     x_shuttle_until_five, whose 17:00 is a bound, needs the next part chosen at run time like x05 (G-CHOOSE)."""
     assert set(GAPS["G-TRIGGER"]["tasks"]) == {
         "x_every_hour", "x_keep_feeding", "u03_until_stop", "u18_every_morning", "x_all_parts_ever",
-        "x01_every_night_round", "x02_every_hour_on_the_hour"}
-    assert set(GAPS["G-LOOP"]["tasks"]) == {
+        "x01_every_night_round", "x02_every_hour_on_the_hour", "x04_every_minute", "f13_retry_every_minute"}
+    assert set(GAPS["G-UNBOUNDED"]["tasks"]) == {  # L6 of I4: out by 0041 M2/M7; G-LOOP closed
         "x_retry_grasp", "x_wait_forever", "u04_back_and_forth", "x_retry_until_grasped", "f10_retry_until_works",
-        "f13_retry_every_minute", "x04_every_minute", "x04_open_until_open", "x01_never_stop",
-        "x04_rounds_inside_rounds"}
+        "x04_open_until_open", "x01_never_stop", "x04_rounds_inside_rounds"}
+    assert GAPS["G-LOOP"]["scope"] == "closed" and GAPS["G-LOOP"]["tasks"] == []
     assert "x_shuttle_until_five" in GAPS["G-CHOOSE"]["tasks"]
     standing = {}
     for name in lib.SETS:

@@ -16,7 +16,7 @@
     "category": "inexpressible",
     "because": "0041 M2"
   },
-  "gap": "G-LOOP",
+  "gap": "G-UNBOUNDED",
   "tags": [
     "mission",
     "no_bound",
