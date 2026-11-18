@@ -1,0 +1,18 @@
+// bench/reference_missions/m07_rounds_until_quay_clear.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 1.9;
+
+task round(robot r, location home, location far) {
+    goal { robot_at r home; }
+    plan {
+        move r to far;
+        wait for 5 s;
+        move r to home;
+    }
+}
+
+mission rounds(robot r, location home, location far, region quay) {  // @mission
+    repeat at most 12 runs {                                         // @mission
+        run round(r, home, far);                                     // @mission
+    } until region_clear quay;                                       // @mission
+    on failure { stop; }                                             // @mission
+}                                                                    // @mission

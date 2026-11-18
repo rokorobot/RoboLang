@@ -1,0 +1,26 @@
+{
+  "id": "i02_the_same_box_again",
+  "prompt": "With arm1, carry box1 from shelf_a to the table, and carry it from shelf_a to the table again, 15 times in all.",
+  "world": "bench/worlds/warehouse.json",
+  "group": "infeasible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_0": {
+    "decision": "cannot",
+    "category": "infeasible",
+    "because": "0041 M4"
+  },
+  "blockers": [
+    "after run 1 box1 is at the table, so the grasp at shelf_a of run 2 fails"
+  ],
+  "gap": "G-LOOP",
+  "tags": [
+    "mission",
+    "task_fails_on_repeat",
+    "count_bound"
+  ],
+  "why": "The task is fine once and cannot succeed the second time in this world: box1 is no longer on shelf_a. The language can say it; the world cannot do it (the mission ends `failed` at run 2).",
+  "attempt_fails_with": "E201"
+}

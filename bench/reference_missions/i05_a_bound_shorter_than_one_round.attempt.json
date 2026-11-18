@@ -1,0 +1,9 @@
+{
+  "task": "round",
+  "bindings": {
+    "r": "amr1",
+    "item": "crate1",
+    "a": "dock",
+    "b": "table"
+  }
+}

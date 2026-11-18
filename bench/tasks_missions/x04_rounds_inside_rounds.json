@@ -1,0 +1,23 @@
+{
+  "id": "x04_rounds_inside_rounds",
+  "prompt": "Do up to 12 rounds. In each round, have tug1 drive from gate_in to gate_out and back to gate_in over and over, until lane_2 is clear, at most 30 times.",
+  "world": "bench/worlds/yard.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_0": {
+    "decision": "cannot",
+    "category": "inexpressible",
+    "because": "0041 M7"
+  },
+  "gap": "G-LOOP",
+  "tags": [
+    "mission",
+    "nested",
+    "repeat_in_repeat"
+  ],
+  "why": "A loop inside a loop: missions cannot nest and a task cannot start a mission (0041 M7). The inner repetition stops on a condition, so it is not a fixed list of copies inside one task either.",
+  "attempt_fails_with": "E201"
+}

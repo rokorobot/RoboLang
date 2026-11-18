@@ -1,0 +1,23 @@
+{
+  "id": "x01_never_stop",
+  "prompt": "Have tug1 drive between gate_in and gate_out forever, and never stop.",
+  "world": "bench/worlds/yard.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_0": {
+    "decision": "cannot",
+    "category": "inexpressible",
+    "because": "0041 M2"
+  },
+  "gap": "G-LOOP",
+  "tags": [
+    "mission",
+    "no_bound",
+    "forever"
+  ],
+  "why": "No bound at all: \"forever\" stays inexpressible (0041 M2). A mission that invents a bound (200 runs, 8 hours) has done something else than asked.",
+  "attempt_fails_with": "E201"
+}

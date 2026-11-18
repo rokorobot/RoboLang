@@ -1,0 +1,10 @@
+{
+  "task": "patrol",
+  "bindings": {
+    "r": "spot1",
+    "a": "stop_a",
+    "b": "stop_b",
+    "c": "stop_c",
+    "d": "stop_d"
+  }
+}

@@ -9,7 +9,7 @@ the 1.7 one, and `expect_1_8` holds the paths (the goal and the world patch of e
 Every program task has a 1.8 reference that is right on every path and does exactly the actions asked (`actions_ok`).
 The 1.7 attempts stay as the evidence of the baseline: 1.7 rejects each with `E203` (`do` is no statement). Also here:
 the scorer's `actions_ok` and `action_replaced` (0040 B1, B5, B8). No network and no SDK; the model run is the
-`Benchmark` workflow with `actions: true`.
+`Benchmark` workflow with `set_only: actions`.
 """
 
 from __future__ import annotations
@@ -582,10 +582,9 @@ def test_the_set_is_in_the_run_script_and_only_runs_on_demand_in_the_workflow():
     assert all("claude-opus" not in ln and "--set actions --prompt" in ln for ln in lines)
     steps = re.split(r"\n      - ", workflow)
     step = next(s for s in steps if s.startswith("name: Run (set actions"))
-    assert "inputs.actions" in step and "pull_request" not in step
+    assert "inputs.set_only == 'actions'" in step and "pull_request" not in step
     pr_step = next(s for s in steps if s.startswith("name: Run (pull request)"))
     weekly = next(s for s in steps if s.startswith("name: Run (weekly or on demand)"))
-    assert "actions" not in pr_step and "!inputs.actions" in weekly and "--set actions" not in weekly
-    declared = r"      actions:\n        description: .*\n        type: boolean\n        default: false"
-    assert re.search(declared, workflow)
+    assert "actions" not in pr_step and "inputs.set_only == ''" in weekly and "--set actions" not in weekly
+    assert re.search(r"      set_only:\n        description: .*\n        type: string\n        default: \"\"", workflow)
     assert "actions actions-minimal" in workflow

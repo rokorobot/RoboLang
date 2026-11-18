@@ -5,7 +5,7 @@ atlas's near language gaps.
 25 `inexpressible` probes, each needing exactly one open gap that a near activity claims, with an obvious attempt
 that RoboLang 1.6 rejects with a named diagnostic (LE-7). 8 `control` requests from near activities that 1.6 can
 express, so the set also measures false refusals; three of them record a refuted claim of the atlas. No network and
-no SDK; the model run is the `Benchmark` workflow with `future: true`.
+no SDK; the model run is the `Benchmark` workflow with `set_only: future`.
 
 RoboLang 1.7 (decision 0039, errata docs/evidence/bench-errata-1-7.md) relabelled the three `G-PATH` probes as programs
 (group `region`): `expect` is the 1.7 label, `expect_1_6` keeps the 1.6 one, and their attempts are replaced by 1.7
@@ -383,12 +383,12 @@ def test_the_set_is_in_the_run_script_and_only_runs_on_demand_in_the_workflow():
     assert "claude-opus" not in line and "--run-id future" in line
     steps = re.split(r"\n      - ", workflow)
     future_step = next(s for s in steps if "--set future" in s)
-    assert "inputs.future" in future_step and "pull_request" not in future_step
+    assert "inputs.set_only == 'future'" in future_step and "pull_request" not in future_step
     # the per-pull-request step and the weekly step never run it
     pr_step = next(s for s in steps if s.startswith("name: Run (pull request)"))
     weekly = next(s for s in steps if s.startswith("name: Run (weekly or on demand)"))
-    assert "future" not in pr_step and "!inputs.future" in weekly and "--set future" not in weekly
-    assert re.search(r"      future:\n        description: .*\n        type: boolean\n        default: false", workflow)
+    assert "future" not in pr_step and "inputs.set_only == ''" in weekly and "--set future" not in weekly
+    assert re.search(r"      set_only:\n        description: .*\n        type: string\n        default: \"\"", workflow)
 
 
 @pytest.mark.parametrize("task_id", sorted(CLOCKS))

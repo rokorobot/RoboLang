@@ -1,0 +1,24 @@
+{
+  "id": "x05_every_new_part",
+  "prompt": "For the next 8 hours, move every new part that arrives at conveyor_in to the bin with arm_a.",
+  "world": "bench/worlds/assembly.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_0": {
+    "decision": "cannot",
+    "category": "inexpressible",
+    "because": "0041 (G-CHOOSE, I7)"
+  },
+  "gap": "G-CHOOSE",
+  "tags": [
+    "mission",
+    "stream",
+    "choose_object",
+    "duration_bound"
+  ],
+  "why": "The bound is stated (8 hours) and the repetition is a mission, but the run needs the next part, which is chosen at run time from objects that do not exist yet: G-CHOOSE (I7). 0041 says how the next blank is named is not settled. The attempt names `next_part`, which is not a task parameter that any world declares.",
+  "attempt_fails_with": "E201"
+}

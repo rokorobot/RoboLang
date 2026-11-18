@@ -32,7 +32,27 @@
         "x_shuttle_until_five",
         "x04_open_until_open",
         "x01_every_night_round",
-        "u18_every_morning"
+        "u18_every_morning",
+        "i01_twelve_rounds_in_half_an_hour",
+        "i02_the_same_box_again",
+        "i03_until_a_pallet_that_is_not_there",
+        "i04_more_retries_than_runs",
+        "i05_a_bound_shorter_than_one_round",
+        "m01_shuttle_thirty_rounds",
+        "m02_retry_the_carry",
+        "m03_inspect_for_three_hours",
+        "m04_patrol_and_go_on",
+        "m05_alternate_the_carry",
+        "m06_carry_until_there",
+        "m07_rounds_until_quay_clear",
+        "m08_rounds_out_of_the_wet_floor",
+        "m09_open_the_oven_door",
+        "m10_scan_for_two_hours",
+        "x01_never_stop",
+        "x02_every_hour_on_the_hour",
+        "x04_rounds_inside_rounds",
+        "x06_until_it_is_cool",
+        "x07_until_ten_to_ten"
       ]
     },
     {
@@ -58,7 +78,8 @@
         "f12_message_delivery",
         "f_msg_line_docked",
         "f_msg_nurse_confirm",
-        "f_msg_wind_clear"
+        "f_msg_wind_clear",
+        "x03_for_each_go_message"
       ]
     },
     {
@@ -133,7 +154,8 @@
         "x_nearest_robot",
         "f_choose_nearest_tugger",
         "f_choose_nearest_dock",
-        "f_choose_nearer_cart"
+        "f_choose_nearer_cart",
+        "x05_every_new_part"
       ]
     },
     {
@@ -2715,6 +2737,63 @@
     {
       "date": "2026-11-17",
       "note": "L6 of I3: G-CLOCK closed by RoboLang 1.9 clock readings",
+      "activities": {
+        "ACT-LOG-001": "deployment now",
+        "ACT-LOG-002": "deployment now",
+        "ACT-MFG-001": "pilot 1-3y",
+        "ACT-MFG-002": "pilot 1-3y",
+        "ACT-RET-001": "deployment now",
+        "ACT-HOS-001": "deployment now",
+        "ACT-HLTH-001": "deployment now",
+        "ACT-ELD-001": "pilot 3-7y",
+        "ACT-HOME-001": "research 3-7y",
+        "ACT-HOME-002": "demo 3-7y",
+        "ACT-INSP-001": "demo now",
+        "ACT-INSP-002": "demo 1-3y",
+        "ACT-SEC-001": "demo 1-3y",
+        "ACT-SAFE-001": "demo 3-7y",
+        "ACT-CON-001": "deployment now",
+        "ACT-AGR-001": "pilot 3-7y",
+        "ACT-EV-001": "pilot 1-3y",
+        "ACT-CLN-001": "deployment now",
+        "ACT-MRC-001": "demo 3-7y",
+        "ACT-MRC-002": "demo 1-3y",
+        "ACT-HRC-001": "research 3-7y",
+        "ACT-HRC-002": "research 3-7y",
+        "ACT-ASM-001": "research 7y+",
+        "ACT-PRED-001": "research 3-7y",
+        "ACT-PRED-002": "research 3-7y",
+        "ACT-AUTO-001": "deployment now",
+        "ACT-AUTO-002": "demo 1-3y",
+        "ACT-AUTO-003": "research 3-7y",
+        "ACT-MFG-003": "demo 1-3y",
+        "ACT-AGR-002": "deployment now",
+        "ACT-SOL-001": "deployment now",
+        "ACT-PRED-003": "concept 3-7y",
+        "ACT-PRED-004": "concept 7y+",
+        "ACT-LRN-001": "concept 3-7y",
+        "ACT-LRN-002": "concept 3-7y",
+        "ACT-AUTO-004": "concept 3-7y",
+        "ACT-SAFE-002": "concept 3-7y",
+        "ACT-CARE-001": "concept 7y+",
+        "ACT-MFG-004": "demo 1-3y",
+        "ACT-HRC-003": "concept 3-7y"
+      },
+      "directions": {
+        "perception": 2.78,
+        "reasoning": 0.68,
+        "prediction": 0.25,
+        "action": 4.52,
+        "learning": 0.75,
+        "cooperation": 1.07,
+        "safety": 0.49,
+        "communication": 0.95,
+        "autonomy": 0.67
+      }
+    },
+    {
+      "date": "2026-11-18",
+      "note": "I4 L3: set 9 missions pre-registered (26 tasks)",
       "activities": {
         "ACT-LOG-001": "deployment now",
         "ACT-LOG-002": "deployment now",

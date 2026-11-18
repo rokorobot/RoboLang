@@ -1,0 +1,23 @@
+// bench/reference_missions/i05_a_bound_shorter_than_one_round.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 1.9;
+
+task round(robot r, object item, location a, location b) {
+    goal { object_at item a; }
+    plan {
+        move r to a;
+        grasp r item;
+        move r to b;
+        place r item at b;
+        wait for 2 min;
+        grasp r item;
+        move r to a;
+        place r item at a;
+    }
+}
+
+mission rounds(robot r, object item, location a, location b) {  // @mission
+    repeat for at most 90 s {                                   // @mission
+        run round(r, item, a, b);                               // @mission
+    };                                                          // @mission
+    on failure { stop; }                                        // @mission
+}                                                               // @mission

@@ -1,0 +1,23 @@
+{
+  "id": "x03_for_each_go_message",
+  "prompt": "Each time channel \"ops\" sends \"go\", send tug1 from gate_in to wash and back to gate_in. Do this at most 10 times.",
+  "world": "bench/worlds/yard.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_0": {
+    "decision": "cannot",
+    "category": "inexpressible",
+    "because": "0041 M6"
+  },
+  "gap": "G-MSG",
+  "tags": [
+    "mission",
+    "message_trigger",
+    "no_message_waits"
+  ],
+  "why": "A message trigger (0041 M6, I6): a run starts when a message arrives. 1.9 has no way to wait for one either (`message_received` is reserved). The bound of 10 is stated; the trigger is what stays out.",
+  "attempt_fails_with": "E201"
+}

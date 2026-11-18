@@ -1,0 +1,24 @@
+{
+  "id": "x02_every_hour_on_the_hour",
+  "prompt": "Every hour on the hour until 18:00, have arm1 inspect box1 on shelf_a with camera_top.",
+  "world": "bench/worlds/warehouse_1_5_1420.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_0": {
+    "decision": "cannot",
+    "category": "inexpressible",
+    "because": "0041 M6"
+  },
+  "gap": "G-LOOP",
+  "tags": [
+    "mission",
+    "every",
+    "time_trigger",
+    "clock_time"
+  ],
+  "why": "A time trigger: \"every hour on the hour\" starts a run at a time, which is a `when` clause that the mission layer gets in a later iteration (0041 M6). A run every 60 minutes after the last one (a wait inside the task) is a different request, `m10`.",
+  "attempt_fails_with": "E201"
+}

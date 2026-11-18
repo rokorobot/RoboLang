@@ -1,0 +1,9 @@
+{
+  "task": "transfer",
+  "bindings": {
+    "r": "arm1",
+    "item": "box1",
+    "src": "shelf_a",
+    "dst": "table"
+  }
+}

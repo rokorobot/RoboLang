@@ -1,0 +1,79 @@
+{
+  "id": "m08_rounds_out_of_the_wet_floor",
+  "prompt": "With cleaner1, drive from dock_2 to the lobby and back to dock_2 without ever entering wet_floor. Do 25 such rounds, and stop at the first round that fails.",
+  "world": "bench/worlds/site_1_3.json",
+  "group": "mission",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_0": {
+    "decision": "program",
+    "expected_mission": {
+      "runs": [
+        {
+          "task": "round",
+          "entities": [
+            "cleaner1",
+            "dock_2",
+            "lobby",
+            "wet_floor"
+          ],
+          "goal": [
+            [
+              "rl:robot:cleaner1",
+              "located_in",
+              "rl:place:dock_2"
+            ]
+          ],
+          "limits": [
+            [
+              "no_go_region",
+              "wet_floor"
+            ]
+          ]
+        }
+      ],
+      "repeat": {
+        "max_runs": 25,
+        "max_duration": null
+      },
+      "until": null,
+      "on_failure": "stop"
+    },
+    "paths": [
+      {
+        "when": "every round works",
+        "world_patch": {},
+        "outcome": "bounded",
+        "runs": 25,
+        "runs_verified": 25
+      },
+      {
+        "when": "round 9 fails: the mission stops",
+        "world_patch": {},
+        "outcome": "failed",
+        "runs": 9,
+        "runs_verified": 8,
+        "run_faults": [
+          {
+            "run": 9
+          }
+        ],
+        "failed_runs": [
+          9
+        ]
+      }
+    ]
+  },
+  "gap": "G-LOOP",
+  "tags": [
+    "mission",
+    "repeat",
+    "count_bound",
+    "region_limit",
+    "stop_on_failure"
+  ],
+  "why": "The limit of 1.7 stays in the task that each run uses (0041 M9: every run keeps its own checks and limits). A mission that drops it is a false program that no other check sees.",
+  "attempt_fails_with": "E201"
+}

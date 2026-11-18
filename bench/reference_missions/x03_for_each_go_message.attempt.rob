@@ -1,0 +1,17 @@
+// bench/reference_missions/x03_for_each_go_message.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 1.9;
+
+task trip(robot r, location home, location far) {
+    goal { robot_at r home; }
+    plan {
+        move r to far;
+        move r to home;
+    }
+}
+
+mission on_go(robot r, location home, location far) {           // @mission
+    repeat when message_received "ops" "go", at most 10 runs {  // @mission
+        run trip(r, home, far);                                 // @mission
+    };                                                          // @mission
+    on failure { stop; }                                        // @mission
+}                                                               // @mission

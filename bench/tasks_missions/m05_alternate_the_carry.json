@@ -1,0 +1,87 @@
+{
+  "id": "m05_alternate_the_carry",
+  "prompt": "With arm1, alternate between carrying box1 from shelf_a to the table, waiting 3 seconds after the placement, and carrying it back from the table to shelf_a, again waiting 3 seconds. Keep alternating for at most 24 carries in all, and stop as soon as the aisle is clear.",
+  "world": "bench/worlds/warehouse.json",
+  "group": "mission",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_0": {
+    "decision": "program",
+    "expected_mission": {
+      "runs": [
+        {
+          "task": "carry",
+          "entities": [
+            "arm1",
+            "box1",
+            "shelf_a",
+            "table"
+          ],
+          "goal": [
+            [
+              "rl:thing:box1",
+              "located_in",
+              "rl:place:table"
+            ]
+          ]
+        },
+        {
+          "task": "carry",
+          "entities": [
+            "arm1",
+            "box1",
+            "table",
+            "shelf_a"
+          ],
+          "goal": [
+            [
+              "rl:thing:box1",
+              "located_in",
+              "rl:place:shelf_a"
+            ]
+          ]
+        }
+      ],
+      "repeat": {
+        "max_runs": 24,
+        "max_duration": null
+      },
+      "until": {
+        "condition": "region_clear aisle",
+        "triples": []
+      },
+      "on_failure": "stop"
+    },
+    "paths": [
+      {
+        "when": "the aisle clears at 8 seconds: after run 3 (9 seconds) the until holds",
+        "world_patch": {},
+        "outcome": "completed",
+        "runs": 3,
+        "runs_verified": 3
+      },
+      {
+        "when": "the aisle never clears: 24 runs",
+        "world_patch": {
+          "events": []
+        },
+        "outcome": "bounded",
+        "runs": 24,
+        "runs_verified": 24
+      }
+    ]
+  },
+  "gap": "G-LOOP",
+  "tags": [
+    "mission",
+    "repeat",
+    "alternate",
+    "two_run_lines",
+    "until",
+    "count_bound"
+  ],
+  "why": "Two different runs one after the other, over and over: one `repeat` with two `run` lines, if 0041 allows that (open point 1 in the plan). One task cannot do it: it would need two directions in one run.",
+  "attempt_fails_with": "E201"
+}

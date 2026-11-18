@@ -7,22 +7,27 @@ name: Benchmark
 # - Weekly (Monday 06:00 UTC) and on demand: sets 1 and 2 with 3 repeats, plus set 2 with the
 #   grammar-only prompt for information (~$4-6), plus set 5 (measured values, decision 0036) with both prompts and
 #   3 repeats, for information and not gated (~$4, capped at $3 per prompt). Results are kept as an artifact for 90 days.
-# - On demand with `set3: true`: only set 3 (branching, decision 0027), full and grammar-only prompts,
+# - On demand with `set_only: set3`: only set 3 (branching, decision 0027), full and grammar-only prompts,
 #   3 repeats each, for information and not gated (~$3-4). Used for the pre-registered 1.3 baseline.
-# - On demand with `set4: true`: only set 4 (failure handling, decision 0035), full and grammar-only prompts,
+# - On demand with `set_only: set4`: only set 4 (failure handling, decision 0035), full and grammar-only prompts,
 #   3 repeats each, for information and not gated; each prompt capped at $10 (`--max-usd`).
-# - On demand with `future: true`: only set "future" (RSI-01 R3: probes of the atlas's near language gaps), full
+# - On demand with `set_only: future`: only set "future" (RSI-01 R3: probes of the atlas's near language gaps), full
 #   prompt, 1 repeat, Sonnet and Haiku, capped at $3 (`--max-usd`), for information and not gated. Never run per
 #   pull request or weekly.
-# - On demand with `regions: true`: only set "regions" (decision 0039: region limits; pre-registered against 1.6),
+# - On demand with `set_only: regions`: only set "regions" (decision 0039: region limits; pre-registered against 1.6),
 #   full and grammar-only prompts, 3 repeats each, Sonnet and Haiku, each prompt capped at $3 (`--max-usd`), for
 #   information and not gated. Never run per pull request or weekly.
-# - On demand with `actions: true`: only set "actions" (decision 0040: declared actions; pre-registered against 1.7),
+# - On demand with `set_only: actions`: only set "actions" (decision 0040: declared actions; pre-registered against 1.7),
 #   full and grammar-only prompts, 3 repeats each, Sonnet and Haiku, each prompt capped at $3 (`--max-usd`), for
 #   information and not gated. Never run per pull request or weekly.
-# - On demand with `clock: true`: only set "clock" (decision 0042: clock readings; pre-registered against 1.8),
+# - On demand with `set_only: clock`: only set "clock" (decision 0042: clock readings; pre-registered against 1.8),
 #   full and grammar-only prompts, 3 repeats each, Sonnet and Haiku, each prompt capped at $3 (`--max-usd`), for
 #   information and not gated. Never run per pull request or weekly.
+# - On demand with `set_only: missions`: only set "missions" (decision 0041: the mission layer; pre-registered against
+#   1.9), full and grammar-only prompts, 3 repeats each, Sonnet and Haiku, each prompt capped at $3 (`--max-usd`), for
+#   information and not gated. Never run per pull request or weekly.
+# One string input `set_only` replaces the per-set booleans (GitHub allows at most 10 `workflow_dispatch` inputs):
+# its values are set3, set4, future, regions, actions, clock and missions; empty is the usual weekly or on-demand run.
 # Needs the repository secret ANTHROPIC_API_KEY; without it (and on pull requests from forks) the
 # job is skipped and nothing is spent.
 
@@ -51,30 +56,10 @@ on:
     - cron: "0 6 * * 1"
   workflow_dispatch:
     inputs:
-      set3:
-        description: "Run only set 3 (branching), full and minimal prompts, 3 repeats; not gated"
-        type: boolean
-        default: false
-      set4:
-        description: "Run only set 4 (failure handling), full and minimal prompts, 3 repeats; not gated"
-        type: boolean
-        default: false
-      future:
-        description: "Run only set future (gap probes), full prompt, 1 repeat, Sonnet and Haiku, max $3; not gated"
-        type: boolean
-        default: false
-      regions:
-        description: "Run only set regions (region limits), full and minimal prompts, 3 repeats, Sonnet and Haiku, max $3 each; not gated"
-        type: boolean
-        default: false
-      actions:
-        description: "Run only set actions (declared actions), full and minimal prompts, 3 repeats, Sonnet and Haiku, max $3 each; not gated"
-        type: boolean
-        default: false
-      clock:
-        description: "Run only set clock (clock readings), full and minimal prompts, 3 repeats, Sonnet and Haiku, max $3 each; not gated"
-        type: boolean
-        default: false
+      set_only:
+        description: "Run only one set, not gated: set3 (branching), set4 (failure handling), future (gap probes), regions, actions, clock or missions. Empty: the usual run"
+        type: string
+        default: ""
       confirm_tasks:
         description: "Confirming run (an erratum): comma-separated task IDs; with confirm_set, confirm_models, confirm_prompt; 3 repeats, max $1; not gated"
         type: string
@@ -129,34 +114,39 @@ jobs:
           python bench/run.py --yes --models claude-sonnet-5-5,claude-haiku-5-5 --run-id set1
           python bench/run.py --yes --models claude-sonnet-5-5,claude-haiku-5-5 --set hard --run-id set2
       - name: Run (set 3, on demand)
-        if: steps.key.outputs.present == 'true' && inputs.set3
+        if: steps.key.outputs.present == 'true' && inputs.set_only == 'set3'
         run: |
           python bench/run.py --yes --set branch --repeats 3 --run-id set3
           python bench/run.py --yes --set branch --prompt minimal --repeats 3 --run-id set3-minimal
       - name: Run (set 4, on demand)
-        if: steps.key.outputs.present == 'true' && inputs.set4
+        if: steps.key.outputs.present == 'true' && inputs.set_only == 'set4'
         run: |
           python bench/run.py --yes --set failure --repeats 3 --max-usd 10 --run-id set4
           python bench/run.py --yes --set failure --prompt minimal --repeats 3 --max-usd 10 --run-id set4-minimal
       - name: Run (set future, on demand)
-        if: steps.key.outputs.present == 'true' && inputs.future
+        if: steps.key.outputs.present == 'true' && inputs.set_only == 'future'
         run: |
           python bench/run.py --yes --set future --prompt full --repeats 1 --models claude-sonnet-5-5,claude-haiku-5-5 --max-usd 3 --run-id future
       - name: Run (set regions, on demand)
-        if: steps.key.outputs.present == 'true' && inputs.regions
+        if: steps.key.outputs.present == 'true' && inputs.set_only == 'regions'
         run: |
           python bench/run.py --yes --set regions --prompt full --repeats 3 --models claude-sonnet-5-5,claude-haiku-5-5 --max-usd 3 --run-id regions
           python bench/run.py --yes --set regions --prompt minimal --repeats 3 --models claude-sonnet-5-5,claude-haiku-5-5 --max-usd 3 --run-id regions-minimal
       - name: Run (set actions, on demand)
-        if: steps.key.outputs.present == 'true' && inputs.actions
+        if: steps.key.outputs.present == 'true' && inputs.set_only == 'actions'
         run: |
           python bench/run.py --yes --set actions --prompt full --repeats 3 --models claude-sonnet-5-5,claude-haiku-5-5 --max-usd 3 --run-id actions
           python bench/run.py --yes --set actions --prompt minimal --repeats 3 --models claude-sonnet-5-5,claude-haiku-5-5 --max-usd 3 --run-id actions-minimal
       - name: Run (set clock, on demand)
-        if: steps.key.outputs.present == 'true' && inputs.clock
+        if: steps.key.outputs.present == 'true' && inputs.set_only == 'clock'
         run: |
           python bench/run.py --yes --set clock --prompt full --repeats 3 --models claude-sonnet-5-5,claude-haiku-5-5 --max-usd 3 --run-id clock
           python bench/run.py --yes --set clock --prompt minimal --repeats 3 --models claude-sonnet-5-5,claude-haiku-5-5 --max-usd 3 --run-id clock-minimal
+      - name: Run (set missions, on demand)
+        if: steps.key.outputs.present == 'true' && inputs.set_only == 'missions'
+        run: |
+          python bench/run.py --yes --set missions --prompt full --repeats 3 --models claude-sonnet-5-5,claude-haiku-5-5 --max-usd 3 --run-id missions
+          python bench/run.py --yes --set missions --prompt minimal --repeats 3 --models claude-sonnet-5-5,claude-haiku-5-5 --max-usd 3 --run-id missions-minimal
       - name: Run (confirming run, on demand)
         if: steps.key.outputs.present == 'true' && inputs.confirm_tasks != ''
         env:
@@ -167,18 +157,26 @@ jobs:
         run: |
           python bench/run.py --yes --set "$CONFIRM_SET" --tasks "$CONFIRM_TASKS" --models "$CONFIRM_MODELS" --prompt "$CONFIRM_PROMPT" --repeats 3 --max-usd 1 --run-id confirm
       - name: Run (weekly or on demand)
-        if: steps.key.outputs.present == 'true' && github.event_name != 'pull_request' && !inputs.set3 && !inputs.set4 && !inputs.future && !inputs.regions && !inputs.actions && !inputs.clock && inputs.confirm_tasks == ''
+        if: steps.key.outputs.present == 'true' && github.event_name != 'pull_request' && inputs.set_only == '' && inputs.confirm_tasks == ''
         run: |
           python bench/run.py --yes --repeats 3 --run-id set1
           python bench/run.py --yes --set hard --repeats 3 --run-id set2
           python bench/run.py --yes --set hard --prompt minimal --repeats 3 --run-id set2-minimal
           python bench/run.py --yes --set values --repeats 3 --max-usd 3 --run-id set5
           python bench/run.py --yes --set values --prompt minimal --repeats 3 --max-usd 3 --run-id set5-minimal
+      - name: Keep the raw answers before scoring
+        uses: actions/upload-artifact@v4
+        if: always() && steps.key.outputs.present == 'true'
+        with:
+          name: benchmark-answers
+          path: bench/results/
+          retention-days: 90
       - name: Score and gate
         id: gate
         if: steps.key.outputs.present == 'true'
+        timeout-minutes: 25
         run: |
-          for dir in bench/results/*/; do python bench/score.py "$dir"; done
+          for dir in bench/results/*/; do echo "scoring $dir"; python bench/score.py "$dir"; done
           if [ -d bench/results/set1 ]; then
             set +e
             python bench/gate.py bench/results/set1 bench/results/set2 --summary summary.md
@@ -195,7 +193,7 @@ jobs:
               echo "" >> summary.md; cat cascade.md >> summary.md
             fi
           done
-          for extra in set3 set3-minimal set4 set4-minimal set5 set5-minimal future regions regions-minimal actions actions-minimal clock clock-minimal confirm; do
+          for extra in set3 set3-minimal set4 set4-minimal set5 set5-minimal future regions regions-minimal actions actions-minimal clock clock-minimal missions missions-minimal confirm; do
             if [ -d "bench/results/$extra" ]; then
               echo "" >> summary.md
               echo "_For information, not gated: $extra._" >> summary.md
@@ -216,7 +214,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: gh pr comment "${{ github.event.pull_request.number }}" --body-file summary.md
       - uses: actions/upload-artifact@v4
-        if: steps.key.outputs.present == 'true'
+        if: always() && steps.key.outputs.present == 'true'
         with:
           name: benchmark-results
           path: |

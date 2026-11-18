@@ -565,12 +565,11 @@ def test_the_set_is_in_the_run_script_and_only_runs_on_demand_in_the_workflow():
     assert all("claude-opus" not in ln and "--set clock --prompt" in ln for ln in lines)
     steps = re.split(r"\n      - ", workflow)
     step = next(s for s in steps if s.startswith("name: Run (set clock"))
-    assert "inputs.clock" in step and "pull_request" not in step
+    assert "inputs.set_only == 'clock'" in step and "pull_request" not in step
     pr_step = next(s for s in steps if s.startswith("name: Run (pull request)"))
     weekly = next(s for s in steps if s.startswith("name: Run (weekly or on demand)"))
-    assert "clock" not in pr_step and "!inputs.clock" in weekly and "--set clock" not in weekly
-    declared = r"      clock:\n        description: .*\n        type: boolean\n        default: false"
-    assert re.search(declared, workflow)
+    assert "clock" not in pr_step and "inputs.set_only == ''" in weekly and "--set clock" not in weekly
+    assert re.search(r"      set_only:\n        description: .*\n        type: string\n        default: \"\"", workflow)
     assert "clock clock-minimal" in workflow
 
 
@@ -579,4 +578,4 @@ def test_the_workflow_stays_within_github_s_limit_of_10_dispatch_inputs():
     block = workflow.split("  workflow_dispatch:\n    inputs:\n")[1].split("\npermissions:")[0]
     inputs = re.findall(r"^      ([a-z_0-9]+):$", block, re.M)
     assert len(inputs) == len(set(inputs)) and len(inputs) <= 10, inputs
-    assert {"set3", "set4", "future", "regions", "actions", "clock"} <= set(inputs)
+    assert "set_only" in inputs and not {"set3", "set4", "future", "regions", "actions", "clock"} & set(inputs)

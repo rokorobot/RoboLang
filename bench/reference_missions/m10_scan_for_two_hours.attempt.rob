@@ -1,0 +1,17 @@
+// bench/reference_missions/m10_scan_for_two_hours.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 1.9;
+
+task scan(robot r, object item, sensor cam, location st) {
+    goal { object_at item st; }
+    plan {
+        inspect r item using cam;
+        wait for 15 min;
+    }
+}
+
+mission scan_rounds(robot r, object item, sensor cam, location st) {  // @mission
+    repeat for at most 2 h {                                          // @mission
+        run scan(r, item, cam, st);                                   // @mission
+    };                                                                // @mission
+    on failure { stop; }                                              // @mission
+}                                                                     // @mission

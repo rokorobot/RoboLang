@@ -1,0 +1,8 @@
+{
+  "task": "open_it",
+  "bindings": {
+    "r": "chef_arm",
+    "door": "oven_door_1",
+    "st": "oven"
+  }
+}

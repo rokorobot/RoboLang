@@ -1,0 +1,14 @@
+// bench/reference_missions/x02_every_hour_on_the_hour.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 1.9;
+
+task scan(robot r, object item, sensor cam, location st) {
+    goal { object_at item st; }
+    plan { inspect r item using cam; }
+}
+
+mission hourly(robot r, object item, sensor cam, location st) {  // @mission
+    repeat every 1 h until 18:00 {                               // @mission
+        run scan(r, item, cam, st);                              // @mission
+    };                                                           // @mission
+    on failure { stop; }                                         // @mission
+}                                                                // @mission

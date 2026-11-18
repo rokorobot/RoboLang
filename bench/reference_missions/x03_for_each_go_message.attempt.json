@@ -1,0 +1,8 @@
+{
+  "task": "trip",
+  "bindings": {
+    "r": "tug1",
+    "home": "gate_in",
+    "far": "wash"
+  }
+}

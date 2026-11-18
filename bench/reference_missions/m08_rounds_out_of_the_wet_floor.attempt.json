@@ -1,0 +1,9 @@
+{
+  "task": "round",
+  "bindings": {
+    "r": "cleaner1",
+    "home": "dock_2",
+    "far": "lobby",
+    "wet": "wet_floor"
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "id": "i03_until_a_pallet_that_is_not_there",
+  "prompt": "With tug1, drive from gate_in to gate_out and back to gate_in, at most 20 rounds, until pallet_9 is at wash.",
+  "world": "bench/worlds/yard.json",
+  "group": "infeasible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_0": {
+    "decision": "cannot",
+    "category": "infeasible",
+    "because": "0041 M7"
+  },
+  "blockers": [
+    "the world has no pallet_9, so the until condition cannot be checked"
+  ],
+  "gap": "G-LOOP",
+  "tags": [
+    "mission",
+    "until",
+    "no_such_entity",
+    "count_bound"
+  ],
+  "why": "The `until` names an entity the world lacks (the check is `E`-class at the world, as for a task's goal): the mission can be written and not run.",
+  "attempt_fails_with": "E201"
+}

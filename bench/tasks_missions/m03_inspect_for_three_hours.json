@@ -1,0 +1,85 @@
+{
+  "id": "m03_inspect_for_three_hours",
+  "prompt": "With arm_b, inspect p4 with cam_s3, then wait 10 minutes, and repeat that for at most 3 hours. Stop as soon as fence_b is clear.",
+  "world": "bench/worlds/assembly.json",
+  "group": "mission",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_0": {
+    "decision": "program",
+    "expected_mission": {
+      "runs": [
+        {
+          "task": "look",
+          "entities": [
+            "arm_b",
+            "p4",
+            "cam_s3",
+            "station3"
+          ],
+          "goal": [
+            [
+              "rl:thing:p4",
+              "located_in",
+              "rl:place:station3"
+            ]
+          ]
+        }
+      ],
+      "repeat": {
+        "max_runs": null,
+        "max_duration": {
+          "value": 3,
+          "unit": "h"
+        }
+      },
+      "until": {
+        "condition": "region_clear fence_b",
+        "triples": []
+      },
+      "on_failure": "stop"
+    },
+    "paths": [
+      {
+        "when": "fence_b clears at 25 minutes: after run 3 (30 minutes) the until holds",
+        "world_patch": {
+          "events": [
+            {
+              "at": {
+                "value": "1500",
+                "unit": "s"
+              },
+              "fact": "region_clear",
+              "target": "fence_b",
+              "value": true
+            }
+          ]
+        },
+        "outcome": "completed",
+        "runs": 3,
+        "runs_verified": 3
+      },
+      {
+        "when": "fence_b never clears: 18 runs of 10 minutes fill the 3 hours",
+        "world_patch": {
+          "events": []
+        },
+        "outcome": "bounded",
+        "runs": 18,
+        "runs_verified": 18
+      }
+    ]
+  },
+  "gap": "G-LOOP",
+  "tags": [
+    "mission",
+    "repeat",
+    "duration_bound",
+    "until",
+    "wait_in_task"
+  ],
+  "why": "The bound is a duration (3 hours) and the count follows from it (18 runs), so no fixed list of copies is what the request says; the stop condition is checked after each run (0041 M3).",
+  "attempt_fails_with": "E201"
+}

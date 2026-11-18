@@ -1,0 +1,9 @@
+{
+  "task": "scan",
+  "bindings": {
+    "r": "arm1",
+    "item": "box1",
+    "cam": "camera_top",
+    "st": "shelf_a"
+  }
+}

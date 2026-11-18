@@ -1,0 +1,122 @@
+{
+  "id": "m09_open_the_oven_door",
+  "prompt": "With chef_arm, open oven_door_1. If it is still closed afterwards, try again, up to 15 attempts in all, and carry on after a failed attempt.",
+  "world": "bench/worlds/kitchen_values_1_4.json",
+  "group": "mission",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_0": {
+    "decision": "program",
+    "expected_mission": {
+      "runs": [
+        {
+          "task": "open_it",
+          "entities": [
+            "chef_arm",
+            "oven_door_1",
+            "oven"
+          ],
+          "goal": [
+            [
+              "rl:thing:oven_door_1",
+              "in_state",
+              "open"
+            ]
+          ],
+          "actions": [
+            {
+              "robot": "chef_arm",
+              "action": "open",
+              "target": "oven_door_1"
+            }
+          ]
+        }
+      ],
+      "repeat": {
+        "max_runs": 15,
+        "max_duration": null
+      },
+      "until": {
+        "condition": "in_state oven_door_1 \"open\"",
+        "triples": [
+          [
+            "rl:thing:oven_door_1",
+            "in_state",
+            "open"
+          ]
+        ]
+      },
+      "on_failure": "continue"
+    },
+    "paths": [
+      {
+        "when": "the first attempt works",
+        "world_patch": {},
+        "outcome": "completed",
+        "runs": 1,
+        "runs_verified": 1
+      },
+      {
+        "when": "attempts 1 and 2 fail, attempt 3 works",
+        "world_patch": {},
+        "outcome": "completed",
+        "runs": 3,
+        "runs_verified": 1,
+        "run_faults": [
+          {
+            "run": 1
+          },
+          {
+            "run": 2
+          }
+        ],
+        "failed_runs": [
+          1,
+          2
+        ]
+      },
+      {
+        "when": "every attempt fails: 15 attempts, then the bound",
+        "world_patch": {},
+        "outcome": "bounded",
+        "runs": 15,
+        "runs_verified": 0,
+        "run_faults": [
+          {
+            "run": "all"
+          }
+        ],
+        "failed_runs": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15
+        ]
+      }
+    ]
+  },
+  "gap": "G-LOOP",
+  "tags": [
+    "mission",
+    "repeat",
+    "until",
+    "continue",
+    "declared_action",
+    "count_bound"
+  ],
+  "why": "The 1.8 `do` stays in the task and `in_state` is the `until` (0041 M3: the conditions tasks already use). The count is above what handlers write (10 tries is the longest fixed chain in set 4). The standing `x04_open_until_open` has no bound and is out in 2.0 (M2).",
+  "attempt_fails_with": "E201"
+}

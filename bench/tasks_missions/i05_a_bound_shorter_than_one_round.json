@@ -1,0 +1,26 @@
+{
+  "id": "i05_a_bound_shorter_than_one_round",
+  "prompt": "With amr1, carry crate1 from the dock to the table, wait 2 minutes there and carry it back to the dock. Keep repeating that round, but stop everything after 90 seconds.",
+  "world": "bench/worlds/warehouse.json",
+  "group": "infeasible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_0": {
+    "decision": "cannot",
+    "category": "infeasible",
+    "because": "0041 M2"
+  },
+  "blockers": [
+    "one round takes 2 minutes and the whole job may take 90 seconds"
+  ],
+  "gap": "G-LOOP",
+  "tags": [
+    "mission",
+    "bound_too_small",
+    "duration_bound"
+  ],
+  "why": "A duration bound below the time of a single run: the first run alone would pass the bound. A run is never cut (a task run is complete and verified), so nothing can be repeated within 90 seconds.",
+  "attempt_fails_with": "E201"
+}

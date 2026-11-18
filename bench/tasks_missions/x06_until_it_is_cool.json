@@ -1,0 +1,24 @@
+{
+  "id": "x06_until_it_is_cool",
+  "prompt": "With chef_arm, measure the temperature of pan_1 with probe_temp and send the reading to channel \"pass\", then wait 1 minute. Repeat that for at most 30 times, until the reading is below 40 degrees Celsius.",
+  "world": "bench/worlds/kitchen_values_1_4.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_0": {
+    "decision": "cannot",
+    "category": "inexpressible",
+    "because": "0041 M3 (open point 2)"
+  },
+  "gap": "G-LOOP",
+  "tags": [
+    "mission",
+    "until",
+    "measured_condition",
+    "count_bound"
+  ],
+  "why": "The `until` is a comparison of a measured value. M3 allows \"the conditions tasks already use\", and a comparison is not allowed in `pre` or `goal` (`E321`): read that way, it stays out. If the owner allows values in `until` (open point 2) this becomes a program with the `until` as stated.",
+  "attempt_fails_with": "E201"
+}

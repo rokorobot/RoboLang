@@ -1,0 +1,48 @@
+{
+  "id": "c03_wait_for_the_aisle",
+  "prompt": "With amr1, carry crate1 from the dock to the table, but only after the aisle is clear. Wait up to 20 seconds for it and, if it is not clear by then, stop the job as failed.",
+  "world": "bench/worlds/warehouse.json",
+  "group": "control",
+  "expect": {
+    "decision": "program"
+  },
+  "expect_1_9": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "the aisle clears at 8 seconds",
+        "goal": [
+          [
+            "rl:thing:crate1",
+            "located_in",
+            "rl:place:table"
+          ]
+        ],
+        "world_patch": {}
+      },
+      {
+        "when": "the aisle never clears: the wait times out",
+        "fails": true,
+        "world_patch": {
+          "events": []
+        }
+      }
+    ]
+  },
+  "expect_2_0": {
+    "decision": "program",
+    "expected_mission": null
+  },
+  "expected_goal": [
+    [
+      "rl:thing:crate1",
+      "located_in",
+      "rl:place:table"
+    ]
+  ],
+  "tags": [
+    "wait_until",
+    "timeout",
+    "no_mission"
+  ]
+}

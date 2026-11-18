@@ -86,6 +86,7 @@ before.
 
 | Date | Note | Added | Removed | Changed | Ranking |
 |---|---|---|---|---|---|
+| 2026-11-18 | I4 L3: set 9 missions pre-registered (26 tasks) | — | — | — | 1. action 4.52 · 2. perception 2.78 · 3. cooperation 1.07 · 4. communication 0.95 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
 | 2026-11-17 | L6 of I3: G-CLOCK closed by RoboLang 1.9 clock readings | — | — | — | 1. action 4.52 · 2. perception 2.78 · 3. cooperation 1.07 · 4. communication 0.95 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
 | 2026-11-17 | I3 L4: RoboLang 1.9 built and taught | — | — | — | 1. action 4.52 · 2. perception 2.78 · 3. cooperation 1.07 · 4. communication 0.95 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
 | 2026-11-17 | I3 L3 done: set 8 frozen; bounds B1-B8 and clarifications K1-K11 approved; G-DATE opened (K11) | — | — | — | 1. action 4.52 · 2. perception 2.78 · 3. cooperation 1.07 · 4. communication 0.95 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
@@ -155,7 +156,7 @@ before.
 
 | Language gap | Scope | Priority | Near | Benchmark tasks |
 |---|---|---|---|---|
-| `G-CHOOSE` Choosing objects or robots at run time | open | 5.23 | yes | 5 |
+| `G-CHOOSE` Choosing objects or robots at run time | open | 5.23 | yes | 6 |
 | `G-PERCEIVE` Conditions on perceived properties (dirty, damaged) | open | 4.94 | yes | 4 |
 
 ## Cooperation
@@ -193,7 +194,7 @@ before.
 
 | Language gap | Scope | Priority | Near | Benchmark tasks |
 |---|---|---|---|---|
-| `G-MSG` Waiting for an incoming message, or confirming delivery | open | 4.02 | yes | 8 |
+| `G-MSG` Waiting for an incoming message, or confirming delivery | open | 4.02 | yes | 9 |
 
 ## Learning
 
@@ -224,7 +225,7 @@ before.
 
 | Language gap | Scope | Priority | Near | Benchmark tasks |
 |---|---|---|---|---|
-| `G-LOOP` Repetition without a fixed bound: loops, retry until it works, schedules, event streams | open | 8.21 | yes | 15 |
+| `G-LOOP` Repetition without a fixed bound: loops, retry until it works, schedules, event streams | open | 8.21 | yes | 35 |
 | `G-CALC` Arithmetic, counting and text built from values | open | 1.55 | yes | 10 |
 | `G-CLOCK` Clock readings and times of day | closed | 0.00 | — | 0 |
 | `G-DATE` Dates and times on another day: tomorrow, a weekday, a calendar date | open | 0.00 | — | 2 |
