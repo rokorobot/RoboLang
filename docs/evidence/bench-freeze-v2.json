@@ -1,5 +1,5 @@
 {
-  "sha256": "aa7c36673e7ddc9e152e6a67d0588274b922ab71fe998a1fece58452fdd5f51a",
+  "sha256": "5f160a23905efc6c10c55a23ae0b4eb3622eb69ba3a0d97fcc561cf5f1d77a12",
   "schema": "robolang.bench.freeze.v2",
   "patterns": [
     "bench/tasks*/*.json",
@@ -1263,7 +1263,7 @@
     "src/robolang/arch02/scenario.py": "79a5c8be33e617fc189902ae5e4b089b687b238289b5c1e240de90e68c04c8ef",
     "src/robolang/arch02/world.py": "4bf1d3d13bea983a355518fe9a560d446d2a604e309fa4c356315517b95c8cf5",
     "src/robolang/authorization.py": "abe088a94af825a7c1624cf76c270e0f504562f3016a4fb93189ac71350fd9d4",
-    "src/robolang/bridge.py": "f0a534d2d19838289e3ef0bf9b6ea00e3593425d91122309afa2dfa7f057965e",
+    "src/robolang/bridge.py": "3dd3d8977f483420293455666538b63b720ec01b531624a79619b18aed87b2d8",
     "src/robolang/cli.py": "8bab57e4d5a045b564e1aa0441cdb56c275cebc4a975f76e2e8526373e99601c",
     "src/robolang/core/__init__.py": "2023a3f96b1e56f7775767ca8e94a58ba58b07fb6b75186a8b3e9ab133185db9",
     "src/robolang/core/canonical.py": "09d8f5809966dee4401f0632d423a930dd37d59a1c2a21f0c3d3281df3ba85d0",

@@ -123,6 +123,52 @@ def path_goals(task: ir.Task) -> list[tuple[str, tuple[ir.Condition, ...] | None
     return out
 
 
+def distinct_path_goals(task: ir.Task) -> list[tuple[str, tuple[ir.Condition, ...] | None]]:
+    """
+    The distinct effective goals of the plan's paths, as `path_goals` gives them but each goal once, with the label of
+    the first path (depth-first, `then` before `else`, `ok` before `failed`) that has it. Linear in the plan, not in
+    its paths: every step with a failure handler doubles the paths, so a plan of 40 handled steps has 2^40 of them
+    (erratum W2); the walk is memoised on the position in the plan, what follows it, and the goal so far.
+    """
+    memo: dict = {}
+    alive: list = []  # keeps every sequence used in a key alive, so an id() is never reused within this walk
+
+    def walk(seq, i, cont, goal):
+        alive.append(seq)
+        key = (id(seq), i, tuple((id(s), j) for s, j in cont), goal)
+        if key in memo:
+            return memo[key]
+        result: list = []
+        while True:
+            if i >= len(seq):
+                if not cont:
+                    result = [("", goal)]
+                    break
+                (seq, i), cont = cont[-1], cont[:-1]
+                continue
+            step = seq[i]
+            if isinstance(step, ir.Fail):
+                result = [("", None)]
+                break
+            handler = ir.handler_of(step)
+            if isinstance(step, ir.If) or handler is not None:
+                sides = (("then", step.then, step.goal_then), ("else", step.orelse, step.goal_else)) \
+                    if isinstance(step, ir.If) else (("ok", (), None), ("failed", handler, None))
+                rest = cont + ((seq, i + 1),)
+                seen: set = set()
+                for side, body, branch_goal in sides:
+                    for label, g in walk(tuple(body), 0, rest, goal + tuple(branch_goal or ())):
+                        if g not in seen:
+                            seen.add(g)
+                            result.append((f"{side}/{label}" if label else side, g))
+                break
+            i += 1
+        memo[key] = result
+        return result
+
+    return walk(tuple(task.steps), 0, (), tuple(task.goal or ()))
+
+
 class PathsDiffer(NotExportable):
     """A branching task whose paths do not all have one goal: Core 0.1 cannot state "any of" (decision 0027 B7)."""
 
@@ -147,7 +193,7 @@ def goal_atoms(task: ir.Task) -> tuple[ir.Condition, ...]:
         raise NotExportable(0, "no goal")
     if not task.branching:
         return flatten_atoms(task.goal)
-    goals = {label: None if goal is None else flatten_atoms(goal) for label, goal in path_goals(task)}
+    goals = {label: None if goal is None else flatten_atoms(goal) for label, goal in distinct_path_goals(task)}
     failing = [f"path {label} ends in fail" for label, goal in goals.items() if goal is None]
     if failing:
         raise PathsDiffer(failing[0])
@@ -226,7 +272,7 @@ def goal_alternatives(task: ir.Task, bindings: dict[str, str]) -> tuple[tuple[ir
     if task.goal is None:
         raise NotExportable(0, "no goal")
     found: dict[frozenset[Triple], tuple[ir.Condition, ...]] = {}
-    for _, goal in path_goals(task):
+    for _, goal in distinct_path_goals(task):
         for atoms in () if goal is None else alternatives_of(goal):
             found.setdefault(frozenset(triple_of(atom, bindings) for atom in atoms), atoms)
     if not found:

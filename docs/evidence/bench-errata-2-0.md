@@ -50,3 +50,14 @@ The second run ([run 44261560831](https://github.com/rokorobot/RoboLang/actions/
 way. Scoring ran past its own 25-minute timeout, which suggests the runner itself had died, likely out of memory, and
 nothing was uploaded. The orchestrator cancelled it. The raw answers are now uploaded as `benchmark-answers`
 **before** scoring, so a failure while scoring can be reproduced offline.
+
+## Erratum W2 (2026-11-18): exporting a goal is linear in the plan, not in its paths
+
+The cause of both lost runs was not GitHub. Scoring the grammar-only answers ran out of memory.
+`bridge.goal_atoms` and `bridge.goal_alternatives` walked **every path** of a plan, and each `if` or failure handler
+doubles the paths. Haiku's 1.9 answer to `m06_carry_until_there` had 18 handled steps. The same walk serves
+`robolang export-goal` and `delegate`: on that valid task, `export-goal` took 15 s and then failed out of memory.
+The new `bridge.distinct_path_goals` gives the same distinct goals in the same order (a test checks it against
+`path_goals`), memoised on the position in the plan, what follows it, and the goal so far. It finishes in 0.16 s.
+`tests/test_lang15.py` has a regression test with 40 handled steps. The results of earlier sets are unaffected:
+they never had such plans. This is a fix to the package and goes into the next release.

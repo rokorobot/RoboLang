@@ -3,6 +3,11 @@
 The distribution version (this file) is independent of the language versions (1.1 to 1.9) and the Task IR schema
 versions (1.0 to 1.8). Decision records are in [`spec/decisions/`](https://github.com/rokorobot/RoboLang/tree/main/spec/decisions).
 
+## Unreleased
+
+- Exporting a goal (`export-goal`, `delegate`, Core 0.2 alternatives) no longer walks every path of a plan: a plan
+  with many failure handlers or `if`s took exponential time and memory (erratum W2 of `docs/evidence/bench-errata-2-0.md`).
+
 ## 0.6.0 (2026-11-17)
 
 RoboLang 1.9 (clock readings), iteration I3 of the [roadmap](docs/LANGUAGE_ROADMAP.md). Accepted on benchmark set 8

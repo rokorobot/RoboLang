@@ -110,21 +110,21 @@ set (a request without a bound stays out, and a mission with an invented bound i
 "until it works" to be a program, M2 has to give a default bound, and 0041 says it does not. L4 relabels the 15 as
 `expect_2_0: cannot / inexpressible` and none moves to program.
 
-## Acceptance bounds (proposed, placeholders: to be fixed with the baseline in hand, rule 6)
+## Acceptance bounds (proposed with the baseline in hand, rule 6; for the owner)
 
-The baseline (1.9, 3 repeats, Sonnet and Haiku) is not run. The smallest step is one answer (rule 6). The acceptance
+Baseline: [bench-set9-baseline.md](../evidence/bench-set9-baseline.md) (2026-11-18, 1.9, 3 repeats). The smallest step is one answer (rule 6). The acceptance
 run repeats the baseline under 2.0.
 
 | # | Group | Measure | Baseline (1.9) | Proposed bound (2.0, per model) |
 |---|---|---|---|---|
 | B1 | 10 `mission` programs | `mission_ok` and the outcome of every path, full prompt | not expressible | ≥ 90%: at least 27/30 |
 | B2 | the same, grammar-only | the same | not expressible | for information |
-| B3 | 7 inexpressible tasks | false programs, full and grammar-only | to be measured | at most 1/21 for each model and prompt |
-| B4 | 5 infeasible tasks | decision `cannot`; no valid mission that succeeds | to be measured | at least 14/15, and 0 that succeed |
-| B5 | 4 `control` | right decision and **no mission added**, full prompt | to be measured | at least 11/12 |
+| B3 | 7 inexpressible tasks | false programs, full and grammar-only | 0/21 for each | at most 1/21 for each model and prompt |
+| B4 | 5 infeasible tasks | decision `cannot`; no valid mission that succeeds | 15/15 for each (grammar-only Haiku 14/15) | at least 14/15, and 0 that succeed |
+| B5 | 4 `control` | right decision and **no mission added**, full prompt | Haiku 12/12, Sonnet 9/12 (it declined the fixed count `c01` 3/3) | at least 11/12 |
 | B6 | sets 1 and 2 (standing) | `gate.json`; decision accuracy | latest run | the gate passes; `decision_correct` drops at most 2 points or one answer, whichever is larger |
 | B7 | economy | statements, kinds, literals, reserved words, top-level declarations, world fields, codes | — | 0 task statements, 1 top-level declaration (`mission`), at most 7 reserved words (`mission`, `repeat`, `run`, `runs`, `stop`, `continue`, `retry`; `until` and `for` exist), 0 world fields (the `run_faults` of the paths are a test form, not a world field), about 6 user-facing codes plus their IR forms |
-| B8 | 10 `mission` programs | **repetition replaced silently**: a valid, succeeding 1.x program (no mission) that runs the task once, unrolls a number of copies the request did not ask for, or drops the repetition; full prompt | to be measured (the stripped attempts are this program) | at most 1/30 |
+| B8 | 10 `mission` programs | **repetition replaced silently**: a valid, succeeding 1.x program (no mission) that runs the task once, unrolls a number of copies the request did not ask for, or drops the repetition; full prompt | **Haiku 4/30, Sonnet 0/30** (grammar-only: Haiku 12/30, Sonnet 2/30) | at most 1/30 |
 | B9 | 10 `mission` programs and `x01`, `x06`, `x07` | **bound dropped or invented** (0041): a mission without the bound the request states (a run count, a duration, `retry N`), or with one it did not state (a run count added to a duration-only request, a bound for "forever"), full prompt | not expressible | at most 1/30 on the programs; 0 missions written for `x01` |
 
 If a bound fails, 2.0 stays in code only and is not taught.

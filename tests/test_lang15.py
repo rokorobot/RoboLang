@@ -274,3 +274,22 @@ def test_validate_world_reports_a_certain_failure_inside_a_handler(tmp_path):
     finally:
         os.chdir(previous)
     assert code == 1 and "t.rob:5:22: error[S211]" in err.getvalue() and "(on path 1.else)" in err.getvalue()
+
+
+def test_goal_export_is_linear_in_the_plan_not_in_its_paths_erratum_w2():
+    """40 steps with a failure handler give 2^40 paths; the export must not walk them (erratum W2 of 2.0)."""
+    import time
+    from robolang.bridge import distinct_path_goals, goal_alternatives
+    steps = "move r to src;\n" + "".join("move r to dst else { wait for 1 s; }\nmove r to src else { wait for 1 s; }\n"
+                                         for _ in range(20)) + "grasp r box;\nmove r to dst;\nplace r box at dst;"
+    big = compile_source(task(steps)).ir.tasks[0]
+    start = time.monotonic()
+    assert [a.KIND for a in goal_atoms(big)] == ["object_at"]
+    binds = {"r": "arm1", "box": "box1", "src": "shelf", "dst": "table"}
+    assert len(goal_alternatives(big, binds)) == 1 and len(distinct_path_goals(big)) == 1
+    assert time.monotonic() - start < 5
+    # for a small plan the distinct goals are exactly the deduplicated goals of every path, in the same order
+    retry = compile_source(task("move r to src;\ngrasp r box else { grasp r box; }\nmove r to dst;\n"
+                                "place r box at dst;")).ir.tasks[0]
+    every = path_goals(retry)
+    assert [g for _, g in distinct_path_goals(retry)] == list(dict.fromkeys(g for _, g in every))
