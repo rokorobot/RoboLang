@@ -21,7 +21,7 @@ from pathlib import Path
 
 from . import nodes as ast
 from .diagnostics import MAX_ERRORS, Diagnostic, RoboLangError
-from .measured import Atom, Operand, Scopes, View
+from .measured import AREA_KINDS, Atom, Operand, Scopes, View
 from .nodes import ParamType, Span
 from .paths import double_grasps, goalless_path
 from .parser import ParseResult, parse_recovering
@@ -72,7 +72,9 @@ def _holding_test(condition, positive: bool = True):
     return None
 
 
-_VALUE_CODES = {"scope": "E317", "clash": "E318", "kind": "E319", "operator": "E320", "goal": "E321", "live": "E322"}
+_VALUE_CODES = {"scope": "E317", "clash": "E318", "kind": "E319", "operator": "E320", "goal": "E321", "live": "E322",
+                # RoboLang 2.2 (decision 0044): a number needs its unit; a count is a whole number
+                "unit": "E206", "count": "E328"}
 
 
 def _operand(node) -> Operand:
@@ -80,7 +82,8 @@ def _operand(node) -> Operand:
     if isinstance(node, ast.Name):
         return Operand("binding", node.span, name=node.text)
     if isinstance(node, ast.QuantityLit):
-        return Operand("quantity", node.span, unit=node.unit)
+        whole = None if node.unit is not None else node.value == node.value.to_integral_value()
+        return Operand("quantity", node.span, unit=node.unit, whole=whole)
     if isinstance(node, ast.LiveReading):
         return Operand("live", node.span, kind=node.kind.text)
     if isinstance(node, ast.LiveClock):  # RoboLang 1.9
@@ -157,6 +160,7 @@ class _Validator:
         self._branching = False  # RoboLang 1.4 to 1.8
         self._handlers = False  # RoboLang 1.5 to 1.8
         self._values = False  # RoboLang 1.6 to 1.8
+        self._kinds = False  # RoboLang 2.2: four more kinds and `%`
         self._language = None
         self._mission_names: set[str] = set()
         self._owner = "task"  # what the names in scope are parameters of: "task", or "mission" (RoboLang 2.0)
@@ -192,10 +196,11 @@ class _Validator:
     def _program(self, program: ast.Program):
         language = program.version.version if program.version is not None else None
         self._language = language
-        self._typed_sensors = language in ("1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "2.0", "2.1")
-        self._branching = language in ("1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "2.0", "2.1")
-        self._handlers = language in ("1.5", "1.6", "1.7", "1.8", "1.9", "2.0", "2.1")
-        self._values = language in ("1.6", "1.7", "1.8", "1.9", "2.0", "2.1")
+        self._typed_sensors = language in ("1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "2.0", "2.1", "2.2")
+        self._branching = language in ("1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "2.0", "2.1", "2.2")
+        self._handlers = language in ("1.5", "1.6", "1.7", "1.8", "1.9", "2.0", "2.1", "2.2")
+        self._values = language in ("1.6", "1.7", "1.8", "1.9", "2.0", "2.1", "2.2")
+        self._kinds = language == "2.2"
         seen: dict[str, ast.Name] = {}
         for task in program.tasks:
             first = seen.setdefault(task.name.text, task.name)
@@ -506,7 +511,10 @@ class _Validator:
             self._sensor(statement.sensor, "inspect ... using")
         elif isinstance(statement, ast.Measure):
             self._use(statement.robot, ParamType.ROBOT, "measure")
-            self._use(statement.obj, ParamType.OBJECT, "measure")
+            if statement.kind.text in AREA_KINDS and self._kinds:  # RoboLang 2.2 (decision 0044 D1): or a location
+                self._use_any(statement.obj, f"measure {statement.kind.text}")
+            else:
+                self._use(statement.obj, ParamType.OBJECT, "measure")
             self._sensor(statement.sensor, "measure ... using")
         elif isinstance(statement, ast.MeasureClock):  # RoboLang 1.9 (decision 0042 T1): the robot is recorded
             self._use(statement.robot, ParamType.ROBOT, "measure")
@@ -542,7 +550,10 @@ class _Validator:
     # -------- individual rules --------
 
     def _live(self, reading: ast.LiveReading):
-        self._use(reading.obj, ParamType.OBJECT, "a live reading")
+        if reading.kind.text in AREA_KINDS and self._kinds:  # RoboLang 2.2 (decision 0044 D1): or a location
+            self._use_any(reading.obj, f"a live {reading.kind.text} reading")
+        else:
+            self._use(reading.obj, ParamType.OBJECT, "a live reading")
         self._sensor(reading.sensor, "a live reading ... using")
 
     def _sensor(self, sensor: ast.StringLit | ast.Name, context: str):

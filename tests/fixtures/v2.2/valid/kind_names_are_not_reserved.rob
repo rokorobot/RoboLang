@@ -1,0 +1,15 @@
+// RoboLang v2.2 fixture: valid
+// expect: ok
+// why: fill, count, pressure and confidence are not reserved: they are still names (D10)
+
+robolang 2.2;
+
+task t(robot r, location count, location confidence, sensor cam, sensor tag) {
+    goal { robot_at r confidence; }
+    plan {
+        move r to confidence;
+        measure r count of count using tag as fill;
+        measure r fill of count using cam as pressure;
+        if pressure < 25 % { communicate r to "lead" with fill; }
+    }
+}

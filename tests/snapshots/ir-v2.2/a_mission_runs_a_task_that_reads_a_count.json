@@ -1,0 +1,133 @@
+{
+  "ir_schema": "robolang.mission-ir",
+  "ir_schema_version": "1.2",
+  "task_ir_schema_version": "1.10",
+  "language_version": "2.2",
+  "tasks": [
+    {
+      "name": "round",
+      "parameters": [
+        {
+          "name": "r",
+          "type": "robot"
+        },
+        {
+          "name": "aisle",
+          "type": "location"
+        },
+        {
+          "name": "shelf",
+          "type": "location"
+        },
+        {
+          "name": "tag",
+          "type": "sensor"
+        }
+      ],
+      "safety": [],
+      "preconditions": [],
+      "goal": [
+        {
+          "kind": "robot_at",
+          "robot": "r",
+          "location": "aisle"
+        }
+      ],
+      "steps": [
+        {
+          "kind": "move",
+          "robot": "r",
+          "target": "aisle"
+        },
+        {
+          "kind": "measure",
+          "robot": "r",
+          "reading": "count",
+          "object": "shelf",
+          "sensor": "tag",
+          "binding": "n"
+        },
+        {
+          "kind": "if",
+          "condition": {
+            "kind": "compare",
+            "left": {
+              "kind": "binding",
+              "name": "n"
+            },
+            "op": "==",
+            "right": {
+              "kind": "quantity",
+              "value": "0"
+            }
+          },
+          "then": [
+            {
+              "kind": "communicate",
+              "robot": "r",
+              "channel": "lead",
+              "message": "empty"
+            }
+          ],
+          "else": [],
+          "goal_then": null,
+          "goal_else": null
+        }
+      ]
+    }
+  ],
+  "missions": [
+    {
+      "name": "nightly",
+      "parameters": [
+        {
+          "name": "r",
+          "type": "robot"
+        },
+        {
+          "name": "aisle",
+          "type": "location"
+        },
+        {
+          "name": "shelf",
+          "type": "location"
+        },
+        {
+          "name": "tag",
+          "type": "sensor"
+        }
+      ],
+      "repeat": {
+        "max_runs": 3,
+        "until": {
+          "kind": "compare",
+          "left": {
+            "kind": "live",
+            "reading": "count",
+            "object": "shelf",
+            "sensor": "tag"
+          },
+          "op": "==",
+          "right": {
+            "kind": "quantity",
+            "value": "0"
+          }
+        }
+      },
+      "runs": [
+        {
+          "task": "round",
+          "arguments": [
+            "r",
+            "aisle",
+            "shelf",
+            "tag"
+          ]
+        }
+      ],
+      "on_failure": {
+        "policy": "stop"
+      }
+    }
+  ]
+}

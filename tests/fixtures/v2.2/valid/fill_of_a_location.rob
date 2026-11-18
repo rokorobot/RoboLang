@@ -1,0 +1,16 @@
+// RoboLang v2.2 fixture: valid
+// expect: ok
+// why: a fill and a count may be read of a location as well as of an object (D1)
+
+robolang 2.2;
+
+task t(robot r, location shelf, location aisle, sensor cam, sensor tag) {
+    goal { robot_at r aisle; }
+    plan {
+        move r to aisle;
+        measure r fill of shelf using cam as level;
+        measure r count of shelf using tag as n;
+        if level < 25 % { communicate r to "lead" with "low"; }
+        if n == 0 { communicate r to "lead" with n; }
+    }
+}

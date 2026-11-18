@@ -1,5 +1,5 @@
 """
-Lexer for RoboLang v1.1 to v2.0 (spec/robolang-v1.1.md, sections 2 and 3).
+Lexer for RoboLang v1.1 to v2.2 (spec/robolang-v1.1.md, sections 2 and 3).
 
 Tokens are produced on demand. The parser uses this to reject an unsupported
 language version (E213) without interpreting the rest of the file; after the
@@ -43,14 +43,16 @@ class Lexer:
         self.verify = False  # `@verify` is an annotation after a `robolang 1.3;` to `1.8;` marker only
         self.values = False  # comparison operators are tokens after a `robolang 1.6;` to `2.0;` marker only
         self.clock = False  # time literals `22:00` are tokens after a `robolang 1.9;` or `2.0;` marker only
+        self.percent = False  # `%` is a token after a `robolang 2.2;` marker only (decision 0044 K2)
 
     def set_language(self, version: str):
         """Switch to the words and annotations of language `version` (a `robolang` marker was read)."""
         if version in RESERVED_BY_VERSION:
             self.reserved = RESERVED_BY_VERSION[version]
-        self.verify = version in ("1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "2.0", "2.1")
-        self.values = version in ("1.6", "1.7", "1.8", "1.9", "2.0", "2.1")
-        self.clock = version in ("1.9", "2.0", "2.1")
+        self.verify = version in ("1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "2.0", "2.1", "2.2")
+        self.values = version in ("1.6", "1.7", "1.8", "1.9", "2.0", "2.1", "2.2")
+        self.clock = version in ("1.9", "2.0", "2.1", "2.2")
+        self.percent = version == "2.2"
 
     # -------- helpers --------
 
@@ -108,6 +110,8 @@ class Lexer:
             return self._unit_or_word()
         if ch in _PUNCTUATION:
             return self._take(_PUNCTUATION[ch], 1)
+        if self.percent and ch == "%":
+            return self._take(TokenKind.PERCENT, 1)
         if self.values and ch in "<>=!":
             return self._operator()
         if ch == "/" and self._peek(1) == "*":

@@ -1,5 +1,5 @@
 """
-Abstract syntax tree for RoboLang v1.1 to v2.1 (robolang-v1.1.md section 7, v1.2 section 6, v1.3 section 6).
+Abstract syntax tree for RoboLang v1.1 to v2.2 (robolang-v1.1.md section 7, v1.2 section 6, v1.3 section 6).
 
 Nodes are immutable and record the source faithfully: names are unresolved,
 units are kept as written and nothing is normalized. Binding and type checks
@@ -167,10 +167,13 @@ class Not:
 
 @dataclass(frozen=True)
 class QuantityLit:
-    """RoboLang 1.6: `60 degC`. The unit is kept as written; whether it belongs to the compared kind is static."""
+    """
+    RoboLang 1.6: `60 degC`. The unit is kept as written; whether it belongs to the compared kind is static. RoboLang
+    2.2 (decision 0044 K2): `unit` is None for a bare number in a comparison, which only a count accepts (E206 else).
+    """
 
     value: Decimal
-    unit: str
+    unit: str | None
     span: Span
 
 

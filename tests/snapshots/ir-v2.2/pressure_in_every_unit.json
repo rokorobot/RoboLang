@@ -1,0 +1,133 @@
+{
+  "ir_schema": "robolang.task-ir",
+  "ir_schema_version": "1.10",
+  "language_version": "2.2",
+  "tasks": [
+    {
+      "name": "t",
+      "parameters": [
+        {
+          "name": "r",
+          "type": "robot"
+        },
+        {
+          "name": "gauge",
+          "type": "object"
+        },
+        {
+          "name": "aisle",
+          "type": "location"
+        },
+        {
+          "name": "cam",
+          "type": "sensor"
+        }
+      ],
+      "safety": [],
+      "preconditions": [],
+      "goal": [
+        {
+          "kind": "robot_at",
+          "robot": "r",
+          "location": "aisle"
+        }
+      ],
+      "steps": [
+        {
+          "kind": "move",
+          "robot": "r",
+          "target": "aisle"
+        },
+        {
+          "kind": "measure",
+          "robot": "r",
+          "reading": "pressure",
+          "object": "gauge",
+          "sensor": "cam",
+          "binding": "p"
+        },
+        {
+          "kind": "if",
+          "condition": {
+            "kind": "compare",
+            "left": {
+              "kind": "binding",
+              "name": "p"
+            },
+            "op": ">",
+            "right": {
+              "kind": "quantity",
+              "value": "6",
+              "unit": "bar"
+            }
+          },
+          "then": [
+            {
+              "kind": "communicate",
+              "robot": "r",
+              "channel": "maintenance",
+              "message": "over"
+            }
+          ],
+          "else": [],
+          "goal_then": null,
+          "goal_else": null
+        },
+        {
+          "kind": "if",
+          "condition": {
+            "kind": "compare",
+            "left": {
+              "kind": "binding",
+              "name": "p"
+            },
+            "op": "<",
+            "right": {
+              "kind": "quantity",
+              "value": "450",
+              "unit": "kPa"
+            }
+          },
+          "then": [
+            {
+              "kind": "communicate",
+              "robot": "r",
+              "channel": "maintenance",
+              "message": "low"
+            }
+          ],
+          "else": [],
+          "goal_then": null,
+          "goal_else": null
+        },
+        {
+          "kind": "if",
+          "condition": {
+            "kind": "compare",
+            "left": {
+              "kind": "binding",
+              "name": "p"
+            },
+            "op": ">=",
+            "right": {
+              "kind": "quantity",
+              "value": "100000",
+              "unit": "Pa"
+            }
+          },
+          "then": [
+            {
+              "kind": "communicate",
+              "robot": "r",
+              "channel": "maintenance",
+              "binding": "p"
+            }
+          ],
+          "else": [],
+          "goal_then": null,
+          "goal_else": null
+        }
+      ]
+    }
+  ]
+}

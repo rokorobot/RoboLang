@@ -17,19 +17,20 @@ from decimal import Decimal
 from types import MappingProxyType
 
 from .. import ir
-from ..measured import KINDS, LABEL
-from ..tokens import KIND_UNITS
+from ..measured import AREA_KINDS, COUNT, KINDS, KINDS_V2_2, LABEL
+from ..tokens import KIND_UNITS_V2_2
 from .values import DURATION_UNITS, SPEED_UNITS, Speed, duration_ms, parse_decimal
 
 WORLD_SCHEMA = "robolang.sim.world"
 WORLD_SCHEMA_VERSION = "1.0"
 # 1.1 adds `class` and `mass` to objects (3.3); 1.2 measured values (14); 1.3 region limits (15); 1.4 actions (16);
-# 1.5 the clock (17); 1.6 channels and incoming messages (19)
-WORLD_SCHEMA_VERSIONS = ("1.0", "1.1", "1.2", "1.3", "1.4", "1.5", "1.6")
-_MEASURED = ("1.2", "1.3", "1.4", "1.5", "1.6")  # the world files with measured values
-_REGIONS = ("1.3", "1.4", "1.5", "1.6")  # the world files with `contains` and `honours`
-_ACTIONS = ("1.4", "1.5", "1.6")  # the world files with `actions`, `state` and `location_states`
-_CLOCKS = ("1.5", "1.6")  # the world files with a `clock`
+# 1.5 the clock (17); 1.6 channels and incoming messages (19); 1.7 four more measured kinds (20)
+WORLD_SCHEMA_VERSIONS = ("1.0", "1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7")
+_MEASURED = ("1.2", "1.3", "1.4", "1.5", "1.6", "1.7")  # the world files with measured values
+_REGIONS = ("1.3", "1.4", "1.5", "1.6", "1.7")  # the world files with `contains` and `honours`
+_ACTIONS = ("1.4", "1.5", "1.6", "1.7")  # the world files with `actions`, `state` and `location_states`
+_CLOCKS = ("1.5", "1.6", "1.7")  # the world files with a `clock`
+_CHANNELS = ("1.6", "1.7")  # the world files with `channels` and `messages`
 SENDER = re.compile(r"rl:(agent|robot):[A-Za-z0-9][A-Za-z0-9._:@-]{0,127}")  # a sender of a message (world file 1.6)
 FACT_MESSAGE = "message"  # the fact of a `messages` entry, which is an event like the others (decision 0043 S6)
 HONOURS = ("no_go_region", "in_region")  # what a robot profile may declare it honours (world file 1.3)
@@ -210,6 +211,9 @@ class World:
     clock: Clock | None = None  # world file 1.5: None is no clock (a `time` reading then fails the step)
     # world file 1.6: channel -> its allowed senders; empty is no message service (message conditions are unknown)
     channels: Mapping[str, tuple[str, ...]] = dataclasses.field(default_factory=lambda: MappingProxyType({}))
+    # world file 1.7 (decision 0044 D1): location -> the fill and count a sensor would read of it, in file order
+    location_properties: Mapping[str, tuple["Property", ...]] = dataclasses.field(
+        default_factory=lambda: MappingProxyType({}))
 
     def kind_of(self, entity_id: str) -> str | None:
         if entity_id in self.locations:
@@ -394,7 +398,8 @@ class _Loader:
             "world_schema", "world_schema_version", "locations", "regions", "robots",
             "objects", "sensors", "events", "tasks",
         ) + (("location_states",) if self.version in _ACTIONS else ()) + (("clock",) if self.version in _CLOCKS else ())
-        top += ("channels", "messages") if self.version == "1.6" else ()
+        top += ("channels", "messages") if self.version in _CHANNELS else ()
+        top += ("location_properties",) if self.version == "1.7" else ()
         self.obj(doc, "", top, "the world file")
         self.require(doc, "", "locations", "tasks")
         locations = self.locations(self.need(doc, "", "locations"))
@@ -413,6 +418,7 @@ class _Loader:
 
         # Form of every section, in the document order of the fields above.
         location_states = self.location_states(doc, locations)
+        location_properties = self.location_properties(doc, locations)
         clock = self.clock(doc)
         regions = {k: self.region(k, v) for k, v in regions_raw.items()}
         robots = {k: self.robot(k, v) for k, v in robots_raw.items()}
@@ -433,6 +439,7 @@ class _Loader:
                 seen.add(entity)
 
         world = World(tuple(locations), regions, robots, objects, sensors, (), TaskScript(self.task.name, (), (), None))
+
         self.check_regions(world)
         self.check_robots(world)
         self.check_objects(world)
@@ -453,6 +460,7 @@ class _Loader:
             MappingProxyType(location_states),
             clock,
             MappingProxyType(channels),
+            MappingProxyType(location_properties),
         )
 
     # -- sections: form --
@@ -487,6 +495,34 @@ class _Loader:
                 self.fail("E505", pointer + _pointer(key), f"'{key}' is not a declared location")
             self.label(label, pointer + _pointer(key))
         return dict(raw)
+
+    def location_properties(self, doc, locations):
+        """
+        `location_properties: { LOCATION: { "fill": {...}, "count": {...} } }` (world file 1.7, decision 0044 D1): what
+        a sensor would read of a place (a shelf, a bay) that is a location. Only `fill` and `count`, as the language
+        reads them.
+        """
+        if "location_properties" not in doc:
+            return {}
+        pointer = _pointer("location_properties")
+        raw = doc["location_properties"]
+        if not isinstance(raw, dict):
+            self.fail("E504", pointer, "'location_properties' must be an object")
+        out = {}
+        for key, item in raw.items():
+            kp = pointer + _pointer(key)
+            self.entity_id(key, kp)
+            if key not in locations:
+                self.fail("E505", kp, f"'{key}' is not a declared location")
+            if not isinstance(item, dict):
+                self.fail("E504", kp, "the properties of a location must be an object")
+            props = []
+            for kind, value in item.items():
+                if self.kind(kind, kp + _pointer(kind)) not in AREA_KINDS:
+                    self.fail("E512", kp + _pointer(kind), f"a location holds {' or '.join(AREA_KINDS)}, not '{kind}'")
+                props.append(self.property_value(kind, value, kp + _pointer(kind)))
+            out[key] = tuple(props)
+        return out
 
     def clock(self, doc) -> Clock | None:
         """`clock: { "start": "2026-11-17T21:30:00", "zone": "Europe/Prague" }` (world file 1.5, decision 0042 T7)."""
@@ -666,17 +702,18 @@ class _Loader:
         """A measured kind (E512)."""
         if not isinstance(kind, str):
             self.fail("E504", pointer, "a kind must be a string")
-        if kind not in KINDS:
-            self.fail("E512", pointer, f"unknown kind '{kind}'; the kinds are {', '.join(KINDS)}")
+        kinds = KINDS_V2_2 if self.version == "1.7" else KINDS
+        if kind not in kinds:
+            self.fail("E512", pointer, f"unknown kind '{kind}'; the kinds are {', '.join(kinds)}")
         return kind
 
     def unit(self, kind, unit, pointer):
         """The unit of a quantity of `kind` (E504 if not text, E513 if of another kind)."""
         if not isinstance(unit, str):
             self.fail("E504", pointer, "a unit must be a string")
-        if unit not in KIND_UNITS[kind]:
-            self.fail("E513", pointer, f"'{unit}' is not a unit of {kind}; the units of {kind} are "
-                                       f"{', '.join(KIND_UNITS[kind])}")
+        units = KIND_UNITS_V2_2[kind]
+        if unit not in units:
+            self.fail("E513", pointer, f"'{unit}' is not a unit of {kind}; the units of {kind} are {', '.join(units)}")
         return unit
 
     def properties(self, value, p):
@@ -690,7 +727,18 @@ class _Loader:
                      for kind, item in raw.items())
 
     def property_value(self, kind, raw, pointer):
-        """`{ "value": "72", "unit": "degC" }`, or for a label `{ "value": "LOT-7731" }` (decision 0036 V9)."""
+        """
+        `{ "value": "72", "unit": "degC" }`, or for a label `{ "value": "LOT-7731" }` (decision 0036 V9). A count is
+        `{ "value": "14" }`: a whole number, no unit (decision 0044 D2). A fill or confidence is 0 to 100 `%`.
+        """
+        if kind == COUNT:
+            if isinstance(raw, dict) and "unit" in raw:
+                self.fail("E514", pointer + _pointer("unit"), "a count has no unit")
+            item = self.obj(raw, pointer, ("value",), "a property")
+            text = self.need(item, pointer, "value")
+            if not isinstance(text, str) or not text.isascii() or not text.isdigit():
+                self.fail("E504", pointer + _pointer("value"), "a count is a whole number such as \"14\" (not below 0)")
+            return Property(kind, Decimal(text), None)
         if kind == LABEL:
             if isinstance(raw, dict) and "unit" in raw:
                 self.fail("E514", pointer + _pointer("unit"), "a label has no unit")
@@ -705,6 +753,8 @@ class _Loader:
         if not isinstance(text, str) or _SIGNED_DECIMAL.fullmatch(text) is None:
             self.fail("E504", pointer + _pointer("value"), "must be a decimal string such as \"72\" or \"-18\"")
         unit = self.unit(kind, self.need(item, pointer, "unit"), pointer + _pointer("unit"))
+        if unit == "%" and not 0 <= Decimal(text) <= 100:
+            self.fail("E504", pointer + _pointer("value"), f"a {kind} is 0 to 100 %, not {text}")
         return Property(kind, Decimal(text), unit)
 
     def object_class(self, value, p):
@@ -750,17 +800,21 @@ class _Loader:
         for kind, item in raw.items():
             kp = mp + _pointer(kind)
             self.kind(kind, kp)
-            if kind == LABEL:
+            exact = kind in (LABEL, COUNT)  # a label has neither; a count is exact (decision 0044 D2)
+            if exact:
                 for field in ("unit", "uncertainty"):
                     if isinstance(item, dict) and field in item:
-                        self.fail("E514", kp + _pointer(field), f"a label has no {field}")
+                        self.fail("E514", kp + _pointer(field), f"a {kind} has no {field}" + (
+                            ": a count is exact (decision 0044 D2)" if kind == COUNT else ""))
                 fields = ("contact",)
             else:
                 fields = ("unit", "uncertainty", "contact")
             m = self.obj(item, kp, fields, "a measure")
             self.require(m, kp, *fields)
             unit = uncertainty = None
-            if kind != LABEL:
+            if kind == COUNT:
+                uncertainty = Decimal(0)
+            elif kind != LABEL:
                 unit = self.unit(kind, self.need(m, kp, "unit"), kp + _pointer("unit"))
                 try:
                     uncertainty = parse_decimal(self.need(m, kp, "uncertainty"))
@@ -892,6 +946,8 @@ class _Loader:
                 continue
             p = _pointer("events", i, "target")
             if event.fact == "property":  # the target is a declared object (E515 if it is not declared at all)
+                if event.target in world.locations and event.value.kind in AREA_KINDS:  # world file 1.7 (0044 D1)
+                    continue
                 if event.target not in world.objects:
                     if world.kind_of(event.target) is None and event.target not in world.sensors:
                         self.fail("E515", p, f"'{event.target}' is not a declared object")

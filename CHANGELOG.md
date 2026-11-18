@@ -1,7 +1,25 @@
 # Changelog
 
-The distribution version (this file) is independent of the language versions (1.1 to 2.1), the Task IR schema
-versions (1.0 to 1.9) and the Mission IR schema (1.0 and 1.1). Decision records are in [`spec/decisions/`](https://github.com/rokorobot/RoboLang/tree/main/spec/decisions).
+The distribution version (this file) is independent of the language versions (1.1 to 2.2), the Task IR schema
+versions (1.0 to 1.10) and the Mission IR schema (1.0 to 1.2). Decision records are in [`spec/decisions/`](https://github.com/rokorobot/RoboLang/tree/main/spec/decisions).
+
+## Unreleased
+
+RoboLang 2.2: more measured kinds, iteration I6 of the [roadmap](docs/LANGUAGE_ROADMAP.md) (decision 0044; built in step L4;
+the acceptance run on benchmark set 11 is the next step, L5: it has not been made, and 2.2 is not accepted until it passes the
+bounds B1 to B9).
+
+- **RoboLang 2.2: more measured kinds** (decision 0044, step L4 of iteration I6). A `.rob` file `robolang 2.2;` may read four
+  more kinds with `measure r KIND of X using S as N`: `fill` (how full, in `%`), `confidence` (the sensor's confidence in the label
+  it reports, in `%`), `pressure` (`Pa`, `kPa`, `bar`, converted exactly) and `count` (a whole number, no unit, exact: it also
+  takes `==` and `!=`). `fill` and `count` may be read of an object or a location (D1); a robot as the target is the existing
+  type error. `%` is a new unit token; a bare fraction, the word `percent` and `psi` are not accepted (`E206`); comparing two
+  kinds is `E319`. The kind names are recognised by position and are not reserved. A reading near a threshold is unknown and
+  fails closed, as in 1.6; live readings work in `wait until`. No new statement. New Task IR 1.10 (and Mission IR 1.2), world
+  file 1.7 (the kinds in `measures` and `properties`, and `location_properties`), run record 1.10 and mission record 1.2. New
+  codes `E328` (a count compared with a number that is not whole) and `I229` in the reader. `delegate` and the ROS 2 backend
+  still refuse any `measure` (`S509`). `robolang --version` shows language 2.2. Files of 1.1 to 2.1 are unchanged: there the new
+  kinds are still `E217` and `%` is still `E101`. Not taught yet.
 
 ## 0.8.0 (2026-11-18)
 

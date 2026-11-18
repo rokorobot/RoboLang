@@ -1,6 +1,6 @@
 """
-Measured values (RoboLang 1.6, spec/robolang-v1.6.md, decision 0036): kinds, units, exact comparison, and the static
-rules for bindings. Nothing here executes anything.
+Measured values (RoboLang 1.6, spec/robolang-v1.6.md, decision 0036; four more kinds in 2.2, decision 0044): kinds,
+units, exact comparison, and the static rules for bindings. Nothing here executes anything.
 
 Two parts, both used by the compiler's validator and by the IR reader so that the two cannot disagree:
 
@@ -17,10 +17,13 @@ from dataclasses import dataclass
 from decimal import Context, Decimal, localcontext
 from typing import Callable, Iterable, NamedTuple
 
-from .tokens import KIND_UNITS
+from .tokens import KIND_UNITS, KIND_UNITS_V2_2
 
-KINDS = tuple(KIND_UNITS)
+KINDS = tuple(KIND_UNITS)  # the kinds of 1.6
+KINDS_V2_2 = tuple(KIND_UNITS_V2_2)  # RoboLang 2.2 (decision 0044 K1): also fill, confidence, pressure and count
 LABEL = "label"
+COUNT = "count"  # exact (uncertainty 0), compared with a whole number that has no unit; also takes == and != (K3, D2)
+AREA_KINDS = ("fill", "count")  # a reading of these may name a location as well as an object (decision 0044 D1)
 ORDERING = ("<", "<=", ">", ">=")  # for quantities; labels take == and != (V6)
 
 # unit -> (kind, factor to the kind's base unit, offset). Base units: degC, g, mm. K = degC + 273.15 exactly.
@@ -37,33 +40,50 @@ _UNITS = {
     "ms": ("elapsed", Decimal(1), Decimal(0)),
     "s": ("elapsed", Decimal(1000), Decimal(0)),
     "min": ("elapsed", Decimal(60000), Decimal(0)),
+    # RoboLang 2.2 (decision 0044 K2): `%` is a unit of two kinds (fill and confidence), 0 to 100, its own base unit.
+    # Pressure converts exactly: base unit Pa, 1 kPa = 1000 Pa, 1 bar = 100 kPa = 100000 Pa.
+    "%": ("fill", Decimal(1), Decimal(0)),
+    "Pa": ("pressure", Decimal(1), Decimal(0)),
+    "kPa": ("pressure", Decimal(1000), Decimal(0)),
+    "bar": ("pressure", Decimal(100000), Decimal(0)),
 }
-assert {u for units in KIND_UNITS.values() for u in units} | {"ms", "s", "min"} == set(_UNITS)
+assert {u for units in KIND_UNITS_V2_2.values() for u in units} | {"ms", "s", "min"} == set(_UNITS)
 CLOCK_UNITS = {"time": (), "elapsed": ("ms", "s", "min")}  # the clock kinds (RoboLang 1.9) and their units
 TIME = "time"
 ELAPSED = "elapsed"
 
 
 def kind_units(kind: str) -> tuple[str, ...]:
-    """The units a kind compares with: a measured kind's, or a clock kind's."""
-    return KIND_UNITS[kind] if kind in KIND_UNITS else CLOCK_UNITS[kind]
+    """The units a kind compares with: a measured kind's, or a clock kind's. A count has none."""
+    return KIND_UNITS_V2_2[kind] if kind in KIND_UNITS_V2_2 else CLOCK_UNITS[kind]
 _EXACT = Context(prec=200)  # world and source numbers have at most a few dozen digits: arithmetic here is exact
 
 
 def unit_kind(unit: str) -> str | None:
-    """The kind a unit belongs to, or None for a word that is not a unit."""
+    """The kind a unit belongs to (for `%`, the first of its two kinds), or None for a word that is not a unit."""
     return _UNITS[unit][0] if unit in _UNITS else None
 
 
-def to_base(value: Decimal, unit: str) -> Decimal:
-    """`value` in `unit` as an exact decimal in the kind's base unit (degC, g or mm)."""
+def unit_kinds(unit: str) -> tuple[str, ...]:
+    """Every kind a unit belongs to: `%` is a unit of both fill and confidence (decision 0044 K2, D3)."""
+    kinds = tuple(kind for kind, units in KIND_UNITS_V2_2.items() if unit in units)
+    other = unit_kind(unit)
+    return kinds or ((other,) if other else ())
+
+
+def to_base(value: Decimal, unit: str | None) -> Decimal:
+    """`value` in `unit` as an exact decimal in the kind's base unit (degC, g, mm, %, Pa). A count has no unit."""
+    if unit is None:
+        return value
     _, factor, offset = _UNITS[unit]
     with localcontext(_EXACT):
         return value * factor + offset
 
 
-def spread_to_base(uncertainty: Decimal, unit: str) -> Decimal:
+def spread_to_base(uncertainty: Decimal, unit: str | None) -> Decimal:
     """An uncertainty is a difference, so it scales but does not shift (1 K = 1 degC)."""
+    if unit is None:
+        return uncertainty
     with localcontext(_EXACT):
         return uncertainty * _UNITS[unit][1]
 
@@ -82,7 +102,7 @@ class Interval(NamedTuple):
     hi: Decimal
 
 
-def reading_interval(value: Decimal, uncertainty: Decimal, unit: str) -> Interval:
+def reading_interval(value: Decimal, uncertainty: Decimal, unit: str | None) -> Interval:
     centre, spread = to_base(value, unit), spread_to_base(uncertainty, unit)
     with localcontext(_EXACT):
         return Interval(centre - spread, centre + spread)
@@ -91,7 +111,8 @@ def reading_interval(value: Decimal, uncertainty: Decimal, unit: str) -> Interva
 def compare_intervals(op: str, a: Interval, b: Interval) -> bool | None:
     """
     `a OP b` over every value in the two intervals (V7): True if every pair of values satisfies it, False if none
-    does, None (unknown) otherwise. With uncertainty 0 on both sides this is the ordinary comparison.
+    does, None (unknown) otherwise. With uncertainty 0 on both sides this is the ordinary comparison. `==` and `!=`
+    are for a count (decision 0044 K3).
     """
     if op == "<":
         return True if a.hi < b.lo else False if a.lo >= b.hi else None
@@ -101,6 +122,9 @@ def compare_intervals(op: str, a: Interval, b: Interval) -> bool | None:
         return True if a.lo > b.hi else False if a.hi <= b.lo else None
     if op == ">=":
         return True if a.lo >= b.hi else False if a.hi < b.lo else None
+    if op in ("==", "!="):  # a count is exact (decision 0044 K3): both sides are points, so this is never unknown
+        same = True if a.lo == a.hi == b.lo == b.hi else False if a.hi < b.lo or a.lo > b.hi else None
+        return same if op == "==" or same is None else not same
     raise ValueError(f"not an ordering operator: {op!r}")
 
 
@@ -115,6 +139,7 @@ class Operand:
     name: str | None = None  # binding: its name
     unit: str | None = None  # quantity: its unit
     kind: str | None = None  # live or clock: the measured or clock kind
+    whole: bool | None = None  # a quantity with no unit (RoboLang 2.2): is the number whole? None if it has a unit
 
 
 @dataclass(frozen=True)
@@ -268,14 +293,27 @@ class Scopes:
             other = LABEL
         elif right.form == "time":
             other = TIME
+        elif right.unit is None:  # RoboLang 2.2: a bare number, which only a count compares with (decision 0044 D2, D3)
+            other = COUNT
         else:
-            other = unit_kind(right.unit)
+            fits = unit_kinds(right.unit)
+            other = kind if kind in fits else (fits[0] if fits else None)  # `%` fits fill and confidence
         if kind is None or other is None:
             return
-        if right.form == "quantity" and kind != LABEL and other != kind:
-            self._report("kind", f"'{right.unit}' is a unit of {other}, but the left side is {kind} "
-                                 + (f"(units of {kind}: {', '.join(kind_units(kind))})" if kind_units(kind)
-                                    else "(a time of day compares with a time such as 22:00)"), right.at)
+        if right.form == "quantity" and right.unit is None and kind == COUNT:
+            if right.whole is False:
+                self._report("count", "a count is compared with a whole number: a count is exact and cannot be "
+                                      "2.5 (decision 0044 D2)", right.at)
+        elif right.form == "quantity" and right.unit is None and kind != LABEL:
+            self._report("unit", "a number needs its unit: " + (
+                f"{kind} is compared with {', '.join(f'{u!r}' for u in kind_units(kind))}" if kind_units(kind)
+                else "a time of day compares with a time such as 22:00") + " ('percent' and a bare fraction are not "
+                "accepted: write '25 %')", right.at)
+        elif right.form == "quantity" and kind != LABEL and other != kind:
+            hint = (f"(units of {kind}: {', '.join(kind_units(kind))})" if kind_units(kind)
+                    else "(a count takes no unit: write the number alone)" if kind == COUNT
+                    else "(a time of day compares with a time such as 22:00)")
+            self._report("kind", f"'{right.unit}' is a unit of {other}, but the left side is {kind} {hint}", right.at)
         elif other != kind:
             what = "a string" if right.form == "text" else "a quantity" if right.form == "quantity" \
                 else "a time of day" if right.form == "time" else f"'{right.name}' ({other})"
@@ -287,6 +325,6 @@ class Scopes:
         elif kind in (TIME, ELAPSED) and atom.op not in ORDERING:
             self._report("operator", f"{kind} is compared with '<', '<=', '>' or '>=', not '{atom.op}': two instants "
                                      "are almost never equal at the moment they are checked", atom.at)
-        elif kind != LABEL and atom.op not in ORDERING:
+        elif kind not in (LABEL, COUNT) and atom.op not in ORDERING:
             self._report("operator", f"{kind} is compared with '<', '<=', '>' or '>=', not '{atom.op}': a reading "
                                      "has an uncertainty, so equality is almost never decidable", atom.at)

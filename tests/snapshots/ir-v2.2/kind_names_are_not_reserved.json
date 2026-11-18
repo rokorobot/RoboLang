@@ -1,0 +1,91 @@
+{
+  "ir_schema": "robolang.task-ir",
+  "ir_schema_version": "1.10",
+  "language_version": "2.2",
+  "tasks": [
+    {
+      "name": "t",
+      "parameters": [
+        {
+          "name": "r",
+          "type": "robot"
+        },
+        {
+          "name": "count",
+          "type": "location"
+        },
+        {
+          "name": "confidence",
+          "type": "location"
+        },
+        {
+          "name": "cam",
+          "type": "sensor"
+        },
+        {
+          "name": "tag",
+          "type": "sensor"
+        }
+      ],
+      "safety": [],
+      "preconditions": [],
+      "goal": [
+        {
+          "kind": "robot_at",
+          "robot": "r",
+          "location": "confidence"
+        }
+      ],
+      "steps": [
+        {
+          "kind": "move",
+          "robot": "r",
+          "target": "confidence"
+        },
+        {
+          "kind": "measure",
+          "robot": "r",
+          "reading": "count",
+          "object": "count",
+          "sensor": "tag",
+          "binding": "fill"
+        },
+        {
+          "kind": "measure",
+          "robot": "r",
+          "reading": "fill",
+          "object": "count",
+          "sensor": "cam",
+          "binding": "pressure"
+        },
+        {
+          "kind": "if",
+          "condition": {
+            "kind": "compare",
+            "left": {
+              "kind": "binding",
+              "name": "pressure"
+            },
+            "op": "<",
+            "right": {
+              "kind": "quantity",
+              "value": "25",
+              "unit": "%"
+            }
+          },
+          "then": [
+            {
+              "kind": "communicate",
+              "robot": "r",
+              "channel": "lead",
+              "binding": "fill"
+            }
+          ],
+          "else": [],
+          "goal_then": null,
+          "goal_else": null
+        }
+      ]
+    }
+  ]
+}

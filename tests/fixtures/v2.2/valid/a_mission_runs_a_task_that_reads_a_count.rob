@@ -1,0 +1,18 @@
+// RoboLang v2.2 fixture: valid
+// expect: ok
+// why: a mission over a task with new kinds is Mission IR 1.2
+
+robolang 2.2;
+
+task round(robot r, location aisle, location shelf, sensor tag) {
+    goal { robot_at r aisle; }
+    plan {
+        move r to aisle;
+        measure r count of shelf using tag as n;
+        if n == 0 { communicate r to "lead" with "empty"; }
+    }
+}
+
+mission nightly(robot r, location aisle, location shelf, sensor tag) {
+    repeat at most 3 runs { run round(r, aisle, shelf, tag); } until count of shelf using tag == 0;
+}

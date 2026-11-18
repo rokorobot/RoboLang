@@ -190,5 +190,9 @@
   "I228_message_in_a_goal.json": [
     "I228",
     "/tasks/0/goal/1"
+  ],
+  "I229_count_not_whole.json": [
+    "I229",
+    "/tasks/0/steps/2/condition/right"
   ]
 }

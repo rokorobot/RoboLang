@@ -1,0 +1,15 @@
+// RoboLang v2.2 fixture: valid
+// expect: ok
+// why: the label and its confidence, read with the same sensor (K4)
+
+robolang 2.2;
+
+task t(robot r, object plant, location aisle, sensor cam) {
+    goal { robot_at r aisle; }
+    plan {
+        move r to aisle;
+        measure r label of plant using cam as seen;
+        measure r confidence of plant using cam as sure;
+        if seen == "weed" and sure >= 90 % { communicate r to "ops" with "weed confirmed"; }
+    }
+}

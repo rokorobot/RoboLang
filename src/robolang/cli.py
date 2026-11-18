@@ -13,7 +13,7 @@ Developer commands for RoboLang 1.1 to 2.1.
                            send the task's goal to a robot that runs its own plan; print the delegate record
 
 validate, inspect, simulate, export-goal and delegate take `--ir IR` instead of FILE: a Task IR JSON
-document (schema 1.0 to 1.9) or a Mission IR document (1.0, 1.1), read strictly and re-validated in full
+document (schema 1.0 to 1.10) or a Mission IR document (1.0 to 1.2), read strictly and re-validated in full
 (spec/ir-reader-v0.1.md). export-goal and delegate never take a mission: a robot is sent tasks only (X607).
     arch02 --scenario SCENARIO --cases CASES --case ID
                            run one case of the RFC-001 reference scenario in simulation
@@ -352,7 +352,7 @@ def _value(operand: task_ir.Operand, typed: bool) -> str:
     if isinstance(operand, task_ir.BindingRef):
         return operand.name
     if isinstance(operand, task_ir.QuantityLit):
-        return f"{task_ir.decimal_text(operand.value)} {operand.unit}"
+        return task_ir.decimal_text(operand.value) + ("" if operand.unit is None else f" {operand.unit}")
     if isinstance(operand, task_ir.TextLit):
         return _quoted(operand.value)
     if isinstance(operand, task_ir.TimeLit):
@@ -961,7 +961,7 @@ def _input_arguments(command: argparse.ArgumentParser, what: str, note: str = ""
         "--ir",
         metavar="IR",
         help=(
-            "path to a Task IR JSON file (schema 1.0 to 1.9) instead of FILE. It is read strictly and "
+            "path to a Task IR JSON file (schema 1.0 to 1.10) instead of FILE. It is read strictly and "
             f"re-validated in full, whatever versions it claims (spec/ir-reader-v0.1.md){note}"
         ),
     )

@@ -1,0 +1,14 @@
+// RoboLang v2.2 fixture: valid
+// expect: ok
+// why: a confidence needs no label reading (D4)
+
+robolang 2.2;
+
+task t(robot r, object plant, location aisle, sensor cam) {
+    goal { robot_at r aisle; }
+    plan {
+        move r to aisle;
+        measure r confidence of plant using cam as sure;
+        communicate r to "ops" with sure;
+    }
+}

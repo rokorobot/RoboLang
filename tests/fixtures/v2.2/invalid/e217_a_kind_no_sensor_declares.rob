@@ -1,0 +1,13 @@
+// RoboLang v2.2 fixture: invalid
+// expect: error E217 (syntax) line 11
+// why: the four kinds are the whole list: smell is no kind (K8)
+
+robolang 2.2;
+
+task t(robot r, object shelf, location aisle, sensor cam, sensor tag) {
+    goal { robot_at r aisle; }
+    plan {
+        move r to aisle;
+        measure r smell of shelf using cam as s;
+    }
+}

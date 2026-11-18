@@ -1,0 +1,125 @@
+{
+  "ir_schema": "robolang.task-ir",
+  "ir_schema_version": "1.10",
+  "language_version": "2.2",
+  "tasks": [
+    {
+      "name": "t",
+      "parameters": [
+        {
+          "name": "r",
+          "type": "robot"
+        },
+        {
+          "name": "shelf",
+          "type": "object"
+        },
+        {
+          "name": "aisle",
+          "type": "location"
+        },
+        {
+          "name": "cam",
+          "type": "sensor"
+        },
+        {
+          "name": "tag",
+          "type": "sensor"
+        }
+      ],
+      "safety": [],
+      "preconditions": [],
+      "goal": [
+        {
+          "kind": "robot_at",
+          "robot": "r",
+          "location": "aisle"
+        }
+      ],
+      "steps": [
+        {
+          "kind": "move",
+          "robot": "r",
+          "target": "aisle"
+        },
+        {
+          "kind": "measure",
+          "robot": "r",
+          "reading": "count",
+          "object": "shelf",
+          "sensor": "tag",
+          "binding": "n"
+        },
+        {
+          "kind": "if",
+          "condition": {
+            "kind": "compare",
+            "left": {
+              "kind": "binding",
+              "name": "n"
+            },
+            "op": "==",
+            "right": {
+              "kind": "quantity",
+              "value": "2.5"
+            }
+          },
+          "then": [
+            {
+              "kind": "communicate",
+              "robot": "r",
+              "channel": "lead",
+              "message": "empty"
+            }
+          ],
+          "else": [],
+          "goal_then": null,
+          "goal_else": null
+        },
+        {
+          "kind": "if",
+          "condition": {
+            "kind": "and",
+            "conditions": [
+              {
+                "kind": "compare",
+                "left": {
+                  "kind": "binding",
+                  "name": "n"
+                },
+                "op": "!=",
+                "right": {
+                  "kind": "quantity",
+                  "value": "3"
+                }
+              },
+              {
+                "kind": "compare",
+                "left": {
+                  "kind": "binding",
+                  "name": "n"
+                },
+                "op": ">=",
+                "right": {
+                  "kind": "quantity",
+                  "value": "1"
+                }
+              }
+            ]
+          },
+          "then": [
+            {
+              "kind": "communicate",
+              "robot": "r",
+              "channel": "lead",
+              "message": "not three"
+            }
+          ],
+          "else": [],
+          "goal_then": null,
+          "goal_else": null
+        }
+      ]
+    }
+  ]
+}

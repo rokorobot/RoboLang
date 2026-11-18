@@ -1,0 +1,14 @@
+// RoboLang v2.2 fixture: invalid
+// expect: error E206 (syntax) line 12
+// why: psi is not a unit; the author converts (D6)
+
+robolang 2.2;
+
+task t(robot r, object gauge, location aisle, sensor cam, sensor tag) {
+    goal { robot_at r aisle; }
+    plan {
+        move r to aisle;
+        measure r pressure of gauge using cam as p;
+        if p > 90 psi { communicate r to "maintenance" with "over"; }
+    }
+}

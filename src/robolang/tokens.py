@@ -14,6 +14,7 @@ class TokenKind(Enum):
     TIME = "time of day"  # RoboLang 1.9 files only: 22:00 or 22:00:00
     STRING = "string"
     SPEED_UNIT = "speed unit"
+    PERCENT = "%"  # RoboLang 2.2 files only: the unit of a `fill` or `confidence` (decision 0044 K2)
     OPERATOR = "comparison operator"  # RoboLang 1.6 files only
     AT_SAFETY = "@safety"
     AT_VERIFY = "@verify"  # RoboLang 1.3 files only
@@ -89,11 +90,14 @@ MAX_RETRIES = 100  # `retry N`
 # RoboLang 2.1 adds incoming messages (decision 0043 S1): the condition `message_received "CH" with "TEXT"`. The word
 # has been reserved since 1.1 and `with` is a keyword already, so there is no new reserved word.
 CONDITIONS_V2_1 = CONDITIONS_V1_8 + ("message_received",)
+# RoboLang 2.2 adds four measured kinds (decision 0044 K1) and the unit token `%` (K2). The kind names are recognised by
+# position (after `measure r` and before `of`) and are not reserved (D10): `count` may still be a name.
+NEW_KINDS_V2_2 = ("fill", "confidence", "pressure", "count")
 # Language version -> its reserved words. Versions not listed read as 1.1.
 RESERVED_BY_VERSION = {
     "1.2": RESERVED_V1_2, "1.3": RESERVED_V1_3, "1.4": RESERVED_V1_4, "1.5": RESERVED_V1_4, "1.6": RESERVED_V1_6,
     "1.7": RESERVED_V1_6, "1.8": RESERVED_V1_8, "1.9": RESERVED_V1_9, "2.0": RESERVED_V2_0,
-    "2.1": RESERVED_V2_0,
+    "2.1": RESERVED_V2_0, "2.2": RESERVED_V2_0,
 }
 
 # Recognized only in their grammatical position; not reserved.
@@ -106,6 +110,9 @@ DURATION_UNITS = ("ms", "s", "min")
 
 # RoboLang 1.6 measured values (decision 0036 V5): kind -> its units, in the order the spec lists them.
 KIND_UNITS = {"temperature": ("degC", "K"), "mass": ("g", "kg"), "distance": ("mm", "cm", "m"), "label": ()}
+# RoboLang 2.2 (decision 0044 K1, K2): `%` for fill and confidence (0 to 100), Pa, kPa and bar for pressure; a count has
+# no unit. The 1.6 mapping above stays for files below 2.2 and for the kinds a world action takes.
+KIND_UNITS_V2_2 = {**KIND_UNITS, "fill": ("%",), "confidence": ("%",), "pressure": ("Pa", "kPa", "bar"), "count": ()}
 COMPARISON_OPERATORS = ("<", "<=", ">", ">=", "==", "!=")
 
 ESCAPES = {'"': '"', "\\": "\\", "n": "\n", "t": "\t"}

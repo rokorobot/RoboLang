@@ -1,0 +1,58 @@
+{
+  "ir_schema": "robolang.task-ir",
+  "ir_schema_version": "1.10",
+  "language_version": "2.2",
+  "tasks": [
+    {
+      "name": "t",
+      "parameters": [
+        {
+          "name": "r",
+          "type": "robot"
+        },
+        {
+          "name": "plant",
+          "type": "object"
+        },
+        {
+          "name": "aisle",
+          "type": "location"
+        },
+        {
+          "name": "cam",
+          "type": "sensor"
+        }
+      ],
+      "safety": [],
+      "preconditions": [],
+      "goal": [
+        {
+          "kind": "robot_at",
+          "robot": "r",
+          "location": "aisle"
+        }
+      ],
+      "steps": [
+        {
+          "kind": "move",
+          "robot": "r",
+          "target": "aisle"
+        },
+        {
+          "kind": "measure",
+          "robot": "r",
+          "reading": "confidence",
+          "object": "plant",
+          "sensor": "cam",
+          "binding": "sure"
+        },
+        {
+          "kind": "communicate",
+          "robot": "r",
+          "channel": "ops",
+          "binding": "sure"
+        }
+      ]
+    }
+  ]
+}

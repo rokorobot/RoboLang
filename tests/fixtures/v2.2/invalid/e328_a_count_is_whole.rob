@@ -1,0 +1,14 @@
+// RoboLang v2.2 fixture: invalid
+// expect: error E328 (static) line 12
+// why: a count is compared with a whole number (D2)
+
+robolang 2.2;
+
+task t(robot r, object shelf, location aisle, sensor cam, sensor tag) {
+    goal { robot_at r aisle; }
+    plan {
+        move r to aisle;
+        measure r count of shelf using tag as n;
+        if n < 2.5 { communicate r to "lead" with "x"; }
+    }
+}
