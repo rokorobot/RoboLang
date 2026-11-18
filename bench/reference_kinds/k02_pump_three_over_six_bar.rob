@@ -1,0 +1,15 @@
+// bench/reference_kinds/k02_pump_three_over_six_bar.rob: hand-written reference (RoboLang 2.2)
+robolang 2.2;
+
+task read_gauge(robot r, object gauge, sensor cam, location pump) {
+    goal { robot_at r pump; }
+    plan {
+        move r to pump;
+        measure r pressure of gauge using cam as p;
+        if p > 6 bar {
+            communicate r to "maintenance" with "pump 3 over pressure";
+        } else {
+            communicate r to "maintenance" with "pump 3 ok";
+        }
+    }
+}

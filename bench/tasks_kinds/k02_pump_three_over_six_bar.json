@@ -1,9 +1,12 @@
 {
   "id": "k02_pump_three_over_six_bar",
   "prompt": "With crawler1, drive to pump_3 and read gauge_p3 with cam_crawler1. If the pressure is above 6 bar, tell channel \"maintenance\" \"pump 3 over pressure\"; if it is not, tell channel \"maintenance\" \"pump 3 ok\".",
-  "world": "bench/worlds/plant_room.json",
+  "world": "bench/worlds/kinds_k02_pump_three_over_six_bar.json",
   "group": "kind",
   "expect": {
+    "decision": "program"
+  },
+  "expect_2_1": {
     "decision": "cannot",
     "category": "inexpressible"
   },
@@ -32,21 +35,6 @@
         }
       }
     },
-    "expected_readings": [
-      [
-        "crawler1",
-        "pressure",
-        "gauge_p3"
-      ]
-    ],
-    "expected_comparisons": [
-      {
-        "kind": "pressure",
-        "op": ">",
-        "value": "6",
-        "unit": "bar"
-      }
-    ],
     "paths": [
       {
         "when": "gauge_p3 reads 7.2 bar: above 6 bar",
@@ -106,6 +94,21 @@
       }
     ]
   },
+  "expected_readings": [
+    [
+      "crawler1",
+      "pressure",
+      "gauge_p3"
+    ]
+  ],
+  "expected_comparisons": [
+    {
+      "kind": "pressure",
+      "op": ">",
+      "value": "6",
+      "unit": "bar"
+    }
+  ],
   "gap": "G-PERCEIVE",
   "tags": [
     "pressure",

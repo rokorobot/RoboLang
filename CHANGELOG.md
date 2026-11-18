@@ -19,7 +19,14 @@ bounds B1 to B9).
   file 1.7 (the kinds in `measures` and `properties`, and `location_properties`), run record 1.10 and mission record 1.2. New
   codes `E328` (a count compared with a number that is not whole) and `I229` in the reader. `delegate` and the ROS 2 backend
   still refuse any `measure` (`S509`). `robolang --version` shows language 2.2. Files of 1.1 to 2.1 are unchanged: there the new
-  kinds are still `E217` and `%` is still `E101`. Not taught yet.
+  kinds are still `E217` and `%` is still `E101`.
+- **Taught and relabelled** (decision 0044, step L4 of iteration I6): `robolang reference` and both benchmark prompts teach 2.2 (a
+  subsection "More kinds" in "Measured values"; the grammar-only prompt pastes `spec/grammar-v2.2.ebnf`, which says what 2.2 cannot
+  say; the world shown to the model lists which sensor measures which new kind, with its unit, never a value). Benchmark set 11 is
+  labelled for 2.2 (`expect`; the 2.1 label is `expect_2_1`) with a world file 1.7 copy and a reference per program; the R3 probes
+  `f_perceive_shelf_fill` and `f_perceive_weed_confidence` and the counting requests `x_count_and_send` and `x_count_report` are
+  programs; `x01_packaging_looks_worn` moves to the new far gap G-QUALITY. New scorer measures `kind_ok`, `reading_replaced`,
+  `kind_or_threshold_changed` and `kind_added`. Errata `docs/evidence/bench-errata-2-2.md`; freeze regenerated.
 
 ## 0.8.0 (2026-11-18)
 

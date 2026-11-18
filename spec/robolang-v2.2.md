@@ -1,9 +1,9 @@
 # RoboLang 2.2: more measured kinds
 
 **Status:** front end, Task IR 1.10 (Mission IR 1.2 for a file with a mission), world file 1.7, the simulation (run record
-1.10, mission record 1.2) and the IR reader complete in code. The language reference and the benchmark prompts teach 2.2 in the
-second commit of step L4 of decision 0044; the acceptance run on benchmark set 11 is the next step (L5), and until it passes
-the bounds B1 to B9 2.2 is not accepted.
+1.10, mission record 1.2) and the IR reader complete in code. The language reference and the benchmark prompts teach 2.2 (L4
+of decision 0044); the acceptance run on benchmark set 11 is the next step (L5), and until it passes the bounds B1 to B9 2.2 is
+not accepted.
 Decision: [0044](decisions/0044-more-measured-kinds.md) (K1 to K9, and clarifications D1 to D14 approved 2026-11-18).
 Grammar: [grammar-v2.2.ebnf](grammar-v2.2.ebnf). IR: [Task IR 1.10](ir-schema-v1.10.md) and [Mission IR 1.2](mission-ir-v1.0.md).
 Simulation: [section 20](simulation-v1.0.md). Everything not stated here is exactly as in [RoboLang 2.1](robolang-v2.1.md), and

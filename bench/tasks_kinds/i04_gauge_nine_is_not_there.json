@@ -1,9 +1,13 @@
 {
   "id": "i04_gauge_nine_is_not_there",
   "prompt": "With crawler2, read gauge_p9 with cam_crawler2 and, if the pressure is above 6 bar, tell channel \"maintenance\" \"pump 9 over pressure\".",
-  "world": "bench/worlds/plant_room.json",
+  "world": "bench/worlds/kinds_i04_gauge_nine_is_not_there.json",
   "group": "infeasible",
   "expect": {
+    "decision": "cannot",
+    "category": "infeasible"
+  },
+  "expect_2_1": {
     "decision": "cannot",
     "category": "inexpressible"
   },

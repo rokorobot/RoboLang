@@ -1,4 +1,4 @@
-"""The shipped RoboLang 2.1 reference, CLI command, examples, vocabulary and benchmark integration."""
+"""The shipped RoboLang 2.2 reference, CLI command, examples, vocabulary and benchmark integration."""
 
 from __future__ import annotations
 import io
@@ -35,7 +35,7 @@ def test_every_complete_rob_example_compiles():
     assert examples
     for index, source in enumerate(examples, start=1):
         result = compile_source(source, f"language-reference-example-{index}.rob")
-        assert result.ir.language_version == "2.1"
+        assert result.ir.language_version == "2.2"
 
 
 def test_reference_names_every_reserved_word_and_annotation_key():
@@ -53,9 +53,9 @@ def test_every_diagnostic_code_in_the_reference_exists_in_the_implementation():
     assert cited and cited <= implemented
 
 
-def test_reference_is_2_1_and_teaches_branching_handlers_missions_and_what_stays_out():
+def test_reference_is_2_2_and_teaches_branching_handlers_missions_and_what_stays_out():
     text = reference()
-    assert text.startswith("# RoboLang 2.1 language reference")
+    assert text.startswith("# RoboLang 2.2 language reference")
     for old in ("robolang 1.3;", "robolang 1.4;", "robolang 1.5;", "robolang 1.6;", "robolang 1.7;", "robolang 1.9;"):
         assert old not in text, old
     for new in ("`if", "`else if", "fail \"", "E216", "E307", "E309", "E313", "S261", "S262",
@@ -99,7 +99,7 @@ def test_reference_teaches_measured_values():
                    "**The value is read when the program runs.**", "Never settle a comparison from a description",
                    "arithmetic (an average", "choosing an object at run time"):
         assert phrase in text, phrase
-    assert "robolang 2.1;" in text and "measure r" in text
+    assert "robolang 2.2;" in text and "measure r" in text
 
 
 def test_reference_teaches_that_a_run_time_condition_is_decided_by_an_if_never_by_the_description():
@@ -110,15 +110,15 @@ def test_reference_teaches_that_a_run_time_condition_is_decided_by_an_if_never_b
         assert phrase in text, phrase
 
 
-def test_the_prompts_are_for_2_1():
+def test_the_prompts_are_for_2_2():
     full, minimal = bench.load_prompt("full"), bench.load_prompt("minimal")
     for prompt in (full, minimal):
-        assert prompt.startswith("You write RoboLang 2.1 programs.") and "RoboLang 2.0 programs" not in prompt
-        assert "RoboLang 2.0 cannot say it" not in prompt and "RoboLang 2.1 cannot say it" in prompt
+        assert prompt.startswith("You write RoboLang 2.2 programs.") and "RoboLang 2.1 programs" not in prompt
+        assert "RoboLang 2.1 cannot say it" not in prompt and "RoboLang 2.2 cannot say it" in prompt
         assert '"mission": "<name of the mission>"' in prompt and "needs no mission, and no decline" in prompt
-    assert "measure" in full and "robolang 2.1;" in full and "robolang 2.0;" not in full and "robolang 1.4;" not in full
-    # 2.1 is a delta over 2.0, 1.9, 1.8, 1.7, 1.6, 1.5, 1.4 and 1.3: the grammar-only prompt pastes all nine
-    assert "spec/grammar-v2.1.ebnf" in minimal and "spec/grammar-v2.0.ebnf" in minimal
+    assert "measure" in full and "robolang 2.2;" in full and "robolang 2.1;" not in full and "robolang 1.4;" not in full
+    # 2.2 is a delta over 2.1, 2.0, 1.9, 1.8, 1.7, 1.6, 1.5, 1.4 and 1.3: the grammar-only prompt pastes all ten
+    assert "spec/grammar-v2.2.ebnf" in minimal and "spec/grammar-v2.1.ebnf" in minimal
     assert '"measure"' in minimal and '"if"' in minimal and "handler" in minimal
     assert '"no_go_region"' in minimal and "S003" in minimal and "X605" in minimal
     assert '"do"' in minimal and '"in_state"' in minimal and "S006" in minimal
@@ -127,9 +127,12 @@ def test_the_prompts_are_for_2_1():
     assert "triggers" in minimal and "nesting" in minimal and "480 min" in minimal
     assert '"message_received"' in minimal and "E327" in minimal and "S011" in minimal and "delivery" in minimal
     assert "patterns" in minimal and "the sender is the world's" in minimal
+    assert '"fill"' in minimal and '"confidence"' in minimal and '"pressure"' in minimal and "E328" in minimal
+    assert "a reading of a person" in minimal and "Do not replace a reading" in minimal and "OR a location" in minimal
     assert [f.name for f in bench.GRAMMAR_FILES] == ["grammar-v1.3.ebnf", "grammar-v1.4.ebnf", "grammar-v1.5.ebnf",
                                                      "grammar-v1.6.ebnf", "grammar-v1.7.ebnf", "grammar-v1.8.ebnf",
-                                                     "grammar-v1.9.ebnf", "grammar-v2.0.ebnf", "grammar-v2.1.ebnf"]
+                                                     "grammar-v1.9.ebnf", "grammar-v2.0.ebnf", "grammar-v2.1.ebnf",
+                                                     "grammar-v2.2.ebnf"]
     texts = [f.read_text(encoding="utf-8").strip() for f in bench.GRAMMAR_FILES]
     assert all(t in minimal for t in texts)
     assert [minimal.index(t) for t in texts] == sorted(minimal.index(t) for t in texts)
@@ -224,3 +227,25 @@ def test_reference_teaches_incoming_messages():
                    "`X608`"):
         assert phrase in text, phrase
     assert "message_received" in tokens.FUTURE_RESERVED  # no new word: reserved since 1.1
+
+
+def test_reference_teaches_the_four_new_kinds_2_2():
+    """0044 (L4): the kinds, the unit `%`, pressure units, an exact count, a location, confidence with its label, no
+    replacing, and what stays out."""
+    text = " ".join(reference().split())
+    assert "### More kinds: fill, confidence, pressure, count" in text
+    for phrase in ("**`fill`** is how full something is", "`level < 25 %`", "**`confidence`** how sure the sensor is",
+                   "`c >= 90 %`", "**`pressure`**", "`p < 450 kPa` and `p < 4.5 bar` are the same test",
+                   "**`count`** how many items", "`n == 0`", "`measure r count of aisle_5 using tag as n;`",
+                   "`%` is the unit of `fill` and `confidence`", "A bare fraction (`0.3`) or the word `percent`",
+                   "(`E206`)", "comparing one with the other is `E319`", "There is no `psi`", "A `count` is exact",
+                   "`n < 2.5` is `E328`", "it also takes `==` and `!=`",
+                   "**`fill` and `count` may be read of an object or of a location**",
+                   "A robot is not an object or a location", "`E304`", "**`confidence` belongs to a label.**",
+                   "read with the **same** sensor", "**Do not replace a reading.**", "never an `inspect`",
+                   "never a `label` reading in its place", "never dropped", "`infeasible`", "**Not in 2.2**",
+                   "a kind no sensor can declare", "a reading of a person", "a reading of the robot itself",
+                   "counting objects chosen at run time", "arithmetic on readings", "measures fill in % +/- 2",
+                   "never what the value is"):
+        assert phrase in text, phrase
+    assert "fill" not in tokens.RESERVED_V2_0 and "count" not in tokens.RESERVED_V2_0  # recognised by position

@@ -124,7 +124,7 @@ The owner approved the replacement plan, freeze, paid validation and merge. See 
 Run `python tools/bench_freeze.py --check` to verify the recorded inputs against freeze v2
 (`docs/evidence/bench-freeze-v2.json`, decision 0035 E9; v1 is kept as history). Changes after the freeze require errata
 ([errata for 1.5](../docs/evidence/bench-errata-1-5.md), [errata for 1.6](../docs/evidence/bench-errata-1-6.md),
-[errata for 1.7](../docs/evidence/bench-errata-1-7.md), [errata for 1.8](../docs/evidence/bench-errata-1-8.md), [errata for 1.9](../docs/evidence/bench-errata-1-9.md), [errata for 2.0](../docs/evidence/bench-errata-2-0.md), [errata for 2.1](../docs/evidence/bench-errata-2-1.md)).
+[errata for 1.7](../docs/evidence/bench-errata-1-7.md), [errata for 1.8](../docs/evidence/bench-errata-1-8.md), [errata for 1.9](../docs/evidence/bench-errata-1-9.md), [errata for 2.0](../docs/evidence/bench-errata-2-0.md), [errata for 2.1](../docs/evidence/bench-errata-2-1.md), [errata for 2.2](../docs/evidence/bench-errata-2-2.md)).
 A `decoy` looks impossible or unclear but is feasible. A `clarify` task
 expects `"decision": "clarify"`: the request could mean several entities (`candidates`) or omits a value, and the world
 does not decide. A request that leaves the choice to the model ("a shelf", "one of the vials", set 2's `ambiguous`
@@ -205,8 +205,8 @@ read from these numbers.
 
 Set 2 has the same for its three branching tasks (`x_route_by_cell`, `x_whichever_free`, `x_missing_box_branch`),
 group `branching`. The grammar-only prompt pastes `spec/grammar-v1.3.ebnf`, `spec/grammar-v1.4.ebnf`,
-`spec/grammar-v1.5.ebnf`, `spec/grammar-v1.6.ebnf`, `spec/grammar-v1.7.ebnf`, `spec/grammar-v1.8.ebnf`, `spec/grammar-v1.9.ebnf`, `spec/grammar-v2.0.ebnf` and `spec/grammar-v2.1.ebnf`, each a delta
-over the one before. Since 0043 L4 the prompts teach RoboLang 2.1 (0041 L4 taught 2.0, 0042 L4 taught 1.9, 0040 L4 taught 1.8, 0039 L4 taught 1.7, 0036 PR 2 taught 1.6, 0035 PR 2 taught 1.5). In set 3,
+`spec/grammar-v1.5.ebnf`, `spec/grammar-v1.6.ebnf`, `spec/grammar-v1.7.ebnf`, `spec/grammar-v1.8.ebnf`, `spec/grammar-v1.9.ebnf`, `spec/grammar-v2.0.ebnf`, `spec/grammar-v2.1.ebnf` and `spec/grammar-v2.2.ebnf`, each a delta
+over the one before. Since 0044 L4 the prompts teach RoboLang 2.2 (0043 L4 taught 2.1, 0041 L4 taught 2.0, 0042 L4 taught 1.9, 0040 L4 taught 1.8, 0039 L4 taught 1.7, 0036 PR 2 taught 1.6, 0035 PR 2 taught 1.5). In set 3,
 `x_failover_on_fault` is now a program judged per path (group `recover`; `expect_1_4` keeps the old label).
 
 Run it on demand from GitHub Actions: `Benchmark`, `set_only: set3`. That runs full and grammar-only prompts with 3
@@ -434,29 +434,44 @@ grammar-only one). The acceptance run (L5) is next.
 
 ## Set 11: more measured kinds (`--set kinds`)
 
-24 tasks in `tasks_kinds/`, the 2.1 references of the controls and the obvious 2.1 attempts in `reference_kinds/`, decision record
-[0044](../spec/decisions/0044-more-measured-kinds.md), plan, bounds and open points in
-[bench-11-kinds.md](../docs/plans/bench-11-kinds.md) (draft for the owner: the bounds B1–B9 are placeholders). Pre-registered
-against 2.1 (L3 of I6), not yet labelled for 2.2: `expect` is the 2.1 label (every non-control task `cannot / inexpressible`, each
-with an attempt that fails with `E101`, `E217` or `E505`; 10 `kind` tasks, 5 `infeasible`, 5 `inexpressible`, 4 `control` that are
-programs), `expect_2_2` the label for acceptance. A 2.2 program carries, inside `expect_2_2`, `world_2_2` (the sensor `measures`
-and the object `properties` that world file 1.7 adds, with unit and uncertainty), its `paths` (each forced by a `world_patch` of
-property values; a reading near the threshold is a path that fails, `S261`) and the checks it asks for: `expected_readings`
-(`[robot, kind, object]`), `expected_comparisons` (`{kind, op, value, unit}`; a count has no unit) and, where the program
-combines a reading with an older feature, `expected_limits`, `expected_actions`, `expected_clock`, `expected_message_waits`, and
-`expected_sensors` (the decoy). The attempts mark the reading lines with `// @reading`: without them each is a valid 2.1 program
-that succeeds, the reading replaced silently (the plan's B8; `k09` needs `attempt_world_patch`, a message in its world). The
-worlds are `site` and two new world files (1.6), `stockroom` and `plant_room`; the 2.1 world shows no property value and no new
-kind. The new scorer measures (`reading_ok`, reading replaced silently, kind or threshold changed) are L4's.
+24 tasks in `tasks_kinds/`, the 2.2 references of the 10 programs and of the controls (the controls' are 2.1) and the obvious 2.1
+attempts in `reference_kinds/`, decision record [0044](../spec/decisions/0044-more-measured-kinds.md), plan, bounds B1-B9 and
+clarifications D1-D14 in [bench-11-kinds.md](../docs/plans/bench-11-kinds.md) (approved by the owner, 2026-11-18). Pre-registered
+against 2.1 (L3 of I6) and **labelled for 2.2 at L4**: `expect` is the 2.2 label (10 `kind` programs, 5 `infeasible`, 5
+`inexpressible`, 4 `control`), `expect_2_1` the 2.1 label (every non-control task `cannot / inexpressible`, each with an attempt
+that fails with `E101`, `E217` or `E505`), `expect_2_2` the pre-registered 2.2 label: `world_2_2` (the sensor `measures` and the
+object `properties` that world file 1.7 adds, with unit and uncertainty) and the `paths` of a program (each forced by a `world_patch`
+of property values; a reading near the threshold is a path that fails, `S261`). The checks a label asks for are task keys, as in sets
+6 to 10: `expected_readings` (`[robot, kind, object]`), `expected_comparisons` (`{kind, op, value, unit}`; a count has no unit) and,
+where the program combines a reading with an older feature, `expected_limits`, `expected_actions`, `expected_clock`,
+`expected_message_waits`, and `expected_sensors` (the decoy). The world shown to the model is the **world file 1.7 copy**
+`worlds/kinds_<id>.json` of the 2.1 world (15 of them: the 10 programs and the 5 infeasible tasks; the other tasks keep their 2.1
+worlds): it lists which sensor measures which new kind with its unit (`cam_scan1 (on scanbot1, available; measures fill in % +/- 2)`),
+and never a property value. The attempts mark the reading lines with `// @reading`: without them each is a valid 2.1 program that
+succeeds, the reading replaced silently (the plan's B8; `k09` needs `attempt_world_patch`, a message in its world).
+
+Scorer (`lib.py`, `score.py`): **`kind_ok`** (exactly the readings of `expected_readings`, each the asked kind of the asked object by
+the asked robot, and exactly the comparisons of `expected_comparisons`: the kind, the test modulo its complement, and the limit exact
+after unit conversion, so `450 kPa` is `4.5 bar` and `450 bar` is not; with `expected_sensors`, only those sensors; one of the task's
+checks, so `request_satisfied` needs it; B1), **`reading_replaced`** (B8, and the B4 clause for the infeasible requests: a valid
+program whose run ends SUCCEEDED with no `measure` of the new kind the request asks for: an `inspect`, a `label` stand-in or nothing
+in its place), **`kind_or_threshold_changed`** (B9: a reading of another kind or object, a `confidence` without its `label`, a test or
+limit that differs after conversion: `>=` for `>`, a factor off, the limit moved to avoid an unknown, another sensor), and `kind_added`
+(B5: a new-kind reading on a control; right is the right decision and none, `no_kind_added`). All are per model, like
+`message_wait_replaced`. `lib.task_paths` reads `expect_2_2.paths`.
 
 Erratum P2 relabels `u01_if_dirty` and `u02_if_damaged` (set "ask") as `cannot / infeasible` (their worlds have no label sensor,
-`S234`; [bench-errata-2-2.md](../docs/evidence/bench-errata-2-2.md)); the old label is kept as `expect_1_3`.
+`S234`), and erratum P3 the four standing tasks that 2.2 changes: the R3 probes `f_perceive_shelf_fill` (set "future"; `shelf_a` is a
+location: D1) and `f_perceive_weed_confidence`, and the counting requests `x_count_and_send` (set 3) and `x_count_report` (set 2):
+group `kind`, programs with a world file 1.7 copy, a reference and two paths, `expect_2_1` the old label
+([bench-errata-2-2.md](../docs/evidence/bench-errata-2-2.md)).
 
 `tests/test_bench_kinds.py` checks the counts, the labels, the sensors and objects against the prompts and the world, that every
 path follows the comparison (a small model of it in the test: three values, the sensor's uncertainty, exact conversion of kPa
-and bar), the infeasible and inexpressible reasons, that every attempt fails with its code and every stripped attempt succeeds,
-the controls, the K6 relabel, the atlas, the scorer and the workflow. On demand from GitHub Actions: `Benchmark`,
-`set_only: kinds` (full and minimal prompts, 3 repeats, Sonnet and Haiku, `--max-usd 3` each, not gated, not in the per-PR or weekly
-runs).
+and bar), the infeasible and inexpressible reasons, the world copies and what the model is shown, that every attempt fails with its
+code and every stripped attempt succeeds, that every 2.2 reference validates and ends as labelled on every path, the scorer measures
+on variants, the standing relabels, the atlas, the cost (scoring a synthetic run: under a minute and 1 GB) and the workflow. On
+demand from GitHub Actions: `Benchmark`, `set_only: kinds` (full and minimal prompts, 3 repeats, Sonnet and Haiku, `--max-usd 3`
+each, not gated, not in the per-PR or weekly runs).
 Locally: `python bench/run.py --set kinds --repeats 3 --models claude-sonnet-5-5,claude-haiku-5-5` (a paid run: confirm it
 first; estimate ~$3.8 for the full prompt and ~$3.6 for the grammar-only one).

@@ -1,9 +1,12 @@
 {
   "id": "k10_the_right_camera",
   "prompt": "With scanbot2, read how full shelf_3 is with its own camera and, if it is less than 10 percent full, tell channel \"lead\" \"shelf_3 is nearly empty\"; if it is not, tell no one.",
-  "world": "bench/worlds/stockroom.json",
+  "world": "bench/worlds/kinds_k10_the_right_camera.json",
   "group": "kind",
   "expect": {
+    "decision": "program"
+  },
+  "expect_2_1": {
     "decision": "cannot",
     "category": "inexpressible"
   },
@@ -58,24 +61,6 @@
         }
       }
     },
-    "expected_readings": [
-      [
-        "scanbot2",
-        "fill",
-        "shelf_3"
-      ]
-    ],
-    "expected_comparisons": [
-      {
-        "kind": "fill",
-        "op": "<",
-        "value": "10",
-        "unit": "%"
-      }
-    ],
-    "expected_sensors": [
-      "cam_scan2"
-    ],
     "paths": [
       {
         "when": "shelf_3 is 6 % full: below 10 %",
@@ -130,6 +115,24 @@
       }
     ]
   },
+  "expected_readings": [
+    [
+      "scanbot2",
+      "fill",
+      "shelf_3"
+    ]
+  ],
+  "expected_comparisons": [
+    {
+      "kind": "fill",
+      "op": "<",
+      "value": "10",
+      "unit": "%"
+    }
+  ],
+  "expected_sensors": [
+    "cam_scan2"
+  ],
   "gap": "G-PERCEIVE",
   "tags": [
     "fill",

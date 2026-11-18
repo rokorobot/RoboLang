@@ -1,9 +1,12 @@
 {
   "id": "k06_tank_close_to_the_mark",
   "prompt": "With crawler2, drive to tank_farm and read how full tank_2 is with cam_crawler2. If it is more than 80 percent full, tell channel \"maintenance\" \"tank_2 is nearly full\"; if it is not, tell no one.",
-  "world": "bench/worlds/plant_room.json",
+  "world": "bench/worlds/kinds_k06_tank_close_to_the_mark.json",
   "group": "kind",
   "expect": {
+    "decision": "program"
+  },
+  "expect_2_1": {
     "decision": "cannot",
     "category": "inexpressible"
   },
@@ -32,21 +35,6 @@
         }
       }
     },
-    "expected_readings": [
-      [
-        "crawler2",
-        "fill",
-        "tank_2"
-      ]
-    ],
-    "expected_comparisons": [
-      {
-        "kind": "fill",
-        "op": ">",
-        "value": "80",
-        "unit": "%"
-      }
-    ],
     "paths": [
       {
         "when": "tank_2 is 90 % full: above 80 %",
@@ -117,6 +105,21 @@
       }
     ]
   },
+  "expected_readings": [
+    [
+      "crawler2",
+      "fill",
+      "tank_2"
+    ]
+  ],
+  "expected_comparisons": [
+    {
+      "kind": "fill",
+      "op": ">",
+      "value": "80",
+      "unit": "%"
+    }
+  ],
   "gap": "G-PERCEIVE",
   "tags": [
     "fill",

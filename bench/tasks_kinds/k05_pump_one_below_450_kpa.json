@@ -1,9 +1,12 @@
 {
   "id": "k05_pump_one_below_450_kpa",
   "prompt": "With crawler2, drive to pump_1 and read gauge_p1 with cam_crawler2. If the pressure is below 450 kPa, tell channel \"maintenance\" \"pump 1 low pressure\"; if it is not, tell no one.",
-  "world": "bench/worlds/plant_room.json",
+  "world": "bench/worlds/kinds_k05_pump_one_below_450_kpa.json",
   "group": "kind",
   "expect": {
+    "decision": "program"
+  },
+  "expect_2_1": {
     "decision": "cannot",
     "category": "inexpressible"
   },
@@ -32,21 +35,6 @@
         }
       }
     },
-    "expected_readings": [
-      [
-        "crawler2",
-        "pressure",
-        "gauge_p1"
-      ]
-    ],
-    "expected_comparisons": [
-      {
-        "kind": "pressure",
-        "op": "<",
-        "value": "450",
-        "unit": "kPa"
-      }
-    ],
     "paths": [
       {
         "when": "gauge_p1 reads 4.2 bar = 420 kPa: below 450 kPa",
@@ -101,6 +89,21 @@
       }
     ]
   },
+  "expected_readings": [
+    [
+      "crawler2",
+      "pressure",
+      "gauge_p1"
+    ]
+  ],
+  "expected_comparisons": [
+    {
+      "kind": "pressure",
+      "op": "<",
+      "value": "450",
+      "unit": "kPa"
+    }
+  ],
   "gap": "G-PERCEIVE",
   "tags": [
     "pressure",

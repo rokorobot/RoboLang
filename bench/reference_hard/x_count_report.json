@@ -1,0 +1,9 @@
+{
+  "task": "count_parts",
+  "bindings": {
+    "r": "arm_a",
+    "belt": "conveyor_in",
+    "here": "station1",
+    "cam": "cam_s1"
+  }
+}

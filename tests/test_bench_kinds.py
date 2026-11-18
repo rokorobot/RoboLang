@@ -1,20 +1,22 @@
 """
 Benchmark set 11, "kinds" (bench/tasks_kinds/, decision record 0044, plan docs/plans/bench-11-kinds.md): four more
 measured kinds for the 1.6 `measure`, `fill` and `confidence` (percent, unit token `%`), `pressure` (Pa, kPa, bar) and
-`count` (a whole number, no unit, exact, `==` allowed), pre-registered against RoboLang 2.1 before any code (L3 of
-iteration I6). `expect` is the 2.1 label (the baseline: every non-control task declines as inexpressible, because
-`fill`, `confidence`, `pressure` and `count` are no kind of `measure`: E217, and `%` is no token: E101); `expect_2_2` is
-the label for acceptance once 2.2 is taught: the paths of a program (each forced by world file 1.7 property values in
-its `world_patch`), `world_2_2` (the sensor `measures` and object `properties` the 1.7 world adds), and the checks a
-label asks for (`expected_readings`, `expected_comparisons`, `expected_limits`, `expected_actions`, `expected_clock`,
-`expected_message_waits`). They are kept inside `expect_2_2` so that the 2.1 scorer does not read them.
+`count` (a whole number, no unit, exact, `==` allowed). Pre-registered against RoboLang 2.1 (L3 of iteration I6) and
+labelled for 2.2 in L4: `expect` is the **2.2** label (the one the scorer reads), `expect_2_1` the 2.1 label (the
+baseline: every non-control task declines as inexpressible, because `fill`, `confidence`, `pressure` and `count` are no
+kind of `measure`: E217, and `%` is no token: E101), and `expect_2_2` the pre-registered 2.2 label: the paths of a
+program (each forced by world file 1.7 property values in its `world_patch`) and `world_2_2` (the sensor `measures` and
+object `properties` the 1.7 world adds). The checks a label asks for (`expected_readings`, `expected_comparisons`,
+`expected_limits`, `expected_actions`, `expected_clock`, `expected_message_waits`, `expected_sensors`) are keys of the
+task, as in every other set.
 
-10 `kind` requests that are programs in 2.2, 5 `infeasible` in 2.2, 5 `inexpressible` that stay out (0044 K8:
-G-PERCEIVE, G-SELF, G-CHOOSE, G-CALC, G-PROX), 4 `control` requests that are programs in both versions (a plain carry,
-a 1.6 `temperature`, `mass` and `label` reading: no new kind). 2.1 declines every non-control task, and every one has an
-obvious attempt that 2.1 rejects; those attempts stay as the evidence of the baseline. Only the controls have a
-reference; the 2.2 references wait for L4. Erratum K6 (0044) relabels the "ask" tasks `u01_if_dirty` and
-`u02_if_damaged`.
+10 `kind` requests that are programs in 2.2 (a reference each), 5 `infeasible`, 5 `inexpressible` that stay out (0044
+K8, D14: G-QUALITY, G-SELF, G-CHOOSE, G-CALC, G-PROX), 4 `control` requests that are programs in both versions (a plain
+carry, a 1.6 `temperature`, `mass` and `label` reading: no new kind). Every task with a world file 1.7 copy
+(`bench/worlds/kinds_<id>.json`) is the 2.1 world plus the `world_2_2` notes. The obvious 2.1 attempts stay as the
+evidence of the baseline. The R3 probes `f_perceive_shelf_fill` and `f_perceive_weed_confidence` and the two counting
+requests `x_count_and_send` and `x_count_report` are relabelled in their own sets (erratum P3). Erratum K6 (0044)
+relabels the "ask" tasks `u01_if_dirty` and `u02_if_damaged`.
 No network and no SDK; the model run is the `Benchmark` workflow with `set_only: kinds`.
 """
 
@@ -47,7 +49,7 @@ NEW_KINDS = ("fill", "confidence", "pressure", "count")
 UNITS = {"fill": {"%"}, "confidence": {"%"}, "pressure": {"Pa", "kPa", "bar"}, "count": set()}
 FACTOR = {"%": Decimal(1), "Pa": Decimal(1), "kPa": Decimal(1000), "bar": Decimal(100000)}  # 1 bar = 100 kPa (0044 K2)
 SECONDS = {"ms": 0.001, "s": 1, "min": 60}
-NEW_WORLDS = {"stockroom.json", "plant_room.json"}
+OLD_WORLDS = {"stockroom.json", "plant_room.json", "site.json"}  # the 2.1 worlds of the set: no new kind in them
 THEN = {"k01_restock_under_thirty_percent": "restock shelf_2", "k02_pump_three_over_six_bar": "pump 3 over pressure",
         "k03_shelf_three_out_of_stock": "shelf_3 is out of stock", "k04_weed_and_ninety_percent_sure": "weed confirmed",
         "k05_pump_one_below_450_kpa": "pump 1 low pressure", "k06_tank_close_to_the_mark": "tank_2 is nearly full",
@@ -107,8 +109,13 @@ def seconds(duration: str | dict) -> float:
     return float(value) * SECONDS[unit]
 
 
+CHECKS = ("expected_readings", "expected_comparisons", "expected_limits", "expected_actions", "expected_clock",
+          "expected_message_waits", "expected_sensors")
+
+
 def label_2_2(task: dict) -> dict:
-    return task["expect_2_2"]
+    """The pre-registered 2.2 label with the task's checks (they are keys of the task since L4)."""
+    return {**task["expect_2_2"], **{k: task[k] for k in CHECKS if k in task}}
 
 
 # -------- the set --------
@@ -136,35 +143,39 @@ def test_the_ids_are_new_ones_and_no_prompt_is_a_copy_of_a_standing_task():
     assert {"f_perceive_shelf_fill", "f_perceive_weed_confidence"} <= set(elsewhere)
 
 
-def test_labels_are_2_1_in_expect_and_2_2_in_expect_2_2():
+def test_expect_is_the_2_2_label_and_the_2_1_label_is_kept_in_expect_2_1():
     for task_id, task in SET.items():
-        later = label_2_2(task)
+        later = task["expect_2_2"]
         assert later["decision"] in ("program", "cannot"), task_id
-        checks = {"expected_readings", "expected_comparisons", "expected_limits", "expected_actions", "expected_clock",
-                  "expected_message_waits"}
-        assert not checks & set(task) or task["group"] == "control", task_id
+        assert not set(CHECKS) & set(later), task_id  # the checks are keys of the task, not of the label
         if task["group"] == "control":
-            assert task["expect"] == {"decision": "program"} and later == {"decision": "program"}, task_id
+            assert task["expect"] == later == {"decision": "program"}  # the same in both versions
+            assert task["expect_2_1"]["decision"] == "program" and not task["expect"].get("paths")
             assert lib.expected_goals(task) or lib.task_paths(task), task_id
             assert not {"why", "attempt_fails_with", "gap", "blockers"} & set(task)
             continue
-        assert task["expect"] == CANNOT and lib.expectation(task) == ("cannot", "inexpressible"), task_id
-        assert len(task["why"]) > 40 and task["gap"] in GAPS and GAPS[task["gap"]]["scope"] in ("open", "out")
-        assert not {"expected_goal", "expected_goals", "paths", "expect_2_1", "expect_2_0"} & set(task), task_id
-        assert lib.task_paths(task) is None, task_id  # the 2.2 paths are read by the 2.2 scorer (L4), not by 2.1's
+        assert task["expect_2_1"] == CANNOT, task_id  # the baseline label
+        assert len(task["why"]) > 40 and task["gap"] in GAPS
+        assert not {"expected_goal", "expected_goals", "paths", "expect_2_0"} & set(task), task_id
     for task_id, task in PROGRAMS.items():
         later = label_2_2(task)
-        assert later["decision"] == "program" and later["paths"] and later["expected_readings"], task_id
-        assert later["expected_comparisons"] and later["world_2_2"]["sensors"], task_id
+        assert task["expect"] == {"decision": "program"} == {"decision": later["decision"]}
+        assert lib.expectation(task) == ("program", "none") and lib.task_paths(task) == later["paths"], task_id
+        assert later["paths"] and later["expected_readings"] and later["expected_comparisons"], task_id
+        assert later["world_2_2"]["sensors"] and task["gap"] == "G-PERCEIVE"
         assert len({p["when"] for p in later["paths"]}) == len(later["paths"]) >= 2
-        assert task["gap"] == "G-PERCEIVE"
+        assert task["world"] == f"bench/worlds/kinds_{task_id}.json"
     for task_id, task in INFEASIBLE.items():
-        later = label_2_2(task)
+        later = task["expect_2_2"]
         assert later["decision"] == "cannot" and later["category"] == "infeasible", task_id
+        assert task["expect"] == {"decision": "cannot", "category": "infeasible"}
+        assert lib.expectation(task) == ("cannot", "infeasible") and lib.task_paths(task) is None
         assert task["blockers"] and task["gap"] == "G-PERCEIVE" and later["because"][0] == "S", task_id
+        assert task["world"] == f"bench/worlds/kinds_{task_id}.json"
     for task_id, task in INEXPRESSIBLE.items():
-        later = label_2_2(task)
+        later = task["expect_2_2"]
         assert {k: later[k] for k in ("decision", "category")} == CANNOT and later["because"] == "0044 K8", task_id
+        assert task["expect"] == CANNOT and lib.expectation(task) == ("cannot", "inexpressible")
 
 
 def test_every_kind_has_a_program_and_the_programs_combine_the_features_the_pre_registration_lists():
@@ -174,7 +185,7 @@ def test_every_kind_has_a_program_and_the_programs_combine_the_features_the_pre_
     for tag in ("conversion", "unknown_fails_closed", "region_limit", "declared_action", "clock_time", "message_wait",
                 "decoy", "equals", "two_readings_one_sensor", "if_else", "threshold_above", "threshold_below"):
         assert tags[tag] >= 1, tag
-    assert len({t["world"] for t in PROGRAMS.values()}) == 3  # stockroom, plant_room, site
+    assert len({t["world"] for t in PROGRAMS.values()}) == 10  # a world file 1.7 copy each
     # the 1.7 limit, the 1.8 `do`, the 1.9 clock and the 2.1 message wait that go with a reading
     assert label_2_2(SET["k07_around_the_forklift_lane"])["expected_limits"] == [["no_go_region", "forklift_lane"]]
     assert label_2_2(SET["k08_open_the_relief_valve"])["expected_actions"] == [
@@ -376,7 +387,7 @@ def test_the_infeasible_tasks_each_break_one_rule():
 
 def test_the_inexpressible_tasks_each_stay_out_for_one_reason_of_0044_k8():
     assert {t: d["gap"] for t, d in INEXPRESSIBLE.items()} == {
-        "x01_packaging_looks_worn": "G-PERCEIVE", "x02_own_battery_first": "G-SELF",
+        "x01_packaging_looks_worn": "G-QUALITY", "x02_own_battery_first": "G-SELF",
         "x03_carry_as_many_as_counted": "G-CHOOSE", "x04_average_fill": "G-CALC", "x05_nearest_person": "G-PROX"}
     assert {t: set(d["tags"]) for t, d in INEXPRESSIBLE.items()} == {
         "x01_packaging_looks_worn": {"wear", "free_kind", "if"},
@@ -391,21 +402,51 @@ def test_the_inexpressible_tasks_each_stay_out_for_one_reason_of_0044_k8():
     assert "nearest person" in SET["x05_nearest_person"]["prompt"]
 
 
-def test_at_most_three_new_world_files_and_the_2_1_worlds_hold_no_new_kind():
-    elsewhere = {Path(t["world"]).name for name in lib.SETS if name != "kinds" for t in lib.load_set(name).values()}
-    mine = {Path(t["world"]).name for t in SET.values()}
-    assert len(mine - elsewhere) <= 3 and mine - elsewhere == NEW_WORLDS
-    for name in mine:
+def test_the_2_1_worlds_hold_no_new_kind_and_each_world_file_1_7_copy_is_its_world_plus_the_notes_k5():
+    """World file 1.7 (L4): `kinds_<id>.json` is the 2.1 world of the L3 set with the `world_2_2` notes merged (the
+    sensors' `measures`, the objects' default `properties`) and nothing else changed; the world a model is shown lists
+    which sensor measures which new kind, with the unit, and never a property value (K5)."""
+    for name in OLD_WORLDS:
         world = json.loads(read(REPO / "bench" / "worlds" / name))
         assert world["world_schema_version"] in ("1.2", "1.3", "1.4", "1.5", "1.6"), name
         text = json.dumps(world)
-        for kind in NEW_KINDS:  # the 1.7 world file is L4's: these files are what 2.1 loads
+        for kind in NEW_KINDS:  # these files are what 2.1 loads
             assert f'"{kind}"' not in text, (name, kind)
-        shown = lib.describe_world(world)
-        assert not re.search(r"\b(fill|confidence|pressure|count)\b", shown), name  # nothing hints at the new kinds
-    for name in NEW_WORLDS:
-        world = json.loads(read(REPO / "bench" / "worlds" / name))
-        assert len(world["locations"]) + sum(len(world[k]) for k in ("regions", "robots", "objects", "sensors")) >= 20
+        assert not re.search(r"\b(fill|confidence|pressure|count)\b", lib.describe_world(world)), name
+    for task_id, task in {**PROGRAMS, **INFEASIBLE}.items():
+        notes = label_2_2(task)["world_2_2"]
+        copy = json.loads(read(REPO / task["world"]))
+        base = json.loads(read(REPO / "bench" / "worlds" / f"{original_world(task_id)}.json"))
+        assert copy.pop("world_schema_version") == "1.7" and base.pop("world_schema_version") in (
+            "1.2", "1.3", "1.4", "1.5", "1.6")
+        for name, patch in notes.get("sensors", {}).items():
+            for key, value in patch.items():
+                if key == "measures":
+                    base["sensors"][name].pop("measures", None)
+                    if value:
+                        base["sensors"][name]["measures"] = value
+                else:
+                    base["sensors"][name][key] = value
+        for name, patch in notes.get("objects", {}).items():
+            base["objects"][name].setdefault("properties", {}).update(patch["properties"])
+        assert copy == base, task_id
+        shown = lib.describe_world(copy_world := json.loads(read(REPO / task["world"])))
+        for name, patch in notes.get("sensors", {}).items():
+            for kind, measure in patch.get("measures", {}).items():
+                if kind in NEW_KINDS:  # `fill in % +/- 2`, `pressure in bar +/- 0.1`, `count`
+                    unit = f" in {measure['unit']} +/- {measure['uncertainty']}" if "unit" in measure else ""
+                    assert f"{name} (on " in shown and f"{kind}{unit}" in shown, (task_id, name, kind)
+        objects_line = next(ln for ln in shown.splitlines() if ln.startswith("objects: "))
+        assert not re.search(r"\b(fill|confidence|pressure|count|label|degC)\b", objects_line), task_id  # no value
+        assert "world_2_2" not in shown and "properties" not in shown and "location_properties" not in copy_world
+    for task_id in set(SET) - set(PROGRAMS) - set(INFEASIBLE):
+        assert not SET[task_id]["world"].startswith("bench/worlds/kinds_"), task_id  # x and c tasks: the 2.1 worlds
+
+
+def original_world(task_id: str) -> str:
+    """The 2.1 world of a task of the set (the L3 pre-registration), by its prefix."""
+    return {"k04": "site"}.get(task_id[:3], "plant_room" if task_id[:3] in (
+        "k02", "k05", "k06", "k08", "i03", "i04") else "stockroom")
 
 
 # -------- the references and the attempts --------
@@ -414,7 +455,7 @@ def test_references_and_attempts_are_where_they_should_be():
     names = [p.name for p in REF.iterdir()]
     refs = {n.split(".")[0] for n in names if ".attempt" not in n}
     attempts = {n.split(".")[0] for n in names if ".attempt." in n}
-    assert refs == set(CONTROLS) and attempts == set(DECLINED)  # no 2.2 reference yet: that is L4
+    assert refs == set(CONTROLS) | set(PROGRAMS) and attempts == set(DECLINED)  # a 2.2 reference per program (L4)
     for task_id in DECLINED:
         assert (REF / f"{task_id}.attempt.rob").is_file() and (REF / f"{task_id}.attempt.json").is_file()
     for name in names:
@@ -550,17 +591,22 @@ def test_erratum_k6_relabels_the_two_ask_tasks_as_infeasible_and_keeps_the_old_l
 
 # -------- the atlas --------
 
-def test_every_task_2_1_declines_is_in_exactly_one_atlas_gap_and_no_control_is():
+def test_only_what_2_2_still_declines_is_in_an_atlas_gap_and_g_perceive_stays_open_until_l6():
     in_gaps = [(t, g["id"]) for g in ATLAS["gaps"] for t in g["tasks"] if t in SET]
-    assert len(in_gaps) == len({t for t, _ in in_gaps}) == len(DECLINED) == 20
-    assert {t for t, _ in in_gaps} == set(DECLINED)
+    assert len(in_gaps) == len({t for t, _ in in_gaps}) == len(INEXPRESSIBLE) == 5
+    assert {t for t, _ in in_gaps} == set(INEXPRESSIBLE)  # the programs and the infeasible tasks are in no gap
     for task_id, gap in in_gaps:
-        assert DECLINED[task_id]["gap"] == gap and GAPS[gap]["scope"] in ("open", "out")
-    assert Counter(gap for _, gap in in_gaps) == {
-        "G-PERCEIVE": 16, "G-SELF": 1, "G-CHOOSE": 1, "G-CALC": 1, "G-PROX": 1}
-    assert {"f_perceive_shelf_fill", "f_perceive_weed_confidence"} <= set(GAPS["G-PERCEIVE"]["tasks"])
-    assert len(GAPS["G-PERCEIVE"]["tasks"]) == 18
-    assert "I6 L3: set 11 kinds pre-registered (24 tasks)" in [h["note"] for h in ATLAS["history"]]
+        assert INEXPRESSIBLE[task_id]["gap"] == gap and GAPS[gap]["scope"] == "open"
+    assert Counter(gap for _, gap in in_gaps) == {"G-QUALITY": 1, "G-SELF": 1, "G-CHOOSE": 1, "G-CALC": 1, "G-PROX": 1}
+    assert GAPS["G-PERCEIVE"]["scope"] == "open" and GAPS["G-PERCEIVE"]["tasks"] == []  # closes at L6 of I6
+    assert "RoboLang 2.2" in GAPS["G-PERCEIVE"]["scope_note"]
+    quality = GAPS["G-QUALITY"]  # D14: far, open
+    assert quality["scope"] == "open" and quality["tasks"] == ["x01_packaging_looks_worn"]
+    assert quality["direction"] == "perception" and "no sensor kind declares" in quality["name"]
+    assert not {"x_count_report", "x_count_and_send"} & set(GAPS["G-CALC"]["tasks"])  # relabelled: programs now
+    notes = [h["note"] for h in ATLAS["history"]]
+    assert "I6 L3: set 11 kinds pre-registered (24 tasks)" in notes
+    assert notes[-1] == "I6 L4: RoboLang 2.2 built and taught"
 
 
 # -------- the scorer and the workflow --------
@@ -577,11 +623,12 @@ def kinds_run(tmp_path: Path, replies: dict) -> Path:
     return out_dir
 
 
-def test_the_scorer_counts_a_silent_replacement_as_false_and_a_decline_of_a_control_as_a_refusal(tmp_path):
+def test_the_scorer_counts_a_decline_as_wrong_a_replacement_as_a_false_program_and_a_refused_control(tmp_path):
     replies = {
-        "k01_restock_under_thirty_percent": decline(),                                       # right under 2.1
-        "i01_the_pickers_camera_reads_nothing": decline("infeasible"),                      # category differs
-        "k06_tank_close_to_the_mark": attempt_answer("k06_tank_close_to_the_mark", strip=True),  # reading dropped
+        "k01_restock_under_thirty_percent": decline(),                                       # a false refusal now
+        "i01_the_pickers_camera_reads_nothing": decline("infeasible"),                      # right
+        "x01_packaging_looks_worn": attempt_answer("x01_packaging_looks_worn", strip=True),  # a false program
+        "k06_tank_close_to_the_mark": reference("k06_tank_close_to_the_mark"),               # right
         "c01_carry_a_carton": reference("c01_carry_a_carton"),                                # right
         "c03_weigh_a_carton": decline(),                                                     # a control refused
     }
@@ -589,19 +636,232 @@ def test_the_scorer_counts_a_silent_replacement_as_false_and_a_decline_of_a_cont
     meta, rows = score.load_rows(out_dir)
     by = {r["task_id"]: r for r in rows}
     assert meta["set"] == "kinds" and meta["prompt"] == "full"
-    assert by["k01_restock_under_thirty_percent"]["decision_correct"]
-    assert by["k01_restock_under_thirty_percent"]["category_correct"]
+    refused = by["k01_restock_under_thirty_percent"]
+    assert refused["false_refusal"] and not refused["decision_correct"] and refused["kind_ok"] is False
     declined = by["i01_the_pickers_camera_reads_nothing"]
-    assert declined["decision_correct"] and declined["category_correct"] is False
-    silent = by["k06_tank_close_to_the_mark"]
+    assert declined["decision_correct"] and declined["category_correct"] and declined["reading_replaced"] is False
+    silent = by["x01_packaging_looks_worn"]
     assert silent["false_program"] and not silent["decision_correct"]
-    assert by["c01_carry_a_carton"]["decision_correct"] and by["c01_carry_a_carton"]["goal_correct"]
+    done = by["k06_tank_close_to_the_mark"]
+    assert done["decision_correct"] and done["request_satisfied"] and done["kind_ok"] and done["value_ok"]
+    assert done["reading_replaced"] is False and done["kind_or_threshold_changed"] is False
+    assert by["c01_carry_a_carton"]["decision_correct"] and by["c01_carry_a_carton"]["kind_added"] is False
     assert by["c03_weigh_a_carton"]["false_refusal"]
     text = score.score_dir(out_dir)
     assert "Task set kinds, prompt full." in text
     kinds = text.split("By kind of task:")[1]
     for kind in ("kind", "infeasible", "control"):
         assert f"| {kind} |" in kinds
+    for line in ("| kind_ok (B1:", "| reading_replaced_silently (B8:", "| reading_dropped_where_infeasible (B4:",
+                 "| kind_or_threshold_changed (B9:", "| no_kind_added (B5:"):
+        assert line in text, line
+
+
+# -------- the 2.2 references and the scorer of the reading measures (B1, B5, B8, B9) --------
+
+@pytest.mark.parametrize("task_id", sorted(PROGRAMS))
+def test_the_reference_of_a_kind_program_validates_and_ends_as_labelled_on_every_path(task_id):
+    task = PROGRAMS[task_id]
+    answer = reference(task_id)
+    assert answer["rob"].splitlines()[1] == "robolang 2.2;" and answer["rob"].isascii()
+    assert "@reading" not in answer["rob"] and "\r" not in answer["rob"]
+    checked = lib.check_answer(task, answer)
+    assert checked.valid and checked.language_version == "2.2", checked.report
+    judgement = lib.judge(task, checked, answer["bindings"])
+    assert judgement.goal_correct and judgement.plan_succeeds and judgement.value_ok, (judgement.paths, judgement.state)
+    assert judgement.kind_ok is True and judgement.checks["kinds"] is True and all(judgement.checks.values())
+    assert judgement.reading_replaced is False and judgement.kind_or_threshold_changed is False
+    assert not judgement.half_program and judgement.silent_substitution is False
+    assert len(judgement.paths) == len(label_2_2(task)["paths"])
+    assert all(p["goal_ok"] and p["plan_ok"] for p in judgement.paths), judgement.paths
+    for path, got in zip(label_2_2(task)["paths"], judgement.paths):  # the S261 path of k06 ends FAILED, as labelled
+        assert (got["state"] == "FAILED") == bool(path.get("fails")), (task_id, path["when"], got)
+    assert (REF / f"{task_id}.attempt.rob").is_file()  # the 2.1 attempt stays as the evidence of the baseline
+
+
+def judged(task_id: str, old: str | None = None, new: str | None = None, task: dict | None = None,
+           rob: str | None = None):
+    answer = reference(task_id)
+    if rob is not None:
+        answer["rob"] = rob
+    if old is not None:
+        assert old in answer["rob"], (task_id, old)
+        answer["rob"] = answer["rob"].replace(old, new)
+    task = task or SET[task_id]
+    checked = lib.check_answer(task, answer)
+    assert checked.valid, (task_id, checked.report)
+    return lib.judge(task, checked, answer["bindings"])
+
+
+def test_kind_ok_is_exact_after_conversion_and_modulo_the_complement_b1():
+    for new in ("4.5 bar", "450000 Pa"):  # the same limit in another unit
+        assert judged("k05_pump_one_below_450_kpa", "450 kPa", new).kind_ok is True, new
+    swapped = judged("k01_restock_under_thirty_percent", """        if f < 30 % {
+            communicate r to "lead" with "restock shelf_2";
+        }""", """        if f >= 30 % {
+            wait for 1 s;
+        } else {
+            communicate r to "lead" with "restock shelf_2";
+        }""")
+    assert swapped.kind_ok is True and swapped.kind_or_threshold_changed is False  # the branches swapped
+    assert judged("k03_shelf_three_out_of_stock", "n == 0", "n <= 0").kind_ok is False  # == is not <=
+    assert judged("k03_shelf_three_out_of_stock", "n == 0", "n != 0").kind_ok is True  # the complement
+    other = dict(SET["k10_the_right_camera"], expected_sensors=["cam_scan1"])  # another sensor than the one asked
+    wrong = judged("k10_the_right_camera", task=other)
+    assert wrong.kind_ok is False and wrong.kind_or_threshold_changed is True
+
+
+@pytest.mark.parametrize("task_id,old,new", [
+    ("k05_pump_one_below_450_kpa", "450 kPa", "450 bar"),            # a factor off between kPa and bar
+    ("k05_pump_one_below_450_kpa", "450 kPa", "4.5 kPa"),
+    ("k01_restock_under_thirty_percent", "f < 30 %", "f <= 30 %"),   # another test
+    ("k02_pump_three_over_six_bar", "p > 6 bar", "p >= 6 bar"),      # `>=` for `>`
+    ("k06_tank_close_to_the_mark", "f > 80 %", "f > 85 %"),          # the limit moved to avoid an unknown
+    ("k06_tank_close_to_the_mark", "f > 80 %", "f > 79 %"),
+    ("k07_around_the_forklift_lane", "f < 25 %", "f < 30 %"),
+])
+def test_a_changed_test_or_limit_is_kind_or_threshold_changed_b9(task_id, old, new):
+    judgement = judged(task_id, old, new)
+    assert judgement.kind_or_threshold_changed is True and judgement.kind_ok is False
+    assert judgement.reading_replaced is False  # the reading is there: only what it is compared with changed
+
+
+def test_confidence_without_its_label_and_a_label_alone_are_changed_b9_and_the_label_alone_is_replaced_b8():
+    rob = reference("k04_weed_and_ninety_percent_sure")["rob"]
+    task_id = "k04_weed_and_ninety_percent_sure"
+    no_label = rob.replace("        measure r label of plant using cam as what;\n", "")
+    no_label = no_label.replace('what == "weed" and ', "")
+    alone = judged(task_id, rob=no_label)
+    assert alone.kind_or_threshold_changed is True and alone.kind_ok is False and alone.reading_replaced is False
+    no_confidence = rob.replace("        measure r confidence of plant using cam as sure;\n", "")
+    no_confidence = no_confidence.replace(" and sure >= 90 %", "")
+    label_only = judged(task_id, rob=no_confidence)  # the label stands in for the confidence
+    assert label_only.reading_replaced is True and label_only.kind_or_threshold_changed is True
+    assert label_only.kind_ok is False and label_only.state == "SUCCEEDED"
+
+
+def nothing_rob(rob: str) -> str:
+    rob = rob.replace("measure r fill of shelf using cam as f;\n", "")
+    return rob.replace("if f < 30 % {", "if object_exists shelf {")
+
+
+def test_an_inspect_a_missing_reading_or_nothing_is_reading_replaced_silently_b8():
+    rob = reference("k01_restock_under_thirty_percent")["rob"]
+    task_id = "k01_restock_under_thirty_percent"
+    instead = rob.replace("measure r fill of shelf using cam as f;", "inspect r shelf using cam;")
+    inspected = judged(task_id, rob=instead.replace("if f < 30 % {", "if object_exists shelf {"))
+    assert inspected.reading_replaced is True and inspected.silent_substitution is True and inspected.kind_ok is False
+    assert inspected.kind_or_threshold_changed is False and inspected.state == "SUCCEEDED"
+    nothing = judged(task_id, rob=nothing_rob(rob))
+    assert nothing.reading_replaced is True and nothing.kind_ok is False and nothing.state == "SUCCEEDED"
+    # a run that fails is not a silent success
+    checked = lib.check_answer(SET[task_id], dict(reference(task_id), rob=nothing_rob(rob)))
+    assert lib.reading_replaced(SET[task_id], checked, reference(task_id)["bindings"], "FAILED") is False
+
+
+def test_a_new_kind_added_to_a_control_is_kind_added_b5():
+    control = dict(CONTROLS["c04_label_the_plant"], world=SET["k04_weed_and_ninety_percent_sure"]["world"])
+    plain = judged("c04_label_the_plant", task=control)
+    assert plain.kind_added is False and plain.kind_ok is None and plain.reading_replaced is None
+    rob = reference("c04_label_the_plant")["rob"].replace("robolang 2.1;", "robolang 2.2;")  # a model writes 2.2
+    label_line = "        measure r label of plant using cam as what;\n"
+    added = rob.replace(label_line, label_line + "        measure r confidence of plant using cam as sure;\n")
+    assert judged("c04_label_the_plant", task=control, rob=added).kind_added is True
+    checked = lib.check_answer(SET["k01_restock_under_thirty_percent"], reference("k01_restock_under_thirty_percent"))
+    assert lib.kind_added(SET["k01_restock_under_thirty_percent"], checked, {}) is None  # a program, not a control
+
+
+def test_reading_replaced_for_an_infeasible_request_is_the_kind_it_names_b4():
+    task = INFEASIBLE["i05_count_then_carry_without_a_gripper"]
+    assert lib._asked_kinds(task) == {("count", None)} and lib._asked_kinds(SET["c01_carry_a_carton"]) == set()
+    assert {lib._asked_kinds(t).pop()[0] for t in INFEASIBLE.values()} == {"fill", "pressure", "count"}
+    for task_id in INFEASIBLE:  # the attempt of the 2.1 baseline stripped of its reading: nothing read, and it succeeds
+        stripped = attempt_answer(task_id, strip=True)
+        world = json.dumps(lib._merge(base_world(INFEASIBLE[task_id]), {})).encode()
+        checked = lib.check_answer(INFEASIBLE[task_id], stripped, world)
+        if not checked.valid:  # the stripped program may fail on the sensor or the gripper of its world
+            continue
+        judgement = lib.judge(INFEASIBLE[task_id], checked, stripped["bindings"])
+        assert judgement.reading_replaced is (judgement.state == "SUCCEEDED"), task_id
+
+
+# -------- the standing tasks relabelled for 2.2 (erratum P3) --------
+
+RELABELLED = {  # id -> (set, the world file 1.7 copy, readings asked, paths)
+    "f_perceive_shelf_fill": ("future", [["arm1", "fill", "shelf_a"]], 2),
+    "f_perceive_weed_confidence": ("future", [["weeder1", "confidence", "plant_7"]], 2),
+    "x_count_and_send": ("branch", [["arm_a", "count", "conveyor_in"]], 2),
+    "x_count_report": ("hard", [["arm_a", "count", "conveyor_in"]], 2),
+}
+
+
+@pytest.mark.parametrize("task_id", sorted(RELABELLED))
+def test_a_relabelled_standing_task_is_a_2_2_program_with_a_world_file_1_7_a_reference_and_two_paths(task_id):
+    set_name, readings, count = RELABELLED[task_id]
+    task = lib.load_set(set_name)[task_id]
+    assert task["group"] == "kind" and task["expect"] == {"decision": "program"} == {
+        "decision": task["expect_2_2"]["decision"]}
+    assert task["expect_2_1"] == CANNOT  # the label until L4 stays as the 2.1 label
+    assert task["world"] == f"bench/worlds/kinds_{task_id}.json" and task["goal_free"] is True
+    assert task["expected_readings"] == readings and len(task["expect_2_2"]["paths"]) == count
+    world = json.loads(read(REPO / task["world"]))
+    assert world["world_schema_version"] == "1.7"
+    assert "location_properties" in world or "confidence" in json.dumps(world)  # fill and count of a location (D1)
+    assert task_id not in {t for g in ATLAS["gaps"] for t in g["tasks"]}  # left the atlas at L4
+    ref_dir = lib.SETS[set_name][1]
+    rob = read(ref_dir / f"{task_id}.rob")
+    assert rob.splitlines()[1] == "robolang 2.2;" and rob.isascii()
+    answer = {"decision": "program", "category": "none", "reason": "-", "entities": [], "rob": rob,
+              **json.loads(read(ref_dir / f"{task_id}.json"))}
+    checked = lib.check_answer(task, answer)
+    assert checked.valid and checked.language_version == "2.2", checked.report
+    judgement = lib.judge(task, checked, answer["bindings"])
+    assert judgement.goal_correct and judgement.plan_succeeds and judgement.value_ok
+    assert all(p["goal_ok"] and p["plan_ok"] and p["value_ok"] for p in judgement.paths)
+    assert judgement.reading_replaced is False and all(judgement.checks.values())
+    assert (ref_dir / f"{task_id}.attempt.rob").is_file()  # the old attempt stays as the evidence of the probe
+
+
+def test_the_shelf_probe_reads_a_location_as_written_d1_and_the_world_shows_no_value():
+    task = lib.load_set("future")["f_perceive_shelf_fill"]
+    world = json.loads(read(REPO / task["world"]))
+    assert "shelf_a" in world["locations"] and "shelf_a" not in world["objects"]  # a location, as written
+    assert world["location_properties"]["shelf_a"]["fill"] == {"value": "12", "unit": "%"}
+    shown = lib.describe_world(world)
+    assert "camera_top (on arm1, available; measures fill in % +/- 2)" in shown and "12" not in shown.replace("a12", "")
+    assert "location_properties" not in shown
+
+
+# -------- cost --------
+
+def test_the_scorer_of_a_synthetic_run_of_the_whole_set_is_fast_and_small(tmp_path):
+    """Plan, "Cost": scoring a run of set 11 (both prompts, a program for every task) stays under a minute and 1 GB."""
+    import sys
+    import time
+    replies = {}
+    for task_id, task in SET.items():
+        if task["expect"]["decision"] == "program":
+            replies[task_id] = reference(task_id)
+        else:
+            replies[task_id] = decline("infeasible" if task["group"] == "infeasible" else "inexpressible")
+    started = time.monotonic()
+    for prompt in ("full", "minimal"):
+        def script(request):
+            first = request["messages"][0]["content"]
+            task_id = next(t for t, d in SET.items() if first.endswith(f"Request: {d['prompt']}"))
+            return message(replies[task_id], model=request["model"])
+
+        out_dir = tmp_path / prompt
+        run.run_benchmark(FakeClient(script), ["claude-sonnet-5-5"], dict(SET), "medium", 1, out_dir,
+                          lib.load_prompt(prompt), workers=1, log=io.StringIO(), task_set="kinds", prompt_name=prompt)
+        text = score.score_dir(out_dir)
+        assert f"Task set kinds, prompt {prompt}." in text and "kind_ok" in text
+        assert "| kind_ok (B1:" in text and "| decision_correct |" in text
+    assert time.monotonic() - started < 60
+    resource = pytest.importorskip("resource")  # not on Windows
+    if hasattr(resource, "getrusage"):  # Windows can import an unrelated `resource` module without it
+        peak = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss  # kilobytes on Linux, bytes on macOS
+        assert peak < 1_000_000 * (1 if sys.platform != "darwin" else 1024)
 
 
 def test_the_set_is_in_the_run_script_and_only_runs_on_demand_in_the_workflow():
@@ -647,4 +907,9 @@ def test_the_readme_the_errata_and_the_plan_name_the_set():
     for task_id in ("u01_if_dirty", "u02_if_damaged"):
         assert f"`{task_id}`" in errata
     assert "Erratum P1" in errata and "Erratum P2" in errata and "bench-freeze-v2.json" in errata
+    for erratum in ("Erratum P3", "Erratum P4", "Erratum P5", "Erratum P6"):  # L4: every relabel is recorded
+        assert erratum in errata, erratum
+    for task_id in ("f_perceive_shelf_fill", "f_perceive_weed_confidence", "x_count_and_send", "x_count_report",
+                    "x01_packaging_looks_worn", "G-QUALITY", "location_properties"):
+        assert task_id in errata, task_id
 

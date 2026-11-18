@@ -1,17 +1,86 @@
 {
   "id": "x_count_report",
   "prompt": "Count how many parts are on conveyor_in when the program starts (the line keeps feeding it, so the number changes every shift) and send that number to channel \"ops\" from arm_a.",
-  "world": "bench/worlds/assembly.json",
-  "group": "inexpressible",
+  "world": "bench/worlds/kinds_x_count_report.json",
+  "group": "kind",
   "expect": {
+    "decision": "program"
+  },
+  "expect_2_1": {
     "decision": "cannot",
     "category": "inexpressible"
   },
+  "expect_2_2": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "three parts are on conveyor_in: the number 3 is sent to ops",
+        "goal": [],
+        "world_patch": {
+          "location_properties": {
+            "conveyor_in": {
+              "count": {
+                "value": "3"
+              }
+            }
+          }
+        }
+      },
+      {
+        "when": "none is on conveyor_in: the number 0 is sent to ops",
+        "goal": [],
+        "world_patch": {
+          "location_properties": {
+            "conveyor_in": {
+              "count": {
+                "value": "0"
+              }
+            }
+          }
+        }
+      }
+    ],
+    "world_2_2": {
+      "sensors": {
+        "cam_s1": {
+          "measures": {
+            "count": {
+              "contact": false
+            }
+          }
+        }
+      },
+      "location_properties": {
+        "conveyor_in": {
+          "count": {
+            "value": "3"
+          }
+        }
+      }
+    }
+  },
+  "goal_free": true,
+  "expected_readings": [
+    [
+      "arm_a",
+      "count",
+      "conveyor_in"
+    ]
+  ],
+  "expected_messages": [
+    {
+      "channel": "ops",
+      "value_of": [
+        "conveyor_in",
+        "count"
+      ]
+    }
+  ],
   "tags": [
     "counting",
     "arithmetic",
     "communicate"
   ],
-  "why": "A message is a fixed string. There are no variables, no counters and no way to read how many objects are somewhere, so a number measured at run time cannot be sent.",
+  "why": "RoboLang 2.2 (0044 K1, D1): a `count` of the parts on conveyor_in (a location, D1), read by arm_a's camera and sent to ops as a value (1.6 V8). The request names no end state. Before L4 (2.1): A message is a fixed string. There are no variables, no counters and no way to read how many objects are somewhere, so a number measured at run time cannot be sent.",
   "attempt_fails_with": "E201"
 }

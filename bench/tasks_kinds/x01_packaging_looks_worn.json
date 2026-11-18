@@ -7,12 +7,16 @@
     "decision": "cannot",
     "category": "inexpressible"
   },
+  "expect_2_1": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
   "expect_2_2": {
     "decision": "cannot",
     "category": "inexpressible",
     "because": "0044 K8"
   },
-  "gap": "G-PERCEIVE",
+  "gap": "G-QUALITY",
   "tags": [
     "wear",
     "free_kind",

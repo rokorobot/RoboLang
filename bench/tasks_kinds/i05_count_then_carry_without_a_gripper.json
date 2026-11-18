@@ -1,9 +1,13 @@
 {
   "id": "i05_count_then_carry_without_a_gripper",
   "prompt": "With scanbot1, drive to aisle_1, count the items on shelf_1 with tag_scan1 and, if there are none, carry carton_1 from the backroom to aisle_1.",
-  "world": "bench/worlds/stockroom.json",
+  "world": "bench/worlds/kinds_i05_count_then_carry_without_a_gripper.json",
   "group": "infeasible",
   "expect": {
+    "decision": "cannot",
+    "category": "infeasible"
+  },
+  "expect_2_1": {
     "decision": "cannot",
     "category": "inexpressible"
   },

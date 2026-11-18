@@ -1,0 +1,155 @@
+{
+  "world_schema": "robolang.sim.world",
+  "world_schema_version": "1.7",
+  "locations": [
+    "control_room",
+    "pump_hall",
+    "pump_1",
+    "pump_2",
+    "pump_3",
+    "tank_farm",
+    "workshop",
+    "charging"
+  ],
+  "regions": {
+    "walkway": {
+      "clear": true,
+      "contains": [
+        "pump_hall"
+      ]
+    }
+  },
+  "robots": {
+    "crawler1": {
+      "ready": true,
+      "location": "control_room",
+      "gripper": false,
+      "max_speed": [
+        {
+          "value": "0.7",
+          "unit": "m/s"
+        }
+      ],
+      "honours": [
+        "no_go_region",
+        "in_region"
+      ],
+      "actions": {
+        "open": {
+          "target": "object",
+          "result": "open"
+        }
+      }
+    },
+    "crawler2": {
+      "ready": true,
+      "location": "pump_hall",
+      "gripper": false,
+      "max_speed": [
+        {
+          "value": "0.7",
+          "unit": "m/s"
+        }
+      ],
+      "honours": [
+        "no_go_region",
+        "in_region"
+      ],
+      "actions": {}
+    },
+    "crawler3": {
+      "ready": true,
+      "location": "tank_farm",
+      "gripper": false,
+      "max_speed": [
+        {
+          "value": "0.7",
+          "unit": "m/s"
+        }
+      ],
+      "honours": [
+        "no_go_region",
+        "in_region"
+      ],
+      "actions": {}
+    }
+  },
+  "objects": {
+    "gauge_p1": {
+      "present": true,
+      "location": "pump_1",
+      "class": "gauge"
+    },
+    "gauge_p3": {
+      "present": true,
+      "location": "pump_3",
+      "class": "gauge"
+    },
+    "gauge_p9": {
+      "present": false,
+      "class": "gauge"
+    },
+    "tank_1": {
+      "present": true,
+      "location": "tank_farm",
+      "class": "tank",
+      "properties": {
+        "temperature": {
+          "value": "55",
+          "unit": "degC"
+        }
+      }
+    },
+    "tank_2": {
+      "present": true,
+      "location": "tank_farm",
+      "class": "tank",
+      "properties": {
+        "temperature": {
+          "value": "30",
+          "unit": "degC"
+        }
+      }
+    },
+    "relief_valve_3": {
+      "present": true,
+      "location": "pump_3",
+      "class": "valve",
+      "state": "closed"
+    }
+  },
+  "sensors": {
+    "cam_crawler1": {
+      "robot": "crawler1",
+      "available": true
+    },
+    "probe_crawler1": {
+      "robot": "crawler1",
+      "available": true,
+      "measures": {
+        "temperature": {
+          "unit": "degC",
+          "uncertainty": "0.5",
+          "contact": true
+        }
+      }
+    },
+    "cam_crawler2": {
+      "robot": "crawler2",
+      "available": true,
+      "measures": {
+        "pressure": {
+          "unit": "bar",
+          "uncertainty": "0.05",
+          "contact": false
+        }
+      }
+    },
+    "cam_crawler3": {
+      "robot": "crawler3",
+      "available": false
+    }
+  },
+  "events": [],
+  "tasks": {}
+}

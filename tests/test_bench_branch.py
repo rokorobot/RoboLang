@@ -54,7 +54,8 @@ def judged(task_id: str, answer: dict):
 def test_the_mix_of_tasks():
     assert len(SET) == 36
     groups = Counter(d["group"] for d in SET.values())
-    assert groups == {"branching": 20, "inexpressible": 5, "control": 8, "recover": 1, "clock": 1, "message": 1}
+    assert groups == {"branching": 20, "inexpressible": 4, "control": 8, "recover": 1, "clock": 1, "message": 1,
+                      "kind": 1}
     for task_id, task in SET.items():
         assert task["id"] == task_id and (REPO / task["world"]).is_file() and task["tags"]
         assert task["prompt"].endswith(".") and "expect_1_4" in task
@@ -64,7 +65,8 @@ def test_files_are_where_they_should_be():
     names = {p.name for p in REF.iterdir()}
     recover = {t for t, d in SET.items() if d["group"] == "recover"}
     messages = {t for t, d in SET.items() if d["group"] == "message"}  # 0043: a 2.1 program, its attempt kept
-    assert {n.split(".")[0] for n in names if ".attempt." in n} == set(CANNOT) | recover | messages
+    kinds = {t for t, d in SET.items() if d["group"] == "kind"}  # 0044: a 2.2 program, its attempt kept
+    assert {n.split(".")[0] for n in names if ".attempt." in n} == set(CANNOT) | recover | messages | kinds
     assert {n.split(".")[0] for n in names if ".attempt." not in n} == set(FEASIBLE)
     for task_id in BRANCHING:
         assert (REF / f"{task_id}.rob").read_text(encoding="utf-8").splitlines()[1] == "robolang 1.4;"
@@ -95,6 +97,12 @@ def test_expectations_are_well_formed():
             assert later == {"decision": "cannot", "category": "inexpressible"} and task["expect_2_0"] == later
             assert task["expect_2_1"]["decision"] == "program" and len(task["expect_2_1"]["paths"]) == 2
             assert task["world"] == "bench/worlds/msg_x_wait_ready_message.json" and task["expected_message_waits"]
+            continue
+        if task["group"] == "kind":  # 0044: a program in 2.2 only (a count of items, read by a sensor)
+            assert (decision, category) == ("program", "none") and task["expect"] == {"decision": "program"}
+            assert later == {"decision": "cannot", "category": "inexpressible"} and task["expect_2_1"] == later
+            assert task["expect_2_2"]["decision"] == "program" and len(task["expect_2_2"]["paths"]) == 2
+            assert task["world"] == "bench/worlds/kinds_x_count_and_send.json" and task["expected_readings"]
             continue
         if task["group"] == "inexpressible":
             assert (decision, category) == ("cannot", "inexpressible")

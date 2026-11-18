@@ -25,7 +25,7 @@ from robolang.sim import World, WorldError, load_world, mission_task, run_missio
 from robolang.sim import run as simulate_task
 from robolang.sim.messages import atoms as message_atoms
 from robolang.sim.values import duration_ms_of
-from robolang.tokens import KIND_UNITS
+from robolang.tokens import KIND_UNITS_V2_2
 
 ROOT = Path(__file__).resolve().parent.parent
 BENCH = ROOT / "bench"
@@ -53,19 +53,19 @@ MISSIONS_TASKS_DIR = BENCH / "tasks_missions"  # set 9: missions, pre-registered
 MISSIONS_REFERENCE_DIR = BENCH / "reference_missions"
 MESSAGES_TASKS_DIR = BENCH / "tasks_messages"  # set 10: incoming messages, pre-registered against 2.0 (decision 0043)
 MESSAGES_REFERENCE_DIR = BENCH / "reference_messages"
-KINDS_TASKS_DIR = BENCH / "tasks_kinds"  # set 11: more measured kinds, pre-registered against 2.1 (decision 0044)
+KINDS_TASKS_DIR = BENCH / "tasks_kinds"  # set 11: more measured kinds, pre-registered on 2.1, labelled for 2.2 (0044)
 KINDS_REFERENCE_DIR = BENCH / "reference_kinds"
 PROMPT_FILE = BENCH / "prompt.md"
 REFERENCE_FILE = ROOT / "docs" / "language-reference.md"
 MINIMAL_PROMPT_FILE = BENCH / "prompt_minimal.md"
-# 2.1 is a delta over 2.0, over 1.9, over 1.8, over 1.7, over 1.6, over 1.5, over 1.4, over 1.3: the grammar-only prompt
-# pastes all nine
-GRAMMAR_FILE = ROOT / "spec" / "grammar-v2.1.ebnf"
+# 2.2 is a delta over 2.1, over 2.0, over 1.9, over 1.8, over 1.7, over 1.6, over 1.5, over 1.4, over 1.3: the
+# grammar-only prompt pastes all ten
+GRAMMAR_FILE = ROOT / "spec" / "grammar-v2.2.ebnf"
 BASE_GRAMMAR_FILE = ROOT / "spec" / "grammar-v1.3.ebnf"
 GRAMMAR_FILES = (BASE_GRAMMAR_FILE, ROOT / "spec" / "grammar-v1.4.ebnf", ROOT / "spec" / "grammar-v1.5.ebnf",
                  ROOT / "spec" / "grammar-v1.6.ebnf", ROOT / "spec" / "grammar-v1.7.ebnf",
                  ROOT / "spec" / "grammar-v1.8.ebnf", ROOT / "spec" / "grammar-v1.9.ebnf",
-                 ROOT / "spec" / "grammar-v2.0.ebnf", GRAMMAR_FILE)
+                 ROOT / "spec" / "grammar-v2.0.ebnf", ROOT / "spec" / "grammar-v2.1.ebnf", GRAMMAR_FILE)
 GRAMMAR_MARK = "{{GRAMMAR}}"  # in prompt_minimal.md: replaced by the text of the grammar file
 REFERENCE_MARK = "{{LANGUAGE_REFERENCE}}"  # in prompt.md: replaced by the shipped, tested reference
 
@@ -112,13 +112,13 @@ ANSWER_SCHEMA = {
                      "description": "\"program\" to answer with RoboLang source, \"cannot\" to decline the request, "
                                     "\"clarify\" to ask which reading is meant."},
         "category": {"type": "string", "enum": list(CATEGORIES),
-                     "description": "Why it cannot be done: \"inexpressible\" (RoboLang 2.1 cannot say it) or "
+                     "description": "Why it cannot be done: \"inexpressible\" (RoboLang 2.2 cannot say it) or "
                                     "\"infeasible\" (this world or robot cannot do it). \"none\" for a program."},
         "reason": {"type": "string", "description": "One sentence: what the program does, or why it cannot be done."},
         "entities": {"type": "array", "items": {"type": "string"},
                      "description": "World entity IDs: for cannot, the ones that block the request; for clarify, every "
                                     "candidate the request could mean. Empty for a program."},
-        "rob": {"type": "string", "description": "The complete RoboLang 2.1 source. Empty when decision is cannot."},
+        "rob": {"type": "string", "description": "The complete RoboLang 2.2 source. Empty when decision is cannot."},
         "task": {"type": "string", "description": "The name of the task in the source to run. Empty when cannot, "
                                                   "and when the answer is a mission."},
         "bindings": {  # a list of pairs: structured outputs require additionalProperties false on objects
@@ -236,11 +236,11 @@ def _channels(world: dict) -> str:
 
 def _facts(world: dict) -> list[str]:
     version = world.get("world_schema_version")
-    lines = [_clock(world)] if version in ("1.5", "1.6") else []
-    if version == "1.6":
+    lines = [_clock(world)] if version in ("1.5", "1.6", "1.7") else []
+    if version in ("1.6", "1.7"):
         lines.append(_channels(world))
     # 0039: what a region holds, what a robot honours (shown only where the file says; a file 1.4 may omit both)
-    limits = world.get("world_schema_version") in ("1.3", "1.4", "1.5", "1.6") and (
+    limits = world.get("world_schema_version") in ("1.3", "1.4", "1.5", "1.6", "1.7") and (
         any("honours" in r for r in world.get("robots", {}).values())
         or any("contains" in r for r in world.get("regions", {}).values()))
     regions = world.get("regions", {})
@@ -258,7 +258,7 @@ def _facts(world: dict) -> list[str]:
             parts.append(f"max speed {speeds}")
         if limits:
             parts.append(f"honours {', '.join(r['honours'])}" if r.get("honours") else "honours no region limit")
-        if world.get("world_schema_version") in ("1.4", "1.5", "1.6"):  # 0040 C12: exact names, so all are listed
+        if world.get("world_schema_version") in ("1.4", "1.5", "1.6", "1.7"):  # 0040 C12: names are exact: all listed
             parts.append(f"can do: {_declared(r['actions'])}" if r.get("actions") else "can do no declared action")
         robots.append(f"{name} ({', '.join(parts)})")
     if robots:
@@ -466,6 +466,10 @@ class Judgement:
     message_wait_replaced: bool | None = None  # 0043 (B4, B8): valid, SUCCEEDED, the asked message wait missing
     channel_or_text_changed: bool | None = None  # 0043 (B9): a message wait on another channel or text than asked
     message_added: bool | None = None   # 0043 (B5): a message condition where the request asks for none (a control)
+    kind_ok: bool | None = None         # decision 0044 (B1): exactly the readings and tests asked; None: not asked
+    reading_replaced: bool | None = None  # 0044 (B8, B4): valid, SUCCEEDED, an asked new-kind reading missing
+    kind_or_threshold_changed: bool | None = None  # 0044 (B9): another kind, test, limit, unit or sensor than asked
+    kind_added: bool | None = None      # 0044 (B5): a new-kind reading where the request asks for none (a control)
     mission_ok: bool | None = None      # decision 0041 (B1): the runs, bound, until and policy asked; None: no mission
     repetition_replaced: bool | None = None  # 0041 (B8): a valid, succeeding 1.x program for a mission task
     bound_dropped_or_invented: bool | None = None  # 0041 (B9): a mission without a stated bound, or with another
@@ -509,9 +513,12 @@ def task_paths(task_def: dict) -> list[dict] | None:
     The paths of a branching task (set 2 and 3, `expect_1_4.paths`; set 4 and pre-registered 1.5 labels,
     `expect_1_5.paths`; sets that teach 1.6, `expect_1_6.paths`; 1.7, `expect_1_7.paths`; 1.8, `expect_1_8.paths`; 1.9,
     `expect_1_9.paths`; set 10, `expect_2_0.paths` of a control and `expect_2_1.paths` of a message program that is no
-    mission), each with
+    mission; set 11, `expect_2_2.paths` of a reading program), each with
     the world that forces it, or None.
     """
+    kinds = task_def.get("expect_2_2") or {}  # RoboLang 2.2 (0044): the paths of a reading program (set 11, the probes)
+    if kinds.get("paths"):
+        return kinds["paths"]
     label = task_def.get("expect_2_0") or {}
     if label.get("paths") and not label.get("expected_mission"):  # set 10 (0043): the 2.0 paths of a control
         return label["paths"]
@@ -618,7 +625,7 @@ def _value_key(value) -> tuple | None:
         return None
     if isinstance(value, task_ir.TextLit):
         return ("text", value.value)
-    kind = next(k for k, units in KIND_UNITS.items() if value.unit in units)
+    kind = next(k for k, units in KIND_UNITS_V2_2.items() if value.unit in units)
     return (kind, to_base(value.value, value.unit))
 
 
@@ -1128,6 +1135,158 @@ def judge_messages(task_def: dict, checked: Checked, ok_when_run: bool, judgemen
         judgement.checks["message_waits"] = judgement.message_ok
 
 
+# -------- more measured kinds (decision 0044, RoboLang 2.2) --------
+
+NEW_KINDS = ("fill", "confidence", "pressure", "count")
+# An ordering comparison modulo its complement: `x < v` and `x >= v` are one test with the branches swapped, as are
+# `x <= v` and `x > v`; `==` and `!=` are one test. `>=` for `>` is a different threshold (B9).
+_TEST_CLASS = {"<": "<", ">=": "<", "<=": "<=", ">": "<=", "==": "==", "!=": "=="}
+
+
+def _answer_tasks(checked: Checked) -> list[task_ir.Task]:
+    """The tasks an answer holds that run: its task, or each task its mission runs (once, however often it runs)."""
+    if checked.mission is None:
+        return [checked.task]
+    names = list(dict.fromkeys(r.task for r in checked.mission.runs))
+    return [checked.document.task(name) for name in names]
+
+
+def _compare_atoms(condition: task_ir.Condition):
+    if isinstance(condition, (task_ir.And, task_ir.Or)):
+        for inner in condition.conditions:
+            yield from _compare_atoms(inner)
+    elif isinstance(condition, task_ir.Not):
+        yield from _compare_atoms(condition.condition)
+    elif isinstance(condition, task_ir.Compare):
+        yield condition
+
+
+def kind_uses(checked: Checked, bindings: dict[str, str]) -> tuple[set, set, set]:
+    """
+    What the answer reads and tests, on any path (decision 0044 B1, B8, B9): the readings as (robot, kind, object)
+    (`measure` steps; a live reading in a `wait until` has the robot its sensor is mounted on), the comparisons as (kind
+    of the left side, the test modulo its complement, the limit exactly in the kind's base unit, or the text of a label)
+    and the sensors (entity IDs). A comparison with a binding on the right has no limit and is not listed.
+    """
+    readings, comparisons, sensors = set(), set(), set()
+    for task in _answer_tasks(checked):
+        kinds: dict[str, str] = {}
+        steps = [step for _, step in task_ir.walk(task.steps)]
+        for step in steps:
+            if isinstance(step, task_ir.Measure):
+                kinds[step.binding] = step.reading
+                sensor = bindings.get(step.sensor, step.sensor)
+                readings.add((bindings.get(step.robot, step.robot), step.reading, bindings.get(step.obj, step.obj)))
+                sensors.add(sensor)
+        conditions = [s.condition for s in steps if isinstance(s, (task_ir.If, task_ir.WaitUntil))]
+        for atom in (a for c in conditions for a in _compare_atoms(c)):
+            left = atom.left
+            if isinstance(left, task_ir.LiveReading):
+                sensor = bindings.get(left.sensor, left.sensor)
+                robot = checked.world.sensors[sensor].robot if checked.world and sensor in checked.world.sensors \
+                    else None
+                readings.add((robot, left.reading, bindings.get(left.obj, left.obj)))
+                sensors.add(sensor)
+                kind = left.reading
+            elif isinstance(left, task_ir.BindingRef) and left.name in kinds:
+                kind = kinds[left.name]
+            else:
+                continue
+            if isinstance(atom.right, task_ir.QuantityLit):
+                comparisons.add((kind, _TEST_CLASS[atom.op], to_base(atom.right.value, atom.right.unit)))
+            elif isinstance(atom.right, task_ir.TextLit):
+                comparisons.add((kind, _TEST_CLASS[atom.op], atom.right.value))
+    return readings, comparisons, sensors
+
+
+def _expected_comparisons(task_def: dict) -> set:
+    out = set()
+    for c in task_def.get("expected_comparisons", []):
+        limit = c["value"] if c["kind"] == "label" else to_base(Decimal(c["value"]), c.get("unit"))
+        out.add((c["kind"], _TEST_CLASS[c["op"]], limit))
+    return out
+
+
+def _asked_kinds(task_def: dict) -> set[tuple]:
+    """The new-kind readings a request asks for: (kind, object) of the label; for an infeasible request, its kind."""
+    asked = {(r[1], r[2]) for r in task_def.get("expected_readings", []) if r[1] in NEW_KINDS}
+    if not asked and task_def.get("group") == "infeasible" and "expect_2_2" in task_def:
+        asked = {(kind, None) for kind in NEW_KINDS if kind in task_def["tags"]}
+    return asked
+
+
+def kind_ok(task_def: dict, checked: Checked, bindings: dict[str, str]) -> bool | None:
+    """
+    Decision 0044 (B1). A task with `expected_comparisons` is judged on what it reads and how it tests it: exactly the
+    readings of `expected_readings` (each the asked kind, of the asked object, by the asked robot), exactly those
+    comparisons (the kind, the test modulo its complement, the limit exactly: `450 kPa` is `4.5 bar`; a unit of the
+    wrong size is another limit) and, with `expected_sensors`, exactly those sensors; none more and none fewer. None
+    when the task has no `expected_comparisons`.
+    """
+    if "expected_comparisons" not in task_def:
+        return None
+    readings, comparisons, sensors = kind_uses(checked, bindings)
+    if readings != {tuple(r) for r in task_def.get("expected_readings", [])}:
+        return False
+    if comparisons != _expected_comparisons(task_def):
+        return False
+    return "expected_sensors" not in task_def or sensors == set(task_def["expected_sensors"])
+
+
+def reading_replaced(task_def: dict, checked: Checked, bindings: dict[str, str], state: str) -> bool | None:
+    """
+    Decision 0044 (B8, and the B4 clause): a valid program whose run ends SUCCEEDED but that has no `measure` of a
+    new-kind reading the request asks for: an `inspect` in its place, a `label` stand-in, or nothing, so every other
+    check passes. For an infeasible request (no reading label) it is the kind it names that is missing. None when the
+    request asks for no new-kind reading.
+    """
+    asked = _asked_kinds(task_def)
+    if not asked:
+        return None
+    readings, _, _ = kind_uses(checked, bindings)
+    declared = {(kind, obj) for _, kind, obj in readings}
+    missing = [(kind, obj) for kind, obj in asked
+               if ((kind, obj) not in declared if obj is not None else not any(k == kind for k, _ in declared))]
+    return state == "SUCCEEDED" and bool(missing)
+
+
+def kind_or_threshold_changed(task_def: dict, checked: Checked, bindings: dict[str, str]) -> bool | None:
+    """
+    Decision 0044 (B9): a reading of another kind or object (`count` for `fill`, `label` where `confidence` is asked,
+    `confidence` read without the `label` it belongs to), a comparison whose test or limit differs after exact
+    conversion (`>=` for `>`, `kPa` against `bar` off by a factor, a limit moved to avoid an unknown) or a sensor other
+    than the one asked. A program that reads nothing is no change (it is `reading_replaced`). None when the task has
+    no `expected_comparisons`.
+    """
+    if "expected_comparisons" not in task_def:
+        return None
+    readings, comparisons, sensors = kind_uses(checked, bindings)
+    wanted = {tuple(r) for r in task_def.get("expected_readings", [])}
+    if readings and readings != wanted:
+        return True
+    if comparisons and comparisons != _expected_comparisons(task_def):
+        return True
+    return bool(sensors and "expected_sensors" in task_def and sensors != set(task_def["expected_sensors"]))
+
+
+def kind_added(task_def: dict, checked: Checked, bindings: dict[str, str]) -> bool | None:
+    """Decision 0044 (B5): a control (a request for no new kind) whose answer reads one. None for every other task."""
+    if task_def.get("group") != "control" or "expect_2_2" not in task_def:
+        return None
+    readings, _, _ = kind_uses(checked, bindings)
+    return any(kind in NEW_KINDS for _, kind, _ in readings)
+
+
+def judge_kinds(task_def: dict, checked: Checked, bindings: dict[str, str], state: str, judgement: Judgement) -> None:
+    """Set the 2.2 reading measures of a judgement (a task or a mission answer)."""
+    judgement.kind_ok = kind_ok(task_def, checked, bindings)
+    judgement.reading_replaced = reading_replaced(task_def, checked, bindings, state)
+    judgement.kind_or_threshold_changed = kind_or_threshold_changed(task_def, checked, bindings)
+    judgement.kind_added = kind_added(task_def, checked, bindings)
+    if judgement.kind_ok is not None and (task_def.get("expect") or {}).get("decision") == "program":
+        judgement.checks["kinds"] = judgement.kind_ok
+
+
 # -------- missions (decision 0041, RoboLang 2.0) --------
 
 MISSION_OUTCOMES_OK = ("completed", "bounded")  # ended without failing: B4 allows no valid mission that succeeds
@@ -1352,7 +1511,9 @@ def judge_mission(task_def: dict, checked: Checked, bindings: dict[str, str]) ->
     label = mission_label(task_def)
     judgement = Judgement(False, result.outcome in MISSION_OUTCOMES_OK, result.outcome,
                           result.failure.code if result.failure else None, {})
+    state = "SUCCEEDED" if judgement.plan_succeeds else "FAILED"
     if label is None:
+        judge_kinds(task_def, checked, bindings, state, judgement)
         judge_messages(task_def, checked, judgement.plan_succeeds, judgement)
         expect = task_def.get("expect_2_0") or {}
         judgement.mission_added = expect.get("decision") == "program"
@@ -1360,6 +1521,7 @@ def judge_mission(task_def: dict, checked: Checked, bindings: dict[str, str]) ->
             judgement.bound_dropped_or_invented = True
         return judgement
     judgement.mission_added = False
+    judge_kinds(task_def, checked, bindings, state, judgement)
     judge_messages(task_def, checked, judgement.plan_succeeds, judgement)
     _, goals = _mission_runs_ok(label, checked, bindings, result)
     judgement.paths = judge_mission_paths(task_def, label, checked, bindings)
@@ -1444,6 +1606,7 @@ def judge(task_def: dict, checked: Checked, bindings: dict[str, str]) -> Judgeme
     if judgement.clock_ok is not None:
         judgement.checks["clock"] = judgement.clock_ok
     judge_messages(task_def, checked, result.state == "SUCCEEDED", judgement)
+    judge_kinds(task_def, checked, bindings, result.state, judgement)
     return judgement
 
 

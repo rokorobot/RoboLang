@@ -1,7 +1,7 @@
 """
-Developer commands for RoboLang 1.1 to 2.1.
+Developer commands for RoboLang 1.1 to 2.2.
 
-    reference              print the shipped RoboLang 2.1 language reference
+    reference              print the shipped RoboLang 2.2 language reference
     example [DIR]          write a sample task (fetch.rob) and world (world.json) to start from
     validate FILE          check a .rob file against the language contract
     inspect  FILE          show what a validated file describes (text or JSON IR)
@@ -83,9 +83,9 @@ NOT_A_SAFETY_CHECK_IR = (
 NOTHING_EXECUTED = "This is a description only. Nothing was executed."
 
 _DESCRIPTION = f"""\
-Tools for RoboLang 1.1 to 2.1 task and mission files.
+Tools for RoboLang 1.1 to 2.2 task and mission files.
 
-reference prints the shipped 2.1 language reference. validate and inspect check and describe .rob
+reference prints the shipped 2.2 language reference. validate and inspect check and describe .rob
 files; they never execute anything.
 simulate runs a validated task in a symbolic, deterministic simulation only: it never loads a
 robot adapter or connects to ROS 2 or hardware, and its result is not evidence that a task is
@@ -984,8 +984,8 @@ def _parser(prog: str) -> argparse.ArgumentParser:
 
     reference = commands.add_parser(
         "reference",
-        help="print the shipped RoboLang 2.1 language reference",
-        description="Print the exact RoboLang 2.1 reference shipped with this installation. Nothing is executed.",
+        help="print the shipped RoboLang 2.2 language reference",
+        description="Print the exact RoboLang 2.2 reference shipped with this installation. Nothing is executed.",
     )
     reference.set_defaults(run=_reference)
 

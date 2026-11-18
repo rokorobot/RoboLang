@@ -1,9 +1,13 @@
 {
   "id": "i03_the_gauge_camera_is_offline",
   "prompt": "With crawler3, read gauge_p1 with cam_crawler3 and, if the pressure is above 6 bar, tell channel \"maintenance\" \"pump 1 over pressure\".",
-  "world": "bench/worlds/plant_room.json",
+  "world": "bench/worlds/kinds_i03_the_gauge_camera_is_offline.json",
   "group": "infeasible",
   "expect": {
+    "decision": "cannot",
+    "category": "infeasible"
+  },
+  "expect_2_1": {
     "decision": "cannot",
     "category": "inexpressible"
   },

@@ -1,9 +1,13 @@
 {
   "id": "i01_the_pickers_camera_reads_nothing",
   "prompt": "With picker_s, look at bin_1 with cam_picker and, if it is less than half full, tell channel \"lead\" \"refill bin_1\".",
-  "world": "bench/worlds/stockroom.json",
+  "world": "bench/worlds/kinds_i01_the_pickers_camera_reads_nothing.json",
   "group": "infeasible",
   "expect": {
+    "decision": "cannot",
+    "category": "infeasible"
+  },
+  "expect_2_1": {
     "decision": "cannot",
     "category": "inexpressible"
   },

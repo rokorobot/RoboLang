@@ -1,0 +1,12 @@
+// bench/reference_future/f_perceive_weed_confidence.rob: hand-written reference (RoboLang 2.2)
+robolang 2.2;
+
+task check_weed(robot r, object plant, sensor cam, location here) {
+    goal { robot_at r here; }
+    plan {
+        measure r confidence of plant using cam as c;
+        if c < 90 % {
+            communicate r to "ops" with "plant_7 is in row_12";
+        }
+    }
+}

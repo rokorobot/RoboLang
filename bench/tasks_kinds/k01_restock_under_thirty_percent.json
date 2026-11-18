@@ -1,9 +1,12 @@
 {
   "id": "k01_restock_under_thirty_percent",
   "prompt": "With scanbot1, drive to aisle_2 and look at shelf_2 with cam_scan1. If it is less than 30 percent full, tell channel \"lead\" \"restock shelf_2\"; if it is not, tell no one.",
-  "world": "bench/worlds/stockroom.json",
+  "world": "bench/worlds/kinds_k01_restock_under_thirty_percent.json",
   "group": "kind",
   "expect": {
+    "decision": "program"
+  },
+  "expect_2_1": {
     "decision": "cannot",
     "category": "inexpressible"
   },
@@ -32,21 +35,6 @@
         }
       }
     },
-    "expected_readings": [
-      [
-        "scanbot1",
-        "fill",
-        "shelf_2"
-      ]
-    ],
-    "expected_comparisons": [
-      {
-        "kind": "fill",
-        "op": "<",
-        "value": "30",
-        "unit": "%"
-      }
-    ],
     "paths": [
       {
         "when": "shelf_2 is 12 % full: below 30 %, so the lead is told",
@@ -101,6 +89,21 @@
       }
     ]
   },
+  "expected_readings": [
+    [
+      "scanbot1",
+      "fill",
+      "shelf_2"
+    ]
+  ],
+  "expected_comparisons": [
+    {
+      "kind": "fill",
+      "op": "<",
+      "value": "30",
+      "unit": "%"
+    }
+  ],
   "gap": "G-PERCEIVE",
   "tags": [
     "fill",

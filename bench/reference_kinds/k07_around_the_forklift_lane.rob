@@ -1,0 +1,14 @@
+// bench/reference_kinds/k07_around_the_forklift_lane.rob: hand-written reference (RoboLang 2.2)
+robolang 2.2;
+
+task scan_far_shelf(robot r, object shelf, sensor cam, location far, region lane) {
+    @safety no_go_region lane;
+    goal { robot_at r far; }
+    plan {
+        move r to far;
+        measure r fill of shelf using cam as f;
+        if f < 25 % {
+            communicate r to "lead" with "shelf_3 is low";
+        }
+    }
+}

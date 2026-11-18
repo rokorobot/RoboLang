@@ -1,0 +1,8 @@
+{
+  "task": "check_shelf",
+  "bindings": {
+    "r": "arm1",
+    "shelf": "shelf_a",
+    "cam": "camera_top"
+  }
+}
