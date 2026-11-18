@@ -447,8 +447,8 @@ def test_every_task_2_0_declines_is_in_exactly_one_atlas_gap_and_no_control_is()
     for task_id, gap in in_gaps:
         assert DECLINED[task_id]["gap"] == gap and GAPS[gap]["scope"] in ("open", "out")
     assert Counter(gap for _, gap in in_gaps) == {"G-MSG": 16, "G-TRIGGER": 1, "G-CALC": 2, "G-DELIVERY": 1}
-    assert GAPS["G-DELIVERY"]["direction"] == "communication" and GAPS["G-DELIVERY"]["tasks"] == [
-        "x01_make_sure_it_was_delivered"]
+    assert GAPS["G-DELIVERY"]["direction"] == "communication" and GAPS["G-DELIVERY"]["scope"] == "out"  # C13
+    assert set(GAPS["G-DELIVERY"]["tasks"]) == {"x01_make_sure_it_was_delivered", "f12_message_delivery"}
     assert "I5 L3: set 10 messages pre-registered (24 tasks)" in [h["note"] for h in ATLAS["history"]]
 
 
@@ -527,7 +527,7 @@ def test_the_readme_and_the_plan_name_the_set():
     readme = read(REPO / "bench" / "README.md")
     assert "## Set 10: messages (`--set messages`)" in readme and "set_only: messages" in readme
     plan = read(REPO / "docs" / "plans" / "bench-10-messages.md")
-    assert "draft for the owner" in plan.split("\n\n")[2] or "draft for the owner" in plan[:600]
+    assert "APPROVED by the owner" in plan[:600]  # frozen at L3 (owner, 2026-11-18)
     for task_id in SET:
         assert f"`{task_id}`" in plan, task_id
     for bound in ("B1", "B2", "B3", "B4", "B5", "B6", "B7", "B8", "B9"):

@@ -36,3 +36,11 @@ tasks").
 
 `docs/evidence/bench-freeze-v2.json` is regenerated for all of the above (the old manifest deleted, then
 `python tools/bench_freeze.py`).
+
+## Erratum C (owner, 2026-11-18): gaps after the clarifications of 0043
+
+- `f12_message_delivery` moves from G-MSG to G-DELIVERY, which is now scope `out` (S7, C13).
+- Set 9's `x03_for_each_go_message` moves from G-MSG to G-TRIGGER (S10).
+
+Labels are unchanged. `x05_a_message_in_the_goal` becomes a program at L4 (C14).
+`docs/evidence/bench-freeze-v2.json` is regenerated.

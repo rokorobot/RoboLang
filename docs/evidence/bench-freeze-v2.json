@@ -1,5 +1,5 @@
 {
-  "sha256": "8fb33b00d2231f1373dcc6d58ade80f49c17d2a7391d686059dc594310d3020a",
+  "sha256": "7996f639c6d0633670f8853746284cdbac98fac944311fa8cb199a4d0c4decf2",
   "schema": "robolang.bench.freeze.v2",
   "patterns": [
     "bench/tasks*/*.json",
@@ -1235,7 +1235,7 @@
     "bench/tasks_missions/m10_scan_for_two_hours.json": "3b85b3c4e315035dfe71a0682a6a57637728e214a4132e0210a75a8046339be1",
     "bench/tasks_missions/x01_never_stop.json": "b29a2d163e5126fb8d051d39cda5f696d69e8cd146f13f95653a7aadd61fd6a7",
     "bench/tasks_missions/x02_every_hour_on_the_hour.json": "335e2eb4b2f7e15f22a4da7abed42dce503760caf96478e26506fcd5df51f401",
-    "bench/tasks_missions/x03_for_each_go_message.json": "6ecdd06fa52f18ee63beb0010a99db4d9a8302a27f7e0f4f75808b510b9fe7e7",
+    "bench/tasks_missions/x03_for_each_go_message.json": "7b1c031be9fd778e9d4187ec88aa6ba2dedccb20888f6b725ed57c4b170e58cb",
     "bench/tasks_missions/x04_rounds_inside_rounds.json": "c37d4be3ffbd2b7a6f225b72f5a3933a7d33bf0d53a024e3d419c3169c5e04cc",
     "bench/tasks_missions/x05_every_new_part.json": "2d5eeb5b7ccc0da9ba9cb93d97936d428806f6e093ccbeb4d0cbd9c4919305ab",
     "bench/tasks_missions/x06_until_it_is_cool.json": "0a0aa996d050ef61cb206f4f1e6d230082d11f10d88d2b3ccae8fe7c3ba97419",
@@ -1409,11 +1409,11 @@
     "tests/test_bench_cascade.py": "5bb726f33ea9f6f23c2dfad8df07b43d551d9697e94409b4fb2798366f323e50",
     "tests/test_bench_clock.py": "fbaea9ce7855109f11a4c26ba630bc897dc7baee4046e6628d1a799a0416294f",
     "tests/test_bench_failure.py": "0eaf64464bcc628431f079147266c73fd23ccb746894c0e7965c6db569633958",
-    "tests/test_bench_future.py": "4352a9d148c6fd1a3dcad8aee774aabebf055f1652bf61c25d0deb34e3d357a8",
+    "tests/test_bench_future.py": "9cafe6a1004dbd50665c211087a5498b9b842f472b487aba37383ba44b5dcf79",
     "tests/test_bench_gate.py": "653be1ae7d454b4b93d8df99b6a999214511d76bae37c1f147108dbe98d608b9",
     "tests/test_bench_hard.py": "23689d35bfc667060eb79af8af8ea2bea283751c06e786c5ea2ba2b754586a8b",
-    "tests/test_bench_messages.py": "d103f69aceb20f120c92f09ca3dd356af15abadd10c0ebebe4745333ed8a984a",
-    "tests/test_bench_missions.py": "5f28564c1496c998fb5a42c44723b268441cae04cab04b0a237dd8fe051e6e69",
+    "tests/test_bench_messages.py": "c7bab18150726b0d0897100994899e8f67a0dada51a3230404643e74c7dbdfb2",
+    "tests/test_bench_missions.py": "fd4568698ee58d1318c40efc5cd495ece23ce83517c79e7182ca8dafcd00f67b",
     "tests/test_bench_regions.py": "ae936526a45e272d02a9dee414193a6455cd06550dda929e12a632cbca8e9550",
     "tests/test_bench_values.py": "ad1c68636ee4ec9d130ef995a15bdf35e8247979b99477123e5a1df52bd26cf2",
     "tools/bench_freeze.py": "921ce22129c37ddbfdd2ea2c716189f6195759b8377b6ce97383556a93852065"

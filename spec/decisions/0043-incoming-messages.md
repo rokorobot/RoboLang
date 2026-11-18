@@ -97,7 +97,7 @@ task feed(robot r, object tote, location handoff, location line) {
 The owner accepted every recommendation: S2 from the start of the run, S4 senders in the world, and S7 delivery
 out of 2.1. S1–S11 are accepted.
 
-## Clarifications (PROPOSED 2026-11-18, from writing the L3 set; for the owner)
+## Clarifications (APPROVED by the owner 2026-11-18, from writing the L3 set)
 
 | # | Question | Recommended |
 |---|---|---|

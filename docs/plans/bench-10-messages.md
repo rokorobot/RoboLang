@@ -1,6 +1,6 @@
 # Benchmark set 10: messages (pre-registration draft)
 
-**Status:** **draft for the owner** (2026-11-18): tasks, labels, open points 1-14 and the placeholder bounds B1-B9 are not approved and nothing is
+**Status:** **APPROVED by the owner, 2026-11-18** (tasks, labels, clarifications C1–C14 in 0043, bounds B1–B9); frozen.
 frozen. `tests/test_bench_messages.py`; run with `python bench/run.py --set messages`. Modelled on set 9,
 [bench-9-missions.md](bench-9-missions.md), and set 8, [bench-8-clock.md](bench-8-clock.md). No model was run and no money
 was spent. **The labels follow 0043 S1-S11 as approved ([0043](../../spec/decisions/0043-incoming-messages.md), 2026-11-18).
@@ -111,7 +111,7 @@ Eight standing tasks and one set 9 task are about messages. Under 0043 they are 
 | `f12_message_delivery` | inexpressible | S7 (delivery), as `x01` here; atlas gap G-MSG until L6 of I5 decides (open point 13) |
 | `x03_for_each_go_message` (set 9) | inexpressible | a trigger (S10, S11); atlas gap G-MSG at present, G-TRIGGER by 0043 S10 (open point 13) |
 
-## Acceptance bounds (proposed with the baseline in hand, rule 6; for the owner)
+## Acceptance bounds (APPROVED by the owner 2026-11-18, with the baseline in hand, rule 6)
 
 Baseline: [bench-set10-baseline.md](../evidence/bench-set10-baseline.md) (2026-11-18, 2.0, 3 repeats): no false
 programs, every decision right.

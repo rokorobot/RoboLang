@@ -305,7 +305,7 @@ def test_the_inexpressible_tasks_each_stay_out_for_one_reason_of_0041():
                        "x05_every_new_part": {"stream", "choose_object"}}
     # G-TRIGGER (clarification 14): the time trigger moved out of G-LOOP; the message one stays in G-MSG
     assert {t: d["gap"] for t, d in INEXPRESSIBLE.items()} == {
-        "x01_never_stop": "G-UNBOUNDED", "x02_every_hour_on_the_hour": "G-TRIGGER", "x03_for_each_go_message": "G-MSG",
+        "x01_never_stop": "G-UNBOUNDED", "x02_every_hour_on_the_hour": "G-TRIGGER", "x03_for_each_go_message": "G-TRIGGER",
         "x04_rounds_inside_rounds": "G-UNBOUNDED", "x05_every_new_part": "G-CHOOSE"}
     # no bound is stated in x01; a bound is stated in the others, so only the named construct stays out
     assert not re.search(r"\d", SET["x01_never_stop"]["prompt"].replace("tug1", ""))
@@ -462,7 +462,7 @@ def test_every_inexpressible_task_is_in_exactly_one_atlas_gap_and_nothing_else_i
     assert {t for t, _ in in_gaps} == set(INEXPRESSIBLE)
     for task_id, gap in in_gaps:
         assert INEXPRESSIBLE[task_id]["gap"] == gap and GAPS[gap]["scope"] in ("open", "out")
-    assert Counter(gap for _, gap in in_gaps) == {"G-UNBOUNDED": 2, "G-TRIGGER": 1, "G-MSG": 1, "G-CHOOSE": 1}
+    assert Counter(gap for _, gap in in_gaps) == {"G-UNBOUNDED": 2, "G-TRIGGER": 2, "G-CHOOSE": 1}
     assert GAPS["G-TRIGGER"]["scope"] == "open" and GAPS["G-TRIGGER"]["direction"] == "reasoning"
     assert {t["gap"] for t in PROGRAMS.values()} | {t["gap"] for t in INFEASIBLE.values()} == {"G-LOOP"}
     assert "I4 L4: RoboLang 2.0 built and taught" in [h["note"] for h in ATLAS["history"]]
