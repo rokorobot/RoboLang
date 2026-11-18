@@ -98,6 +98,7 @@ Exit 6 prints one diagnostic, `FILE: error[CODE]: task 'T': …`:
 | `X602` | A bound object has no `class` or no `mass` in the world file (needs `world_schema_version` 1.1) |
 | `X605` | RoboLang 1.7: the task has a region limit (`@safety no_go_region` or `in_region`). Core 0.1 and 0.2 carry no region limit, so the task is refused rather than exported without it (decision 0039 P8) |
 | `X606` | RoboLang 1.8: the goal has an `in_state`. Core 0.1 and 0.2 have no state triples, so the task is refused rather than exported without it (decision 0040 A8) |
+| `X607` | RoboLang 2.0: `--task` or `--mission` names a mission. A mission runs on the planner's side and a robot is sent tasks only, one task run at a time (decision 0041 M8), so a mission is refused; export one of its tasks instead |
 
 Warnings (skipped limits) never change the exit status.
 

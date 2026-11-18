@@ -1,0 +1,118 @@
+{
+  "ir_schema": "robolang.mission-ir",
+  "ir_schema_version": "1.0",
+  "task_ir_schema_version": "1.8",
+  "language_version": "2.0",
+  "tasks": [
+    {
+      "name": "transfer",
+      "parameters": [
+        {
+          "name": "r",
+          "type": "robot"
+        },
+        {
+          "name": "item",
+          "type": "object"
+        },
+        {
+          "name": "src",
+          "type": "location"
+        },
+        {
+          "name": "dst",
+          "type": "location"
+        }
+      ],
+      "safety": [],
+      "preconditions": [],
+      "goal": [
+        {
+          "kind": "object_at",
+          "object": "item",
+          "location": "dst"
+        }
+      ],
+      "steps": [
+        {
+          "kind": "move",
+          "robot": "r",
+          "target": "src"
+        },
+        {
+          "kind": "grasp",
+          "robot": "r",
+          "object": "item"
+        },
+        {
+          "kind": "move",
+          "robot": "r",
+          "target": "dst"
+        },
+        {
+          "kind": "place",
+          "robot": "r",
+          "object": "item",
+          "target": "dst"
+        }
+      ]
+    }
+  ],
+  "missions": [
+    {
+      "name": "alternate",
+      "parameters": [
+        {
+          "name": "r",
+          "type": "robot"
+        },
+        {
+          "name": "item",
+          "type": "object"
+        },
+        {
+          "name": "a",
+          "type": "location"
+        },
+        {
+          "name": "b",
+          "type": "location"
+        },
+        {
+          "name": "lane",
+          "type": "region"
+        }
+      ],
+      "repeat": {
+        "max_runs": 24,
+        "until": {
+          "kind": "region_clear",
+          "region": "lane"
+        }
+      },
+      "runs": [
+        {
+          "task": "transfer",
+          "arguments": [
+            "r",
+            "item",
+            "a",
+            "b"
+          ]
+        },
+        {
+          "task": "transfer",
+          "arguments": [
+            "r",
+            "item",
+            "b",
+            "a"
+          ]
+        }
+      ],
+      "on_failure": {
+        "policy": "continue"
+      }
+    }
+  ]
+}

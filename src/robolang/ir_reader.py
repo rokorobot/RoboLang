@@ -28,6 +28,8 @@ from .tokens import (
     COMPARISON_OPERATORS,
     DURATION_UNITS,
     KIND_UNITS,
+    MAX_MISSION_RUNS,
+    MAX_RETRIES,
     RESERVED,
     RESERVED_BY_VERSION,
     MAX_REGION_LIMITS,
@@ -37,13 +39,17 @@ from .tokens import (
 )
 from .validator import double_grasp_message, fail_reason_problem
 
-SCHEMA_VERSIONS = tuple(ir.IR_SCHEMA_VERSIONS.values())  # "1.0" to "1.8": the index is the schema's rank
-LANGUAGE_OF = {schema: language for language, schema in ir.IR_SCHEMA_VERSIONS.items()}
+SCHEMA_VERSIONS = tuple(dict.fromkeys(ir.IR_SCHEMA_VERSIONS.values()))  # "1.0" to "1.8": the index is the schema's rank
+LANGUAGES_OF: dict[str, list[str]] = {}  # schema -> the languages that compile to it (1.8: RoboLang 1.9 and 2.0)
+for _language, _schema in ir.IR_SCHEMA_VERSIONS.items():
+    LANGUAGES_OF.setdefault(_schema, []).append(_language)
+LANGUAGE_OF = {schema: languages[0] for schema, languages in LANGUAGES_OF.items()}  # the language it began in
 SAFETY_KINDS = ("max_speed", "no_go_region", "in_region")
 _REGION_RANK = 6  # the first schema with region limits (`no_go_region`, `in_region`)
 _ACTIONS_RANK = 7  # the first schema with the step `do` and the condition `in_state` (RoboLang 1.8)
 _CLOCK_RANK = 8  # the first schema with the step `read_clock`, `time` and `clock` operands (RoboLang 1.9)
 MAX_DECIMAL_CHARS = 64
+_POLICIES = ("stop", "continue", "retry")  # a mission's failure policy (Mission IR 1.0)
 
 _READ_CODES = {"encoding": "I101", "json": "I102", "duplicate_key": "I103", "number": "I104", "depth": "I105"}
 _NAME = re.compile(r"[A-Za-z][A-Za-z0-9_]*")
@@ -171,6 +177,8 @@ class _Reader:
         self._rank = 0
         self._schema = SCHEMA_VERSIONS[0]
         self._reserved = RESERVED
+        self._mission_names: set = set()
+        self._owner = "task"  # what the names in scope are parameters of: "task", or "mission" (Mission IR)
 
     def error(self, code: str, message: str, pointer: str):
         self.errors.append(IRDiagnostic(code, message, pointer, self._filename))
@@ -798,7 +806,7 @@ class _Reader:
             name, at = node[key], _pointer(ptr, key)
             declared = self._params.get(name)
             if declared is None:
-                self.error("I203", f"undeclared name '{name}': it is not a parameter of this task", at)
+                self.error("I203", f"undeclared name '{name}': it is not a parameter of this {self._owner}", at)
             elif declared not in ((expected,) if isinstance(expected, str) else expected):
                 wanted = _article(expected) if isinstance(expected, str) else " or ".join(map(_article, expected))
                 self.error("I204", f"'{name}' is {_article(declared)}, but '{node['kind']}' expects {wanted} here", at)
@@ -823,27 +831,257 @@ class _Reader:
         if value == "":
             self.error("I207", f"empty string: a {what} must not be empty", ptr)
 
+    # -------- missions (Mission IR 1.0, RoboLang 2.0) --------
+
+    def missions(self, document: dict) -> bool:
+        """Form, then meaning, of each mission; a mission with a form error is not checked for meaning."""
+        missions = document.get("missions")
+        if "missions" not in document or not self.array(missions, "/missions"):
+            return False
+        if not missions:
+            self.error("I120", "a Mission IR document needs at least one mission", "/missions")
+            return False
+        tasks = _task_signatures(document.get("tasks"))
+        self._mission_names = {m.get("name") for m in missions if isinstance(m, dict)}
+        seen = {name: _pointer("/tasks", i) for i, name in enumerate(tasks_names(document.get("tasks")))}
+        for i, mission in enumerate(missions):
+            ptr = _pointer("/missions", i)
+            name = mission.get("name") if isinstance(mission, dict) else None
+            if isinstance(name, str):
+                if name in seen:
+                    self.error("I201", f"duplicate name '{name}': a mission and a task, or two missions, cannot share "
+                                       f"a name (first defined at {seen[name]})", _pointer(ptr, "name"))
+                seen.setdefault(name, ptr)
+            if self.mission_form(mission, ptr):
+                self.mission_meaning(mission, ptr, tasks)
+        return True
+
+    def count(self, value, ptr: str) -> bool:
+        if isinstance(value, int) and not isinstance(value, bool):
+            return True
+        self.error("I110", f"expected a whole number, found {_what(value)}", ptr)
+        return False
+
+    def mission_form(self, mission, ptr: str) -> bool:
+        ok = self.shape(mission, ptr, ("name", "parameters", "runs", "on_failure"), ("repeat",))
+        if not isinstance(mission, dict):
+            return False
+        if "name" in mission:
+            ok = self.name(mission["name"], _pointer(ptr, "name")) and ok
+        if "parameters" in mission:
+            ok = self.parameters(mission["parameters"], _pointer(ptr, "parameters")) and ok
+        if "repeat" in mission:
+            ok = self.repeat_form(mission["repeat"], _pointer(ptr, "repeat")) and ok
+        if "runs" in mission:
+            ok = self.runs_form(mission["runs"], _pointer(ptr, "runs")) and ok
+        if "on_failure" in mission:
+            ok = self.on_failure_form(mission["on_failure"], _pointer(ptr, "on_failure")) and ok
+        return ok
+
+    def repeat_form(self, repeat, ptr: str) -> bool:
+        ok = self.shape(repeat, ptr, (), ("max_runs", "max_duration", "until"))
+        if not isinstance(repeat, dict):
+            return False
+        if "max_runs" in repeat:
+            ok = self.count(repeat["max_runs"], _pointer(ptr, "max_runs")) and ok
+        if "max_duration" in repeat:
+            ok = self.quantity(repeat["max_duration"], _pointer(ptr, "max_duration"), DURATION_UNITS, False) and ok
+        if "until" in repeat:
+            ok = self.condition(repeat["until"], _pointer(ptr, "until")) and ok
+        return ok
+
+    def runs_form(self, runs, ptr: str) -> bool:
+        if not self.array(runs, ptr):
+            return False
+        if not runs:
+            self.error("I120", "a mission needs at least one run", ptr)
+            return False
+        ok = True
+        for i, run in enumerate(runs):
+            at = _pointer(ptr, i)
+            ok = self.shape(run, at, ("task", "arguments")) and ok
+            if not isinstance(run, dict):
+                continue
+            if "task" in run:
+                ok = self.string(run["task"], _pointer(at, "task")) and ok
+            if "arguments" in run and self.array(run["arguments"], _pointer(at, "arguments")):
+                for j, argument in enumerate(run["arguments"]):
+                    ok = self.string(argument, _pointer(_pointer(at, "arguments"), j)) and ok
+            elif "arguments" in run:
+                ok = False
+        return ok
+
+    def on_failure_form(self, failure, ptr: str) -> bool:
+        ok = self.shape(failure, ptr, ("policy",), ("retries",))
+        if not isinstance(failure, dict):
+            return False
+        policy = failure.get("policy")
+        if "policy" in failure and self.string(policy, _pointer(ptr, "policy")):
+            if policy not in _POLICIES:
+                self.error("I114", f"unknown failure policy '{policy}'; expected one of "
+                                   + ", ".join(f"'{p}'" for p in _POLICIES), _pointer(ptr, "policy"))
+                ok = False
+        elif "policy" in failure:
+            ok = False
+        if "retries" in failure:
+            ok = self.count(failure["retries"], _pointer(ptr, "retries")) and ok
+            if policy in _POLICIES and policy != "retry":
+                self.error("I112", f"unknown field 'retries' for policy '{policy}': only 'retry' has a count",
+                           _pointer(ptr, "retries"))
+                ok = False
+        elif policy == "retry":
+            self.error("I111", "missing field 'retries': 'retry' needs a count", ptr)
+            ok = False
+        return ok
+
+    def mission_meaning(self, mission: dict, ptr: str, tasks: dict):
+        """The compiler's rules for a mission (E302, E303, E304, E305, E317 to E320, E325, E326) on IR."""
+        self._owner = "mission"
+        self._params = {}
+        for i, param in enumerate(mission["parameters"]):
+            if param["name"] in self._params:
+                self.error("I202", f"duplicate parameter name '{param['name']}' in mission '{mission['name']}'",
+                           _pointer(_pointer(_pointer(ptr, "parameters"), i), "name"))
+                continue
+            self._params[param["name"]] = param["type"]
+        for i, run in enumerate(mission["runs"]):
+            self.run_meaning(run, _pointer(_pointer(ptr, "runs"), i), tasks)
+        repeat = mission.get("repeat")
+        if repeat is not None:
+            self.repeat_meaning(repeat, _pointer(ptr, "repeat"))
+        failure = mission["on_failure"]
+        if "retries" in failure:
+            self.counted(failure["retries"], "retry", MAX_RETRIES, _pointer(_pointer(ptr, "on_failure"), "retries"))
+        self._owner = "task"
+
+    def counted(self, value: int, what: str, most: int, ptr: str):
+        if value <= 0:
+            self.error("I205", f"{what} must be greater than zero", ptr)
+        elif value > most:
+            self.error("I226", f"{what} is at most {most}; this one is {value}", ptr)
+
+    def repeat_meaning(self, repeat: dict, ptr: str):
+        if "max_runs" in repeat:
+            self.counted(repeat["max_runs"], "the number of runs", MAX_MISSION_RUNS, _pointer(ptr, "max_runs"))
+        if "max_duration" in repeat:
+            self.positive(repeat["max_duration"]["value"], "the duration bound",
+                          _pointer(_pointer(ptr, "max_duration"), "value"))
+        until = repeat.get("until")
+        if until is not None:
+            at = _pointer(ptr, "until")
+            self.condition_meaning(until, at)
+            scopes = Scopes(self._params, lambda handle: View(condition=handle, live_ok=True), _atoms,
+                            lambda rule, message, where: self.error(_VALUE_CODES[rule], message, where))
+            scopes.plan(((until, at),))
+        if "max_runs" not in repeat and "max_duration" not in repeat and not time_bound(until):
+            self.error("I226", "a repeat needs a hard bound (decision 0041 M2): 'max_runs', 'max_duration', or an "
+                               "'until' of the form clock_time >= T that ends it at a time of day", ptr)
+
+    def run_meaning(self, run: dict, ptr: str, tasks: dict):
+        """I227 (E326), I203, I204: the run names a task of the document and gives it arguments of the right types."""
+        name = run["task"]
+        if name not in tasks and name in self._mission_names:
+            self.error("I227", f"'run {name}': '{name}' is a mission, and a mission cannot run a mission "
+                               "(decision 0041 M7): run a task", _pointer(ptr, "task"))
+            return
+        if name not in tasks:
+            listed = ", ".join(sorted(tasks)) or "(none)"
+            self.error("I227", f"'run {name}': there is no task '{name}' in this document; tasks: {listed}",
+                       _pointer(ptr, "task"))
+            return
+        types = tasks[name]
+        if types is None:  # the task has a form error, reported already
+            return
+        if len(run["arguments"]) != len(types):
+            self.error("I227", f"'run {name}' takes {len(types)} argument{'' if len(types) == 1 else 's'}, found "
+                               f"{len(run['arguments'])}", _pointer(ptr, "arguments"))
+            return
+        for i, (argument, wanted) in enumerate(zip(run["arguments"], types)):
+            at = _pointer(_pointer(ptr, "arguments"), i)
+            declared = self._params.get(argument)
+            if declared is None:
+                self.error("I203", f"undeclared name '{argument}': it is not a parameter of this mission", at)
+            elif declared != wanted:
+                self.error("I204", f"'{argument}' is {_article(declared)}, but task '{name}' expects "
+                                   f"{_article(wanted)} here", at)
+
     # -------- document --------
 
     def document(self, document) -> bool:
         """Check the claims of the document header. False when the schema cannot be determined."""
+        if isinstance(document, dict) and document.get("ir_schema") == ir.MISSION_IR_SCHEMA:
+            return self.mission_header(document)
         if not self.shape(document, "", ("ir_schema", "ir_schema_version", "language_version", "tasks")):
             if not isinstance(document, dict) or "ir_schema_version" not in document:
                 return False
         if document.get("ir_schema") != ir.IR_SCHEMA:
-            self.error("I113", f"not a Task IR document: 'ir_schema' must be '{ir.IR_SCHEMA}'", "/ir_schema")
+            self.error("I113", f"not a Task IR or Mission IR document: 'ir_schema' must be '{ir.IR_SCHEMA}' or "
+                               f"'{ir.MISSION_IR_SCHEMA}'", "/ir_schema")
         version = document.get("ir_schema_version")
         if not isinstance(version, str) or version not in SCHEMA_VERSIONS:
             known = ", ".join(f"'{v}'" for v in SCHEMA_VERSIONS)
             self.error("I113", f"unsupported ir_schema_version; this reader knows {known}", "/ir_schema_version")
             return False
-        self._schema, self._rank = version, SCHEMA_VERSIONS.index(version)
-        language = LANGUAGE_OF[version]
-        self._reserved = RESERVED_BY_VERSION.get(language, RESERVED)
-        if document.get("language_version") != language and "language_version" in document:
-            self.error("I113", f"language_version must be '{language}' for ir_schema_version '{version}'",
-                       "/language_version")
+        self._task_header(document, version)
         return True
+
+    def _task_header(self, document: dict, version: str):
+        """The schema, its rank and the reserved words of the language the document claims (it must fit the schema)."""
+        self._schema, self._rank = version, SCHEMA_VERSIONS.index(version)
+        languages = LANGUAGES_OF[version]
+        claimed = document.get("language_version")
+        language = claimed if claimed in languages else languages[0]
+        self._reserved = RESERVED_BY_VERSION.get(language, RESERVED)
+        if claimed not in languages and "language_version" in document:
+            wanted = " or ".join(f"'{lang}'" for lang in languages)
+            self.error("I113", f"language_version must be {wanted} for ir_schema_version '{version}'",
+                       "/language_version")
+
+    def mission_header(self, document: dict) -> bool:
+        """Mission IR 1.0: its own version, the Task IR version of its tasks (1.8), and RoboLang 2.0."""
+        self.shape(document, "", ("ir_schema", "ir_schema_version", "task_ir_schema_version", "language_version",
+                                  "tasks", "missions"))
+        if document.get("ir_schema_version") != ir.MISSION_IR_SCHEMA_VERSION:
+            self.error("I113", f"unsupported ir_schema_version for a Mission IR document; this reader knows "
+                               f"'{ir.MISSION_IR_SCHEMA_VERSION}'", "/ir_schema_version")
+            return False
+        version = ir.IR_SCHEMA_VERSIONS["2.0"]
+        if document.get("task_ir_schema_version") != version:
+            self.error("I113", f"task_ir_schema_version must be '{version}': the tasks of Mission IR 1.0 are Task IR "
+                               f"{version}", "/task_ir_schema_version")
+        if document.get("language_version") != "2.0":
+            self.error("I113", "language_version must be '2.0' for a Mission IR document", "/language_version")
+        self._task_header({"language_version": "2.0"}, version)
+        return True
+
+
+def time_bound(node: dict | None) -> bool:
+    """Clarification 2 of decision 0041 on a condition object: `clock_time >= T` (or `>`), alone or in an `or`."""
+    if node is None:
+        return False
+    if node["kind"] == "or":
+        return any(time_bound(c) for c in node["conditions"])
+    return (node["kind"] == "compare" and node["left"]["kind"] == "clock" and node["left"]["reading"] == "time"
+            and node["op"] in (">", ">=") and node["right"]["kind"] == "time")
+
+
+def _task_signatures(tasks) -> dict[str, list[str] | None]:
+    """The tasks of a document as name -> parameter types, or None for a task whose parameters cannot be read."""
+    found: dict[str, list[str] | None] = {}
+    for task in tasks if isinstance(tasks, list) else ():
+        name = task.get("name") if isinstance(task, dict) else None
+        if not isinstance(name, str):
+            continue
+        params = task.get("parameters")
+        ok = isinstance(params, list) and all(isinstance(p, dict) and isinstance(p.get("type"), str) for p in params)
+        found.setdefault(name, [p["type"] for p in params] if ok else None)
+    return found
+
+
+def tasks_names(tasks) -> list[str | None]:
+    """The names of the tasks, in order (None where there is none), as the positions in `/tasks`."""
+    return [t.get("name") if isinstance(t, dict) and isinstance(t.get("name"), str) else None
+            for t in tasks] if isinstance(tasks, list) else []
 
 
 def _handles(items: list, ptr: str) -> tuple:
@@ -903,6 +1141,21 @@ def _view(handle: tuple) -> View:
 
 def _quantity(node: dict) -> ir.Quantity:
     return ir.Quantity(Decimal(node["value"]), node["unit"])
+
+
+def _mission(node: dict) -> ir.Mission:
+    repeat = node.get("repeat")
+    failure = node["on_failure"]
+    return ir.Mission(
+        name=node["name"],
+        parameters=tuple(ir.Parameter(p["name"], p["type"]) for p in node["parameters"]),
+        repeat=None if repeat is None else ir.Repeat(
+            repeat.get("max_runs"),
+            _quantity(repeat["max_duration"]) if "max_duration" in repeat else None,
+            _condition(repeat["until"]) if "until" in repeat else None),
+        runs=tuple(ir.Run(r["task"], tuple(r["arguments"])) for r in node["runs"]),
+        on_failure=ir.OnFailure(failure["policy"], failure.get("retries")),
+    )
 
 
 def _condition(node: dict) -> ir.Condition:
@@ -1041,14 +1294,20 @@ def read_ir(data: bytes, filename: str = "<string>") -> ir.TaskIR:
     try:
         if reader.document(document):
             clean = _tasks(reader, document)
+            if document.get("ir_schema") == ir.MISSION_IR_SCHEMA:
+                clean = reader.missions(document) and clean
     except _TooMany:
         pass
     if reader.errors:
         raise IRError(reader.errors)
     assert clean
-    schema = document["ir_schema_version"]
+    if document["ir_schema"] == ir.MISSION_IR_SCHEMA:
+        schema, language = document["task_ir_schema_version"], "2.0"
+    else:
+        schema, language = document["ir_schema_version"], document["language_version"]
     rank = SCHEMA_VERSIONS.index(schema)
-    return ir.TaskIR(tuple(_task(t, rank) for t in document["tasks"]), LANGUAGE_OF[schema], ir.IR_SCHEMA, schema)
+    missions = tuple(_mission(m) for m in document["missions"]) if "missions" in document else ()
+    return ir.TaskIR(tuple(_task(t, rank) for t in document["tasks"]), language, ir.IR_SCHEMA, schema, missions)
 
 
 def _tasks(reader: _Reader, document: dict) -> bool:

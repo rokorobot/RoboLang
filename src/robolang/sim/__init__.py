@@ -27,7 +27,10 @@ from .executor import (
     StepResult,
     run,
 )
-from .record import DEFAULT_SEED, SEED, run_id, sha256_normalized, to_json, to_record
+from .mission import MissionFailure, MissionResult, TaskRun, mission_task, run_mission
+from .record import (
+    DEFAULT_SEED, SEED, mission_run_id, run_id, sha256_normalized, to_json, to_mission_record, to_record,
+)
 from .values import DURATION_UNITS, SPEED_UNITS, Speed, Truth, duration_ms, duration_ms_of, ms_text, parse_decimal
 from .world import (
     WORLD_SCHEMA,
@@ -49,6 +52,13 @@ from .world import (
 )
 
 __all__ = [
+    "MissionFailure",
+    "MissionResult",
+    "TaskRun",
+    "mission_run_id",
+    "mission_task",
+    "run_mission",
+    "to_mission_record",
     "DEFAULT_SEED",
     "SEED",
     "run_id",

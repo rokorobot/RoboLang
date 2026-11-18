@@ -124,7 +124,7 @@ The owner approved the replacement plan, freeze, paid validation and merge. See 
 Run `python tools/bench_freeze.py --check` to verify the recorded inputs against freeze v2
 (`docs/evidence/bench-freeze-v2.json`, decision 0035 E9; v1 is kept as history). Changes after the freeze require errata
 ([errata for 1.5](../docs/evidence/bench-errata-1-5.md), [errata for 1.6](../docs/evidence/bench-errata-1-6.md),
-[errata for 1.7](../docs/evidence/bench-errata-1-7.md), [errata for 1.8](../docs/evidence/bench-errata-1-8.md), [errata for 1.9](../docs/evidence/bench-errata-1-9.md)).
+[errata for 1.7](../docs/evidence/bench-errata-1-7.md), [errata for 1.8](../docs/evidence/bench-errata-1-8.md), [errata for 1.9](../docs/evidence/bench-errata-1-9.md), [errata for 2.0](../docs/evidence/bench-errata-2-0.md)).
 A `decoy` looks impossible or unclear but is feasible. A `clarify` task
 expects `"decision": "clarify"`: the request could mean several entities (`candidates`) or omits a value, and the world
 does not decide. A request that leaves the choice to the model ("a shelf", "one of the vials", set 2's `ambiguous`
@@ -205,8 +205,8 @@ read from these numbers.
 
 Set 2 has the same for its three branching tasks (`x_route_by_cell`, `x_whichever_free`, `x_missing_box_branch`),
 group `branching`. The grammar-only prompt pastes `spec/grammar-v1.3.ebnf`, `spec/grammar-v1.4.ebnf`,
-`spec/grammar-v1.5.ebnf`, `spec/grammar-v1.6.ebnf`, `spec/grammar-v1.7.ebnf`, `spec/grammar-v1.8.ebnf` and `spec/grammar-v1.9.ebnf`, each a delta
-over the one before. Since 0042 L4 the prompts teach RoboLang 1.9 (0040 L4 taught 1.8, 0039 L4 taught 1.7, 0036 PR 2 taught 1.6, 0035 PR 2 taught 1.5). In set 3,
+`spec/grammar-v1.5.ebnf`, `spec/grammar-v1.6.ebnf`, `spec/grammar-v1.7.ebnf`, `spec/grammar-v1.8.ebnf`, `spec/grammar-v1.9.ebnf` and `spec/grammar-v2.0.ebnf`, each a delta
+over the one before. Since 0041 L4 the prompts teach RoboLang 2.0 (0042 L4 taught 1.9, 0040 L4 taught 1.8, 0039 L4 taught 1.7, 0036 PR 2 taught 1.6, 0035 PR 2 taught 1.5). In set 3,
 `x_failover_on_fault` is now a program judged per path (group `recover`; `expect_1_4` keeps the old label).
 
 Run it on demand from GitHub Actions: `Benchmark`, `set_only: set3`. That runs full and grammar-only prompts with 3
@@ -363,21 +363,32 @@ estimate ~$3.7 for the full prompt and ~$3.5 for the grammar-only one).
 
 ## Set 9: missions (`--set missions`)
 
-26 tasks in `tasks_missions/`, controls' references and the obvious attempts in `reference_missions/`, decision record
-[0041](../spec/decisions/0041-mission-layer.md), plan, proposed bounds and open points in
-[bench-9-missions.md](../docs/plans/bench-9-missions.md) (draft for the owner). Pre-registered against 1.9 before any 2.0
-code (iteration I4, step L3): `expect` is the 1.9 label (all 22 non-controls `cannot / inexpressible`, each with an attempt
-that fails with `E201`, a top-level `mission` where a task is expected), `expect_2_0` the label for acceptance (10
-`mission` programs with an `expected_mission` and the mission outcome of each path, 5 `infeasible`, 7 `inexpressible`, 4
-`control` programs with no mission). `expected_mission` is `{runs, repeat, until, on_failure}`: the task runs with their
-entities, the bound (`max_runs` and/or `max_duration`), the `until` condition (a string, and Core triples where it is a
-fact) and the failure policy (`stop`, `continue`, `{"retry": N}`); `null` on a control. A path forces its outcome with a
-`world_patch` (events, objects) and `run_faults` (task run k fails: a test form, the world file has no such field yet).
-The attempts mark the mission part with `// @mission`: without those lines every attempt is a valid 1.9 program that
-runs the task once and ends SUCCEEDED, which is the silent replacement of the repetition that the plan's B8 counts. No
-world file is new. `tests/test_bench_missions.py` checks the counts, the labels, the bounds against the prompts, the
-paths, the attempts, the controls, the atlas and the workflow. On demand from GitHub Actions: `Benchmark`, `set_only:
-missions` (full and minimal prompts, 3 repeats, Sonnet and Haiku, `--max-usd 3` each, not gated, not in the per-PR or
-weekly runs; one string input `set_only` replaces the per-set booleans, because the workflow had reached GitHub's limit of
-10 dispatch inputs). Locally: `python bench/run.py --set missions --repeats 3 --models claude-sonnet-5-5,claude-haiku-5-5`
-(a paid run: confirm it first; estimate ~$4.0 for the full prompt and ~$3.9 for the grammar-only one).
+26 tasks in `tasks_missions/`, the 2.0 references and the obvious 1.9 attempts in `reference_missions/`, decision record
+[0041](../spec/decisions/0041-mission-layer.md), plan, bounds and open points in
+[bench-9-missions.md](../docs/plans/bench-9-missions.md) (bounds B1–B9 approved 2026-11-18). Pre-registered against 1.9
+(L3) and labelled for 2.0 at L4 ([errata](../docs/evidence/bench-errata-2-0.md)): `expect` is the 2.0 label (12
+`program`: the 10 `mission` tasks and `x06`, `x07`, group `mission_until`, which became programs when the owner approved
+clarification 2; 5 `infeasible`; 5 `inexpressible`; 4 `control`), `expect_1_9` the 1.9 label (every non-control
+`cannot / inexpressible`, each with an attempt that fails with `E201`), `expect_2_0` the pre-registered 2.0 label.
+`expected_mission` is `{runs, repeat, until, on_failure, policy_stated}`: the task runs with their entities and goal (and
+`limits`, `actions`, a value `messages`), the bound (`max_runs` and/or `max_duration`), the `until` condition (a string)
+and the failure policy (`stop`, `continue`, `{"retry": N}`); a path forces its outcome with a `world_patch` (events,
+objects) and `run_faults` (task run k fails: a test form, the world file has no such field). `c01` also has an
+`accepted_mission` (a mission with `at most 3 runs` is as good as the task with six moves, clarification 10).
+
+**The answer.** A mission answer names the mission in an optional key `mission` (clarification 4); `bindings` then bind the
+mission's parameters and `task` is empty. **Scoring** (`mission_ok`, `mission_paths_ok`, `repetition_replaced_silently`,
+`bound_dropped_or_invented`, `no_mission_added`, `policy_invented` in `bench/score.py`): `mission_ok` is the runs (entities,
+goal, limits, actions), the bound, the `until` and the policy asked, none more and none fewer; `mission_paths_ok` adds that
+every path (a patched world, with its faulted runs) ends as the label says (outcome, task runs, verified runs, failed runs);
+B8 counts a valid, succeeding answer with no mission where one is needed; B9 a stated bound missing or an unstated one
+added (any mission for "forever", `x01`); B5 a control with the right decision and no mission added (`c01` may be either).
+A policy the request does not state is `stop`; another one is recorded in `policy_invented`, never a failure.
+
+`tests/test_bench_missions.py` checks the counts, the labels, the bounds against the prompts, the paths, that every 2.0
+reference is valid and ends as its label says on every path, the scorer, the controls, the atlas and the workflow. On
+demand from GitHub Actions: `Benchmark`, `set_only: missions` (full and minimal prompts, 3 repeats, Sonnet and Haiku,
+`--max-usd 3` each, not gated, not in the per-PR or weekly runs; one string input `set_only` replaces the per-set booleans,
+because the workflow had reached GitHub's limit of 10 dispatch inputs). Locally: `python bench/run.py --set missions
+--repeats 3 --models claude-sonnet-5-5,claude-haiku-5-5` (a paid run: confirm it first; estimate ~$4.0 for the full prompt
+and ~$3.9 for the grammar-only one).

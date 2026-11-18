@@ -1,5 +1,5 @@
 """
-Abstract syntax tree for RoboLang v1.1 to v1.9 (robolang-v1.1.md section 7, v1.2 section 6, v1.3 section 6).
+Abstract syntax tree for RoboLang v1.1 to v2.0 (robolang-v1.1.md section 7, v1.2 section 6, v1.3 section 6).
 
 Nodes are immutable and record the source faithfully: names are unresolved,
 units are kept as written and nothing is normalized. Binding and type checks
@@ -430,9 +430,61 @@ class Task:
 
 
 @dataclass(frozen=True)
+class Count:
+    """RoboLang 2.0: a whole number in a mission, a run count or a number of retries."""
+
+    value: int
+    span: Span
+
+
+@dataclass(frozen=True)
+class RunLine:
+    """RoboLang 2.0 (decision 0041): `run task(a, b);` in a mission. The arguments are parameters of the mission."""
+
+    task: Name
+    args: tuple[Name, ...]
+    span: Span
+
+
+@dataclass(frozen=True)
+class Repeat:
+    """
+    RoboLang 2.0: `repeat at most N runs, for at most D { run ...; } until CONDITION;`. Both bounds and `until` are
+    optional here; a mission needs a hard bound (E325).
+    """
+
+    max_runs: Count | None
+    max_duration: Duration | None
+    until: Condition | None
+    span: Span
+
+
+@dataclass(frozen=True)
+class OnFailure:
+    """RoboLang 2.0: `on failure { stop; }`, `{ continue; }` or `{ retry N; }`. `policy` is the word; `retries` is N."""
+
+    policy: Name
+    retries: Count | None
+    span: Span
+
+
+@dataclass(frozen=True)
+class Mission:
+    """RoboLang 2.0 (decision 0041 M1): runs tasks, one run after another. `repeat` is None for a single run."""
+
+    name: Name
+    params: tuple[Param, ...]
+    runs: tuple[RunLine, ...]
+    repeat: Repeat | None
+    on_failure: OnFailure | None
+    span: Span
+
+
+@dataclass(frozen=True)
 class Program:
-    """`version` is None for a file without a version marker."""
+    """`version` is None for a file without a version marker. `missions` is empty before 2.0."""
 
     version: VersionDecl | None
     tasks: tuple[Task, ...]
     span: Span
+    missions: tuple[Mission, ...] = ()

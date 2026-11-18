@@ -1,4 +1,4 @@
-"""The shipped RoboLang 1.8 reference, CLI command, examples, vocabulary and benchmark integration."""
+"""The shipped RoboLang 2.0 reference, CLI command, examples, vocabulary and benchmark integration."""
 
 from __future__ import annotations
 import io
@@ -35,12 +35,13 @@ def test_every_complete_rob_example_compiles():
     assert examples
     for index, source in enumerate(examples, start=1):
         result = compile_source(source, f"language-reference-example-{index}.rob")
-        assert result.ir.language_version == "1.9"
+        assert result.ir.language_version == "2.0"
 
 
 def test_reference_names_every_reserved_word_and_annotation_key():
     words = set(re.findall(r"[A-Za-z_][A-Za-z0-9_]*", reference()))
     assert set(tokens.RESERVED_V1_4) <= words
+    assert set(tokens.MISSION_WORDS) <= words  # RoboLang 2.0
     assert set(tokens.SAFETY_KEYS + tokens.VERIFY_KEYS) <= words
 
 
@@ -52,17 +53,18 @@ def test_every_diagnostic_code_in_the_reference_exists_in_the_implementation():
     assert cited and cited <= implemented
 
 
-def test_reference_is_1_9_and_teaches_branching_handlers_and_what_stays_out():
+def test_reference_is_2_0_and_teaches_branching_handlers_missions_and_what_stays_out():
     text = reference()
-    assert text.startswith("# RoboLang 1.9 language reference")
-    for old in ("robolang 1.3;", "robolang 1.4;", "robolang 1.5;", "robolang 1.6;", "robolang 1.7;"):
+    assert text.startswith("# RoboLang 2.0 language reference")
+    for old in ("robolang 1.3;", "robolang 1.4;", "robolang 1.5;", "robolang 1.6;", "robolang 1.7;", "robolang 1.9;"):
         assert old not in text, old
     for new in ("`if", "`else if", "fail \"", "E216", "E307", "E309", "E313", "S261", "S262",
                 "else {", "E201", "E316"):
         assert new in text, new
     # nesting depth, the goal of a path, and what stays out of the language
     assert "at most 4 deep" in text and "Every path\n  must have at least one goal condition" in text
-    for out in ("loops", "counts", "dates", "message waits", "arithmetic", "string formatting"):
+    for out in ("loops", "dates", "message waits", "arithmetic", "string formatting", "triggers",
+                "choosing the next object"):
         assert out in " ".join(text.split()), out
 
 
@@ -97,7 +99,7 @@ def test_reference_teaches_measured_values():
                    "**The value is read when the program runs.**", "Never settle a comparison from a description",
                    "arithmetic (an average", "choosing an object at run time"):
         assert phrase in text, phrase
-    assert "robolang 1.9;" in text and "measure r" in text
+    assert "robolang 2.0;" in text and "measure r" in text
 
 
 def test_reference_teaches_that_a_run_time_condition_is_decided_by_an_if_never_by_the_description():
@@ -108,23 +110,44 @@ def test_reference_teaches_that_a_run_time_condition_is_decided_by_an_if_never_b
         assert phrase in text, phrase
 
 
-def test_the_prompts_are_for_1_9():
+def test_the_prompts_are_for_2_0():
     full, minimal = bench.load_prompt("full"), bench.load_prompt("minimal")
     for prompt in (full, minimal):
-        assert prompt.startswith("You write RoboLang 1.9 programs.") and "RoboLang 1.8 programs" not in prompt
-        assert "RoboLang 1.8 cannot say it" not in prompt and "RoboLang 1.9 cannot say it" in prompt
-    assert "measure" in full and "robolang 1.9;" in full and "robolang 1.8;" not in full and "robolang 1.4;" not in full
-    # 1.9 is a delta over 1.8, 1.7, 1.6, 1.5, 1.4 and 1.3: the grammar-only prompt pastes all seven
-    assert "spec/grammar-v1.9.ebnf" in minimal and '"measure"' in minimal and '"if"' in minimal and "handler" in minimal
+        assert prompt.startswith("You write RoboLang 2.0 programs.") and "RoboLang 1.9 programs" not in prompt
+        assert "RoboLang 1.9 cannot say it" not in prompt and "RoboLang 2.0 cannot say it" in prompt
+        assert '"mission": "<name of the mission>"' in prompt and "needs no mission, and no decline" in prompt
+    assert "measure" in full and "robolang 2.0;" in full and "robolang 1.9;" not in full and "robolang 1.4;" not in full
+    # 2.0 is a delta over 1.9, 1.8, 1.7, 1.6, 1.5, 1.4 and 1.3: the grammar-only prompt pastes all eight
+    assert "spec/grammar-v2.0.ebnf" in minimal and '"measure"' in minimal and '"if"' in minimal and "handler" in minimal
     assert '"no_go_region"' in minimal and "S003" in minimal and "X605" in minimal
     assert '"do"' in minimal and '"in_state"' in minimal and "S006" in minimal
     assert '"clock_time"' in minimal and '"time"' in minimal and "S010" in minimal and "another day" in minimal
+    assert '"mission"' in minimal and '"repeat"' in minimal and "E325" in minimal and "S401" in minimal
+    assert "triggers" in minimal and "nesting" in minimal and "480 min" in minimal
     assert [f.name for f in bench.GRAMMAR_FILES] == ["grammar-v1.3.ebnf", "grammar-v1.4.ebnf", "grammar-v1.5.ebnf",
                                                      "grammar-v1.6.ebnf", "grammar-v1.7.ebnf", "grammar-v1.8.ebnf",
-                                                     "grammar-v1.9.ebnf"]
+                                                     "grammar-v1.9.ebnf", "grammar-v2.0.ebnf"]
     texts = [f.read_text(encoding="utf-8").strip() for f in bench.GRAMMAR_FILES]
     assert all(t in minimal for t in texts)
     assert [minimal.index(t) for t in texts] == sorted(minimal.index(t) for t in texts)
+
+
+def test_reference_teaches_missions_and_the_fixed_count_fix():
+    """0041 L4 and the owner's teaching fix (2026-11-18): a fixed count is one task with the steps repeated (or a
+    mission with that run count), a bounded number of retries of one step is a 1.5 handler: models over-declined
+    both."""
+    text = " ".join(reference().split())
+    assert "## Missions" in text
+    for phrase in ("**A fixed count is not a mission:**", '"three round trips" is one task with the steps written out',
+                   "a mission with `at most 3 runs` is also accepted", '"retry the step up to 3 times"',
+                   "is a failure handler, a program, not a decline", "**A fixed count needs no mission.**",
+                   "Every repeat has a hard bound", "no hours, 3 hours are `180 min`", "`E325`", "`E326`", "`S401`",
+                   "`S402`", "retry N;", "on failure",
+                   "**Not in the language** (decline as `inexpressible`): **no bound**",
+                   "**triggers**", "**nesting**", "**choosing the next object at run time**",
+                   "Retries count against the bound", "A robot never receives a mission",
+                   "never a count that was not asked for"):
+        assert phrase in text, phrase
 
 
 def test_both_prompts_say_a_request_about_entities_not_listed_now_cannot_be_represented():

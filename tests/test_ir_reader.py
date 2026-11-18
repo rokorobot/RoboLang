@@ -19,7 +19,7 @@ TESTS = Path(__file__).parent
 REPO_ROOT = TESTS.parent
 SNAPSHOT_SETS = [("ir", "valid"), ("ir-v1.2", "v1.2/valid"), ("ir-v1.3", "v1.3/valid"), ("ir-v1.4", "v1.4/valid"),
                  ("ir-v1.5", "v1.5/valid"), ("ir-v1.6", "v1.6/valid"), ("ir-v1.7", "v1.7/valid"),
-                 ("ir-v1.8", "v1.8/valid"), ("ir-v1.9", "v1.9/valid")]
+                 ("ir-v1.8", "v1.8/valid"), ("ir-v1.9", "v1.9/valid"), ("ir-v2.0", "v2.0/valid")]
 SNAPSHOTS = [
     pytest.param(snapshot, TESTS / "fixtures" / fixtures / f"{snapshot.stem}.rob", id=f"{folder}/{snapshot.stem}")
     for folder, fixtures in SNAPSHOT_SETS
@@ -58,7 +58,7 @@ def test_every_compiler_snapshot_reads_back_to_the_compilers_ir(snapshot, source
 
 
 def test_snapshot_sets_are_complete():
-    assert len(SNAPSHOTS) == 64
+    assert len(SNAPSHOTS) == 70
 
 
 def test_reading_is_independent_of_layout_key_order_and_decimal_zeros():

@@ -1,0 +1,16 @@
+// RoboLang v2.0 fixture: invalid
+// expect: error E325 (static) line 13
+// why: a repeat needs a hard bound: an until on a fact is not one (M2)
+
+robolang 2.0;
+
+task round(robot r, location home, location far) {
+    goal { robot_at r home; }
+    plan { move r to far; wait for 5 s; move r to home; }
+}
+
+mission m(robot r, location home, location far, region quay) {
+    repeat {
+        run round(r, home, far);
+    } until region_clear quay;
+}

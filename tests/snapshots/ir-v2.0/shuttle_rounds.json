@@ -1,0 +1,88 @@
+{
+  "ir_schema": "robolang.mission-ir",
+  "ir_schema_version": "1.0",
+  "task_ir_schema_version": "1.8",
+  "language_version": "2.0",
+  "tasks": [
+    {
+      "name": "round",
+      "parameters": [
+        {
+          "name": "r",
+          "type": "robot"
+        },
+        {
+          "name": "home",
+          "type": "location"
+        },
+        {
+          "name": "far",
+          "type": "location"
+        }
+      ],
+      "safety": [],
+      "preconditions": [],
+      "goal": [
+        {
+          "kind": "robot_at",
+          "robot": "r",
+          "location": "home"
+        }
+      ],
+      "steps": [
+        {
+          "kind": "move",
+          "robot": "r",
+          "target": "far"
+        },
+        {
+          "kind": "wait_for",
+          "duration": {
+            "value": "5",
+            "unit": "s"
+          }
+        },
+        {
+          "kind": "move",
+          "robot": "r",
+          "target": "home"
+        }
+      ]
+    }
+  ],
+  "missions": [
+    {
+      "name": "shuttle",
+      "parameters": [
+        {
+          "name": "r",
+          "type": "robot"
+        },
+        {
+          "name": "home",
+          "type": "location"
+        },
+        {
+          "name": "far",
+          "type": "location"
+        }
+      ],
+      "repeat": {
+        "max_runs": 30
+      },
+      "runs": [
+        {
+          "task": "round",
+          "arguments": [
+            "r",
+            "home",
+            "far"
+          ]
+        }
+      ],
+      "on_failure": {
+        "policy": "stop"
+      }
+    }
+  ]
+}

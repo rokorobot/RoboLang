@@ -1,10 +1,27 @@
 # Changelog
 
-The distribution version (this file) is independent of the language versions (1.1 to 1.9) and the Task IR schema
-versions (1.0 to 1.8). Decision records are in [`spec/decisions/`](https://github.com/rokorobot/RoboLang/tree/main/spec/decisions).
+The distribution version (this file) is independent of the language versions (1.1 to 2.0), the Task IR schema
+versions (1.0 to 1.8) and the Mission IR schema (1.0). Decision records are in [`spec/decisions/`](https://github.com/rokorobot/RoboLang/tree/main/spec/decisions).
 
 ## 0.6.1 (2026-11-18)
 
+- **RoboLang 2.0: the mission layer** (decision 0041, step L4 of iteration I4; built and taught: `robolang reference` and the
+  benchmark prompts teach 2.0, and the answer has an optional `mission` key). A `.rob` file `robolang 2.0;` may hold tasks (unchanged: every 1.9 construct) and **missions**:
+  `mission NAME(params) { repeat [at most N runs][, for at most D] { run task(args); ... } [until CONDITION;]
+  [on failure { stop; | continue; | retry N; }] }`. Every repeat has a hard bound (a run count of at most 1000, a duration
+  in `ms`, `s` or `min` with no hour unit, or an `until clock_time >= T`); the `until` takes the facts of a `pre` or a
+  live reading or the clock, as `wait until` does, and an unknown value stops the mission; several `run` lines, typed
+  parameters passed on, and `retry N` with no `repeat` are allowed; no nesting. Seven new reserved words (`mission`,
+  `repeat`, `run`, `runs`, `stop`, `continue`, `retry`) and one top-level declaration. `simulate FILE --world W --mission
+  NAME [--bind ...]` runs a mission in one world with continuous time: each task run is a complete, verified run, the
+  duration bound is checked before each run (a started run is never cut), and the mission ends `completed`, `bounded`,
+  `failed` or `stopped` and lists every run in the new mission run record 1.0. New Mission IR 1.0 (`robolang.mission-ir`,
+  next to Task IR 1.8, which does not change), re-validated by the IR reader. New codes `E325` (no hard bound), `E326` (a
+  `run` that names no task), `S401` (a task cannot fit the duration even once), `S402` (the `until` is unknown),
+  `X607` (`export-goal` and `delegate` refuse a mission), `S514` (the ROS 2 backend refuses one), and `I226`, `I227` in
+  the reader. `delegate` of a mission is refused, not built (owner decision). Safety case hazard H22 ("a mission runs
+  longer or more often than approved"). `robolang --version` shows language 2.0 and mission IR 1.0. Files of 1.1 to 1.9
+  are unchanged.
 - Exporting a goal (`export-goal`, `delegate`, Core 0.2 alternatives) no longer walks every path of a plan: a plan
   with many failure handlers or `if`s took exponential time and memory (erratum W2 of `docs/evidence/bench-errata-2-0.md`).
 

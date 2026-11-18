@@ -24,8 +24,10 @@ RUN_RECORD_SCHEMA_VERSION = "1.0"
 # Language version -> run record schema version (robolang-v1.2.md section 8.3; v1.3 section 8.3).
 RUN_RECORD_SCHEMA_VERSIONS = {
     "1.1": "1.0", "1.2": "1.1", "1.3": "1.2", "1.4": "1.3", "1.5": "1.4", "1.6": "1.5", "1.7": "1.6",
-    "1.8": "1.7", "1.9": "1.8",
+    "1.8": "1.7", "1.9": "1.8", "2.0": "1.8",
 }
+MISSION_RECORD_SCHEMA = "robolang.sim.mission-run"  # RoboLang 2.0 (decision 0041): the record of a mission
+MISSION_RECORD_SCHEMA_VERSION = "1.0"
 SEED = re.compile(r"[A-Za-z0-9._-]{1,64}")
 DEFAULT_SEED = "0"
 
@@ -46,6 +48,17 @@ def run_id(source: bytes, world: bytes, task: str, seed: str, cli_bindings: Mapp
     kind = "" if source_kind == "source" else f"source_kind {source_kind}\n"
     preimage = (f"robolang-sim-run/1.0\n{kind}{sha256_normalized(source)}\n{sha256_normalized(world)}\n"
                 f"{task}\n{seed}\n")
+    if cli_bindings is not None:
+        preimage += "".join(f"bind {name}={target}\n" for name, target in sorted(cli_bindings.items()))
+    return "sim-" + hashlib.sha256(preimage.encode("ascii")).hexdigest()
+
+
+def mission_run_id(source: bytes, world: bytes, mission: str, seed: str, cli_bindings: Mapping[str, str] | None = None,
+                   source_kind: str = "source") -> str:
+    """The ID of an input-equivalent mission run: as `run_id`, with the mission named in its own preimage."""
+    kind = "" if source_kind == "source" else f"source_kind {source_kind}\n"
+    preimage = (f"robolang-sim-mission/1.0\n{kind}{sha256_normalized(source)}\n{sha256_normalized(world)}\n"
+                f"{mission}\n{seed}\n")
     if cli_bindings is not None:
         preimage += "".join(f"bind {name}={target}\n" for name, target in sorted(cli_bindings.items()))
     return "sim-" + hashlib.sha256(preimage.encode("ascii")).hexdigest()
@@ -239,14 +252,14 @@ def to_record(
         "ir_schema_version": ir.IR_SCHEMA_VERSIONS[language_version],
         "world_schema_version": world_schema_version,
     }
-    if language_version == "1.9":
+    if language_version in ("1.9", "2.0"):
         inputs["world_clock"] = None if world_clock is None else {"start": world_clock.start, "zone": world_clock.zone}
     if bindings_source != "world":  # a record without the key has world-file bindings (section 5.1)
         inputs["bindings_source"] = bindings_source
-    branching = language_version in ("1.4", "1.5", "1.6", "1.7", "1.8", "1.9")
-    handlers = language_version in ("1.5", "1.6", "1.7", "1.8", "1.9")
-    values = language_version in ("1.6", "1.7", "1.8", "1.9")
-    actions = language_version in ("1.8", "1.9")
+    branching = language_version in ("1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "2.0")
+    handlers = language_version in ("1.5", "1.6", "1.7", "1.8", "1.9", "2.0")
+    values = language_version in ("1.6", "1.7", "1.8", "1.9", "2.0")
+    actions = language_version in ("1.8", "1.9", "2.0")
     return {
         "run_record_schema": RUN_RECORD_SCHEMA,
         "run_record_schema_version": RUN_RECORD_SCHEMA_VERSIONS[language_version],
@@ -268,6 +281,85 @@ def to_record(
         "end_t_ms": ms_text(result.end_t_ms),
         "final_world": _final_world(result.final_world, actions),
         **({} if result.goal is None else {"core_outcome": core_outcome(result, task, run_id, core=core)}),
+    }
+
+
+def to_mission_record(
+    result,
+    *,
+    document: ir.TaskIR,
+    run_id: str,
+    source_sha256: str,
+    world_sha256: str,
+    seed: str,
+    bindings_source: str = "world",
+    world_schema_version: str = WORLD_SCHEMA_VERSION,
+    source_kind: str = "source",
+    core: str = "0.1",
+    world_clock=None,
+) -> dict:
+    """
+    The mission run record, schema 1.0 (spec/simulation-v1.0.md section 18): the mission, the outcome and why the
+    mission ended, and every task run in order with its own run record (what `to_record` holds, less the parts the
+    mission holds once: the inputs, the task IR and the final world). A run's `core_outcome` is the outcome of that run.
+    """
+    mission = result.mission
+    inputs = {
+        "source_sha256": source_sha256,
+        **({} if source_kind == "source" else {"source_kind": source_kind}),
+        "world_sha256": world_sha256,
+        "mission": mission.name,
+        "seed": seed,
+        "language_version": document.language_version,
+        "ir_schema_version": ir.MISSION_IR_SCHEMA_VERSION,
+        "task_ir_schema_version": document.ir_schema_version,
+        "world_schema_version": world_schema_version,
+        "world_clock": None if world_clock is None else {"start": world_clock.start, "zone": world_clock.zone},
+    }
+    if bindings_source != "world":
+        inputs["bindings_source"] = bindings_source
+    failure = result.failure
+    runs = []
+    for entry in result.runs:
+        per_run_id = "sim-" + hashlib.sha256(f"{run_id}\nrun {entry.index}".encode("ascii")).hexdigest()
+        body = to_record(entry.result, task=entry.task, run_id=per_run_id, source_sha256=source_sha256,
+                         world_sha256=world_sha256, seed=seed, language_version=document.language_version,
+                         world_schema_version=world_schema_version, source_kind=source_kind, core=core,
+                         world_clock=world_clock)
+        for key in ("run_record_schema", "run_record_schema_version", "mode", "run_id", "inputs", "task",
+                    "final_world"):
+            body.pop(key)
+        runs.append({
+            "index": entry.index,
+            "line": entry.line,
+            "attempt": entry.attempt,
+            "task_name": entry.task.name,
+            "run_id": per_run_id,
+            "t_start_ms": ms_text(entry.t_start_ms),
+            "t_end_ms": ms_text(entry.result.end_t_ms),
+            "until": entry.until,
+            **body,
+        })
+    return {
+        "mission_record_schema": MISSION_RECORD_SCHEMA,
+        "mission_record_schema_version": MISSION_RECORD_SCHEMA_VERSION,
+        "run_record_schema_version": RUN_RECORD_SCHEMA_VERSIONS[document.language_version],
+        "mode": "simulation",
+        "run_id": run_id,
+        "inputs": inputs,
+        "mission": ir.to_dict(mission),
+        "tasks": [ir.to_dict(task) for task in {r.task.name: r.task for r in result.runs}.values()],
+        "bindings": dict(result.bindings),
+        "outcome": result.outcome,
+        "ended_by": result.ended_by,
+        "failure": None if failure is None else {"code": failure.code, "run": failure.run, "message": failure.message},
+        "runs_started": len(result.runs),
+        "runs_verified": result.runs_verified,
+        "runs_failed": result.runs_failed,
+        "runs": runs,
+        "events_applied": [_event(e) for e in result.events_applied],
+        "end_t_ms": ms_text(result.end_t_ms),
+        "final_world": _final_world(result.final_world, True),
     }
 
 

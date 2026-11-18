@@ -4,6 +4,9 @@
   "world": "bench/worlds/warehouse.json",
   "group": "mission",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_9": {
     "decision": "cannot",
     "category": "inexpressible"
   },

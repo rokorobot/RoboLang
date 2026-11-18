@@ -1,0 +1,17 @@
+// bench/reference_missions/m10_scan_for_two_hours.rob: the 2.0 reference (decision 0041)
+robolang 2.0;
+
+task scan(robot r, object item, sensor cam, location st) {
+    goal { object_at item st; }
+    plan {
+        inspect r item using cam;
+        wait for 15 min;
+    }
+}
+
+mission scan_rounds(robot r, object item, sensor cam, location st) {
+    repeat for at most 120 min {
+        run scan(r, item, cam, st);
+    };
+    on failure { stop; }
+}

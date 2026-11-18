@@ -1,0 +1,16 @@
+// RoboLang v2.0 fixture: valid
+// expect: ok
+// why: a count bound, the default policy (stop)
+
+robolang 2.0;
+
+task round(robot r, location home, location far) {
+    goal { robot_at r home; }
+    plan { move r to far; wait for 5 s; move r to home; }
+}
+
+mission shuttle(robot r, location home, location far) {
+    repeat at most 30 runs {
+        run round(r, home, far);
+    };
+}

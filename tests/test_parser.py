@@ -214,7 +214,7 @@ def test_unmarked_file_has_no_version():
     assert parse(task()).program.version is None
 
 
-@pytest.mark.parametrize("version", ["1.0", "1", "2.0", "1.10", "01.1", "01.2"])
+@pytest.mark.parametrize("version", ["1.0", "1", "2.1", "1.10", "01.1", "01.2"])
 def test_other_versions_are_rejected(version):
     raised = error(f"robolang {version};\n" + task())
     assert (raised.code, raised.line, raised.column) == ("E213", 1, 10)
@@ -222,7 +222,7 @@ def test_other_versions_are_rejected(version):
 
 def test_unsupported_version_stops_before_the_rest_of_the_file():
     """A front end must not guess at the syntax of a version it does not implement."""
-    raised = error("robolang 2.0;\n# ~ whatever v2 looks like ~ #\n")
+    raised = error("robolang 2.1;\n# ~ whatever v2 looks like ~ #\n")
     assert raised.code == "E213"
 
 
@@ -366,4 +366,4 @@ def test_lexical_error_anywhere_precedes_a_syntax_error():
 
 
 def test_unsupported_version_is_reported_before_a_lexical_error_right_after_it():
-    assert error("robolang 2.0 # no semicolon, then junk").code == "E213"
+    assert error("robolang 2.1 # no semicolon, then junk").code == "E213"

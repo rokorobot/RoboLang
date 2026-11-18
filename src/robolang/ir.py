@@ -3,7 +3,8 @@ Versioned task IR for RoboLang (spec/ir-schema-v1.0.md; schema 1.1 for RoboLang 
 schema 1.2 for RoboLang 1.3: ir-schema-v1.2.md; schema 1.3 for RoboLang 1.4: ir-schema-v1.3.md; schema 1.4 for
 RoboLang 1.5: ir-schema-v1.4.md; schema 1.5 for RoboLang 1.6: ir-schema-v1.5.md; schema 1.6 for
 RoboLang 1.7: ir-schema-v1.6.md; schema 1.7 for RoboLang 1.8: ir-schema-v1.7.md; schema 1.8 for RoboLang 1.9:
-ir-schema-v1.8.md).
+ir-schema-v1.8.md). RoboLang 2.0 keeps Task IR 1.8 for its tasks and adds the Mission IR 1.0 document
+(`robolang.mission-ir`, spec/mission-ir-v1.0.md), which holds the tasks and the missions of a file.
 
 The IR is a description of validated tasks with source details removed:
 no spans, comments or formatting. Two sources that differ only in layout
@@ -33,7 +34,9 @@ IR_SCHEMA_VERSION = "1.0"
 LANGUAGE_VERSION = DEFAULT_VERSION
 # Language version -> the IR schema version it compiles to (ir-schema-v1.1.md section 1).
 IR_SCHEMA_VERSIONS = {"1.1": "1.0", "1.2": "1.1", "1.3": "1.2", "1.4": "1.3", "1.5": "1.4", "1.6": "1.5", "1.7": "1.6",
-                     "1.8": "1.7", "1.9": "1.8"}
+                     "1.8": "1.7", "1.9": "1.8", "2.0": "1.8"}  # 2.0 changes no task: its tasks are Task IR 1.8
+MISSION_IR_SCHEMA = "robolang.mission-ir"
+MISSION_IR_SCHEMA_VERSION = "1.0"
 
 
 def _key(name: str):
@@ -453,21 +456,66 @@ def walk(steps: tuple[Step, ...], prefix: str = ""):
 
 
 @dataclass(frozen=True)
+class Run:
+    """Mission IR 1.0 (RoboLang 2.0): run `task` with `arguments`, parameters of the mission, in the task's order."""
+
+    task: str
+    arguments: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class Repeat:
+    """
+    Mission IR 1.0: the runs repeat until a bound is reached or `until` holds. At least one of `max_runs` (a count),
+    `max_duration` and a time-of-day `until` is there (decision 0041 M2).
+    """
+
+    max_runs: int | None = field(metadata={"omit_none": True})
+    max_duration: Quantity | None = field(metadata={"omit_none": True})
+    until: Condition | None = field(metadata={"omit_none": True})
+
+
+@dataclass(frozen=True)
+class OnFailure:
+    """Mission IR 1.0: `policy` is "stop", "continue" or "retry"; `retries` (at least 1) is there for "retry" only."""
+
+    policy: str
+    retries: int | None = field(default=None, metadata={"omit_none": True})
+
+
+@dataclass(frozen=True)
+class Mission:
+    """Mission IR 1.0 (RoboLang 2.0, decision 0041): runs tasks one after another. `repeat` is None for one run."""
+
+    name: str
+    parameters: tuple[Parameter, ...]
+    repeat: Repeat | None = field(metadata={"omit_none": True})
+    runs: tuple[Run, ...]
+    on_failure: OnFailure
+
+
+@dataclass(frozen=True)
 class TaskIR:
+    """The tasks of a file and, in a 2.0 file that has missions, its missions (the Mission IR document)."""
+
     tasks: tuple[Task, ...]
     language_version: str = LANGUAGE_VERSION
     ir_schema: str = IR_SCHEMA
     ir_schema_version: str = IR_SCHEMA_VERSION
+    missions: tuple[Mission, ...] = ()
 
     def task(self, name: str) -> Task | None:
         return next((t for t in self.tasks if t.name == name), None)
 
+    def mission(self, name: str) -> Mission | None:
+        return next((m for m in self.missions if m.name == name), None)
+
     def select(self, name: str) -> TaskIR:
-        """The same document restricted to one task. Raises KeyError for an unknown name."""
+        """The same document restricted to one task (and no mission). Raises KeyError for an unknown name."""
         selected = self.task(name)
         if selected is None:
             raise KeyError(name)
-        return dataclasses.replace(self, tasks=(selected,))
+        return dataclasses.replace(self, tasks=(selected,), missions=())
 
 
 @dataclass(frozen=True)
@@ -601,15 +649,32 @@ def _task(node: ast.Task, language: str) -> Task:
         ),
         preconditions=tuple(_condition(c) for c in node.pre.conditions) if node.pre else (),
         # 1.4 on: no task goal, the branches give them
-        goal=() if goal is None and language in ("1.4", "1.5", "1.6", "1.7", "1.8", "1.9") else goal,
+        goal=() if goal is None and language in ("1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "2.0") else goal,
         steps=tuple(_step(s) for s in node.plan.statements),
         verify=_verify(node),
     )
 
 
+def _mission(node: ast.Mission) -> Mission:
+    repeat = node.repeat
+    failure = node.on_failure
+    return Mission(
+        name=node.name.text,
+        parameters=tuple(Parameter(p.name.text, p.type.value) for p in node.params),
+        repeat=None if repeat is None else Repeat(
+            None if repeat.max_runs is None else repeat.max_runs.value,
+            None if repeat.max_duration is None else _quantity(repeat.max_duration),
+            None if repeat.until is None else _condition(repeat.until)),
+        runs=tuple(Run(r.task.text, tuple(a.text for a in r.args)) for r in node.runs),
+        on_failure=OnFailure("stop") if failure is None else
+        OnFailure(failure.policy.text, None if failure.retries is None else failure.retries.value),
+    )
+
+
 def _lower(program: ast.Program) -> TaskIR:
     language = program.version.version if program.version else LANGUAGE_VERSION
-    return TaskIR(tuple(_task(t, language) for t in program.tasks), language, IR_SCHEMA, IR_SCHEMA_VERSIONS[language])
+    return TaskIR(tuple(_task(t, language) for t in program.tasks), language, IR_SCHEMA, IR_SCHEMA_VERSIONS[language],
+                  tuple(_mission(m) for m in program.missions))
 
 
 def compile_program(program: ast.Program, filename: str = "<string>") -> TaskIR:
@@ -643,6 +708,15 @@ def to_dict(node):
         return decimal_text(node)
     if isinstance(node, tuple):
         return [to_dict(item) for item in node]
+    if isinstance(node, TaskIR) and node.missions:  # the Mission IR document (spec/mission-ir-v1.0.md)
+        return {
+            "ir_schema": MISSION_IR_SCHEMA,
+            "ir_schema_version": MISSION_IR_SCHEMA_VERSION,
+            "task_ir_schema_version": node.ir_schema_version,
+            "language_version": node.language_version,
+            "tasks": to_dict(node.tasks),
+            "missions": to_dict(node.missions),
+        }
     if isinstance(node, TaskIR):
         return {
             "ir_schema": node.ir_schema,

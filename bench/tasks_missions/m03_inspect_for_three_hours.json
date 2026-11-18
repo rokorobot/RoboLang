@@ -4,6 +4,9 @@
   "world": "bench/worlds/assembly.json",
   "group": "mission",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_9": {
     "decision": "cannot",
     "category": "inexpressible"
   },
@@ -25,6 +28,22 @@
               "located_in",
               "rl:place:station3"
             ]
+          ],
+          "goals": [
+            [
+              [
+                "rl:thing:p4",
+                "located_in",
+                "rl:place:station3"
+              ]
+            ],
+            [
+              [
+                "rl:robot:arm_b",
+                "located_in",
+                "rl:place:station3"
+              ]
+            ]
           ]
         }
       ],
@@ -39,7 +58,8 @@
         "condition": "region_clear fence_b",
         "triples": []
       },
-      "on_failure": "stop"
+      "on_failure": "stop",
+      "policy_stated": false
     },
     "paths": [
       {

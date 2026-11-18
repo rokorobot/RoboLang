@@ -4,6 +4,9 @@
   "world": "bench/worlds/kitchen_values_1_4.json",
   "group": "mission",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_9": {
     "decision": "cannot",
     "category": "inexpressible"
   },
@@ -78,9 +81,9 @@
         ]
       },
       {
-        "when": "every attempt fails: 15 attempts, then the bound",
+        "when": "every attempt fails: 15 attempts, then the bound (clarification 6: every run failed under continue is failed, not bounded)",
         "world_patch": {},
-        "outcome": "bounded",
+        "outcome": "failed",
         "runs": 15,
         "runs_verified": 0,
         "run_faults": [

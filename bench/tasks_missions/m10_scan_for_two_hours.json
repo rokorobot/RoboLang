@@ -4,6 +4,9 @@
   "world": "bench/worlds/warehouse.json",
   "group": "mission",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_9": {
     "decision": "cannot",
     "category": "inexpressible"
   },
@@ -25,6 +28,22 @@
               "located_in",
               "rl:place:shelf_a"
             ]
+          ],
+          "goals": [
+            [
+              [
+                "rl:thing:box1",
+                "located_in",
+                "rl:place:shelf_a"
+              ]
+            ],
+            [
+              [
+                "rl:robot:arm1",
+                "located_in",
+                "rl:place:shelf_a"
+              ]
+            ]
           ]
         }
       ],
@@ -36,7 +55,8 @@
         }
       },
       "until": null,
-      "on_failure": "stop"
+      "on_failure": "stop",
+      "policy_stated": false
     },
     "paths": [
       {

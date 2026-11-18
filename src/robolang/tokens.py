@@ -1,4 +1,4 @@
-"""Token definitions and word sets for RoboLang v1.1 to v1.9 (robolang-v1.1.md section 3, v1.2 2.2, v1.3 2.2)."""
+"""Token definitions and word sets for RoboLang v1.1 to v2.0 (robolang-v1.1.md section 3, v1.2 2.2, v1.3 2.2)."""
 
 from __future__ import annotations
 from dataclasses import dataclass
@@ -80,10 +80,16 @@ RESERVED_V1_8 = RESERVED_V1_6 | frozenset(("do", "in_state"))
 CLOCK_KINDS = ("time", "elapsed")
 LIVE_CLOCK = {"clock_time": "time", "clock_elapsed": "elapsed"}  # the live names (T6) -> the kind they read
 RESERVED_V1_9 = RESERVED_V1_8 | frozenset(LIVE_CLOCK)
+# RoboLang 2.0 adds the mission layer (decision 0041 M1, M10): seven reserved words. `at`, `for`, `until` and `else`
+# are reserved already; `most`, `on` and `failure` are recognised by position and are not reserved.
+MISSION_WORDS = ("mission", "repeat", "run", "runs", "stop", "continue", "retry")
+RESERVED_V2_0 = RESERVED_V1_9 | frozenset(MISSION_WORDS)
+MAX_MISSION_RUNS = 1000  # a mission's run count, and the most runs any mission makes (spec/robolang-v2.0.md section 3)
+MAX_RETRIES = 100  # `retry N`
 # Language version -> its reserved words. Versions not listed read as 1.1.
 RESERVED_BY_VERSION = {
     "1.2": RESERVED_V1_2, "1.3": RESERVED_V1_3, "1.4": RESERVED_V1_4, "1.5": RESERVED_V1_4, "1.6": RESERVED_V1_6,
-    "1.7": RESERVED_V1_6, "1.8": RESERVED_V1_8, "1.9": RESERVED_V1_9,
+    "1.7": RESERVED_V1_6, "1.8": RESERVED_V1_8, "1.9": RESERVED_V1_9, "2.0": RESERVED_V2_0,
 }
 
 # Recognized only in their grammatical position; not reserved.

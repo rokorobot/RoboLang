@@ -5,6 +5,10 @@
   "group": "infeasible",
   "expect": {
     "decision": "cannot",
+    "category": "infeasible"
+  },
+  "expect_1_9": {
+    "decision": "cannot",
     "category": "inexpressible"
   },
   "expect_2_0": {

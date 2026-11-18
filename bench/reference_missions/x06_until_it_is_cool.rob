@@ -1,0 +1,19 @@
+// bench/reference_missions/x06_until_it_is_cool.rob: the 2.0 reference (decision 0041)
+robolang 2.0;
+
+task read_pan(robot r, object pan, sensor probe, location st) {
+    goal { object_at pan st; }
+    plan {
+        move r to st;
+        measure r temperature of pan using probe as t;
+        communicate r to "pass" with t;
+        wait for 1 min;
+    }
+}
+
+mission cool_down(robot r, object pan, sensor probe, location st) {
+    repeat at most 30 runs {
+        run read_pan(r, pan, probe, st);
+    } until temperature of pan using probe < 40 degC;
+    on failure { stop; }
+}
