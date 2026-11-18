@@ -1,0 +1,10 @@
+{
+  "task": "fuller_bin",
+  "bindings": {
+    "r": "picker_h",
+    "a": "bin_1",
+    "b": "bin_2",
+    "cam": "cam_h",
+    "row": "bin_row"
+  }
+}

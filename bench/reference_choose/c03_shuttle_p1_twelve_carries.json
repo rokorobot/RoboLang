@@ -1,0 +1,10 @@
+{
+  "task": "",
+  "mission": "shuttle",
+  "bindings": {
+    "r": "arm_a",
+    "item": "p1",
+    "a": "conveyor_in",
+    "b": "bin"
+  }
+}

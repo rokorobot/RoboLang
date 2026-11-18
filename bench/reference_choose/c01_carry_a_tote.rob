@@ -1,0 +1,12 @@
+// bench/reference_choose/c01_carry_a_tote.rob: hand-written reference (RoboLang 2.2)
+robolang 2.2;
+
+task carry_tote(robot r, object tote, location src, location dst) {
+    goal { object_at tote dst; }
+    plan {
+        move r to src;
+        grasp r tote;
+        move r to dst;
+        place r tote at dst;
+    }
+}

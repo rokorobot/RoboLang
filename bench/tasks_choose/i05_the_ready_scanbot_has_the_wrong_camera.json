@@ -1,0 +1,63 @@
+{
+  "id": "i05_the_ready_scanbot_has_the_wrong_camera",
+  "prompt": "Have whichever of scanbot2 and scanbot1 is ready and nearer to aisle_2 read how full shelf_3 is with cam_scan2 and, if it is under 10 percent full, tell channel \"lead\" \"restock shelf_3\".",
+  "world": "bench/worlds/kinds_k10_the_right_camera.json",
+  "group": "infeasible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_3": {
+    "decision": "cannot",
+    "category": "infeasible",
+    "because": "S231",
+    "choices": [
+      {
+        "type": "robot",
+        "from": [
+          "scanbot2",
+          "scanbot1"
+        ],
+        "where": "robot_ready",
+        "order": {
+          "nearest_to": "aisle_2"
+        }
+      }
+    ],
+    "world_2_3": {
+      "positions": {
+        "aisle_1": [
+          0,
+          0
+        ],
+        "aisle_2": [
+          10,
+          0
+        ],
+        "aisle_3": [
+          20,
+          0
+        ]
+      },
+      "robots": {
+        "scanbot2": {
+          "ready": false
+        }
+      }
+    }
+  },
+  "blockers": [
+    "cam_scan2"
+  ],
+  "gap": "G-CHOOSE",
+  "tags": [
+    "choose",
+    "robots",
+    "where",
+    "sensor_elsewhere",
+    "existing_infeasibility",
+    "fill"
+  ],
+  "why": "Infeasible in 2.3: scanbot2 is not ready, so the robot is scanbot1, and cam_scan2 is mounted on scanbot2 (S231, as in set 11's `i02`). The sensor cannot follow the choice (dependent choices are out, 0045 C9).",
+  "attempt_fails_with": "E203"
+}

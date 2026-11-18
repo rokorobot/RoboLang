@@ -1,0 +1,120 @@
+{
+  "world_schema": "robolang.sim.world",
+  "world_schema_version": "1.7",
+  "locations": [
+    "bin_row",
+    "dock_a",
+    "dock_b",
+    "floor_bay",
+    "office"
+  ],
+  "regions": {
+    "forklift_aisle": {
+      "clear": true
+    }
+  },
+  "robots": {
+    "picker_h": {
+      "ready": true,
+      "location": "office",
+      "gripper": true,
+      "max_speed": [
+        {
+          "value": "0.8",
+          "unit": "m/s"
+        }
+      ],
+      "honours": [
+        "no_go_region",
+        "in_region"
+      ],
+      "actions": {}
+    }
+  },
+  "objects": {
+    "bin_1": {
+      "present": true,
+      "location": "bin_row",
+      "class": "bin",
+      "properties": {
+        "fill": {
+          "value": "35",
+          "unit": "%"
+        }
+      }
+    },
+    "bin_2": {
+      "present": true,
+      "location": "bin_row",
+      "class": "bin",
+      "properties": {
+        "fill": {
+          "value": "80",
+          "unit": "%"
+        }
+      }
+    },
+    "bin_3": {
+      "present": true,
+      "location": "bin_row",
+      "class": "bin",
+      "properties": {
+        "fill": {
+          "value": "55",
+          "unit": "%"
+        }
+      }
+    },
+    "bin_4": {
+      "present": true,
+      "location": "bin_row",
+      "class": "bin",
+      "properties": {
+        "fill": {
+          "value": "20",
+          "unit": "%"
+        }
+      }
+    },
+    "crate_1": {
+      "present": true,
+      "location": "dock_a",
+      "class": "crate"
+    },
+    "crate_2": {
+      "present": true,
+      "location": "dock_a",
+      "class": "crate"
+    },
+    "crate_3": {
+      "present": true,
+      "location": "dock_a",
+      "class": "crate"
+    }
+  },
+  "location_properties": {
+    "bin_row": {
+      "count": {
+        "value": "4"
+      }
+    }
+  },
+  "sensors": {
+    "cam_h": {
+      "robot": "picker_h",
+      "available": true,
+      "measures": {
+        "fill": {
+          "unit": "%",
+          "uncertainty": "2",
+          "contact": false
+        },
+        "count": {
+          "contact": false
+        }
+      }
+    }
+  },
+  "events": [],
+  "tasks": {}
+}

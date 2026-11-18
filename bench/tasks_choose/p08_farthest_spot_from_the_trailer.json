@@ -1,0 +1,97 @@
+{
+  "id": "p08_farthest_spot_from_the_trailer",
+  "prompt": "With digit1, take case_1 from trailer_4 and store it at whichever of trolley, cart_3 and conveyor_b is farthest from trailer_4.",
+  "world": "bench/worlds/fulfilment.json",
+  "group": "choose",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_3": {
+    "decision": "program",
+    "world_2_3": {
+      "positions": {
+        "trailer_4": [
+          60,
+          20
+        ],
+        "trolley": [
+          55,
+          18
+        ],
+        "cart_3": [
+          12,
+          22
+        ],
+        "conveyor_b": [
+          30,
+          25
+        ]
+      }
+    },
+    "choices": [
+      {
+        "type": "location",
+        "from": [
+          "trolley",
+          "cart_3",
+          "conveyor_b"
+        ],
+        "where": null,
+        "order": {
+          "farthest_from": "trailer_4"
+        }
+      }
+    ],
+    "paths": [
+      {
+        "when": "cart_3 is 48 m from trailer_4, conveyor_b 30 m, trolley 5 m",
+        "chosen": [
+          "cart_3"
+        ],
+        "goal": [
+          [
+            "rl:thing:case_1",
+            "located_in",
+            "rl:place:cart_3"
+          ]
+        ],
+        "messages": [],
+        "world_patch": {}
+      },
+      {
+        "when": "cart_3 is moved 10 m from trailer_4: conveyor_b is now the farthest",
+        "chosen": [
+          "conveyor_b"
+        ],
+        "goal": [
+          [
+            "rl:thing:case_1",
+            "located_in",
+            "rl:place:conveyor_b"
+          ]
+        ],
+        "messages": [],
+        "world_patch": {
+          "positions": {
+            "cart_3": [
+              50,
+              20
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "gap": "G-CHOOSE",
+  "tags": [
+    "choose",
+    "locations",
+    "list",
+    "farthest",
+    "named_in_goal",
+    "pick_place"
+  ],
+  "why": "`farthest from`, the other order of 0045 C4. A program that takes the nearest instead (the order reversed), or the first named, is a different request. 2.2 has no `choose` (E203).",
+  "attempt_fails_with": "E203"
+}

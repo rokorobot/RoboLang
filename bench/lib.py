@@ -55,6 +55,8 @@ MESSAGES_TASKS_DIR = BENCH / "tasks_messages"  # set 10: incoming messages, pre-
 MESSAGES_REFERENCE_DIR = BENCH / "reference_messages"
 KINDS_TASKS_DIR = BENCH / "tasks_kinds"  # set 11: more measured kinds, pre-registered on 2.1, labelled for 2.2 (0044)
 KINDS_REFERENCE_DIR = BENCH / "reference_kinds"
+CHOOSE_TASKS_DIR = BENCH / "tasks_choose"  # set 12: choosing at run time, pre-registered against 2.2 (decision 0045)
+CHOOSE_REFERENCE_DIR = BENCH / "reference_choose"
 PROMPT_FILE = BENCH / "prompt.md"
 REFERENCE_FILE = ROOT / "docs" / "language-reference.md"
 MINIMAL_PROMPT_FILE = BENCH / "prompt_minimal.md"
@@ -81,7 +83,8 @@ SETS = {"1": (TASKS_DIR, REFERENCE_DIR), "hard": (HARD_TASKS_DIR, HARD_REFERENCE
         "clock": (CLOCK_TASKS_DIR, CLOCK_REFERENCE_DIR),
         "missions": (MISSIONS_TASKS_DIR, MISSIONS_REFERENCE_DIR),
         "messages": (MESSAGES_TASKS_DIR, MESSAGES_REFERENCE_DIR),
-        "kinds": (KINDS_TASKS_DIR, KINDS_REFERENCE_DIR)}
+        "kinds": (KINDS_TASKS_DIR, KINDS_REFERENCE_DIR),
+        "choose": (CHOOSE_TASKS_DIR, CHOOSE_REFERENCE_DIR)}
 PROMPTS = ("full", "minimal")
 
 # $ per million tokens: (input, output, cache read). A cache write (5 minutes) costs 1.25 x input.

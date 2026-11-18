@@ -1,0 +1,13 @@
+// bench/reference_choose/i03_the_ready_robot_has_no_gripper.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 2.2;
+
+task carry_by_ready(robot a, robot b, object tote, location src, location dst) {
+    goal { object_at tote dst; }
+    plan {
+        choose robot who from (a, b) where robot_ready who nearest to src else { fail "no robot is ready"; } // @choice who=a
+        move who to src;
+        grasp who tote;
+        move who to dst;
+        place who tote at dst;
+    }
+}

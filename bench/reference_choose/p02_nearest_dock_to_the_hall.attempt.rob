@@ -1,0 +1,10 @@
+// bench/reference_choose/p02_nearest_dock_to_the_hall.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 2.2;
+
+task go_to_dock(robot r, location d1, location d2, location d3, location hall) {
+    goal { robot_at r dock; }
+    plan {
+        choose location dock from (d1, d2, d3) nearest to hall else { fail "no dock"; }             // @choice dock=d1
+        move r to dock;
+    }
+}

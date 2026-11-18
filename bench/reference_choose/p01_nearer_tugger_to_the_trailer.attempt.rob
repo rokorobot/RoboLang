@@ -1,0 +1,11 @@
+// bench/reference_choose/p01_nearer_tugger_to_the_trailer.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 2.2;
+
+task send_nearer(robot a, robot b, location spot) {
+    goal { robot_at tug spot; }
+    plan {
+        choose robot tug from (a, b) nearest to spot else { fail "no tugger can be sent"; }         // @choice tug=a
+        move tug to spot;
+        communicate tug to "ops" with "tugger sent";
+    }
+}

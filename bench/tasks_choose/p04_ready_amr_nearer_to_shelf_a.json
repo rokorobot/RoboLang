@@ -1,0 +1,112 @@
+{
+  "id": "p04_ready_amr_nearer_to_shelf_a",
+  "prompt": "Bring box1 from shelf_a to the handoff with whichever of amr1 and amr2 is ready and nearer to shelf_a. If neither is ready, stop the job as failed.",
+  "world": "bench/worlds/warehouse.json",
+  "group": "choose",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_3": {
+    "decision": "program",
+    "world_2_3": {
+      "positions": {
+        "shelf_a": [
+          10,
+          10
+        ],
+        "charging": [
+          12,
+          8
+        ],
+        "dock": [
+          40,
+          10
+        ],
+        "handoff": [
+          60,
+          30
+        ]
+      }
+    },
+    "choices": [
+      {
+        "type": "robot",
+        "from": [
+          "amr1",
+          "amr2"
+        ],
+        "where": "robot_ready",
+        "order": {
+          "nearest_to": "shelf_a"
+        }
+      }
+    ],
+    "paths": [
+      {
+        "when": "amr2 is nearer but not ready (it is charging): the decoy; amr1 is ready",
+        "chosen": [
+          "amr1"
+        ],
+        "goal": [
+          [
+            "rl:thing:box1",
+            "located_in",
+            "rl:place:handoff"
+          ]
+        ],
+        "messages": [],
+        "world_patch": {}
+      },
+      {
+        "when": "amr2 is ready too and is the nearer",
+        "chosen": [
+          "amr2"
+        ],
+        "goal": [
+          [
+            "rl:thing:box1",
+            "located_in",
+            "rl:place:handoff"
+          ]
+        ],
+        "messages": [],
+        "world_patch": {
+          "robots": {
+            "amr2": {
+              "ready": true
+            }
+          }
+        }
+      },
+      {
+        "when": "neither is ready: no candidate is left and `else` runs",
+        "chosen": [
+          null
+        ],
+        "fails": true,
+        "messages": [],
+        "world_patch": {
+          "robots": {
+            "amr1": {
+              "ready": false
+            }
+          }
+        }
+      }
+    ]
+  },
+  "gap": "G-CHOOSE",
+  "tags": [
+    "choose",
+    "robots",
+    "list",
+    "where",
+    "robot_ready",
+    "nearest",
+    "decoy",
+    "else_runs"
+  ],
+  "why": "A `where` and an order together, with a decoy: the nearer robot, amr2, is not ready. A program that takes the nearest (the `where` dropped), or the first ready one (the order dropped), or one fixed robot, is a different request. 2.2 has no `choose` (E203); without it the attempt uses the first named robot.",
+  "attempt_fails_with": "E203"
+}

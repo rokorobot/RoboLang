@@ -475,3 +475,31 @@ demand from GitHub Actions: `Benchmark`, `set_only: kinds` (full and minimal pro
 each, not gated, not in the per-PR or weekly runs).
 Locally: `python bench/run.py --set kinds --repeats 3 --models claude-sonnet-5-5,claude-haiku-5-5` (a paid run: confirm it
 first; estimate ~$3.8 for the full prompt and ~$3.6 for the grammar-only one).
+
+## Set 12: choosing at run time (`--set choose`)
+
+25 tasks in `tasks_choose/`, the references of the controls and the obvious 2.2 attempts in `reference_choose/`, decision record
+[0045](../spec/decisions/0045-choosing-at-run-time.md), plan, bounds and open points in
+[bench-12-choose.md](../docs/plans/bench-12-choose.md) (draft for the owner: the bounds B1–B9 are placeholders). Pre-registered
+against 2.2 (L3 of I7), not yet labelled for 2.3: `expect` is the 2.2 label (every non-control task `cannot / inexpressible`, each
+with an attempt that fails with `E203`, a `choose` statement; 11 `choose` programs in 2.3, 5 `infeasible`, 5 `inexpressible` that
+stay out, 4 `control` programs), `expect_2_3` the label for acceptance. A 2.3 program carries, inside `expect_2_3`, `world_2_3` (the
+world file 1.8 facts: a `position` `[x, y]` in metres per location, the readiness of robots and the places of objects that differ from
+the 2.2 world), `choices` (type, candidates in the order written, `where`, `nearest_to` or `farthest_from`), its `paths` (each forced
+by a `world_patch` that changes which candidate wins; a path where no candidate is left is `fails`, `else` runs) and, for a mission,
+`expected_mission` (the bound the request states, `on_failure`). The goal of a path names the entity chosen (0045 C7). The attempts
+mark the choice line with `// @choice NAME=ENTITY`: with that line removed and the name replaced by the first candidate, each is a
+valid 2.2 program that succeeds, the choice replaced silently (the plan's B8; a mission fails on its second run, `S215`). The worlds are
+existing ones and two new world files (1.7), `bin_hall` and `parts_line`; no world of the set has a position. The new scorer measures
+(`choice_ok`, choice replaced silently, criterion changed) are L4's.
+
+The R3 probes and the standing tasks of G-CHOOSE stay in their sets. Erratum Q2 moves `x03_any_hot_pan` and
+`x03_carry_as_many_as_counted` from G-CHOOSE to the new far gap G-EACH ([bench-errata-2-3.md](../docs/evidence/bench-errata-2-3.md)).
+
+`tests/test_bench_choose.py` checks the counts, the labels, a small model of 0045 C2 to C5 over every path (which candidate wins
+in each patched world, that a fixed pick, another order, no order and no `where` each lose a path), the mission paths, the
+infeasible and inexpressible reasons, that every attempt fails with `E203` and every stripped attempt succeeds, the controls, the
+atlas, the scorer and the workflow. On demand from GitHub Actions: `Benchmark`, `set_only: choose` (full and minimal prompts, 3
+repeats, Sonnet and Haiku, `--max-usd 3` each, not gated, not in the per-PR or weekly runs). Locally: `python bench/run.py --set choose
+--repeats 3 --models claude-sonnet-5-5,claude-haiku-5-5` (a paid run: confirm it first; estimate ~$4.0 for the full prompt and ~$3.8 for
+the grammar-only one).

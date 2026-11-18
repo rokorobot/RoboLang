@@ -1,0 +1,58 @@
+{
+  "id": "i02_the_wall_has_no_position",
+  "prompt": "Move spot1 to whichever of dock_1, dock_2 and dock_3 is nearest to level_3_wall.",
+  "world": "bench/worlds/site.json",
+  "group": "infeasible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_3": {
+    "decision": "cannot",
+    "category": "infeasible",
+    "because": "0045 C5 (level_3_wall has no position: it is unknown, every candidate is excluded and `else` runs)",
+    "choices": [
+      {
+        "type": "location",
+        "from": [
+          "dock_1",
+          "dock_2",
+          "dock_3"
+        ],
+        "where": null,
+        "order": {
+          "nearest_to": "level_3_wall"
+        }
+      }
+    ],
+    "world_2_3": {
+      "positions": {
+        "dock_1": [
+          50,
+          30
+        ],
+        "dock_2": [
+          42,
+          18
+        ],
+        "dock_3": [
+          55,
+          12
+        ]
+      }
+    }
+  },
+  "blockers": [
+    "level_3_wall"
+  ],
+  "gap": "G-CHOOSE",
+  "tags": [
+    "choose",
+    "locations",
+    "nearest",
+    "no_position",
+    "no_fallback"
+  ],
+  "why": "Infeasible in 2.3: the place the distance is measured from has no position in the world, so nothing is known about distance and every candidate is left out (0045 C5, fails closed). The request names no fallback.",
+  "attempt_fails_with": "E203"
+}

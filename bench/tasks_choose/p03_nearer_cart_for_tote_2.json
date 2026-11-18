@@ -1,0 +1,96 @@
+{
+  "id": "p03_nearer_cart_for_tote_2",
+  "prompt": "With digit1, take tote_2 from inbound_conveyor to whichever of cart_3 and conveyor_b is closer to outbound_conveyor and place it there.",
+  "world": "bench/worlds/fulfilment.json",
+  "group": "choose",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_3": {
+    "decision": "program",
+    "world_2_3": {
+      "positions": {
+        "inbound_conveyor": [
+          10,
+          20
+        ],
+        "outbound_conveyor": [
+          50,
+          5
+        ],
+        "cart_3": [
+          12,
+          22
+        ],
+        "conveyor_b": [
+          30,
+          25
+        ]
+      }
+    },
+    "choices": [
+      {
+        "type": "location",
+        "from": [
+          "cart_3",
+          "conveyor_b"
+        ],
+        "where": null,
+        "order": {
+          "nearest_to": "outbound_conveyor"
+        }
+      }
+    ],
+    "paths": [
+      {
+        "when": "conveyor_b is 28 m from outbound_conveyor, cart_3 42 m",
+        "chosen": [
+          "conveyor_b"
+        ],
+        "goal": [
+          [
+            "rl:thing:tote_2",
+            "located_in",
+            "rl:place:conveyor_b"
+          ]
+        ],
+        "messages": [],
+        "world_patch": {}
+      },
+      {
+        "when": "conveyor_b is moved to the far corner, 57 m away: cart_3 is closer",
+        "chosen": [
+          "cart_3"
+        ],
+        "goal": [
+          [
+            "rl:thing:tote_2",
+            "located_in",
+            "rl:place:cart_3"
+          ]
+        ],
+        "messages": [],
+        "world_patch": {
+          "positions": {
+            "conveyor_b": [
+              5,
+              40
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "gap": "G-CHOOSE",
+  "tags": [
+    "choose",
+    "locations",
+    "list",
+    "nearest",
+    "named_in_goal",
+    "pick_place"
+  ],
+  "why": "The nearer of two places to put something, decided from where the places are, as in the R3 probe `f_choose_nearer_cart`. 2.2 cannot read a distance between places (E304) and has no `choose` (E203); without the choice the attempt places the tote at one cart fixed in advance.",
+  "attempt_fails_with": "E203"
+}

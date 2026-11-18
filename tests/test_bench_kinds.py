@@ -388,7 +388,7 @@ def test_the_infeasible_tasks_each_break_one_rule():
 def test_the_inexpressible_tasks_each_stay_out_for_one_reason_of_0044_k8():
     assert {t: d["gap"] for t, d in INEXPRESSIBLE.items()} == {
         "x01_packaging_looks_worn": "G-QUALITY", "x02_own_battery_first": "G-SELF",
-        "x03_carry_as_many_as_counted": "G-CHOOSE", "x04_average_fill": "G-CALC", "x05_nearest_person": "G-PROX"}
+        "x03_carry_as_many_as_counted": "G-EACH", "x04_average_fill": "G-CALC", "x05_nearest_person": "G-PROX"}
     assert {t: set(d["tags"]) for t, d in INEXPRESSIBLE.items()} == {
         "x01_packaging_looks_worn": {"wear", "free_kind", "if"},
         "x02_own_battery_first": {"battery", "self_state", "if"},
@@ -597,7 +597,7 @@ def test_only_what_2_2_still_declines_is_in_an_atlas_gap_and_g_perceive_is_close
     assert {t for t, _ in in_gaps} == set(INEXPRESSIBLE)  # the programs and the infeasible tasks are in no gap
     for task_id, gap in in_gaps:
         assert INEXPRESSIBLE[task_id]["gap"] == gap and GAPS[gap]["scope"] == "open"
-    assert Counter(gap for _, gap in in_gaps) == {"G-QUALITY": 1, "G-SELF": 1, "G-CHOOSE": 1, "G-CALC": 1, "G-PROX": 1}
+    assert Counter(gap for _, gap in in_gaps) == {"G-QUALITY": 1, "G-SELF": 1, "G-EACH": 1, "G-CALC": 1, "G-PROX": 1}
     assert GAPS["G-PERCEIVE"]["scope"] == "closed" and GAPS["G-PERCEIVE"]["tasks"] == []  # L6 of I6
     assert GAPS["G-PERCEIVE"]["closed_in"] == "RoboLang 2.2"
     quality = GAPS["G-QUALITY"]  # D14: far, open
@@ -891,7 +891,7 @@ def test_the_set_only_input_lists_kinds_and_keeps_the_input_count():
     steps = re.split(r"\n      - ", workflow)
     for value in ("set3", "set4", "future", "regions", "actions", "clock", "missions", "messages", "kinds"):
         assert sum(f"inputs.set_only == '{value}'" in s for s in steps) == 1, value
-    assert "messages or kinds. Empty" in block
+    assert "kinds or choose. Empty" in block
 
 
 def test_the_readme_the_errata_and_the_plan_name_the_set():

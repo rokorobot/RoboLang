@@ -1,0 +1,13 @@
+// bench/reference_choose/p08_farthest_spot_from_the_trailer.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 2.2;
+
+task store_far(robot r, object item, location src, location a, location b, location c) {
+    goal { object_at item dst; }
+    plan {
+        move r to src;
+        grasp r item;
+        choose location dst from (a, b, c) farthest from src else { fail "no place"; }              // @choice dst=a
+        move r to dst;
+        place r item at dst;
+    }
+}

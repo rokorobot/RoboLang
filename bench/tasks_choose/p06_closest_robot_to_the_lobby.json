@@ -1,0 +1,99 @@
+{
+  "id": "p06_closest_robot_to_the_lobby",
+  "prompt": "Send whichever robot is closest to the lobby to the lobby.",
+  "world": "bench/worlds/site.json",
+  "group": "choose",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_3": {
+    "decision": "program",
+    "world_2_3": {
+      "positions": {
+        "stop_a": [
+          0,
+          0
+        ],
+        "dock_2": [
+          42,
+          18
+        ],
+        "gridline_a": [
+          5,
+          40
+        ],
+        "headland": [
+          80,
+          80
+        ],
+        "module_pallet": [
+          30,
+          50
+        ],
+        "lobby": [
+          45,
+          12
+        ]
+      }
+    },
+    "choices": [
+      {
+        "type": "robot",
+        "from": "robots",
+        "where": null,
+        "order": {
+          "nearest_to": "lobby"
+        }
+      }
+    ],
+    "paths": [
+      {
+        "when": "cleaner1 is at dock_2, 7 m from the lobby",
+        "chosen": [
+          "cleaner1"
+        ],
+        "goal": [
+          [
+            "rl:robot:cleaner1",
+            "located_in",
+            "rl:place:lobby"
+          ]
+        ],
+        "messages": [],
+        "world_patch": {}
+      },
+      {
+        "when": "cleaner1 is at the headland: installer1 at module_pallet (41 m) is now the closest",
+        "chosen": [
+          "installer1"
+        ],
+        "goal": [
+          [
+            "rl:robot:installer1",
+            "located_in",
+            "rl:place:lobby"
+          ]
+        ],
+        "messages": [],
+        "world_patch": {
+          "robots": {
+            "cleaner1": {
+              "location": "headland"
+            }
+          }
+        }
+      }
+    ]
+  },
+  "gap": "G-CHOOSE",
+  "tags": [
+    "choose",
+    "robots",
+    "all_robots",
+    "nearest",
+    "named_in_goal"
+  ],
+  "why": "Every robot of the world is a candidate (`robots`), not a list the request names: the standing task `x_nearest_robot` in the shape of 0045 C2. 2.2 has no `choose` (E203); the attempt without it sends the first robot the world lists.",
+  "attempt_fails_with": "E203"
+}
