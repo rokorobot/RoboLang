@@ -1,6 +1,6 @@
 # Benchmark set 9: missions (pre-registration draft)
 
-**Status:** **draft for the owner**, 2026-11-18. Directory: `bench/tasks_missions/`, `bench/reference_missions/`; tests
+**Status:** **APPROVED by the owner, 2026-11-18** (tasks, labels, clarifications 1–14 in 0041, bounds B1–B9); frozen.
 `tests/test_bench_missions.py`; run with `python bench/run.py --set missions`. Modelled on set 8,
 [bench-8-clock.md](bench-8-clock.md). No model was run and no money was spent. **The labels follow 0041 M1–M10 as
 approved. Where 0041 does not decide what a label needs, the label states the reading used and the question is listed
@@ -110,7 +110,7 @@ set (a request without a bound stays out, and a mission with an invented bound i
 "until it works" to be a program, M2 has to give a default bound, and 0041 says it does not. L4 relabels the 15 as
 `expect_2_0: cannot / inexpressible` and none moves to program.
 
-## Acceptance bounds (proposed with the baseline in hand, rule 6; for the owner)
+## Acceptance bounds (APPROVED by the owner 2026-11-18, with the baseline in hand, rule 6)
 
 Baseline: [bench-set9-baseline.md](../evidence/bench-set9-baseline.md) (2026-11-18, 1.9, 3 repeats). The smallest step is one answer (rule 6). The acceptance
 run repeats the baseline under 2.0.

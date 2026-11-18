@@ -75,3 +75,22 @@ With G-MSG it makes 4. The order is generated in
 1. G-LOOP is reopened, with the mission layer as its design.
 2. Every repeat has a hard bound.
 3. 2.0 has `continue` and `retry N`, as well as `stop`.
+
+## Clarifications (APPROVED by the owner 2026-11-18, from writing the L3 set)
+
+| # | Question | Decision |
+|---|---|---|
+| 1 | Several `run` lines in one repeat | Allowed. Each task run counts towards the bound |
+| 2 | Clock and measured values in `until` | Allowed, read live as in `wait until`; an unknown value stops the mission (fails closed). **A time-of-day deadline (`until clock_time >= 22:00`) is a hard bound under M2**, because a 1.9 time lies on the day the mission starts. `x06` and `x07` become programs |
+| 3 | A mission's parameters | Typed like a task's, and passed to `run task(…)`. "The next blank" from a list is G-CHOOSE, not 2.0 |
+| 4 | How a benchmark answer names a mission | A new answer field `mission`, next to `task` |
+| 5 | The outcome without `until` | A count-only bound ends `bounded`; a single run with `retry` and no `repeat` ends `completed` |
+| 6 | Every run failed under `continue` | `failed`, not `bounded`, so a failure is never hidden |
+| 7 | Retries and the bound | Retries count against the bound |
+| 8 | The duration bound | Checked before each run, and a started run is never cut. A task that cannot fit even once (from its waits) fails before the run |
+| 9 | State and time across runs | One world, with continuous time; events are on mission time |
+| 10 | A fixed count up to 10: task or mission | Both are accepted |
+| 11 | No failure policy in the request | `stop` by default; an invented `continue` is recorded, not failed |
+| 12 | Hours in a mission bound | Still no `h` (owner, 0042): 8 hours is written `480 min` |
+| 13 | "Every hour on the hour" written as "wait 60 min" | A false program: it is a different request |
+| 14 | The atlas gap for triggers | A new far gap, **G-TRIGGER** (time, message and self-state triggers on missions, M6), so that G-LOOP can close at L6 |
