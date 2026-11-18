@@ -1,5 +1,5 @@
 // bench/reference_missions/c04_three_named_totes.rob: hand-written reference
-robolang 1.9;
+robolang 2.0;
 
 task move_totes(robot r, object t1, object t2, object t3, location src, location dst) {
     goal { object_at t1 dst; object_at t2 dst; object_at t3 dst; }

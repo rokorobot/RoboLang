@@ -1,5 +1,5 @@
 // bench/reference_missions/c03_wait_for_the_aisle.rob: hand-written reference
-robolang 1.9;
+robolang 2.0;
 
 task carry_crate(robot r, object item, location src, location dst, region lane) {
     goal { object_at item dst; }

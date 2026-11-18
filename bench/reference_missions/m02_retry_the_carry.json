@@ -1,0 +1,10 @@
+{
+  "task": "",
+  "mission": "carry_part",
+  "bindings": {
+    "r": "arm2",
+    "item": "part7",
+    "src": "table",
+    "dst": "inspection_bay"
+  }
+}

@@ -219,6 +219,7 @@ class _State:
         self.request: ActionRequest | None = None  # what the step just run requested (RoboLang 1.8)
         self.values: dict[str, Reading] = {}  # the bindings of `measure` (RoboLang 1.6)
         self.clock = Decimal(0)
+        self.origin = Decimal(0)  # the clock when the current run reached RUNNING (a mission's later runs start later)
         self.next_event = 0
         self.applied: list[AppliedEvent] = []
 
@@ -317,7 +318,8 @@ def _clock_reading(state: _State, kind: str, robot: str | None) -> Reading:
     `elapsed` is the simulated time since the run reached `RUNNING` (K6). Exact: uncertainty 0 (T7).
     """
     if kind == "elapsed":
-        return Reading(robot or "clock", kind, state.clock / 1000, "s", Decimal(0), "clock", state.clock)
+        return Reading(robot or "clock", kind, (state.clock - state.origin) / 1000, "s", Decimal(0), "clock",
+                       state.clock)
     clock = state.world.clock
     if clock is None:
         raise _StepFailed("S237")
@@ -394,8 +396,9 @@ def _evaluate(task: ir.Task, state: _State, bound: dict[str, str], condition: ir
     return Truth.UNKNOWN  # no sensor of that name is declared
 
 
-def _authorize(task: ir.Task, world: World, bindings: tuple[tuple[str, str], ...]):
-    """Section 4.3. Returns (limit results, Failure or None)."""
+def _authorize(task: ir.Task, world: World, bindings: tuple[tuple[str, str], ...],
+               elapsed_ms: Decimal = Decimal(0)):
+    """Section 4.3. Returns (limit results, Failure or None). `elapsed_ms`: the time gone before a mission's run."""
     bound = dict(bindings)
     robots = [bound[p.name] for p in task.parameters if p.type == "robot"]
     statuses: list[str] = []
@@ -430,7 +433,7 @@ def _authorize(task: ir.Task, world: World, bindings: tuple[tuple[str, str], ...
             statuses.append("failed_check")
             failure = Failure(code, "authorization", None, None, index, culprit)
     if failure is None:  # RoboLang 1.8: the declared actions, after the limits (decision 0040 A6, C7)
-        problems = action_problems(task, world, bound) or clock_problems(task, world, bound)
+        problems = action_problems(task, world, bound) or clock_problems(task, world, bound, elapsed_ms)
         if problems:
             failure = Failure(problems[0].code, "authorization", problems[0].step, None, None, problems[0].robot)
     return tuple(LimitResult(lim, status) for lim, status in zip(task.safety, statuses)), failure
@@ -605,9 +608,13 @@ def _check_inputs(task: ir.Task, world: World) -> None:
             raise SimulationInputError(f"the world scripts step {index}, outside the plan of task '{task.name}'")
 
 
-def run(task: ir.Task, world: World) -> RunResult:
+def run(task: ir.Task, world: World, state: _State | None = None) -> RunResult:
     """
     Run `task` against `world` in simulation (section 4). Never mutates `world`.
+
+    `state` is for a mission (RoboLang 2.0, decision 0041, spec/simulation-v1.0.md section 18): the one world and clock
+    of the mission, carried from one task run to the next. The run reads its facts, time and events from it, and its
+    times are mission time; the readings of an earlier run are gone. Without it the run starts a world of its own.
 
     `task` must come from the compiler (`compile_source`) or from `ir_reader.read_ir`, which re-validates
     a Task IR document in full, and `world` from `load_world` for that same task, as `robolang simulate`
@@ -617,8 +624,11 @@ def run(task: ir.Task, world: World) -> RunResult:
     _check_inputs(task, world)
     bindings = world.task.bindings
     bound = dict(bindings)
-    limits, authorization = _authorize(task, world, bindings)
-    state = _State(world)
+    if state is None:
+        state = _State(world)
+    state.values, state.request, state.origin = {}, None, state.clock
+    applied_before = len(state.applied)
+    limits, authorization = _authorize(task, world, bindings, state.clock)
     flat = list(ir.walk(task.steps))
 
     def not_run(done: dict[int, StepResult]) -> tuple[StepResult, ...]:
@@ -720,5 +730,5 @@ def run(task: ir.Task, world: World) -> RunResult:
     states.append("FAILED" if failure is not None else "CANCELLED" if cancelled is not None else "SUCCEEDED")
     return RunResult(
         task.name, bindings, tuple(states), states[-1], failure, cancelled, limits, pre, goal, results,
-        tuple(state.applied), state.clock, state.freeze(), tuple(decisions),
+        tuple(state.applied[applied_before:]), state.clock, state.freeze(), tuple(decisions),
     )

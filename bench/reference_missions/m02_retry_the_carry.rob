@@ -1,0 +1,17 @@
+// bench/reference_missions/m02_retry_the_carry.rob: the 2.0 reference (decision 0041)
+robolang 2.0;
+
+task transfer(robot r, object item, location src, location dst) {
+    goal { object_at item dst; }
+    plan {
+        move r to src;
+        grasp r item;
+        move r to dst;
+        place r item at dst;
+    }
+}
+
+mission carry_part(robot r, object item, location src, location dst) {
+    run transfer(r, item, src, dst);
+    on failure { retry 12; }
+}

@@ -1,0 +1,9 @@
+{
+  "task": "",
+  "mission": "three_rounds",
+  "bindings": {
+    "r": "tug1",
+    "home": "gate_in",
+    "far": "gate_out"
+  }
+}

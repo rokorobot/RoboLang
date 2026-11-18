@@ -1,24 +1,30 @@
-# RoboLang 1.9 language reference
+# RoboLang 2.0 language reference
 
 RoboLang is a small, checked language for robot tasks. A program describes a desired final state and
 a plan for reaching it in a symbolic world. A program is correct only when it validates, names the
 right entities, states the operator's requested outcome in `goal`, and reaches that goal.
 
-RoboLang 1.9 has bounded branching (`if`/`else`, see "Branching"), step failure handlers (a step
+RoboLang 2.0 has bounded branching (`if`/`else`, see "Branching"), step failure handlers (a step
 `else { ... }` that runs when that step fails, see "Failure handlers"), measured values (`measure`
 reads a temperature, a mass, a distance or a label from a sensor, see "Measured values"), region
 limits (`@safety no_go_region R;`, `@safety in_region R;`: where the robots may be while they move, see
 "Region limits"), declared actions (`do r open door;` asks a robot for an action its profile declares, and
-`in_state door "open"` checks the result, see "Declared actions") and clock readings (`measure r time as t;` reads the
-time of day, `22:00` is a time, `wait until clock_time >= 23:00 ...` waits for one, see "Clock readings"). It has no loops
-("until it works"), counts, dates, schedules, arithmetic, string formatting, message waits, limits on one
-step only, limits on an arm or a person, or
-variables beyond typed task parameters and the names that `measure` binds. Do not silently drop part of a request. If a request needs an unsupported construct, or the available
+`in_state door "open"` checks the result, see "Declared actions"), clock readings (`measure r time as t;` reads the
+time of day, `22:00` is a time, `wait until clock_time >= 23:00 ...` waits for one, see "Clock readings") and
+**missions** (a `mission` runs tasks one after another, again and again, with a hard bound: a count, a duration or a
+time of day, see "Missions"). A task itself never loops: it runs once. **A fixed count is not a mission:** "three round
+trips" is one task with the steps written out three times (a mission with `at most 3 runs` is also accepted), and
+"try the grasp once more" or "retry the step up to 3 times" is a failure handler, a program, not a decline. It has no
+repeat without a bound ("forever", "until it works" with no count or time), triggers ("every hour", "every morning",
+"at 06:00", "when a message arrives"), loops inside loops, choosing the next object at run time, dates, arithmetic,
+string formatting, message waits, limits on one step only, limits on an arm or a person, or variables beyond typed
+parameters and the names that `measure` binds. Do not silently drop part of a request. If a request needs an unsupported construct, or the available
 world and robots cannot perform it, say that it cannot be represented or completed.
 
 ## File and task structure
 
-A file starts with `robolang 1.9;` and holds one or more tasks. `//` starts a comment. The language
+A file starts with `robolang 2.0;` and holds one or more tasks, and missions that run them (see "Missions"). A file of
+tasks only needs no mission. `//` starts a comment. The language
 is case-sensitive. Whitespace only separates tokens.
 
 ```text
@@ -43,6 +49,7 @@ robolang task pre plan goal robot object location region sensor move grasp place
 to at using with for until timeout robot_ready region_clear object_exists sensor_ok object_at robot_at holding
 and or not in_region with_approach no_go_region require_guard message_received scalar duration
 if else fail measure as do in_state clock_time clock_elapsed
+mission repeat run runs stop continue retry
 ```
 
 Numbers are unsigned decimals (`2`, `0.5`); there is no sign or exponent. A duration is a number
@@ -104,9 +111,9 @@ if region_clear cell {
   must not be empty (`E307`).
 - `if` is nested at most 4 deep (`E216`). `if` cannot be used in `pre` or in a `wait until` condition.
 - An `if` is decided by the world, not by whether an earlier step worked. To react to a failed step,
-  use a failure handler (below). Nothing is repeated, counted, or timed: if a request needs a loop
-  ("until it works", "as many times as it takes"), elapsed time, or waiting for a message, it cannot
-  be represented: say so.
+  use a failure handler (below). Nothing inside a task is repeated, counted, or timed: repeating whole
+  task runs with a stated bound is a mission ("Missions"). A request that needs a loop with no bound
+  ("until it works", "as many times as it takes"), or waiting for a message, cannot be represented: say so.
 
 **A condition about the moment the job runs is decided by the program, with `if`.** When the request
 says "if arm1 is ready when the job starts", "if the cell is clear at that moment", "if the box is
@@ -146,8 +153,10 @@ wait until region_clear aisle timeout 10 s else {
 - **A fixed number of retries is allowed:** a handler may repeat its step, and handlers nest, so
   `grasp r box else { grasp r box else { grasp r box; } }` is up to three attempts. A handler counts
   as one nesting level, as an `if` does: at most 4 in all (`E216`). For more attempts, follow with
-  `if not holding r box { grasp r box else { ... } }` steps. "Until it works" or "as many times as
-  it takes" is a loop: it cannot be represented.
+  `if not holding r box { grasp r box else { ... } }` steps. "Retry the step up to 3 times" and "try
+  once more, then stop" are this: write the handler, do not decline them. "Until it works" or "as many
+  times as it takes", with no number of tries, is a loop with no bound: it cannot be represented. Retrying a
+  whole task run is a mission ("Missions").
 - A path is one choice at each `if` and at each handled step (it worked, or its handler ran). Every
   path needs a goal or must end in `fail` (`E309`).
 
@@ -236,7 +245,7 @@ communicate r to "lead" with now;          // a time is sent as HH:MM:SS; an ela
 ```
 
 ```rob
-robolang 1.9;
+robolang 2.0;
 
 task tote_if_open(robot r, object tote, location inb, location outb) {
     plan {
@@ -313,7 +322,7 @@ goal { in_state door "open"; }      // the result is checked, never assumed
 ```
 
 ```rob
-robolang 1.9;
+robolang 2.0;
 
 task restock(robot r, object closet, object kit, location ward, location store) {
     goal { in_state closet "open"; object_at kit ward; }
@@ -429,7 +438,7 @@ Both words go after `@safety`, name a `region` parameter, and are written before
 order with `max_speed`. Bind the parameter to the region of the world that the request names, by its exact ID.
 
 ```rob
-robolang 1.9;
+robolang 2.0;
 
 task to_lobby(robot r, location lobby, region wet) {
     @safety no_go_region wet;
@@ -469,6 +478,89 @@ task to_lobby(robot r, location lobby, region wet) {
   inside, where the world lists the region's locations (`S004`), (3) the robot starts there (`S005`), or (4) the request
   hands the job to the delegated Core executor: Core carries no region limits, so a task with one cannot be
   delegated.
+
+## Missions
+
+A **mission** runs tasks one after another. Every task run is a complete run with its own `pre`, limits, steps and goal; the
+mission only decides whether to start the next one. It is written next to the tasks it runs, in the same file.
+
+```text
+mission NAME(type param, ...) {
+    repeat at most 30 runs, for at most 90 min {     // a hard bound: a count, a duration, or both
+        run TASK(param, param, ...);                 // one or more run lines, each a run of a task of the file
+    } until region_clear cell;                       // `until` is optional; the repeat always ends with `;`
+    on failure { stop; }                             // optional: stop (default), continue, or retry 3
+}
+```
+
+```rob
+robolang 2.0;
+
+task round(robot r, location home, location far) {
+    goal { robot_at r home; }
+    plan { move r to far; wait for 5 s; move r to home; }
+}
+
+mission shuttle(robot r, location home, location far, region quay) {
+    repeat at most 12 runs, for at most 480 min {
+        run round(r, home, far);
+    } until region_clear quay;
+    on failure { continue; }
+}
+```
+
+- **Parameters and `run`.** A mission has typed parameters like a task. `run round(r, home, far);` starts a run of a task of
+  the file, with one parameter of the mission for each parameter of the task, in order and of the same type (`E326`
+  for a task that is not in the file, a mission or the wrong number of arguments; `E303`, `E304` for the names and
+  types). Bind the **mission's** parameters to world entities, as for a task. Several `run` lines may stand in one
+  `repeat`: they run in order, then again, and each run counts towards the bound ("carry it there, then carry it back, 24
+  carries in all" is two `run` lines and `at most 24 runs`).
+- **Every repeat has a hard bound** (`E325` with none): `at most N runs` (1 to 1000), `for at most D` (a duration in `ms`,
+  `s` or `min`: **no hours, 3 hours are `180 min`**), or an `until clock_time >= T` (a time of day, "until 22:00"), alone or
+  with a count. Give exactly the bounds the request states: a count when it says "30 times", a duration when it says
+  "for 2 hours", both when it says both, and never a count that was not asked for (a duration-only request is
+  `for at most 120 min` with no `at most`).
+- **`until`** takes the conditions of a `pre` (`region_clear r`, `object_at o l`, `robot_at`, `holding`, `object_exists`,
+  `in_state`, with `and`, `or`, `not`) over the mission's parameters, or a comparison with a live reading or the
+  clock like `wait until` (`until temperature of pan using probe < 40 degC;`, `until clock_time >= 22:00;`). It is
+  checked after each run, and the mission ends when it holds. A value that cannot be read, or a fact the world lacks,
+  stops the mission (`S402`); the mission never goes on as if it were false. A `measure` name is not available in a
+  mission (`E317`).
+- **`on failure`** says what follows a run that failed. `stop;` (the default, when the request says nothing about
+  failures) ends the mission as failed; `continue;` records the failed run and goes on with the next ("note it and go
+  on", "do not stop the job"); `retry N;` runs the same task again, at most N more times, and the mission fails when
+  they are used up ("run it again up to 12 more times"). Retries count against the bound.
+- **A mission with no `repeat`** is one run, with `on failure { retry N; }`: "carry it, and if it fails, again, up to 12
+  more times, then stop" is `run transfer(...);` and `on failure { retry 12; }`. It has exactly one `run` line.
+- **Time.** All the runs share one world and one clock: an object stays where a run left it, a wait in a task advances
+  the mission's time, and a world event is seen when the time reaches it. The duration is checked **before** each run
+  and a run that has started is never cut: 10-minute runs in 3 hours are 18 runs. A task whose waits alone are longer than
+  the duration cannot run even once, so the request is infeasible (`S401`): "12 rounds of 5 minutes within 30 minutes".
+- **How it ends.** `completed` (the `until` holds, or the one run was done), `bounded` (a count or duration was reached),
+  `failed` (a run failed under `stop`, retries were used up, or every run failed under `continue`) or `stopped` (the
+  `until` is unknown). A mission never claims more than its runs verified.
+- **A robot never receives a mission:** the planner runs it, and each task run goes to the robot as an ordinary task.
+- **A fixed count needs no mission.** "Three round trips" is one task with the steps written out, a program (a mission
+  with `at most 3 runs` is also accepted); "retry the grasp up to twice" is a failure handler (see "Failure handlers"):
+
+```rob
+robolang 2.0;
+
+task three_round_trips(robot r, location a, location b) {
+    goal { robot_at r a; }
+    plan { move r to b; move r to a; move r to b; move r to a; move r to b; move r to a; }
+}
+```
+
+- **Not in the language** (decline as `inexpressible`): **no bound** ("forever", "keep going", "until it works",
+  "until I tell you to stop", "as long as it takes": do not invent one); **triggers** ("every hour", "every morning",
+  "every 10 minutes", "at 06:00", "each time a message arrives", "when the oven is hot": a mission starts a run when the
+  last one is done, never at a time or on an event, and "wait 60 min" at the end of a task is a different request);
+  **nesting** (a loop inside a loop, a mission that runs a mission); **choosing the next object at run time** ("every
+  part that arrives", "the next blank": a mission repeats a task whose parameters are fixed). A request whose count is
+  small and fixed is **not** one of these: "three round trips" is one task with the steps repeated, and "retry the
+  grasp up to twice" is a failure handler; neither is declined. A request that contradicts itself ("12 runs in all, and
+  20 retries on top of the first") or cannot fit its own time is `infeasible`.
 
 ## What symbolic simulation requires
 
@@ -522,6 +614,10 @@ are:
 | `E319` | kinds that do not match: a unit of another kind, a string against a quantity, a time against a duration or an elapsed value, a retry of another kind |
 | `E320` | `==` or `!=` on a quantity, a time or an elapsed value, or ordering on a label |
 | `E321` | a comparison in `pre` or `goal` |
+| `E325` | a `repeat` with no hard bound (no count, duration or time of day to end at), or a count over its cap (1000 runs, 100 retries) |
+| `E326` | a `run` of something that is not a task of the file (a mission, an unknown name), or with the wrong number of arguments |
+| `S401` | a mission's task cannot fit its duration bound even once: its waits alone are longer |
+| `S402` | a mission's `until` is unknown after a run: the mission stops |
 | `E322` | a live reading or `clock_time` / `clock_elapsed` anywhere but the condition of a `wait until` |
 | `S010` | `wait until clock_time >= T` where T has already passed when the task starts |
 | `S237` | a `time` reading and the world has no clock |
@@ -547,7 +643,7 @@ records completion. Its parameters still
 need bindings to concrete world entities before simulation.
 
 ```rob
-robolang 1.9;
+robolang 2.0;
 
 task deliver(robot r, object box, location src, location dst, region cell, sensor camera) {
     @safety max_speed 0.5 m/s;
@@ -571,7 +667,7 @@ This task chooses at run time. If the cell is clear when the job reaches the `if
 `a`; otherwise it goes to `b`. Each path has its own goal.
 
 ```rob
-robolang 1.9;
+robolang 2.0;
 
 task route(robot r, object box, location src, location a, location b, region cell) {
     plan {
@@ -593,7 +689,7 @@ task route(robot r, object box, location src, location a, location b, region cel
 This task retries a failed grasp once. If the second grasp also fails, it reports and stops.
 
 ```rob
-robolang 1.9;
+robolang 2.0;
 
 task fetch(robot r, object box, location src, location dst) {
     goal { object_at box dst; }
@@ -617,7 +713,7 @@ reading to the "pass" channel, and moves the pan only if the reading is clearly 
 may be too hot.
 
 ```rob
-robolang 1.9;
+robolang 2.0;
 
 task check_pan(robot r, object pan, sensor probe, location src, location dst) {
     goal { object_at pan dst; }

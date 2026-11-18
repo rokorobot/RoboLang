@@ -1,0 +1,17 @@
+// bench/reference_missions/m09_open_the_oven_door.rob: the 2.0 reference (decision 0041)
+robolang 2.0;
+
+task open_it(robot r, object door, location st) {
+    goal { in_state door "open"; }
+    plan {
+        move r to st;
+        do r open door;
+    }
+}
+
+mission open_oven(robot r, object door, location st) {
+    repeat at most 15 runs {
+        run open_it(r, door, st);
+    } until in_state door "open";
+    on failure { continue; }
+}

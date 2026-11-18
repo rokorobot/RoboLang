@@ -310,8 +310,10 @@ def test_old_answers_are_programs_and_new_ones_are_read_fully():
 
 def test_the_schema_requires_every_field_and_closes_the_objects():
     schema = lib.ANSWER_SCHEMA
-    assert list(schema["properties"]) == ["decision", "category", "reason", "entities", "rob", "task", "bindings"]
-    assert schema["required"] == list(schema["properties"]) and schema["additionalProperties"] is False
+    assert list(schema["properties"]) == ["decision", "category", "reason", "entities", "rob", "task", "bindings",
+                                          "mission"]
+    # RoboLang 2.0 (decision 0041, clarification 4): `mission` is the one optional key
+    assert schema["required"] == list(schema["properties"])[:-1] and schema["additionalProperties"] is False
     assert schema["properties"]["decision"]["enum"] == ["program", "cannot", "clarify"]
     assert schema["properties"]["category"]["enum"] == ["inexpressible", "infeasible", "none"]
 

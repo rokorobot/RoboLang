@@ -75,6 +75,7 @@ A closed gripper whose object marker no camera sees gives `unknown`; so does `ro
 | S511 | The run was cancelled (stop file) |
 | S512 | The run's deadline passed |
 | S513 | The run's authorization was revoked (stop file) |
+| S514 | The name given as the task is a mission (RoboLang 2.0, decision 0041 M8): a mission runs on the planner's side and this backend is sent tasks only; refused before any motion |
 
 S101, S102, S301 and S302 have their [simulation](simulation-v1.0.md) meanings, decided from observations.
 

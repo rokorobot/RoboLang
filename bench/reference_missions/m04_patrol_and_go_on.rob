@@ -1,0 +1,19 @@
+// bench/reference_missions/m04_patrol_and_go_on.rob: the 2.0 reference (decision 0041)
+robolang 2.0;
+
+task patrol(robot r, location a, location b, location c, location d) {
+    goal { robot_at r a; }
+    plan {
+        move r to b;
+        move r to c;
+        move r to d;
+        move r to a;
+    }
+}
+
+mission patrol_rounds(robot r, location a, location b, location c, location d) {
+    repeat at most 12 runs {
+        run patrol(r, a, b, c, d);
+    };
+    on failure { continue; }
+}

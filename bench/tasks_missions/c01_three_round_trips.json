@@ -6,9 +6,47 @@
   "expect": {
     "decision": "program"
   },
+  "expect_1_9": {
+    "decision": "program"
+  },
   "expect_2_0": {
     "decision": "program",
-    "expected_mission": null
+    "expected_mission": null,
+    "accepted_mission": {
+      "runs": [
+        {
+          "task": "round",
+          "entities": [
+            "tug1",
+            "gate_in",
+            "gate_out"
+          ],
+          "goal": [
+            [
+              "rl:robot:tug1",
+              "located_in",
+              "rl:place:gate_in"
+            ]
+          ]
+        }
+      ],
+      "repeat": {
+        "max_runs": 3,
+        "max_duration": null
+      },
+      "until": null,
+      "on_failure": "stop",
+      "policy_stated": false,
+      "paths": [
+        {
+          "when": "every round works: three runs of one round",
+          "world_patch": {},
+          "outcome": "bounded",
+          "runs": 3,
+          "runs_verified": 3
+        }
+      ]
+    }
   },
   "expected_goal": [
     [

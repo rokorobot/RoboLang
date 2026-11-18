@@ -1,0 +1,16 @@
+// RoboLang v2.0 fixture: invalid
+// expect: error E319 (static) line 15
+// why: a reading is compared with its own kind
+
+robolang 2.0;
+
+task round(robot r, location home, location far) {
+    goal { robot_at r home; }
+    plan { move r to far; wait for 5 s; move r to home; }
+}
+
+mission m(robot r, location home, location far, object pan, sensor probe) {
+    repeat at most 3 runs {
+        run round(r, home, far);
+    } until temperature of pan using probe < 40 mm;
+}

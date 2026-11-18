@@ -2,15 +2,69 @@
   "id": "x07_until_ten_to_ten",
   "prompt": "With tug1, drive from gate_in to gate_out, wait 5 minutes and drive back to gate_in. Repeat that round until 22:00, but for at most 40 rounds.",
   "world": "bench/worlds/yard_1_5_2130.json",
-  "group": "inexpressible",
+  "group": "mission_until",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_9": {
     "decision": "cannot",
     "category": "inexpressible"
   },
   "expect_2_0": {
-    "decision": "cannot",
-    "category": "inexpressible",
-    "because": "0041 M3 (open point 2)"
+    "decision": "program",
+    "expected_mission": {
+      "runs": [
+        {
+          "task": "round",
+          "entities": [
+            "tug1",
+            "gate_in",
+            "gate_out"
+          ],
+          "goal": [
+            [
+              "rl:robot:tug1",
+              "located_in",
+              "rl:place:gate_in"
+            ]
+          ]
+        }
+      ],
+      "repeat": {
+        "max_runs": 40,
+        "max_duration": null
+      },
+      "until": {
+        "condition": "clock_time >= 22:00",
+        "triples": []
+      },
+      "on_failure": "stop",
+      "policy_stated": false
+    },
+    "paths": [
+      {
+        "when": "the clock starts at 21:30 and a round takes 5 minutes: the sixth round ends at 22:00",
+        "world_patch": {},
+        "outcome": "completed",
+        "runs": 6,
+        "runs_verified": 6
+      },
+      {
+        "when": "round 3 fails: the mission stops",
+        "world_patch": {},
+        "run_faults": [
+          {
+            "run": 3
+          }
+        ],
+        "outcome": "failed",
+        "runs": 3,
+        "runs_verified": 2,
+        "failed_runs": [
+          3
+        ]
+      }
+    ]
   },
   "gap": "G-LOOP",
   "tags": [
@@ -20,6 +74,6 @@
     "count_bound",
     "clock_time"
   ],
-  "why": "The `until` is a time of day. 1.9 allows a time comparison in `if` and `wait until` only (`E321` in `pre` and `goal`), and M3 reuses the conditions of tasks: read that way, a clock `until` stays out. The request states a bound (40 rounds), so only the condition decides. If the owner allows the clock in `until` (open point 2) this becomes a program.",
+  "why": "Clarification 2 of 0041: a time-of-day `until` is a hard bound under M2 and may be read live as in `wait until`. The request states a count too (40 rounds), so both bounds are in the program; it became a program when the owner approved clarification 2 (2026-11-18).",
   "attempt_fails_with": "E201"
 }

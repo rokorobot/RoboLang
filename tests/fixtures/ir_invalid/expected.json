@@ -178,5 +178,13 @@
   "I225_nine_region_limits.json": [
     "I225",
     "/tasks/0/safety/8"
+  ],
+  "I226_repeat_without_a_bound.json": [
+    "I226",
+    "/missions/0/repeat"
+  ],
+  "I227_run_names_no_task.json": [
+    "I227",
+    "/missions/0/runs/0/task"
   ]
 }

@@ -103,9 +103,9 @@ def test_versions():
 
 
 def test_unsupported_versions_list_all_supported_ones():
-    raised = error("robolang 2.0;\n" + task(version=None))
+    raised = error("robolang 2.1;\n" + task(version=None))
     assert (raised.code, raised.line, raised.column) == ("E213", 1, 10)
-    assert "1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8 and 1.9" in str(raised)
+    assert "1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9 and 2.0" in str(raised)
 
 
 # -------- syntax and AST (spec 3, 6) --------
@@ -776,8 +776,8 @@ def test_version_lists_all_languages_and_schemas():
     from robolang import cli as cli_module
 
     assert cli_module.version_text().endswith(
-        "(language 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8 and 1.9, "
-        "IR schema 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7 and 1.8)")
+        "(language 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9 and 2.0, "
+        "IR schema 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7 and 1.8, mission IR 1.0)")
     assert cli_module._joined(["1.1"]) == "1.1" and cli_module._joined(["1.1", "1.2"]) == "1.1 and 1.2"
 
 

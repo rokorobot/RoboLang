@@ -7,12 +7,16 @@
     "decision": "cannot",
     "category": "inexpressible"
   },
+  "expect_1_9": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
   "expect_2_0": {
     "decision": "cannot",
     "category": "inexpressible",
     "because": "0041 M6"
   },
-  "gap": "G-LOOP",
+  "gap": "G-TRIGGER",
   "tags": [
     "mission",
     "every",

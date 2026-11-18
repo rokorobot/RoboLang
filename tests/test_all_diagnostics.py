@@ -247,3 +247,22 @@ def test_clock_reading_errors_are_all_reported_with_the_others():
         "  }\n}\n"
     )
     assert errors(source) == [("E318", 6), ("E319", 7), ("E322", 8), ("E320", 9)]
+
+
+def test_mission_errors_are_all_reported_with_the_others():
+    """RoboLang 2.0 (decision 0041): E326, E304, E303, E325 and E317 in missions of one file, each at its own line."""
+    source = (
+        "robolang 2.0;\n"
+        "task round(robot r, location a) {\n  goal { robot_at r a; }\n  plan { move r to a; }\n}\n"
+        "mission one(robot r, location a, region q) {\n"
+        "  repeat at most 3 runs {\n"
+        "    run rounds(r, a);\n"  # 8: E326
+        "    run round(q, a);\n"  # 9: E304
+        "    run round(r, nowhere);\n"  # 10: E303
+        "  } until t < 4 degC;\n"  # 11: E317
+        "}\n"
+        "mission two(robot r, location a) {\n"
+        "  repeat {\n    run round(r, a);\n  };\n"  # 14: E325
+        "}\n"
+    )
+    assert errors(source) == [("E326", 8), ("E304", 9), ("E303", 10), ("E317", 11), ("E325", 14)]

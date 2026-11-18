@@ -179,8 +179,8 @@ def test_error_reports_filename_and_position():
 
 def test_lexer_is_lazy():
     """Text after the tokens already requested is not examined."""
-    lexer = Lexer("robolang 2.0; # ~ not v1.1 syntax")
+    lexer = Lexer("robolang 2.1; # ~ not v1.1 syntax")
 
-    assert [lexer.next_token().text for _ in range(3)] == ["robolang", "2.0", ";"]
+    assert [lexer.next_token().text for _ in range(3)] == ["robolang", "2.1", ";"]
     with pytest.raises(RoboLangError):
         lexer.next_token()

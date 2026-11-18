@@ -2,15 +2,81 @@
   "id": "x06_until_it_is_cool",
   "prompt": "With chef_arm, measure the temperature of pan_1 with probe_temp and send the reading to channel \"pass\", then wait 1 minute. Repeat that for at most 30 times, until the reading is below 40 degrees Celsius.",
   "world": "bench/worlds/kitchen_values_1_4.json",
-  "group": "inexpressible",
+  "group": "mission_until",
   "expect": {
+    "decision": "program"
+  },
+  "expect_1_9": {
     "decision": "cannot",
     "category": "inexpressible"
   },
   "expect_2_0": {
-    "decision": "cannot",
-    "category": "inexpressible",
-    "because": "0041 M3 (open point 2)"
+    "decision": "program",
+    "expected_mission": {
+      "runs": [
+        {
+          "task": "read_pan",
+          "entities": [
+            "chef_arm",
+            "pan_1",
+            "probe_temp"
+          ],
+          "extra_entities_ok": true,
+          "goal_free": true,
+          "messages": [
+            {
+              "channel": "pass",
+              "value_of": [
+                "pan_1",
+                "temperature"
+              ]
+            }
+          ]
+        }
+      ],
+      "repeat": {
+        "max_runs": 30,
+        "max_duration": null
+      },
+      "until": {
+        "condition": "temperature of pan_1 using probe_temp < 40 degC",
+        "triples": []
+      },
+      "on_failure": "stop",
+      "policy_stated": false
+    },
+    "paths": [
+      {
+        "when": "pan_1 cools to 35 degC at 100 s: after run 2 (120 s) the reading is below 40 degC",
+        "world_patch": {
+          "events": [
+            {
+              "at": {
+                "value": "100",
+                "unit": "s"
+              },
+              "fact": "property",
+              "target": "pan_1",
+              "property": "temperature",
+              "value": {
+                "value": "35",
+                "unit": "degC"
+              }
+            }
+          ]
+        },
+        "outcome": "completed",
+        "runs": 2,
+        "runs_verified": 2
+      },
+      {
+        "when": "pan_1 stays at 55 degC: 30 runs fill the bound",
+        "world_patch": {},
+        "outcome": "bounded",
+        "runs": 30,
+        "runs_verified": 30
+      }
+    ]
   },
   "gap": "G-LOOP",
   "tags": [
@@ -19,6 +85,6 @@
     "measured_condition",
     "count_bound"
   ],
-  "why": "The `until` is a comparison of a measured value. M3 allows \"the conditions tasks already use\", and a comparison is not allowed in `pre` or `goal` (`E321`): read that way, it stays out. If the owner allows values in `until` (open point 2) this becomes a program with the `until` as stated.",
+  "why": "Clarification 2 of 0041: an `until` may compare a live reading with a value, read as in `wait until`. The request states its bound (30 times) and the reading is taken again after each run, so it is a program; it became one when the owner approved clarification 2 (2026-11-18).",
   "attempt_fails_with": "E201"
 }
