@@ -1,0 +1,13 @@
+// bench/reference_kinds/c04_label_the_plant.rob: hand-written reference
+robolang 2.1;
+
+task weed_check(robot r, object plant, sensor cam, location here) {
+    goal { robot_at r here; }
+    plan {
+        move r to here;
+        measure r label of plant using cam as what;
+        if what == "weed" {
+            communicate r to "ops" with "weed";
+        }
+    }
+}

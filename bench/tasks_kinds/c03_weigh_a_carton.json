@@ -1,0 +1,50 @@
+{
+  "id": "c03_weigh_a_carton",
+  "prompt": "With picker_s, weigh carton_2 with scale_picker and tell channel \"lead\" the weight.",
+  "world": "bench/worlds/stockroom.json",
+  "group": "control",
+  "expect": {
+    "decision": "program"
+  },
+  "expect_2_1": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "carton_2 weighs 2.5 kg: the reading is sent as a value",
+        "goal": [
+          [
+            "rl:robot:picker_s",
+            "located_in",
+            "rl:place:backroom"
+          ]
+        ],
+        "messages": [
+          {
+            "channel": "lead",
+            "value_of": [
+              "carton_2",
+              "mass"
+            ]
+          }
+        ],
+        "world_patch": {}
+      }
+    ]
+  },
+  "expect_2_2": {
+    "decision": "program"
+  },
+  "expected_readings": [
+    [
+      "picker_s",
+      "mass",
+      "carton_2"
+    ]
+  ],
+  "tags": [
+    "measure",
+    "mass",
+    "send_value",
+    "no_new_kind"
+  ]
+}

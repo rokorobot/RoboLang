@@ -2,13 +2,45 @@
   "id": "u02_if_damaged",
   "prompt": "Have crane 2 scan container 102 with its camera; if the scan shows damage, move it to the workshop, otherwise to berth 2.",
   "world": "bench/worlds/yard.json",
-  "group": "inexpressible",
+  "group": "infeasible",
   "expect": {
+    "decision": "cannot",
+    "category": "infeasible"
+  },
+  "expect_1_3": {
     "decision": "cannot",
     "category": "inexpressible"
   },
   "tags": [
-    "branching"
+    "branching",
+    "sensor_does_not_measure_the_kind"
   ],
-  "why": "RoboLang 1.3 has no conditional statement, and inspect yields no condition a plan could test."
+  "why": "Infeasible (erratum K6, decision 0044): under 1.6 a `label` reading expresses \"damaged or not\", but cam_c2, crane 2's camera, measures no `label` in this world (S234). With a label sensor, the attempt reads it and branches. The 1.3 reason (no conditional statement) is history.",
+  "why_1_3": "RoboLang 1.3 has no conditional statement, and inspect yields no condition a plan could test.",
+  "blockers": [
+    "cam_c2"
+  ],
+  "fix_patch": {
+    "world_schema_version": "1.2",
+    "sensors": {
+      "cam_c2": {
+        "measures": {
+          "label": {
+            "contact": false
+          }
+        }
+      }
+    },
+    "objects": {
+      "cont_102": {
+        "properties": {
+          "label": {
+            "value": "damaged"
+          }
+        }
+      }
+    }
+  },
+  "attempt_fails_with": "S234",
+  "erratum": "K6 (decision 0044), docs/evidence/bench-errata-2-2.md"
 }

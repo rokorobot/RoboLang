@@ -1,0 +1,9 @@
+{
+  "task": "scan_on_signal",
+  "bindings": {
+    "r": "scanbot1",
+    "shelf": "shelf_1",
+    "reader": "tag_scan1",
+    "aisle": "aisle_1"
+  }
+}

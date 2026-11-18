@@ -1,0 +1,11 @@
+{
+  "task": "scan_container",
+  "bindings": {
+    "r": "crane2",
+    "box": "cont_102",
+    "cam": "cam_c2",
+    "berth": "berth_1",
+    "shop": "workshop",
+    "bay": "berth_2"
+  }
+}

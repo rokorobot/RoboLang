@@ -1,0 +1,13 @@
+// bench/reference_kinds/k03_shelf_three_out_of_stock.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 2.1;
+
+task check_stock(robot r, object shelf, sensor reader, location aisle) {
+    goal { robot_at r aisle; }
+    plan {
+        move r to aisle;
+        measure r count of shelf using reader as n;                                                 // @reading
+        if n == 0 {                                                                                 // @reading
+            communicate r to "lead" with "shelf_3 is out of stock";                                 // @reading
+        }                                                                                           // @reading
+    }
+}

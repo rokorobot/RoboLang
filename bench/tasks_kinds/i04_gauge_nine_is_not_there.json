@@ -1,0 +1,40 @@
+{
+  "id": "i04_gauge_nine_is_not_there",
+  "prompt": "With crawler2, read gauge_p9 with cam_crawler2 and, if the pressure is above 6 bar, tell channel \"maintenance\" \"pump 9 over pressure\".",
+  "world": "bench/worlds/plant_room.json",
+  "group": "infeasible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_2": {
+    "decision": "cannot",
+    "category": "infeasible",
+    "because": "S213",
+    "world_2_2": {
+      "sensors": {
+        "cam_crawler2": {
+          "measures": {
+            "pressure": {
+              "unit": "bar",
+              "uncertainty": "0.05",
+              "contact": false
+            }
+          }
+        }
+      },
+      "objects": {}
+    }
+  },
+  "blockers": [
+    "gauge_p9"
+  ],
+  "gap": "G-PERCEIVE",
+  "tags": [
+    "pressure",
+    "object_not_present",
+    "no_else_path"
+  ],
+  "why": "Infeasible in 2.2: gauge_p9 is not present in the world (S213, S214): the sensor measures `pressure`, the robot carries it, and there is no object to read. Under 2.1 the attempt fails earlier, with E217.",
+  "attempt_fails_with": "E217"
+}

@@ -1,0 +1,58 @@
+{
+  "id": "i02_the_camera_is_on_the_other_robot",
+  "prompt": "With scanbot1, read how full shelf_3 is with cam_scan2 and, if it is less than 10 percent full, tell channel \"lead\" \"restock shelf_3\".",
+  "world": "bench/worlds/stockroom.json",
+  "group": "infeasible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_2": {
+    "decision": "cannot",
+    "category": "infeasible",
+    "because": "S231",
+    "world_2_2": {
+      "sensors": {
+        "cam_scan1": {
+          "measures": {
+            "fill": {
+              "unit": "%",
+              "uncertainty": "2",
+              "contact": false
+            }
+          }
+        },
+        "cam_scan2": {
+          "measures": {
+            "fill": {
+              "unit": "%",
+              "uncertainty": "2",
+              "contact": false
+            }
+          }
+        }
+      },
+      "objects": {
+        "shelf_3": {
+          "properties": {
+            "fill": {
+              "value": "6",
+              "unit": "%"
+            }
+          }
+        }
+      }
+    }
+  },
+  "blockers": [
+    "cam_scan2"
+  ],
+  "gap": "G-PERCEIVE",
+  "tags": [
+    "fill",
+    "sensor_elsewhere",
+    "no_else_path"
+  ],
+  "why": "Infeasible in 2.2: cam_scan2 measures `fill` but is mounted on scanbot2, not on scanbot1 (S231), as in 1.6's `i03_probe_elsewhere`. Under 2.1 the attempt fails earlier, with E217.",
+  "attempt_fails_with": "E101"
+}

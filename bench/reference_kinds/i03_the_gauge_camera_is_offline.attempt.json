@@ -1,0 +1,9 @@
+{
+  "task": "read_gauge",
+  "bindings": {
+    "r": "crawler3",
+    "gauge": "gauge_p1",
+    "cam": "cam_crawler3",
+    "pump": "pump_1"
+  }
+}

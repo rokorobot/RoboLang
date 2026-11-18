@@ -1,0 +1,23 @@
+{
+  "id": "x01_packaging_looks_worn",
+  "prompt": "With scanbot1, look at shelf_1 with cam_scan1 and, if its packaging looks worn, tell channel \"lead\" \"shelf_1 needs new packaging\".",
+  "world": "bench/worlds/stockroom.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_2": {
+    "decision": "cannot",
+    "category": "inexpressible",
+    "because": "0044 K8"
+  },
+  "gap": "G-PERCEIVE",
+  "tags": [
+    "wear",
+    "free_kind",
+    "if"
+  ],
+  "why": "A kind no sensor can declare (0044 K8): how worn something looks is not `fill`, `confidence`, `pressure` or `count`, and the world cannot name new kinds. A decline is the right answer; 2.2 does not add it.",
+  "attempt_fails_with": "E101"
+}

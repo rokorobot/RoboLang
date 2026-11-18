@@ -1,0 +1,13 @@
+// bench/reference_kinds/x01_packaging_looks_worn.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 2.1;
+
+task check_wear(robot r, object shelf, sensor cam, location aisle) {
+    goal { robot_at r aisle; }
+    plan {
+        move r to aisle;
+        measure r wear of shelf using cam as w;                                                     // @reading
+        if w > 50 % {                                                                               // @reading
+            communicate r to "lead" with "shelf_1 needs new packaging";                             // @reading
+        }                                                                                           // @reading
+    }
+}

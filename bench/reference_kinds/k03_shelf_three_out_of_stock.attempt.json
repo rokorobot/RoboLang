@@ -1,0 +1,9 @@
+{
+  "task": "check_stock",
+  "bindings": {
+    "r": "scanbot1",
+    "shelf": "shelf_3",
+    "reader": "tag_scan1",
+    "aisle": "aisle_3"
+  }
+}

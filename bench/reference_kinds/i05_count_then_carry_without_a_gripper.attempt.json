@@ -1,0 +1,11 @@
+{
+  "task": "restock_if_empty",
+  "bindings": {
+    "r": "scanbot1",
+    "shelf": "shelf_1",
+    "carton": "carton_1",
+    "reader": "tag_scan1",
+    "aisle": "aisle_1",
+    "room": "backroom"
+  }
+}

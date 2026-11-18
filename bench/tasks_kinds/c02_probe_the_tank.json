@@ -1,0 +1,81 @@
+{
+  "id": "c02_probe_the_tank",
+  "prompt": "With crawler1, take the temperature of tank_1 with probe_crawler1 and, if it is above 60 degC, tell channel \"maintenance\" \"tank_1 is hot\"; if it is not, tell no one.",
+  "world": "bench/worlds/plant_room.json",
+  "group": "control",
+  "expect": {
+    "decision": "program"
+  },
+  "expect_2_1": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "tank_1 at 70 degC: above 60 degC",
+        "goal": [
+          [
+            "rl:robot:crawler1",
+            "located_in",
+            "rl:place:tank_farm"
+          ]
+        ],
+        "messages": [
+          [
+            "maintenance",
+            "tank_1 is hot"
+          ]
+        ],
+        "world_patch": {
+          "objects": {
+            "tank_1": {
+              "properties": {
+                "temperature": {
+                  "value": "70",
+                  "unit": "degC"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "when": "tank_1 at 40 degC: not above 60 degC",
+        "goal": [
+          [
+            "rl:robot:crawler1",
+            "located_in",
+            "rl:place:tank_farm"
+          ]
+        ],
+        "messages": [],
+        "world_patch": {
+          "objects": {
+            "tank_1": {
+              "properties": {
+                "temperature": {
+                  "value": "40",
+                  "unit": "degC"
+                }
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "expect_2_2": {
+    "decision": "program"
+  },
+  "expected_readings": [
+    [
+      "crawler1",
+      "temperature",
+      "tank_1"
+    ]
+  ],
+  "tags": [
+    "measure",
+    "temperature",
+    "if",
+    "no_new_kind"
+  ]
+}

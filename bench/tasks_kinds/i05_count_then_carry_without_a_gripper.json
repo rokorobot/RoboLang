@@ -1,0 +1,46 @@
+{
+  "id": "i05_count_then_carry_without_a_gripper",
+  "prompt": "With scanbot1, drive to aisle_1, count the items on shelf_1 with tag_scan1 and, if there are none, carry carton_1 from the backroom to aisle_1.",
+  "world": "bench/worlds/stockroom.json",
+  "group": "infeasible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_2": {
+    "decision": "cannot",
+    "category": "infeasible",
+    "because": "S2xx (no gripper)",
+    "world_2_2": {
+      "sensors": {
+        "tag_scan1": {
+          "measures": {
+            "count": {
+              "contact": false
+            }
+          }
+        }
+      },
+      "objects": {
+        "shelf_1": {
+          "properties": {
+            "count": {
+              "value": "0"
+            }
+          }
+        }
+      }
+    }
+  },
+  "blockers": [
+    "scanbot1"
+  ],
+  "gap": "G-PERCEIVE",
+  "tags": [
+    "count",
+    "no_gripper",
+    "no_else_path"
+  ],
+  "why": "Infeasible in 2.2: the reading is possible (tag_scan1 measures `count` on scanbot1) but the request also needs a `grasp`, and scanbot1 has no gripper. A model must not drop the carry. Under 2.1 the attempt fails earlier, with E217.",
+  "attempt_fails_with": "E217"
+}

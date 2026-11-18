@@ -1,0 +1,10 @@
+{
+  "task": "scan_far_shelf",
+  "bindings": {
+    "r": "scanbot1",
+    "shelf": "shelf_3",
+    "cam": "cam_scan1",
+    "far": "aisle_3",
+    "lane": "forklift_lane"
+  }
+}

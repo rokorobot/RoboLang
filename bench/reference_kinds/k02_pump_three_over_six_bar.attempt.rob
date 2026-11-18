@@ -1,0 +1,15 @@
+// bench/reference_kinds/k02_pump_three_over_six_bar.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 2.1;
+
+task read_gauge(robot r, object gauge, sensor cam, location pump) {
+    goal { robot_at r pump; }
+    plan {
+        move r to pump;
+        measure r pressure of gauge using cam as p;                                                 // @reading
+        if p > 6 bar {                                                                              // @reading
+            communicate r to "maintenance" with "pump 3 over pressure";                             // @reading
+        } else {                                                                                    // @reading
+            communicate r to "maintenance" with "pump 3 ok";                                        // @reading
+        }                                                                                           // @reading
+    }
+}

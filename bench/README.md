@@ -431,3 +431,32 @@ Actions: `Benchmark`, `set_only: messages` (full and minimal prompts, 3 repeats,
 gated, not in the per-PR or weekly runs). Locally: `python bench/run.py --set messages --repeats 3 --models
 claude-sonnet-5-5,claude-haiku-5-5` (a paid run: confirm it first; estimate ~$3.7 for the full prompt and ~$3.6 for the
 grammar-only one). The acceptance run (L5) is next.
+
+## Set 11: more measured kinds (`--set kinds`)
+
+24 tasks in `tasks_kinds/`, the 2.1 references of the controls and the obvious 2.1 attempts in `reference_kinds/`, decision record
+[0044](../spec/decisions/0044-more-measured-kinds.md), plan, bounds and open points in
+[bench-11-kinds.md](../docs/plans/bench-11-kinds.md) (draft for the owner: the bounds B1–B9 are placeholders). Pre-registered
+against 2.1 (L3 of I6), not yet labelled for 2.2: `expect` is the 2.1 label (every non-control task `cannot / inexpressible`, each
+with an attempt that fails with `E101`, `E217` or `E505`; 10 `kind` tasks, 5 `infeasible`, 5 `inexpressible`, 4 `control` that are
+programs), `expect_2_2` the label for acceptance. A 2.2 program carries, inside `expect_2_2`, `world_2_2` (the sensor `measures`
+and the object `properties` that world file 1.7 adds, with unit and uncertainty), its `paths` (each forced by a `world_patch` of
+property values; a reading near the threshold is a path that fails, `S261`) and the checks it asks for: `expected_readings`
+(`[robot, kind, object]`), `expected_comparisons` (`{kind, op, value, unit}`; a count has no unit) and, where the program
+combines a reading with an older feature, `expected_limits`, `expected_actions`, `expected_clock`, `expected_message_waits`, and
+`expected_sensors` (the decoy). The attempts mark the reading lines with `// @reading`: without them each is a valid 2.1 program
+that succeeds, the reading replaced silently (the plan's B8; `k09` needs `attempt_world_patch`, a message in its world). The
+worlds are `site` and two new world files (1.6), `stockroom` and `plant_room`; the 2.1 world shows no property value and no new
+kind. The new scorer measures (`reading_ok`, reading replaced silently, kind or threshold changed) are L4's.
+
+Erratum P2 relabels `u01_if_dirty` and `u02_if_damaged` (set "ask") as `cannot / infeasible` (their worlds have no label sensor,
+`S234`; [bench-errata-2-2.md](../docs/evidence/bench-errata-2-2.md)); the old label is kept as `expect_1_3`.
+
+`tests/test_bench_kinds.py` checks the counts, the labels, the sensors and objects against the prompts and the world, that every
+path follows the comparison (a small model of it in the test: three values, the sensor's uncertainty, exact conversion of kPa
+and bar), the infeasible and inexpressible reasons, that every attempt fails with its code and every stripped attempt succeeds,
+the controls, the K6 relabel, the atlas, the scorer and the workflow. On demand from GitHub Actions: `Benchmark`,
+`set_only: kinds` (full and minimal prompts, 3 repeats, Sonnet and Haiku, `--max-usd 3` each, not gated, not in the per-PR or weekly
+runs).
+Locally: `python bench/run.py --set kinds --repeats 3 --models claude-sonnet-5-5,claude-haiku-5-5` (a paid run: confirm it
+first; estimate ~$3.8 for the full prompt and ~$3.6 for the grammar-only one).

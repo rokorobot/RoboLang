@@ -1,0 +1,9 @@
+{
+  "task": "probe_tank",
+  "bindings": {
+    "r": "crawler1",
+    "tank": "tank_1",
+    "probe": "probe_crawler1",
+    "farm": "tank_farm"
+  }
+}

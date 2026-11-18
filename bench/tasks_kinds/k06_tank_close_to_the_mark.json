@@ -1,0 +1,131 @@
+{
+  "id": "k06_tank_close_to_the_mark",
+  "prompt": "With crawler2, drive to tank_farm and read how full tank_2 is with cam_crawler2. If it is more than 80 percent full, tell channel \"maintenance\" \"tank_2 is nearly full\"; if it is not, tell no one.",
+  "world": "bench/worlds/plant_room.json",
+  "group": "kind",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_2": {
+    "decision": "program",
+    "world_2_2": {
+      "sensors": {
+        "cam_crawler2": {
+          "measures": {
+            "fill": {
+              "unit": "%",
+              "uncertainty": "2",
+              "contact": false
+            }
+          }
+        }
+      },
+      "objects": {
+        "tank_2": {
+          "properties": {
+            "fill": {
+              "value": "90",
+              "unit": "%"
+            }
+          }
+        }
+      }
+    },
+    "expected_readings": [
+      [
+        "crawler2",
+        "fill",
+        "tank_2"
+      ]
+    ],
+    "expected_comparisons": [
+      {
+        "kind": "fill",
+        "op": ">",
+        "value": "80",
+        "unit": "%"
+      }
+    ],
+    "paths": [
+      {
+        "when": "tank_2 is 90 % full: above 80 %",
+        "goal": [
+          [
+            "rl:robot:crawler2",
+            "located_in",
+            "rl:place:tank_farm"
+          ]
+        ],
+        "messages": [
+          [
+            "maintenance",
+            "tank_2 is nearly full"
+          ]
+        ],
+        "world_patch": {
+          "objects": {
+            "tank_2": {
+              "properties": {
+                "fill": {
+                  "value": "90",
+                  "unit": "%"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "when": "tank_2 is 50 % full: not above 80 %",
+        "goal": [
+          [
+            "rl:robot:crawler2",
+            "located_in",
+            "rl:place:tank_farm"
+          ]
+        ],
+        "messages": [],
+        "world_patch": {
+          "objects": {
+            "tank_2": {
+              "properties": {
+                "fill": {
+                  "value": "50",
+                  "unit": "%"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "when": "tank_2 reads 80.5 % +/- 2: the comparison with 80 % is unknown, so the run fails (S261)",
+        "fails": true,
+        "world_patch": {
+          "objects": {
+            "tank_2": {
+              "properties": {
+                "fill": {
+                  "value": "80.5",
+                  "unit": "%"
+                }
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "gap": "G-PERCEIVE",
+  "tags": [
+    "fill",
+    "percent",
+    "if",
+    "uncertainty",
+    "unknown_fails_closed",
+    "threshold_above"
+  ],
+  "why": "Uncertainty and fail-closed as in 1.6 (0044 K3, 0036 V7): 80.5 +/- 2 against 80 is unknown, and an unknown `if` fails the run (S261). A model must not move the limit to avoid it. Under 2.1 `fill` is no kind (E217).",
+  "attempt_fails_with": "E101"
+}

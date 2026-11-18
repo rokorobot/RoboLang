@@ -1,0 +1,13 @@
+// bench/reference_kinds/i01_the_pickers_camera_reads_nothing.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 2.1;
+
+task check_bin(robot r, object bin, sensor cam, location room) {
+    goal { robot_at r room; }
+    plan {
+        move r to room;
+        measure r fill of bin using cam as f;                                                       // @reading
+        if f < 50 % {                                                                               // @reading
+            communicate r to "lead" with "refill bin_1";                                            // @reading
+        }                                                                                           // @reading
+    }
+}

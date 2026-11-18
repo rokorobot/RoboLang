@@ -1,0 +1,13 @@
+// bench/reference_kinds/c02_probe_the_tank.rob: hand-written reference
+robolang 2.1;
+
+task probe_tank(robot r, object tank, sensor probe, location farm) {
+    goal { robot_at r farm; }
+    plan {
+        move r to farm;
+        measure r temperature of tank using probe as t;
+        if t > 60 degC {
+            communicate r to "maintenance" with "tank_1 is hot";
+        }
+    }
+}

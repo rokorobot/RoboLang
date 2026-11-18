@@ -1,0 +1,119 @@
+{
+  "id": "k02_pump_three_over_six_bar",
+  "prompt": "With crawler1, drive to pump_3 and read gauge_p3 with cam_crawler1. If the pressure is above 6 bar, tell channel \"maintenance\" \"pump 3 over pressure\"; if it is not, tell channel \"maintenance\" \"pump 3 ok\".",
+  "world": "bench/worlds/plant_room.json",
+  "group": "kind",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_2": {
+    "decision": "program",
+    "world_2_2": {
+      "sensors": {
+        "cam_crawler1": {
+          "measures": {
+            "pressure": {
+              "unit": "bar",
+              "uncertainty": "0.1",
+              "contact": false
+            }
+          }
+        }
+      },
+      "objects": {
+        "gauge_p3": {
+          "properties": {
+            "pressure": {
+              "value": "7.2",
+              "unit": "bar"
+            }
+          }
+        }
+      }
+    },
+    "expected_readings": [
+      [
+        "crawler1",
+        "pressure",
+        "gauge_p3"
+      ]
+    ],
+    "expected_comparisons": [
+      {
+        "kind": "pressure",
+        "op": ">",
+        "value": "6",
+        "unit": "bar"
+      }
+    ],
+    "paths": [
+      {
+        "when": "gauge_p3 reads 7.2 bar: above 6 bar",
+        "goal": [
+          [
+            "rl:robot:crawler1",
+            "located_in",
+            "rl:place:pump_3"
+          ]
+        ],
+        "messages": [
+          [
+            "maintenance",
+            "pump 3 over pressure"
+          ]
+        ],
+        "world_patch": {
+          "objects": {
+            "gauge_p3": {
+              "properties": {
+                "pressure": {
+                  "value": "7.2",
+                  "unit": "bar"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "when": "gauge_p3 reads 5.1 bar: not above 6 bar",
+        "goal": [
+          [
+            "rl:robot:crawler1",
+            "located_in",
+            "rl:place:pump_3"
+          ]
+        ],
+        "messages": [
+          [
+            "maintenance",
+            "pump 3 ok"
+          ]
+        ],
+        "world_patch": {
+          "objects": {
+            "gauge_p3": {
+              "properties": {
+                "pressure": {
+                  "value": "5.1",
+                  "unit": "bar"
+                }
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "gap": "G-PERCEIVE",
+  "tags": [
+    "pressure",
+    "bar",
+    "if",
+    "if_else",
+    "threshold_above"
+  ],
+  "why": "A `pressure` reading in bar (0044 K1, K2): inspection of a gauge (ACT-INSP-001). `inspect` reads no value, and under 2.1 `pressure` is no kind of `measure` (E217).",
+  "attempt_fails_with": "E217"
+}

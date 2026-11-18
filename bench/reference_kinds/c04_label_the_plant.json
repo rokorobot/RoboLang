@@ -1,0 +1,9 @@
+{
+  "task": "weed_check",
+  "bindings": {
+    "r": "weeder1",
+    "plant": "plant_7",
+    "cam": "cam_weeder1",
+    "here": "headland"
+  }
+}

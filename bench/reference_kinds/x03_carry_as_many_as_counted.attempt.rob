@@ -1,0 +1,13 @@
+// bench/reference_kinds/x03_carry_as_many_as_counted.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 2.1;
+
+task carry_counted(robot r, object bin, object carton, sensor cam, location room, location out) {
+    goal { object_at carton out; }
+    plan {
+        measure r count of bin using cam as n;                                                      // @reading
+        move r to room;
+        grasp r carton;
+        move r to out;
+        place r carton at out;
+    }
+}
