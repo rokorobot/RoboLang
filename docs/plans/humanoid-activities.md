@@ -86,6 +86,7 @@ before.
 
 | Date | Note | Added | Removed | Changed | Ranking |
 |---|---|---|---|---|---|
+| 2026-11-18 | I4 L5: 2.0 accepted with one exception; G-OBSERVE opened | — | — | — | 1. action 4.52 · 2. perception 2.78 · 3. cooperation 1.07 · 4. communication 0.95 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
 | 2026-11-18 | I4 L4: RoboLang 2.0 built and taught | — | — | — | 1. action 4.52 · 2. perception 2.78 · 3. cooperation 1.07 · 4. communication 0.95 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
 | 2026-11-18 | I4 L3: set 9 missions pre-registered (26 tasks) | — | — | — | 1. action 4.52 · 2. perception 2.78 · 3. cooperation 1.07 · 4. communication 0.95 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
 | 2026-11-17 | L6 of I3: G-CLOCK closed by RoboLang 1.9 clock readings | — | — | — | 1. action 4.52 · 2. perception 2.78 · 3. cooperation 1.07 · 4. communication 0.95 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
@@ -159,6 +160,7 @@ before.
 |---|---|---|---|---|
 | `G-CHOOSE` Choosing objects or robots at run time | open | 5.23 | yes | 7 |
 | `G-PERCEIVE` Conditions on perceived properties (dirty, damaged) | open | 4.94 | yes | 4 |
+| `G-OBSERVE` Tasks that only observe (inspect, scan, wait) and ask for no end state, so a goal must not be invented | open | 0.00 | — | 0 |
 
 ## Cooperation
 

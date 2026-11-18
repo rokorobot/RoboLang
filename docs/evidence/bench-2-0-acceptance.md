@@ -33,11 +33,24 @@ Haiku 5.5, full and grammar-only prompts, 3 repeats. **Cost $1.62.** Bounds B1â€
 
 ## Verdict
 
-**Not accepted as pre-registered** (B1, B8). Pending the owner's decision. Recommended, as for 1.8 (erratum E5):
+**ACCEPTED by the owner, 2026-11-18, with one recorded exception (B1 for Sonnet).**
 
-1. **Erratum M1:** `m03` and `m10` also accept the readings of K2 (`robot_at` the robot at its station, or the
-   object staying at its place). `object_exists` stays wrong, as in K2.
-2. **Teaching fix M2:** the reference and the grammar comment say that more than 10 repeats, or repeating until a
-   condition holds, is a mission and not an unrolled task.
-3. **Confirming run:** `m03`, `m09`, `m10`, `c01`, `c04`, both prompts, both models, 3 repeats, about $0.30. It
-   replaces those tasks' answers for B1, B5 and B8. If B1 and B8 then hold, 2.0 is accepted.
+After errata M1 and M2, the confirming runs (full prompt:
+[44286597065](https://github.com/rokorobot/RoboLang/actions/runs/44286597065); grammar-only:
+[44286801836](https://github.com/rokorobot/RoboLang/actions/runs/44286801836); `m03`, `m09`, `m10`, `c01`, `c04`,
+3 repeats, $0.40) replace those tasks' answers:
+
+| # | Measure (full prompt) | Sonnet | Haiku |
+|---|---|---|---|
+| B1 | mission programs | 25/30 | **29/30** |
+| B5 | controls | 12/12 | 12/12 |
+| B8 | repetition replaced silently | **0/30** | **0/30** |
+
+- **The exception:** Sonnet's B1 misses (25/30 against 27) are all one thing. In `m03` (3/3) and `m10` (2/3) it wrote
+  the right mission (bound, `until`, policy) but gave the inspection task the goal `object_exists`, which K2 and M1
+  do not accept. The request asks for no end state, so the language makes the model invent a goal. This finding
+  is recorded in the atlas as the far gap **G-OBSERVE**: tasks that only observe and need no end state.
+- Grammar-only B1 is for information: Sonnet 26/30, Haiku 27/30.
+
+**Paid cost of I4:** baseline $1.10, plus about $2 for two runs lost to the bug fixed by W2; acceptance $1.62;
+confirming runs $0.40.
