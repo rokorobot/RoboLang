@@ -1,0 +1,27 @@
+{
+  "id": "i01_twelve_rounds_in_half_an_hour",
+  "prompt": "With tug1, drive from gate_in to gate_out, wait 5 minutes and drive back to gate_in. Do 12 such rounds and have them all finished within 30 minutes.",
+  "world": "bench/worlds/yard.json",
+  "group": "infeasible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_0": {
+    "decision": "cannot",
+    "category": "infeasible",
+    "because": "0041 M2"
+  },
+  "blockers": [
+    "12 rounds with a wait of 5 minutes each need 60 minutes; the request allows 30"
+  ],
+  "gap": "G-LOOP",
+  "tags": [
+    "mission",
+    "bound_too_small",
+    "duration_bound",
+    "count_bound"
+  ],
+  "why": "Both bounds are stated and cannot both be met: the duration allows 6 rounds. A mission that stops at 30 minutes ends `bounded` after 6 rounds and has not done what was asked.",
+  "attempt_fails_with": "E201"
+}

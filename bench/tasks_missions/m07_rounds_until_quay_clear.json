@@ -1,0 +1,82 @@
+{
+  "id": "m07_rounds_until_quay_clear",
+  "prompt": "With tug1, drive from gate_in to gate_out, wait 5 seconds and drive back to gate_in. Repeat that round until the quay is clear, but for at most 12 rounds.",
+  "world": "bench/worlds/yard.json",
+  "group": "mission",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_0": {
+    "decision": "program",
+    "expected_mission": {
+      "runs": [
+        {
+          "task": "round",
+          "entities": [
+            "tug1",
+            "gate_in",
+            "gate_out"
+          ],
+          "goal": [
+            [
+              "rl:robot:tug1",
+              "located_in",
+              "rl:place:gate_in"
+            ]
+          ]
+        }
+      ],
+      "repeat": {
+        "max_runs": 12,
+        "max_duration": null
+      },
+      "until": {
+        "condition": "region_clear quay",
+        "triples": []
+      },
+      "on_failure": "stop"
+    },
+    "paths": [
+      {
+        "when": "the quay clears at 12 seconds: after run 3 (15 seconds) the until holds",
+        "world_patch": {
+          "events": [
+            {
+              "at": {
+                "value": "12",
+                "unit": "s"
+              },
+              "fact": "region_clear",
+              "target": "quay",
+              "value": true
+            }
+          ]
+        },
+        "outcome": "completed",
+        "runs": 3,
+        "runs_verified": 3
+      },
+      {
+        "when": "the quay never clears: the bound of 12 runs is reached",
+        "world_patch": {
+          "events": []
+        },
+        "outcome": "bounded",
+        "runs": 12,
+        "runs_verified": 12
+      }
+    ]
+  },
+  "gap": "G-LOOP",
+  "tags": [
+    "mission",
+    "repeat",
+    "until",
+    "bounded_outcome",
+    "count_bound",
+    "wait_in_task"
+  ],
+  "why": "A mission that ends by its bound, not by its `until`: outcome `bounded` (0041 M5), which must not be reported as done.",
+  "attempt_fails_with": "E201"
+}

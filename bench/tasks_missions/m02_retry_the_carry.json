@@ -1,0 +1,104 @@
+{
+  "id": "m02_retry_the_carry",
+  "prompt": "With arm2, carry part7 from the table to the inspection_bay. If the run fails, run it again, up to 12 more times; if it still fails, stop for good.",
+  "world": "bench/worlds/warehouse.json",
+  "group": "mission",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_0": {
+    "decision": "program",
+    "expected_mission": {
+      "runs": [
+        {
+          "task": "transfer",
+          "entities": [
+            "arm2",
+            "part7",
+            "table",
+            "inspection_bay"
+          ],
+          "goal": [
+            [
+              "rl:thing:part7",
+              "located_in",
+              "rl:place:inspection_bay"
+            ]
+          ]
+        }
+      ],
+      "repeat": null,
+      "until": null,
+      "on_failure": {
+        "retry": 12
+      }
+    },
+    "paths": [
+      {
+        "when": "the first run works",
+        "world_patch": {},
+        "outcome": "completed",
+        "runs": 1,
+        "runs_verified": 1
+      },
+      {
+        "when": "runs 1 and 2 fail, run 3 works",
+        "world_patch": {},
+        "outcome": "completed",
+        "runs": 3,
+        "runs_verified": 1,
+        "run_faults": [
+          {
+            "run": 1
+          },
+          {
+            "run": 2
+          }
+        ],
+        "failed_runs": [
+          1,
+          2
+        ]
+      },
+      {
+        "when": "part7 is gone: every run fails, 1 + 12 runs, then the mission stops",
+        "world_patch": {
+          "objects": {
+            "part7": {
+              "present": false,
+              "location": null
+            }
+          }
+        },
+        "outcome": "failed",
+        "runs": 13,
+        "runs_verified": 0,
+        "failed_runs": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13
+        ]
+      }
+    ]
+  },
+  "gap": "G-LOOP",
+  "tags": [
+    "mission",
+    "retry",
+    "retry_n",
+    "whole_run"
+  ],
+  "why": "Retrying the whole run up to 12 more times is `on failure { retry 12; }` (0041 M4), not a step handler: a 1.5 handler repeats one step and nests at most 4 deep, and 13 attempts of the whole carry are not a fixed short sequence. 1.9 has no way to run the task again.",
+  "attempt_fails_with": "E201"
+}

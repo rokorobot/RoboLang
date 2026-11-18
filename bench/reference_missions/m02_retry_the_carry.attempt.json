@@ -1,0 +1,9 @@
+{
+  "task": "transfer",
+  "bindings": {
+    "r": "arm2",
+    "item": "part7",
+    "src": "table",
+    "dst": "inspection_bay"
+  }
+}

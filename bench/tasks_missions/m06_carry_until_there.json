@@ -1,0 +1,83 @@
+{
+  "id": "m06_carry_until_there",
+  "prompt": "With amr1, carry crate1 from the dock to the table. If crate1 is not at the table afterwards, carry it again, up to 15 times in all. A failed carry does not stop the job.",
+  "world": "bench/worlds/warehouse.json",
+  "group": "mission",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_0": {
+    "decision": "program",
+    "expected_mission": {
+      "runs": [
+        {
+          "task": "transfer",
+          "entities": [
+            "amr1",
+            "crate1",
+            "dock",
+            "table"
+          ],
+          "goal": [
+            [
+              "rl:thing:crate1",
+              "located_in",
+              "rl:place:table"
+            ]
+          ]
+        }
+      ],
+      "repeat": {
+        "max_runs": 15,
+        "max_duration": null
+      },
+      "until": {
+        "condition": "object_at crate1 table",
+        "triples": [
+          [
+            "rl:thing:crate1",
+            "located_in",
+            "rl:place:table"
+          ]
+        ]
+      },
+      "on_failure": "continue"
+    },
+    "paths": [
+      {
+        "when": "the first carry works: the until holds after run 1",
+        "world_patch": {},
+        "outcome": "completed",
+        "runs": 1,
+        "runs_verified": 1
+      },
+      {
+        "when": "run 1 fails, run 2 works",
+        "world_patch": {},
+        "outcome": "completed",
+        "runs": 2,
+        "runs_verified": 1,
+        "run_faults": [
+          {
+            "run": 1
+          }
+        ],
+        "failed_runs": [
+          1
+        ]
+      }
+    ]
+  },
+  "gap": "G-LOOP",
+  "tags": [
+    "mission",
+    "repeat",
+    "until",
+    "until_after_first_run",
+    "continue",
+    "count_bound"
+  ],
+  "why": "The `until` holds after the first run, so a mission without it runs the carry 15 times and the second run fails (crate1 is already at the table). 1.9 runs the carry once and cannot say \"again if it is not there\".",
+  "attempt_fails_with": "E201"
+}

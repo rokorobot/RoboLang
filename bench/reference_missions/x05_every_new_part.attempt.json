@@ -1,0 +1,9 @@
+{
+  "task": "feed",
+  "bindings": {
+    "r": "arm_a",
+    "part": "p1",
+    "src": "conveyor_in",
+    "bin_at": "bin"
+  }
+}

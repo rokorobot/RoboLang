@@ -1,0 +1,72 @@
+{
+  "id": "m01_shuttle_thirty_rounds",
+  "prompt": "With tug1, drive from gate_in to gate_out and back to gate_in, again and again for at most 30 rounds. If a round fails, stop.",
+  "world": "bench/worlds/yard.json",
+  "group": "mission",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_0": {
+    "decision": "program",
+    "expected_mission": {
+      "runs": [
+        {
+          "task": "round",
+          "entities": [
+            "tug1",
+            "gate_in",
+            "gate_out"
+          ],
+          "goal": [
+            [
+              "rl:robot:tug1",
+              "located_in",
+              "rl:place:gate_in"
+            ]
+          ]
+        }
+      ],
+      "repeat": {
+        "max_runs": 30,
+        "max_duration": null
+      },
+      "until": null,
+      "on_failure": "stop"
+    },
+    "paths": [
+      {
+        "when": "every round works",
+        "world_patch": {},
+        "outcome": "bounded",
+        "runs": 30,
+        "runs_verified": 30
+      },
+      {
+        "when": "round 7 fails: the mission stops",
+        "world_patch": {},
+        "outcome": "failed",
+        "runs": 7,
+        "runs_verified": 6,
+        "run_faults": [
+          {
+            "run": 7
+          }
+        ],
+        "failed_runs": [
+          7
+        ]
+      }
+    ]
+  },
+  "gap": "G-LOOP",
+  "tags": [
+    "mission",
+    "repeat",
+    "count_bound",
+    "stop_on_failure",
+    "shuttle"
+  ],
+  "why": "\"Again and again for at most 30 rounds\" is a repetition whose count is stated and too large to write out as a fixed list (a fixed sequence of ten or fewer repeats is a control, `c01`). 1.9 has no repetition: a task runs once. The attempt writes the mission and, without it, drives one round.",
+  "attempt_fails_with": "E201"
+}

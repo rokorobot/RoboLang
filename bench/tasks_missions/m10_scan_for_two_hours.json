@@ -1,0 +1,77 @@
+{
+  "id": "m10_scan_for_two_hours",
+  "prompt": "With arm1, inspect box1 on shelf_a with camera_top and then wait 15 minutes, and keep doing that for 2 hours.",
+  "world": "bench/worlds/warehouse.json",
+  "group": "mission",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_0": {
+    "decision": "program",
+    "expected_mission": {
+      "runs": [
+        {
+          "task": "scan",
+          "entities": [
+            "arm1",
+            "box1",
+            "camera_top",
+            "shelf_a"
+          ],
+          "goal": [
+            [
+              "rl:thing:box1",
+              "located_in",
+              "rl:place:shelf_a"
+            ]
+          ]
+        }
+      ],
+      "repeat": {
+        "max_runs": null,
+        "max_duration": {
+          "value": 2,
+          "unit": "h"
+        }
+      },
+      "until": null,
+      "on_failure": "stop"
+    },
+    "paths": [
+      {
+        "when": "every scan works: 8 runs fill the 2 hours",
+        "world_patch": {},
+        "outcome": "bounded",
+        "runs": 8,
+        "runs_verified": 8
+      },
+      {
+        "when": "run 3 fails: the mission stops",
+        "world_patch": {},
+        "outcome": "failed",
+        "runs": 3,
+        "runs_verified": 2,
+        "run_faults": [
+          {
+            "run": 3
+          }
+        ],
+        "failed_runs": [
+          3
+        ]
+      }
+    ]
+  },
+  "gap": "G-LOOP",
+  "tags": [
+    "mission",
+    "repeat",
+    "duration_bound",
+    "wait_in_task",
+    "stop_on_failure",
+    "no_count_stated"
+  ],
+  "why": "Only a duration is stated, so only a duration is the bound: a mission that adds a run count the request did not state has invented a bound (0041's measure).",
+  "attempt_fails_with": "E201"
+}

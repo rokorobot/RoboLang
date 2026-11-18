@@ -1,0 +1,17 @@
+// bench/reference_missions/m09_open_the_oven_door.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 1.9;
+
+task open_it(robot r, object door, location st) {
+    goal { in_state door "open"; }
+    plan {
+        move r to st;
+        do r open door;
+    }
+}
+
+mission open_oven(robot r, object door, location st) {  // @mission
+    repeat at most 15 runs {                            // @mission
+        run open_it(r, door, st);                       // @mission
+    } until in_state door "open";                       // @mission
+    on failure { continue; }                            // @mission
+}                                                       // @mission

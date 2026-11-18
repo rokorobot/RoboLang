@@ -1,0 +1,19 @@
+// bench/reference_missions/m04_patrol_and_go_on.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 1.9;
+
+task patrol(robot r, location a, location b, location c, location d) {
+    goal { robot_at r a; }
+    plan {
+        move r to b;
+        move r to c;
+        move r to d;
+        move r to a;
+    }
+}
+
+mission patrol_rounds(robot r, location a, location b, location c, location d) {  // @mission
+    repeat at most 12 runs {                                                      // @mission
+        run patrol(r, a, b, c, d);                                                // @mission
+    };                                                                            // @mission
+    on failure { continue; }                                                      // @mission
+}                                                                                 // @mission

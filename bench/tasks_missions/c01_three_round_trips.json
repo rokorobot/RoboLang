@@ -1,0 +1,25 @@
+{
+  "id": "c01_three_round_trips",
+  "prompt": "With tug1, drive from gate_in to gate_out and back to gate_in, three times.",
+  "world": "bench/worlds/yard.json",
+  "group": "control",
+  "expect": {
+    "decision": "program"
+  },
+  "expect_2_0": {
+    "decision": "program",
+    "expected_mission": null
+  },
+  "expected_goal": [
+    [
+      "rl:robot:tug1",
+      "located_in",
+      "rl:place:gate_in"
+    ]
+  ],
+  "tags": [
+    "fixed_count",
+    "decoy_repeat",
+    "unrolled"
+  ]
+}

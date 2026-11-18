@@ -1,0 +1,25 @@
+{
+  "id": "x07_until_ten_to_ten",
+  "prompt": "With tug1, drive from gate_in to gate_out, wait 5 minutes and drive back to gate_in. Repeat that round until 22:00, but for at most 40 rounds.",
+  "world": "bench/worlds/yard_1_5_2130.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_0": {
+    "decision": "cannot",
+    "category": "inexpressible",
+    "because": "0041 M3 (open point 2)"
+  },
+  "gap": "G-LOOP",
+  "tags": [
+    "mission",
+    "until",
+    "clock_condition",
+    "count_bound",
+    "clock_time"
+  ],
+  "why": "The `until` is a time of day. 1.9 allows a time comparison in `if` and `wait until` only (`E321` in `pre` and `goal`), and M3 reuses the conditions of tasks: read that way, a clock `until` stays out. The request states a bound (40 rounds), so only the condition decides. If the owner allows the clock in `until` (open point 2) this becomes a program.",
+  "attempt_fails_with": "E201"
+}

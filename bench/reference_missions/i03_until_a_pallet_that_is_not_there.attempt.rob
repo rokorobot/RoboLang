@@ -1,0 +1,17 @@
+// bench/reference_missions/i03_until_a_pallet_that_is_not_there.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 1.9;
+
+task round(robot r, location home, location far) {
+    goal { robot_at r home; }
+    plan {
+        move r to far;
+        move r to home;
+    }
+}
+
+mission rounds(robot r, location home, location far, object pallet, location wash) {  // @mission
+    repeat at most 20 runs {                                                          // @mission
+        run round(r, home, far);                                                      // @mission
+    } until object_at pallet wash;                                                    // @mission
+    on failure { stop; }                                                              // @mission
+}                                                                                     // @mission

@@ -48,6 +48,8 @@ ACTIONS_TASKS_DIR = BENCH / "tasks_actions"  # set 7: declared actions, pre-regi
 ACTIONS_REFERENCE_DIR = BENCH / "reference_actions"
 CLOCK_TASKS_DIR = BENCH / "tasks_clock"  # set 8: clock readings, pre-registered against 1.8, labelled for 1.9
 CLOCK_REFERENCE_DIR = BENCH / "reference_clock"
+MISSIONS_TASKS_DIR = BENCH / "tasks_missions"  # set 9: missions, pre-registered against 1.9 (decision 0041)
+MISSIONS_REFERENCE_DIR = BENCH / "reference_missions"
 PROMPT_FILE = BENCH / "prompt.md"
 REFERENCE_FILE = ROOT / "docs" / "language-reference.md"
 MINIMAL_PROMPT_FILE = BENCH / "prompt_minimal.md"
@@ -69,7 +71,8 @@ SETS = {"1": (TASKS_DIR, REFERENCE_DIR), "hard": (HARD_TASKS_DIR, HARD_REFERENCE
         "future": (FUTURE_TASKS_DIR, FUTURE_REFERENCE_DIR),
         "regions": (REGIONS_TASKS_DIR, REGIONS_REFERENCE_DIR),
         "actions": (ACTIONS_TASKS_DIR, ACTIONS_REFERENCE_DIR),
-        "clock": (CLOCK_TASKS_DIR, CLOCK_REFERENCE_DIR)}
+        "clock": (CLOCK_TASKS_DIR, CLOCK_REFERENCE_DIR),
+        "missions": (MISSIONS_TASKS_DIR, MISSIONS_REFERENCE_DIR)}
 PROMPTS = ("full", "minimal")
 
 # $ per million tokens: (input, output, cache read). A cache write (5 minutes) costs 1.25 x input.

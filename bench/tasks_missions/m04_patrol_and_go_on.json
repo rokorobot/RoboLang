@@ -1,0 +1,74 @@
+{
+  "id": "m04_patrol_and_go_on",
+  "prompt": "With spot1, patrol stop_a, stop_b, stop_c and stop_d in turn and come back to stop_a, for up to 12 rounds. If a round fails, note it and go on with the next round; do not stop.",
+  "world": "bench/worlds/site_1_3.json",
+  "group": "mission",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_0": {
+    "decision": "program",
+    "expected_mission": {
+      "runs": [
+        {
+          "task": "patrol",
+          "entities": [
+            "spot1",
+            "stop_a",
+            "stop_b",
+            "stop_c",
+            "stop_d"
+          ],
+          "goal": [
+            [
+              "rl:robot:spot1",
+              "located_in",
+              "rl:place:stop_a"
+            ]
+          ]
+        }
+      ],
+      "repeat": {
+        "max_runs": 12,
+        "max_duration": null
+      },
+      "until": null,
+      "on_failure": "continue"
+    },
+    "paths": [
+      {
+        "when": "every round works",
+        "world_patch": {},
+        "outcome": "bounded",
+        "runs": 12,
+        "runs_verified": 12
+      },
+      {
+        "when": "round 5 fails: the mission goes on, 11 rounds are verified, the record lists round 5 as failed",
+        "world_patch": {},
+        "outcome": "bounded",
+        "runs": 12,
+        "runs_verified": 11,
+        "run_faults": [
+          {
+            "run": 5
+          }
+        ],
+        "failed_runs": [
+          5
+        ]
+      }
+    ]
+  },
+  "gap": "G-LOOP",
+  "tags": [
+    "mission",
+    "repeat",
+    "count_bound",
+    "continue",
+    "patrol"
+  ],
+  "why": "`on failure { continue; }` (0041 M4): a failed run is logged, never counted as done, and the next one starts. 1.9 stops at the first failed step.",
+  "attempt_fails_with": "E201"
+}

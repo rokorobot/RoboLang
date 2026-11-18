@@ -1,0 +1,19 @@
+// bench/reference_missions/x05_every_new_part.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 1.9;
+
+task feed(robot r, object part, location src, location bin_at) {
+    goal { object_at part bin_at; }
+    plan {
+        move r to src;
+        grasp r part;
+        move r to bin_at;
+        place r part at bin_at;
+    }
+}
+
+mission keep_feeding(robot r, location src, location bin_at) {  // @mission
+    repeat for at most 8 h {                                    // @mission
+        run feed(r, next_part, src, bin_at);                    // @mission
+    };                                                          // @mission
+    on failure { stop; }                                        // @mission
+}                                                               // @mission

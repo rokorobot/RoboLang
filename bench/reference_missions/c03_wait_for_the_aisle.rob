@@ -1,0 +1,13 @@
+// bench/reference_missions/c03_wait_for_the_aisle.rob: hand-written reference
+robolang 1.9;
+
+task carry_crate(robot r, object item, location src, location dst, region lane) {
+    goal { object_at item dst; }
+    plan {
+        wait until region_clear lane timeout 20 s else { fail "the aisle did not clear"; }
+        move r to src;
+        grasp r item;
+        move r to dst;
+        place r item at dst;
+    }
+}

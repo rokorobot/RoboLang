@@ -1,0 +1,17 @@
+// bench/reference_missions/m03_inspect_for_three_hours.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 1.9;
+
+task look(robot r, object part, sensor cam, location st) {
+    goal { object_at part st; }
+    plan {
+        inspect r part using cam;
+        wait for 10 min;
+    }
+}
+
+mission watch(robot r, object part, sensor cam, location st, region fence) {  // @mission
+    repeat for at most 3 h {                                                  // @mission
+        run look(r, part, cam, st);                                           // @mission
+    } until region_clear fence;                                               // @mission
+    on failure { stop; }                                                      // @mission
+}                                                                             // @mission

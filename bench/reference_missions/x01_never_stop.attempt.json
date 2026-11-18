@@ -1,0 +1,8 @@
+{
+  "task": "round",
+  "bindings": {
+    "r": "tug1",
+    "home": "gate_in",
+    "far": "gate_out"
+  }
+}

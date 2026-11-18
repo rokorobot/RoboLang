@@ -1,0 +1,28 @@
+{
+  "id": "i04_more_retries_than_runs",
+  "prompt": "With arm2, carry part7 from the table to the inspection_bay in at most 12 runs in all. If a run fails, run it again, up to 20 more times.",
+  "world": "bench/worlds/warehouse.json",
+  "group": "infeasible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_0": {
+    "decision": "cannot",
+    "category": "infeasible",
+    "because": "0041 M4"
+  },
+  "blockers": [
+    "the request allows 12 runs in all and 20 retries on top of the first run"
+  ],
+  "gap": "G-LOOP",
+  "tags": [
+    "mission",
+    "retry",
+    "retry_n",
+    "contradiction",
+    "count_bound"
+  ],
+  "why": "The retry count is above the total of runs that the request itself allows. Whether a retry counts against the run bound is open point 7; the request says both, and no mission does both.",
+  "attempt_fails_with": "E201"
+}

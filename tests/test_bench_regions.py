@@ -8,7 +8,7 @@ label, `expect_1_6` the 1.6 one (the baseline), `expect_1_7` also holds the path
 out (0039 P2, P3, P9; G-PROX, G-FORCE), 4 `control` requests that are programs in both versions. Under 1.6 every
 non-control task was declined, and every one has an obvious attempt that 1.6 rejects with a named diagnostic. The 9
 `region` tasks have a 1.7 reference. The worlds are world file 1.3 copies (C1). No network and no SDK; the model run is
-the `Benchmark` workflow with `regions: true`.
+the `Benchmark` workflow with `set_only: regions`.
 """
 
 from __future__ import annotations
@@ -469,10 +469,9 @@ def test_the_set_is_in_the_run_script_and_only_runs_on_demand_in_the_workflow():
     assert all("claude-opus" not in ln and "--set regions --prompt" in ln for ln in lines)
     steps = re.split(r"\n      - ", workflow)
     step = next(s for s in steps if s.startswith("name: Run (set regions"))
-    assert "inputs.regions" in step and "pull_request" not in step
+    assert "inputs.set_only == 'regions'" in step and "pull_request" not in step
     pr_step = next(s for s in steps if s.startswith("name: Run (pull request)"))
     weekly = next(s for s in steps if s.startswith("name: Run (weekly or on demand)"))
-    assert "regions" not in pr_step and "!inputs.regions" in weekly and "--set regions" not in weekly
-    declared = r"      regions:\n        description: .*\n        type: boolean\n        default: false"
-    assert re.search(declared, workflow)
+    assert "regions" not in pr_step and "inputs.set_only == ''" in weekly and "--set regions" not in weekly
+    assert re.search(r"      set_only:\n        description: .*\n        type: string\n        default: \"\"", workflow)
     assert re.search(r"for extra in .*regions regions-minimal.*; do", workflow)

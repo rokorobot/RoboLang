@@ -1,0 +1,23 @@
+// bench/reference_missions/x04_rounds_inside_rounds.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 1.9;
+
+task round(robot r, location home, location far) {
+    goal { robot_at r home; }
+    plan {
+        move r to far;
+        move r to home;
+    }
+}
+
+mission inner(robot r, location home, location far, region lane) {  // @mission
+    repeat at most 30 runs {                                        // @mission
+        run round(r, home, far);                                    // @mission
+    } until region_clear lane;                                      // @mission
+    on failure { stop; }                                            // @mission
+}                                                                   // @mission
+mission outer(robot r, location home, location far, region lane) {  // @mission
+    repeat at most 12 runs {                                        // @mission
+        run inner(r, home, far, lane);                              // @mission
+    }                                                               // @mission
+    on failure { stop; }                                            // @mission
+}                                                                   // @mission

@@ -209,7 +209,7 @@ group `branching`. The grammar-only prompt pastes `spec/grammar-v1.3.ebnf`, `spe
 over the one before. Since 0042 L4 the prompts teach RoboLang 1.9 (0040 L4 taught 1.8, 0039 L4 taught 1.7, 0036 PR 2 taught 1.6, 0035 PR 2 taught 1.5). In set 3,
 `x_failover_on_fault` is now a program judged per path (group `recover`; `expect_1_4` keeps the old label).
 
-Run it on demand from GitHub Actions: `Benchmark`, `set3: true`. That runs full and grammar-only prompts with 3
+Run it on demand from GitHub Actions: `Benchmark`, `set_only: set3`. That runs full and grammar-only prompts with 3
 repeats, for information only and not gated (~$3-4). Locally: `python bench/run.py --set branch --repeats 3`.
 
 ## Set 4: failure handling (`--set failure`)
@@ -232,7 +232,7 @@ of these states with an `if`, paths also check what only a handler gets right: `
 SUCCEEDED: a handler let the plan go on after the wait timed out. A task whose request says to go on sets
 `continue_ok`.
 
-Run it on demand from GitHub Actions: `Benchmark`, `set4: true`: full and grammar-only prompts, 3 repeats, not gated,
+Run it on demand from GitHub Actions: `Benchmark`, `set_only: set4`: full and grammar-only prompts, 3 repeats, not gated,
 each capped at $10. Locally: `python bench/run.py --set failure --repeats 3`.
 
 ## Set 5: measured values (`--set values`)
@@ -270,7 +270,7 @@ record an atlas claim that R3 refuted. Four new worlds (`worlds/fulfilment.json`
 `fry_station.json`) and `worlds/warehouse.json`. A probe belongs to exactly one gap in `atlas.json`;
 `tests/test_bench_future.py` checks the counts per group and per gap.
 
-Run it on demand from GitHub Actions: `Benchmark`, `future: true` (full prompt, 1 repeat, Sonnet and Haiku, `--max-usd 3`,
+Run it on demand from GitHub Actions: `Benchmark`, `set_only: future` (full prompt, 1 repeat, Sonnet and Haiku, `--max-usd 3`,
 not gated). It is not in the per-PR or weekly runs. Locally: `python bench/run.py --set future` (a paid run: confirm it first).
 
 ## Set 6: region limits (`--set regions`)
@@ -294,7 +294,7 @@ declares exactly those region limits, the right kind on the right region, none m
 needs it) and `limit_dropped_silently` (a valid program whose run ends SUCCEEDED but that lacks a region limit the
 request asked for, so no other check notices; counted over every answer to those tasks, like `silent_substitution`).
 `tests/test_bench_regions.py` checks the counts, the labels, the worlds, the references (valid, SUCCEEDED on every path,
-exactly their limits), the scorer and the controls. On demand from GitHub Actions: `Benchmark`, `regions: true` (full and
+exactly their limits), the scorer and the controls. On demand from GitHub Actions: `Benchmark`, `set_only: regions` (full and
 minimal prompts, 3 repeats, Sonnet and Haiku, `--max-usd 3` each, not gated, not in the per-PR or weekly runs). Locally:
 `python bench/run.py --set regions --repeats 3` (a paid run: confirm it first; estimate ~$3.3 per prompt).
 
@@ -324,7 +324,7 @@ compared in the base unit, none more and none fewer; it is one of the task's che
 like `limit_dropped_silently`). A goal `in_state` is compared by meaning as a fact `[X, "in_state", label]` about the
 state of `X`, separate from where `X` is (0040 C1). `tests/test_bench_actions.py` checks the counts, the labels, the
 worlds, the references (valid, SUCCEEDED on every path, exactly their actions), the 1.7 attempts, the scorer and the
-controls. On demand from GitHub Actions: `Benchmark`, `actions: true` (full and minimal prompts, 3 repeats, Sonnet and
+controls. On demand from GitHub Actions: `Benchmark`, `set_only: actions` (full and minimal prompts, 3 repeats, Sonnet and
 Haiku, `--max-usd 3` each, not gated, not in the per-PR or weekly runs). Locally: `python bench/run.py --set actions
 --repeats 3 --models claude-sonnet-5-5,claude-haiku-5-5` (a paid run: confirm it first; estimate ~$3.6 per prompt).
 
@@ -356,7 +356,28 @@ durations, so 60 min is 1 h), none more, none fewer, and none on a control; it i
 condition or a wait for a time the request asked for, as when a guessed `wait for`, a fixed message or nothing stands in
 its place; counted over every answer to those tasks, like `action_replaced_silently`). `tests/test_bench_clock.py`
 checks the counts, the labels, the worlds, the references (valid, SUCCEEDED on every path, exactly their clock use), the
-1.8 attempts, the scorer and the controls. On demand from GitHub Actions: `Benchmark`, `clock: true` (full and minimal prompts, 3 repeats, Sonnet and Haiku, `--max-usd 3` each, not
+1.8 attempts, the scorer and the controls. On demand from GitHub Actions: `Benchmark`, `set_only: clock` (full and minimal prompts, 3 repeats, Sonnet and Haiku, `--max-usd 3` each, not
 gated, not in the per-PR or weekly runs; the workflow is at GitHub's limit of 10 dispatch inputs). Locally: `python
 bench/run.py --set clock --repeats 3 --models claude-sonnet-5-5,claude-haiku-5-5` (a paid run: confirm it first;
 estimate ~$3.7 for the full prompt and ~$3.5 for the grammar-only one).
+
+## Set 9: missions (`--set missions`)
+
+26 tasks in `tasks_missions/`, controls' references and the obvious attempts in `reference_missions/`, decision record
+[0041](../spec/decisions/0041-mission-layer.md), plan, proposed bounds and open points in
+[bench-9-missions.md](../docs/plans/bench-9-missions.md) (draft for the owner). Pre-registered against 1.9 before any 2.0
+code (iteration I4, step L3): `expect` is the 1.9 label (all 22 non-controls `cannot / inexpressible`, each with an attempt
+that fails with `E201`, a top-level `mission` where a task is expected), `expect_2_0` the label for acceptance (10
+`mission` programs with an `expected_mission` and the mission outcome of each path, 5 `infeasible`, 7 `inexpressible`, 4
+`control` programs with no mission). `expected_mission` is `{runs, repeat, until, on_failure}`: the task runs with their
+entities, the bound (`max_runs` and/or `max_duration`), the `until` condition (a string, and Core triples where it is a
+fact) and the failure policy (`stop`, `continue`, `{"retry": N}`); `null` on a control. A path forces its outcome with a
+`world_patch` (events, objects) and `run_faults` (task run k fails: a test form, the world file has no such field yet).
+The attempts mark the mission part with `// @mission`: without those lines every attempt is a valid 1.9 program that
+runs the task once and ends SUCCEEDED, which is the silent replacement of the repetition that the plan's B8 counts. No
+world file is new. `tests/test_bench_missions.py` checks the counts, the labels, the bounds against the prompts, the
+paths, the attempts, the controls, the atlas and the workflow. On demand from GitHub Actions: `Benchmark`, `set_only:
+missions` (full and minimal prompts, 3 repeats, Sonnet and Haiku, `--max-usd 3` each, not gated, not in the per-PR or
+weekly runs; one string input `set_only` replaces the per-set booleans, because the workflow had reached GitHub's limit of
+10 dispatch inputs). Locally: `python bench/run.py --set missions --repeats 3 --models claude-sonnet-5-5,claude-haiku-5-5`
+(a paid run: confirm it first; estimate ~$4.0 for the full prompt and ~$3.9 for the grammar-only one).

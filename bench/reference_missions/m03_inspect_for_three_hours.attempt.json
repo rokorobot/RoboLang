@@ -1,0 +1,9 @@
+{
+  "task": "look",
+  "bindings": {
+    "r": "arm_b",
+    "part": "p4",
+    "cam": "cam_s3",
+    "st": "station3"
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "id": "c04_three_named_totes",
+  "prompt": "With digit1, move tote_1, then tote_2, then tote_3 from inbound_conveyor to outbound_conveyor, one after the other.",
+  "world": "bench/worlds/fulfilment.json",
+  "group": "control",
+  "expect": {
+    "decision": "program"
+  },
+  "expect_2_0": {
+    "decision": "program",
+    "expected_mission": null
+  },
+  "expected_goal": [
+    [
+      "rl:thing:tote_1",
+      "located_in",
+      "rl:place:outbound_conveyor"
+    ],
+    [
+      "rl:thing:tote_2",
+      "located_in",
+      "rl:place:outbound_conveyor"
+    ],
+    [
+      "rl:thing:tote_3",
+      "located_in",
+      "rl:place:outbound_conveyor"
+    ]
+  ],
+  "tags": [
+    "named_objects",
+    "decoy_every",
+    "fixed_sequence"
+  ]
+}

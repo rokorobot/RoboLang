@@ -1,0 +1,65 @@
+{
+  "id": "c02_grasp_once_more",
+  "prompt": "With arm2, carry part7 from the table to the inspection_bay. If the grasp fails, try it once more, and if it fails again, stop.",
+  "world": "bench/worlds/warehouse.json",
+  "group": "control",
+  "expect": {
+    "decision": "program"
+  },
+  "expect_1_9": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "part7 on the table",
+        "goal": [
+          [
+            "rl:thing:part7",
+            "located_in",
+            "rl:place:inspection_bay"
+          ]
+        ],
+        "tries": [
+          "grasp",
+          1
+        ],
+        "world_patch": {
+          "events": []
+        }
+      },
+      {
+        "when": "part7 missing: both grasps fail, the run stops",
+        "fails": true,
+        "tries": [
+          "grasp",
+          2
+        ],
+        "world_patch": {
+          "events": [],
+          "objects": {
+            "part7": {
+              "present": false,
+              "location": null
+            }
+          }
+        }
+      }
+    ]
+  },
+  "expect_2_0": {
+    "decision": "program",
+    "expected_mission": null
+  },
+  "expected_goal": [
+    [
+      "rl:thing:part7",
+      "located_in",
+      "rl:place:inspection_bay"
+    ]
+  ],
+  "tags": [
+    "retry",
+    "grasp",
+    "handler",
+    "bounded_retry"
+  ]
+}
