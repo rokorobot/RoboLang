@@ -1,0 +1,13 @@
+// bench/reference_messages/i05_only_a_near_miss_arrives.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 2.0;
+
+task release_part(robot r, object part, location src, location dst) {
+    goal { object_at part dst; }
+    plan {
+        wait until message_received "qa" with "RELEASE" timeout 5 min else { fail "no release"; }  // @message
+        move r to src;
+        grasp r part;
+        move r to dst;
+        place r part at dst;
+    }
+}

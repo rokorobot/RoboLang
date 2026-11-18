@@ -1,0 +1,56 @@
+{
+  "id": "c02_tell_the_ops",
+  "prompt": "With arm1, carry box1 from shelf_a to the table and then tell channel \"ops\" \"box1 is on the table\".",
+  "world": "bench/worlds/warehouse.json",
+  "group": "control",
+  "expect": {
+    "decision": "program"
+  },
+  "expect_2_0": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "the world as given",
+        "goal": [
+          [
+            "rl:thing:box1",
+            "located_in",
+            "rl:place:table"
+          ]
+        ],
+        "world_patch": {},
+        "messages": [
+          [
+            "ops",
+            "box1 is on the table"
+          ]
+        ]
+      }
+    ]
+  },
+  "expect_2_1": {
+    "decision": "program",
+    "expected_message_waits": [],
+    "world_2_1": {
+      "channels": {
+        "ops": {
+          "from": [
+            "rl:agent:ops-ctl"
+          ]
+        }
+      }
+    }
+  },
+  "expected_goal": [
+    [
+      "rl:thing:box1",
+      "located_in",
+      "rl:place:table"
+    ]
+  ],
+  "tags": [
+    "communicate",
+    "send_only",
+    "no_message_wait"
+  ]
+}

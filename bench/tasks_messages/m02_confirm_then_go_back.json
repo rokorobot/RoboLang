@@ -1,0 +1,90 @@
+{
+  "id": "m02_confirm_then_go_back",
+  "prompt": "With moxi1, take medication_1 from the pharmacy to room_412 and place it there. Then wait up to 15 minutes for the nurse to send \"CONFIRMED\" on channel \"nurse\", and send moxi1 back to the nurse_station. If no confirmation comes, tell channel \"alerts\" \"no confirmation\" and stop the job as failed.",
+  "world": "bench/worlds/ward.json",
+  "group": "message",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_1": {
+    "decision": "program",
+    "expected_message_waits": [
+      {
+        "use": "wait",
+        "channel": "nurse",
+        "text": "CONFIRMED",
+        "timeout": "15 min"
+      }
+    ],
+    "paths": [
+      {
+        "when": "the nurse confirms at 4 minutes",
+        "goal": [
+          [
+            "rl:thing:medication_1",
+            "located_in",
+            "rl:place:room_412"
+          ],
+          [
+            "rl:robot:moxi1",
+            "located_in",
+            "rl:place:nurse_station"
+          ]
+        ],
+        "world_patch": {
+          "messages": [
+            {
+              "at": {
+                "value": "240",
+                "unit": "s"
+              },
+              "channel": "nurse",
+              "text": "CONFIRMED",
+              "from": "rl:agent:nurse-1"
+            }
+          ]
+        },
+        "end_ms": "240000"
+      },
+      {
+        "when": "no confirmation: the wait times out after 15 minutes, the alert is sent and the run fails",
+        "fails": true,
+        "world_patch": {
+          "messages": []
+        },
+        "end_ms": "900000",
+        "messages": [
+          [
+            "alerts",
+            "no confirmation"
+          ]
+        ]
+      }
+    ],
+    "world_2_1": {
+      "channels": {
+        "nurse": {
+          "from": [
+            "rl:agent:nurse-1"
+          ]
+        },
+        "alerts": {
+          "from": [
+            "rl:agent:alert-hub"
+          ]
+        }
+      }
+    }
+  },
+  "gap": "G-MSG",
+  "tags": [
+    "message_wait",
+    "wait_until",
+    "timeout",
+    "handler_communicate",
+    "reply_message"
+  ],
+  "why": "\"Wait until the nurse confirms\" is a reply message and is expressible in 2.1 (0043 S7): the wait is a `wait until message_received` and its handler reports and fails. 2.0 has no such condition.",
+  "attempt_fails_with": "E211"
+}

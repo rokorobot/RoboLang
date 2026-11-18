@@ -1,0 +1,20 @@
+// bench/reference_messages/m03_second_box_if_asked.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 2.0;
+
+task carry_box(robot r, object box, object extra, location src, location src2, location dst, region lane) {
+    goal { object_at box dst; }
+    plan {
+        wait until region_clear lane timeout 20 s else { fail "the aisle did not clear"; }
+        move r to src;
+        grasp r box;
+        move r to dst;
+        place r box at dst;
+        if message_received "ops" with "ALSO BOX2" {  // @message
+            goal { object_at extra dst; }             // @message
+            move r to src2;                           // @message
+            grasp r extra;                            // @message
+            move r to dst;                            // @message
+            place r extra at dst;                     // @message
+        }                                             // @message
+    }
+}

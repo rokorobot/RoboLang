@@ -1,0 +1,13 @@
+// bench/reference_messages/i03_thirty_seconds_for_a_late_message.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 2.0;
+
+task place_module(robot r, object module, location src, location dst) {
+    goal { object_at module dst; }
+    plan {
+        move r to src;
+        grasp r module;
+        wait until message_received "site" with "WIND CLEAR" timeout 30 s else { fail "wind did not clear in time"; }  // @message
+        move r to dst;
+        place r module at dst;
+    }
+}

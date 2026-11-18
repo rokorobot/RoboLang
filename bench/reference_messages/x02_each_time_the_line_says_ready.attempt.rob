@@ -1,0 +1,17 @@
+// bench/reference_messages/x02_each_time_the_line_says_ready.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 2.0;
+
+task shuttle(robot r, location home, location far) {
+    goal { robot_at r home; }
+    plan {
+        move r to far;
+        move r to home;
+    }
+}
+
+mission on_ready(robot r, location home, location far) {                                  // @message
+    repeat when message_received "line" with "TOTE READY", for at most 240 min {         // @message
+        run shuttle(r, home, far);                                                        // @message
+    };                                                                                    // @message
+    on failure { continue; }                                                              // @message
+}                                                                                         // @message

@@ -1,0 +1,35 @@
+{
+  "id": "i01_a_channel_the_world_does_not_have",
+  "prompt": "With picker1, take tray_2 from packing to dispatch, but only after channel \"packing\" has sent \"BAG READY\". Wait up to 5 minutes for it and, if it does not come, stop the job as failed.",
+  "world": "bench/worlds/pharmacy.json",
+  "group": "infeasible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_1": {
+    "decision": "cannot",
+    "category": "infeasible",
+    "because": "0043 S4",
+    "world_2_1": {
+      "channels": {
+        "pharmacy": {
+          "from": [
+            "rl:agent:pharmacist-w"
+          ]
+        }
+      }
+    }
+  },
+  "blockers": [
+    "the world declares the channel \"pharmacy\" only; \"packing\" is a location, not a channel"
+  ],
+  "gap": "G-MSG",
+  "tags": [
+    "message_wait",
+    "undeclared_channel",
+    "near_miss_channel"
+  ],
+  "why": "S4: a task that names an undeclared channel fails before the run, so the request cannot be done in this world, with or without a handler for the timeout.",
+  "attempt_fails_with": "E211"
+}

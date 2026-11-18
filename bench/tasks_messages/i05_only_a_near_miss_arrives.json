@@ -1,0 +1,57 @@
+{
+  "id": "i05_only_a_near_miss_arrives",
+  "prompt": "With arm_b, move p4 from station3 to the bin, but only after channel \"qa\" has sent \"RELEASE\". Wait up to 5 minutes for it.",
+  "world": "bench/worlds/assembly.json",
+  "group": "infeasible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_1": {
+    "decision": "cannot",
+    "category": "infeasible",
+    "because": "0043 S3",
+    "world_2_1": {
+      "channels": {
+        "qa": {
+          "from": [
+            "rl:agent:qa-ctl"
+          ]
+        }
+      },
+      "messages": [
+        {
+          "at": {
+            "value": "40",
+            "unit": "s"
+          },
+          "channel": "qa",
+          "text": "release",
+          "from": "rl:agent:qa-ctl"
+        },
+        {
+          "at": {
+            "value": "90",
+            "unit": "s"
+          },
+          "channel": "qa",
+          "text": "RELEASE NOW",
+          "from": "rl:agent:qa-ctl"
+        }
+      ]
+    }
+  },
+  "blockers": [
+    "channel \"qa\" gets \"release\" at 40 seconds and \"RELEASE NOW\" at 90 seconds, never \"RELEASE\""
+  ],
+  "gap": "G-MSG",
+  "tags": [
+    "message_wait",
+    "near_miss_text",
+    "exact_text",
+    "case_sensitive",
+    "no_else_path"
+  ],
+  "why": "S3: a match is exact and case-sensitive. Neither message is the text the request names, so no message counts.",
+  "attempt_fails_with": "E211"
+}

@@ -1,0 +1,13 @@
+// bench/reference_messages/i01_a_channel_the_world_does_not_have.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 2.0;
+
+task bring_tray(robot r, object tray, location src, location dst) {
+    goal { object_at tray dst; }
+    plan {
+        move r to src;
+        grasp r tray;
+        wait until message_received "packing" with "BAG READY" timeout 5 min else { fail "no bag signal"; }  // @message
+        move r to dst;
+        place r tray at dst;
+    }
+}

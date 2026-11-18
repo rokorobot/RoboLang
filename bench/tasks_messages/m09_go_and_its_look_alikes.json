@@ -1,0 +1,135 @@
+{
+  "id": "m09_go_and_its_look_alikes",
+  "prompt": "With picker1, take tray_1 from packing to dispatch, but only after the pharmacist on channel \"pharmacy_west\" has sent \"GO\". Wait up to 10 minutes for it and, if it does not come, stop the job as failed.",
+  "world": "bench/worlds/pharmacy.json",
+  "group": "message",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_1": {
+    "decision": "program",
+    "expected_message_waits": [
+      {
+        "use": "wait",
+        "channel": "pharmacy_west",
+        "text": "GO",
+        "timeout": "10 min"
+      }
+    ],
+    "paths": [
+      {
+        "when": "the decoys arrive first (30, 60 and 90 seconds); the real GO arrives at 200 seconds",
+        "goal": [
+          [
+            "rl:thing:tray_1",
+            "located_in",
+            "rl:place:dispatch"
+          ]
+        ],
+        "world_patch": {
+          "messages": [
+            {
+              "at": {
+                "value": "30",
+                "unit": "s"
+              },
+              "channel": "pharmacy_west",
+              "text": "GO BACK",
+              "from": "rl:agent:pharmacist-w"
+            },
+            {
+              "at": {
+                "value": "60",
+                "unit": "s"
+              },
+              "channel": "pharmacy_east",
+              "text": "GO",
+              "from": "rl:agent:pharmacist-e"
+            },
+            {
+              "at": {
+                "value": "90",
+                "unit": "s"
+              },
+              "channel": "pharmacy_west",
+              "text": "go",
+              "from": "rl:agent:pharmacist-w"
+            },
+            {
+              "at": {
+                "value": "200",
+                "unit": "s"
+              },
+              "channel": "pharmacy_west",
+              "text": "GO",
+              "from": "rl:agent:pharmacist-w"
+            }
+          ]
+        },
+        "end_ms": "200000"
+      },
+      {
+        "when": "only the decoys arrive: the wait times out after 10 minutes",
+        "fails": true,
+        "world_patch": {
+          "messages": [
+            {
+              "at": {
+                "value": "30",
+                "unit": "s"
+              },
+              "channel": "pharmacy_west",
+              "text": "GO BACK",
+              "from": "rl:agent:pharmacist-w"
+            },
+            {
+              "at": {
+                "value": "60",
+                "unit": "s"
+              },
+              "channel": "pharmacy_east",
+              "text": "GO",
+              "from": "rl:agent:pharmacist-e"
+            },
+            {
+              "at": {
+                "value": "90",
+                "unit": "s"
+              },
+              "channel": "pharmacy_west",
+              "text": "go",
+              "from": "rl:agent:pharmacist-w"
+            }
+          ]
+        },
+        "end_ms": "600000"
+      }
+    ],
+    "world_2_1": {
+      "channels": {
+        "pharmacy_west": {
+          "from": [
+            "rl:agent:pharmacist-w"
+          ]
+        },
+        "pharmacy_east": {
+          "from": [
+            "rl:agent:pharmacist-e"
+          ]
+        }
+      }
+    }
+  },
+  "gap": "G-MSG",
+  "tags": [
+    "message_wait",
+    "decoy",
+    "near_miss_text",
+    "near_miss_channel",
+    "exact_text",
+    "timeout"
+  ],
+  "why": "Decoys in the world: \"GO BACK\" on the right channel, \"GO\" on the neighbouring channel pharmacy_east, and \"go\" in lower case (S3: exact and case-sensitive). Only the real \"GO\" releases the tray, and a program that waits for any message or for the wrong channel proceeds too early.",
+  "attempt_fails_with": "E211"
+}

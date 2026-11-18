@@ -1,0 +1,11 @@
+// bench/reference_messages/m07_lobby_when_it_opens.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 2.0;
+
+task clean_to_lobby(robot r, location lobby, region wet) {
+    @safety no_go_region wet;
+    goal { robot_at r lobby; }
+    plan {
+        wait until message_received "facility" with "LOBBY OPEN" timeout 10 min else { fail "the lobby did not open"; }  // @message
+        move r to lobby;
+    }
+}

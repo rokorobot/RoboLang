@@ -1,0 +1,37 @@
+{
+  "id": "x03_forward_the_order_number",
+  "prompt": "With digit1, wait up to 5 minutes for channel \"orders\" to send an order number, send that number on to channel \"labels\", and then move tote_1 from the inbound_conveyor to the outbound_conveyor.",
+  "world": "bench/worlds/fulfilment.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_1": {
+    "decision": "cannot",
+    "category": "inexpressible",
+    "because": "0043 S10",
+    "world_2_1": {
+      "channels": {
+        "orders": {
+          "from": [
+            "rl:agent:order-desk"
+          ]
+        },
+        "labels": {
+          "from": [
+            "rl:agent:label-printer"
+          ]
+        }
+      }
+    }
+  },
+  "gap": "G-CALC",
+  "tags": [
+    "message_content",
+    "value_from_message",
+    "forward"
+  ],
+  "why": "The content of a message as a value stays out of 2.1 (0043 S1 alternative, S10, S11): a condition tests a text, it binds nothing, and nothing in the language can use received text.",
+  "attempt_fails_with": "E211"
+}

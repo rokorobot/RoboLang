@@ -1,0 +1,29 @@
+{
+  "id": "i04_no_message_service_in_the_ward",
+  "prompt": "With moxi1, take iv_kit_1 from the supply_closet to room_412, but only after the charge nurse has sent \"ROOM CLEAN\" on channel \"nurse\". Wait up to 5 minutes for it.",
+  "world": "bench/worlds/ward.json",
+  "group": "infeasible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_1": {
+    "decision": "cannot",
+    "category": "infeasible",
+    "because": "0043 S5",
+    "world_2_1": {
+      "note": "no `channels` field: the world has no message service"
+    }
+  },
+  "blockers": [
+    "the world declares no channel and has no message service"
+  ],
+  "gap": "G-MSG",
+  "tags": [
+    "message_wait",
+    "no_message_service",
+    "no_channels"
+  ],
+  "why": "S5: a world with no message service makes `message_received` unknown, which fails closed (and S4 fails a task that names a channel the world does not declare). Either way the wait cannot succeed.",
+  "attempt_fails_with": "E211"
+}

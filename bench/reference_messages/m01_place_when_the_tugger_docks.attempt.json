@@ -1,0 +1,10 @@
+{
+  "task": "hand_to_line",
+  "bindings": {
+    "r": "digit1",
+    "tote": "tote_1",
+    "src": "inbound_conveyor",
+    "hold": "handoff_point",
+    "dst": "line_feed"
+  }
+}

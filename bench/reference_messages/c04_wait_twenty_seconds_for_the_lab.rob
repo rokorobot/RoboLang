@@ -1,0 +1,13 @@
+// bench/reference_messages/c04_wait_twenty_seconds_for_the_lab.rob: hand-written reference
+robolang 2.0;
+
+task bring_samples(robot r, object item, location src, location dst) {
+    goal { object_at item dst; }
+    plan {
+        move r to src;
+        grasp r item;
+        move r to dst;
+        wait for 20 s;
+        place r item at dst;
+    }
+}

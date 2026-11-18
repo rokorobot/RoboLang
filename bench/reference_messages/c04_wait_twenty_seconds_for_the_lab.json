@@ -1,0 +1,9 @@
+{
+  "task": "bring_samples",
+  "bindings": {
+    "r": "moxi1",
+    "item": "samples_1",
+    "src": "ward_3",
+    "dst": "lab"
+  }
+}

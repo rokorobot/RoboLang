@@ -1,0 +1,9 @@
+{
+  "task": "notify_and_deliver",
+  "bindings": {
+    "r": "moxi1",
+    "med": "medication_1",
+    "src": "pharmacy",
+    "dst": "room_412"
+  }
+}

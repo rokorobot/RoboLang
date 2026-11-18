@@ -1,0 +1,8 @@
+{
+  "task": "shuttle",
+  "bindings": {
+    "r": "tugger_a",
+    "home": "tugger_bay",
+    "far": "line_feed"
+  }
+}

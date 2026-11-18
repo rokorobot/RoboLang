@@ -1,0 +1,46 @@
+{
+  "id": "i02_the_wrong_sender",
+  "prompt": "With digit1, take tote_2 from the inbound_conveyor to the handoff_point and hold it there until the line controller has sent \"TUGGER DOCKED\" on channel \"line\", then place it on line_feed.",
+  "world": "bench/worlds/fulfilment.json",
+  "group": "infeasible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_1": {
+    "decision": "cannot",
+    "category": "infeasible",
+    "because": "0043 S4",
+    "world_2_1": {
+      "channels": {
+        "line": {
+          "from": [
+            "rl:agent:line-ctl"
+          ]
+        }
+      },
+      "messages": [
+        {
+          "at": {
+            "value": "60",
+            "unit": "s"
+          },
+          "channel": "line",
+          "text": "TUGGER DOCKED",
+          "from": "rl:agent:contractor-3"
+        }
+      ]
+    }
+  },
+  "blockers": [
+    "the only \"TUGGER DOCKED\" comes at 60 seconds from rl:agent:contractor-3, which channel \"line\" does not allow"
+  ],
+  "gap": "G-MSG",
+  "tags": [
+    "message_wait",
+    "sender_not_allowed",
+    "no_else_path"
+  ],
+  "why": "S4: a message from a sender the channel does not allow is ignored, and the request states no other way to go on. The world has no message that counts, so the tote would wait for ever.",
+  "attempt_fails_with": "E211"
+}

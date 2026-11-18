@@ -1,0 +1,108 @@
+{
+  "id": "m05_release_after_the_clock_wait",
+  "prompt": "With amr1, carry crate1 from the dock to the table, but not before 09:20 and only after channel \"ops\" has sent \"RELEASE\". Wait up to 10 minutes for 09:20, then up to 5 minutes for the message; if either does not come, stop the job as failed.",
+  "world": "bench/worlds/warehouse_1_5_0915.json",
+  "group": "message",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_1": {
+    "decision": "program",
+    "expected_message_waits": [
+      {
+        "use": "wait",
+        "channel": "ops",
+        "text": "RELEASE",
+        "timeout": "5 min"
+      }
+    ],
+    "paths": [
+      {
+        "when": "RELEASE arrives at 120 seconds, while the program still waits for 09:20: it counts (S2)",
+        "goal": [
+          [
+            "rl:thing:crate1",
+            "located_in",
+            "rl:place:table"
+          ]
+        ],
+        "world_patch": {
+          "messages": [
+            {
+              "at": {
+                "value": "120",
+                "unit": "s"
+              },
+              "channel": "ops",
+              "text": "RELEASE",
+              "from": "rl:agent:ops-ctl"
+            }
+          ]
+        },
+        "end_ms": "300000"
+      },
+      {
+        "when": "RELEASE arrives at 400 seconds, during the message wait",
+        "goal": [
+          [
+            "rl:thing:crate1",
+            "located_in",
+            "rl:place:table"
+          ]
+        ],
+        "world_patch": {
+          "messages": [
+            {
+              "at": {
+                "value": "400",
+                "unit": "s"
+              },
+              "channel": "ops",
+              "text": "RELEASE",
+              "from": "rl:agent:ops-ctl"
+            }
+          ]
+        },
+        "end_ms": "400000"
+      },
+      {
+        "when": "no RELEASE: the message wait times out 5 minutes after 09:20",
+        "fails": true,
+        "world_patch": {
+          "messages": []
+        },
+        "end_ms": "600000"
+      }
+    ],
+    "world_2_1": {
+      "channels": {
+        "ops": {
+          "from": [
+            "rl:agent:ops-ctl"
+          ]
+        }
+      }
+    },
+    "expected_clock": [
+      {
+        "use": "wait",
+        "reading": "time",
+        "op": ">=",
+        "value": "09:20",
+        "timeout": "10 min"
+      }
+    ]
+  },
+  "gap": "G-MSG",
+  "tags": [
+    "message_wait",
+    "latched",
+    "message_before_the_wait",
+    "clock_time",
+    "two_waits",
+    "timeout"
+  ],
+  "why": "S2 (latched): the world starts at 09:15, so the wait for 09:20 takes 5 minutes. A RELEASE sent at 2 minutes arrives before the message wait starts and still counts; a model that only counts messages that arrive during the wait fails that path.",
+  "attempt_fails_with": "E211"
+}

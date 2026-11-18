@@ -392,3 +392,27 @@ demand from GitHub Actions: `Benchmark`, `set_only: missions` (full and minimal 
 because the workflow had reached GitHub's limit of 10 dispatch inputs). Locally: `python bench/run.py --set missions
 --repeats 3 --models claude-sonnet-5-5,claude-haiku-5-5` (a paid run: confirm it first; estimate ~$4.0 for the full prompt
 and ~$3.9 for the grammar-only one).
+
+## Set 10: messages (`--set messages`)
+
+24 tasks in `tasks_messages/`, the 2.0 references of the controls and the obvious 2.0 attempts in `reference_messages/`,
+decision record [0043](../spec/decisions/0043-incoming-messages.md), plan, bounds and open points in
+[bench-10-messages.md](../docs/plans/bench-10-messages.md) (draft for the owner: the bounds B1–B9 are placeholders). Pre-registered
+against 2.0 (L3 of I5), not yet labelled for 2.1: `expect` is the 2.0 label (every non-control task `cannot / inexpressible`,
+each with an attempt that fails with `E211` or `E201`; 10 `message` tasks, 5 `infeasible`, 5 `inexpressible`, 4 `control`
+that are programs), `expect_2_1` the label for acceptance. A 2.1 program carries `expected_message_waits` (a list of `{use,
+channel, text, timeout}`: `use` is `wait`, `if` or `until`, `text` is `null` for any message on the channel), `world_2_1` (the
+`channels` the world declares, each with its allowed senders; an infeasible task also the `messages` the world holds) and
+`paths`, each forced by a `world_patch` of incoming `messages` (`{at, channel, text, from}`) and ending at `end_ms`. The
+attempts mark the message lines with `// @message` (and `// @message-tail`): without them each is a valid 2.0 program that
+succeeds, the message wait replaced silently (the plan's B8). `lib.task_paths` also reads `expect_2_0.paths` of a task that is
+no mission (the paths of the controls). The new scorer measures (`message_wait_ok`, message wait replaced silently, channel or
+text changed) are L4's.
+
+`tests/test_bench_messages.py` checks the counts, the labels, the channels and texts against the prompts, that every path
+follows 0043 S2–S4 (a small model of it in the test), the infeasible and inexpressible reasons, that every attempt fails with
+its code and every stripped attempt succeeds, the controls, the atlas, the scorer and the workflow. On demand from GitHub
+Actions: `Benchmark`, `set_only: messages` (full and minimal prompts, 3 repeats, Sonnet and Haiku, `--max-usd 3` each, not
+gated, not in the per-PR or weekly runs). Locally: `python bench/run.py --set messages --repeats 3 --models
+claude-sonnet-5-5,claude-haiku-5-5` (a paid run: confirm it first; estimate ~$3.7 for the full prompt and ~$3.6 for the
+grammar-only one).

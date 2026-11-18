@@ -471,9 +471,10 @@ def test_every_inexpressible_task_is_in_exactly_one_atlas_gap_and_nothing_else_i
 def test_the_standing_g_loop_tasks_are_relabelled_by_what_the_request_bounds():
     """None states a bound it can use, so none is a program; the triggers moved to G-TRIGGER (clarification 14), and
     x_shuttle_until_five, whose 17:00 is a bound, needs the next part chosen at run time like x05 (G-CHOOSE)."""
-    assert set(GAPS["G-TRIGGER"]["tasks"]) == {
+    assert {  # later sets add their own triggers (set 10: x02_each_time_the_line_says_ready)
         "x_every_hour", "x_keep_feeding", "u03_until_stop", "u18_every_morning", "x_all_parts_ever",
-        "x01_every_night_round", "x02_every_hour_on_the_hour", "x04_every_minute", "f13_retry_every_minute"}
+        "x01_every_night_round", "x02_every_hour_on_the_hour", "x04_every_minute", "f13_retry_every_minute"
+    } <= set(GAPS["G-TRIGGER"]["tasks"])
     assert set(GAPS["G-UNBOUNDED"]["tasks"]) == {  # L6 of I4: out by 0041 M2/M7; G-LOOP closed
         "x_retry_grasp", "x_wait_forever", "u04_back_and_forth", "x_retry_until_grasped", "f10_retry_until_works",
         "x04_open_until_open", "x01_never_stop", "x04_rounds_inside_rounds"}

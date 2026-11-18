@@ -1,0 +1,60 @@
+{
+  "id": "c03_wait_for_the_worker_lane",
+  "prompt": "With digit1, carry tote_2 from the inbound_conveyor to the outbound_conveyor, but only after the worker_lane is clear. Wait up to 30 seconds for it and, if it is not clear by then, stop the job as failed.",
+  "world": "bench/worlds/fulfilment.json",
+  "group": "control",
+  "expect": {
+    "decision": "program"
+  },
+  "expect_2_0": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "the worker_lane clears at 10 seconds",
+        "goal": [
+          [
+            "rl:thing:tote_2",
+            "located_in",
+            "rl:place:outbound_conveyor"
+          ]
+        ],
+        "world_patch": {},
+        "end_ms": "10000"
+      },
+      {
+        "when": "the worker_lane never clears: the wait times out after 30 seconds",
+        "fails": true,
+        "world_patch": {
+          "events": []
+        },
+        "end_ms": "30000"
+      }
+    ]
+  },
+  "expect_2_1": {
+    "decision": "program",
+    "expected_message_waits": [],
+    "world_2_1": {
+      "channels": {
+        "line": {
+          "from": [
+            "rl:agent:line-ctl"
+          ]
+        }
+      }
+    }
+  },
+  "expected_goal": [
+    [
+      "rl:thing:tote_2",
+      "located_in",
+      "rl:place:outbound_conveyor"
+    ]
+  ],
+  "tags": [
+    "wait_until",
+    "region_clear",
+    "timeout",
+    "no_message_wait"
+  ]
+}

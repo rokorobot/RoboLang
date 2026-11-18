@@ -50,6 +50,8 @@ CLOCK_TASKS_DIR = BENCH / "tasks_clock"  # set 8: clock readings, pre-registered
 CLOCK_REFERENCE_DIR = BENCH / "reference_clock"
 MISSIONS_TASKS_DIR = BENCH / "tasks_missions"  # set 9: missions, pre-registered against 1.9 (decision 0041)
 MISSIONS_REFERENCE_DIR = BENCH / "reference_missions"
+MESSAGES_TASKS_DIR = BENCH / "tasks_messages"  # set 10: incoming messages, pre-registered against 2.0 (decision 0043)
+MESSAGES_REFERENCE_DIR = BENCH / "reference_messages"
 PROMPT_FILE = BENCH / "prompt.md"
 REFERENCE_FILE = ROOT / "docs" / "language-reference.md"
 MINIMAL_PROMPT_FILE = BENCH / "prompt_minimal.md"
@@ -73,7 +75,8 @@ SETS = {"1": (TASKS_DIR, REFERENCE_DIR), "hard": (HARD_TASKS_DIR, HARD_REFERENCE
         "regions": (REGIONS_TASKS_DIR, REGIONS_REFERENCE_DIR),
         "actions": (ACTIONS_TASKS_DIR, ACTIONS_REFERENCE_DIR),
         "clock": (CLOCK_TASKS_DIR, CLOCK_REFERENCE_DIR),
-        "missions": (MISSIONS_TASKS_DIR, MISSIONS_REFERENCE_DIR)}
+        "missions": (MISSIONS_TASKS_DIR, MISSIONS_REFERENCE_DIR),
+        "messages": (MESSAGES_TASKS_DIR, MESSAGES_REFERENCE_DIR)}
 PROMPTS = ("full", "minimal")
 
 # $ per million tokens: (input, output, cache read). A cache write (5 minutes) costs 1.25 x input.
@@ -480,8 +483,12 @@ def task_paths(task_def: dict) -> list[dict] | None:
     """
     The paths of a branching task (set 2 and 3, `expect_1_4.paths`; set 4 and pre-registered 1.5 labels,
     `expect_1_5.paths`; sets that teach 1.6, `expect_1_6.paths`; 1.7, `expect_1_7.paths`; 1.8, `expect_1_8.paths`; 1.9,
-    `expect_1_9.paths`), each with the world that forces it, or None.
+    `expect_1_9.paths`; set 10, pre-registered against 2.0, `expect_2_0.paths` of a task that is no mission), each with
+    the world that forces it, or None.
     """
+    label = task_def.get("expect_2_0") or {}
+    if label.get("paths") and not label.get("expected_mission"):  # set 10 (0043): the 2.0 paths of a control
+        return label["paths"]
     for key in ("expect_1_9", "expect_1_8", "expect_1_7", "expect_1_6", "expect_1_5", "expect_1_4"):
         paths = (task_def.get(key) or {}).get("paths")
         if paths:

@@ -1,0 +1,36 @@
+{
+  "id": "c01_plain_carry",
+  "prompt": "With arm1, carry box2 from shelf_b to the table.",
+  "world": "bench/worlds/warehouse.json",
+  "group": "control",
+  "expect": {
+    "decision": "program"
+  },
+  "expect_2_0": {
+    "decision": "program"
+  },
+  "expect_2_1": {
+    "decision": "program",
+    "expected_message_waits": [],
+    "world_2_1": {
+      "channels": {
+        "ops": {
+          "from": [
+            "rl:agent:ops-ctl"
+          ]
+        }
+      }
+    }
+  },
+  "expected_goal": [
+    [
+      "rl:thing:box2",
+      "located_in",
+      "rl:place:table"
+    ]
+  ],
+  "tags": [
+    "plain_move",
+    "no_message_wait"
+  ]
+}

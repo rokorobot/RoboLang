@@ -1,0 +1,73 @@
+{
+  "id": "m01_place_when_the_tugger_docks",
+  "prompt": "With digit1, carry tote_1 from the inbound_conveyor to the handoff_point and hold it there. Wait up to 10 minutes for channel \"line\" to send \"TUGGER DOCKED\", then place tote_1 on line_feed. If it does not come, stop the job as failed.",
+  "world": "bench/worlds/fulfilment.json",
+  "group": "message",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_1": {
+    "decision": "program",
+    "expected_message_waits": [
+      {
+        "use": "wait",
+        "channel": "line",
+        "text": "TUGGER DOCKED",
+        "timeout": "10 min"
+      }
+    ],
+    "paths": [
+      {
+        "when": "TUGGER DOCKED arrives from the line controller at 90 seconds",
+        "goal": [
+          [
+            "rl:thing:tote_1",
+            "located_in",
+            "rl:place:line_feed"
+          ]
+        ],
+        "world_patch": {
+          "messages": [
+            {
+              "at": {
+                "value": "90",
+                "unit": "s"
+              },
+              "channel": "line",
+              "text": "TUGGER DOCKED",
+              "from": "rl:agent:line-ctl"
+            }
+          ]
+        },
+        "end_ms": "90000"
+      },
+      {
+        "when": "no message arrives: the wait times out after 10 minutes",
+        "fails": true,
+        "world_patch": {
+          "messages": []
+        },
+        "end_ms": "600000"
+      }
+    ],
+    "world_2_1": {
+      "channels": {
+        "line": {
+          "from": [
+            "rl:agent:line-ctl"
+          ]
+        }
+      }
+    }
+  },
+  "gap": "G-MSG",
+  "tags": [
+    "message_wait",
+    "wait_until",
+    "timeout",
+    "exact_text"
+  ],
+  "why": "The plain case of 0043 S1: a bounded `wait until message_received` with an `else`. 2.0 has no condition that tests a message (`message_received` is reserved, E211); a `region_clear` or a fixed `wait for` in its place is the wait replaced silently.",
+  "attempt_fails_with": "E211"
+}
