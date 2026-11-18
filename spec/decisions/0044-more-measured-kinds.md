@@ -1,8 +1,9 @@
 # Decision record 0044: More measured kinds (I6, G-PERCEIVE, RoboLang 2.2)
 
 **Date:** 2026-11-18
-**Status:** PROPOSED. This is step L2 of iteration I6 in the [language roadmap](../../docs/LANGUAGE_ROADMAP.md). The
-owner chose to continue with I6 on 2026-11-18. Every point below needs the owner's review before anything is built.
+**Status:** **APPROVED by the owner, 2026-11-18**: K1–K9 as recommended (four kinds `fill`, `confidence`, `pressure`,
+`count`; `==` on `count`; `u01`/`u02` relabelled in L3). This is step L2 of iteration I6 in the
+[language roadmap](../../docs/LANGUAGE_ROADMAP.md).
 **Applies to (when decided):** a new `spec/robolang-v2.2.md` and `grammar-v2.2.ebnf`, Task IR 1.10, world file 1.7,
 `src/robolang/measured.py`, `tokens.py`, `docs/language-reference.md`, and `bench/` (the L3 set).
 
@@ -72,9 +73,11 @@ if level < 25 % { communicate r to "lead" with "restock shelf_a"; }
   example by `inspect` (as in 1.6), by a label stand-in, or by nothing.
 - **Economy:** 0 statements, 4 kinds, 1 unit token `%`, 3 pressure units, and about 3 codes.
 
-## Open questions for the owner
+## Owner's answers (2026-11-18)
 
-1. K1: these four kinds (recommended), or fewer to start with?
-2. K3: `==` on `count` (recommended)?
-3. K6: relabel the stale `u01` and `u02` in this iteration?
-4. Are K1–K9 accepted?
+The owner accepted every recommendation:
+
+- K1: the four kinds;
+- K3: `==` on `count`;
+- K6: `u01` and `u02` are relabelled in L3;
+- K1–K9 are accepted.
