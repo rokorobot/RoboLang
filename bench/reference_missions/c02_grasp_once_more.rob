@@ -1,5 +1,5 @@
 // bench/reference_missions/c02_grasp_once_more.rob: hand-written reference
-robolang 1.9;
+robolang 2.0;
 
 task carry_part(robot r, object item, location src, location dst) {
     goal { object_at item dst; }

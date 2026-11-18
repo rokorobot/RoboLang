@@ -6,6 +6,9 @@
   "expect": {
     "decision": "program"
   },
+  "expect_1_9": {
+    "decision": "program"
+  },
   "expect_2_0": {
     "decision": "program",
     "expected_mission": null

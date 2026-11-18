@@ -51,6 +51,19 @@ label lists, none more and none fewer, and none at all on a control. It is one o
 `time_replaced` (decision 0042 B8, tasks that ask for a clock use): a valid program whose run ends SUCCEEDED and that
 lacks a time condition or a wait for a time the request asked for (a guessed `wait for`, a fixed message or nothing in
 its place), so every other check passes. Counted over every answer to those tasks, per model, like `action_replaced`.
+`mission_ok` (decision 0041 B1, tasks whose 2.0 label has an `expected_mission`, or an `accepted_mission` for a fixed
+count): the valid answer is a mission with the runs asked (entities, goal, limits, actions), the bound asked (a count, a
+duration, the retries, a time of day: none more and none fewer), the `until` asked and the failure policy asked;
+`mission_paths_ok` is `mission_ok` with every path of the label ending as it says (outcome, task runs, verified runs,
+failed runs). The answer names the mission in its `mission` key, and its `bindings` bind the mission's parameters.
+`repetition_replaced_silently` (0041 B8, the programs that need a mission): a valid answer with no mission whose run
+ends SUCCEEDED (the task run once, copies the request did not ask for, or the repetition dropped). Counted over every
+answer to those tasks, per model, like `time_replaced_silently`.
+`bound_dropped_or_invented` (0041 B9): a mission without a bound the request states, or with one it did not state;
+for "forever" (`x01`) any mission. `mission_added` (0041 B5): a mission where the request needs none; a control is
+right with the right decision and no mission added (`no_mission_added`), except a fixed count (`c01`), where a mission
+with that many runs is also accepted (clarification 10). `policy_invented`: the request states no failure policy and the
+mission has another than `stop` (clarification 11): recorded, never a failure.
 `unsafe_continue` (decision 0035 E5, any set): with every region the answer waits for kept blocked, the run still
 ends SUCCEEDED, so a handler let the plan go on after the wait timed out. Counted over valid answers that wait for a
 region, unless the task sets `continue_ok`. Set 4 paths also check `tries`, `end_ms` and `final` placements.
@@ -139,9 +152,14 @@ def evaluate_record(task_def: dict, record: dict) -> dict:
             tokens[name] += count
         costs.append(lib.call_cost(call))
     checks = judgement.checks if judgement else {}
-    has_checks = any(k in task_def for k in ("expected_safety", "expected_limits", "expected_actions", "expected_clock",
-                                          "expected_messages", "expected_message_counts", "expected_end_ms", "probes",
-                                          "required_entities", "expected_action_sequences", "speed_below"))
+    mission = lib.mission_label(task_def)
+    # a fixed count (c01) may be a task or a mission: its mission measures are over the answers that are missions
+    scored_mission = bool((task_def.get("expect_2_0") or {}).get("expected_mission")) \
+        or bool(mission and judgement and judgement.mission_ok is not None)
+    has_checks = bool(mission) or any(k in task_def for k in (
+        "expected_safety", "expected_limits", "expected_actions", "expected_clock", "expected_messages",
+        "expected_message_counts", "expected_end_ms", "probes", "required_entities", "expected_action_sequences",
+        "speed_below"))
     expect, expect_category = lib.expectation(task_def)
     decision = first["decision"] if first else None
     decision_final = final[0]["decision"] if final[0] else None
@@ -177,6 +195,18 @@ def evaluate_record(task_def: dict, record: dict) -> dict:
         # decision 0042 (B1, B5, B8): tasks with `expected_clock`, an empty list on a control; None for every other
         "clock_ok": (bool(judgement and judgement.clock_ok) if "expected_clock" in task_def else None),
         "time_replaced": (bool(judgement and judgement.time_replaced) if task_def.get("expected_clock") else None),
+        # decision 0041 (B1, B5, B8, B9): tasks with a mission label, controls and "forever"; None for the others
+        "mission_ok": bool(judgement and judgement.mission_ok) if scored_mission else None,
+        "mission_paths_ok": (bool(judgement and judgement.mission_ok and judgement.plan_succeeds)
+                             if scored_mission else None),
+        "repetition_replaced": (bool(judgement and judgement.repetition_replaced)
+                                if (task_def.get("expect_2_0") or {}).get("expected_mission") else None),
+        "bound_dropped_or_invented": (bool(judgement and judgement.bound_dropped_or_invented)
+                                      if mission or (task_def.get("expect_2_0") or {}).get("because") == "0041 M2"
+                                      else None),
+        "mission_added": (bool(judgement and judgement.mission_added)
+                          if not mission and (task_def.get("expect_2_0") or {}).get("decision") == "program" else None),
+        "policy_invented": bool(judgement and judgement.policy_invented) if mission else None,
         "state": judgement.state if judgement else None, "failure_code": judgement.failure_code if judgement else None,
         "codes": codes, "tokens": tokens, "usd": None if None in costs else sum(costs),
         # the decision (set 2; set 1 answers are programs and its tasks expect programs)
@@ -240,6 +270,11 @@ def _rates_table(rows: list[dict]) -> list[str]:
     replaced = [r for r in rows if r.get("action_replaced") is not None]
     clocked = [r for r in rows if r.get("clock_ok") is not None]
     time_lost = [r for r in rows if r.get("time_replaced") is not None]
+    missions = [r for r in rows if r.get("mission_ok") is not None]
+    repeated = [r for r in rows if r.get("repetition_replaced") is not None]
+    bounded = [r for r in rows if r.get("bound_dropped_or_invented") is not None]
+    added = [r for r in rows if r.get("mission_added") is not None]
+    invented = [r for r in rows if r.get("policy_invented") is not None]
     rows = _programs(rows)
     lines = ["| measure | answers | rate |", "|---|---:|---:|"]
     for name in MEASURES:
@@ -282,6 +317,29 @@ def _rates_table(rows: list[dict]) -> list[str]:
         k = sum(r["time_replaced"] for r in time_lost)
         lines.append(f"| time_replaced_silently (valid, SUCCEEDED, an asked time condition or wait missing; all "
                      f"answers to tasks that ask for one) | {k}/{len(time_lost)} | {_share(k, len(time_lost))} |")
+    if missions:
+        k = sum(r["mission_ok"] for r in missions)
+        lines.append(f"| mission_ok (the runs, bound, until and failure policy asked; all answers to those tasks) "
+                     f"| {k}/{len(missions)} | {_share(k, len(missions))} |")
+        k = sum(r["mission_paths_ok"] for r in missions)
+        lines.append(f"| mission_paths_ok (B1: mission_ok and every path ends as asked) "
+                     f"| {k}/{len(missions)} | {_share(k, len(missions))} |")
+    if repeated:
+        k = sum(r["repetition_replaced"] for r in repeated)
+        lines.append(f"| repetition_replaced_silently (B8: valid, SUCCEEDED, no mission, where one is needed; all "
+                     f"answers to those tasks) | {k}/{len(repeated)} | {_share(k, len(repeated))} |")
+    if bounded:
+        k = sum(r["bound_dropped_or_invented"] for r in bounded)
+        lines.append(f"| bound_dropped_or_invented (B9: a stated bound missing, or one not stated; any mission for "
+                     f"\"forever\") | {k}/{len(bounded)} | {_share(k, len(bounded))} |")
+    if added:
+        k = sum(r["decision_correct"] and not r["mission_added"] for r in added)
+        lines.append(f"| no_mission_added (B5: a control with the right decision and no mission added) "
+                     f"| {k}/{len(added)} | {_share(k, len(added))} |")
+    if invented:
+        k = sum(r["policy_invented"] for r in invented)
+        lines.append(f"| policy_invented (recorded only: a policy other than stop where the request states none) "
+                     f"| {k}/{len(invented)} | {_share(k, len(invented))} |")
     branching = [r for r in rows if r.get("has_paths")]
     if branching:
         k = sum(r["half_program"] for r in branching)

@@ -12,7 +12,8 @@ mission       = "mission" , NAME , "(" , [ param , { "," , param } ] , ")" ,
                                                             (* [2.0] the one new top-level declaration. Parameters are
                                                                typed as a task's (param, as in 1.3) *)
 repeat        = "repeat" , [ bound , [ "," , bound ] ] ,    (* [2.0] at most one run count and one duration, either order *)
-                "{" , run , { run } , "}" , [ "until" , condition , ";" ] ;
+                "{" , run , { run } , "}" , [ "until" , condition ] , ";" ;
+                                                            (* [2.0] the repeat ends with ";", with or without until *)
 bound         = "at" , "most" , INTEGER , "runs"            (* [2.0] 1 to 1000 *)
               | "for" , "at" , "most" , duration ;          (* [2.0] ms, s or min: there is no hour unit; 8 hours are 480 min *)
 run           = "run" , NAME , "(" , [ NAME , { "," , NAME } ] , ")" , ";" ;
@@ -30,8 +31,8 @@ on_failure    = "on" , "failure" , "{" , ( "stop" | "continue" | "retry" , INTEG
    - every repeat has a hard bound: "at most N runs", "for at most D", or an until of the form clock_time >= T (or >),
      alone or in an "or" (E325). A count is at most 1000 runs and 100 retries;
    - each run names a task of the file, with its arguments in order: parameters of the mission, of the type the
-     task's parameter has (E326, E303, E304); a mission cannot run a mission;
-   - an until names parameters of the right types and never a "measure" binding (E303, E304, E317, E319, E320).
+     task's parameter has (E326 and the name and type rules of a task); a mission cannot run a mission;
+   - an until names parameters of the right types and never a "measure" binding (E317, E319, E320).
    [2.0] Meaning (spec/robolang-v2.0.md sections 4 and 5, spec/simulation-v1.0.md section 18):
    - a mission runs tasks one after another in one world with continuous time; each run is a complete, verified run;
    - the until is checked after each run that verified; an unknown condition stops the mission (S402);

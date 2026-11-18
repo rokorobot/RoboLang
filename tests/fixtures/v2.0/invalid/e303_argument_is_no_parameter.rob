@@ -12,5 +12,5 @@ task round(robot r, location home, location far) {
 mission m(robot r, location home, location far, region quay) {
     repeat at most 3 runs {
         run round(r, home, next_far);
-    }
+    };
 }

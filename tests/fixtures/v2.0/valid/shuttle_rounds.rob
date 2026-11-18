@@ -12,5 +12,5 @@ task round(robot r, location home, location far) {
 mission shuttle(robot r, location home, location far) {
     repeat at most 30 runs {
         run round(r, home, far);
-    }
+    };
 }

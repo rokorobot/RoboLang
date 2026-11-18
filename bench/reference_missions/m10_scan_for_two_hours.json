@@ -1,0 +1,10 @@
+{
+  "task": "",
+  "mission": "scan_rounds",
+  "bindings": {
+    "r": "arm1",
+    "item": "box1",
+    "cam": "camera_top",
+    "st": "shelf_a"
+  }
+}

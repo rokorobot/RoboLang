@@ -21,7 +21,7 @@ from robolang import bridge
 from robolang import ir as task_ir
 from robolang.cli import main as robolang_cli
 from robolang.measured import to_base
-from robolang.sim import World, WorldError, load_world
+from robolang.sim import World, WorldError, load_world, mission_task, run_mission
 from robolang.sim import run as simulate_task
 from robolang.sim.values import duration_ms_of
 from robolang.tokens import KIND_UNITS
@@ -53,12 +53,13 @@ MISSIONS_REFERENCE_DIR = BENCH / "reference_missions"
 PROMPT_FILE = BENCH / "prompt.md"
 REFERENCE_FILE = ROOT / "docs" / "language-reference.md"
 MINIMAL_PROMPT_FILE = BENCH / "prompt_minimal.md"
-# 1.9 is a delta over 1.8, over 1.7, over 1.6, over 1.5, over 1.4, over 1.3: the grammar-only prompt pastes all seven
-GRAMMAR_FILE = ROOT / "spec" / "grammar-v1.9.ebnf"
+# 2.0 is a delta over 1.9, over 1.8, over 1.7, over 1.6, over 1.5, over 1.4, over 1.3: the grammar-only prompt pastes
+# all eight
+GRAMMAR_FILE = ROOT / "spec" / "grammar-v2.0.ebnf"
 BASE_GRAMMAR_FILE = ROOT / "spec" / "grammar-v1.3.ebnf"
 GRAMMAR_FILES = (BASE_GRAMMAR_FILE, ROOT / "spec" / "grammar-v1.4.ebnf", ROOT / "spec" / "grammar-v1.5.ebnf",
                  ROOT / "spec" / "grammar-v1.6.ebnf", ROOT / "spec" / "grammar-v1.7.ebnf",
-                 ROOT / "spec" / "grammar-v1.8.ebnf", GRAMMAR_FILE)
+                 ROOT / "spec" / "grammar-v1.8.ebnf", ROOT / "spec" / "grammar-v1.9.ebnf", GRAMMAR_FILE)
 GRAMMAR_MARK = "{{GRAMMAR}}"  # in prompt_minimal.md: replaced by the text of the grammar file
 REFERENCE_MARK = "{{LANGUAGE_REFERENCE}}"  # in prompt.md: replaced by the shipped, tested reference
 
@@ -103,18 +104,19 @@ ANSWER_SCHEMA = {
                      "description": "\"program\" to answer with RoboLang source, \"cannot\" to decline the request, "
                                     "\"clarify\" to ask which reading is meant."},
         "category": {"type": "string", "enum": list(CATEGORIES),
-                     "description": "Why it cannot be done: \"inexpressible\" (RoboLang 1.4 cannot say it) or "
+                     "description": "Why it cannot be done: \"inexpressible\" (RoboLang 2.0 cannot say it) or "
                                     "\"infeasible\" (this world or robot cannot do it). \"none\" for a program."},
         "reason": {"type": "string", "description": "One sentence: what the program does, or why it cannot be done."},
         "entities": {"type": "array", "items": {"type": "string"},
                      "description": "World entity IDs: for cannot, the ones that block the request; for clarify, every "
                                     "candidate the request could mean. Empty for a program."},
-        "rob": {"type": "string", "description": "The complete RoboLang 1.9 source. Empty when decision is cannot."},
-        "task": {"type": "string", "description": "The name of the task in the source to run. Empty when cannot."},
+        "rob": {"type": "string", "description": "The complete RoboLang 2.0 source. Empty when decision is cannot."},
+        "task": {"type": "string", "description": "The name of the task in the source to run. Empty when cannot, "
+                                                  "and when the answer is a mission."},
         "bindings": {  # a list of pairs: structured outputs require additionalProperties false on objects
             "type": "array",
-            "description": "One entry per task parameter: the parameter name and the world entity ID bound to it. "
-                           "Empty when decision is cannot.",
+            "description": "One entry per parameter of the task (or of the mission, when `mission` is given): the "
+                           "parameter name and the world entity ID bound to it. Empty when decision is cannot.",
             "items": {
                 "type": "object",
                 "properties": {"param": {"type": "string"}, "id": {"type": "string"}},
@@ -122,6 +124,10 @@ ANSWER_SCHEMA = {
                 "additionalProperties": False,
             },
         },
+        "mission": {"type": "string",  # RoboLang 2.0 (decision 0041, clarification 4): optional, not in `required`
+                    "description": "The name of the mission in the source to run, when the answer is a mission: "
+                                   "`bindings` then binds the mission's parameters and `task` is empty. Leave out "
+                                   "for a task."},
     },
     "required": ["decision", "category", "reason", "entities", "rob", "task", "bindings"],
     "additionalProperties": False,
@@ -295,9 +301,13 @@ def parse_answer(text: str) -> tuple[dict | None, str | None]:
         answer = {"decision": "program", "category": "none", "reason": "", **answer}
     if isinstance(answer, dict) and set(answer) == SET2_ANSWER_KEYS:
         answer = {"entities": [], **answer}
+    if isinstance(answer, dict) and "mission" in answer and not isinstance(answer["mission"], str):
+        return None, '"mission" must be a string: the name of the mission, or left out'
+    if isinstance(answer, dict) and set(answer) - {"mission"} == set(ANSWER_SCHEMA["required"]):
+        answer = {**answer, "mission": answer.get("mission", "")}  # RoboLang 2.0: the optional key, "" when left out
     if not isinstance(answer, dict) or set(answer) != set(ANSWER_SCHEMA["properties"]):
         return None, ('the reply must be one JSON object with exactly the keys "decision", "category", "reason", '
-                      '"entities", "rob", "task" and "bindings"')
+                      '"entities", "rob", "task" and "bindings", and "mission" only for a mission')
     if answer["decision"] not in DECISIONS or answer["category"] not in CATEGORIES \
             or not isinstance(answer["reason"], str) or not isinstance(answer["entities"], list) \
             or not all(isinstance(e, str) for e in answer["entities"]):
@@ -335,6 +345,8 @@ class Checked:
     task: task_ir.Task | None = None
     world: World | None = None
     language_version: str = ""
+    mission: task_ir.Mission | None = None  # RoboLang 2.0: the answer is a mission (and `task` is None)
+    document: task_ir.TaskIR | None = None  # the whole file, for the tasks a mission runs
 
 
 def _codes(text: str) -> tuple[str, ...]:
@@ -356,6 +368,24 @@ def _validate_source(rob: str, world: bytes | None = None, task: str = "", bindi
     return str(status), err.getvalue().replace(str(path), "answer.rob").replace(str(world_path), "world.json")
 
 
+def _check_mission(task_def: dict, answer: dict, result, stderr: str, world_data: bytes | None) -> Checked:
+    """RoboLang 2.0: the answer names a mission; its parameters are bound as a task's are (`validate --world` has no
+    mission form, so the bindings are loaded as `simulate --mission` loads them)."""
+    mission = result.ir.mission(answer["mission"])
+    if mission is None:
+        names = ", ".join(m.name for m in result.ir.missions) or "(none)"
+        report = f"error[{NO_TASK_CODE}]: no mission named '{answer['mission']}' in answer.rob; missions: {names}"
+        return Checked(False, report, (NO_TASK_CODE,))
+    data = world_data or world_bytes(task_def)
+    try:
+        world = load_world(data, "world.json", mission_task(mission), answer["bindings"])
+    except WorldError as error:
+        report = ("robolang simulate answer.rob --world world.json --mission " + answer["mission"] + " --bind "
+                  + " ".join(f"{k}={v}" for k, v in answer["bindings"].items()) + f"\n{error.format()}")
+        return Checked(False, report, (error.code,))
+    return Checked(True, "", _codes(stderr), None, world, result.ir.language_version, mission, result.ir)
+
+
 def _world_command(answer: dict) -> str:
     return "robolang validate answer.rob --world world.json --task " + answer["task"] + " --bind " \
         + " ".join(f"{k}={v}" for k, v in answer["bindings"].items())
@@ -368,6 +398,8 @@ def check_answer(task_def: dict, answer: dict, world_data: bytes | None = None) 
     if status != "0":
         return Checked(False, f"robolang validate answer.rob\n{stderr}".rstrip(), _codes(stderr))
     result = task_ir.compile_source(answer["rob"], "answer.rob")
+    if answer.get("mission"):
+        return _check_mission(task_def, answer, result, stderr, world_data)
     task = result.ir.task(answer["task"])
     if task is None:
         names = ", ".join(t.name for t in result.ir.tasks)
@@ -406,6 +438,11 @@ class Judgement:
     action_replaced: bool | None = None  # 0040 (B8): valid, SUCCEEDED, an asked `do` missing; None: none asked
     clock_ok: bool | None = None        # decision 0042 (B1, B5): exactly the clock readings asked; None: not asked
     time_replaced: bool | None = None   # 0042 (B8): valid, SUCCEEDED, an asked time condition or wait missing
+    mission_ok: bool | None = None      # decision 0041 (B1): the runs, bound, until and policy asked; None: no mission
+    repetition_replaced: bool | None = None  # 0041 (B8): a valid, succeeding 1.x program for a mission task
+    bound_dropped_or_invented: bool | None = None  # 0041 (B9): a mission without a stated bound, or with another
+    mission_added: bool | None = None   # 0041 (B5): a mission where the request needs none (a control)
+    policy_invented: bool | None = None  # 0041 clarification 11: a policy the request did not state (recorded only)
 
 
 def _merge(base: dict, patch: dict) -> dict:
@@ -958,8 +995,248 @@ def _sequence_matches(actions: list[dict], sequence: dict) -> bool:
     return all(any(_action_matches(a, e) for a in remaining) for e in expected)
 
 
+# -------- missions (decision 0041, RoboLang 2.0) --------
+
+MISSION_OUTCOMES_OK = ("completed", "bounded")  # ended without failing: B4 allows no valid mission that succeeds
+
+
+def mission_label(task_def: dict) -> dict | None:
+    """
+    The mission a task's 2.0 label asks for, or None: `expect_2_0.expected_mission` (runs, repeat, until, on_failure)
+    with the `paths` of `expect_2_0`; or, for a fixed count that may be a task or a mission (clarification 10),
+    `expect_2_0.accepted_mission` (the same, with its own `paths`). None for every other task.
+    """
+    label = task_def.get("expect_2_0") or {}
+    if label.get("expected_mission"):
+        return {**label["expected_mission"], "paths": label.get("paths", [])}
+    return label.get("accepted_mission")
+
+
+def _entity_text(name: str, bindings: dict[str, str]) -> str:
+    return bindings.get(name, name)
+
+
+def condition_text(condition: task_ir.Condition, bindings: dict[str, str]) -> str:
+    """A condition as one canonical text with entity IDs for names: `and` and `or` operands sorted, times `HH:MM:SS`."""
+    def operand(node) -> str:
+        if isinstance(node, task_ir.QuantityLit):
+            return f"{task_ir.decimal_text(node.value)} {node.unit}"
+        if isinstance(node, task_ir.TimeLit):
+            return node.value
+        if isinstance(node, task_ir.LiveClock):
+            return f"clock_{node.reading}"
+        if isinstance(node, task_ir.LiveReading):
+            return (f"{node.reading} of {_entity_text(node.obj, bindings)} using "
+                    f"{_entity_text(node.sensor, bindings)}")
+        if isinstance(node, task_ir.TextLit):
+            return json.dumps(node.value)
+        return node.name
+
+    if isinstance(condition, (task_ir.And, task_ir.Or)):
+        word = "and" if isinstance(condition, task_ir.And) else "or"
+        return "(" + f" {word} ".join(sorted(condition_text(c, bindings) for c in condition.conditions)) + ")"
+    if isinstance(condition, task_ir.Not):
+        return f"not {condition_text(condition.condition, bindings)}"
+    if isinstance(condition, task_ir.Compare):
+        return f"{operand(condition.left)} {condition.op} {operand(condition.right)}"
+    if isinstance(condition, task_ir.InState):
+        return f"in_state {_entity_text(condition.target, bindings)} {json.dumps(condition.label)}"
+    parts = [_entity_text(getattr(condition, f.name), bindings) for f in fields(condition)]
+    return f"{condition.KIND} {' '.join(parts)}"
+
+
+_TIME_NO_SECONDS = re.compile(r"(?<![\d:])(\d\d:\d\d)(?![\d:])")
+
+
+def _label_condition(text: str) -> str:
+    """The `condition` text of a label in the canonical form: single spaces, and every time with seconds."""
+    return _TIME_NO_SECONDS.sub(r"\1:00", " ".join(text.split()))
+
+
+def _mission_bounds(mission: task_ir.Mission) -> dict:
+    """The bounds a mission states, as the label states them: a run count, a duration (ms), retries, a time of day."""
+    repeat = mission.repeat
+    until = None if repeat is None else repeat.until
+    return {"max_runs": None if repeat is None else repeat.max_runs,
+            "max_ms": None if repeat is None or repeat.max_duration is None else duration_ms_of(repeat.max_duration),
+            "retries": mission.on_failure.retries,
+            "time_of_day": until is not None and _time_bound(until)}
+
+
+def _time_bound(condition: task_ir.Condition) -> bool:
+    if isinstance(condition, task_ir.Or):
+        return any(_time_bound(c) for c in condition.conditions)
+    return (isinstance(condition, task_ir.Compare) and isinstance(condition.left, task_ir.LiveClock)
+            and condition.left.reading == "time" and condition.op in (">", ">=")
+            and isinstance(condition.right, task_ir.TimeLit))
+
+
+def _label_bounds(label: dict) -> dict:
+    repeat = label.get("repeat") or {}
+    failure = label.get("on_failure")
+    until = (label.get("until") or {}).get("condition", "")
+    duration = repeat.get("max_duration")
+    return {"max_runs": repeat.get("max_runs"),
+            "max_ms": None if not duration else _ms(f"{duration['value']} {duration['unit']}"),
+            "retries": failure["retry"] if isinstance(failure, dict) else None,
+            "time_of_day": bool(re.search(r"clock_time >=? ", until))}
+
+
+def _run_bindings(task: task_ir.Task, run: task_ir.Run, bindings: dict[str, str]) -> dict[str, str]:
+    return {p.name: bindings[a] for p, a in zip(task.parameters, run.arguments)}
+
+
+def _mission_runs_ok(label: dict, checked: Checked, bindings: dict[str, str], base) -> tuple[bool, bool]:
+    """(the runs are the ones asked, each run's goal means the goal asked): by entities, by `limits`, by `actions`,
+    and by the goal of the first run of each line in the unpatched world."""
+    mission, document = checked.mission, checked.document
+    wanted = label["runs"]
+    if len(mission.runs) != len(wanted):
+        return False, False
+    structure = goals = True
+    for place, (run, expected) in enumerate(zip(mission.runs, wanted), start=1):
+        task = document.task(run.task)
+        run_bound = _run_bindings(task, run, bindings)
+        if expected.get("extra_entities_ok"):  # the request does not name every entity the task needs (a location)
+            if not set(expected["entities"]) <= set(run_bound.values()):
+                structure = False
+        elif sorted(run_bound.values()) != sorted(expected["entities"]):
+            structure = False
+        if "limits" in expected and {(r.kind, run_bound[r.region]) for r in task.region_limits} \
+                != {tuple(limit) for limit in expected["limits"]}:
+            structure = False
+        if "actions" in expected:
+            done = {(run_bound.get(s.robot, s.robot), s.action, run_bound.get(s.target, s.target))
+                    for _, s in task_ir.walk(task.steps) if isinstance(s, task_ir.Do)}
+            if done != {(a["robot"], a["action"], a["target"]) for a in expected["actions"]}:
+                structure = False
+        first = next((r for r in base.runs if r.line == place), None)
+        if first is None:
+            goals = False
+            continue
+        for message in expected.get("messages", []):  # a reading sent as a value on a channel (decision 0036 V13)
+            sent = {(s.message.channel, s.message.value.subject, s.message.value.kind) for s in first.result.steps
+                    if s.status == "succeeded" and s.message and s.message.value is not None}
+            if (message["channel"], *message["value_of"]) not in sent:
+                structure = False
+        if expected.get("goal_free"):  # the request names no end state: a run that ends SUCCEEDED is right
+            goals = goals and first.result.state == "SUCCEEDED"
+            continue
+        reached = bool(first.result.goal) and all(g.result is not None for g in first.result.goal)
+        effective = replace(task, goal=tuple(g.condition for g in first.result.goal) if reached else ())
+        readings = [{tuple(t) for t in expected["goal"]}]
+        goals = goals and bool(goal_means(effective, run_bound, readings))
+    return structure, goals
+
+
+def _mission_until_ok(label: dict, checked: Checked, bindings: dict[str, str]) -> bool:
+    repeat = checked.mission.repeat
+    until = None if repeat is None else repeat.until
+    wanted = (label.get("until") or {}).get("condition")
+    if until is None or wanted is None:
+        return until is None and wanted is None
+    return condition_text(until, bindings) == _label_condition(wanted)
+
+
+def _mission_policy(mission: task_ir.Mission):
+    failure = mission.on_failure
+    return {"retry": failure.retries} if failure.policy == "retry" else failure.policy
+
+
+def policy_invented(label: dict, checked: Checked) -> bool | None:
+    """Clarification 11: the request states no failure policy (`policy_stated` false), the label is `stop`, and a
+    mission with another policy invented one: recorded here, not a failure of `mission_ok`."""
+    if label.get("policy_stated", True):
+        return None
+    return _mission_policy(checked.mission) != label["on_failure"]
+
+
+def mission_ok(label: dict, checked: Checked, bindings: dict[str, str], base) -> bool:
+    """
+    Decision 0041 (B1): the mission has the runs asked (entities, goal, limits, actions), the bound asked (a count, a
+    duration, the retries, a time of day: none more and none fewer), the `until` asked, and the failure policy asked.
+    """
+    structure, goals = _mission_runs_ok(label, checked, bindings, base)
+    policy_ok = _mission_policy(checked.mission) == label["on_failure"] or policy_invented(label, checked) is True \
+        and _mission_policy(checked.mission) in ("stop", "continue")
+    return (structure and goals and _mission_bounds(checked.mission) == _label_bounds(label)
+            and _mission_until_ok(label, checked, bindings) and policy_ok)
+
+
+def bound_dropped_or_invented(label: dict, checked: Checked) -> bool:
+    """Decision 0041 (B9): a bound the request states is missing (a count, a duration, `retry N`, a time of day), or
+    one it did not state is there. A bound with the wrong value is not this: `mission_ok` fails it."""
+    found, wanted = _mission_bounds(checked.mission), _label_bounds(label)
+    return any((found[key] is None) != (wanted[key] is None) for key in ("max_runs", "max_ms", "retries")) \
+        or found["time_of_day"] != wanted["time_of_day"]
+
+
+def _fail_runs(path: dict):
+    faults = path.get("run_faults", [])
+    if any(f["run"] == "all" for f in faults):
+        return "all"
+    return {f["run"] for f in faults}
+
+
+def judge_mission_paths(task_def: dict, label: dict, checked: Checked, bindings: dict[str, str]) -> list[dict]:
+    """Run the mission once per path of the label, in that path's patched world, with its faulted runs (clarification
+    9; `run_faults` is a test form): the outcome, the runs, the verified runs and the failed runs are the label's."""
+    results = []
+    for path in label.get("paths", []):
+        entry = {"when": path["when"], "goal_ok": False, "plan_ok": False, "state": None, "failure_code": None,
+                 "value_ok": None}
+        patched = _merge(json.loads(world_bytes(task_def)), path["world_patch"])
+        try:
+            world = load_world(json.dumps(patched).encode("utf-8"), "world.json", mission_task(checked.mission),
+                               bindings)
+            result = run_mission(checked.document, checked.mission, world, fail_runs=_fail_runs(path))
+        except WorldError as error:
+            entry["failure_code"] = error.code
+            results.append(entry)
+            continue
+        entry["state"], entry["failure_code"] = result.outcome, result.failure.code if result.failure else None
+        failed = [r.index for r in result.runs if not r.verified]
+        entry["goal_ok"] = entry["plan_ok"] = (
+            result.outcome == path["outcome"] and len(result.runs) == path["runs"]
+            and result.runs_verified == path["runs_verified"] and failed == path.get("failed_runs", failed))
+        results.append(entry)
+    return results
+
+
+def judge_mission(task_def: dict, checked: Checked, bindings: dict[str, str]) -> Judgement:
+    """
+    A valid answer that is a mission (RoboLang 2.0). Run in the unpatched world, then once per path of the label.
+    With a label: `goal_correct` (the goal of each run line means the goal asked), `plan_succeeds` (every path ends as
+    the label says), and the check `mission` (runs, bound, until, policy). With none (a control, an infeasible or
+    inexpressible request): a mission added, and `plan_succeeds` when it completed or was bounded (B4: no valid mission
+    that succeeds).
+    """
+    result = run_mission(checked.document, checked.mission, checked.world)
+    label = mission_label(task_def)
+    judgement = Judgement(False, result.outcome in MISSION_OUTCOMES_OK, result.outcome,
+                          result.failure.code if result.failure else None, {})
+    if label is None:
+        expect = task_def.get("expect_2_0") or {}
+        judgement.mission_added = expect.get("decision") == "program"
+        if expect.get("because") == "0041 M2":  # B9: "forever" is given a bound
+            judgement.bound_dropped_or_invented = True
+        return judgement
+    judgement.mission_added = False
+    _, goals = _mission_runs_ok(label, checked, bindings, result)
+    judgement.paths = judge_mission_paths(task_def, label, checked, bindings)
+    judgement.goal_correct = goals
+    judgement.plan_succeeds = bool(judgement.paths) and all(p["plan_ok"] for p in judgement.paths)
+    judgement.mission_ok = mission_ok(label, checked, bindings, result)
+    judgement.checks["mission"] = judgement.mission_ok
+    judgement.bound_dropped_or_invented = bound_dropped_or_invented(label, checked)
+    judgement.policy_invented = policy_invented(label, checked)
+    return judgement
+
+
 def judge(task_def: dict, checked: Checked, bindings: dict[str, str]) -> Judgement:
     """Goal, simulation and the task's optional checks, for an answer that `check_answer` accepted."""
+    if checked.mission is not None:
+        return judge_mission(task_def, checked, bindings)
     try:
         exported = {(t.subject, t.property, t.value) for t in bridge.goal_triples(checked.task, bindings)}
     except bridge.NotExportable:
@@ -1023,6 +1300,8 @@ def judge(task_def: dict, checked: Checked, bindings: dict[str, str]) -> Judgeme
         judgement.checks["declared_actions"] = judgement.actions_ok
     judgement.clock_ok = clock_ok(task_def, checked, bindings)
     judgement.time_replaced = time_replaced(task_def, checked, bindings, result.state)
+    if (task_def.get("expect_2_0") or {}).get("expected_mission"):
+        judgement.repetition_replaced = result.state == "SUCCEEDED"  # a valid, succeeding 1.x program (B8)
     if judgement.clock_ok is not None:
         judgement.checks["clock"] = judgement.clock_ok
     return judgement
@@ -1048,13 +1327,13 @@ def repair_message(report: str) -> str:
     return ("That answer was rejected. This is the exact output of the RoboLang tools:\n\n"
             f"{report}\n\n"
             "Fix the problem and answer again in the same format: the complete corrected source, "
-            "the task name and the bindings.")
+            "the task name (or the mission name) and the bindings.")
 
 
 def format_repair_message(problem: str) -> str:
     return (f"That reply could not be read: {problem}.\n\n"
             "Answer again as one JSON object with the keys \"decision\", \"category\", \"reason\", "
-            "\"entities\", \"rob\", \"task\" and \"bindings\".")
+            "\"entities\", \"rob\", \"task\" and \"bindings\" (and \"mission\" for a mission).")
 
 
 def served_by(call: dict) -> dict:

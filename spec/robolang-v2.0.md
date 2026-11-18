@@ -46,7 +46,7 @@ mission NAME(parameters) {
     repeat [at most N runs] [, for at most D] {
         run TASK(arguments);
         ...
-    } [until CONDITION;]
+    } [until CONDITION] ;
     [on failure { stop; | continue; | retry N; }]
 }
 ```
@@ -71,7 +71,7 @@ mission NAME(parameters) {
   `E325`. "Forever" is inexpressible. Whatever the bounds say, no mission makes more than 1000 task runs in one run of the
   simulation (a mission whose tasks never wait, with only a duration, would never reach its bound: 1000 runs end it
   `bounded`).
-- **`until CONDITION;`** is checked **after each task run that verified**, in the order of the runs, and ends the
+- **`} until CONDITION;`** (the repeat always ends with `;`, with or without an `until`) is checked **after each task run that verified**, in the order of the runs, and ends the
   mission `completed` when it holds (M3). The condition is a fact condition as in a `pre` (`region_clear`,
   `object_at`, `robot_at`, `holding`, `object_exists`, `robot_ready`, `sensor_ok`, `in_state`, with `and`, `or`,
   `not`) over the parameters of the mission, **or a comparison with a live reading or the live clock**, read as in a

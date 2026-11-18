@@ -1,0 +1,17 @@
+// bench/reference_missions/m03_inspect_for_three_hours.rob: the 2.0 reference (decision 0041)
+robolang 2.0;
+
+task look(robot r, object part, sensor cam, location st) {
+    goal { object_at part st; }
+    plan {
+        inspect r part using cam;
+        wait for 10 min;
+    }
+}
+
+mission watch(robot r, object part, sensor cam, location st, region fence) {
+    repeat for at most 180 min {
+        run look(r, part, cam, st);
+    } until region_clear fence;
+    on failure { stop; }
+}

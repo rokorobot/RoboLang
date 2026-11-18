@@ -1,8 +1,9 @@
 """
 Benchmark set 9, "missions" (bench/tasks_missions/, decision record 0041, plan docs/plans/bench-9-missions.md): the
 mission layer of RoboLang 2.0 (a top-level `mission` that runs tasks one run after another with a hard bound, an
-`until` condition and a failure policy), pre-registered against RoboLang 1.9 before any code (L3 of iteration I4).
-`expect` is the 1.9 label (the baseline), `expect_2_0` the label for acceptance, with the `expected_mission` of a
+`until` condition and a failure policy), pre-registered against RoboLang 1.9 before any code (L3 of iteration I4) and
+labelled for RoboLang 2.0 at L4: `expect` is the 2.0 label, `expect_1_9` the 1.9 label (the baseline), and `expect_2_0`
+keeps the pre-registered 2.0 label, with the `expected_mission` of a
 program and the mission outcome of each path.
 
 10 `mission` requests that become programs in 2.0, 5 `infeasible` in 2.0, 7 `inexpressible` that stay out (0041 M2,
@@ -33,10 +34,12 @@ ATLAS = json.loads((REPO / "bench" / "atlas.json").read_text(encoding="utf-8"))
 GAPS = {g["id"]: g for g in ATLAS["gaps"]}
 CANNOT = {"decision": "cannot", "category": "inexpressible"}
 PROGRAMS = {t: d for t, d in SET.items() if d["group"] == "mission"}
+UNTIL = {t: d for t, d in SET.items() if d["group"] == "mission_until"}  # x06, x07: programs by clarification 2
+MISSIONS = {**PROGRAMS, **UNTIL}
 INFEASIBLE = {t: d for t, d in SET.items() if d["group"] == "infeasible"}
 INEXPRESSIBLE = {t: d for t, d in SET.items() if d["group"] == "inexpressible"}
 CONTROLS = {t: d for t, d in SET.items() if d["group"] == "control"}
-DECLINED = {**PROGRAMS, **INFEASIBLE, **INEXPRESSIBLE}  # what 1.9 must decline: an attempt each, a gap each
+DECLINED = {**PROGRAMS, **UNTIL, **INFEASIBLE, **INEXPRESSIBLE}  # what 1.9 declines: an attempt each
 MISSION_LINE = re.compile(r"^[^\n]*// @mission\n", re.M)  # an attempt marks every line that is the mission
 OUTCOMES = ("completed", "bounded", "failed")
 
@@ -78,12 +81,12 @@ def world_ids(task: dict) -> set[str]:
 def test_the_mix_of_tasks():
     assert len(SET) == 26
     groups = Counter(d["group"] for d in SET.values())
-    assert groups == {"mission": 10, "infeasible": 5, "inexpressible": 7, "control": 4}
+    assert groups == {"mission": 10, "mission_until": 2, "infeasible": 5, "inexpressible": 5, "control": 4}
     for task_id, task in SET.items():
         assert task["id"] == task_id and (lib.MISSIONS_TASKS_DIR / f"{task_id}.json").is_file()
         assert (REPO / task["world"]).is_file() and task["tags"] and task["prompt"].endswith(".")
         assert task["prompt"].isascii() and "\r" not in read(lib.MISSIONS_TASKS_DIR / f"{task_id}.json")
-    prefixes = {"mission": "m", "infeasible": "i", "inexpressible": "x", "control": "c"}
+    prefixes = {"mission": "m", "mission_until": "x", "infeasible": "i", "inexpressible": "x", "control": "c"}
     for task_id, task in SET.items():
         assert re.fullmatch(prefixes[task["group"]] + r"\d\d_[a-z0-9_]+", task_id), task_id
 
@@ -97,30 +100,37 @@ def test_the_ids_are_new_ones_and_no_prompt_is_a_copy_of_a_standing_task():
     assert not {t["prompt"] for t in SET.values()} & {t["prompt"] for t in elsewhere.values()}
 
 
-def test_labels_are_1_9_in_expect_and_2_0_in_expect_2_0():
+def test_labels_are_2_0_in_expect_1_9_is_the_baseline_and_expect_2_0_keeps_the_pre_registration():
     for task_id, task in SET.items():
         later = task["expect_2_0"]
         assert later["decision"] in ("program", "cannot"), task_id
+        assert task["expect"] == {k: later[k] for k in ("decision", "category") if k in later}, task_id
         if task["group"] == "control":
-            assert task["expect"] == {"decision": "program"} and lib.expected_goals(task), task_id
-            assert later == {"decision": "program", "expected_mission": None}
+            assert task["expect"] == {"decision": "program"} and task["expect_1_9"]["decision"] == "program"
+            assert lib.expected_goals(task), task_id
+            assert later["expected_mission"] is None and set(later) <= {"decision", "expected_mission",
+                                                                        "accepted_mission"}
             assert not {"why", "attempt_fails_with", "gap", "blockers"} & set(task)
             continue
-        assert task["expect"] == CANNOT and lib.expectation(task) == ("cannot", "inexpressible"), task_id
+        assert task["expect_1_9"] == CANNOT, task_id  # the baseline: 1.9 declines every task that is not a control
         assert len(task["why"]) > 40 and task["attempt_fails_with"] == "E201", task_id
-        assert not {"expected_goal", "expected_goals", "expect_1_9", "paths"} & set(task)
+        assert not {"expected_goal", "expected_goals", "paths"} & set(task)
         assert task["gap"] in GAPS and GAPS[task["gap"]]["scope"] == "open", task_id
+    for task_id, task in {**PROGRAMS, **UNTIL}.items():
+        assert task["expect"] == {"decision": "program"} and lib.expectation(task) == ("program", "none"), task_id
+        assert task["expect_2_0"]["expected_mission"] and task["expect_2_0"]["paths"], task_id
+        assert lib.task_paths(task) is None  # the mission paths are read by the mission scorer, not by `judge_paths`
     for task_id, task in INFEASIBLE.items():
         later = task["expect_2_0"]
         assert later["decision"] == "cannot" and later["category"] == "infeasible", task_id
+        assert task["expect"] == {"decision": "cannot", "category": "infeasible"}, task_id
         assert later["because"].startswith("0041 M") and task["blockers"], task_id
     for task_id, task in INEXPRESSIBLE.items():
         later = task["expect_2_0"]
-        assert {k: later[k] for k in ("decision", "category")} == CANNOT, task_id
+        assert {k: later[k] for k in ("decision", "category")} == CANNOT == task["expect"], task_id
         assert later["because"].startswith("0041 "), task_id
     reasons = sorted(t["expect_2_0"]["because"] for t in INEXPRESSIBLE.values())
-    assert reasons == ["0041 (G-CHOOSE, I7)", "0041 M2", "0041 M3 (open point 2)", "0041 M3 (open point 2)",
-                       "0041 M6", "0041 M6", "0041 M7"]
+    assert reasons == ["0041 (G-CHOOSE, I7)", "0041 M2", "0041 M6", "0041 M6", "0041 M7"]
 
 
 def test_the_mission_programs_cover_the_cases_the_pre_registration_lists():
@@ -149,14 +159,16 @@ def test_the_mission_programs_cover_the_cases_the_pre_registration_lists():
 
 
 def test_each_expected_mission_names_entities_that_the_world_has_and_states_a_bound():
-    for task_id, task in PROGRAMS.items():
+    for task_id, task in MISSIONS.items():
         mission = task["expect_2_0"]["expected_mission"]
-        assert set(mission) == {"runs", "repeat", "until", "on_failure"}, task_id
+        assert {"runs", "repeat", "until", "on_failure"} <= set(mission) <= {"runs", "repeat", "until", "on_failure",
+                                                                              "policy_stated"}, task_id
         assert mission["runs"], task_id
         for entry in mission["runs"]:
-            assert entry["task"] and entry["goal"] and entry["entities"], task_id
+            assert entry["task"] and (entry["goal"] if "goal" in entry else entry["goal_free"]), task_id
+            assert entry["entities"], task_id
             assert set(entry["entities"]) <= world_ids(task), (task_id, entry["entities"])
-            for subject, prop, value in entry["goal"]:
+            for subject, prop, value in entry.get("goal", []):
                 assert subject.startswith("rl:") and prop in ("located_in", "in_state"), task_id
         assert mission["on_failure"] in ("stop", "continue") or set(mission["on_failure"]) == {"retry"}, task_id
         if task_id == "m02_retry_the_carry":  # a single run with `retry 12`: no `repeat` clause is needed
@@ -175,6 +187,9 @@ def test_the_bound_in_the_label_is_the_bound_in_the_request_no_more_and_no_less(
     for task_id, task in PROGRAMS.items():
         mission = task["expect_2_0"]["expected_mission"]
         prompt = task["prompt"]
+        assert (mission.get("policy_stated", True) is False) == (task_id in (
+            "m03_inspect_for_three_hours", "m05_alternate_the_carry", "m07_rounds_until_quay_clear",
+            "m10_scan_for_two_hours")), task_id  # clarification 11: these requests state no failure policy
         bound = mission["repeat"] or {"max_runs": None, "max_duration": None}
         if bound["max_runs"]:
             counted = rf"\b{bound['max_runs']} (such rounds|rounds|carries|attempts|times|runs|scans)"
@@ -197,7 +212,7 @@ def test_the_bound_in_the_label_is_the_bound_in_the_request_no_more_and_no_less(
 
 
 def test_the_paths_are_forced_by_the_world_and_their_outcomes_follow_the_label():
-    for task_id, task in PROGRAMS.items():
+    for task_id, task in MISSIONS.items():
         mission = task["expect_2_0"]["expected_mission"]
         paths = task["expect_2_0"]["paths"]
         assert len(paths) >= 2, task_id
@@ -210,9 +225,11 @@ def test_the_paths_are_forced_by_the_world_and_their_outcomes_follow_the_label()
             assert path["runs_verified"] + len(failed) <= path["runs"], (task_id, path["when"])
             if mission["repeat"] and mission["repeat"]["max_runs"]:
                 assert path["runs"] <= mission["repeat"]["max_runs"], (task_id, path["when"])
-            if path["outcome"] == "failed":  # `stop` at the first failed run
-                assert mission["on_failure"] in ("stop", {"retry": 12}), task_id
+            if path["outcome"] == "failed":  # `stop` at the first failed run, or every run failed under `continue`
+                assert mission["on_failure"] in ("stop", "continue", {"retry": 12}), task_id
                 assert failed and failed[-1] == path["runs"], (task_id, path["when"])
+                if mission["on_failure"] == "continue":  # clarification 6: never hidden as bounded
+                    assert path["runs_verified"] == 0 and len(failed) == path["runs"], (task_id, path["when"])
             if path["outcome"] == "completed":  # verified by an until, or a verified single run
                 assert mission["until"] or mission["repeat"] is None, (task_id, path["when"])
                 assert path["runs_verified"] >= 1 and (not failed or failed[-1] < path["runs"]), task_id
@@ -236,7 +253,7 @@ def test_a_duration_bound_gives_the_count_of_runs_that_the_label_says():
     for task_id, per_run_min, bound_min in (("m03_inspect_for_three_hours", 10, 180),
                                              ("m10_scan_for_two_hours", 15, 120)):
         paths = SET[task_id]["expect_2_0"]["paths"]
-        assert f"wait for {per_run_min} min;" in read(REF / f"{task_id}.attempt.rob")
+        assert f"wait for {per_run_min} min;" in read(REF / f"{task_id}.rob")
         bounded = next(p for p in paths if p["outcome"] == "bounded")
         assert bounded["runs"] == ceil(bound_min / per_run_min)
     # the until path of m03: the event at 25 minutes is first seen after run 3 (30 minutes), not after run 2
@@ -285,18 +302,28 @@ def test_the_inexpressible_tasks_each_stay_out_for_one_reason_of_0041():
                        "x02_every_hour_on_the_hour": {"every", "time_trigger"},
                        "x03_for_each_go_message": {"message_trigger", "no_message_waits"},
                        "x04_rounds_inside_rounds": {"nested", "repeat_in_repeat"},
-                       "x05_every_new_part": {"stream", "choose_object"},
-                       "x06_until_it_is_cool": {"until", "measured_condition"},
-                       "x07_until_ten_to_ten": {"until", "clock_condition"}}
+                       "x05_every_new_part": {"stream", "choose_object"}}
+    # G-TRIGGER (clarification 14): the time trigger moved out of G-LOOP; the message one stays in G-MSG
     assert {t: d["gap"] for t, d in INEXPRESSIBLE.items()} == {
-        "x01_never_stop": "G-LOOP", "x02_every_hour_on_the_hour": "G-LOOP", "x03_for_each_go_message": "G-MSG",
-        "x04_rounds_inside_rounds": "G-LOOP", "x05_every_new_part": "G-CHOOSE", "x06_until_it_is_cool": "G-LOOP",
-        "x07_until_ten_to_ten": "G-LOOP"}
+        "x01_never_stop": "G-LOOP", "x02_every_hour_on_the_hour": "G-TRIGGER", "x03_for_each_go_message": "G-MSG",
+        "x04_rounds_inside_rounds": "G-LOOP", "x05_every_new_part": "G-CHOOSE"}
     # no bound is stated in x01; a bound is stated in the others, so only the named construct stays out
     assert not re.search(r"\d", SET["x01_never_stop"]["prompt"].replace("tug1", ""))
-    for task_id in ("x03_for_each_go_message", "x04_rounds_inside_rounds", "x05_every_new_part",
-                    "x06_until_it_is_cool", "x07_until_ten_to_ten"):
+    for task_id in ("x03_for_each_go_message", "x04_rounds_inside_rounds", "x05_every_new_part"):
         assert re.search(r"\b(\d+ (times|rounds|hours)|at most)\b", SET[task_id]["prompt"]), task_id
+
+
+def test_x06_and_x07_became_programs_by_clarification_2():
+    """An `until` may read a live value or the clock, and a time-of-day `until` is a hard bound."""
+    for task_id in UNTIL:
+        task = SET[task_id]
+        assert task["expect_1_9"] == CANNOT and task["expect"] == {"decision": "program"}
+        assert task["expect_2_0"]["expected_mission"]["on_failure"] == "stop"
+        assert task["expect_2_0"]["expected_mission"]["policy_stated"] is False
+    until = {t: SET[t]["expect_2_0"]["expected_mission"]["until"]["condition"] for t in UNTIL}
+    assert until == {"x06_until_it_is_cool": "temperature of pan_1 using probe_temp < 40 degC",
+                     "x07_until_ten_to_ten": "clock_time >= 22:00"}
+    assert SET["x07_until_ten_to_ten"]["expect_2_0"]["expected_mission"]["repeat"]["max_runs"] == 40
 
 
 def test_no_new_world_file_is_needed():
@@ -312,9 +339,10 @@ def test_no_new_world_file_is_needed():
 
 def test_references_and_attempts_are_where_they_should_be():
     names = [p.name for p in REF.iterdir()]
-    refs = {n.split(".")[0] for n in names if ".attempt" not in n}
+    refs = {n.split(".")[0] for n in names if ".attempt" not in n}  # the references, including c01's mission form
     attempts = {n.split(".")[0] for n in names if ".attempt." in n}
-    assert refs == set(CONTROLS) and attempts == set(DECLINED)  # no 2.0 reference yet: that is L4
+    assert refs == set(CONTROLS) | set(MISSIONS) and attempts == set(DECLINED)  # a 2.0 reference for each program
+    assert (REF / "c01_three_round_trips.mission.rob").is_file()  # the other accepted form of c01 (clarification 10)
     for task_id in DECLINED:
         assert (REF / f"{task_id}.attempt.rob").is_file() and (REF / f"{task_id}.attempt.json").is_file()
     for name in names:
@@ -397,12 +425,12 @@ def test_the_attempt_binds_the_entities_the_request_names():
 def test_the_control_reference_is_valid_exports_an_accepted_goal_and_succeeds_on_every_path(task_id):
     task = CONTROLS[task_id]
     answer = reference(task_id)
-    assert answer["rob"].count("robolang 1.9;") == 1 and answer["rob"].isascii()
+    assert answer["rob"].count("robolang 2.0;") == 1 and answer["rob"].isascii()
     body = answer["rob"].split("\n", 1)[1]
     assert not re.search(r"^mission |\brepeat\b|\brun \w+\(|// @mission", body, re.M)
     checked = lib.check_answer(task, answer)
     assert checked.valid, checked.report
-    assert checked.language_version == "1.9"
+    assert checked.language_version == "2.0"
     judgement = lib.judge(task, checked, answer["bindings"])
     assert judgement.goal_correct and judgement.plan_succeeds, (judgement.state, judgement.failure_code)
     assert not judgement.half_program
@@ -410,6 +438,8 @@ def test_the_control_reference_is_valid_exports_an_accepted_goal_and_succeeds_on
 
 def test_the_controls_are_a_fixed_sequence_a_step_retry_and_a_bounded_wait_and_want_no_mission():
     assert all(t["expect_2_0"]["expected_mission"] is None for t in CONTROLS.values())
+    assert [t["expect_2_0"].get("accepted_mission") is not None for t in CONTROLS.values()] == [True, False, False,
+                                                                                                False]
     assert read(REF / "c01_three_round_trips.rob").count("move r to far;") == 3  # unrolled: a task, not a mission
     assert "grasp r item else {" in read(REF / "c02_grasp_once_more.rob")  # a 1.5 handler, bounded, expressible
     assert "wait until region_clear lane timeout 20 s" in read(REF / "c03_wait_for_the_aisle.rob")
@@ -425,15 +455,37 @@ def test_the_controls_are_a_fixed_sequence_a_step_retry_and_a_bounded_wait_and_w
 
 # -------- the atlas --------
 
-def test_every_task_1_9_declines_is_in_exactly_one_atlas_gap_and_no_control_is():
+def test_every_inexpressible_task_is_in_exactly_one_atlas_gap_and_nothing_else_is():
+    """After L4 only what 2.0 still declines is in a gap: programs, infeasible tasks and controls are not."""
     in_gaps = [(t, g["id"]) for g in ATLAS["gaps"] for t in g["tasks"] if t in SET]
-    assert len(in_gaps) == len({t for t, _ in in_gaps}) == len(DECLINED)
-    assert {t for t, _ in in_gaps} == set(DECLINED)
+    assert len(in_gaps) == len({t for t, _ in in_gaps}) == len(INEXPRESSIBLE)
+    assert {t for t, _ in in_gaps} == set(INEXPRESSIBLE)
     for task_id, gap in in_gaps:
-        assert DECLINED[task_id]["gap"] == gap and GAPS[gap]["scope"] == "open"
-    assert Counter(gap for _, gap in in_gaps) == {"G-LOOP": 20, "G-MSG": 1, "G-CHOOSE": 1}
+        assert INEXPRESSIBLE[task_id]["gap"] == gap and GAPS[gap]["scope"] == "open"
+    assert Counter(gap for _, gap in in_gaps) == {"G-LOOP": 2, "G-TRIGGER": 1, "G-MSG": 1, "G-CHOOSE": 1}
+    assert GAPS["G-TRIGGER"]["scope"] == "open" and GAPS["G-TRIGGER"]["direction"] == "reasoning"
     assert {t["gap"] for t in PROGRAMS.values()} | {t["gap"] for t in INFEASIBLE.values()} == {"G-LOOP"}
-    assert ATLAS["history"][-1]["note"] == "I4 L3: set 9 missions pre-registered (26 tasks)"
+    assert ATLAS["history"][-1]["note"] == "I4 L4: RoboLang 2.0 built and taught"
+
+
+def test_the_standing_g_loop_tasks_are_relabelled_by_what_the_request_bounds():
+    """None states a bound it can use, so none is a program; the triggers moved to G-TRIGGER (clarification 14), and
+    x_shuttle_until_five, whose 17:00 is a bound, needs the next part chosen at run time like x05 (G-CHOOSE)."""
+    assert set(GAPS["G-TRIGGER"]["tasks"]) == {
+        "x_every_hour", "x_keep_feeding", "u03_until_stop", "u18_every_morning", "x_all_parts_ever",
+        "x01_every_night_round", "x02_every_hour_on_the_hour"}
+    assert set(GAPS["G-LOOP"]["tasks"]) == {
+        "x_retry_grasp", "x_wait_forever", "u04_back_and_forth", "x_retry_until_grasped", "f10_retry_until_works",
+        "f13_retry_every_minute", "x04_every_minute", "x04_open_until_open", "x01_never_stop",
+        "x04_rounds_inside_rounds"}
+    assert "x_shuttle_until_five" in GAPS["G-CHOOSE"]["tasks"]
+    standing = {}
+    for name in lib.SETS:
+        if name != "missions":
+            standing.update(lib.load_set(name))
+    for task_id in (*GAPS["G-TRIGGER"]["tasks"], *GAPS["G-LOOP"]["tasks"], "x_shuttle_until_five"):
+        if task_id in standing:
+            assert lib.expectation(standing[task_id]) == ("cannot", "inexpressible"), task_id
 
 
 # -------- the scorer and the workflow --------
@@ -450,28 +502,170 @@ def missions_run(tmp_path: Path, replies: dict) -> Path:
     return out_dir
 
 
-def test_the_scorer_counts_a_silent_replacement_as_false_and_a_decline_of_a_control_as_a_refusal(tmp_path):
+def mission_reference(task_id: str, suffix: str = "") -> dict:
+    return reference(task_id + suffix)
+
+
+def test_every_2_0_reference_is_valid_and_gives_its_outcome_on_every_path():
+    """The 12 mission programs: valid, the mission asked, and every path ends as its label says."""
+    for task_id, task in MISSIONS.items():
+        answer = reference(task_id)
+        assert answer["rob"].startswith(f"// bench/reference_missions/{task_id}.rob: the 2.0 reference")
+        assert answer["rob"].count("robolang 2.0;") == 1 and answer["task"] == "" and answer["mission"]
+        checked = lib.check_answer(task, answer)
+        assert checked.valid and checked.language_version == "2.0", (task_id, checked.report)
+        judgement = lib.judge(task, checked, answer["bindings"])
+        assert judgement.mission_ok and judgement.goal_correct and judgement.plan_succeeds, (task_id, judgement.paths)
+        assert [p["plan_ok"] for p in judgement.paths] == [True] * len(task["expect_2_0"]["paths"]), task_id
+        assert judgement.mission_added is False and judgement.bound_dropped_or_invented is False
+        assert [p["state"] for p in judgement.paths] == [p["outcome"] for p in task["expect_2_0"]["paths"]], task_id
+
+
+def test_c01_may_be_a_task_or_a_mission_with_three_runs_clarification_10():
+    task = CONTROLS["c01_three_round_trips"]
+    as_task = reference("c01_three_round_trips")
+    as_mission = reference("c01_three_round_trips.mission")
+    for answer in (as_task, as_mission):
+        checked = lib.check_answer(task, answer)
+        judgement = lib.judge(task, checked, answer["bindings"])
+        assert checked.valid and judgement.goal_correct and judgement.plan_succeeds, answer["rob"]
+        assert not judgement.mission_added
+    assert lib.judge(task, lib.check_answer(task, as_mission), as_mission["bindings"]).mission_ok
+    wrong = dict(as_mission, rob=as_mission["rob"].replace("at most 3 runs", "at most 4 runs"))
+    assert not lib.judge(task, lib.check_answer(task, wrong), wrong["bindings"]).mission_ok
+    # c02 to c04 want no mission: a mission there is `mission_added`
+    for task_id in ("c02_grasp_once_more", "c03_wait_for_the_aisle", "c04_three_named_totes"):
+        assert lib.mission_label(CONTROLS[task_id]) is None
+
+
+def mutated(task_id: str, old: str, new: str) -> tuple[dict, lib.Judgement]:
+    answer = reference(task_id)
+    assert old in answer["rob"], (task_id, old)
+    answer = dict(answer, rob=answer["rob"].replace(old, new))
+    checked = lib.check_answer(SET[task_id], answer)
+    assert checked.valid, checked.report
+    return answer, lib.judge(SET[task_id], checked, answer["bindings"])
+
+
+def test_mission_ok_fails_a_wrong_count_a_dropped_until_and_a_wrong_policy():
+    _, wrong = mutated("m01_shuttle_thirty_rounds", "at most 30 runs", "at most 29 runs")
+    assert not wrong.mission_ok and not wrong.plan_succeeds and wrong.bound_dropped_or_invented is False
+    _, no_until = mutated("m07_rounds_until_quay_clear", "} until region_clear quay;", "};")
+    assert not no_until.mission_ok and not no_until.plan_succeeds  # the quay path would end bounded, not completed
+    _, policy = mutated("m04_patrol_and_go_on", "on failure { continue; }", "on failure { stop; }")
+    assert not policy.mission_ok and not policy.plan_succeeds
+    _, swapped = mutated("m06_carry_until_there", "until object_at item dst;", "until object_at item src;")
+    assert not swapped.mission_ok
+
+
+def test_a_policy_the_request_does_not_state_is_recorded_not_failed_clarification_11():
+    _, kept = mutated("m10_scan_for_two_hours", "on failure { stop; }", "on failure { continue; }")
+    assert kept.policy_invented is True and kept.mission_ok is True
+    _, retry = mutated("m10_scan_for_two_hours", "on failure { stop; }", "on failure { retry 3; }")
+    assert not retry.mission_ok  # only stop and continue are the default or a recorded invention
+    _, stated = mutated("m01_shuttle_thirty_rounds", "on failure { stop; }", "on failure { continue; }")
+    assert stated.policy_invented is None and not stated.mission_ok  # the request says "stop": continue is wrong
+
+
+def test_a_bound_dropped_or_invented_is_counted_b9():
+    _, invented = mutated("m10_scan_for_two_hours", "repeat for at most 120 min",
+                          "repeat at most 8 runs, for at most 120 min")
+    assert invented.bound_dropped_or_invented is True and not invented.mission_ok
+    _, dropped = mutated("m01_shuttle_thirty_rounds", "repeat at most 30 runs",
+                         "repeat at most 30 runs, for at most 99 min")
+    assert dropped.bound_dropped_or_invented is True
+    _, dropped_count = mutated("m03_inspect_for_three_hours", "repeat for at most 180 min", "repeat at most 18 runs")
+    assert dropped_count.bound_dropped_or_invented is True
+    _, no_time = mutated("x07_until_ten_to_ten", "until clock_time >= 22:00", "until robot_at r far")
+    assert no_time.bound_dropped_or_invented is True  # the time of day the request states is gone
+    answer, wrong_value = mutated("m10_scan_for_two_hours", "for at most 120 min", "for at most 121 min")
+    assert wrong_value.bound_dropped_or_invented is False and not wrong_value.mission_ok  # a wrong value is not B9
+    # x01: any mission written for "forever" is an invented bound
+    task = SET["x01_never_stop"]
+    forever = reference("m01_shuttle_thirty_rounds")
+    checked = lib.check_answer(dict(task, world="bench/worlds/yard.json"), forever)
+    assert lib.judge(task, checked, forever["bindings"]).bound_dropped_or_invented is True
+
+
+def test_a_valid_succeeding_program_for_a_mission_task_is_repetition_replaced_b8():
+    for task_id in PROGRAMS:
+        answer = attempt_answer(task_id, strip=True)
+        checked = lib.check_answer(SET[task_id], answer)
+        assert checked.valid and checked.language_version == "1.9", task_id
+        judgement = lib.judge(SET[task_id], checked, answer["bindings"])
+        assert judgement.repetition_replaced is True and not judgement.mission_ok, task_id
+        assert not (judgement.goal_correct and judgement.plan_succeeds), task_id
+    # a 2.0 program with a mission is not one; nor is a decline
+    answer = reference("m01_shuttle_thirty_rounds")
+    checked = lib.check_answer(SET["m01_shuttle_thirty_rounds"], answer)
+    assert lib.judge(SET["m01_shuttle_thirty_rounds"], checked, answer["bindings"]).repetition_replaced is None
+
+
+def test_the_answer_may_name_a_mission_and_old_answers_still_read():
+    answer = {"decision": "program", "category": "none", "reason": "x", "entities": [], "rob": "r", "task": "",
+              "bindings": [{"param": "r", "id": "tug1"}]}
+    read_back, problem = lib.parse_answer(json.dumps(answer))
+    assert problem is None and read_back["mission"] == "" and read_back["bindings"] == {"r": "tug1"}
+    read_back, problem = lib.parse_answer(json.dumps(dict(answer, mission="patrol")))
+    assert problem is None and read_back["mission"] == "patrol"
+    assert lib.parse_answer(json.dumps(dict(answer, mission=3)))[1] is not None
+    assert lib.parse_answer(json.dumps(dict(answer, extra=1)))[1] is not None
+    assert "mission" not in lib.ANSWER_SCHEMA["required"] and "mission" in lib.ANSWER_SCHEMA["properties"]
+    unknown = dict(reference("m01_shuttle_thirty_rounds"), mission="nope")
+    checked = lib.check_answer(SET["m01_shuttle_thirty_rounds"], unknown)
+    assert not checked.valid and checked.codes == (lib.NO_TASK_CODE,) and "no mission named 'nope'" in checked.report
+    unbound = dict(reference("m03_inspect_for_three_hours"), bindings={"r": "arm_b"})
+    checked = lib.check_answer(SET["m03_inspect_for_three_hours"], unbound)
+    assert not checked.valid and "E506" in checked.report
+
+
+def totes_mission() -> dict:
+    rob = ("robolang 2.0;\n\ntask move_tote(robot r, object t, location a, location b) {\n    goal { object_at t b; }\n"
+           "    plan { move r to a; grasp r t; move r to b; place r t at b; }\n}\n\n"
+           "mission totes(robot r, object t, location a, location b) {\n    run move_tote(r, t, a, b);\n}\n")
+    return {"decision": "program", "category": "none", "reason": "x", "entities": [], "rob": rob, "task": "",
+            "mission": "totes", "bindings": {"r": "digit1", "t": "tote_1", "a": "inbound_conveyor",
+                                             "b": "outbound_conveyor"}}
+
+
+def test_the_scorer_counts_the_measures_of_set_9(tmp_path):
     replies = {
-        "m01_shuttle_thirty_rounds": decline(),                                  # right under 1.9
-        "i01_twelve_rounds_in_half_an_hour": decline("infeasible"),              # declined, category differs
-        "m10_scan_for_two_hours": attempt_answer("m10_scan_for_two_hours", strip=True),  # one scan: a false program
-        "c01_three_round_trips": reference("c01_three_round_trips"),             # right
-        "c04_three_named_totes": decline(),                                      # false refusal of a control
+        "m01_shuttle_thirty_rounds": reference("m01_shuttle_thirty_rounds"),               # right
+        "m02_retry_the_carry": decline(),                                                   # a refusal of a program
+        "m10_scan_for_two_hours": attempt_answer("m10_scan_for_two_hours", strip=True),     # B8: the scan once
+        "x06_until_it_is_cool": reference("x06_until_it_is_cool"),                          # clarification 2
+        "i01_twelve_rounds_in_half_an_hour": decline("infeasible"),                        # right
+        "x01_never_stop": reference("m01_shuttle_thirty_rounds"),                           # "forever" given a bound
+        "c01_three_round_trips": reference("c01_three_round_trips.mission"),                # a mission, 3 runs
+        "c04_three_named_totes": totes_mission(),                                           # a mission added
     }
     out_dir = missions_run(tmp_path, replies)
     meta, rows = score.load_rows(out_dir)
     by = {r["task_id"]: r for r in rows}
     assert meta["set"] == "missions" and meta["prompt"] == "full"
-    assert by["m01_shuttle_thirty_rounds"]["decision_correct"] and by["m01_shuttle_thirty_rounds"]["category_correct"]
-    declined = by["i01_twelve_rounds_in_half_an_hour"]
-    assert declined["decision_correct"] and declined["category_correct"] is False
-    assert by["m10_scan_for_two_hours"]["false_program"] and not by["m10_scan_for_two_hours"]["decision_correct"]
-    assert by["c01_three_round_trips"]["decision_correct"] and by["c01_three_round_trips"]["goal_correct"]
-    assert by["c04_three_named_totes"]["false_refusal"] and not by["c04_three_named_totes"]["decision_correct"]
+    right = by["m01_shuttle_thirty_rounds"]
+    assert right["decision_correct"] and right["mission_ok"] and right["mission_paths_ok"]
+    assert right["request_satisfied"]
+    assert right["repetition_replaced"] is False and right["bound_dropped_or_invented"] is False
+    assert by["m02_retry_the_carry"]["false_refusal"] and by["m02_retry_the_carry"]["mission_ok"] is False
+    replaced = by["m10_scan_for_two_hours"]
+    assert replaced["repetition_replaced"] and not replaced["mission_ok"] and not replaced["request_satisfied"]
+    assert by["x06_until_it_is_cool"]["decision_correct"] and by["x06_until_it_is_cool"]["mission_paths_ok"]
+    assert by["i01_twelve_rounds_in_half_an_hour"]["decision_correct"]
+    forever = by["x01_never_stop"]
+    assert forever["false_program"] and forever["bound_dropped_or_invented"] and forever["mission_ok"] is None
+    assert by["c01_three_round_trips"]["decision_correct"] and by["c01_three_round_trips"]["mission_added"] is None
+    assert by["c01_three_round_trips"]["mission_ok"] is True
+    assert by["c01_three_round_trips"]["request_satisfied"]
+    added = by["c04_three_named_totes"]
+    assert added["decision_correct"] and added["mission_added"] is True and added["mission_ok"] is None
     text = score.score_dir(out_dir)
     assert "Task set missions, prompt full." in text
+    for measure in ("mission_ok", "mission_paths_ok", "repetition_replaced_silently", "bound_dropped_or_invented",
+                    "no_mission_added", "policy_invented"):
+        assert measure in text, measure
     kinds = text.split("By kind of task:")[1]
-    for kind in ("mission", "infeasible", "control"):
+    for kind in ("mission", "mission_until", "infeasible", "inexpressible", "control"):
         assert f"| {kind} |" in kinds
 
 

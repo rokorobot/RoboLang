@@ -5,8 +5,8 @@ versions (1.0 to 1.8) and the Mission IR schema (1.0). Decision records are in [
 
 ## Unreleased
 
-- **RoboLang 2.0: the mission layer** (decision 0041, step L4 of iteration I4; built, not taught yet: the reference and the
-  prompts still teach 1.9). A `.rob` file `robolang 2.0;` may hold tasks (unchanged: every 1.9 construct) and **missions**:
+- **RoboLang 2.0: the mission layer** (decision 0041, step L4 of iteration I4; built and taught: `robolang reference` and the
+  benchmark prompts teach 2.0, and the answer has an optional `mission` key). A `.rob` file `robolang 2.0;` may hold tasks (unchanged: every 1.9 construct) and **missions**:
   `mission NAME(params) { repeat [at most N runs][, for at most D] { run task(args); ... } [until CONDITION;]
   [on failure { stop; | continue; | retry N; }] }`. Every repeat has a hard bound (a run count of at most 1000, a duration
   in `ms`, `s` or `min` with no hour unit, or an `until clock_time >= T`); the `until` takes the facts of a `pre` or a

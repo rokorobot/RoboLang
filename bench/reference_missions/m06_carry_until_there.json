@@ -1,0 +1,10 @@
+{
+  "task": "",
+  "mission": "carry_until_there",
+  "bindings": {
+    "r": "amr1",
+    "item": "crate1",
+    "src": "dock",
+    "dst": "table"
+  }
+}

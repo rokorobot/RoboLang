@@ -1,0 +1,11 @@
+{
+  "task": "",
+  "mission": "alternate",
+  "bindings": {
+    "r": "arm1",
+    "item": "box1",
+    "a": "shelf_a",
+    "b": "table",
+    "lane": "aisle"
+  }
+}

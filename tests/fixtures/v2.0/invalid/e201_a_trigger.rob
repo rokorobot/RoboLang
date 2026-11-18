@@ -12,5 +12,5 @@ task round(robot r, location home, location far) {
 mission m(robot r, location home, location far, region quay) {
     every 1 min {
         run round(r, home, far);
-    }
+    };
 }

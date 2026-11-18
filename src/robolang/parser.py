@@ -393,12 +393,12 @@ class _Parser:
             runs.append(self._run())
         if not runs:
             self._error("E208", "empty repeat: a repeat block must contain at least one 'run' line")
-        end = self._advance()
+        self._advance()
         until = None
         if self._at_keyword("until"):
             self._advance()
             until = self._condition("a condition after 'until'")
-            end = self._semicolon("the until condition")
+        end = self._semicolon("the repeat statement")  # `};` or `} until CONDITION;`
         return ast.Repeat(max_runs, max_duration, until, start.span.to(end.span)), runs
 
     def _run(self) -> ast.RunLine:

@@ -21,7 +21,7 @@
     "every",
     "mission_trigger"
   ],
-  "gap": "G-LOOP",
+  "gap": "G-TRIGGER",
   "why": "\"Every night\" repeats at a time: a mission trigger (0041 M6), not a wait. 1.9 can wait for 23:30 once; the repetition is the part that stays out (0042 T11). The attempt waits for 23:30 and runs once.",
   "attempt_fails_with": "E101"
 }

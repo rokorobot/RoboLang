@@ -262,7 +262,7 @@ def test_mission_errors_are_all_reported_with_the_others():
         "  } until t < 4 degC;\n"  # 11: E317
         "}\n"
         "mission two(robot r, location a) {\n"
-        "  repeat {\n    run round(r, a);\n  }\n"  # 14: E325
+        "  repeat {\n    run round(r, a);\n  };\n"  # 14: E325
         "}\n"
     )
     assert errors(source) == [("E326", 8), ("E304", 9), ("E303", 10), ("E317", 11), ("E325", 14)]

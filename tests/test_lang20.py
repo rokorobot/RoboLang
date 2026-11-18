@@ -96,7 +96,7 @@ def repeat(head: str, *runs: str, until: str = "", policy: str = "") -> str:
     """The body of a mission: `repeat HEAD { RUNS } until UNTIL;` and the failure policy."""
     lines = [f"    repeat {head} {{" if head else "    repeat {"]
     lines += [f"        {run}" for run in runs]
-    lines.append("    }" + (f" until {until};" if until else ""))
+    lines.append("    }" + (f" until {until}" if until else "") + ";")
     return "\n".join(lines) + ("\n" + policy if policy else "")
 
 
@@ -104,7 +104,7 @@ RUN = "run round(r, home, far);"
 
 
 def shuttle(extra: str = "", until: str = "", policy: str = "") -> str:
-    return mission_source(f"    repeat {extra} {{\n        run round(r, home, far);\n    }}{until}\n{policy}")
+    return mission_source(f"    repeat {extra} {{\n        run round(r, home, far);\n    }}{until or ';'}\n{policy}")
 
 
 # -------- the language --------
@@ -147,8 +147,8 @@ def test_a_mission_only_file_needs_its_tasks():
 def test_a_mission_with_a_syntax_error_does_not_hide_the_next_task_or_mission():
     source = (
         "robolang 2.0;\n" + ROUND +
-        "mission a(robot r, location home, location far) {\n  repeat at most x runs {\n " + RUN + "\n }\n}\n"
-        "mission b(robot r, location home, location far) {\n  repeat {\n " + RUN + "\n }\n}\n")
+        "mission a(robot r, location home, location far) {\n  repeat at most x runs {\n " + RUN + "\n };\n}\n"
+        "mission b(robot r, location home, location far) {\n  repeat {\n " + RUN + "\n };\n}\n")
     assert [c for c, _ in codes(source)] == ["E201", "E325"]
 
 
@@ -391,7 +391,7 @@ def test_a_task_that_cannot_fit_the_duration_even_once_fails_before_the_run():
 def test_a_wait_in_a_branch_that_fails_does_not_count_towards_the_least_time():
     tasks = ('task t(robot r, location a, region q) {\n goal { robot_at r a; }\n plan {\n'
              '  if region_clear q { wait for 1 s; } else { wait for 9 s; }\n  move r to a;\n }\n}\n')
-    source = mission_source("    repeat for at most 2 s {\n        run t(r, home, quay);\n    }",
+    source = mission_source("    repeat for at most 2 s {\n        run t(r, home, quay);\n    };",
                             "robot r, location home, region quay", tasks)
     assert mission_run(source, bindings={"r": "tug1", "home": "gate_in", "quay": "quay"}).ended_by == "duration_bound"
 
@@ -451,7 +451,7 @@ def test_one_world_with_continuous_time_clarification_9():
     tasks = ('task carry(robot r, object item, location src, location dst) {\n goal { object_at item dst; }\n'
              ' plan { move r to src; grasp r item; move r to dst; place r item at dst; wait for 3 s; }\n}\n')
     source = mission_source(
-        "    repeat at most 4 runs {\n        run carry(r, item, a, b);\n        run carry(r, item, b, a);\n    }",
+        "    repeat at most 4 runs {\n        run carry(r, item, a, b);\n        run carry(r, item, b, a);\n    };",
         "robot r, object item, location a, location b", tasks)
     result = mission_run(source, bindings={"r": "tug1", "item": "box1", "a": "dock", "b": "table"})
     assert result.runs_verified == 4  # the second run finds the box where the first left it
@@ -465,7 +465,7 @@ def test_one_world_with_continuous_time_clarification_9():
 def test_elapsed_is_per_task_run_and_the_clock_time_goes_on():
     tasks = ('task stamp(robot r, location a) {\n goal { robot_at r a; }\n plan {\n  measure r elapsed as took;\n'
              '  communicate r to "ops" with took;\n  wait for 10 s;\n  move r to a;\n }\n}\n')
-    result = mission_run(mission_source("    repeat at most 3 runs {\n        run stamp(r, home);\n    }",
+    result = mission_run(mission_source("    repeat at most 3 runs {\n        run stamp(r, home);\n    };",
                                         "robot r, location home", tasks), bindings={"r": "tug1", "home": "gate_in"})
     sent = [r.result.steps[1].message.value for r in result.runs]
     assert [m.value for m in sent] == [Decimal(0)] * 3 and [m.t_ms for m in sent] == [0, 10000, 20000]
@@ -505,7 +505,7 @@ def test_authorization_and_the_checks_before_a_run_apply_to_each_run_with_missio
 def test_a_task_that_carries_its_own_limits_and_pre_keeps_them_in_every_run():
     tasks = ('task guarded(robot r, location a, region q) {\n @safety no_go_region q;\n pre { robot_ready r; }\n'
              ' goal { robot_at r a; }\n plan { move r to a; }\n}\n')
-    source = mission_source("    repeat at most 3 runs {\n        run guarded(r, home, quay);\n    }",
+    source = mission_source("    repeat at most 3 runs {\n        run guarded(r, home, quay);\n    };",
                             "robot r, location home, region quay", tasks)
     result = mission_run(source, lambda w: w["robots"]["tug1"].update(honours=["no_go_region"]),
                          {"r": "tug1", "home": "gate_in", "quay": "quay"})

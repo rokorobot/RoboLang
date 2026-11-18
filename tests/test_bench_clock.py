@@ -194,7 +194,7 @@ def test_the_inexpressible_tasks_each_stay_out_for_one_reason_of_0042_t11():
                        "x03_time_between_scans": {"elapsed", "arithmetic"},
                        "x04_pickup_two_hours_later": {"arithmetic"},
                        "x05_on_monday": {"date"}}
-    assert [d["gap"] for _, d in sorted(INEXPRESSIBLE.items())] == ["G-LOOP", "G-DATE", "G-CALC", "G-CALC", "G-DATE"]
+    assert [d["gap"] for _, d in sorted(INEXPRESSIBLE.items())] == ["G-TRIGGER", "G-DATE", "G-CALC", "G-CALC", "G-DATE"]
 
 
 def test_the_worlds_are_1_5_copies_with_only_the_clock_added():
@@ -377,7 +377,7 @@ def test_the_atlas_keeps_what_1_9_still_declines_and_g_clock_is_closed():
     assert {t for t, _ in in_gaps} == set(INEXPRESSIBLE) and len(in_gaps) == len(INEXPRESSIBLE)
     for task_id, gap in in_gaps:
         assert INEXPRESSIBLE[task_id]["gap"] == gap and GAPS[gap]["scope"] == "open"
-    assert Counter(gap for _, gap in in_gaps) == {"G-DATE": 2, "G-LOOP": 1, "G-CALC": 2}
+    assert Counter(gap for _, gap in in_gaps) == {"G-DATE": 2, "G-TRIGGER": 1, "G-CALC": 2}
     assert {t["gap"] for t in PROGRAMS.values()} | {t["gap"] for t in INFEASIBLE.values()} == {"G-CLOCK"}
     assert GAPS["G-CLOCK"]["scope"] == "closed" and GAPS["G-CLOCK"]["closed_in"] == "RoboLang 1.9"  # L6 of I3
     assert not {c for c in CONTROLS} & {t for g in ATLAS["gaps"] for t in g["tasks"]}
