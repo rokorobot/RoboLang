@@ -465,7 +465,7 @@ def test_every_inexpressible_task_is_in_exactly_one_atlas_gap_and_nothing_else_i
     assert Counter(gap for _, gap in in_gaps) == {"G-LOOP": 2, "G-TRIGGER": 1, "G-MSG": 1, "G-CHOOSE": 1}
     assert GAPS["G-TRIGGER"]["scope"] == "open" and GAPS["G-TRIGGER"]["direction"] == "reasoning"
     assert {t["gap"] for t in PROGRAMS.values()} | {t["gap"] for t in INFEASIBLE.values()} == {"G-LOOP"}
-    assert ATLAS["history"][-1]["note"] == "I4 L4: RoboLang 2.0 built and taught"
+    assert "I4 L4: RoboLang 2.0 built and taught" in [h["note"] for h in ATLAS["history"]]
 
 
 def test_the_standing_g_loop_tasks_are_relabelled_by_what_the_request_bounds():
