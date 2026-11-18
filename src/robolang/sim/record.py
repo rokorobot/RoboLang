@@ -24,10 +24,11 @@ RUN_RECORD_SCHEMA_VERSION = "1.0"
 # Language version -> run record schema version (robolang-v1.2.md section 8.3; v1.3 section 8.3).
 RUN_RECORD_SCHEMA_VERSIONS = {
     "1.1": "1.0", "1.2": "1.1", "1.3": "1.2", "1.4": "1.3", "1.5": "1.4", "1.6": "1.5", "1.7": "1.6",
-    "1.8": "1.7", "1.9": "1.8", "2.0": "1.8",
+    "1.8": "1.7", "1.9": "1.8", "2.0": "1.8", "2.1": "1.9",
 }
 MISSION_RECORD_SCHEMA = "robolang.sim.mission-run"  # RoboLang 2.0 (decision 0041): the record of a mission
 MISSION_RECORD_SCHEMA_VERSION = "1.0"
+MISSION_RECORD_SCHEMA_VERSIONS = {"2.0": "1.0", "2.1": "1.1"}  # 1.1 (RoboLang 2.1) adds `messages`
 SEED = re.compile(r"[A-Za-z0-9._-]{1,64}")
 DEFAULT_SEED = "0"
 
@@ -90,6 +91,17 @@ def _observation(observation) -> dict | None:
         "present": observation.present,
         "location": observation.location,
         "held_by": observation.held_by,
+    }
+
+
+def _received(message) -> dict:
+    """RoboLang 2.1 (decision 0043 S6): a message that arrived, and whether it counted."""
+    return {
+        "t_ms": ms_text(message.t_ms),
+        "channel": message.channel,
+        "text": message.text,
+        "from": message.sender,
+        "status": "accepted" if message.accepted else "ignored",
     }
 
 
@@ -240,7 +252,9 @@ def to_record(
     source (adds `action` after `message` on every step: what a `do` requested, with the status `requested`, or null;
     `state` on every `final_world` object, and `final_world.location_states`), 1.8 for a 1.9 source (embeds Task IR
     1.8; `inputs.world_clock` after `world_schema_version`: the world's `start` and `zone`, or null; a reading of
-    `time` or `elapsed` has a `text` after `t_ms`, as it is sent in a message: `HH:MM:SS` or `37 s`).
+    `time` or `elapsed` has a `text` after `t_ms`, as it is sent in a message: `HH:MM:SS` or `37 s`), 1.9 for a 2.1
+    source (embeds Task IR 1.9; `messages` after `events_applied`: every message that arrived from the start of the run
+    to its end, each with `t_ms`, `channel`, `text`, `from` and `status` "accepted" or "ignored").
     """
     inputs = {
         "source_sha256": source_sha256,
@@ -252,14 +266,14 @@ def to_record(
         "ir_schema_version": ir.IR_SCHEMA_VERSIONS[language_version],
         "world_schema_version": world_schema_version,
     }
-    if language_version in ("1.9", "2.0"):
+    if language_version in ("1.9", "2.0", "2.1"):
         inputs["world_clock"] = None if world_clock is None else {"start": world_clock.start, "zone": world_clock.zone}
     if bindings_source != "world":  # a record without the key has world-file bindings (section 5.1)
         inputs["bindings_source"] = bindings_source
-    branching = language_version in ("1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "2.0")
-    handlers = language_version in ("1.5", "1.6", "1.7", "1.8", "1.9", "2.0")
-    values = language_version in ("1.6", "1.7", "1.8", "1.9", "2.0")
-    actions = language_version in ("1.8", "1.9", "2.0")
+    branching = language_version in ("1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "2.0", "2.1")
+    handlers = language_version in ("1.5", "1.6", "1.7", "1.8", "1.9", "2.0", "2.1")
+    values = language_version in ("1.6", "1.7", "1.8", "1.9", "2.0", "2.1")
+    actions = language_version in ("1.8", "1.9", "2.0", "2.1")
     return {
         "run_record_schema": RUN_RECORD_SCHEMA,
         "run_record_schema_version": RUN_RECORD_SCHEMA_VERSIONS[language_version],
@@ -278,6 +292,7 @@ def to_record(
         **({"decisions": [_decision(d) for d in result.decisions]} if branching else {}),
         "steps": [_step(s, branching, handlers, values, actions) for s in result.steps],
         "events_applied": [_event(e) for e in result.events_applied],
+        **({"messages": [_received(m) for m in result.messages]} if language_version == "2.1" else {}),
         "end_t_ms": ms_text(result.end_t_ms),
         "final_world": _final_world(result.final_world, actions),
         **({} if result.goal is None else {"core_outcome": core_outcome(result, task, run_id, core=core)}),
@@ -311,7 +326,7 @@ def to_mission_record(
         "mission": mission.name,
         "seed": seed,
         "language_version": document.language_version,
-        "ir_schema_version": ir.MISSION_IR_SCHEMA_VERSION,
+        "ir_schema_version": ir.MISSION_IR_SCHEMA_VERSIONS[document.language_version],
         "task_ir_schema_version": document.ir_schema_version,
         "world_schema_version": world_schema_version,
         "world_clock": None if world_clock is None else {"start": world_clock.start, "zone": world_clock.zone},
@@ -342,7 +357,7 @@ def to_mission_record(
         })
     return {
         "mission_record_schema": MISSION_RECORD_SCHEMA,
-        "mission_record_schema_version": MISSION_RECORD_SCHEMA_VERSION,
+        "mission_record_schema_version": MISSION_RECORD_SCHEMA_VERSIONS[document.language_version],
         "run_record_schema_version": RUN_RECORD_SCHEMA_VERSIONS[document.language_version],
         "mode": "simulation",
         "run_id": run_id,
@@ -358,6 +373,7 @@ def to_mission_record(
         "runs_failed": result.runs_failed,
         "runs": runs,
         "events_applied": [_event(e) for e in result.events_applied],
+        **({"messages": [_received(m) for m in result.messages]} if document.language_version == "2.1" else {}),
         "end_t_ms": ms_text(result.end_t_ms),
         "final_world": _final_world(result.final_world, True),
     }

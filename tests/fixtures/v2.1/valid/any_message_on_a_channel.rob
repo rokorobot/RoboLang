@@ -1,0 +1,14 @@
+// RoboLang v2.1 fixture: valid
+// expect: ok
+// why: no text: any message on the channel counts (S1, C9)
+
+robolang 2.1;
+
+task feed(robot r, object tote, location src, location hold, location line) {
+    goal { object_at tote line; }
+    plan {
+        move r to src; grasp r tote; move r to hold;
+        wait until message_received "nurse" timeout 15 min else { fail "no confirmation"; }
+        move r to line; place r tote at line;
+    }
+}

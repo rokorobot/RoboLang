@@ -1,0 +1,86 @@
+{
+  "ir_schema": "robolang.task-ir",
+  "ir_schema_version": "1.9",
+  "language_version": "2.1",
+  "tasks": [
+    {
+      "name": "feed",
+      "parameters": [
+        {
+          "name": "r",
+          "type": "robot"
+        },
+        {
+          "name": "tote",
+          "type": "object"
+        },
+        {
+          "name": "src",
+          "type": "location"
+        },
+        {
+          "name": "hold",
+          "type": "location"
+        },
+        {
+          "name": "line",
+          "type": "location"
+        }
+      ],
+      "safety": [],
+      "preconditions": [],
+      "goal": [
+        {
+          "kind": "object_at",
+          "object": "tote",
+          "location": "line"
+        }
+      ],
+      "steps": [
+        {
+          "kind": "move",
+          "robot": "r",
+          "target": "src"
+        },
+        {
+          "kind": "grasp",
+          "robot": "r",
+          "object": "tote"
+        },
+        {
+          "kind": "move",
+          "robot": "r",
+          "target": "hold"
+        },
+        {
+          "kind": "wait_until",
+          "condition": {
+            "kind": "message_received",
+            "channel": "nurse"
+          },
+          "timeout": {
+            "value": "15",
+            "unit": "min"
+          },
+          "else": [
+            {
+              "kind": "fail",
+              "reason": "no confirmation"
+            }
+          ]
+        },
+        {
+          "kind": "move",
+          "robot": "r",
+          "target": "line"
+        },
+        {
+          "kind": "place",
+          "robot": "r",
+          "object": "tote",
+          "target": "line"
+        }
+      ]
+    }
+  ]
+}

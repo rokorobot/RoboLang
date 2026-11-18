@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Protocol
 
 from robolang import ir
+from robolang.sim.messages import has_message
 
 from . import observe
 
@@ -168,6 +169,9 @@ def execute(task: ir.Task, bindings: dict[str, str], site: Site, ops: Operations
             raise BackendFailure("S510", "a clock reading (measure r time, measure r elapsed) is refused: this backend "
                                          "has no wall clock, and `elapsed` from /clock needs value bindings it does "
                                          "not have (RoboLang 1.9, decision 0042 T9)")
+        if has_message(task):
+            raise BackendFailure("S515", "message_received is refused: this backend has no message service, and no "
+                                         "channel or sender is declared for it (RoboLang 2.1, decision 0043 S8)")
         if any(isinstance(step, ir.Do) for _, step in ir.walk(task.steps)) or task.goal_states:
             raise BackendFailure("S508", "declared actions (do) and states (in_state) can be neither run nor observed "
                                          "by this backend")

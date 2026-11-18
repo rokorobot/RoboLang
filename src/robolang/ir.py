@@ -4,7 +4,8 @@ schema 1.2 for RoboLang 1.3: ir-schema-v1.2.md; schema 1.3 for RoboLang 1.4: ir-
 RoboLang 1.5: ir-schema-v1.4.md; schema 1.5 for RoboLang 1.6: ir-schema-v1.5.md; schema 1.6 for
 RoboLang 1.7: ir-schema-v1.6.md; schema 1.7 for RoboLang 1.8: ir-schema-v1.7.md; schema 1.8 for RoboLang 1.9:
 ir-schema-v1.8.md). RoboLang 2.0 keeps Task IR 1.8 for its tasks and adds the Mission IR 1.0 document
-(`robolang.mission-ir`, spec/mission-ir-v1.0.md), which holds the tasks and the missions of a file.
+(`robolang.mission-ir`, spec/mission-ir-v1.0.md), which holds the tasks and the missions of a file. RoboLang 2.1 has
+Task IR 1.9 (ir-schema-v1.9.md: the condition `message_received`) and, for a file with a mission, Mission IR 1.1.
 
 The IR is a description of validated tasks with source details removed:
 no spans, comments or formatting. Two sources that differ only in layout
@@ -34,9 +35,11 @@ IR_SCHEMA_VERSION = "1.0"
 LANGUAGE_VERSION = DEFAULT_VERSION
 # Language version -> the IR schema version it compiles to (ir-schema-v1.1.md section 1).
 IR_SCHEMA_VERSIONS = {"1.1": "1.0", "1.2": "1.1", "1.3": "1.2", "1.4": "1.3", "1.5": "1.4", "1.6": "1.5", "1.7": "1.6",
-                     "1.8": "1.7", "1.9": "1.8", "2.0": "1.8"}  # 2.0 changes no task: its tasks are Task IR 1.8
+                     "1.8": "1.7", "1.9": "1.8", "2.0": "1.8", "2.1": "1.9"}  # 2.0: no new task, so Task IR 1.8
 MISSION_IR_SCHEMA = "robolang.mission-ir"
-MISSION_IR_SCHEMA_VERSION = "1.0"
+# Language version (of a file that has a mission) -> Mission IR version: 1.1 holds Task IR 1.9 tasks (RoboLang 2.1)
+MISSION_IR_SCHEMA_VERSIONS = {"2.0": "1.0", "2.1": "1.1"}
+MISSION_IR_SCHEMA_VERSION = MISSION_IR_SCHEMA_VERSIONS["2.0"]  # the first version
 
 
 def _key(name: str):
@@ -243,8 +246,20 @@ class Compare:
     right: BindingRef | QuantityLit | TextLit | TimeLit
 
 
+@dataclass(frozen=True)
+class MessageReceived:
+    """
+    Schema 1.9 (RoboLang 2.1, decision 0043 S1): a message has arrived on `channel` (with exactly `text`, when there is
+    one: no `text` key means any message on the channel).
+    """
+
+    KIND: ClassVar[str] = "message_received"
+    channel: str
+    text: str | None = field(default=None, metadata={"omit_none": True})
+
+
 Condition = Union[RobotReady, RegionClear, ObjectExists, SensorOk, ObjectAt, RobotAt, Holding, And, Or, Not, Compare,
-                  InState]
+                  InState, MessageReceived]
 
 
 # -------- steps --------
@@ -557,6 +572,8 @@ def _condition(node: ast.Condition) -> Condition:
         return Compare(_operand(node.left), node.op, _operand(node.right))
     if isinstance(node, ast.InState):
         return InState(node.target.text, node.label.value)
+    if isinstance(node, ast.MessageReceived):
+        return MessageReceived(node.channel.value, None if node.text is None else node.text.value)
     return SensorOk(_sensor(node.sensor))
 
 
@@ -649,7 +666,7 @@ def _task(node: ast.Task, language: str) -> Task:
         ),
         preconditions=tuple(_condition(c) for c in node.pre.conditions) if node.pre else (),
         # 1.4 on: no task goal, the branches give them
-        goal=() if goal is None and language in ("1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "2.0") else goal,
+        goal=() if goal is None and language in ("1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "2.0", "2.1") else goal,
         steps=tuple(_step(s) for s in node.plan.statements),
         verify=_verify(node),
     )
@@ -711,7 +728,7 @@ def to_dict(node):
     if isinstance(node, TaskIR) and node.missions:  # the Mission IR document (spec/mission-ir-v1.0.md)
         return {
             "ir_schema": MISSION_IR_SCHEMA,
-            "ir_schema_version": MISSION_IR_SCHEMA_VERSION,
+            "ir_schema_version": MISSION_IR_SCHEMA_VERSIONS[node.language_version],
             "task_ir_schema_version": node.ir_schema_version,
             "language_version": node.language_version,
             "tasks": to_dict(node.tasks),

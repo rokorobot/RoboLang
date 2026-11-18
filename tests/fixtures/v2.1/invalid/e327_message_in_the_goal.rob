@@ -1,0 +1,10 @@
+// RoboLang v2.1 fixture: invalid
+// expect: error E327 (static) line 8
+// why: a message is not an end state: never in a goal (S1)
+
+robolang 2.1;
+
+task t(robot r, object tote, location src, location line) {
+    goal { object_at tote line; message_received "line" with "RECEIVED"; }
+    plan { move r to src; grasp r tote; move r to line; place r tote at line; }
+}

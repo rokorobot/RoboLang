@@ -176,7 +176,7 @@ def version_text() -> str:
         f"robolang {distribution} "
         f"(language {_joined(task_ir.IR_SCHEMA_VERSIONS)}, "
         f"IR schema {_joined(dict.fromkeys(task_ir.IR_SCHEMA_VERSIONS.values()))}, "
-        f"mission IR {task_ir.MISSION_IR_SCHEMA_VERSION})"
+        f"mission IR {_joined(task_ir.MISSION_IR_SCHEMA_VERSIONS.values())})"
     )
 
 
@@ -284,6 +284,8 @@ def _world_diagnostic(args, inputs: _RunInputs, finding: Finding):
     node = next(t for t in inputs.loaded.program.tasks if t.name.text == inputs.task.name)
     if part == "goal":
         return Diagnostic(finding.code, finding.message, node.goal.conditions[index].span, filename=args.file)
+    if part == "preconditions":
+        return Diagnostic(finding.code, finding.message, node.pre.conditions[index].span, filename=args.file)
     statement = (node.annotations if part == "safety" else node.plan.statements)[index]
     for side, position in zip(parts[1::2], parts[2::2]):  # into the branch, then to the statement in it
         branch = statement.then if side == "then" else statement.orelse if hasattr(statement, "then") \
@@ -312,7 +314,7 @@ def _validate(args, out, err) -> int:
     if loaded.warnings:
         summary += f", {_plural(loaded.warnings, 'warning')}"
     if loaded.kind == "ir":
-        kind = f"Mission IR {task_ir.MISSION_IR_SCHEMA_VERSION}" if document.missions \
+        kind = f"Mission IR {task_ir.MISSION_IR_SCHEMA_VERSIONS[document.language_version]}" if document.missions \
             else f"Task IR {document.ir_schema_version}"
         print(f"{args.file}: valid {kind} (RoboLang {document.language_version}, {summary})", file=out)
         print(NOT_A_SAFETY_CHECK_IR, file=out)
@@ -384,6 +386,9 @@ def _condition(condition: task_ir.Condition, typed: bool = False) -> str:
         return f"holding {condition.robot} {condition.obj}"
     if isinstance(condition, task_ir.InState):
         return f"in_state {condition.target} {_quoted(condition.label)}"
+    if isinstance(condition, task_ir.MessageReceived):
+        with_text = "" if condition.text is None else f" with {_quoted(condition.text)}"
+        return f"message_received {_quoted(condition.channel)}{with_text}"
     if isinstance(condition, task_ir.Compare):
         return f"{_value(condition.left, typed)} {condition.op} {_value(condition.right, typed)}"
     # A new condition kind must be rendered here explicitly, never shown as another kind.
@@ -557,6 +562,7 @@ _FAILURE_MEANING = {
     "S007": "the target of a do step is not of the kind (object or location) the robot's action acts on",
     "S008": "the value of a do step is missing, unexpected or not of the kind the robot's action takes",
     "S009": "a goal in_state that no declared action of the task's robots produces and the world does not hold",
+    "S011": "a message_received names a channel that the world does not declare (the world has channels)",
     "S010": "a wait until clock_time names a time that has already passed at the start (the wait would not wait)",
     "S101": "a pre condition is false",
     "S102": "a pre condition is unknown in the world",

@@ -1,0 +1,115 @@
+{
+  "ir_schema": "robolang.task-ir",
+  "ir_schema_version": "1.9",
+  "language_version": "2.1",
+  "tasks": [
+    {
+      "name": "second_box",
+      "parameters": [
+        {
+          "name": "r",
+          "type": "robot"
+        },
+        {
+          "name": "a",
+          "type": "object"
+        },
+        {
+          "name": "b",
+          "type": "object"
+        },
+        {
+          "name": "shelf_a",
+          "type": "location"
+        },
+        {
+          "name": "shelf_b",
+          "type": "location"
+        },
+        {
+          "name": "table",
+          "type": "location"
+        }
+      ],
+      "safety": [],
+      "preconditions": [],
+      "goal": [],
+      "steps": [
+        {
+          "kind": "move",
+          "robot": "r",
+          "target": "shelf_a"
+        },
+        {
+          "kind": "grasp",
+          "robot": "r",
+          "object": "a"
+        },
+        {
+          "kind": "move",
+          "robot": "r",
+          "target": "table"
+        },
+        {
+          "kind": "place",
+          "robot": "r",
+          "object": "a",
+          "target": "table"
+        },
+        {
+          "kind": "if",
+          "condition": {
+            "kind": "message_received",
+            "channel": "ops",
+            "text": "ALSO BOX2"
+          },
+          "then": [
+            {
+              "kind": "move",
+              "robot": "r",
+              "target": "shelf_b"
+            },
+            {
+              "kind": "grasp",
+              "robot": "r",
+              "object": "b"
+            },
+            {
+              "kind": "move",
+              "robot": "r",
+              "target": "table"
+            },
+            {
+              "kind": "place",
+              "robot": "r",
+              "object": "b",
+              "target": "table"
+            }
+          ],
+          "else": [
+            {
+              "kind": "communicate",
+              "robot": "r",
+              "channel": "ops",
+              "message": "no second box"
+            }
+          ],
+          "goal_then": [
+            {
+              "kind": "object_at",
+              "object": "b",
+              "location": "table"
+            }
+          ],
+          "goal_else": [
+            {
+              "kind": "object_at",
+              "object": "a",
+              "location": "table"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

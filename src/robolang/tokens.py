@@ -86,10 +86,14 @@ MISSION_WORDS = ("mission", "repeat", "run", "runs", "stop", "continue", "retry"
 RESERVED_V2_0 = RESERVED_V1_9 | frozenset(MISSION_WORDS)
 MAX_MISSION_RUNS = 1000  # a mission's run count, and the most runs any mission makes (spec/robolang-v2.0.md section 3)
 MAX_RETRIES = 100  # `retry N`
+# RoboLang 2.1 adds incoming messages (decision 0043 S1): the condition `message_received "CH" with "TEXT"`. The word
+# has been reserved since 1.1 and `with` is a keyword already, so there is no new reserved word.
+CONDITIONS_V2_1 = CONDITIONS_V1_8 + ("message_received",)
 # Language version -> its reserved words. Versions not listed read as 1.1.
 RESERVED_BY_VERSION = {
     "1.2": RESERVED_V1_2, "1.3": RESERVED_V1_3, "1.4": RESERVED_V1_4, "1.5": RESERVED_V1_4, "1.6": RESERVED_V1_6,
     "1.7": RESERVED_V1_6, "1.8": RESERVED_V1_8, "1.9": RESERVED_V1_9, "2.0": RESERVED_V2_0,
+    "2.1": RESERVED_V2_0,
 }
 
 # Recognized only in their grammatical position; not reserved.

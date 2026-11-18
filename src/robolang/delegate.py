@@ -23,8 +23,9 @@ from .core import Context, Key, Receipt, canonical_bytes, check_message, sign_si
 from .delegate_peer import (
     DEFAULT_LEASE_MS, CustodyPoint, custody_point, handoff_criteria, peer_observation, trust_keys,
 )
-from .export_goal import MESSAGE_LIFETIME_MS, export_goal, simulation_key
+from .export_goal import MESSAGE_LIFETIME_MS, ExportError, export_goal, simulation_key
 from .sim import DEFAULT_SEED, RunResult, World, WorldError, load_world, run, run_id, sha256_normalized, to_record
+from .sim.messages import has_message
 from .sim.outcome import SIM_KEY, SIM_KEY_REF, core_outcome, object_triple
 
 RECORD_SCHEMA = "robolang.delegate"
@@ -134,6 +135,8 @@ def _consider(plan: Plan, task: ir.Task, robot_world: bytes, world_name: str, ro
         return "no_goal", None
     if any(isinstance(step, (ir.Measure, ir.ReadClock)) for _, step in ir.walk(task.steps)):
         return "measure_unsupported", None  # RoboLang 1.6 values are not delegated yet (spec/robolang-v1.6.md)
+    if has_message(task):
+        return "message_unsupported", None  # a robot needs the channel's trust configuration (RoboLang 2.1, 0043 S8)
     if task.goal_states:
         return "in_state_unsupported", None  # Core 0.2 has no state triples (RoboLang 1.8, decision 0040 A8)
     if task.region_limits:
@@ -660,5 +663,9 @@ def delegate(task: ir.Task, world: World, *, sender: str, recipient: str, librar
     """
     if mode != "simulation":
         raise DelegateError("D701", f"mode '{mode}' is refused: delegate runs in simulation only")
+    if has_message(task):  # never delegated: the robot would need the trust configuration of the channel (0043 S8)
+        raise ExportError("X608", "the task waits for a message ('message_received'): a robot is sent no task that "
+                                  "needs a channel and its allowed senders, which are the integrator's configuration "
+                                  "(decision 0043 S8)")
     proposal = export_goal(task, world, sender=sender, recipient=recipient, core=core).message
     return _Exchange(proposal, library, robot_world, robot_world_name, intercept, lease_ms).finish()

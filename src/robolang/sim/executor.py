@@ -15,6 +15,7 @@ from ..measured import LABEL, Interval, compare_intervals, convert, reading_inte
 from .actions import action_problems
 from .clock import DAY_S, clock_problems
 from .regions import CHECKED, limit_problems
+from .messages import ReceivedMessage, message_events, message_problems, received, same_text
 from .values import Truth, duration_ms_of
 from .world import Property, World
 
@@ -183,6 +184,7 @@ class RunResult:
     end_t_ms: Decimal
     final_world: FinalWorld
     decisions: tuple[Decision, ...] = ()
+    messages: tuple[ReceivedMessage, ...] = ()  # RoboLang 2.1: what arrived from the start of the run to its end
 
 
 class SimulationInputError(ValueError):
@@ -220,6 +222,8 @@ class _State:
         self.values: dict[str, Reading] = {}  # the bindings of `measure` (RoboLang 1.6)
         self.clock = Decimal(0)
         self.origin = Decimal(0)  # the clock when the current run reached RUNNING (a mission's later runs start later)
+        self.incoming = message_events(world)  # RoboLang 2.1: the world's messages, in time order
+        self.message_origin = Decimal(0)  # a message counts from here: the start of the run (a mission until: its own)
         self.next_event = 0
         self.applied: list[AppliedEvent] = []
 
@@ -230,6 +234,8 @@ class _State:
         while self.next_event < len(events) and events[self.next_event].at_ms <= t:
             event = events[self.next_event]
             self.next_event += 1
+            if event.fact == "message":  # held by the world: it counts through a `message_received` condition
+                continue
             if event.fact == "robot_ready":
                 self.ready[event.target] = event.value
             elif event.fact == "region_clear":
@@ -386,6 +392,8 @@ def _evaluate(task: ir.Task, state: _State, bound: dict[str, str], condition: ir
         return Truth.of(state.location[bound[condition.robot]] == bound[condition.location])
     if isinstance(condition, ir.Holding):
         return _holding(state, bound[condition.robot], bound[condition.obj])
+    if isinstance(condition, ir.MessageReceived):
+        return _message_received(state, condition)
     if isinstance(condition, ir.InState):  # RoboLang 1.8 (decision 0040 A2): no known state is unknown, fail closed
         target = bound[condition.target]
         held = state.state[target] if target in state.state else state.location_state.get(target)
@@ -394,6 +402,24 @@ def _evaluate(task: ir.Task, state: _State, bound: dict[str, str], condition: ir
     if sensor in state.available:
         return Truth.of(state.available[sensor])
     return Truth.UNKNOWN  # no sensor of that name is declared
+
+
+def _message_received(state: _State, condition: ir.MessageReceived) -> Truth:
+    """
+    RoboLang 2.1 (decision 0043): true once a message from an allowed sender has arrived on the channel, with the
+    text when there is one, at or after the start of the run (S2, C4) and no later than now; latched (C7). A channel
+    with no message yet is false (S5). A world with no channels has no message service: unknown, fails closed (C1).
+    """
+    allowed = state.world.channels.get(condition.channel)
+    if allowed is None:
+        return Truth.UNKNOWN
+    for event in state.incoming:
+        if event.at_ms > state.clock:
+            break
+        if event.at_ms >= state.message_origin and event.target == condition.channel and event.value.sender in allowed \
+                and (condition.text is None or same_text(condition.text, event.value.text)):
+            return Truth.TRUE
+    return Truth.FALSE
 
 
 def _authorize(task: ir.Task, world: World, bindings: tuple[tuple[str, str], ...],
@@ -433,9 +459,11 @@ def _authorize(task: ir.Task, world: World, bindings: tuple[tuple[str, str], ...
             statuses.append("failed_check")
             failure = Failure(code, "authorization", None, None, index, culprit)
     if failure is None:  # RoboLang 1.8: the declared actions, after the limits (decision 0040 A6, C7)
-        problems = action_problems(task, world, bound) or clock_problems(task, world, bound, elapsed_ms)
+        problems = action_problems(task, world, bound) or clock_problems(task, world, bound, elapsed_ms) \
+            or message_problems(task, world)
         if problems:
-            failure = Failure(problems[0].code, "authorization", problems[0].step, None, None, problems[0].robot)
+            failure = Failure(problems[0].code, "authorization", problems[0].step, problems[0].precondition, None,
+                              problems[0].robot)
     return tuple(LimitResult(lim, status) for lim, status in zip(task.safety, statuses)), failure
 
 
@@ -627,6 +655,7 @@ def run(task: ir.Task, world: World, state: _State | None = None) -> RunResult:
     if state is None:
         state = _State(world)
     state.values, state.request, state.origin = {}, None, state.clock
+    state.message_origin = state.clock  # S2: a run starts fresh; a message from before it does not count
     applied_before = len(state.applied)
     limits, authorization = _authorize(task, world, bindings, state.clock)
     flat = list(ir.walk(task.steps))
@@ -731,4 +760,5 @@ def run(task: ir.Task, world: World, state: _State | None = None) -> RunResult:
     return RunResult(
         task.name, bindings, tuple(states), states[-1], failure, cancelled, limits, pre, goal, results,
         tuple(state.applied[applied_before:]), state.clock, state.freeze(), tuple(decisions),
+        received(state.incoming, world, state.origin, state.clock),
     )

@@ -14,6 +14,7 @@ from .. import ir
 from .actions import action_problems
 from .clock import clock_problems
 from .executor import _sensor_id
+from .messages import message_problems
 from .regions import limit_problems
 from .world import World
 
@@ -60,10 +61,14 @@ def check_task(task: ir.Task, world: World) -> list[Finding]:
                                                 f"of robot '{robot}' ({_speed(speeds[unit], unit)})",
                                         ("safety", index)))
                 break
-    # section 16.3 (RoboLang 1.8) and section 17.3 (RoboLang 1.9, K3), every problem
-    for problem in (*action_problems(task, world, bound), *clock_problems(task, world, bound)):
+    # section 16.3 (RoboLang 1.8), section 17.3 (RoboLang 1.9, K3) and section 19.3 (RoboLang 2.1, S011), every problem
+    for problem in (*action_problems(task, world, bound), *clock_problems(task, world, bound),
+                    *message_problems(task, world)):
         if problem.goal is not None:
             findings.append(Finding(problem.code, problem.message, ("goal", problem.goal)))
+            continue
+        if problem.precondition is not None:
+            findings.append(Finding(problem.code, problem.message, ("preconditions", problem.precondition - 1)))
             continue
         nested = "." in problem.label
         findings.append(Finding(problem.code, f"{problem.message} (on path {_branch_of(problem.label)})" if nested

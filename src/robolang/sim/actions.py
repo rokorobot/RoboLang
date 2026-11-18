@@ -24,6 +24,7 @@ class ActionProblem:
     step: int | None  # the 1-based index of the `do` step in ir.walk order; None for S009
     label: str = ""  # the path label of the step (ir.walk), "" for S009
     goal: int | None = None  # S009: the 0-based index of the goal condition
+    precondition: int | None = None  # S011: the 1-based number of the `pre` condition, when the problem is there
 
 
 def entity_state(world: World, entity: str) -> str | None:

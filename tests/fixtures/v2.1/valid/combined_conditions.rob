@@ -1,0 +1,14 @@
+// RoboLang v2.1 fixture: valid
+// expect: ok
+// why: message_received combines with and, or and not, and with the facts (C10)
+
+robolang 2.1;
+
+task hold_for_two(robot r, region lane, location hold) {
+    goal { robot_at r hold; }
+    plan {
+        move r to hold;
+        wait until message_received "dock" with "DOOR OPEN" and message_received "safety" with "LANE CLEAR" and region_clear lane timeout 10 min else { fail "not released"; }
+        wait until message_received "ops" with "GO" or not message_received "ops" with "STOP" timeout 1 min else { fail "stopped"; }
+    }
+}

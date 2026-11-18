@@ -1,5 +1,5 @@
 """
-Static validation for RoboLang v1.1 to v2.0 (spec/robolang-v1.1.md, section 5; spec/robolang-v1.3.md, section 4;
+Static validation for RoboLang v1.1 to v2.1 (spec/robolang-v1.1.md, section 5; spec/robolang-v1.3.md, section 4;
 spec/robolang-v1.4.md, section 4; spec/robolang-v1.6.md, section 6 for bindings and kinds).
 
 Checks a parsed program for errors that the grammar cannot express: duplicate
@@ -192,10 +192,10 @@ class _Validator:
     def _program(self, program: ast.Program):
         language = program.version.version if program.version is not None else None
         self._language = language
-        self._typed_sensors = language in ("1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "2.0")
-        self._branching = language in ("1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "2.0")
-        self._handlers = language in ("1.5", "1.6", "1.7", "1.8", "1.9", "2.0")
-        self._values = language in ("1.6", "1.7", "1.8", "1.9", "2.0")
+        self._typed_sensors = language in ("1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "2.0", "2.1")
+        self._branching = language in ("1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "2.0", "2.1")
+        self._handlers = language in ("1.5", "1.6", "1.7", "1.8", "1.9", "2.0", "2.1")
+        self._values = language in ("1.6", "1.7", "1.8", "1.9", "2.0", "2.1")
         seen: dict[str, ast.Name] = {}
         for task in program.tasks:
             first = seen.setdefault(task.name.text, task.name)
@@ -338,10 +338,25 @@ class _Validator:
         if handler is not None:  # a branch without a goal block (decision 0034)
             self._statements(handler.statements, branch=True)
 
+    def _goal_condition(self, condition: ast.Condition):
+        """A condition of a `goal` block, or of the goal of an `if` branch: never a message (decision 0043 S1)."""
+        self._condition(condition)
+        stack = [condition]
+        while stack:
+            node = stack.pop()
+            if isinstance(node, (ast.And, ast.Or)):
+                stack.extend(node.operands)
+            elif isinstance(node, ast.Not):
+                stack.append(node.operand)
+            elif isinstance(node, ast.MessageReceived):
+                self._report("E327", "'message_received' cannot be in a goal: a message is not an end state of the "
+                                     "world (decision 0043 S1); wait for it in the plan with 'wait until "
+                                     "message_received ...'", node.span)
+
     def _goal(self, task: ast.Task):
         if task.goal is not None:
             for condition in task.goal.conditions:
-                self._condition(condition)
+                self._goal_condition(condition)
         elif self._branching:
             label = goalless_path(task.plan.statements, False, _parts)
             if label is not None:
@@ -460,6 +475,11 @@ class _Validator:
         elif isinstance(condition, ast.Holding):
             self._use(condition.robot, ParamType.ROBOT, "holding")
             self._use(condition.obj, ParamType.OBJECT, "holding")
+        elif isinstance(condition, ast.MessageReceived):  # RoboLang 2.1 (decision 0043 S1, C11)
+            self._not_empty(condition.channel, "channel name")
+            if condition.text is not None and condition.text.value.strip(" ") == "":
+                self._error("E307", "empty string: a message text must not be empty, or only spaces, which are "
+                                    "trimmed (decision 0043 S3)", condition.text.span)
         elif isinstance(condition, ast.InState):  # RoboLang 1.8 (decision 0040 A6)
             self._use_any(condition.target, "in_state")
             self._not_empty(condition.label, "state label")
@@ -506,7 +526,7 @@ class _Validator:
                 if branch is not None:
                     if branch.goal is not None:
                         for condition in branch.goal.conditions:
-                            self._condition(condition)
+                            self._goal_condition(condition)
                     self._statements(branch.statements, branch=True)
         elif isinstance(statement, ast.Fail):
             self._not_empty(statement.reason, "reason")

@@ -1,7 +1,26 @@
 # Changelog
 
-The distribution version (this file) is independent of the language versions (1.1 to 2.0), the Task IR schema
-versions (1.0 to 1.8) and the Mission IR schema (1.0). Decision records are in [`spec/decisions/`](https://github.com/rokorobot/RoboLang/tree/main/spec/decisions).
+The distribution version (this file) is independent of the language versions (1.1 to 2.1), the Task IR schema
+versions (1.0 to 1.9) and the Mission IR schema (1.0 and 1.1). Decision records are in [`spec/decisions/`](https://github.com/rokorobot/RoboLang/tree/main/spec/decisions).
+
+## Unreleased
+
+RoboLang 2.1: incoming messages, iteration I5 of the [roadmap](docs/LANGUAGE_ROADMAP.md) (decision 0043; built, taught and
+relabelled in step L4; the acceptance run on benchmark set 10 is the next step).
+
+- **RoboLang 2.1: incoming messages** (decision 0043, step L4 of iteration I5). A `.rob` file `robolang 2.1;` may use the
+  condition `message_received "CH" with "TEXT"` (an exact text) and `message_received "CH"` (any message on the channel) in a
+  `pre`, an `if`, a `wait until` and a mission's `until`, combined with `and`, `or` and `not`. It is never in a `goal`
+  (`E327`). A message counts once it has arrived at or after the start of the task run, stays counted for the rest of the run,
+  is matched exactly after trimming spaces at both ends, and counts only from a sender that the **world** declares for its
+  channel: who to trust is the integrator's, never the task's. A world with no channels has no message service, so every
+  message condition is unknown and fails closed. No new reserved word (`message_received` has been reserved since 1.1), no new
+  statement. New Task IR 1.9 (and Mission IR 1.1 for a file with a mission), world file 1.6 (`channels`, `messages`), run
+  record 1.9 (`messages`: each received message, `accepted` or `ignored`) and mission record 1.1. New codes `E327` (a message
+  in a goal), `E519` (a world's channels or messages), `S011` (a channel the world does not declare, before the run and in
+  `validate --world`), `X608` (`delegate` refuses a task that has a message condition), `S515` (the ROS 2 backend refuses
+  one) and `I228` in the reader. Safety case hazard H23 ("a spoofed message changes what a robot does"). `robolang --version`
+  shows language 2.1. Files of 1.1 to 2.0 are unchanged: there `message_received` is still `E211`.
 
 ## 0.7.0 (2026-11-18)
 

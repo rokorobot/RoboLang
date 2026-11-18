@@ -312,6 +312,7 @@ bindings, fault indices and cancellation index depend on it.
 | `E516` | World file 1.3 (section 15.1): an unknown ability in a robot's `honours` |
 | `E517` | World file 1.4 (section 16.1): an unknown `target` or `value` kind in a robot's declared action |
 | `E518` | World file 1.5 (section 17.1): a `clock` whose `start` is not a local date and time or whose `zone` is not a zone name |
+| `E519` | World file 1.6 (section 19.1): a `channels` or `messages` entry that makes no sense: no channel declared, a channel with no allowed sender, an empty message text, a message on a channel the world does not declare, a sender that is a robot the world does not declare |
 
 ## 4. Execution semantics
 
@@ -586,7 +587,7 @@ run_id            = "sim-" + lowercase hex SHA-256 of preimage
 
 ### 7.1 World-file errors
 
-Section 3.9 (`E501`–`E518`). They stop processing with exit status 3; no run is created.
+Section 3.9 (`E501`–`E519`). They stop processing with exit status 3; no run is created.
 
 ### 7.2 Run failures
 
@@ -602,6 +603,7 @@ Section 3.9 (`E501`–`E518`). They stop processing with exit status 3; no run i
 | `S008` | authorization | RoboLang 1.8: the value of a `do` is missing, unexpected or not of the declared kind (section 16.3) |
 | `S009` | authorization | RoboLang 1.8: a goal `in_state` that no declared action of the task's robots produces and the world does not hold (section 16.3) |
 | `S010` | authorization | RoboLang 1.9: a `wait until clock_time >= T` (or `> T`) whose T is before the clock's start: the time has already passed (section 17.3) |
+| `S011` | authorization | RoboLang 2.1: a `message_received` names a channel that the world does not declare, in a world that declares channels (section 19.3) |
 | `S101` | precondition | A `pre` condition is false |
 | `S102` | precondition | A `pre` condition is unknown |
 | `S201` | step | The robot is not ready |
@@ -799,6 +801,7 @@ authoring error.
 | `S003`, `S004`, `S005` | RoboLang 1.7, section 15.3, for **every** region limit; every problem of a limit is listed, not only the first |
 | `S006`, `S007`, `S008`, `S009` | RoboLang 1.8, section 16.3, for **every** `do` on every path and every required goal `in_state` |
 | `S010` | RoboLang 1.9, section 17.3, for **every** `wait until clock_time >= T` (or `> T`) in the plan's own sequence whose T has passed at the start |
+| `S011` | RoboLang 2.1, section 19.3, for **every** `message_received` of a `pre`, an `if` or a `wait until`, on every path, that names a channel the world does not declare (only in a world that declares channels) |
 | `S211` | A `grasp` whose robot has no gripper (4.5) |
 | `S231` | An `inspect` or `measure` whose sensor is not declared, or not mounted on its robot (4.5, 14.2) |
 | `S234` | A `measure` of a kind its sensor does not measure (14.2): a sensor with no `measures` in the world file measures nothing |
@@ -1336,11 +1339,12 @@ simulation (a mission whose tasks never wait, with only a duration, never reache
 
 ### 18.4 The mission run record 1.0
 
-`mission_record_schema` `robolang.sim.mission-run`, `mission_record_schema_version` `1.0`; the key order is:
+`mission_record_schema` `robolang.sim.mission-run`, `mission_record_schema_version` `1.0` (`1.1` for a 2.1 source, which adds `messages` after
+`events_applied`, section 19.4); the key order is:
 
 | Key | Content |
 |---|---|
-| `run_record_schema_version` | the schema of the run records inside (`1.8` for 2.0) |
+| `run_record_schema_version` | the schema of the run records inside (`1.8` for 2.0, `1.9` for 2.1) |
 | `mode` | `simulation` |
 | `run_id` | `sim-` and the SHA-256 of `robolang-sim-mission/1.0`, the source, the world, the mission, the seed and the bindings of `--bind` (as section 6) |
 | `inputs` | `source_sha256`, `source_kind` (IR input only), `world_sha256`, `mission`, `seed`, `language_version` (`2.0`), `ir_schema_version` (`1.0`: Mission IR), `task_ir_schema_version` (`1.8`), `world_schema_version`, `world_clock`, `bindings_source` (`cli` only) |
@@ -1348,7 +1352,7 @@ simulation (a mission whose tasks never wait, with only a duration, never reache
 | `tasks` | the tasks that were run, as Task IR 1.8, in order of first run |
 | `bindings` | the mission's parameters, in order |
 | `outcome` | `completed`, `bounded`, `failed` or `stopped` |
-| `ended_by` | `until`, `run_verified`, `run_bound`, `duration_bound`, `run_failed`, `retries_used`, `bound_with_retry`, `all_failed`, `cannot_fit`, `until_unknown` |
+| `ended_by` | `until`, `run_verified`, `run_bound`, `duration_bound`, `run_failed`, `retries_used`, `bound_with_retry`, `all_failed`, `cannot_fit`, `until_unknown`, `undeclared_channel` (2.1, `S011`) |
 | `failure` | `null`, or `{ "code", "run", "message" }`: for `failed` the code of the last failed run (`run` its number); `S401` (no run); `S402` for `stopped` |
 | `runs_started`, `runs_verified`, `runs_failed` | counts of task runs |
 | `runs` | every task run in order (below) |
@@ -1375,3 +1379,77 @@ a binding is missing or of the wrong kind. The run record is on stdout in every 
 `export-goal` and `delegate` refuse a mission with `X607`, and the ROS 2 backend with `S514`: a robot is sent tasks, never a
 mission (M8). `delegate` of a mission is refused, not built (see [robolang-v2.0.md](robolang-v2.0.md) section 7).
 
+## 19. RoboLang 2.1: incoming messages
+
+Decision record [0043](decisions/0043-incoming-messages.md) (S1 to S11, clarifications C1 to C14); language in
+[robolang-v2.1.md](robolang-v2.1.md). A task of language 1.1 to 2.0 runs exactly as before, whatever the world file's version.
+
+### 19.1 World file 1.6
+
+`"world_schema_version": "1.6"` is 1.5 plus two optional top-level fields, `channels` and `messages`. Files 1.0 to 1.5
+are still accepted and unchanged; both fields are unknown (`E503`) there, and **a world of 1.5 or older has no message
+service**.
+
+```json
+"channels": { "line": { "from": ["rl:agent:line-ctl", "rl:robot:tugger_a"] } },
+"messages": [
+  { "at": { "value": "90", "unit": "s" }, "channel": "line", "text": "TUGGER DOCKED", "from": "rl:agent:line-ctl" }
+]
+```
+
+- **`channels`** declares each channel and the senders it accepts (S4): who may be trusted is the integrator's
+  configuration, never the task's. A sender is `rl:agent:NAME` or `rl:robot:ID`, the second a robot of this world (C6; an
+  undeclared robot is `E519`). A channel has at least one sender, listed once (`E519`). The object has at least one
+  channel: **a world that declares none leaves the field out, and has no message service** (C1). A channel name is any
+  text with no space at either end.
+- **`messages`** is the incoming messages, events like the others (S6): `at` (a duration in `ms`, `s` or `min`; **zero is
+  allowed**, C4), `channel` (declared, `E519` otherwise), `text` (not empty, `E519`) and `from` (a sender by form, `E504`).
+  Any sender may appear in a message: one that the channel does not accept is recorded and ignored (19.2). A world with
+  messages and no `channels` is `E519`. Messages are applied in time order with the other events; ties keep file order.
+- A message is **never** a task's own `communicate`: no step of a task puts a message in this list (C6, S10).
+
+### 19.2 What counts
+
+A `message_received "CH"` (any message) or `message_received "CH" with "TEXT"` is evaluated like any condition, at the
+start of a wait, at every event, and at the arrival of each message (S1):
+
+- **A message counts** once it has arrived **at or after the start of the run** (S2, C4: a message at `at: 0` counts), and
+  at or before now; and it stays counted for the rest of the run (latched, C7): a second wait for the same message passes
+  at once.
+- **Text** is compared exactly and case-sensitively after trimming the space character (U+0020) at both ends of both texts
+  (S3, C11). There are no patterns, and `with ""` is an error (`E307`).
+- **Sender.** A message counts only if its sender is accepted on its channel (S4). Any other message is **ignored**: it
+  does not count, and the run record lists it as `ignored`.
+- **Value.** A declared channel with no matching message yet is **false**, not unknown (S5). A world with **no channels**
+  has no message service: every `message_received` is **unknown**, and fails closed (`S102` in a `pre`, `S261` in an `if`,
+  `S241` at the timeout of a wait); `not` of an unknown is unknown (C10).
+- **A wait** ends at the arrival of the message that makes its condition true, **inclusive at the timeout** (C5): a message
+  at exactly the timeout counts. If the message has arrived already, the wait ends at once. A message from an ignored sender
+  wakes the wait, which then goes on waiting.
+- **A mission** (C8): each task run starts fresh, so a message that arrived before a run started, in an earlier run, does
+  not count in it (one that arrives at exactly the start does); the mission's `until` sees every message **since the mission
+  started**, and is evaluated after each run that verified (S402 as for any condition). A message wait inside a mission's
+  task is a wait like any other (C12).
+
+### 19.3 `S011`: a channel the world does not declare
+
+In a world that declares channels, a task that names a channel the world does not declare fails **before the run reaches
+`AUTHORIZED`** with **`S011`**, and `validate --world` reports it (S4, C1). Every `message_received` of the task is checked: of
+a `pre`, an `if` and a `wait until`, on every path (a channel is a fact of the task and the world, not of the path). A
+mission whose `until` names one ends `failed` with `ended_by` `undeclared_channel` and `S011`, before any run. A world with no
+`channels` is not checked: its conditions are unknown (19.2).
+
+### 19.4 Run record 1.9
+
+A 2.1 source writes `run_record_schema_version` `1.9` and embeds Task IR 1.9. The key order is that of record 1.8 with
+`messages`, an array after `events_applied`: every message that arrived from the start of the run to its end, in order, as
+`{ "t_ms", "channel", "text", "from", "status" }` with `status` `accepted` or `ignored`. The messages are not in
+`events_applied`. A mission record `1.1` has the same `messages` for the whole mission, and each run entry has its own.
+Earlier sources write their records unchanged, byte for byte.
+
+### 19.5 Core, ROS 2, delegation
+
+`core_outcome` is unchanged: a goal never holds a message (S1). `export-goal` is unaffected. `delegate` refuses a task that
+has a `message_received` with **`X608`** (exit 6) and does not use such a library task (`message_unsupported`): the robot
+would need the channel's trust configuration (S8). The ROS 2 backend refuses `message_received` with **`S515`** before any
+motion ([ros2-backend-v0.1.md](ros2-backend-v0.1.md)).

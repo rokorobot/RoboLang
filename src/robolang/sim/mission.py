@@ -15,6 +15,7 @@ from decimal import Decimal
 
 from .. import ir
 from ..tokens import MAX_MISSION_RUNS
+from .messages import ReceivedMessage, received, undeclared_in
 from .executor import AppliedEvent, FinalWorld, RunResult, SimulationInputError, _State, _StepFailed, _evaluate, run
 from .values import Truth, duration_ms_of
 from .world import TaskScript, World
@@ -22,6 +23,7 @@ from .world import TaskScript, World
 COMPLETED, BOUNDED, FAILED, STOPPED = "completed", "bounded", "failed", "stopped"  # M5
 S401 = "S401"  # a task cannot fit the duration bound even once (clarification 8): the mission fails before any run
 S402 = "S402"  # the `until` condition is unknown (M3, fails closed): the mission stops
+S011 = "S011"  # RoboLang 2.1: the `until` names a channel the world does not declare: the mission fails before any run
 
 
 @dataclass(frozen=True)
@@ -55,12 +57,13 @@ class MissionResult:
     bindings: tuple[tuple[str, str], ...]
     outcome: str  # completed, bounded, failed or stopped
     ended_by: str  # until, run_bound, duration_bound, run_failed, retries_used, bound_with_retry, all_failed,
-    #                until_unknown or cannot_fit
+    #                until_unknown, cannot_fit or undeclared_channel
     failure: MissionFailure | None
     runs: tuple[TaskRun, ...]
     events_applied: tuple[AppliedEvent, ...]
     end_t_ms: Decimal
     final_world: FinalWorld
+    messages: tuple[ReceivedMessage, ...] = ()  # RoboLang 2.1: every message since the mission started
 
     @property
     def runs_verified(self) -> int:
@@ -133,7 +136,15 @@ def run_mission(document: ir.TaskIR, mission: ir.Mission, world: World, *,
 
     def result(outcome: str, ended_by: str, failure: MissionFailure | None = None) -> MissionResult:
         return MissionResult(mission, world.task.bindings, outcome, ended_by, failure, tuple(runs),
-                             tuple(state.applied), state.clock, state.freeze())
+                             tuple(state.applied), state.clock, state.freeze(),
+                             received(state.incoming, world, Decimal(0), state.clock))
+
+    missing = undeclared_in(until, world)  # RoboLang 2.1 (decision 0043 S4, C1): fails before any run
+    if missing:
+        declared = ", ".join(f"'{c}'" for c in sorted(world.channels))
+        return result(FAILED, "undeclared_channel", MissionFailure(
+            S011, None, f"the until condition names channel '{missing[0]}', which the world does not declare "
+                        f"(channels: {declared})"))
 
     if max_ms is not None:  # clarification 8: a task that cannot fit even once fails before the run
         for task in tasks:
@@ -156,6 +167,7 @@ def run_mission(document: ir.TaskIR, mission: ir.Mission, world: World, *,
         return MissionFailure(failed[-1].result.failure.code, failed[-1].index)
 
     def until_value() -> Truth:
+        state.message_origin = Decimal(0)  # C8: the until sees every message since the mission started
         try:
             return _evaluate(pseudo, state, bound, until)
         except _StepFailed:  # a clock reading that cannot be taken (S237, S238) is unknown, as in a comparison

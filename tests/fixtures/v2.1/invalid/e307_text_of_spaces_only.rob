@@ -1,0 +1,14 @@
+// RoboLang v2.1 fixture: invalid
+// expect: error E307 (static) line 11
+// why: a text of spaces only is empty once trimmed (S3, C11, E307)
+
+robolang 2.1;
+
+task feed(robot r, object tote, location src, location hold, location line) {
+    goal { object_at tote line; }
+    plan {
+        move r to src; grasp r tote; move r to hold;
+        wait until message_received "line" with "   " timeout 10 min else { fail "no"; }
+        move r to line; place r tote at line;
+    }
+}
