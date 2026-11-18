@@ -763,8 +763,9 @@ def test_the_scorer_of_a_synthetic_run_of_the_whole_set_is_fast_and_small(tmp_pa
         text = score.score_dir(out_dir)
         assert f"Task set messages, prompt {prompt}." in text and "message_ok" in text
     assert time.monotonic() - started < 60
-    peak = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss  # kilobytes on Linux, bytes on macOS
-    assert peak < 1_000_000 * (1 if sys.platform != "darwin" else 1024)
+    if hasattr(resource, "getrusage"):  # Windows can import an unrelated `resource` module without it
+        peak = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss  # kilobytes on Linux, bytes on macOS
+        assert peak < 1_000_000 * (1 if sys.platform != "darwin" else 1024)
 
 
 def test_the_set_is_in_the_run_script_and_only_runs_on_demand_in_the_workflow():
