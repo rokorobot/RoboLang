@@ -96,7 +96,7 @@ def test_every_task_names_a_near_activity_and_every_probe_an_open_gap_that_activ
             assert "gap" not in task
             continue
         gap = GAPS[task["gap"]]
-        if task["group"] in ("region", "action", "clock"):  # 1.7-1.9 programs: gaps closed at L6, left every `needs`
+        if task["group"] in ("region", "action", "clock", "message"):  # 1.7-2.1 programs: gaps closed at L6
             assert gap["scope"] == "closed" and task_id not in gap["tasks"], task_id
             continue
         assert gap["scope"] == "open" and task["gap"] != "G-LOOP", task_id
@@ -112,7 +112,7 @@ def test_every_gap_a_near_activity_claims_is_probed_except_the_proven_loop():
     claimed = {g for a in ATLAS["activities"] if atlas_report.is_near(a) for g in a["needs"]
                if GAPS[g]["scope"] == "open" and g != "G-LOOP"}  # G-LOOP: 12 standing tasks prove it; reopened by 0041
     assert claimed - {"G-MSG"} == {t["gap"] for t in PROBES.values()}  # G-MSG: built in 2.1, closes at L6 of I5
-    assert {t["gap"] for t in MESSAGES.values()} == {"G-MSG"} and GAPS["G-MSG"]["scope"] == "open"
+    assert {t["gap"] for t in MESSAGES.values()} == {"G-MSG"} and GAPS["G-MSG"]["scope"] == "closed"  # L6 of I5
     assert {t["gap"] for t in CLOCKS.values()} == {"G-CLOCK"} and GAPS["G-CLOCK"]["scope"] == "closed"  # L6 of I3
     assert {t["gap"] for t in ACTIONS.values()} == {"G-ACT"} and GAPS["G-ACT"]["scope"] == "closed"  # L6 of I2
     assert {t["gap"] for t in REGIONS.values()} == {"G-PATH"} and GAPS["G-PATH"]["scope"] == "closed"

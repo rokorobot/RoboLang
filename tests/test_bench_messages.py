@@ -148,7 +148,7 @@ def test_labels_are_2_1_in_expect_and_2_0_in_expect_2_0():
             continue
         assert task["expect_2_0"] == CANNOT, task_id  # the baseline label: 2.0 declines every one of them
         assert len(task["why"]) > 40 and task["attempt_fails_with"] in ("E211", "E201"), task_id
-        assert task["gap"] in GAPS and GAPS[task["gap"]]["scope"] in ("open", "out"), task_id
+        assert task["gap"] in GAPS and GAPS[task["gap"]]["scope"] in ("open", "out", "closed"), task_id
     for task_id, task in PROGRAMS.items():
         later = task["expect_2_1"]
         assert task["expect"] == {"decision": "program"} and lib.expectation(task) == ("program", "none"), task_id
@@ -545,15 +545,14 @@ def test_the_standing_tasks_that_name_no_text_or_no_channel_follow_c9():
 
 # -------- the atlas --------
 
-def test_after_l4_only_what_2_1_still_declines_is_in_an_atlas_gap_and_g_msg_stays_open_until_l6():
+def test_only_what_2_1_still_declines_is_in_an_atlas_gap_and_g_msg_is_closed():
     in_gaps = [(t, g["id"]) for g in ATLAS["gaps"] for t in g["tasks"] if t in SET]
     declined = {**INEXPRESSIBLE, **GOAL}  # x05 is declined again (erratum N3)
     assert {t for t, _ in in_gaps} == set(declined) and len(in_gaps) == len(declined)
     for task_id, gap in in_gaps:
         assert declined[task_id]["gap"] == gap and GAPS[gap]["scope"] in ("open", "out")
     assert Counter(gap for _, gap in in_gaps) == {"G-TRIGGER": 1, "G-CALC": 2, "G-DELIVERY": 1, "G-EVENTGOAL": 1}
-    assert GAPS["G-MSG"]["scope"] == "open" and GAPS["G-MSG"]["tasks"] == []  # closes at L6, after the acceptance run
-    assert "2.1" in GAPS["G-MSG"]["scope_note"] and "L6" in GAPS["G-MSG"]["scope_note"]
+    assert GAPS["G-MSG"]["scope"] == "closed" and GAPS["G-MSG"]["closed_in"] == "RoboLang 2.1"  # L6 of I5
     assert GAPS["G-DELIVERY"]["direction"] == "communication" and GAPS["G-DELIVERY"]["scope"] == "out"  # C13
     assert set(GAPS["G-DELIVERY"]["tasks"]) == {"x01_make_sure_it_was_delivered", "f12_message_delivery"}
     notes = [h["note"] for h in ATLAS["history"]]
