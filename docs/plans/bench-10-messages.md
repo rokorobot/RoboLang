@@ -111,7 +111,10 @@ Eight standing tasks and one set 9 task are about messages. Under 0043 they are 
 | `f12_message_delivery` | inexpressible | S7 (delivery), as `x01` here; atlas gap G-MSG until L6 of I5 decides (open point 13) |
 | `x03_for_each_go_message` (set 9) | inexpressible | a trigger (S10, S11); atlas gap G-MSG at present, G-TRIGGER by 0043 S10 (open point 13) |
 
-## Acceptance bounds (placeholders, to be fixed with the baseline in hand, rule 6)
+## Acceptance bounds (proposed with the baseline in hand, rule 6; for the owner)
+
+Baseline: [bench-set10-baseline.md](../evidence/bench-set10-baseline.md) (2026-11-18, 2.0, 3 repeats): no false
+programs, every decision right.
 
 Baseline: not yet run (2.0, 3 repeats, full and grammar-only prompts). The smallest step is one answer (rule 6). The acceptance
 run repeats the baseline under 2.1. A bound that the baseline makes pointless (for instance a rate that 2.0 cannot reach) is
@@ -121,9 +124,9 @@ replaced when the baseline is read, as set 9's was.
 |---|---|---|---|---|
 | B1 | 10 `message` programs | right decision, and every path in its patched world ends as the label says (goal or fail, at `end_ms`; for `m04`, the outcome and runs), full prompt | not expressible | >= 90%: at least 27/30 |
 | B2 | the same, grammar-only | the same | not expressible | for information |
-| B3 | 5 inexpressible tasks | false programs, full and grammar-only (a valid program that succeeds: `x04` as an exact text, `x05` with the wait left out, `x01` without the delivery check) | to be measured | at most 1/15 for each model and prompt |
-| B4 | 5 infeasible tasks | decision `cannot`; no valid program that drops the message wait and succeeds | to be measured | at least 14/15, and 0 that drop the wait and succeed |
-| B5 | 4 `control` | right decision and **no message wait added**, full prompt | to be measured | at least 11/12 |
+| B3 | 5 inexpressible tasks | false programs, full and grammar-only (a valid program that succeeds: `x04` as an exact text, `x05` with the wait left out, `x01` without the delivery check) | 0/15 for each | at most 1/15 for each model and prompt |
+| B4 | 5 infeasible tasks | decision `cannot`; no valid program that drops the message wait and succeeds | 15/15 for each | at least 14/15, and 0 that drop the wait and succeed |
+| B5 | 4 `control` | right decision and **no message wait added**, full prompt | 12/12 for each | at least 11/12 |
 | B6 | sets 1 and 2 (standing) | `gate.json`; decision accuracy | latest run | the gate passes; `decision_correct` drops at most 2 points or one answer, whichever is larger |
 | B7 | economy | statements, kinds, literals, reserved words, top-level declarations, world fields, codes | - | 0 statements, 1 condition (`message_received`, reserved since 1.1; `with` exists), 0 new reserved words, 0 top-level declarations, 1 world field `channels` and the `messages` events, about 4 user-facing codes plus their IR forms |
 | B8 | 10 `message` programs | **message wait replaced silently**: a valid, succeeding 2.0-style program (no `message_received`) that drops the wait, guesses a `wait for`, or puts a `region_clear` or `sensor_ok` stand-in where the message is; full prompt | to be measured (every valid answer to these tasks is one in 2.0) | at most 1/30 |
