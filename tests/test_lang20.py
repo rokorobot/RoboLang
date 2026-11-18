@@ -477,10 +477,10 @@ def test_a_time_of_day_bound_ends_the_mission_and_one_day_only():
     assert (result.outcome, result.ended_by, len(result.runs)) == ("completed", "until", 4)
     late = shuttle("", " until clock_time >= 23:59:59;")
     ending = mission_run(late, lambda w: w["clock"].update(start="2026-11-18T23:59:50"))
-    assert (ending.outcome, ending.ended_by, ending.failure.code) == ("stopped", "until_unknown", "S402")
+    assert (ending.outcome, ending.ended_by, ending.failure.code) == ("failed", "until_unknown", "S402")
     assert len(ending.runs) == 2  # 23:59:55 after run 1; after run 2 the day has ended (S238): unknown, not false
     unclocked = mission_run(source, lambda w: (w.update(world_schema_version="1.4"), w.pop("clock")))
-    assert (unclocked.outcome, unclocked.failure.code) == ("stopped", "S402")
+    assert (unclocked.outcome, unclocked.failure.code) == ("failed", "S402")
 
 
 def test_an_unknown_until_stops_the_mission_fail_closed_m3():
@@ -488,7 +488,7 @@ def test_an_unknown_until_stops_the_mission_fail_closed_m3():
                             "robot r, location home, location far, object box, location dock")
     result = mission_run(source, lambda w: w["objects"].update(box1={}),
                          {"r": "tug1", "home": "gate_in", "far": "gate_out", "box": "box1", "dock": "dock"})
-    assert (result.outcome, result.ended_by, result.failure.code) == ("stopped", "until_unknown", "S402")
+    assert (result.outcome, result.ended_by, result.failure.code) == ("failed", "until_unknown", "S402")
     assert len(result.runs) == 1
 
 
@@ -612,7 +612,7 @@ def test_exit_codes_follow_the_outcome(files):
     unclocked.write_text(json.dumps(data))
     bind = [f"{k}={v}" for k, v in BIND.items()]
     code, out, err = cli("simulate", rob, "--world", str(unclocked), "--mission", "m", "--bind", *bind)
-    assert code == 5 and json.loads(out)["outcome"] == "stopped" and "S402" in err
+    assert code == 4 and json.loads(out)["outcome"] == "failed" and "S402" in err
 
 
 def test_task_and_mission_are_exclusive_and_each_names_the_other(files):

@@ -77,7 +77,7 @@ mission NAME(parameters) {
   `not`) over the parameters of the mission, **or a comparison with a live reading or the live clock**, read as in a
   `wait until` (clarification 2): `until temperature of pan using probe < 40 degC;`, `until clock_time >= 22:00;`. A
   comparison with a `measure` binding is `E317`: a mission has none. A value that cannot be read, or a fact that is
-  unknown, makes the condition **unknown, and the mission stops** (fails closed, `S402`).
+  unknown, makes the condition **unknown, and the mission fails** (fails closed, `S402`; owner, 2026-11-18).
 - **`on failure`** says what happens after a task run that failed (M4). It is optional: the default is `stop`.
   - `stop;` ends the mission `failed`.
   - `continue;` records the failed run, never counts it as done, and goes on with the next run line.
@@ -122,8 +122,8 @@ A mission ends in exactly one of four states, and says why (`ended_by`). It neve
 |---|---|---|
 | `completed` | the `until` holds after a run that verified; or, with no `repeat`, the single run (or one of its retries) verified | `until`, `run_verified` |
 | `bounded` | a bound (run count, duration) was reached, and at least one run verified | `run_bound`, `duration_bound` |
-| `failed` | a run failed under `stop`; the retries are used up; the bound was reached while a retry was pending; every run failed under `continue` (never hidden as `bounded`); or a task cannot fit the duration bound even once (`S401`, before any run) | `run_failed`, `retries_used`, `bound_with_retry`, `all_failed`, `cannot_fit` |
-| `stopped` | the `until` is unknown (`S402`); an operator stop or a lease end (M2) stops a mission at any time | `until_unknown` |
+| `failed` | a run failed under `stop`; the retries are used up; the bound was reached while a retry was pending; every run failed under `continue` (never hidden as `bounded`); a task cannot fit the duration bound even once (`S401`, before any run); or the `until` is unknown after a run (`S402`, fails closed) | `run_failed`, `retries_used`, `bound_with_retry`, `all_failed`, `cannot_fit`, `until_unknown` |
+| `stopped` | an operator stop or a lease end (M2) stops a mission at any time | `stopped` |
 
 A mission with a count bound alone, reached, ends `bounded`, not `completed`: "do it 30 times" that was done is
 `bounded` (clarification 5).

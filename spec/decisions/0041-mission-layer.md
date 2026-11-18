@@ -94,3 +94,13 @@ With G-MSG it makes 4. The order is generated in
 | 12 | Hours in a mission bound | Still no `h` (owner, 0042): 8 hours is written `480 min` |
 | 13 | "Every hour on the hour" written as "wait 60 min" | A false program: it is a different request |
 | 14 | The atlas gap for triggers | A new far gap, **G-TRIGGER** (time, message and self-state triggers on missions, M6), so that G-LOOP can close at L6 |
+
+## Implementation note (L4, 2026-11-18; owner's decisions)
+
+Built in PR #159. The owner decided three points on 2026-11-18:
+
+1. **`delegate` refuses a mission in 2.0 (`X607`).** Delegating each run would need the world, the clock and the
+   lease carried from one delegated run to the next, so it is a later step. `simulate --mission` runs missions.
+2. **An unknown `until` ends the mission `failed`** (`S402`, fails closed), not `stopped`. `stopped` is kept for an
+   operator stop or a lease end (M5).
+3. **`validate --world` does not check missions yet.** This is a follow-up; `simulate` checks them.

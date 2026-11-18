@@ -1,5 +1,5 @@
 {
-  "sha256": "46bb632d5af15e580136ad0b233acb9664b3bd869e4951ee0b4cbcbb642bf43e",
+  "sha256": "585183faf3669fb5baaa542aebad585ce0f1e75edca51df07402f02d8e7ef895",
   "schema": "robolang.bench.freeze.v2",
   "patterns": [
     "bench/tasks*/*.json",
@@ -1322,7 +1322,7 @@
     "src/robolang/sim/check.py": "8bb622c70595390bcaa27382d5144239d36622de2ad8f81cc615f5a294eec7e2",
     "src/robolang/sim/clock.py": "1104ac95cb74180a3165f4cd1fb775db9c57a80b4d3d3182e9a26557dd5cd7f7",
     "src/robolang/sim/executor.py": "3615dcef53b09bf54dbab9b1928473864a224e408c7c425ef2258c3ee5281349",
-    "src/robolang/sim/mission.py": "a9f122d26496ef5db96b6273a1a6ba898180034766fe2204ffe32e9100c6e5c2",
+    "src/robolang/sim/mission.py": "04ee10637aaf796b370976ce90ca486019df47a9246e78756109810b552994ec",
     "src/robolang/sim/outcome.py": "1d6a4e36eaebb378fe26131c0f9fc3dfa602a80b47eb2ecc71e742dbd16f469b",
     "src/robolang/sim/record.py": "a1a49f90f042c3d4ac0f8b95cd11154cf3cb04069fa15a319b6b0aeea40db513",
     "src/robolang/sim/regions.py": "c28d97576c6c0a7c4df3d225673a843f0db329353ddf025fba4b47677949b32b",

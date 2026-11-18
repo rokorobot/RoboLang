@@ -142,3 +142,8 @@ missions, M6: I5, I6, I8); `x03_for_each_go_message` stays in G-MSG. No sub-acti
 ## Freeze
 
 `docs/evidence/bench-freeze-v2.json` is regenerated for all of the above (the previous manifest is in git history).
+
+## Erratum W3 (owner, 2026-11-18): an unknown `until` fails the mission
+
+An unknown `until` (`S402`) now ends the mission `failed` (`until_unknown`), not `stopped`. `stopped` is kept for an
+operator stop or a lease end. No set-9 label used the old outcome. `docs/evidence/bench-freeze-v2.json` is regenerated.

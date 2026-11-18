@@ -189,7 +189,7 @@ def run_mission(document: ir.TaskIR, mission: ir.Mission, world: World, *,
                         if value is Truth.TRUE:
                             return result(COMPLETED, "until")
                         if value is Truth.UNKNOWN:
-                            return result(STOPPED, "until_unknown", MissionFailure(
+                            return result(FAILED, "until_unknown", MissionFailure(
                                 S402, number, "the until condition is unknown after this run, so the mission stops"))
                     break
                 if failure_policy.policy == "stop":
