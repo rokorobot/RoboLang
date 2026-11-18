@@ -68,6 +68,6 @@ Frozen, dated copies with a git tag: [roadmap-snapshots/](roadmap-snapshots/READ
 | I2 G-ACT | L1–L5 done (accepted 2026-11-17, [acceptance](evidence/bench-1-8-acceptance.md): silent action replacement 3/30 → 0/30). **L6:** G-ACT closed in the atlas; release 0.5.0 with RoboLang 1.8 prepared, published by the owner (strategy D3) |
 | I3 G-CLOCK | L1–L5 done (accepted 2026-11-17, [acceptance](evidence/bench-1-9-acceptance.md)). **L6:** G-CLOCK closed in the atlas; release 0.6.0 with RoboLang 1.9 prepared, published by the owner (strategy D3) |
 | I4 G-LOOP (mission layer) | L1–L5 done (accepted 2026-11-18 with one exception, [acceptance](evidence/bench-2-0-acceptance.md): repetition replaced silently 4/30 → 0/30). **L6:** G-LOOP closed in the atlas, G-UNBOUNDED split off (out, 0041 M2/M7); release 0.7.0 with RoboLang 2.0 prepared, published by the owner (strategy D3) |
-| I5 G-MSG | **L1 done** (owner, 2026-11-18). **L2:** decision record [0043](../spec/decisions/0043-incoming-messages.md) proposed; every point waits for the owner |
+| I5 G-MSG | **L1 done** (owner, 2026-11-18). **L2 done:** decision record [0043](../spec/decisions/0043-incoming-messages.md) approved 2026-11-18. **L3:** pre-registration of set 10 "messages" started |
 | I6–I10 | Not started |
 | Mission layer decision record | [0041](../spec/decisions/0041-mission-layer.md) **approved 2026-11-17**: G-LOOP reopened (LE-9), mission layer with a hard bound, `stop`/`continue`/`retry N`; built at I4 |

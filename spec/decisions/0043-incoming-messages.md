@@ -1,8 +1,9 @@
 # Decision record 0043: Incoming messages (I5, G-MSG, RoboLang 2.1)
 
 **Date:** 2026-11-18
-**Status:** PROPOSED. This is step L2 of iteration I5 in the [language roadmap](../../docs/LANGUAGE_ROADMAP.md). The
-owner chose to start I5 on 2026-11-18. Every point below needs the owner's review before anything is built.
+**Status:** **APPROVED by the owner, 2026-11-18**: S1–S11 as recommended. A message counts from the start of the task
+run (S2); senders are declared in the world (S4); confirmed delivery stays out of 2.1 (S7). This is step L2 of
+iteration I5 in the [language roadmap](../../docs/LANGUAGE_ROADMAP.md).
 **Applies to (when decided):**
 - new `spec/robolang-v2.1.md` and `grammar-v2.1.ebnf`;
 - Task IR 1.9 and world file 1.6;
@@ -91,9 +92,7 @@ task feed(robot r, object tote, location handoff, location line) {
 - **Economy:** 0 new statements, 1 condition (with a reserved word that finally gets used), 1 world field (`channels`,
   plus `messages` events) and about 4 codes.
 
-## Open questions for the owner
+## Owner's answers (2026-11-18)
 
-1. S2: a message counts from the start of the task run (recommended), or only during the wait?
-2. S4: senders declared in the world (recommended), or a `from` written in the task?
-3. S7: confirmed delivery stays out of 2.1?
-4. Are S1–S11 accepted?
+The owner accepted every recommendation: S2 from the start of the run, S4 senders in the world, and S7 delivery
+out of 2.1. S1–S11 are accepted.
