@@ -1,0 +1,15 @@
+// bench/reference_kinds/k09_nine_oclock_scan_on_the_signal.rob: hand-written reference (RoboLang 2.2)
+robolang 2.2;
+
+task scan_on_signal(robot r, object shelf, sensor reader, location aisle) {
+    goal { robot_at r aisle; }
+    plan {
+        wait until clock_time >= 09:00 timeout 20 min else { fail "09:00 did not come in time"; }
+        wait until message_received "stock" with "SCAN NOW" timeout 5 min else { fail "no scan signal"; }
+        move r to aisle;
+        measure r count of shelf using reader as n;
+        if n == 0 {
+            communicate r to "lead" with "shelf_1 is empty";
+        }
+    }
+}

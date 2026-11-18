@@ -82,7 +82,7 @@ The owner accepted every recommendation:
 - K6: `u01` and `u02` are relabelled in L3;
 - K1–K9 are accepted.
 
-## Clarifications (PROPOSED 2026-11-18, from writing the L3 set; for the owner)
+## Clarifications (APPROVED by the owner 2026-11-18, from writing the L3 set)
 
 | # | Question | Recommended |
 |---|---|---|

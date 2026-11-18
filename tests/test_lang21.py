@@ -330,7 +330,7 @@ def test_the_reader_checks_the_header_of_both_mission_versions():
     source = f"robolang 2.1;\n{ROUND}mission shift(robot r, location home, location far) {{\n" \
              '    repeat at most 3 runs { run round(r, home, far); } until message_received "ops";\n}\n'
     document = document_of(source)
-    for key, value in (("ir_schema_version", "1.2"), ("task_ir_schema_version", "1.8"), ("language_version", "2.0")):
+    for key, value in (("ir_schema_version", "1.3"), ("task_ir_schema_version", "1.8"), ("language_version", "2.0")):
         bad = copy.deepcopy(document)
         bad[key] = value
         assert ("I113", f"/{key}") in problems(bad), key

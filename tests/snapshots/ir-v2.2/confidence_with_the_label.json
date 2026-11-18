@@ -1,0 +1,104 @@
+{
+  "ir_schema": "robolang.task-ir",
+  "ir_schema_version": "1.10",
+  "language_version": "2.2",
+  "tasks": [
+    {
+      "name": "t",
+      "parameters": [
+        {
+          "name": "r",
+          "type": "robot"
+        },
+        {
+          "name": "plant",
+          "type": "object"
+        },
+        {
+          "name": "aisle",
+          "type": "location"
+        },
+        {
+          "name": "cam",
+          "type": "sensor"
+        }
+      ],
+      "safety": [],
+      "preconditions": [],
+      "goal": [
+        {
+          "kind": "robot_at",
+          "robot": "r",
+          "location": "aisle"
+        }
+      ],
+      "steps": [
+        {
+          "kind": "move",
+          "robot": "r",
+          "target": "aisle"
+        },
+        {
+          "kind": "measure",
+          "robot": "r",
+          "reading": "label",
+          "object": "plant",
+          "sensor": "cam",
+          "binding": "seen"
+        },
+        {
+          "kind": "measure",
+          "robot": "r",
+          "reading": "confidence",
+          "object": "plant",
+          "sensor": "cam",
+          "binding": "sure"
+        },
+        {
+          "kind": "if",
+          "condition": {
+            "kind": "and",
+            "conditions": [
+              {
+                "kind": "compare",
+                "left": {
+                  "kind": "binding",
+                  "name": "seen"
+                },
+                "op": "==",
+                "right": {
+                  "kind": "text",
+                  "value": "weed"
+                }
+              },
+              {
+                "kind": "compare",
+                "left": {
+                  "kind": "binding",
+                  "name": "sure"
+                },
+                "op": ">=",
+                "right": {
+                  "kind": "quantity",
+                  "value": "90",
+                  "unit": "%"
+                }
+              }
+            ]
+          },
+          "then": [
+            {
+              "kind": "communicate",
+              "robot": "r",
+              "channel": "ops",
+              "message": "weed confirmed"
+            }
+          ],
+          "else": [],
+          "goal_then": null,
+          "goal_else": null
+        }
+      ]
+    }
+  ]
+}

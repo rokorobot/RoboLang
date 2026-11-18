@@ -6,6 +6,7 @@ RoboLang 1.7: ir-schema-v1.6.md; schema 1.7 for RoboLang 1.8: ir-schema-v1.7.md;
 ir-schema-v1.8.md). RoboLang 2.0 keeps Task IR 1.8 for its tasks and adds the Mission IR 1.0 document
 (`robolang.mission-ir`, spec/mission-ir-v1.0.md), which holds the tasks and the missions of a file. RoboLang 2.1 has
 Task IR 1.9 (ir-schema-v1.9.md: the condition `message_received`) and, for a file with a mission, Mission IR 1.1.
+RoboLang 2.2 has Task IR 1.10 (ir-schema-v1.10.md: the kinds fill, confidence, pressure and count) and Mission IR 1.2.
 
 The IR is a description of validated tasks with source details removed:
 no spans, comments or formatting. Two sources that differ only in layout
@@ -35,11 +36,16 @@ IR_SCHEMA_VERSION = "1.0"
 LANGUAGE_VERSION = DEFAULT_VERSION
 # Language version -> the IR schema version it compiles to (ir-schema-v1.1.md section 1).
 IR_SCHEMA_VERSIONS = {"1.1": "1.0", "1.2": "1.1", "1.3": "1.2", "1.4": "1.3", "1.5": "1.4", "1.6": "1.5", "1.7": "1.6",
-                     "1.8": "1.7", "1.9": "1.8", "2.0": "1.8", "2.1": "1.9"}  # 2.0: no new task, so Task IR 1.8
+                     "1.8": "1.7", "1.9": "1.8", "2.0": "1.8", "2.1": "1.9",
+                     "2.2": "1.10"}  # 2.0: no new task, so Task IR 1.8
 MISSION_IR_SCHEMA = "robolang.mission-ir"
-# Language version (of a file that has a mission) -> Mission IR version: 1.1 holds Task IR 1.9 tasks (RoboLang 2.1)
-MISSION_IR_SCHEMA_VERSIONS = {"2.0": "1.0", "2.1": "1.1"}
+# Language version (of a file that has a mission) -> Mission IR version: 1.1 holds Task IR 1.9 tasks (RoboLang 2.1),
+# 1.2 holds Task IR 1.10 tasks (RoboLang 2.2)
+MISSION_IR_SCHEMA_VERSIONS = {"2.0": "1.0", "2.1": "1.1", "2.2": "1.2"}
 MISSION_IR_SCHEMA_VERSION = MISSION_IR_SCHEMA_VERSIONS["2.0"]  # the first version
+
+
+_BRANCHING = ("1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "2.0", "2.1", "2.2")  # a task has no goal of its own (1.4 on)
 
 
 def _key(name: str):
@@ -183,11 +189,14 @@ class BindingRef:
 
 @dataclass(frozen=True)
 class QuantityLit:
-    """Schema 1.5: a comparison operand `60 degC`: the number and unit as written, never converted."""
+    """
+    Schema 1.5: a comparison operand `60 degC`: the number and unit as written, never converted. Schema 1.10 (RoboLang
+    2.2): a count's literal has no unit (no `unit` key).
+    """
 
     KIND: ClassVar[str] = "quantity"
     value: Decimal
-    unit: str
+    unit: str | None = field(default=None, metadata={"omit_none": True})
 
 
 @dataclass(frozen=True)
@@ -666,7 +675,7 @@ def _task(node: ast.Task, language: str) -> Task:
         ),
         preconditions=tuple(_condition(c) for c in node.pre.conditions) if node.pre else (),
         # 1.4 on: no task goal, the branches give them
-        goal=() if goal is None and language in ("1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "2.0", "2.1") else goal,
+        goal=() if goal is None and language in _BRANCHING else goal,
         steps=tuple(_step(s) for s in node.plan.statements),
         verify=_verify(node),
     )

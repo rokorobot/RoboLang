@@ -1,0 +1,14 @@
+// bench/reference_kinds/k08_open_the_relief_valve.rob: hand-written reference (RoboLang 2.2)
+robolang 2.2;
+
+task relieve(robot r, object gauge, object valve, sensor cam, location pump) {
+    goal { robot_at r pump; }
+    plan {
+        move r to pump;
+        measure r pressure of gauge using cam as p;
+        if p > 6 bar {
+            goal { in_state valve "open"; }
+            do r open valve;
+        }
+    }
+}

@@ -1,0 +1,13 @@
+// bench/reference_kinds/k05_pump_one_below_450_kpa.rob: hand-written reference (RoboLang 2.2)
+robolang 2.2;
+
+task read_gauge(robot r, object gauge, sensor cam, location pump) {
+    goal { robot_at r pump; }
+    plan {
+        move r to pump;
+        measure r pressure of gauge using cam as p;
+        if p < 450 kPa {
+            communicate r to "maintenance" with "pump 1 low pressure";
+        }
+    }
+}

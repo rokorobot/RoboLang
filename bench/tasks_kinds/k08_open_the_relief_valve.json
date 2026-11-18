@@ -1,9 +1,12 @@
 {
   "id": "k08_open_the_relief_valve",
   "prompt": "With crawler1, drive to pump_3, read gauge_p3 with cam_crawler1 and, if the pressure is above 6 bar, open relief_valve_3; if it is not, leave the valve closed.",
-  "world": "bench/worlds/plant_room.json",
+  "world": "bench/worlds/kinds_k08_open_the_relief_valve.json",
   "group": "kind",
   "expect": {
+    "decision": "program"
+  },
+  "expect_2_1": {
     "decision": "cannot",
     "category": "inexpressible"
   },
@@ -32,28 +35,6 @@
         }
       }
     },
-    "expected_readings": [
-      [
-        "crawler1",
-        "pressure",
-        "gauge_p3"
-      ]
-    ],
-    "expected_comparisons": [
-      {
-        "kind": "pressure",
-        "op": ">",
-        "value": "6",
-        "unit": "bar"
-      }
-    ],
-    "expected_actions": [
-      {
-        "robot": "crawler1",
-        "action": "open",
-        "target": "relief_valve_3"
-      }
-    ],
     "paths": [
       {
         "when": "gauge_p3 reads 7 bar: above 6 bar, the valve is opened",
@@ -106,6 +87,28 @@
       }
     ]
   },
+  "expected_readings": [
+    [
+      "crawler1",
+      "pressure",
+      "gauge_p3"
+    ]
+  ],
+  "expected_comparisons": [
+    {
+      "kind": "pressure",
+      "op": ">",
+      "value": "6",
+      "unit": "bar"
+    }
+  ],
+  "expected_actions": [
+    {
+      "robot": "crawler1",
+      "action": "open",
+      "target": "relief_valve_3"
+    }
+  ],
   "gap": "G-PERCEIVE",
   "tags": [
     "pressure",

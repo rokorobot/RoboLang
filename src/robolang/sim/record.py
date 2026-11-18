@@ -24,11 +24,11 @@ RUN_RECORD_SCHEMA_VERSION = "1.0"
 # Language version -> run record schema version (robolang-v1.2.md section 8.3; v1.3 section 8.3).
 RUN_RECORD_SCHEMA_VERSIONS = {
     "1.1": "1.0", "1.2": "1.1", "1.3": "1.2", "1.4": "1.3", "1.5": "1.4", "1.6": "1.5", "1.7": "1.6",
-    "1.8": "1.7", "1.9": "1.8", "2.0": "1.8", "2.1": "1.9",
+    "1.8": "1.7", "1.9": "1.8", "2.0": "1.8", "2.1": "1.9", "2.2": "1.10",
 }
 MISSION_RECORD_SCHEMA = "robolang.sim.mission-run"  # RoboLang 2.0 (decision 0041): the record of a mission
 MISSION_RECORD_SCHEMA_VERSION = "1.0"
-MISSION_RECORD_SCHEMA_VERSIONS = {"2.0": "1.0", "2.1": "1.1"}  # 1.1 (RoboLang 2.1) adds `messages`
+MISSION_RECORD_SCHEMA_VERSIONS = {"2.0": "1.0", "2.1": "1.1", "2.2": "1.2"}  # 1.1 (2.1) adds `messages`; 1.2: 2.2
 SEED = re.compile(r"[A-Za-z0-9._-]{1,64}")
 DEFAULT_SEED = "0"
 
@@ -106,15 +106,19 @@ def _received(message) -> dict:
 
 
 def _reading(reading) -> dict | None:
-    """A measured value (RoboLang 1.6, decision 0036 V8). A label has no `unit` and no `uncertainty` key."""
+    """
+    A measured value (RoboLang 1.6, decision 0036 V8). A label has no `unit` and no `uncertainty` key; a count (2.2) has
+    an `uncertainty` of "0" and no `unit`.
+    """
     if reading is None:
         return None
-    quantity = reading.unit is not None
+    quantity = reading.uncertainty is not None
     return {
         "subject": reading.subject,
         "kind": reading.kind,
         "value": ir.decimal_text(reading.value) if quantity else reading.value,
-        **({"unit": reading.unit, "uncertainty": ir.decimal_text(reading.uncertainty)} if quantity else {}),
+        **({"unit": reading.unit} if reading.unit is not None else {}),
+        **({"uncertainty": ir.decimal_text(reading.uncertainty)} if quantity else {}),
         "sensor": reading.sensor,
         "t_ms": ms_text(reading.t_ms),
         **({"text": clock_text(reading.kind, reading.value)} if reading.kind in CLOCK_KINDS else {}),
@@ -137,10 +141,10 @@ def _event(event) -> dict:
     out = {"t_ms": ms_text(event.t_ms), "fact": event.fact, "target": event.target}
     if event.fact == "property":  # world file 1.2: the object's property took this value
         prop = event.value
-        quantity = prop.unit is not None
+        quantity = not isinstance(prop.value, str)  # a label is text; a count is a number with no unit
         return {**out, "property": prop.kind,
                 "value": {"value": ir.decimal_text(prop.value) if quantity else prop.value,
-                          **({"unit": prop.unit} if quantity else {})}}
+                          **({"unit": prop.unit} if prop.unit is not None else {})}}
     return {**out, "value": event.value}
 
 
@@ -266,14 +270,14 @@ def to_record(
         "ir_schema_version": ir.IR_SCHEMA_VERSIONS[language_version],
         "world_schema_version": world_schema_version,
     }
-    if language_version in ("1.9", "2.0", "2.1"):
+    if language_version in ("1.9", "2.0", "2.1", "2.2"):
         inputs["world_clock"] = None if world_clock is None else {"start": world_clock.start, "zone": world_clock.zone}
     if bindings_source != "world":  # a record without the key has world-file bindings (section 5.1)
         inputs["bindings_source"] = bindings_source
-    branching = language_version in ("1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "2.0", "2.1")
-    handlers = language_version in ("1.5", "1.6", "1.7", "1.8", "1.9", "2.0", "2.1")
-    values = language_version in ("1.6", "1.7", "1.8", "1.9", "2.0", "2.1")
-    actions = language_version in ("1.8", "1.9", "2.0", "2.1")
+    branching = language_version in ("1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "2.0", "2.1", "2.2")
+    handlers = language_version in ("1.5", "1.6", "1.7", "1.8", "1.9", "2.0", "2.1", "2.2")
+    values = language_version in ("1.6", "1.7", "1.8", "1.9", "2.0", "2.1", "2.2")
+    actions = language_version in ("1.8", "1.9", "2.0", "2.1", "2.2")
     return {
         "run_record_schema": RUN_RECORD_SCHEMA,
         "run_record_schema_version": RUN_RECORD_SCHEMA_VERSIONS[language_version],
@@ -292,7 +296,7 @@ def to_record(
         **({"decisions": [_decision(d) for d in result.decisions]} if branching else {}),
         "steps": [_step(s, branching, handlers, values, actions) for s in result.steps],
         "events_applied": [_event(e) for e in result.events_applied],
-        **({"messages": [_received(m) for m in result.messages]} if language_version == "2.1" else {}),
+        **({"messages": [_received(m) for m in result.messages]} if language_version in ("2.1", "2.2") else {}),
         "end_t_ms": ms_text(result.end_t_ms),
         "final_world": _final_world(result.final_world, actions),
         **({} if result.goal is None else {"core_outcome": core_outcome(result, task, run_id, core=core)}),
@@ -373,7 +377,8 @@ def to_mission_record(
         "runs_failed": result.runs_failed,
         "runs": runs,
         "events_applied": [_event(e) for e in result.events_applied],
-        **({"messages": [_received(m) for m in result.messages]} if document.language_version == "2.1" else {}),
+        **({"messages": [_received(m) for m in result.messages]}
+           if document.language_version in ("2.1", "2.2") else {}),
         "end_t_ms": ms_text(result.end_t_ms),
         "final_world": _final_world(result.final_world, True),
     }

@@ -1,12 +1,92 @@
 {
   "id": "f_perceive_shelf_fill",
   "prompt": "With arm1, scan shelf_a with camera_top; if the shelf is less than a quarter full, tell channel \"lead\" to restock it.",
-  "world": "bench/worlds/warehouse.json",
-  "group": "inexpressible",
+  "world": "bench/worlds/kinds_f_perceive_shelf_fill.json",
+  "group": "kind",
   "expect": {
+    "decision": "program"
+  },
+  "expect_2_1": {
     "decision": "cannot",
     "category": "inexpressible"
   },
+  "expect_2_2": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "shelf_a is 12 % full: below a quarter, the lead is told",
+        "goal": [],
+        "messages": [
+          [
+            "lead",
+            null
+          ]
+        ],
+        "world_patch": {
+          "location_properties": {
+            "shelf_a": {
+              "fill": {
+                "value": "12",
+                "unit": "%"
+              }
+            }
+          }
+        }
+      },
+      {
+        "when": "shelf_a is 70 % full: not below a quarter, nobody is told",
+        "goal": [],
+        "messages": [],
+        "world_patch": {
+          "location_properties": {
+            "shelf_a": {
+              "fill": {
+                "value": "70",
+                "unit": "%"
+              }
+            }
+          }
+        }
+      }
+    ],
+    "world_2_2": {
+      "sensors": {
+        "camera_top": {
+          "measures": {
+            "fill": {
+              "unit": "%",
+              "uncertainty": "2",
+              "contact": false
+            }
+          }
+        }
+      },
+      "location_properties": {
+        "shelf_a": {
+          "fill": {
+            "value": "12",
+            "unit": "%"
+          }
+        }
+      }
+    }
+  },
+  "goal_free": true,
+  "expected_readings": [
+    [
+      "arm1",
+      "fill",
+      "shelf_a"
+    ]
+  ],
+  "expected_comparisons": [
+    {
+      "kind": "fill",
+      "op": "<",
+      "value": "25",
+      "unit": "%"
+    }
+  ],
   "activity": "ACT-RET-001",
   "gap": "G-PERCEIVE",
   "tags": [
@@ -14,6 +94,6 @@
     "if",
     "percent"
   ],
-  "why": "A condition on a perceived level in percent: `measure` reads only temperature, mass, distance or label, and no unit is a percentage (language reference: 'Measured values', kinds and units).",
+  "why": "RoboLang 2.2 (0044 K1, D1): a `fill` reading of `shelf_a`, a location in this world (D1: `fill` and `count` may be read of a location), compared with `< 25 %` (a quarter); the lead is told. The request names no end state. Before L4 (2.1): a condition on a perceived level in percent: `measure` read only temperature, mass, distance or label, and no unit was a percentage (E217).",
   "attempt_fails_with": "E217"
 }

@@ -1,0 +1,103 @@
+{
+  "ir_schema": "robolang.task-ir",
+  "ir_schema_version": "1.10",
+  "language_version": "2.2",
+  "tasks": [
+    {
+      "name": "t",
+      "parameters": [
+        {
+          "name": "r",
+          "type": "robot"
+        },
+        {
+          "name": "shelf",
+          "type": "location"
+        },
+        {
+          "name": "aisle",
+          "type": "location"
+        },
+        {
+          "name": "cam",
+          "type": "sensor"
+        },
+        {
+          "name": "tag",
+          "type": "sensor"
+        }
+      ],
+      "safety": [],
+      "preconditions": [],
+      "goal": [
+        {
+          "kind": "robot_at",
+          "robot": "r",
+          "location": "aisle"
+        }
+      ],
+      "steps": [
+        {
+          "kind": "move",
+          "robot": "r",
+          "target": "aisle"
+        },
+        {
+          "kind": "wait_until",
+          "condition": {
+            "kind": "compare",
+            "left": {
+              "kind": "live",
+              "reading": "fill",
+              "object": "shelf",
+              "sensor": "cam"
+            },
+            "op": ">",
+            "right": {
+              "kind": "quantity",
+              "value": "80",
+              "unit": "%"
+            }
+          },
+          "timeout": {
+            "value": "10",
+            "unit": "min"
+          },
+          "else": [
+            {
+              "kind": "fail",
+              "reason": "never full"
+            }
+          ]
+        },
+        {
+          "kind": "wait_until",
+          "condition": {
+            "kind": "compare",
+            "left": {
+              "kind": "live",
+              "reading": "count",
+              "object": "shelf",
+              "sensor": "tag"
+            },
+            "op": "==",
+            "right": {
+              "kind": "quantity",
+              "value": "0"
+            }
+          },
+          "timeout": {
+            "value": "5",
+            "unit": "min"
+          },
+          "else": [
+            {
+              "kind": "fail",
+              "reason": "never empty"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

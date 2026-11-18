@@ -20,7 +20,7 @@ from decimal import Decimal
 from . import ir
 from .core import ReadError, read_document
 from .diagnostics import MAX_ERRORS
-from .measured import KINDS, Atom, Operand, Scopes, View
+from .measured import AREA_KINDS, KINDS, KINDS_V2_2, Atom, Operand, Scopes, View
 from .parser import MAX_CONDITION_DEPTH, MAX_IF_DEPTH
 from .paths import double_grasps, goalless_path
 from .tokens import (
@@ -28,6 +28,7 @@ from .tokens import (
     COMPARISON_OPERATORS,
     DURATION_UNITS,
     KIND_UNITS,
+    KIND_UNITS_V2_2,
     MAX_MISSION_RUNS,
     MAX_RETRIES,
     RESERVED,
@@ -49,6 +50,7 @@ _REGION_RANK = 6  # the first schema with region limits (`no_go_region`, `in_reg
 _ACTIONS_RANK = 7  # the first schema with the step `do` and the condition `in_state` (RoboLang 1.8)
 _CLOCK_RANK = 8  # the first schema with the step `read_clock`, `time` and `clock` operands (RoboLang 1.9)
 _MESSAGE_RANK = 9  # the first schema with the condition `message_received` (RoboLang 2.1)
+_KINDS_RANK = 10  # the first schema with the kinds fill, confidence, pressure, count and a unitless count literal (2.2)
 MAX_DECIMAL_CHARS = 64
 _POLICIES = ("stop", "continue", "retry")  # a mission's failure policy (Mission IR 1.0)
 
@@ -83,10 +85,12 @@ _VALUES_RANK = 5  # the first schema with `measure`, `compare` and a `binding` i
 _OPERAND_KEYS = {"binding": ("name",), "quantity": ("value", "unit"), "text": ("value",),
                  "live": ("reading", "object", "sensor"), "time": ("value",), "clock": ("reading",)}
 _LEFT_OPERANDS, _RIGHT_OPERANDS = ("binding", "live"), ("binding", "quantity", "text")
-_QUANTITY_UNITS = tuple(unit for units in KIND_UNITS.values() for unit in units)
+_QUANTITY_UNITS_V1_6 = tuple(unit for units in KIND_UNITS.values() for unit in units)
+_QUANTITY_UNITS = tuple(dict.fromkeys(unit for units in KIND_UNITS_V2_2.values() for unit in units))  # schema 1.10
 _CLOCK_LEFT, _CLOCK_RIGHT = ("clock",), ("time",)  # the operands schema 1.8 adds to a comparison
 _CLOCK_UNITS = ("ms", "s", "min")  # a duration an `elapsed` value compares with (schema 1.8)
-_VALUE_CODES = {"scope": "I218", "clash": "I219", "kind": "I220", "operator": "I221", "goal": "I222", "live": "I223"}
+_VALUE_CODES = {"scope": "I218", "clash": "I219", "kind": "I220", "operator": "I221", "goal": "I222", "live": "I223",
+                "unit": "I117", "count": "I229"}  # schema 1.10: a quantity with no unit is a count's, and whole
 # kind -> (field, parameter type it must name): the uses E303 and E304 check
 _USES = {
     "sensor_ok": (),
@@ -326,7 +330,10 @@ class _Reader:
                                + ", ".join(f"'{k}'" for k in allowed), _pointer(ptr, "kind"))
             return False
         keys = _OPERAND_KEYS[kind]
-        ok = self.shape(node, ptr, ("kind", *keys))
+        if kind == "quantity" and self._rank >= _KINDS_RANK:  # a count literal has no unit (schema 1.10)
+            ok = self.shape(node, ptr, ("kind", "value"), ("unit",))
+        else:
+            ok = self.shape(node, ptr, ("kind", *keys))
         for key in keys:
             if key not in node:
                 continue
@@ -336,7 +343,8 @@ class _Reader:
             elif key == "value" and kind == "quantity":
                 ok = self.decimal(node[key], at) and ok
             elif key == "unit":
-                unit, units = node[key], _QUANTITY_UNITS + (_CLOCK_UNITS if durations else ())
+                units = _QUANTITY_UNITS if self._rank >= _KINDS_RANK else _QUANTITY_UNITS_V1_6
+                unit, units = node[key], units + (_CLOCK_UNITS if durations else ())
                 if not (isinstance(unit, str) and unit in units):
                     listed = ", ".join(f"'{u}'" for u in units)
                     self.error("I117", f"unit not allowed here; expected one of {listed}", at)
@@ -355,7 +363,7 @@ class _Reader:
         """A measured kind: `temperature`, `mass`, `distance` or `label`; for a clock reading `time` or `elapsed`."""
         if not self.string(value, ptr):
             return False
-        kinds = CLOCK_KINDS if clock else KINDS
+        kinds = CLOCK_KINDS if clock else KINDS_V2_2 if self._rank >= _KINDS_RANK else KINDS
         if value not in kinds:
             self.error("I125", f"unknown {'clock' if clock else 'measured'} kind '" + value + "'; expected one of "
                        + ", ".join(f"'{k}'" for k in kinds), ptr)
@@ -510,6 +518,10 @@ class _Reader:
             ok = self.name(node["action"], _pointer(ptr, "action")) and ok
         if "value" in node:
             ok = self.operand(node["value"], _pointer(ptr, "value"), ("quantity", "text")) and ok
+            value = node["value"]
+            if isinstance(value, dict) and value.get("kind") == "quantity" and "unit" not in value:  # schema 1.10
+                self.error("I111", "missing field 'unit'", _pointer(ptr, "value"))
+                ok = False
         return self.handler(node, ptr, ifs) and ok
 
     def communicate(self, node, ptr: str) -> bool:
@@ -785,7 +797,7 @@ class _Reader:
 
     def live(self, node: dict, ptr: str):
         """The object and sensor of a live reading are parameters of the right types (E303, E304, E310)."""
-        self.uses({"kind": "live", "object": node["object"]}, ptr)
+        self.uses({"kind": "live", "object": node["object"], "reading": node["reading"]}, ptr)
         self.sensor(node["sensor"], _pointer(ptr, "sensor"), "a live reading")
 
     def step_meaning(self, node: dict, ptr: str):
@@ -828,7 +840,10 @@ class _Reader:
 
     def uses(self, node: dict, ptr: str):
         """E303 and E304: every parameter a condition or step names is declared, with the type it needs."""
-        for key, expected in _USES[node["kind"]]:
+        uses = _USES[node["kind"]]
+        if self._rank >= _KINDS_RANK and node.get("reading") in AREA_KINDS:  # schema 1.10: a fill or count of a place
+            uses = tuple((key, ("object", "location") if key == "object" else expected) for key, expected in uses)
+        for key, expected in uses:
             name, at = node[key], _pointer(ptr, key)
             declared = self._params.get(name)
             if declared is None:
@@ -1122,12 +1137,17 @@ def _handles(items: list, ptr: str) -> tuple:
     return tuple((item, _pointer(ptr, i)) for i, item in enumerate(items))
 
 
+def _whole(value: str) -> bool:
+    return Decimal(value) == Decimal(value).to_integral_value()
+
+
 def _operand_of(node: dict, ptr: str) -> Operand:
     kind = node["kind"]
     if kind == "binding":
         return Operand("binding", ptr, name=node["name"])
     if kind == "quantity":
-        return Operand("quantity", ptr, unit=node["unit"])
+        unit = node.get("unit")
+        return Operand("quantity", ptr, unit=unit, whole=None if unit is not None else _whole(node["value"]))
     if kind == "live":
         return Operand("live", ptr, kind=node["reading"])
     if kind == "clock":
@@ -1209,7 +1229,7 @@ def _condition(node: dict) -> ir.Condition:
 def _operand(node: dict) -> ir.Operand:
     kind = node["kind"]
     if kind == "quantity":
-        return ir.QuantityLit(Decimal(node["value"]), node["unit"])
+        return ir.QuantityLit(Decimal(node["value"]), node.get("unit"))
     classes = {"binding": ir.BindingRef, "text": ir.TextLit, "live": ir.LiveReading, "time": ir.TimeLit,
                "clock": ir.LiveClock}
     return _of(classes[kind], node)

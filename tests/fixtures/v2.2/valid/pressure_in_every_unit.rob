@@ -1,0 +1,16 @@
+// RoboLang v2.2 fixture: valid
+// expect: ok
+// why: a pressure converts exactly between Pa, kPa and bar (K2)
+
+robolang 2.2;
+
+task t(robot r, object gauge, location aisle, sensor cam) {
+    goal { robot_at r aisle; }
+    plan {
+        move r to aisle;
+        measure r pressure of gauge using cam as p;
+        if p > 6 bar { communicate r to "maintenance" with "over"; }
+        if p < 450 kPa { communicate r to "maintenance" with "low"; }
+        if p >= 100000 Pa { communicate r to "maintenance" with p; }
+    }
+}

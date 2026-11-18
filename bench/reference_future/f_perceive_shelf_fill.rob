@@ -1,0 +1,12 @@
+// bench/reference_future/f_perceive_shelf_fill.rob: hand-written reference (RoboLang 2.2)
+robolang 2.2;
+
+task check_shelf(robot r, location shelf, sensor cam) {
+    goal { robot_at r shelf; }
+    plan {
+        measure r fill of shelf using cam as level;
+        if level < 25 % {
+            communicate r to "lead" with "restock shelf_a";
+        }
+    }
+}

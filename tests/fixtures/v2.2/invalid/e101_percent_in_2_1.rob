@@ -1,0 +1,14 @@
+// RoboLang v2.2 fixture: invalid
+// expect: error E101 (lexical) line 12
+// why: in a file below 2.2 the character % is not a token
+
+robolang 2.1;
+
+task t(robot r, object gauge, location aisle, sensor cam, sensor tag) {
+    goal { robot_at r aisle; }
+    plan {
+        move r to aisle;
+        measure r temperature of gauge using cam as t;
+        if t < 25 % { communicate r to "maintenance" with "over"; }
+    }
+}

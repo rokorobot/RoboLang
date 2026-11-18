@@ -2,7 +2,7 @@
 
 **Status:** implemented in `src/robolang/ir_reader.py` (CORE-1); decision record
 [0021](decisions/0021-core-1-ir-reader.md).
-**Reads:** Task IR schemas [1.0](ir-schema-v1.0.md) to [1.9](ir-schema-v1.9.md), and the Mission IR schemas [1.0 and 1.1](mission-ir-v1.0.md)
+**Reads:** Task IR schemas [1.0](ir-schema-v1.0.md) to [1.10](ir-schema-v1.10.md), and the Mission IR schemas [1.0 to 1.2](mission-ir-v1.0.md)
 **Duties implemented:** 1 and 2 of [ir-schema-v1.0.md](ir-schema-v1.0.md) section 2 (kernel rules K4 and K5
 of the domain contracts)
 
@@ -101,6 +101,7 @@ the whole document; a missing field is reported at the object that lacks it). Th
 | `I226` | Mission IR 1.0: a `repeat` with no hard bound (no `max_runs`, `max_duration` or time-of-day `until`), or a count over its cap: 1000 runs, 100 retries (E325) |
 | `I227` | Mission IR 1.0: a `run` that names no task of the document (unknown, or a mission), or gives it the wrong number of arguments (E326) |
 | `I228` | Schema 1.9: a `message_received` in a goal (`goal`, `goal_then` or `goal_else`), however nested (E327) |
+| `I229` | Schema 1.10: a count compared with a number that is not whole (E328) |
 
 `I211` is not used: a repeated `@verify` key (E311) cannot be written in a JSON object, where it is `I103`.
 
@@ -125,6 +126,9 @@ section 4), in the same order and with the same "one error per item" behaviour (
 - in schema 1.8 (RoboLang 1.9, [robolang-v1.9.md](robolang-v1.9.md) section 3): the robot of a `read_clock` is a `robot`
   parameter (`I203`, `I204`), a time literal is `HH:MM:SS` (`I126`), and the binding and kind rules of schema 1.5 extend to
   the two clock kinds (`I218` to `I223`).
+- in schema 1.10 (RoboLang 2.2, [robolang-v2.2.md](robolang-v2.2.md) section 3): the four new kinds and the units `%`, `Pa`, `kPa` and
+  `bar` are in no older schema (`I125`, `I117`); a `quantity` with no `unit` is a count's (`I117` against another kind, `I229` if not whole);
+  the object of a `fill` or `count` reading may be a location (`I204` otherwise).
 - in schema 1.9 (RoboLang 2.1, [robolang-v2.1.md](robolang-v2.1.md) section 3): no `message_received` in a goal (`I228`), and
   its channel and text are not empty (`I207`; a text of spaces only is empty).
 

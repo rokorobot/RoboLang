@@ -1,4 +1,4 @@
-# RoboLang simulation — semantics, world files 1.0 to 1.5 and run records 1.0 to 1.8
+# RoboLang simulation — semantics, world files 1.0 to 1.7 and run records 1.0 to 1.10
 
 **Status:** RL-BASIC-01a specification, **approved by the owner on 2026-10-26**. Every choice
 in it is recorded in [decision record 0004](decisions/0004-rl-basic-01a-simulation-semantics.md)
@@ -1453,3 +1453,63 @@ Earlier sources write their records unchanged, byte for byte.
 has a `message_received` with **`X608`** (exit 6) and does not use such a library task (`message_unsupported`): the robot
 would need the channel's trust configuration (S8). The ROS 2 backend refuses `message_received` with **`S515`** before any
 motion ([ros2-backend-v0.1.md](ros2-backend-v0.1.md)).
+
+## 20. RoboLang 2.2: more measured kinds
+
+Decision record [0044](decisions/0044-more-measured-kinds.md) (K1 to K9, clarifications D1 to D14); language in
+[robolang-v2.2.md](robolang-v2.2.md). A task of language 1.1 to 2.1 runs exactly as before, whatever the world file's version.
+
+### 20.1 World file 1.7
+
+`"world_schema_version": "1.7"` is 1.6 plus four kinds in `measures` and `properties`, and one optional top-level field,
+`location_properties`. Files 1.0 to 1.6 are still accepted and unchanged; in them the new kinds are `E512`, and
+`location_properties` is an unknown field (`E503`).
+
+```json
+"sensors": {
+  "cam_scan1": { "robot": "scanbot1", "available": true, "measures": {
+    "fill": { "unit": "%", "uncertainty": "2", "contact": false } } },
+  "tag_scan1": { "robot": "scanbot1", "available": true, "measures": { "count": { "contact": false } } },
+  "cam_crawler1": { "robot": "crawler1", "available": true, "measures": {
+    "pressure": { "unit": "bar", "uncertainty": "0.1", "contact": false } } }
+},
+"objects": { "gauge_p3": { "present": true, "location": "pump_3", "properties": {
+  "pressure": { "value": "7.2", "unit": "bar" } } } },
+"location_properties": { "shelf_a": { "fill": { "value": "12", "unit": "%" }, "count": { "value": "3" } } }
+```
+
+| Where | Content |
+|---|---|
+| kind (the key of `measures` or `properties`) | the four of 1.6 and `fill`, `confidence`, `pressure`, `count`; any other word is `E512` |
+| `unit` of `fill` and `confidence` | `%` (`E513` for any other unit); the value of a property is 0 to 100 (`E504` otherwise) |
+| `unit` of `pressure` | `Pa`, `kPa` or `bar`; a property is in any of them and the reading converts it exactly to the sensor's |
+| a **`count`** | **no `unit` and no `uncertainty`**: a `measures` entry is `{ "contact": false }`, and giving it a `unit` or an `uncertainty` is `E514` (a count is exact, D2). A property is `{ "value": "14" }`, a whole number not below 0 (`E504` otherwise; a `unit` is `E514`) |
+| `location_properties` | an object from a declared location to its properties; only `fill` and `count` (`E512` for another kind), each as above (D1). An undeclared location is `E505`. A property **event** may name a location for these two kinds |
+
+The world a model is shown lists which sensor measures which kind (with the unit), **never a property value** (K5).
+
+### 20.2 A reading
+
+`measure r KIND of o using s as NAME` is 14.2 with two additions. `o` may be a **location** for `fill` and `count` (D1): a
+location is always there, so there is no `S213` or `S214` for it, and a `contact: true` sensor needs the robot **at** it. The
+reading of a `count` is exact: no unit and **uncertainty 0**; the others carry the sensor's. Everything else is 14.2: the
+checks, in order (`S231` to `S236`), the exact conversion to the sensor's unit, and no effect on a failure.
+
+### 20.3 Comparisons
+
+As 14.3 and 14.4. A comparison of two intervals is true if every pair of values satisfies it, false if none does, unknown
+otherwise. For a `count` (both sides points) `==` and `!=` are therefore never unknown; for the other kinds only `<`, `<=`, `>` and
+`>=` exist. An unknown comparison fails closed: an `if` fails the run with `S261`, a `wait until` keeps waiting. Unit conversion
+is exact (1 bar = 100000 Pa, 1 kPa = 1000 Pa; `%` has no conversion). The uncertainty may carry an interval across 0 or 100 (99 +/- 2
+`%`); no clamping is applied, and the comparison is made on the interval.
+
+### 20.4 Run record 1.10
+
+A 2.2 source writes `run_record_schema_version` `1.10` and embeds Task IR 1.10; a mission record is `1.2`. The key order is that of
+record 1.9. The reading of a `count` has `"uncertainty": "0"` and **no `unit` key**; the other kinds are as in 14.5. A `property`
+event of a count is `{ "value": "14" }` (no `unit`). Earlier sources write their records unchanged, byte for byte.
+
+### 20.5 Core, ROS 2, delegation
+
+`core_outcome` and `export-goal` are unchanged: goals have no values. `delegate` and the ROS 2 backend refuse a task with a
+`measure` whatever its kind (`S509`).

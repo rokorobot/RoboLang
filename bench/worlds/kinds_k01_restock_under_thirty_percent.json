@@ -1,0 +1,181 @@
+{
+  "world_schema": "robolang.sim.world",
+  "world_schema_version": "1.7",
+  "clock": {
+    "start": "2026-11-18T08:50:00",
+    "zone": "Europe/Prague"
+  },
+  "locations": [
+    "aisle_1",
+    "aisle_2",
+    "aisle_3",
+    "backroom",
+    "checkout",
+    "charging"
+  ],
+  "regions": {
+    "forklift_lane": {
+      "clear": true,
+      "contains": [
+        "aisle_2"
+      ]
+    },
+    "loading_door": {
+      "clear": true
+    }
+  },
+  "robots": {
+    "scanbot1": {
+      "ready": true,
+      "location": "aisle_1",
+      "gripper": false,
+      "max_speed": [
+        {
+          "value": "1",
+          "unit": "m/s"
+        }
+      ],
+      "honours": [
+        "no_go_region",
+        "in_region"
+      ],
+      "actions": {}
+    },
+    "scanbot2": {
+      "ready": true,
+      "location": "aisle_3",
+      "gripper": false,
+      "max_speed": [
+        {
+          "value": "0.8",
+          "unit": "m/s"
+        }
+      ],
+      "honours": [
+        "no_go_region",
+        "in_region"
+      ],
+      "actions": {}
+    },
+    "picker_s": {
+      "ready": true,
+      "location": "backroom",
+      "gripper": true,
+      "max_speed": [
+        {
+          "value": "0.6",
+          "unit": "m/s"
+        }
+      ],
+      "honours": [
+        "no_go_region",
+        "in_region"
+      ],
+      "actions": {}
+    }
+  },
+  "objects": {
+    "shelf_1": {
+      "present": true,
+      "location": "aisle_1",
+      "class": "shelf"
+    },
+    "shelf_2": {
+      "present": true,
+      "location": "aisle_2",
+      "class": "shelf",
+      "properties": {
+        "fill": {
+          "value": "12",
+          "unit": "%"
+        }
+      }
+    },
+    "shelf_3": {
+      "present": true,
+      "location": "aisle_3",
+      "class": "shelf"
+    },
+    "bin_1": {
+      "present": true,
+      "location": "backroom",
+      "class": "bin"
+    },
+    "pallet_1": {
+      "present": true,
+      "location": "backroom",
+      "class": "pallet"
+    },
+    "carton_1": {
+      "present": true,
+      "location": "backroom",
+      "class": "carton",
+      "properties": {
+        "mass": {
+          "value": "1.5",
+          "unit": "kg"
+        }
+      }
+    },
+    "carton_2": {
+      "present": true,
+      "location": "backroom",
+      "class": "carton",
+      "properties": {
+        "mass": {
+          "value": "2.5",
+          "unit": "kg"
+        }
+      }
+    }
+  },
+  "sensors": {
+    "cam_scan1": {
+      "robot": "scanbot1",
+      "available": true,
+      "measures": {
+        "fill": {
+          "unit": "%",
+          "uncertainty": "2",
+          "contact": false
+        }
+      }
+    },
+    "tag_scan1": {
+      "robot": "scanbot1",
+      "available": true
+    },
+    "cam_scan2": {
+      "robot": "scanbot2",
+      "available": true
+    },
+    "tag_scan2": {
+      "robot": "scanbot2",
+      "available": true
+    },
+    "cam_picker": {
+      "robot": "picker_s",
+      "available": true
+    },
+    "scale_picker": {
+      "robot": "picker_s",
+      "available": true,
+      "measures": {
+        "mass": {
+          "unit": "kg",
+          "uncertainty": "0.01",
+          "contact": true
+        }
+      }
+    }
+  },
+  "events": [],
+  "tasks": {},
+  "channels": {
+    "stock": {
+      "from": [
+        "rl:agent:store-ctl"
+      ]
+    }
+  }
+}

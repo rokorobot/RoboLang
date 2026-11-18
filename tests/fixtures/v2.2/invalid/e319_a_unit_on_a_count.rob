@@ -1,0 +1,14 @@
+// RoboLang v2.2 fixture: invalid
+// expect: error E319 (static) line 12
+// why: a count takes no unit (K2)
+
+robolang 2.2;
+
+task t(robot r, object shelf, location aisle, sensor cam, sensor tag) {
+    goal { robot_at r aisle; }
+    plan {
+        move r to aisle;
+        measure r count of shelf using tag as n;
+        if n < 3 kg { communicate r to "lead" with "x"; }
+    }
+}

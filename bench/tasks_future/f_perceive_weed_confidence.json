@@ -1,12 +1,101 @@
 {
   "id": "f_perceive_weed_confidence",
   "prompt": "With weeder1, look at plant_7 with its camera. If the detector is less than 90 percent confident that it is a weed, tell channel \"ops\" which row it is in and do not move to it.",
-  "world": "bench/worlds/site.json",
-  "group": "inexpressible",
+  "world": "bench/worlds/kinds_f_perceive_weed_confidence.json",
+  "group": "kind",
   "expect": {
+    "decision": "program"
+  },
+  "expect_2_1": {
     "decision": "cannot",
     "category": "inexpressible"
   },
+  "expect_2_2": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "the detector is 70 % confident: below 90 %, ops is told which row it is in",
+        "goal": [],
+        "messages": [
+          [
+            "ops",
+            null
+          ]
+        ],
+        "world_patch": {
+          "objects": {
+            "plant_7": {
+              "properties": {
+                "confidence": {
+                  "value": "70",
+                  "unit": "%"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "when": "the detector is 95 % confident: not below 90 %, nobody is told",
+        "goal": [],
+        "messages": [],
+        "world_patch": {
+          "objects": {
+            "plant_7": {
+              "properties": {
+                "confidence": {
+                  "value": "95",
+                  "unit": "%"
+                }
+              }
+            }
+          }
+        }
+      }
+    ],
+    "world_2_2": {
+      "sensors": {
+        "cam_weeder1": {
+          "measures": {
+            "label": {
+              "contact": false
+            },
+            "confidence": {
+              "unit": "%",
+              "uncertainty": "1",
+              "contact": false
+            }
+          }
+        }
+      },
+      "objects": {
+        "plant_7": {
+          "properties": {
+            "confidence": {
+              "value": "70",
+              "unit": "%"
+            }
+          }
+        }
+      }
+    }
+  },
+  "goal_free": true,
+  "expected_readings": [
+    [
+      "weeder1",
+      "confidence",
+      "plant_7"
+    ]
+  ],
+  "expected_comparisons": [
+    {
+      "kind": "confidence",
+      "op": "<",
+      "value": "90",
+      "unit": "%"
+    }
+  ],
   "activity": "ACT-AGR-002",
   "gap": "G-PERCEIVE",
   "tags": [
@@ -14,6 +103,6 @@
     "if",
     "confidence"
   ],
-  "why": "The confidence of a detection is not a measured kind (temperature, mass, distance, label), and labels are exact: a program cannot test how sure the camera is (language reference: 'Measured values').",
+  "why": "RoboLang 2.2 (0044 K1, K4, D4): a `confidence` reading of plant_7 (the sensor's confidence in the label it reports, read alone: D4), compared with `< 90 %`; ops is told which row it is in, and the program does not move. The request names no end state. Before L4 (2.1): the confidence of a detection was not a measured kind (E217).",
   "attempt_fails_with": "E217"
 }

@@ -1,12 +1,13 @@
-# RoboLang 2.1 language reference
+# RoboLang 2.2 language reference
 
 RoboLang is a small, checked language for robot tasks. A program describes a desired final state and
 a plan for reaching it in a symbolic world. A program is correct only when it validates, names the
 right entities, states the operator's requested outcome in `goal`, and reaches that goal.
 
-RoboLang 2.1 has bounded branching (`if`/`else`, see "Branching"), step failure handlers (a step
+RoboLang 2.2 has bounded branching (`if`/`else`, see "Branching"), step failure handlers (a step
 `else { ... }` that runs when that step fails, see "Failure handlers"), measured values (`measure`
-reads a temperature, a mass, a distance or a label from a sensor, see "Measured values"), region
+reads a temperature, a mass, a distance, a label, **how full something is, how sure the detector is, a
+pressure or a count** from a sensor, see "Measured values"), region
 limits (`@safety no_go_region R;`, `@safety in_region R;`: where the robots may be while they move, see
 "Region limits"), declared actions (`do r open door;` asks a robot for an action its profile declares, and
 `in_state door "open"` checks the result, see "Declared actions"), clock readings (`measure r time as t;` reads the
@@ -19,13 +20,14 @@ trips" is one task with the steps written out three times (a mission with `at mo
 repeat without a bound ("forever", "until it works" with no count or time), triggers ("every hour", "every morning",
 "at 06:00", "when a message arrives"), loops inside loops, choosing the next object at run time, dates, arithmetic,
 string formatting, confirming that a message the robot sent was delivered, the content of a message as a value, patterns
-in a message text, limits on one step only, limits on an arm or a person, or variables beyond typed
+in a message text, readings of anything but the eight kinds, of a person or of the robot itself, limits on one step only,
+limits on an arm or a person, or variables beyond typed
 parameters and the names that `measure` binds. Do not silently drop part of a request. If a request needs an unsupported construct, or the available
 world and robots cannot perform it, say that it cannot be represented or completed.
 
 ## File and task structure
 
-A file starts with `robolang 2.1;` and holds one or more tasks, and missions that run them (see "Missions"). A file of
+A file starts with `robolang 2.2;` and holds one or more tasks, and missions that run them (see "Missions"). A file of
 tasks only needs no mission. `//` starts a comment. The language
 is case-sensitive. Whitespace only separates tokens.
 
@@ -181,16 +183,18 @@ whenever a request asks for a weight, a temperature, a distance, a batch number 
 program uses the value afterwards.
 
 - **`measure r KIND of o using s as NAME;`** takes one reading of `KIND` of object `o` with sensor `s`, mounted on
-  robot `r`, and binds it to `NAME`. `KIND` is `temperature`, `mass`, `distance` or `label`; any other word is
+  robot `r`, and binds it to `NAME`. `KIND` is `temperature`, `mass`, `distance`, `label`, `fill`, `confidence`,
+  `pressure` or `count` (the last four are in "More kinds" below); any other word is
   `E217`. The world list shows what each sensor measures, for example
   `probe_temp (on chef_arm, available; measures temperature in degC +/- 0.5, contact)`. If no sensor on the
   robot the request names measures that kind, the request cannot be done in this world: decline it as
   `infeasible`. Do not substitute `inspect`, and do not use another kind.
 - **Kinds and units.** `temperature`: `degC`, `K`. `mass`: `g`, `kg`. `distance`: `mm`, `cm`, `m`. `label`: text
-  (a batch number, a barcode), no unit. A quantity is a number and a unit (`60 degC`, `1.2 kg`, `500 mm`).
+  (a batch number, a barcode), no unit. `fill` and `confidence`: `%`. `pressure`: `Pa`, `kPa`, `bar`. `count`: no unit
+  (see "More kinds"). A quantity is a number and a unit (`60 degC`, `1.2 kg`, `500 mm`, `25 %`, `6 bar`).
   Units of one kind convert exactly (`1.5 kg` is `1500 g`), so write the limit in the unit the request used. A unit of
   another kind is `E319`. Numbers are unsigned, so write a temperature below zero in kelvin (`255 K`). **Degrees
-  Fahrenheit is not a unit:** convert it yourself (`140 F` is `60 degC`) and write `degC`.
+  Fahrenheit is not a unit:** convert it yourself (`140 F` is `60 degC`) and write `degC`; likewise there is no `psi`.
 - **Contact.** A sensor that shows `contact` (a probe, a scale) reads only an object at the robot's own location, or one the
   robot holds: `move r` to the object first, as for `grasp`, or the step fails (`S235`). A sensor without `contact`
   (a scanner, a camera) reads from anywhere. The step also fails when the sensor is not on `r` (`S231`), is not
@@ -203,7 +207,7 @@ program uses the value afterwards.
 - **Comparisons** are conditions, written `t < 60 degC`, `a <= b`, `lot == "LOT-7731"`. The left side is a name bound by
   `measure` (or a live reading, below); the right side is a quantity, a string or another name of the same kind (a
   literal on the left is `E201`). Quantities take `<`, `<=`, `>`, `>=` only: `==` or `!=` on a quantity is `E320`, so
-  "between 50 and 70" is `t >= 50 degC and t <= 70 degC`. Labels take `==` and `!=` only. Kinds must match
+  "between 50 and 70" is `t >= 50 degC and t <= 70 degC`. Labels take `==` and `!=` only; a count takes all six. Kinds must match
   (`E319`). Combine with `and`, `or`, `not` and parentheses like any condition. **A comparison is allowed in `if` and
   in `wait until` conditions only**, not in `pre` or `goal` (`E321`): goals state facts about the world, not values.
   To act only if a reading passes, write an `if`, and `fail` or recover on the other path.
@@ -232,9 +236,59 @@ program uses the value afterwards.
   uncertainty. "Tell the channel the value you measured" is this, never a literal text. There is no formatting: a
   message cannot be built from a value ("Pan 1 is at <reading> degC"), and the request is then not representable.
 - **Not in the language:** arithmetic (an average, a difference, a sum of readings), formatting a value into text,
-  counting, and choosing an object at run time ("any pan
+  and choosing an object at run time ("any pan
   above 80 degC": there is no way to search; name the objects). Say that these cannot be represented. The clock has
   its own section ("Clock readings").
+
+### More kinds: fill, confidence, pressure, count
+
+```rob
+robolang 2.2;
+
+task shelf_check(robot r, location shelf, location aisle, object gauge, sensor cam, sensor tag, sensor pcam) {
+    goal { robot_at r aisle; }
+    plan {
+        move r to aisle;
+        measure r fill of shelf using cam as level;       // how full: %
+        measure r count of shelf using tag as n;          // how many items: a whole number, no unit
+        measure r pressure of gauge using pcam as p;      // Pa, kPa or bar
+        if level < 25 % { communicate r to "lead" with "restock the shelf"; }
+        if n == 0 { communicate r to "lead" with "out of stock"; }
+        if p > 6 bar { communicate r to "maintenance" with "over pressure"; }
+    }
+}
+```
+
+- **`fill`** is how full something is ("less than a quarter full" is `level < 25 %`), **`confidence`** how sure the sensor is
+  of the label it reports for that object ("at least 90 percent sure" is `c >= 90 %`), **`pressure`** what a gauge shows
+  ("above 6 bar", "below 450 kPa"), **`count`** how many items the sensor sees on or in the object ("none left" is `n == 0`).
+  They work as every other kind: a reading binds a name, carries the sensor's uncertainty, is unknown near a limit (and an
+  unknown `if` fails the run, `S261`), is allowed live in `wait until` (`wait until fill of tank using cam > 80 % timeout 10 min
+  else { fail "never full"; }`) and can be sent with `communicate`. The world list shows which sensor measures which of
+  them, for example `cam_scan1 (on scanbot1, available; measures fill in % +/- 2)`; never what the value is.
+- **`%` is the unit of `fill` and `confidence`**, written after the number (`25 %`, from 0 to 100). A bare fraction (`0.3`) or
+  the word `percent` is not a quantity (`E206`): "30 percent" is `30 %`, "a quarter" is `25 %`, "half" is `50 %`. `fill` and
+  `confidence` are different kinds: comparing one with the other is `E319`.
+- **`pressure`** converts exactly between `Pa`, `kPa` and `bar` (1 bar is 100 kPa): write the limit in the unit the request
+  used (`p < 450 kPa` and `p < 4.5 bar` are the same test). Never change a unit by a factor to make a number look familiar, and
+  do not move a limit. There is no `psi`: convert it yourself.
+- **A `count` is exact:** no unit, no uncertainty, a whole number (`n == 0`, `n >= 3`; `n < 2.5` is `E328`, a unit on a count is
+  `E319`), and it also takes `==` and `!=`. A count never makes an unknown.
+- **`fill` and `count` may be read of an object or of a location** ("bay 3 is empty", "how many items are in aisle 5"):
+  `measure r count of aisle_5 using tag as n;` when `aisle_5` is a `location` parameter. `confidence` and `pressure` are read of
+  an object. A robot is not an object or a location: `measure r fill of r ...` is `E304`.
+- **`confidence` belongs to a label.** It is the sensor's confidence in the label it reports for that object at that reading, and
+  may be read alone. "Skip the plant unless the detector is at least 90 percent sure it is a weed" is **both**, `label` and
+  `confidence`, read with the **same** sensor, and tested together (`what == "weed" and sure >= 90 %`). Never replace one with the
+  other.
+- **Do not replace a reading.** A request for a fill, a pressure, a count or a confidence is a `measure` of that kind, never an
+  `inspect`, never a `label` reading in its place, and never dropped. Use the sensor the request names; a sensor that does not
+  measure the kind (`S234`), or is on another robot (`S231`), or is not available (`S232`), or an object that is not there, makes
+  the request `infeasible`: say so.
+- **Not in 2.2** (decline as `inexpressible`): a kind no sensor can declare ("how worn it looks", "if it smells burnt"); a
+  reading of a person ("how far the nearest person is"); a reading of the robot itself ("if its battery is below 20 percent");
+  counting objects chosen at run time and acting on each one ("carry as many cartons as counted": a plan has a fixed number of
+  steps); and arithmetic on readings (an average, a difference).
 
 ## Clock readings
 
@@ -248,7 +302,7 @@ communicate r to "lead" with now;          // a time is sent as HH:MM:SS; an ela
 ```
 
 ```rob
-robolang 2.1;
+robolang 2.2;
 
 task tote_if_open(robot r, object tote, location inb, location outb) {
     plan {
@@ -325,7 +379,7 @@ goal { in_state door "open"; }      // the result is checked, never assumed
 ```
 
 ```rob
-robolang 2.1;
+robolang 2.2;
 
 task restock(robot r, object closet, object kit, location ward, location store) {
     goal { in_state closet "open"; object_at kit ward; }
@@ -442,7 +496,7 @@ Both words go after `@safety`, name a `region` parameter, and are written before
 order with `max_speed`. Bind the parameter to the region of the world that the request names, by its exact ID.
 
 ```rob
-robolang 2.1;
+robolang 2.2;
 
 task to_lobby(robot r, location lobby, region wet) {
     @safety no_go_region wet;
@@ -498,7 +552,7 @@ mission NAME(type param, ...) {
 ```
 
 ```rob
-robolang 2.1;
+robolang 2.2;
 
 task round(robot r, location home, location far) {
     goal { robot_at r home; }
@@ -551,7 +605,7 @@ mission shuttle(robot r, location home, location far, region quay) {
   with `at most 3 runs` is also accepted); "retry the grasp up to twice" is a failure handler (see "Failure handlers"):
 
 ```rob
-robolang 2.1;
+robolang 2.2;
 
 task three_round_trips(robot r, location a, location b) {
     goal { robot_at r a; }
@@ -580,7 +634,7 @@ message_received "nurse"                         // any message at all on that c
 ```
 
 ```rob
-robolang 2.1;
+robolang 2.2;
 
 task feed(robot r, object tote, location src, location handoff, location line) {
     goal { object_at tote line; }
@@ -717,7 +771,7 @@ records completion. Its parameters still
 need bindings to concrete world entities before simulation.
 
 ```rob
-robolang 2.1;
+robolang 2.2;
 
 task deliver(robot r, object box, location src, location dst, region cell, sensor camera) {
     @safety max_speed 0.5 m/s;
@@ -741,7 +795,7 @@ This task chooses at run time. If the cell is clear when the job reaches the `if
 `a`; otherwise it goes to `b`. Each path has its own goal.
 
 ```rob
-robolang 2.1;
+robolang 2.2;
 
 task route(robot r, object box, location src, location a, location b, region cell) {
     plan {
@@ -763,7 +817,7 @@ task route(robot r, object box, location src, location a, location b, region cel
 This task retries a failed grasp once. If the second grasp also fails, it reports and stops.
 
 ```rob
-robolang 2.1;
+robolang 2.2;
 
 task fetch(robot r, object box, location src, location dst) {
     goal { object_at box dst; }
@@ -787,7 +841,7 @@ reading to the "pass" channel, and moves the pan only if the reading is clearly 
 may be too hot.
 
 ```rob
-robolang 2.1;
+robolang 2.2;
 
 task check_pan(robot r, object pan, sensor probe, location src, location dst) {
     goal { object_at pan dst; }

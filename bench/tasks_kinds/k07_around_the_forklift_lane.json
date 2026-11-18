@@ -1,9 +1,12 @@
 {
   "id": "k07_around_the_forklift_lane",
   "prompt": "With scanbot1, drive from aisle_1 to aisle_3 without ever entering forklift_lane, look at shelf_3 with cam_scan1 and, if it is less than 25 percent full, tell channel \"lead\" \"shelf_3 is low\".",
-  "world": "bench/worlds/stockroom.json",
+  "world": "bench/worlds/kinds_k07_around_the_forklift_lane.json",
   "group": "kind",
   "expect": {
+    "decision": "program"
+  },
+  "expect_2_1": {
     "decision": "cannot",
     "category": "inexpressible"
   },
@@ -32,27 +35,6 @@
         }
       }
     },
-    "expected_readings": [
-      [
-        "scanbot1",
-        "fill",
-        "shelf_3"
-      ]
-    ],
-    "expected_comparisons": [
-      {
-        "kind": "fill",
-        "op": "<",
-        "value": "25",
-        "unit": "%"
-      }
-    ],
-    "expected_limits": [
-      [
-        "no_go_region",
-        "forklift_lane"
-      ]
-    ],
     "paths": [
       {
         "when": "shelf_3 is 15 % full: below 25 %",
@@ -107,6 +89,27 @@
       }
     ]
   },
+  "expected_readings": [
+    [
+      "scanbot1",
+      "fill",
+      "shelf_3"
+    ]
+  ],
+  "expected_comparisons": [
+    {
+      "kind": "fill",
+      "op": "<",
+      "value": "25",
+      "unit": "%"
+    }
+  ],
+  "expected_limits": [
+    [
+      "no_go_region",
+      "forklift_lane"
+    ]
+  ],
   "gap": "G-PERCEIVE",
   "tags": [
     "fill",

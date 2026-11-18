@@ -1,0 +1,10 @@
+// bench/reference_branch/x_count_and_send.rob: hand-written reference (RoboLang 2.2)
+robolang 2.2;
+
+task count_parts(robot r, location belt, location here, sensor cam) {
+    goal { robot_at r here; }
+    plan {
+        measure r count of belt using cam as n;
+        communicate r to "ops" with n;
+    }
+}

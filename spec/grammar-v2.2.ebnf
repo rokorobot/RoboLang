@@ -1,0 +1,58 @@
+(* RoboLang v2.2 grammar, implemented in src/robolang/parser.py.
+   RoboLang 2.1 plus four more measured kinds and the unit "%" (decision 0044). Differences from grammar-v2.1.ebnf are
+   marked [2.2]. Everything not shown here is as in grammar-v2.1.ebnf (and the grammars below it): a task and a mission are
+   unchanged. Normative text, diagnostics and static rules: spec/robolang-v2.2.md *)
+
+version_decl  = "robolang" , NUMBER , ";" ;                (* [2.2] NUMBER written exactly 2.2 *)
+
+kind          = "temperature" | "mass" | "distance" | "label"
+              | "fill" | "confidence" | "pressure" | "count" ;
+                                                            (* [2.2] four more kinds. Kind names are recognised by their
+                                                               position (after "measure r", before "of") and are NOT
+                                                               reserved: "count" may still be a name. In a file below 2.2 the
+                                                               four new ones are E217 *)
+
+unit          = "degC" | "K" | "g" | "kg" | "mm" | "cm" | "m" | "ms" | "s" | "min"
+              | "%"                                          (* [2.2] a token in 2.2 files only: fill and confidence, 0 to 100 *)
+              | "Pa" | "kPa" | "bar" ;                       (* [2.2] pressure; 1 bar = 100 kPa, exactly *)
+
+quantity      = NUMBER , unit ;                              (* [2.2] a count's literal has no unit: *)
+operand       = quantity | NUMBER | STRING | NAME | TIME ;    (* [2.2] a bare NUMBER is a count's: a whole number, else E328.
+                                                               Compared with any other kind it is E206 (the unit is required) *)
+
+(* [2.2] The kinds and what each takes:
+       measure r fill of shelf_a using cam as level;         if level < 25 % { ... }
+       measure r confidence of plant_7 using cam as c;       if c >= 90 % { ... }
+       measure r pressure of gauge_p3 using cam as p;        if p > 6 bar { ... }    (* also 600 kPa, 600000 Pa *)
+       measure r count of shelf_3 using tag as n;            if n == 0 { ... }       (* also !=, <, <=, >, >= *)
+   [2.2] The object of a "fill" or "count" reading is an object OR a location parameter ("bay 3 is empty"); of the other
+   kinds, an object. A robot is not either: E304.
+   [2.2] Units: "%" is a unit of two kinds, fill and confidence; the kind of the name decides. Comparing a fill with a
+   confidence, or a count with a fill, is E319. A pressure converts exactly between Pa, kPa and bar. There is no "psi", no
+   bare fraction (0.3) and no word "percent": the unit is required (E206). A count takes no unit (E319 if given) and no
+   fraction (n < 2.5 is E328). A count is exact: it also takes "==" and "!="; the other kinds take "<", "<=", ">", ">=" only.
+   [2.2] "confidence" is the sensor's confidence in the LABEL it reports for that object at that reading. To test "it is a weed
+   and the detector is at least 90 percent sure", read both, "label" and "confidence", with the SAME sensor, and test both.
+   Do not read confidence in place of the label, nor the label in place of the confidence.
+   [2.2] Do not replace a reading: a request to read a fill, a pressure, a count or a confidence is never "inspect", never a
+   "label" reading in its place, and never dropped. Either read it with the kind asked, or decline. Do not move a threshold or
+   change its unit to avoid an unknown: 6 bar is 6 bar. Convert units only exactly (450 kPa is 4.5 bar).
+   [2.2] Live readings work in a "wait until": wait until fill of tank_2 using cam > 80 % timeout 10 min else { ... }
+   [2.2] What 2.2 cannot say (decision 0044 K8; erratum E5 of docs/evidence/bench-errata-1-8.md states why this belongs in
+   the grammar file). Decline each as inexpressible:
+   - a kind no sensor can declare: "how worn it looks", "whether it smells", "if the surface is clean". The four kinds are the
+     whole list; the world cannot name a new kind;
+   - a reading of a person: "how far the nearest person is". A person is not an object of the world;
+   - a reading of the robot itself, such as its own battery: "measure r fill of r" is E304. G-SELF is a later version;
+   - counting objects chosen at run time and acting on each: "carry as many cartons as counted". A plan has a fixed number of
+     steps; a count is compared, never repeated;
+   - arithmetic on readings: an average, a sum, a difference. Reading both is possible; computing is not.
+   [2.2] "psi" is not a unit, and neither is a bare fraction or the word "percent": the author converts (as with degF), and
+   writes "%", "bar", "kPa" or "Pa".
+   [2.2] Meaning (spec/robolang-v2.2.md, spec/simulation-v1.0.md section 20): a reading is the property of the object or
+   location now, in the sensor's unit, with the sensor's uncertainty (a count: none). An unknown comparison (a reading near the
+   threshold) fails closed: an "if" fails the run, a "wait until" keeps waiting. A sensor must declare the kind in the world
+   and be mounted on the robot; a request that names a sensor which does not measure the kind, or is on another robot, or is
+   not available, with no other way to go on, is infeasible, not a program. *)
+
+(* Reserved words in a 2.2 file: those of grammar-v2.1.ebnf. The kind names and "of" are not reserved. *)

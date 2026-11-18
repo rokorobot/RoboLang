@@ -40,6 +40,7 @@ REGIONS = {t: d for t, d in SET.items() if d["group"] == "region"}  # 1.7: progr
 ACTIONS = {t: d for t, d in SET.items() if d["group"] == "action"}  # 1.8: programs with declared actions (0040)
 CLOCKS = {t: d for t, d in SET.items() if d["group"] == "clock"}  # 1.9: programs that read the clock (0042)
 MESSAGES = {t: d for t, d in SET.items() if d["group"] == "message"}  # 2.1: programs that wait for a message (0043)
+KINDS = {t: d for t, d in SET.items() if d["group"] == "kind"}  # 2.2: programs that read a new kind (0044)
 CONTROLS = {t: d for t, d in SET.items() if d["group"] == "control"}
 # R3 refutations: (activity, gap) -> the control whose reference program expresses the claim
 REFUTED = {("ACT-HOS-001", "G-PERCEIVE"): "c_fries_too_dark", ("ACT-SOL-001", "G-PERCEIVE"): "c_table_out_of_tolerance"}
@@ -72,16 +73,17 @@ def decline(category: str = "inexpressible") -> dict:
 
 def test_the_mix_of_tasks():
     assert len(SET) == 33
-    assert Counter(d["group"] for d in SET.values()) == {"inexpressible": 13, "control": 8, "region": 3,
-                                                           "action": 3, "clock": 3, "message": 3}
+    assert Counter(d["group"] for d in SET.values()) == {"inexpressible": 11, "control": 8, "region": 3,
+                                                           "action": 3, "clock": 3, "message": 3, "kind": 2}
     assert set(REGIONS) == {"f_path_avoid_wet_floor", "f_path_stay_in_zone", "f_path_keep_off_road"}
     assert set(ACTIONS) == {"f_act_set_fryer", "f_act_open_closet", "f_act_print_layout"}
     assert set(CLOCKS) == {"f_clock_scan_stamp", "f_clock_shift_cutoff", "f_clock_clean_at_2300"}
     assert set(MESSAGES) == {"f_msg_line_docked", "f_msg_nurse_confirm", "f_msg_wind_clear"}
+    assert set(KINDS) == {"f_perceive_shelf_fill", "f_perceive_weed_confidence"}
     # probes per gap: change on purpose (R3 evidence, docs/evidence/rsi-r3-gap-verification.md)
     assert Counter(d["gap"] for d in PROBES.values()) == {
-        "G-CALC": 3, "G-CONC": 2, "G-CHOOSE": 3, "G-PERCEIVE": 2,
-        "G-SELF": 3}  # G-PATH, G-ACT, G-CLOCK and G-MSG: their probes are 1.7, 1.8, 1.9 and 2.1 programs now
+        "G-CALC": 3, "G-CONC": 2, "G-CHOOSE": 3,
+        "G-SELF": 3}  # G-PATH, G-ACT, G-CLOCK, G-MSG and G-PERCEIVE: 1.7, 1.8, 1.9, 2.1 and 2.2 programs now
     for task_id, task in SET.items():
         assert task["id"] == task_id and (lib.FUTURE_TASKS_DIR / f"{task_id}.json").is_file()
         assert (REPO / task["world"]).is_file() and task["tags"] and task["prompt"].endswith(".")
@@ -99,20 +101,26 @@ def test_every_task_names_a_near_activity_and_every_probe_an_open_gap_that_activ
         if task["group"] in ("region", "action", "clock", "message"):  # 1.7-2.1 programs: gaps closed at L6
             assert gap["scope"] == "closed" and task_id not in gap["tasks"], task_id
             continue
+        if task["group"] == "kind":  # a 2.2 program (0044): its gap is open until L6 of I6, and it left the atlas
+            assert gap["scope"] == "open" and task_id not in gap["tasks"] and task["gap"] == "G-PERCEIVE", task_id
+            continue
         assert gap["scope"] == "open" and task["gap"] != "G-LOOP", task_id
         assert task["gap"] in activity["needs"], f"{task_id}: {task['activity']} does not claim {task['gap']}"
         # a probe is in the atlas under its gap; a relabelled one (a 1.7 program, decision 0039) left it
         assert (task_id in gap["tasks"]) == (task["group"] == "inexpressible"), task_id
     # each of the nine gaps has probes from the activities that claim it, in the atlas, and nowhere else
     in_atlas = {t for g in GAPS.values() for t in g["tasks"]}
-    assert set(PROBES) <= in_atlas and not (set(CONTROLS) | set(REGIONS) | set(ACTIONS) | set(CLOCKS)) & in_atlas
+    assert set(PROBES) <= in_atlas and not (set(CONTROLS) | set(REGIONS) | set(ACTIONS) | set(CLOCKS)
+                                            | set(KINDS)) & in_atlas
 
 
 def test_every_gap_a_near_activity_claims_is_probed_except_the_proven_loop():
     claimed = {g for a in ATLAS["activities"] if atlas_report.is_near(a) for g in a["needs"]
                if GAPS[g]["scope"] == "open" and g != "G-LOOP"}  # G-LOOP: 12 standing tasks prove it; reopened by 0041
-    assert claimed - {"G-MSG"} == {t["gap"] for t in PROBES.values()}  # G-MSG: built in 2.1, closes at L6 of I5
+    # G-MSG: built in 2.1, closes at L6 of I5; G-PERCEIVE: built in 2.2, open until L6 of I6 (no probe is left in it)
+    assert claimed - {"G-MSG", "G-PERCEIVE"} == {t["gap"] for t in PROBES.values()}
     assert {t["gap"] for t in MESSAGES.values()} == {"G-MSG"} and GAPS["G-MSG"]["scope"] == "closed"  # L6 of I5
+    assert {t["gap"] for t in KINDS.values()} == {"G-PERCEIVE"} and GAPS["G-PERCEIVE"]["scope"] == "open"
     assert {t["gap"] for t in CLOCKS.values()} == {"G-CLOCK"} and GAPS["G-CLOCK"]["scope"] == "closed"  # L6 of I3
     assert {t["gap"] for t in ACTIONS.values()} == {"G-ACT"} and GAPS["G-ACT"]["scope"] == "closed"  # L6 of I2
     assert {t["gap"] for t in REGIONS.values()} == {"G-PATH"} and GAPS["G-PATH"]["scope"] == "closed"
@@ -139,12 +147,13 @@ def test_references_and_attempts_are_where_they_should_be():
     names = [p.name for p in REF.iterdir()]
     refs = {n.split(".")[0] for n in names if n.endswith((".rob", ".json")) and ".attempt" not in n}
     attempts = {n.split(".")[0] for n in names if ".attempt." in n}
-    programs = set(CONTROLS) | set(REGIONS) | set(ACTIONS) | set(CLOCKS) | set(MESSAGES)
-    assert refs == programs and attempts == set(PROBES) | set(MESSAGES)  # the 2.0 attempts of the message probes stay
+    programs = set(CONTROLS) | set(REGIONS) | set(ACTIONS) | set(CLOCKS) | set(MESSAGES) | set(KINDS)
+    # the 2.0 attempts of the message probes and the 1.6 attempts of the kind probes stay as evidence
+    assert refs == programs and attempts == set(PROBES) | set(MESSAGES) | set(KINDS)
     assert {p.stem for p in REF.glob("*.rob") if ".attempt" not in p.stem} == programs
     assert {p.stem for p in REF.glob("*.json") if ".attempt" not in p.stem} == programs
     assert {p.name for p in REF.glob("*.attempt.*")} >= {f"{t}.attempt.rob" for t in PROBES}
-    assert {p.name for p in REF.glob("*.attempt.json")} <= {f"{t}.attempt.json" for t in PROBES}
+    assert {p.name for p in REF.glob("*.attempt.json")} <= {f"{t}.attempt.json" for t in {**PROBES, **KINDS}}
     for name in names:
         assert "\r" not in (REF / name).read_text(encoding="utf-8")  # Windows-safe: LF only, never compared as CRLF
 
@@ -309,7 +318,8 @@ def test_the_new_worlds_are_world_1_2_files_and_nothing_else_new_is_added():
     assert {Path(w).stem for w in used} <= set(NEW_WORLDS) | {"warehouse", "site_1_3", "ward_1_4", "site_1_4",
                                                               "fry_station_hot_1_4", "warehouse_1_5_1420",
                                                               "fulfilment_1_5_2115", "site_1_5_2220"} | {
-        f"msg_{t}" for t in MESSAGES}  # 0042 copies; the world file 1.6 copies of the 2.1 message programs (0043)
+        f"msg_{t}" for t in MESSAGES} | {f"kinds_{t}" for t in KINDS}  # 0042 copies; the 1.6 copies of the message
+    # programs (0043); the world file 1.7 copies of the two 2.2 reading programs (0044)
     for name in NEW_WORLDS:
         world = json.loads((REPO / f"bench/worlds/{name}.json").read_text(encoding="utf-8"))
         assert world["world_schema_version"] == "1.2" and world["tasks"] == {}

@@ -1,0 +1,13 @@
+// bench/reference_kinds/k06_tank_close_to_the_mark.rob: hand-written reference (RoboLang 2.2)
+robolang 2.2;
+
+task check_tank(robot r, object tank, sensor cam, location farm) {
+    goal { robot_at r farm; }
+    plan {
+        move r to farm;
+        measure r fill of tank using cam as f;
+        if f > 80 % {
+            communicate r to "maintenance" with "tank_2 is nearly full";
+        }
+    }
+}

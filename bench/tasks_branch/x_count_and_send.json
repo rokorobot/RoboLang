@@ -1,12 +1,81 @@
 {
   "id": "x_count_and_send",
   "prompt": "Count the parts on conveyor_in right now and send the number to channel \"ops\" from arm_a.",
-  "world": "bench/worlds/assembly.json",
-  "group": "inexpressible",
+  "world": "bench/worlds/kinds_x_count_and_send.json",
+  "group": "kind",
   "expect": {
+    "decision": "program"
+  },
+  "expect_2_1": {
     "decision": "cannot",
     "category": "inexpressible"
   },
+  "expect_2_2": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "three parts are on conveyor_in: the number 3 is sent to ops",
+        "goal": [],
+        "world_patch": {
+          "location_properties": {
+            "conveyor_in": {
+              "count": {
+                "value": "3"
+              }
+            }
+          }
+        }
+      },
+      {
+        "when": "none is on conveyor_in: the number 0 is sent to ops",
+        "goal": [],
+        "world_patch": {
+          "location_properties": {
+            "conveyor_in": {
+              "count": {
+                "value": "0"
+              }
+            }
+          }
+        }
+      }
+    ],
+    "world_2_2": {
+      "sensors": {
+        "cam_s1": {
+          "measures": {
+            "count": {
+              "contact": false
+            }
+          }
+        }
+      },
+      "location_properties": {
+        "conveyor_in": {
+          "count": {
+            "value": "3"
+          }
+        }
+      }
+    }
+  },
+  "goal_free": true,
+  "expected_readings": [
+    [
+      "arm_a",
+      "count",
+      "conveyor_in"
+    ]
+  ],
+  "expected_messages": [
+    {
+      "channel": "ops",
+      "value_of": [
+        "conveyor_in",
+        "count"
+      ]
+    }
+  ],
   "expect_1_4": {
     "decision": "cannot",
     "category": "inexpressible"
@@ -15,6 +84,6 @@
     "count",
     "variables"
   ],
-  "why": "Counting needs a value read at run time and a message built from it. Messages are fixed strings and there are no variables.",
+  "why": "RoboLang 2.2 (0044 K1, D1): a `count` of the parts on conveyor_in (a location, D1), read by arm_a's camera and sent to ops as a value (1.6 V8). The request names no end state. Before L4 (2.1): Counting needs a value read at run time and a message built from it. Messages are fixed strings and there are no variables.",
   "attempt_fails_with": "E203"
 }

@@ -1,0 +1,15 @@
+// RoboLang v2.2 fixture: valid
+// expect: ok
+// why: a count is exact: == and != and a literal with no unit (K3, D2)
+
+robolang 2.2;
+
+task t(robot r, object shelf, location aisle, sensor cam, sensor tag) {
+    goal { robot_at r aisle; }
+    plan {
+        move r to aisle;
+        measure r count of shelf using tag as n;
+        if n == 0 { communicate r to "lead" with "empty"; }
+        if n != 3 and n >= 1 { communicate r to "lead" with "not three"; }
+    }
+}

@@ -22,7 +22,8 @@ from robolang import tokens
 REPO = Path(__file__).resolve().parent.parent
 HARD = lib.load_set("hard")
 FEASIBLE = {t: d for t, d in HARD.items() if lib.expectation(d)[0] == "program" and d["group"] not in (
-    "branching", "clock", "message")}
+    "branching", "clock", "message", "kind")}
+KIND = {t: d for t, d in HARD.items() if d["group"] == "kind"}  # 2.1 declined it, 2.2 expresses it (0044)
 MESSAGE = {t: d for t, d in HARD.items() if d["group"] == "message"}  # 2.0 declined it, 2.1 expresses it (0043)
 BRANCHING = {t: d for t, d in HARD.items() if d["group"] == "branching"}  # 1.3 declined them, 1.4 expresses them
 CLOCK = {t: d for t, d in HARD.items() if d["group"] == "clock"}  # 1.8 declined it, 1.9 expresses it (0042)
@@ -54,27 +55,27 @@ def decline(category: str, reason: str = "cannot be done") -> dict:
 
 def test_the_mix_of_tasks():
     assert len(HARD) == 40
-    assert Counter(d["group"] for d in HARD.values()) == {"inexpressible": 5, "branching": 3, "infeasible": 8,
+    assert Counter(d["group"] for d in HARD.values()) == {"inexpressible": 4, "branching": 3, "infeasible": 8,
                                                           "decoy": 8, "ambiguous": 5, "control": 9, "clock": 1,
-                                                          "message": 1}
-    assert len(INEXPRESSIBLE) == 5 and len(INFEASIBLE) == 8 and set(CLOCK) == {"x_elapsed_time"}
-    assert set(MESSAGE) == {"x_wait_message"}
-    assert (len(FEASIBLE) + len(BRANCHING) + len(CLOCK) + len(MESSAGE)) / len(HARD) >= 0.35  # refusing all scores badly
+                                                          "message": 1, "kind": 1}
+    assert len(INEXPRESSIBLE) == 4 and len(INFEASIBLE) == 8 and set(CLOCK) == {"x_elapsed_time"}
+    assert set(MESSAGE) == {"x_wait_message"} and set(KIND) == {"x_count_report"}
+    assert (len(FEASIBLE) + len(BRANCHING) + len(CLOCK) + len(MESSAGE) + len(KIND)) / len(HARD) >= 0.35
     for task_id, task in HARD.items():
         assert task["id"] == task_id and (lib.HARD_TASKS_DIR / f"{task_id}.json").is_file()
         assert (REPO / task["world"]).is_file() and task["tags"] and task["prompt"].endswith((".", "?"))
         assert task["group"] in {"inexpressible", "branching", "infeasible", "decoy", "ambiguous", "control",
-                                  "clock", "message"}
+                                  "clock", "message", "kind"}
 
 
 def test_references_and_attempts_are_where_they_should_be():
     files = list(lib.HARD_REFERENCE_DIR.iterdir())
     refs = {p.name.split(".")[0] for p in files if p.name.endswith((".rob", ".json")) and ".attempt" not in p.name}
     attempts = {p.name.split(".")[0] for p in files if ".attempt." in p.name}
-    assert refs == set(FEASIBLE) | set(BRANCHING) | set(CLOCK) | set(MESSAGE)
-    assert attempts == set(CANNOT) | set(MESSAGE)  # the 1.3 attempt at the message wait stays as evidence
+    assert refs == set(FEASIBLE) | set(BRANCHING) | set(CLOCK) | set(MESSAGE) | set(KIND)
+    assert attempts == set(CANNOT) | set(MESSAGE) | set(KIND)  # the 1.3 attempts at the message wait and the count stay
     assert {p.stem for p in lib.HARD_REFERENCE_DIR.glob("*.rob") if ".attempt" not in p.stem} \
-        == set(FEASIBLE) | set(BRANCHING) | set(CLOCK) | set(MESSAGE)
+        == set(FEASIBLE) | set(BRANCHING) | set(CLOCK) | set(MESSAGE) | set(KIND)
 
 
 def test_expectations_are_well_formed():
@@ -99,6 +100,12 @@ def test_expectations_are_well_formed():
             assert not {"expected_goal", "expected_goals"} & set(task) and len(task["why"]) > 40
             assert task["expect_2_1"]["decision"] == "program" and len(task["expect_2_1"]["paths"]) == 2
             assert task["world"] == "bench/worlds/msg_x_wait_message.json" and task["expected_message_waits"]
+        elif task["group"] == "kind":  # relabelled for 2.2 (0044): a program, a count read and sent as a value
+            assert (decision, category) == ("program", "none") and task["expect_2_1"] == {
+                "decision": "cannot", "category": "inexpressible"}
+            assert not {"expected_goal", "expected_goals"} & set(task) and len(task["why"]) > 40
+            assert task["expect_2_2"]["decision"] == "program" and len(task["expect_2_2"]["paths"]) == 2
+            assert task["world"] == "bench/worlds/kinds_x_count_report.json" and task["expected_readings"]
         elif decision == "program":
             assert category == "none" and "why" not in task and "attempt_fails_with" not in task
             goals = lib.expected_goals(task)
@@ -360,7 +367,7 @@ def hard_run(tmp_path: Path, replies: dict, repairs: dict | None = None, models=
 
 def canned(tmp_path: Path) -> tuple[Path, dict]:
     replies = {
-        "x_count_report": decline("inexpressible"),                            # right
+        "x_keep_feeding": decline("inexpressible"),                            # right
         "x_wait_forever": decline("infeasible"),                               # declined, wrong category
         "x_every_hour": attempt_answer("x_every_hour"),                        # program, invalid: repaired below
         "x_retry_grasp": dict(reference_answer("e_pick_place"), decision="program", category="none",
@@ -383,7 +390,7 @@ def test_scorer_headline_metrics_on_canned_answers(tmp_path):
     by = {r["task_id"]: r for r in rows}
     assert meta["set"] == "hard" and meta["prompt"] == "full"
 
-    right = by["x_count_report"]
+    right = by["x_keep_feeding"]
     assert right["decision_correct"] and right["category_correct"] is True and not right["false_program"]
     assert right["valid_first"] is False and right["codes"] == []  # a decline has no program to check
 
@@ -420,7 +427,7 @@ def test_the_report_has_the_headline_figures_and_a_table_per_kind(tmp_path):
     assert "Task set hard, prompt full." in text
     for column in score.ROBUSTNESS_HEAD:
         assert column in text
-    # 10 answers, 6 of which expect a decline (x_count_report, x_wait, x_every, x_retry, n_gripper, n_missing_place):
+    # 10 answers, 6 of which expect a decline (x_keep_feeding, x_wait, x_every, x_retry, n_gripper, n_missing_place):
     # decision right 6 (the three declines, d_red, m_park, m_same); false programs x_every, x_retry, n_gripper (3),
     # 2 after repair, 1 of them valid and SUCCEEDED (x_retry); 1 false refusal of 4; categories right in 2 of 3 declines
     assert "| decision_correct |" in text
@@ -443,7 +450,7 @@ def test_a_decline_is_never_repaired_and_an_invalid_program_is_(tmp_path):
         return message(decline("inexpressible"))
 
     out_dir = tmp_path / "d"
-    run.run_benchmark(FakeClient(script), ["claude-opus-5-5"], {"x_count_report": HARD["x_count_report"]}, "medium", 1,
+    run.run_benchmark(FakeClient(script), ["claude-opus-5-5"], {"x_keep_feeding": HARD["x_keep_feeding"]}, "medium", 1,
                       out_dir, lib.load_prompt("full"), workers=1, log=io.StringIO(), task_set="hard")
     assert len(client_requests) == 1
     row = score.load_rows(out_dir)[1][0]
@@ -507,7 +514,7 @@ def test_the_minimal_prompt_run_records_set_and_prompt(tmp_path):
         return message(decline("inexpressible"))
 
     key = "sk-ant-api03-TESTKEY-0123456789abcdef"
-    code = run.main(["--yes", "--set", "hard", "--prompt", "minimal", "--tasks", "x_count_report", "--models",
+    code = run.main(["--yes", "--set", "hard", "--prompt", "minimal", "--tasks", "x_keep_feeding", "--models",
                      "claude-haiku-5-5", "--out", str(tmp_path), "--run-id", "m"],
                     client_factory=lambda api_key: FakeClient(script), out=io.StringIO(), err=io.StringIO(),
                     environ={"ANTHROPIC_API_KEY": key})
@@ -516,7 +523,7 @@ def test_the_minimal_prompt_run_records_set_and_prompt(tmp_path):
     assert (meta["set"], meta["prompt"]) == ("hard", "minimal")
     rerun = FakeClient(lambda request: pytest.fail("saved answers are not asked again"))
     with pytest.raises(run.FatalError):  # another prompt under the same run ID is another run
-        run.run_benchmark(rerun, ["claude-haiku-5-5"], {"x_count_report": HARD["x_count_report"]}, "medium", 1,
+        run.run_benchmark(rerun, ["claude-haiku-5-5"], {"x_keep_feeding": HARD["x_keep_feeding"]}, "medium", 1,
                           tmp_path / "m", lib.load_prompt("full"), log=io.StringIO(), task_set="hard",
                           prompt_name="full")
 
@@ -601,3 +608,16 @@ def test_the_1_9_reference_of_x_elapsed_time_is_valid_right_and_reads_the_clock_
                                       answer["rob"]))
     stripped = lib.judge(task, lib.check_answer(task, without), answer["bindings"])
     assert stripped.plan_succeeds and not stripped.clock_ok and stripped.time_replaced  # nothing in place of the time
+
+
+def test_the_counting_request_is_a_2_2_program_and_its_reference_passes_both_paths():
+    """0044 D1: `x_count_report` counts the parts on a location, read by arm_a's camera, and sends the number."""
+    task = HARD["x_count_report"]
+    answer = hard_reference("x_count_report")
+    assert answer["rob"].splitlines()[1] == "robolang 2.2;" and "measure r count of belt" in answer["rob"]
+    checked = lib.check_answer(task, answer)
+    assert checked.valid and checked.language_version == "2.2", checked.report
+    judgement = lib.judge(task, checked, answer["bindings"])
+    assert judgement.goal_correct and judgement.plan_succeeds and judgement.value_ok
+    assert all(p["goal_ok"] and p["plan_ok"] and p["value_ok"] for p in judgement.paths) and len(judgement.paths) == 2
+    assert judgement.reading_replaced is False and judgement.kind_added is None

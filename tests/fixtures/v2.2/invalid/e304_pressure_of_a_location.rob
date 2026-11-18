@@ -1,0 +1,13 @@
+// RoboLang v2.2 fixture: invalid
+// expect: error E304 (static) line 11
+// why: only fill and count may be read of a location (D1)
+
+robolang 2.2;
+
+task t(robot r, location shelf, location aisle, sensor cam, sensor tag) {
+    goal { robot_at r aisle; }
+    plan {
+        move r to aisle;
+        measure r pressure of shelf using cam as p;
+    }
+}

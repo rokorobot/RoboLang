@@ -1,9 +1,12 @@
 {
   "id": "k04_weed_and_ninety_percent_sure",
   "prompt": "With weeder1, look at plant_7 with cam_weeder1. If it is labelled \"weed\" and the detector is at least 90 percent confident, tell channel \"ops\" \"weed confirmed\"; if not, tell channel \"ops\" \"plant_7 skipped\".",
-  "world": "bench/worlds/site.json",
+  "world": "bench/worlds/kinds_k04_weed_and_ninety_percent_sure.json",
   "group": "kind",
   "expect": {
+    "decision": "program"
+  },
+  "expect_2_1": {
     "decision": "cannot",
     "category": "inexpressible"
   },
@@ -35,31 +38,6 @@
         }
       }
     },
-    "expected_readings": [
-      [
-        "weeder1",
-        "label",
-        "plant_7"
-      ],
-      [
-        "weeder1",
-        "confidence",
-        "plant_7"
-      ]
-    ],
-    "expected_comparisons": [
-      {
-        "kind": "label",
-        "op": "==",
-        "value": "weed"
-      },
-      {
-        "kind": "confidence",
-        "op": ">=",
-        "value": "90",
-        "unit": "%"
-      }
-    ],
     "paths": [
       {
         "when": "label weed, confidence 95 %: both hold, ops is told the weed is confirmed",
@@ -156,6 +134,31 @@
       }
     ]
   },
+  "expected_readings": [
+    [
+      "weeder1",
+      "label",
+      "plant_7"
+    ],
+    [
+      "weeder1",
+      "confidence",
+      "plant_7"
+    ]
+  ],
+  "expected_comparisons": [
+    {
+      "kind": "label",
+      "op": "==",
+      "value": "weed"
+    },
+    {
+      "kind": "confidence",
+      "op": ">=",
+      "value": "90",
+      "unit": "%"
+    }
+  ],
   "gap": "G-PERCEIVE",
   "tags": [
     "confidence",

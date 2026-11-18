@@ -1,9 +1,13 @@
 {
   "id": "i02_the_camera_is_on_the_other_robot",
   "prompt": "With scanbot1, read how full shelf_3 is with cam_scan2 and, if it is less than 10 percent full, tell channel \"lead\" \"restock shelf_3\".",
-  "world": "bench/worlds/stockroom.json",
+  "world": "bench/worlds/kinds_i02_the_camera_is_on_the_other_robot.json",
   "group": "infeasible",
   "expect": {
+    "decision": "cannot",
+    "category": "infeasible"
+  },
+  "expect_2_1": {
     "decision": "cannot",
     "category": "inexpressible"
   },

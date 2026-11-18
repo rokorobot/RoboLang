@@ -34,6 +34,7 @@ from .tokens import (
     CLOCK_KINDS,
     DURATION_UNITS,
     KIND_UNITS,
+    KIND_UNITS_V2_2,
     LIVE_CLOCK,
     PARAM_TYPES,
     PARAM_TYPES_V1_3,
@@ -49,7 +50,7 @@ from .tokens import (
 )
 
 DEFAULT_VERSION = "1.1"  # the version of a file without a marker
-SUPPORTED_VERSIONS = ("1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "2.0", "2.1")
+SUPPORTED_VERSIONS = ("1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "2.0", "2.1", "2.2")
 SUPPORTED_VERSION = DEFAULT_VERSION  # kept for existing imports
 MAX_CONDITION_DEPTH = 8  # spec/robolang-v1.2.md section 3.3
 MAX_IF_DEPTH = 4  # spec/robolang-v1.4.md section 3.3 (E216)
@@ -108,6 +109,7 @@ class _Parser:
         self._prev: Token | None = None
         self._buffer: deque[Token] = deque()
         self._language = DEFAULT_VERSION
+        self._bound_kinds: dict[str, str] = {}
         self._ifs = 0  # `if` statements open around the one being parsed (RoboLang 1.4)
         self._tok = lexer.next_token()
 
@@ -116,47 +118,56 @@ class _Parser:
     @property
     def _typed(self) -> bool:
         """True in 1.3 to 1.8 files: goal blocks, outcome atoms and sensor parameters."""
-        return self._language in ("1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "2.0", "2.1")
+        return self._language in ("1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "2.0", "2.1", "2.2")
 
     @property
     def _branching(self) -> bool:
         """True in 1.4 to 1.8 files: `if`, `else` and `fail`."""
-        return self._language in ("1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "2.0", "2.1")
+        return self._language in ("1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "2.0", "2.1", "2.2")
 
     @property
     def _handlers(self) -> bool:
         """True in 1.5 to 1.8 files: a step may end with a failure handler `else { ... }`."""
-        return self._language in ("1.5", "1.6", "1.7", "1.8", "1.9", "2.0", "2.1")
+        return self._language in ("1.5", "1.6", "1.7", "1.8", "1.9", "2.0", "2.1", "2.2")
 
     @property
     def _values(self) -> bool:
         """True in 1.6 to 1.8 files: `measure`, comparisons, live readings and sending a binding (decision 0036)."""
-        return self._language in ("1.6", "1.7", "1.8", "1.9", "2.0", "2.1")
+        return self._language in ("1.6", "1.7", "1.8", "1.9", "2.0", "2.1", "2.2")
 
     @property
     def _regions(self) -> bool:
         """True in 1.7 and 1.8 files: `@safety no_go_region R;` and `@safety in_region R;` (decision 0039)."""
-        return self._language in ("1.7", "1.8", "1.9", "2.0", "2.1")
+        return self._language in ("1.7", "1.8", "1.9", "2.0", "2.1", "2.2")
 
     @property
     def _actions(self) -> bool:
         """True in 1.8 files: `do` and `in_state` (decision 0040)."""
-        return self._language in ("1.8", "1.9", "2.0", "2.1")
+        return self._language in ("1.8", "1.9", "2.0", "2.1", "2.2")
 
     @property
     def _clock(self) -> bool:
         """True in 1.9 files: `measure r time as t;`, time literals and `clock_time` (decision 0042)."""
-        return self._language in ("1.9", "2.0", "2.1")
+        return self._language in ("1.9", "2.0", "2.1", "2.2")
 
     @property
     def _messages(self) -> bool:
         """True in 2.1 files: the condition `message_received` (decision 0043)."""
-        return self._language == "2.1"
+        return self._language in ("2.1", "2.2")
+
+    @property
+    def _kinds(self) -> bool:
+        """True in 2.2 files: the kinds `fill`, `confidence`, `pressure` and `count` and the unit `%` (0044)."""
+        return self._language == "2.2"
+
+    @property
+    def _kind_units(self) -> dict[str, tuple[str, ...]]:
+        return KIND_UNITS_V2_2 if self._kinds else KIND_UNITS
 
     @property
     def _missions(self) -> bool:
         """True in 2.0 files: the top-level `mission` (decision 0041)."""
-        return self._language in ("2.0", "2.1")
+        return self._language in ("2.0", "2.1", "2.2")
 
     @property
     def _statements(self) -> tuple[str, ...]:
@@ -332,6 +343,7 @@ class _Parser:
         return mission if len(self._errors) == before else None
 
     def _mission_body(self) -> ast.Mission:
+        self._bound_kinds = {}
         start = self._advance()
         name = self._name("a mission name")
         self._expect(TokenKind.LPAREN, "'(' after the mission name")
@@ -455,6 +467,7 @@ class _Parser:
         return task if len(self._errors) == before else None
 
     def _task_body(self) -> ast.Task:
+        self._bound_kinds = {}  # RoboLang 2.2: binding name -> its kind, as the `measure` steps so far declare them
         start = self._advance()
         name = self._name("a task name")
         self._expect(TokenKind.LPAREN, "'(' after the task name")
@@ -711,7 +724,8 @@ class _Parser:
         side is a binding or a live reading; the right side a quantity, a string or a binding.
         """
         token, after = self._tok, self._peek()
-        live = token.text in KIND_UNITS and after is not None and after.kind is TokenKind.IDENT and after.text == "of"
+        live = token.text in self._kind_units and after is not None and after.kind is TokenKind.IDENT \
+            and after.text == "of"
         if self._clock and self._at_keyword(*LIVE_CLOCK):  # RoboLang 1.9 (decision 0042 T6)
             self._advance()
             left = ast.LiveClock(ast.Name(token.text, token.span), token.span)
@@ -726,10 +740,12 @@ class _Parser:
             self._error("E201", f"expected a comparison operator ('<', '<=', '>', '>=', '==' or '!=') after "
                                 f"the live reading, found {self._found()}")
         op = self._advance()
+        counted = self._kinds and (left.kind.text if isinstance(left, ast.LiveReading)
+                                   else self._bound_kinds.get(getattr(left, "text", None))) == "count"
         if self._clock and self._at(TokenKind.TIME):  # RoboLang 1.9 (decision 0042 T2)
             right = self._time_lit()
         elif self._at(TokenKind.NUMBER):
-            right = self._quantity()
+            right = self._quantity(bare_ok=counted)  # RoboLang 2.2: a bare number is a count's literal, and only its
         elif self._at(TokenKind.STRING):
             right = self._string("a string")
         elif self._at(TokenKind.IDENT):
@@ -755,13 +771,14 @@ class _Parser:
         return ast.LiveReading(kind, obj, sensor, kind.span.to(sensor.span))
 
     def _kind(self) -> ast.Name:
-        """A measured kind: `temperature`, `mass`, `distance` or `label`. Kinds are names, recognised here only."""
+        """A measured kind: `temperature`, `mass`, `distance` or `label` (2.2: also `fill`, `confidence`, `pressure` and
+        `count`). Kinds are names, recognised here only."""
         token = self._tok
-        if self._at(TokenKind.IDENT) and token.text not in KIND_UNITS:
-            kinds = (*KIND_UNITS, *CLOCK_KINDS) if self._clock else KIND_UNITS
+        if self._at(TokenKind.IDENT) and token.text not in self._kind_units:
+            kinds = (*self._kind_units, *CLOCK_KINDS) if self._clock else self._kind_units
             self._error("E217", f"unknown measured kind '{token.text}'; expected one of {_listed(kinds)}")
         if not self._at(TokenKind.IDENT):
-            self._error("E201", f"expected a measured kind ({_listed(KIND_UNITS)}), found {self._found()}")
+            self._error("E201", f"expected a measured kind ({_listed(self._kind_units)}), found {self._found()}")
         self._advance()
         return ast.Name(token.text, token.span)
 
@@ -771,15 +788,24 @@ class _Parser:
             self._error("E201", f"expected '{word}' {context}, found {self._found()}")
         return self._advance()
 
-    def _quantity(self) -> ast.QuantityLit:
-        """`NUMBER UNIT` with a unit of any kind; whether it fits the compared kind is a static rule (E319)."""
+    def _quantity(self, bare_ok: bool = False) -> ast.QuantityLit:
+        """
+        `NUMBER UNIT` with a unit of any kind; whether it fits the compared kind is a static rule (E319). In a 2.2
+        comparison of a count (`bare_ok`) a number without a unit is read too, as the literal of a count; for any other
+        kind the unit is required (E206, decision 0044 D3).
+        """
         number = self._advance()
-        units = [unit for each in KIND_UNITS.values() for unit in each]
+        units = list(dict.fromkeys(unit for each in self._kind_units.values() for unit in each))
         if self._clock:  # RoboLang 1.9 (decision 0042 T2): an elapsed time compares with a duration
             units += DURATION_UNITS
         if self._at(TokenKind.IDENT) and self._tok.text in units:
             unit = self._advance()
             return ast.QuantityLit(Decimal(number.text), unit.text, number.span.to(unit.span))
+        if self._kinds and self._at(TokenKind.PERCENT):
+            unit = self._advance()
+            return ast.QuantityLit(Decimal(number.text), unit.text, number.span.to(unit.span))
+        if bare_ok and not (self._at(TokenKind.IDENT) or self._at(TokenKind.SPEED_UNIT)):
+            return ast.QuantityLit(Decimal(number.text), None, number.span)
         if self._at(TokenKind.IDENT) or self._at(TokenKind.SPEED_UNIT):
             self._error("E206", f"unknown unit '{self._tok.text}'; expected one of {_listed(units)}")
         end = number.span
@@ -955,6 +981,7 @@ class _Parser:
         sensor = self._sensor("using")
         self._expect_keyword("as", "after the sensor: a measurement is bound to a name")
         binding = self._name("a binding name after 'as'")
+        self._bound_kinds.setdefault(binding.text, kind.text)
         handler, end = self._end("the measure statement")
         return ast.Measure(robot, kind, obj, sensor, binding, start.span.to(end.span), handler)
 

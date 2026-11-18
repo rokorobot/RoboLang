@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from decimal import Decimal
 
 from .. import ir
-from ..measured import LABEL, Interval, compare_intervals, convert, reading_interval, to_base
+from ..measured import COUNT, LABEL, Interval, compare_intervals, convert, reading_interval, to_base
 from .actions import action_problems
 from .clock import DAY_S, clock_problems
 from .regions import CHECKED, limit_problems
@@ -59,7 +59,8 @@ class Observation:
 class Reading:
     """
     A measured value (RoboLang 1.6, decision 0036 V8): `value` +- `uncertainty` in `unit` (a Decimal; for a label
-    the text, with no unit and no uncertainty), of `subject` as read by `sensor` at `t_ms`.
+    the text, with no unit and no uncertainty; for a count, no unit and uncertainty 0), of `subject` as read by `sensor`
+    at `t_ms`.
     """
 
     subject: str
@@ -216,6 +217,8 @@ class _State:
         self.clear = {k: v.clear for k, v in world.regions.items()}
         self.available = {k: v.available for k, v in world.sensors.items()}
         self.props = {k: {p.kind: p for p in v.properties} for k, v in world.objects.items()}  # world file 1.2
+        # world file 1.7 (decision 0044 D1): the fill and count of a location, read as an object's are
+        self.props.update({k: {p.kind: p for p in world.location_properties.get(k, ())} for k in world.locations})
         self.state = {k: v.state for k, v in world.objects.items()}  # world file 1.4
         self.location_state = dict(world.location_states)
         self.request: ActionRequest | None = None  # what the step just run requested (RoboLang 1.8)
@@ -289,7 +292,8 @@ def _take(state: _State, sensor_id: str, kind: str, obj: str, robot: str | None)
     checked before the reading exists, in this order: the sensor is declared (and, for a `measure`, mounted on `robot`:
     S231), available (S232, S233), declares the kind (S234); the object is present (S213, S214); a contact reading
     has the robot at the object (S235); the object has a value for the kind (S236). A live reading in a `wait until`
-    has no robot: `robot` is None, and a contact reading uses the robot the sensor is mounted on.
+    has no robot: `robot` is None, and a contact reading uses the robot the sensor is mounted on. RoboLang 2.2 (decision
+    0044 D1): `obj` may be a location, which is always there (no S213, S214) and is where the robot is when it is.
     """
     sensor = state.world.sensors.get(sensor_id)
     if sensor is None or (robot is not None and sensor.robot != robot):
@@ -300,19 +304,23 @@ def _take(state: _State, sensor_id: str, kind: str, obj: str, robot: str | None)
     measure = sensor.measure(kind)
     if measure is None:
         raise _StepFailed("S234")
-    present = state.present[obj]
+    place = obj in state.world.locations  # a location is not an object: it has no presence, and it is where it is
+    present = True if place else state.present[obj]
     if present is not True:
         raise _StepFailed("S214" if present is None else "S213")
     if measure.contact:
         holder = robot if robot is not None else sensor.robot
         # an object the robot holds is at the robot; otherwise it must be at the robot's location
-        if holder is None or not (state.held_by[obj] == holder or state.at[obj] == state.location[holder]):
+        if holder is None or not (obj == state.location[holder] if place
+                                  else state.held_by[obj] == holder or state.at[obj] == state.location[holder]):
             raise _StepFailed("S235")
     prop = state.props[obj].get(kind)
     if prop is None:
         raise _StepFailed("S236")
     if kind == LABEL:
         return Reading(obj, kind, prop.value, None, None, sensor_id, state.clock)
+    if kind == COUNT:  # exact: no unit, uncertainty 0 (decision 0044 K3)
+        return Reading(obj, kind, prop.value, None, Decimal(0), sensor_id, state.clock)
     return Reading(obj, kind, convert(prop.value, prop.unit, measure.unit), measure.unit, measure.uncertainty,
                    sensor_id, state.clock)
 

@@ -1,0 +1,14 @@
+// RoboLang v2.2 fixture: valid
+// expect: ok
+// why: a live reading of the new kinds in a wait until (D6)
+
+robolang 2.2;
+
+task t(robot r, location shelf, location aisle, sensor cam, sensor tag) {
+    goal { robot_at r aisle; }
+    plan {
+        move r to aisle;
+        wait until fill of shelf using cam > 80 % timeout 10 min else { fail "never full"; }
+        wait until count of shelf using tag == 0 timeout 5 min else { fail "never empty"; }
+    }
+}
