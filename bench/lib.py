@@ -1124,7 +1124,7 @@ def _mission_runs_ok(label: dict, checked: Checked, bindings: dict[str, str], ba
             continue
         reached = bool(first.result.goal) and all(g.result is not None for g in first.result.goal)
         effective = replace(task, goal=tuple(g.condition for g in first.result.goal) if reached else ())
-        readings = [{tuple(t) for t in expected["goal"]}]
+        readings = [{tuple(t) for t in g} for g in expected.get("goals", [expected["goal"]])]  # "goals": erratum M1
         goals = goals and bool(goal_means(effective, run_bound, readings))
     return structure, goals
 

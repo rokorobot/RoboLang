@@ -147,3 +147,18 @@ missions, M6: I5, I6, I8); `x03_for_each_go_message` stays in G-MSG. No sub-acti
 
 An unknown `until` (`S402`) now ends the mission `failed` (`until_unknown`), not `stopped`. `stopped` is kept for an
 operator stop or a lease end. No set-9 label used the old outcome. `docs/evidence/bench-freeze-v2.json` is regenerated.
+
+## Errata M1 and M2 (owner, 2026-11-18, after the L5 run)
+
+The acceptance run ([bench-2-0-acceptance.md](bench-2-0-acceptance.md)) missed B1 and B8.
+
+- **M1, labels:** `m03_inspect_for_three_hours` and `m10_scan_for_two_hours` ask for no end state, so they now also
+  accept `robot_at` the robot at its station (`goals` in the expected run), as K2 did for `k01`. `object_exists`
+  stays wrong. The scorer reads an expected run's `goals` when it has them.
+- **M2, teaching:** the reference and the grammar-only prompt (`spec/grammar-v2.0.ebnf`) say that more than 10
+  repeats, or repeating until a condition holds, is a mission, not one task with its steps copied; copies are only
+  for a fixed count of 10 or fewer (clarification 10). The reference also now says that an unknown `until` ends
+  `failed` (W3), which the L4 text still called `stopped`.
+
+A confirming run of `m03`, `m09`, `m10`, `c01` and `c04` (both prompts, both models, 3 repeats) replaces those
+tasks' answers for B1, B5 and B8. `docs/evidence/bench-freeze-v2.json` is regenerated.

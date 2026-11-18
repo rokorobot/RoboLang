@@ -537,9 +537,12 @@ mission shuttle(robot r, location home, location far, region quay) {
   and a run that has started is never cut: 10-minute runs in 3 hours are 18 runs. A task whose waits alone are longer than
   the duration cannot run even once, so the request is infeasible (`S401`): "12 rounds of 5 minutes within 30 minutes".
 - **How it ends.** `completed` (the `until` holds, or the one run was done), `bounded` (a count or duration was reached),
-  `failed` (a run failed under `stop`, retries were used up, or every run failed under `continue`) or `stopped` (the
-  `until` is unknown). A mission never claims more than its runs verified.
+  `failed` (a run failed under `stop`, retries were used up, every run failed under `continue`, or the `until` is
+  unknown) or `stopped` (an operator stop or a lease end). A mission never claims more than its runs verified.
 - **A robot never receives a mission:** the planner runs it, and each task run goes to the robot as an ordinary task.
+- **More than 10 repeats, or repeating until something holds, is a mission.** "Up to 15 attempts", "until the door is
+  open" or "until the fence is clear" is a `mission` with that bound and `until`: do not write it as one task with the
+  steps or `if not ... { ... }` copied many times. Copies are only for a fixed count of 10 or fewer.
 - **A fixed count needs no mission.** "Three round trips" is one task with the steps written out, a program (a mission
   with `at most 3 runs` is also accepted); "retry the grasp up to twice" is a failure handler (see "Failure handlers"):
 

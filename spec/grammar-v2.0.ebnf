@@ -60,7 +60,10 @@ on_failure    = "on" , "failure" , "{" , ( "stop" | "continue" | "retry" , INTEG
    A fixed short count needs no mission: "three round trips" is one task with the steps written out (or a mission with
    at most 3 runs; both are accepted), and a bounded number of retries of one step is a failure handler (1.5), not a
    mission. A request that needs one of the cases above is declined as inexpressible. A mission with an invented bound,
-   a task run once for "keep doing it", or a "wait" in place of a trigger is a false program, never an answer. *)
+   a task run once for "keep doing it", or a "wait" in place of a trigger is a false program, never an answer.    [2.0] Repeating more than 10 times, or until a condition holds ("up to 15 attempts", "until the door is open"), is
+   a mission; a task with its steps or "if not ... { ... }" copied many times is not what such a request asks
+   (erratum M2 of docs/evidence/bench-errata-2-0.md). Copies in one task are only for a fixed count of 10 or fewer.
+*)
 
 (* Reserved words in a 2.0 file: those of grammar-v1.9.ebnf, and "mission", "repeat", "run", "runs", "stop",
    "continue" and "retry". *)

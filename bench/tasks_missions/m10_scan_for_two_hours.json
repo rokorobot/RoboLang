@@ -28,6 +28,22 @@
               "located_in",
               "rl:place:shelf_a"
             ]
+          ],
+          "goals": [
+            [
+              [
+                "rl:thing:box1",
+                "located_in",
+                "rl:place:shelf_a"
+              ]
+            ],
+            [
+              [
+                "rl:robot:arm1",
+                "located_in",
+                "rl:place:shelf_a"
+              ]
+            ]
           ]
         }
       ],

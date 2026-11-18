@@ -28,6 +28,22 @@
               "located_in",
               "rl:place:station3"
             ]
+          ],
+          "goals": [
+            [
+              [
+                "rl:thing:p4",
+                "located_in",
+                "rl:place:station3"
+              ]
+            ],
+            [
+              [
+                "rl:robot:arm_b",
+                "located_in",
+                "rl:place:station3"
+              ]
+            ]
           ]
         }
       ],
