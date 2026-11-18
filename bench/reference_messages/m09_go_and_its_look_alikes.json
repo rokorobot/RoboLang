@@ -1,0 +1,9 @@
+{
+  "task": "take_tray",
+  "bindings": {
+    "r": "picker1",
+    "tray": "tray_1",
+    "src": "packing",
+    "dst": "dispatch"
+  }
+}

@@ -1,0 +1,13 @@
+// bench/reference_ask/u11_wait_go.rob: hand-written reference (RoboLang 2.1)
+robolang 2.1;
+
+task bring_tray(robot r, object tray, location src, location dst) {
+    goal { object_at tray dst; }
+    plan {
+        wait until message_received "pharmacy" with "GO" timeout 10 min else { fail "the pharmacist did not send GO"; }
+        move r to src;
+        grasp r tray;
+        move r to dst;
+        place r tray at dst;
+    }
+}

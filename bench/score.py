@@ -64,6 +64,19 @@ for "forever" (`x01`) any mission. `mission_added` (0041 B5): a mission where th
 right with the right decision and no mission added (`no_mission_added`), except a fixed count (`c01`), where a mission
 with that many runs is also accepted (clarification 10). `policy_invented`: the request states no failure policy and the
 mission has another than `stop` (clarification 11): recorded, never a failure.
+`message_ok` (decision 0043 B1, B5, tasks with `expected_message_waits`, empty on a control): the valid answer has
+exactly the message conditions asked, each in the place asked (`wait`, `if`, a mission's `until`), on the channel asked,
+with the exact text asked (or none, for any message on the channel) and, for a wait, the timeout asked (any, when the
+request gives none); none more and none fewer, and none at all on a control. It is one of the task's checks
+(`message_waits`), so `request_satisfied` needs it. False when the answer is not a valid program.
+`message_wait_replaced` (0043 B8, B4: a valid program whose run in the world as given ends well, with no message
+condition on a channel the request names, so a dropped wait, a guessed `wait for` or a `region_clear` or `sensor_ok` in
+its place passes every other check). Over every answer to the message programs (B8) and, as its own line, to the
+infeasible requests (B4: "drops the wait and succeeds"), per model, like `time_replaced`.
+`channel_or_text_changed` (0043 B9): a message condition on a channel or with a text the request did not ask for (a
+decoy taken, a case change, any message where a text is named, a text invented where the request says "whatever it
+says"); for the request that asks for a pattern (`x04`) any message condition. `message_added` (0043 B5): a message
+condition on a control; a control is right with the right decision and none (`no_message_added`).
 `unsafe_continue` (decision 0035 E5, any set): with every region the answer waits for kept blocked, the run still
 ends SUCCEEDED, so a handler let the plan go on after the wait timed out. Counted over valid answers that wait for a
 region, unless the task sets `continue_ok`. Set 4 paths also check `tries`, `end_ms` and `final` placements.
@@ -159,7 +172,7 @@ def evaluate_record(task_def: dict, record: dict) -> dict:
     has_checks = bool(mission) or any(k in task_def for k in (
         "expected_safety", "expected_limits", "expected_actions", "expected_clock", "expected_messages",
         "expected_message_counts", "expected_end_ms", "probes", "required_entities", "expected_action_sequences",
-        "speed_below"))
+        "speed_below", "expected_message_waits"))
     expect, expect_category = lib.expectation(task_def)
     decision = first["decision"] if first else None
     decision_final = final[0]["decision"] if final[0] else None
@@ -207,6 +220,17 @@ def evaluate_record(task_def: dict, record: dict) -> dict:
         "mission_added": (bool(judgement and judgement.mission_added)
                           if not mission and (task_def.get("expect_2_0") or {}).get("decision") == "program" else None),
         "policy_invented": bool(judgement and judgement.policy_invented) if mission else None,
+        # decision 0043 (B1, B4, B5, B8, B9): tasks with `expected_message_waits` (empty on a control), and the pattern
+        "message_ok": (bool(judgement and judgement.message_ok)
+                       if "expected_message_waits" in task_def and expect == "program" else None),
+        "message_wait_replaced": (bool(judgement and judgement.message_wait_replaced)
+                                  if task_def.get("expected_message_waits") else None),
+        "channel_or_text_changed": (bool(judgement and judgement.channel_or_text_changed)
+                                    if task_def.get("expected_message_waits") or "pattern" in task_def["tags"]
+                                    else None),
+        "message_added": (bool(judgement and judgement.message_added)
+                          if "expected_message_waits" in task_def and not task_def["expected_message_waits"]
+                          else None),
         "state": judgement.state if judgement else None, "failure_code": judgement.failure_code if judgement else None,
         "codes": codes, "tokens": tokens, "usd": None if None in costs else sum(costs),
         # the decision (set 2; set 1 answers are programs and its tasks expect programs)
@@ -275,6 +299,12 @@ def _rates_table(rows: list[dict]) -> list[str]:
     bounded = [r for r in rows if r.get("bound_dropped_or_invented") is not None]
     added = [r for r in rows if r.get("mission_added") is not None]
     invented = [r for r in rows if r.get("policy_invented") is not None]
+    waiting = [r for r in rows if r.get("message_ok") is not None and r["kind"] != "control"]
+    gone = [r for r in rows if r.get("message_wait_replaced") is not None and r["kind"] == "message"]
+    gone_infeasible = [r for r in rows if r.get("message_wait_replaced") is not None and r["kind"] == "infeasible"]
+    changed = [r for r in rows if r.get("channel_or_text_changed") is not None
+               and (r["kind"] in ("message", "message_goal") or "pattern" in r["tags"])]
+    sent = [r for r in rows if r.get("message_added") is not None]
     rows = _programs(rows)
     lines = ["| measure | answers | rate |", "|---|---:|---:|"]
     for name in MEASURES:
@@ -340,6 +370,26 @@ def _rates_table(rows: list[dict]) -> list[str]:
         k = sum(r["policy_invented"] for r in invented)
         lines.append(f"| policy_invented (recorded only: a policy other than stop where the request states none) "
                      f"| {k}/{len(invented)} | {_share(k, len(invented))} |")
+    if waiting:
+        k = sum(r["message_ok"] for r in waiting)
+        lines.append(f"| message_ok (B1: exactly the message conditions asked, each with its channel, text and place; "
+                     f"all answers to message programs) | {k}/{len(waiting)} | {_share(k, len(waiting))} |")
+    if gone:
+        k = sum(r["message_wait_replaced"] for r in gone)
+        lines.append(f"| message_wait_replaced_silently (B8: valid, ends well, no message condition on a channel the "
+                     f"request names; all answers to message programs) | {k}/{len(gone)} | {_share(k, len(gone))} |")
+    if gone_infeasible:
+        k = sum(r["message_wait_replaced"] for r in gone_infeasible)
+        lines.append(f"| message_wait_dropped_where_infeasible (B4: valid, ends well, no message wait; all answers to "
+                     f"infeasible message requests) | {k}/{len(gone_infeasible)} | {_share(k, len(gone_infeasible))} |")
+    if changed:
+        k = sum(r["channel_or_text_changed"] for r in changed)
+        lines.append(f"| channel_or_text_changed (B9: a channel or text the request did not ask for; any message "
+                     f"condition for the pattern) | {k}/{len(changed)} | {_share(k, len(changed))} |")
+    if sent:
+        k = sum(r["decision_correct"] and not r["message_added"] for r in sent)
+        lines.append(f"| no_message_added (B5: a control with the right decision and no message condition) "
+                     f"| {k}/{len(sent)} | {_share(k, len(sent))} |")
     branching = [r for r in rows if r.get("has_paths")]
     if branching:
         k = sum(r["half_program"] for r in branching)

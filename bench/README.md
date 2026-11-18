@@ -124,7 +124,7 @@ The owner approved the replacement plan, freeze, paid validation and merge. See 
 Run `python tools/bench_freeze.py --check` to verify the recorded inputs against freeze v2
 (`docs/evidence/bench-freeze-v2.json`, decision 0035 E9; v1 is kept as history). Changes after the freeze require errata
 ([errata for 1.5](../docs/evidence/bench-errata-1-5.md), [errata for 1.6](../docs/evidence/bench-errata-1-6.md),
-[errata for 1.7](../docs/evidence/bench-errata-1-7.md), [errata for 1.8](../docs/evidence/bench-errata-1-8.md), [errata for 1.9](../docs/evidence/bench-errata-1-9.md), [errata for 2.0](../docs/evidence/bench-errata-2-0.md)).
+[errata for 1.7](../docs/evidence/bench-errata-1-7.md), [errata for 1.8](../docs/evidence/bench-errata-1-8.md), [errata for 1.9](../docs/evidence/bench-errata-1-9.md), [errata for 2.0](../docs/evidence/bench-errata-2-0.md), [errata for 2.1](../docs/evidence/bench-errata-2-1.md)).
 A `decoy` looks impossible or unclear but is feasible. A `clarify` task
 expects `"decision": "clarify"`: the request could mean several entities (`candidates`) or omits a value, and the world
 does not decide. A request that leaves the choice to the model ("a shelf", "one of the vials", set 2's `ambiguous`
@@ -205,8 +205,8 @@ read from these numbers.
 
 Set 2 has the same for its three branching tasks (`x_route_by_cell`, `x_whichever_free`, `x_missing_box_branch`),
 group `branching`. The grammar-only prompt pastes `spec/grammar-v1.3.ebnf`, `spec/grammar-v1.4.ebnf`,
-`spec/grammar-v1.5.ebnf`, `spec/grammar-v1.6.ebnf`, `spec/grammar-v1.7.ebnf`, `spec/grammar-v1.8.ebnf`, `spec/grammar-v1.9.ebnf` and `spec/grammar-v2.0.ebnf`, each a delta
-over the one before. Since 0041 L4 the prompts teach RoboLang 2.0 (0042 L4 taught 1.9, 0040 L4 taught 1.8, 0039 L4 taught 1.7, 0036 PR 2 taught 1.6, 0035 PR 2 taught 1.5). In set 3,
+`spec/grammar-v1.5.ebnf`, `spec/grammar-v1.6.ebnf`, `spec/grammar-v1.7.ebnf`, `spec/grammar-v1.8.ebnf`, `spec/grammar-v1.9.ebnf`, `spec/grammar-v2.0.ebnf` and `spec/grammar-v2.1.ebnf`, each a delta
+over the one before. Since 0043 L4 the prompts teach RoboLang 2.1 (0041 L4 taught 2.0, 0042 L4 taught 1.9, 0040 L4 taught 1.8, 0039 L4 taught 1.7, 0036 PR 2 taught 1.6, 0035 PR 2 taught 1.5). In set 3,
 `x_failover_on_fault` is now a program judged per path (group `recover`; `expect_1_4` keeps the old label).
 
 Run it on demand from GitHub Actions: `Benchmark`, `set_only: set3`. That runs full and grammar-only prompts with 3
@@ -395,24 +395,39 @@ and ~$3.9 for the grammar-only one).
 
 ## Set 10: messages (`--set messages`)
 
-24 tasks in `tasks_messages/`, the 2.0 references of the controls and the obvious 2.0 attempts in `reference_messages/`,
-decision record [0043](../spec/decisions/0043-incoming-messages.md), plan, bounds and open points in
-[bench-10-messages.md](../docs/plans/bench-10-messages.md) (draft for the owner: the bounds B1–B9 are placeholders). Pre-registered
-against 2.0 (L3 of I5), not yet labelled for 2.1: `expect` is the 2.0 label (every non-control task `cannot / inexpressible`,
-each with an attempt that fails with `E211` or `E201`; 10 `message` tasks, 5 `infeasible`, 5 `inexpressible`, 4 `control`
-that are programs), `expect_2_1` the label for acceptance. A 2.1 program carries `expected_message_waits` (a list of `{use,
-channel, text, timeout}`: `use` is `wait`, `if` or `until`, `text` is `null` for any message on the channel), `world_2_1` (the
-`channels` the world declares, each with its allowed senders; an infeasible task also the `messages` the world holds) and
-`paths`, each forced by a `world_patch` of incoming `messages` (`{at, channel, text, from}`) and ending at `end_ms`. The
-attempts mark the message lines with `// @message` (and `// @message-tail`): without them each is a valid 2.0 program that
-succeeds, the message wait replaced silently (the plan's B8). `lib.task_paths` also reads `expect_2_0.paths` of a task that is
-no mission (the paths of the controls). The new scorer measures (`message_wait_ok`, message wait replaced silently, channel or
-text changed) are L4's.
+24 tasks in `tasks_messages/`, the 2.1 references of the programs and the 2.0 references of the controls, and the obvious 2.0
+attempts, in `reference_messages/`; decision record [0043](../spec/decisions/0043-incoming-messages.md), plan, bounds and open
+points in [bench-10-messages.md](../docs/plans/bench-10-messages.md) (approved by the owner, 2026-11-18). Pre-registered against 2.0
+(L3 of I5) and **labelled for 2.1 at L4**: `expect` is the 2.1 label (10 `message` programs, `x05` as the program `message_goal`
+(clarification C14: the message part is a final bounded wait, the world part is the goal), 5 `infeasible`, 4 `inexpressible`, 4
+`control`), `expect_2_0` the 2.0 label (every non-control task `cannot / inexpressible`, each with an attempt that fails with `E211`
+or `E201`), `expect_2_1` the pre-registered 2.1 label: `world_2_1` (the `channels` the world declares, each with its allowed
+senders; an infeasible task also the `messages` the world holds), the `paths` of a program, each forced by a `world_patch` of
+incoming `messages` (`{at, channel, text, from}`) and ending at `end_ms`, and a mission's `expected_mission`. The checks a label
+asks for are task keys, as in sets 6 to 8: `expected_message_waits` (a list of `{use, channel, text, timeout}`: `use` is `wait`,
+`if` or `until`, `text` is `null` for any message on the channel, `timeout` `null` where the request gives none; empty on a
+control), and a program's `expected_clock`, `expected_limits` and `expected_actions`. The world shown to the model is the **world
+file 1.6 copy** `worlds/msg_<id>.json` of the base world: it lists `channels: line (accepts messages from rl:agent:line-ctl)` (or
+`channels: none (this world has no message service)`) and the scheduled messages with channel, text and sender (C1, C2).
 
-`tests/test_bench_messages.py` checks the counts, the labels, the channels and texts against the prompts, that every path
-follows 0043 S2–S4 (a small model of it in the test), the infeasible and inexpressible reasons, that every attempt fails with
-its code and every stripped attempt succeeds, the controls, the atlas, the scorer and the workflow. On demand from GitHub
+Scorer (`lib.py`, `score.py`): `message_ok` (exactly the message conditions asked, each with its channel, exact text, place and
+timeout, none more, none fewer; one of the task's checks, so `request_satisfied` needs it; B1), **`message_wait_replaced`** (a valid
+program whose run ends well with no message condition on a channel the request names: a dropped wait, a guessed `wait for`, a
+`region_clear` or `sensor_ok` stand-in; counted over the programs for B8 and over the infeasible requests for the B4 clause),
+**`channel_or_text_changed`** (B9: a decoy channel or text, a case change, any message where a text is named, a text invented where
+the request says "whatever it says"; for `x04`, the pattern, any message condition), and `message_added` (B5: a message condition on
+a control; right is the right decision and none, `no_message_added`). All are per model, like `time_replaced`. `lib.task_paths`
+reads `expect_2_1.paths` of a program that is no mission, `lib.mission_label` `expect_2_1.expected_mission` (`m04`). The standing
+message tasks are relabelled the same way (`f_msg_line_docked`, `f_msg_nurse_confirm`, `f_msg_wind_clear`, `x_wait_message`,
+`u11_wait_go`, `u12_radio_clearance`, `x_wait_ready_message`: group `message`, world copies, references, `expect_2_0` the old
+label); see [bench-errata-2-1.md](../docs/evidence/bench-errata-2-1.md).
+
+`tests/test_bench_messages.py` checks the counts, the labels, the world copies, the channels and texts against the prompts, that every
+path follows 0043 S2–S4 (a small model of it in the test), the infeasible and inexpressible reasons, that every attempt fails with
+its code and every stripped attempt succeeds (and is a replaced wait), that every 2.1 reference passes every check on every path, the
+measures above, the standing tasks, the controls, the atlas, the scorer (a synthetic run of both prompts in under a minute and 1 GB)
+and the workflow. On demand from GitHub
 Actions: `Benchmark`, `set_only: messages` (full and minimal prompts, 3 repeats, Sonnet and Haiku, `--max-usd 3` each, not
 gated, not in the per-PR or weekly runs). Locally: `python bench/run.py --set messages --repeats 3 --models
 claude-sonnet-5-5,claude-haiku-5-5` (a paid run: confirm it first; estimate ~$3.7 for the full prompt and ~$3.6 for the
-grammar-only one).
+grammar-only one). The acceptance run (L5) is next.

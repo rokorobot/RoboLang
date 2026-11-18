@@ -1,15 +1,71 @@
 {
   "id": "u11_wait_go",
   "prompt": "Wait for the pharmacist to send \"GO\" on the pharmacy channel, then have picker1 bring tray 1 to dispatch.",
-  "world": "bench/worlds/pharmacy.json",
-  "group": "inexpressible",
+  "world": "bench/worlds/msg_u11_wait_go.json",
+  "group": "message",
   "expect": {
+    "decision": "program"
+  },
+  "expect_2_0": {
     "decision": "cannot",
     "category": "inexpressible"
   },
   "tags": [
     "message_wait"
   ],
-  "why": "Waiting for an incoming message needs message_received, deferred (E211).",
-  "attempt_fails_with": "E211"
+  "why": "RoboLang 2.1 (0043): a `wait until message_received ...` with the world's channel and sender (a program). Before L4 (2.0): Waiting for an incoming message needs message_received, deferred (E211).",
+  "attempt_fails_with": "E211",
+  "expect_2_1": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "the pharmacist sends GO at 60 seconds",
+        "goal": [
+          [
+            "rl:thing:tray_1",
+            "located_in",
+            "rl:place:dispatch"
+          ]
+        ],
+        "world_patch": {
+          "messages": [
+            {
+              "at": {
+                "value": "60",
+                "unit": "s"
+              },
+              "channel": "pharmacy",
+              "text": "GO",
+              "from": "rl:agent:pharmacist-w"
+            }
+          ]
+        },
+        "end_ms": "60000"
+      },
+      {
+        "when": "no GO arrives: the wait times out and the run fails",
+        "fails": true,
+        "world_patch": {
+          "messages": []
+        }
+      }
+    ],
+    "world_2_1": {
+      "channels": {
+        "pharmacy": {
+          "from": [
+            "rl:agent:pharmacist-w"
+          ]
+        }
+      }
+    }
+  },
+  "expected_message_waits": [
+    {
+      "use": "wait",
+      "channel": "pharmacy",
+      "text": "GO",
+      "timeout": null
+    }
+  ]
 }

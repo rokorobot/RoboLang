@@ -1,0 +1,10 @@
+{
+  "task": "fetch_kit",
+  "bindings": {
+    "r": "moxi1",
+    "kit": "iv_kit_1",
+    "door": "closet_door",
+    "closet": "supply_closet",
+    "room": "room_412"
+  }
+}

@@ -1,9 +1,13 @@
 {
   "id": "i03_thirty_seconds_for_a_late_message",
   "prompt": "With installer1, take module_14 from the module_pallet and place it on row_14 within 30 seconds of the start, but only after the site controller has sent \"WIND CLEAR\" on channel \"site\".",
-  "world": "bench/worlds/site.json",
+  "world": "bench/worlds/msg_i03_thirty_seconds_for_a_late_message.json",
   "group": "infeasible",
   "expect": {
+    "decision": "cannot",
+    "category": "infeasible"
+  },
+  "expect_2_0": {
     "decision": "cannot",
     "category": "inexpressible"
   },
@@ -32,6 +36,14 @@
       ]
     }
   },
+  "expected_message_waits": [
+    {
+      "use": "wait",
+      "channel": "site",
+      "text": "WIND CLEAR",
+      "timeout": null
+    }
+  ],
   "blockers": [
     "\"WIND CLEAR\" arrives at 300 seconds; the request allows 30"
   ],

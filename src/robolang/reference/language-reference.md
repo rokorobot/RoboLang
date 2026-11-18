@@ -1,10 +1,10 @@
-# RoboLang 2.0 language reference
+# RoboLang 2.1 language reference
 
 RoboLang is a small, checked language for robot tasks. A program describes a desired final state and
 a plan for reaching it in a symbolic world. A program is correct only when it validates, names the
 right entities, states the operator's requested outcome in `goal`, and reaches that goal.
 
-RoboLang 2.0 has bounded branching (`if`/`else`, see "Branching"), step failure handlers (a step
+RoboLang 2.1 has bounded branching (`if`/`else`, see "Branching"), step failure handlers (a step
 `else { ... }` that runs when that step fails, see "Failure handlers"), measured values (`measure`
 reads a temperature, a mass, a distance or a label from a sensor, see "Measured values"), region
 limits (`@safety no_go_region R;`, `@safety in_region R;`: where the robots may be while they move, see
@@ -12,18 +12,20 @@ limits (`@safety no_go_region R;`, `@safety in_region R;`: where the robots may 
 `in_state door "open"` checks the result, see "Declared actions"), clock readings (`measure r time as t;` reads the
 time of day, `22:00` is a time, `wait until clock_time >= 23:00 ...` waits for one, see "Clock readings") and
 **missions** (a `mission` runs tasks one after another, again and again, with a hard bound: a count, a duration or a
-time of day, see "Missions"). A task itself never loops: it runs once. **A fixed count is not a mission:** "three round
+time of day, see "Missions") and **incoming messages** (`message_received "line" with "DOCKED"` is true once a message has
+arrived on a channel, see "Incoming messages"). A task itself never loops: it runs once. **A fixed count is not a mission:** "three round
 trips" is one task with the steps written out three times (a mission with `at most 3 runs` is also accepted), and
 "try the grasp once more" or "retry the step up to 3 times" is a failure handler, a program, not a decline. It has no
 repeat without a bound ("forever", "until it works" with no count or time), triggers ("every hour", "every morning",
 "at 06:00", "when a message arrives"), loops inside loops, choosing the next object at run time, dates, arithmetic,
-string formatting, message waits, limits on one step only, limits on an arm or a person, or variables beyond typed
+string formatting, confirming that a message the robot sent was delivered, the content of a message as a value, patterns
+in a message text, limits on one step only, limits on an arm or a person, or variables beyond typed
 parameters and the names that `measure` binds. Do not silently drop part of a request. If a request needs an unsupported construct, or the available
 world and robots cannot perform it, say that it cannot be represented or completed.
 
 ## File and task structure
 
-A file starts with `robolang 2.0;` and holds one or more tasks, and missions that run them (see "Missions"). A file of
+A file starts with `robolang 2.1;` and holds one or more tasks, and missions that run them (see "Missions"). A file of
 tasks only needs no mission. `//` starts a comment. The language
 is case-sensitive. Whitespace only separates tokens.
 
@@ -71,6 +73,7 @@ do r set fryer to 175 degC;
 wait for 2 s;
 wait until region_clear cell timeout 30 s else { fail "cell not clear"; }
 wait until clock_time >= 23:00 timeout 90 min else { fail "23:00 did not come in time"; }
+wait until message_received "line" with "TUGGER DOCKED" timeout 10 min else { fail "no dock signal"; }
 communicate r to "channel" with "message";
 communicate r to "channel" with t;
 ```
@@ -113,7 +116,7 @@ if region_clear cell {
 - An `if` is decided by the world, not by whether an earlier step worked. To react to a failed step,
   use a failure handler (below). Nothing inside a task is repeated, counted, or timed: repeating whole
   task runs with a stated bound is a mission ("Missions"). A request that needs a loop with no bound
-  ("until it works", "as many times as it takes"), or waiting for a message, cannot be represented: say so.
+  ("until it works", "as many times as it takes") cannot be represented: say so.
 
 **A condition about the moment the job runs is decided by the program, with `if`.** When the request
 says "if arm1 is ready when the job starts", "if the cell is clear at that moment", "if the box is
@@ -245,7 +248,7 @@ communicate r to "lead" with now;          // a time is sent as HH:MM:SS; an ela
 ```
 
 ```rob
-robolang 2.0;
+robolang 2.1;
 
 task tote_if_open(robot r, object tote, location inb, location outb) {
     plan {
@@ -322,7 +325,7 @@ goal { in_state door "open"; }      // the result is checked, never assumed
 ```
 
 ```rob
-robolang 2.0;
+robolang 2.1;
 
 task restock(robot r, object closet, object kit, location ward, location store) {
     goal { in_state closet "open"; object_at kit ward; }
@@ -396,6 +399,7 @@ An action is a **name**, not a keyword: write it exactly as the world lists it (
 | `in_state x "open"` | the state of object or location `x` is that label (see "Declared actions"; unknown when the world gives `x` no state) |
 | `t < 60 degC`, `lot == "A"` | a measured value compares as stated (only in `if` and `wait until`; see "Measured values") |
 | `now < 22:00`, `clock_time >= 23:00` | a time of day compares as stated (only in `if` and `wait until`; see "Clock readings") |
+| `message_received "line" with "DOCKED"`, `message_received "nurse"` | a message with exactly that text (any message, with no `with`) has arrived on that channel from a sender the world allows (see "Incoming messages"); never in a `goal` |
 
 Combine conditions with `not`, `and`, `or`, and parentheses:
 
@@ -438,7 +442,7 @@ Both words go after `@safety`, name a `region` parameter, and are written before
 order with `max_speed`. Bind the parameter to the region of the world that the request names, by its exact ID.
 
 ```rob
-robolang 2.0;
+robolang 2.1;
 
 task to_lobby(robot r, location lobby, region wet) {
     @safety no_go_region wet;
@@ -494,7 +498,7 @@ mission NAME(type param, ...) {
 ```
 
 ```rob
-robolang 2.0;
+robolang 2.1;
 
 task round(robot r, location home, location far) {
     goal { robot_at r home; }
@@ -521,7 +525,7 @@ mission shuttle(robot r, location home, location far, region quay) {
   "for 2 hours", both when it says both, and never a count that was not asked for (a duration-only request is
   `for at most 120 min` with no `at most`).
 - **`until`** takes the conditions of a `pre` (`region_clear r`, `object_at o l`, `robot_at`, `holding`, `object_exists`,
-  `in_state`, with `and`, `or`, `not`) over the mission's parameters, or a comparison with a live reading or the
+  `in_state`, `message_received "ops" with "SHIFT END"`, with `and`, `or`, `not`) over the mission's parameters, or a comparison with a live reading or the
   clock like `wait until` (`until temperature of pan using probe < 40 degC;`, `until clock_time >= 22:00;`). It is
   checked after each run, and the mission ends when it holds. A value that cannot be read, or a fact the world lacks,
   stops the mission (`S402`); the mission never goes on as if it were false. A `measure` name is not available in a
@@ -547,7 +551,7 @@ mission shuttle(robot r, location home, location far, region quay) {
   with `at most 3 runs` is also accepted); "retry the grasp up to twice" is a failure handler (see "Failure handlers"):
 
 ```rob
-robolang 2.0;
+robolang 2.1;
 
 task three_round_trips(robot r, location a, location b) {
     goal { robot_at r a; }
@@ -564,6 +568,68 @@ task three_round_trips(robot r, location a, location b) {
   small and fixed is **not** one of these: "three round trips" is one task with the steps repeated, and "retry the
   grasp up to twice" is a failure handler; neither is declined. A request that contradicts itself ("12 runs in all, and
   20 retries on top of the first") or cannot fit its own time is `infeasible`.
+
+## Incoming messages
+
+A **message** is something another party sends to a robot's channel: a line controller saying `TUGGER DOCKED`, a nurse saying
+`CONFIRMED`, a site saying `WIND CLEAR`. `message_received` is a **condition**, true once such a message has arrived.
+
+```text
+message_received "line" with "TUGGER DOCKED"     // a message with exactly that text
+message_received "nurse"                         // any message at all on that channel
+```
+
+```rob
+robolang 2.1;
+
+task feed(robot r, object tote, location src, location handoff, location line) {
+    goal { object_at tote line; }
+    plan {
+        move r to src; grasp r tote; move r to handoff;
+        wait until message_received "line" with "TUGGER DOCKED" timeout 10 min else { fail "no dock signal"; }
+        move r to line; place r tote at line;
+    }
+}
+```
+
+- **Where it stands.** In `wait until` ("wait for", "as soon as ... sends", "once ... confirms": **a message wait is
+  `wait until message_received ...`, never a `wait for` of a guessed time, a `region_clear` or a `sensor_ok` in its place, and
+  never left out**), in `if` ("only if ... has sent", with an `else`), in a mission's `until` ("until the line says SHIFT END"),
+  and in `pre` (true only for a message that is there when the run starts: use a wait for a message that has to come). It
+  combines with `and`, `or` and `not` like any condition (`message_received "a" or message_received "b"`). A wait needs the
+  timeout the request gives (if it gives none, choose a generous one, such as `10 min`) and a handler, as every wait does
+  (`E316`): without a way on, the handler is `fail`.
+- **Copy the channel and the text exactly as the request gives them.** The text is exact and case-sensitive (spaces at either end do
+  not count): `"go"`, `"GO NOW"` and `"GO"` are three different texts, and so are channels `pharmacy_west` and `pharmacy_east`.
+  Never change a case, never make up a text, never use a channel the request does not name. There are no patterns: `with "READY"` is
+  not "contains READY". A request that names a channel and no text ("until the nurse confirms", "once customs has sent a message,
+  whatever it says") is `message_received "nurse"` with **no `with`**: any message. A request that names no channel ("until the port
+  authority radios clearance") uses the channel the world lists for that party: the world shows each channel and who may send on it. If
+  exactly one channel is meant, use it; if more than one could be and the request does not say which, ask (`clarify`).
+- **Who may send is the world's, never the program's.** The world lists `channels: line (accepts messages from rl:agent:line-ctl)`
+  and the messages it schedules (`a message "WIND CLEAR" arrives on channel site from rl:agent:site-ctl`). A message counts only if
+  it arrives on that channel from a listed sender; any other message is ignored. There is no `from` in the program, and a robot of the
+  task can be a listed sender ("until amr1 sends READY" with `rl:robot:amr1` on the channel).
+- **When it counts.** A message counts once it has arrived at or after the start of the run, and stays counted for the rest of
+  the run: "as soon as it says DOCKED", sent while the robot was still driving, is not missed. A wait ends when the message
+  arrives (at once if it has), and a message at exactly the timeout counts. A channel that has had no message yet is false.
+- **Never in a goal** (`E327`): a message is not an end state of the world. "The job is done only when the line has sent RECEIVED" is
+  the end state in `goal` (`object_at tote line`) and, as the **last step of the plan**, `wait until message_received "line"
+  with "RECEIVED" timeout 10 min else { fail "no confirmation"; }`: a program, not a decline.
+- **Not asked, not added.** A channel in the world list is not a request: a request that does not ask to wait for or check a message
+  has none. `communicate r to "ops" with "done"` only sends: what a task sends is never a message it receives.
+- **What the world says** decides what is infeasible, not inexpressible. Say `infeasible` when the world cannot give the message:
+  the channel the request names is not listed (`S011`: nothing runs), the world says `channels: none (this world has no message
+  service)` (every message condition is then unknown, so a wait only times out), the scheduled messages come from a sender the
+  channel does not accept, only from look-alike texts (`release` is not `RELEASE`, `RELEASE NOW` is not either), or later than the
+  time the request allows. When the request says what to do if the message does not come ("if it does not come, stop the job"), the
+  program with that `fail` is right. With no way on given, and a message the world shows cannot come in time, it is `infeasible`.
+- **Not in the language** (decline as `inexpressible`): **delivery** ("make sure it was delivered", "check the message got through":
+  a task cannot see whether what it sent arrived, the transport does; a reply message from the other side is a message you can wait
+  for); **for each message** and any trigger ("each time the line says READY", "whenever a message comes": a mission starts a run
+  when the last one is done, not on a message); **the content of a message as a value** ("forward the order number it sends"); and
+  **patterns** ("any message containing READY": do not replace it by one exact text).
+- A task with a message condition is not delegated to a robot (`X608`): the planner runs it.
 
 ## What symbolic simulation requires
 
@@ -585,7 +651,10 @@ task three_round_trips(robot r, location a, location b) {
   changes nothing else. It takes no time.
 - `measure r time` and `measure r elapsed` read the world's clock, take no time and need no sensor; `wait until
   clock_time >= T` ends at the exact time `T`.
-- `communicate` records a message and changes no other state.
+- `message_received "CH" with "TEXT"` is true once a message with exactly that text has arrived on channel `CH` from a
+  sender the world lists for it, at or after the start of the run (see "Incoming messages"). The simulation applies the
+  world's scheduled messages in time order, as it does events.
+- `communicate` records a message and changes no other state. A message a task sends is never a message it receives.
 - A task can bind more than one robot. Their steps still run sequentially in written order.
 
 Validation checks source structure, names, and types. World-specific capability and state failures
@@ -606,7 +675,7 @@ are:
 | `E216` | `if` statements and handlers nested more than 4 deep |
 | `E303` | name is not a task parameter |
 | `E304` | parameter used with the wrong type |
-| `E307` | empty string (for example `fail ""`) |
+| `E307` | empty string (for example `fail ""`, or `message_received "ch" with ""`) |
 | `E309` | a path has no `goal` condition and does not end in `fail` |
 | `E313` | `fail` that is not the last statement of a branch or handler |
 | `E315` | `grasp` of an object a robot still holds, or by a robot that still holds one: `place` it first |
@@ -617,6 +686,8 @@ are:
 | `E319` | kinds that do not match: a unit of another kind, a string against a quantity, a time against a duration or an elapsed value, a retry of another kind |
 | `E320` | `==` or `!=` on a quantity, a time or an elapsed value, or ordering on a label |
 | `E321` | a comparison in `pre` or `goal` |
+| `E327` | a `message_received` in a `goal` (a message is not an end state: wait for it in the plan) |
+| `S011` | a `message_received` names a channel that the world does not list (a world that lists channels): fails before anything moves |
 | `E325` | a `repeat` with no hard bound (no count, duration or time of day to end at), or a count over its cap (1000 runs, 100 retries) |
 | `E326` | a `run` of something that is not a task of the file (a mission, an unknown name), or with the wrong number of arguments |
 | `S401` | a mission's task cannot fit its duration bound even once: its waits alone are longer |
@@ -646,7 +717,7 @@ records completion. Its parameters still
 need bindings to concrete world entities before simulation.
 
 ```rob
-robolang 2.0;
+robolang 2.1;
 
 task deliver(robot r, object box, location src, location dst, region cell, sensor camera) {
     @safety max_speed 0.5 m/s;
@@ -670,7 +741,7 @@ This task chooses at run time. If the cell is clear when the job reaches the `if
 `a`; otherwise it goes to `b`. Each path has its own goal.
 
 ```rob
-robolang 2.0;
+robolang 2.1;
 
 task route(robot r, object box, location src, location a, location b, region cell) {
     plan {
@@ -692,7 +763,7 @@ task route(robot r, object box, location src, location a, location b, region cel
 This task retries a failed grasp once. If the second grasp also fails, it reports and stops.
 
 ```rob
-robolang 2.0;
+robolang 2.1;
 
 task fetch(robot r, object box, location src, location dst) {
     goal { object_at box dst; }
@@ -716,7 +787,7 @@ reading to the "pass" channel, and moves the pan only if the reading is clearly 
 may be too hot.
 
 ```rob
-robolang 2.0;
+robolang 2.1;
 
 task check_pan(robot r, object pan, sensor probe, location src, location dst) {
     goal { object_at pan dst; }

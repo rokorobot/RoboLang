@@ -85,6 +85,7 @@ before.
 
 | Date | Note | Added | Removed | Changed | Ranking |
 |---|---|---|---|---|---|
+| 2026-11-18 | I5 L4: RoboLang 2.1 built and taught | — | — | — | 1. action 4.52 · 2. perception 2.78 · 3. cooperation 1.07 · 4. communication 0.95 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
 | 2026-11-18 | I5 L3 done: set 10 frozen; bounds and clarifications approved; G-DELIVERY out (C13) | — | — | — | 1. action 4.52 · 2. perception 2.78 · 3. cooperation 1.07 · 4. communication 0.95 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
 | 2026-11-18 | I5 L3: set 10 messages pre-registered (24 tasks) | — | — | — | 1. action 4.52 · 2. perception 2.78 · 3. cooperation 1.07 · 4. communication 0.95 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
 | 2026-11-18 | L6 of I4: G-LOOP closed by RoboLang 2.0 missions; G-UNBOUNDED (out, 0041 M2/M7) split off | — | — | — | 1. action 4.52 · 2. perception 2.78 · 3. cooperation 1.07 · 4. communication 0.95 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
@@ -199,7 +200,7 @@ before.
 
 | Language gap | Scope | Priority | Near | Benchmark tasks |
 |---|---|---|---|---|
-| `G-MSG` Waiting for an incoming message, or confirming delivery | open | 4.02 | yes | 23 |
+| `G-MSG` Waiting for an incoming message, or confirming delivery | open | 4.02 | yes | 0 |
 | `G-DELIVERY` Confirming that a message the robot sent was delivered | out | 0.00 | — | 2 |
 
 ## Learning

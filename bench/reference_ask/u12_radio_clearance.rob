@@ -1,0 +1,13 @@
+// bench/reference_ask/u12_radio_clearance.rob: hand-written reference (RoboLang 2.1)
+robolang 2.1;
+
+task cleared(robot r, object o, location src, location dst) {
+    goal { object_at o dst; }
+    plan {
+        wait until message_received "port_authority" timeout 60 min else { fail "no clearance from the port authority"; }
+        move r to src;
+        grasp r o;
+        move r to dst;
+        place r o at dst;
+    }
+}

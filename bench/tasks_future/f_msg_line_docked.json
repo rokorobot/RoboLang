@@ -1,9 +1,12 @@
 {
   "id": "f_msg_line_docked",
   "prompt": "With digit1, carry tote_1 to the handoff point and hold it there. Place it on line_feed as soon as the line controller sends \"TUGGER DOCKED\" on channel \"line\".",
-  "world": "bench/worlds/fulfilment.json",
-  "group": "inexpressible",
+  "world": "bench/worlds/msg_f_msg_line_docked.json",
+  "group": "message",
   "expect": {
+    "decision": "program"
+  },
+  "expect_2_0": {
     "decision": "cannot",
     "category": "inexpressible"
   },
@@ -14,6 +17,59 @@
     "wait",
     "pick_place"
   ],
-  "why": "A condition can only test world facts; `message_received` is reserved and not implemented (language reference: 'message waits'), and the line controller is not a robot or sensor in this world.",
-  "attempt_fails_with": "E211"
+  "why": "RoboLang 2.1 (0043): a `wait until message_received ...` with the world's channel and sender (a program). Before L4 (2.0): A condition can only test world facts; `message_received` is reserved and not implemented (language reference: 'message waits'), and the line controller is not a robot or sensor in this world.",
+  "attempt_fails_with": "E211",
+  "expect_2_1": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "TUGGER DOCKED arrives from the line controller at 90 seconds",
+        "goal": [
+          [
+            "rl:thing:tote_1",
+            "located_in",
+            "rl:place:line_feed"
+          ]
+        ],
+        "world_patch": {
+          "messages": [
+            {
+              "at": {
+                "value": "90",
+                "unit": "s"
+              },
+              "channel": "line",
+              "text": "TUGGER DOCKED",
+              "from": "rl:agent:line-ctl"
+            }
+          ]
+        },
+        "end_ms": "90000"
+      },
+      {
+        "when": "no message arrives: the wait times out and the run fails",
+        "fails": true,
+        "world_patch": {
+          "messages": []
+        }
+      }
+    ],
+    "world_2_1": {
+      "channels": {
+        "line": {
+          "from": [
+            "rl:agent:line-ctl"
+          ]
+        }
+      }
+    }
+  },
+  "expected_message_waits": [
+    {
+      "use": "wait",
+      "channel": "line",
+      "text": "TUGGER DOCKED",
+      "timeout": null
+    }
+  ]
 }

@@ -1,7 +1,7 @@
 {
   "id": "c02_tell_the_ops",
   "prompt": "With arm1, carry box1 from shelf_a to the table and then tell channel \"ops\" \"box1 is on the table\".",
-  "world": "bench/worlds/warehouse.json",
+  "world": "bench/worlds/msg_c02_tell_the_ops.json",
   "group": "control",
   "expect": {
     "decision": "program"
@@ -30,7 +30,6 @@
   },
   "expect_2_1": {
     "decision": "program",
-    "expected_message_waits": [],
     "world_2_1": {
       "channels": {
         "ops": {
@@ -41,6 +40,7 @@
       }
     }
   },
+  "expected_message_waits": [],
   "expected_goal": [
     [
       "rl:thing:box1",

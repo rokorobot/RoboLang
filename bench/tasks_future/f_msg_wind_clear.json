@@ -1,9 +1,12 @@
 {
   "id": "f_msg_wind_clear",
   "prompt": "With installer1, take module_14 from the pallet and hold it until the site controller sends \"WIND CLEAR\" on channel \"site\", then place it on row_14.",
-  "world": "bench/worlds/site.json",
-  "group": "inexpressible",
+  "world": "bench/worlds/msg_f_msg_wind_clear.json",
+  "group": "message",
   "expect": {
+    "decision": "program"
+  },
+  "expect_2_0": {
     "decision": "cannot",
     "category": "inexpressible"
   },
@@ -14,6 +17,59 @@
     "wait",
     "pick_place"
   ],
-  "why": "The program can send messages but cannot wait for one; no condition tests a received message (language reference: 'message waits').",
-  "attempt_fails_with": "E204"
+  "why": "RoboLang 2.1 (0043): a `wait until message_received ...` with the world's channel and sender (a program). Before L4 (2.0): The program can send messages but cannot wait for one; no condition tests a received message (language reference: 'message waits').",
+  "attempt_fails_with": "E204",
+  "expect_2_1": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "WIND CLEAR arrives from the site controller at 300 seconds",
+        "goal": [
+          [
+            "rl:thing:module_14",
+            "located_in",
+            "rl:place:row_14"
+          ]
+        ],
+        "world_patch": {
+          "messages": [
+            {
+              "at": {
+                "value": "300",
+                "unit": "s"
+              },
+              "channel": "site",
+              "text": "WIND CLEAR",
+              "from": "rl:agent:site-ctl"
+            }
+          ]
+        },
+        "end_ms": "300000"
+      },
+      {
+        "when": "no message arrives: the wait times out and the run fails",
+        "fails": true,
+        "world_patch": {
+          "messages": []
+        }
+      }
+    ],
+    "world_2_1": {
+      "channels": {
+        "site": {
+          "from": [
+            "rl:agent:site-ctl"
+          ]
+        }
+      }
+    }
+  },
+  "expected_message_waits": [
+    {
+      "use": "wait",
+      "channel": "site",
+      "text": "WIND CLEAR",
+      "timeout": null
+    }
+  ]
 }

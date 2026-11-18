@@ -1,9 +1,9 @@
 # RoboLang 2.1: incoming messages
 
 **Status:** front end, Task IR 1.9 (Mission IR 1.1 for a file with a mission), world file 1.6, the simulation (run record
-1.9, mission record 1.1) and the IR reader complete in code. Until step L4 of decision 0043 ends, the language reference and
-the benchmark prompts still teach 2.0; the acceptance run on benchmark set 10 is a later step (L5), and until it passes the
-bounds B1 to B9 2.1 is not accepted.
+1.9, mission record 1.1) and the IR reader complete in code. The language reference and the benchmark prompts teach 2.1 (L4 of
+decision 0043); the acceptance run on benchmark set 10 is the next step (L5), and until it passes the bounds B1 to B9 2.1 is not
+accepted.
 Decision: [0043](decisions/0043-incoming-messages.md) (S1 to S11, and clarifications C1 to C14 approved 2026-11-18).
 Grammar: [grammar-v2.1.ebnf](grammar-v2.1.ebnf). IR: [Task IR 1.9](ir-schema-v1.9.md) and [Mission IR 1.1](mission-ir-v1.0.md).
 Simulation: [section 19](simulation-v1.0.md). Everything not stated here is exactly as in [RoboLang 2.0](robolang-v2.0.md): a

@@ -1,0 +1,9 @@
+{
+  "task": "unload_case",
+  "bindings": {
+    "r": "stretch1",
+    "item": "case_1",
+    "src": "trailer_4",
+    "dst": "staging"
+  }
+}

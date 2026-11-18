@@ -1,7 +1,7 @@
 """
-Developer commands for RoboLang 1.1 to 2.0.
+Developer commands for RoboLang 1.1 to 2.1.
 
-    reference              print the shipped RoboLang 2.0 language reference
+    reference              print the shipped RoboLang 2.1 language reference
     example [DIR]          write a sample task (fetch.rob) and world (world.json) to start from
     validate FILE          check a .rob file against the language contract
     inspect  FILE          show what a validated file describes (text or JSON IR)
@@ -13,7 +13,7 @@ Developer commands for RoboLang 1.1 to 2.0.
                            send the task's goal to a robot that runs its own plan; print the delegate record
 
 validate, inspect, simulate, export-goal and delegate take `--ir IR` instead of FILE: a Task IR JSON
-document (schema 1.0 to 1.8) or a Mission IR document (1.0), read strictly and re-validated in full
+document (schema 1.0 to 1.9) or a Mission IR document (1.0, 1.1), read strictly and re-validated in full
 (spec/ir-reader-v0.1.md). export-goal and delegate never take a mission: a robot is sent tasks only (X607).
     arch02 --scenario SCENARIO --cases CASES --case ID
                            run one case of the RFC-001 reference scenario in simulation
@@ -83,9 +83,9 @@ NOT_A_SAFETY_CHECK_IR = (
 NOTHING_EXECUTED = "This is a description only. Nothing was executed."
 
 _DESCRIPTION = f"""\
-Tools for RoboLang 1.1 to 2.0 task and mission files.
+Tools for RoboLang 1.1 to 2.1 task and mission files.
 
-reference prints the shipped 2.0 language reference. validate and inspect check and describe .rob
+reference prints the shipped 2.1 language reference. validate and inspect check and describe .rob
 files; they never execute anything.
 simulate runs a validated task in a symbolic, deterministic simulation only: it never loads a
 robot adapter or connects to ROS 2 or hardware, and its result is not evidence that a task is
@@ -961,7 +961,7 @@ def _input_arguments(command: argparse.ArgumentParser, what: str, note: str = ""
         "--ir",
         metavar="IR",
         help=(
-            "path to a Task IR JSON file (schema 1.0 to 1.8) instead of FILE. It is read strictly and "
+            "path to a Task IR JSON file (schema 1.0 to 1.9) instead of FILE. It is read strictly and "
             f"re-validated in full, whatever versions it claims (spec/ir-reader-v0.1.md){note}"
         ),
     )
@@ -984,8 +984,8 @@ def _parser(prog: str) -> argparse.ArgumentParser:
 
     reference = commands.add_parser(
         "reference",
-        help="print the shipped RoboLang 2.0 language reference",
-        description="Print the exact RoboLang 2.0 reference shipped with this installation. Nothing is executed.",
+        help="print the shipped RoboLang 2.1 language reference",
+        description="Print the exact RoboLang 2.1 reference shipped with this installation. Nothing is executed.",
     )
     reference.set_defaults(run=_reference)
 

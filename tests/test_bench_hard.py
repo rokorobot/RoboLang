@@ -22,7 +22,8 @@ from robolang import tokens
 REPO = Path(__file__).resolve().parent.parent
 HARD = lib.load_set("hard")
 FEASIBLE = {t: d for t, d in HARD.items() if lib.expectation(d)[0] == "program" and d["group"] not in (
-    "branching", "clock")}
+    "branching", "clock", "message")}
+MESSAGE = {t: d for t, d in HARD.items() if d["group"] == "message"}  # 2.0 declined it, 2.1 expresses it (0043)
 BRANCHING = {t: d for t, d in HARD.items() if d["group"] == "branching"}  # 1.3 declined them, 1.4 expresses them
 CLOCK = {t: d for t, d in HARD.items() if d["group"] == "clock"}  # 1.8 declined it, 1.9 expresses it (0042)
 CANNOT = {t: d for t, d in HARD.items() if lib.expectation(d)[0] == "cannot"}
@@ -53,23 +54,27 @@ def decline(category: str, reason: str = "cannot be done") -> dict:
 
 def test_the_mix_of_tasks():
     assert len(HARD) == 40
-    assert Counter(d["group"] for d in HARD.values()) == {"inexpressible": 6, "branching": 3, "infeasible": 8,
-                                                          "decoy": 8, "ambiguous": 5, "control": 9, "clock": 1}
-    assert len(INEXPRESSIBLE) == 6 and len(INFEASIBLE) == 8 and set(CLOCK) == {"x_elapsed_time"}
-    assert (len(FEASIBLE) + len(BRANCHING) + len(CLOCK)) / len(HARD) >= 0.35  # refusing everything must score badly
+    assert Counter(d["group"] for d in HARD.values()) == {"inexpressible": 5, "branching": 3, "infeasible": 8,
+                                                          "decoy": 8, "ambiguous": 5, "control": 9, "clock": 1,
+                                                          "message": 1}
+    assert len(INEXPRESSIBLE) == 5 and len(INFEASIBLE) == 8 and set(CLOCK) == {"x_elapsed_time"}
+    assert set(MESSAGE) == {"x_wait_message"}
+    assert (len(FEASIBLE) + len(BRANCHING) + len(CLOCK) + len(MESSAGE)) / len(HARD) >= 0.35  # refusing all scores badly
     for task_id, task in HARD.items():
         assert task["id"] == task_id and (lib.HARD_TASKS_DIR / f"{task_id}.json").is_file()
         assert (REPO / task["world"]).is_file() and task["tags"] and task["prompt"].endswith((".", "?"))
-        assert task["group"] in {"inexpressible", "branching", "infeasible", "decoy", "ambiguous", "control", "clock"}
+        assert task["group"] in {"inexpressible", "branching", "infeasible", "decoy", "ambiguous", "control",
+                                  "clock", "message"}
 
 
 def test_references_and_attempts_are_where_they_should_be():
     files = list(lib.HARD_REFERENCE_DIR.iterdir())
     refs = {p.name.split(".")[0] for p in files if p.name.endswith((".rob", ".json")) and ".attempt" not in p.name}
     attempts = {p.name.split(".")[0] for p in files if ".attempt." in p.name}
-    assert refs == set(FEASIBLE) | set(BRANCHING) | set(CLOCK) and attempts == set(CANNOT)
+    assert refs == set(FEASIBLE) | set(BRANCHING) | set(CLOCK) | set(MESSAGE)
+    assert attempts == set(CANNOT) | set(MESSAGE)  # the 1.3 attempt at the message wait stays as evidence
     assert {p.stem for p in lib.HARD_REFERENCE_DIR.glob("*.rob") if ".attempt" not in p.stem} \
-        == set(FEASIBLE) | set(BRANCHING) | set(CLOCK)
+        == set(FEASIBLE) | set(BRANCHING) | set(CLOCK) | set(MESSAGE)
 
 
 def test_expectations_are_well_formed():
@@ -88,6 +93,12 @@ def test_expectations_are_well_formed():
             assert not {"expected_goal", "expected_goals"} & set(task) and len(task["why"]) > 40
             assert task["expect_1_9"]["decision"] == "program" and len(task["expect_1_9"]["paths"]) == 1
             assert task["world"] == "bench/worlds/example_1_5.json" and task["expected_clock"]
+        elif task["group"] == "message":  # relabelled for 2.1 (0043): a program, judged on paths and its message wait
+            assert (decision, category) == ("program", "none") and task["expect_2_0"] == {
+                "decision": "cannot", "category": "inexpressible"}
+            assert not {"expected_goal", "expected_goals"} & set(task) and len(task["why"]) > 40
+            assert task["expect_2_1"]["decision"] == "program" and len(task["expect_2_1"]["paths"]) == 2
+            assert task["world"] == "bench/worlds/msg_x_wait_message.json" and task["expected_message_waits"]
         elif decision == "program":
             assert category == "none" and "why" not in task and "attempt_fails_with" not in task
             goals = lib.expected_goals(task)
@@ -349,7 +360,7 @@ def hard_run(tmp_path: Path, replies: dict, repairs: dict | None = None, models=
 
 def canned(tmp_path: Path) -> tuple[Path, dict]:
     replies = {
-        "x_wait_message": decline("inexpressible"),                            # right
+        "x_count_report": decline("inexpressible"),                            # right
         "x_wait_forever": decline("infeasible"),                               # declined, wrong category
         "x_every_hour": attempt_answer("x_every_hour"),                        # program, invalid: repaired below
         "x_retry_grasp": dict(reference_answer("e_pick_place"), decision="program", category="none",
@@ -372,7 +383,7 @@ def test_scorer_headline_metrics_on_canned_answers(tmp_path):
     by = {r["task_id"]: r for r in rows}
     assert meta["set"] == "hard" and meta["prompt"] == "full"
 
-    right = by["x_wait_message"]
+    right = by["x_count_report"]
     assert right["decision_correct"] and right["category_correct"] is True and not right["false_program"]
     assert right["valid_first"] is False and right["codes"] == []  # a decline has no program to check
 
@@ -409,7 +420,7 @@ def test_the_report_has_the_headline_figures_and_a_table_per_kind(tmp_path):
     assert "Task set hard, prompt full." in text
     for column in score.ROBUSTNESS_HEAD:
         assert column in text
-    # 10 answers, 6 of which expect a decline (x_wait_message, x_wait, x_every, x_retry, n_gripper, n_missing_place):
+    # 10 answers, 6 of which expect a decline (x_count_report, x_wait, x_every, x_retry, n_gripper, n_missing_place):
     # decision right 6 (the three declines, d_red, m_park, m_same); false programs x_every, x_retry, n_gripper (3),
     # 2 after repair, 1 of them valid and SUCCEEDED (x_retry); 1 false refusal of 4; categories right in 2 of 3 declines
     assert "| decision_correct |" in text
@@ -432,7 +443,7 @@ def test_a_decline_is_never_repaired_and_an_invalid_program_is_(tmp_path):
         return message(decline("inexpressible"))
 
     out_dir = tmp_path / "d"
-    run.run_benchmark(FakeClient(script), ["claude-opus-5-5"], {"x_wait_message": HARD["x_wait_message"]}, "medium", 1,
+    run.run_benchmark(FakeClient(script), ["claude-opus-5-5"], {"x_count_report": HARD["x_count_report"]}, "medium", 1,
                       out_dir, lib.load_prompt("full"), workers=1, log=io.StringIO(), task_set="hard")
     assert len(client_requests) == 1
     row = score.load_rows(out_dir)[1][0]
@@ -496,7 +507,7 @@ def test_the_minimal_prompt_run_records_set_and_prompt(tmp_path):
         return message(decline("inexpressible"))
 
     key = "sk-ant-api03-TESTKEY-0123456789abcdef"
-    code = run.main(["--yes", "--set", "hard", "--prompt", "minimal", "--tasks", "x_wait_message", "--models",
+    code = run.main(["--yes", "--set", "hard", "--prompt", "minimal", "--tasks", "x_count_report", "--models",
                      "claude-haiku-5-5", "--out", str(tmp_path), "--run-id", "m"],
                     client_factory=lambda api_key: FakeClient(script), out=io.StringIO(), err=io.StringIO(),
                     environ={"ANTHROPIC_API_KEY": key})
@@ -505,7 +516,7 @@ def test_the_minimal_prompt_run_records_set_and_prompt(tmp_path):
     assert (meta["set"], meta["prompt"]) == ("hard", "minimal")
     rerun = FakeClient(lambda request: pytest.fail("saved answers are not asked again"))
     with pytest.raises(run.FatalError):  # another prompt under the same run ID is another run
-        run.run_benchmark(rerun, ["claude-haiku-5-5"], {"x_wait_message": HARD["x_wait_message"]}, "medium", 1,
+        run.run_benchmark(rerun, ["claude-haiku-5-5"], {"x_count_report": HARD["x_count_report"]}, "medium", 1,
                           tmp_path / "m", lib.load_prompt("full"), log=io.StringIO(), task_set="hard",
                           prompt_name="full")
 

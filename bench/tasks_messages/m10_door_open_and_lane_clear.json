@@ -1,28 +1,17 @@
 {
   "id": "m10_door_open_and_lane_clear",
   "prompt": "With stretch1, take case_1 from trailer_4 to staging, but only after channel \"dock\" has sent \"DOOR OPEN\" and channel \"safety\" has sent \"LANE CLEAR\". Wait up to 10 minutes for each of them and, if one does not come, stop the job as failed.",
-  "world": "bench/worlds/fulfilment.json",
+  "world": "bench/worlds/msg_m10_door_open_and_lane_clear.json",
   "group": "message",
   "expect": {
+    "decision": "program"
+  },
+  "expect_2_0": {
     "decision": "cannot",
     "category": "inexpressible"
   },
   "expect_2_1": {
     "decision": "program",
-    "expected_message_waits": [
-      {
-        "use": "wait",
-        "channel": "dock",
-        "text": "DOOR OPEN",
-        "timeout": "10 min"
-      },
-      {
-        "use": "wait",
-        "channel": "safety",
-        "text": "LANE CLEAR",
-        "timeout": "10 min"
-      }
-    ],
     "paths": [
       {
         "when": "LANE CLEAR arrives at 30 seconds and DOOR OPEN at 200 seconds: both are there when needed",
@@ -109,6 +98,20 @@
       }
     }
   },
+  "expected_message_waits": [
+    {
+      "use": "wait",
+      "channel": "dock",
+      "text": "DOOR OPEN",
+      "timeout": "10 min"
+    },
+    {
+      "use": "wait",
+      "channel": "safety",
+      "text": "LANE CLEAR",
+      "timeout": "10 min"
+    }
+  ],
   "gap": "G-MSG",
   "tags": [
     "message_wait",

@@ -1,9 +1,13 @@
 {
   "id": "x01_make_sure_it_was_delivered",
   "prompt": "With moxi1, send \"MEDS READY\" to channel \"nurse\" and make sure the message was delivered before taking medication_1 from the pharmacy to room_412 and placing it there. If it was not delivered, move nothing.",
-  "world": "bench/worlds/ward.json",
+  "world": "bench/worlds/msg_x01_make_sure_it_was_delivered.json",
   "group": "inexpressible",
   "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_0": {
     "decision": "cannot",
     "category": "inexpressible"
   },

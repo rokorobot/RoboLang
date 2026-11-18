@@ -1,9 +1,13 @@
 {
   "id": "i05_only_a_near_miss_arrives",
   "prompt": "With arm_b, move p4 from station3 to the bin, but only after channel \"qa\" has sent \"RELEASE\". Wait up to 5 minutes for it.",
-  "world": "bench/worlds/assembly.json",
+  "world": "bench/worlds/msg_i05_only_a_near_miss_arrives.json",
   "group": "infeasible",
   "expect": {
+    "decision": "cannot",
+    "category": "infeasible"
+  },
+  "expect_2_0": {
     "decision": "cannot",
     "category": "inexpressible"
   },
@@ -41,6 +45,14 @@
       ]
     }
   },
+  "expected_message_waits": [
+    {
+      "use": "wait",
+      "channel": "qa",
+      "text": "RELEASE",
+      "timeout": "5 min"
+    }
+  ],
   "blockers": [
     "channel \"qa\" gets \"release\" at 40 seconds and \"RELEASE NOW\" at 90 seconds, never \"RELEASE\""
   ],

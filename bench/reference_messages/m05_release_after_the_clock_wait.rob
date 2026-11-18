@@ -1,0 +1,14 @@
+// bench/reference_messages/m05_release_after_the_clock_wait.rob: hand-written reference (RoboLang 2.1)
+robolang 2.1;
+
+task release_crate(robot r, object crate, location src, location dst) {
+    goal { object_at crate dst; }
+    plan {
+        wait until clock_time >= 09:20 timeout 10 min else { fail "09:20 did not come in time"; }
+        wait until message_received "ops" with "RELEASE" timeout 5 min else { fail "no release"; }
+        move r to src;
+        grasp r crate;
+        move r to dst;
+        place r crate at dst;
+    }
+}

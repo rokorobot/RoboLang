@@ -6,7 +6,8 @@ versions (1.0 to 1.9) and the Mission IR schema (1.0 and 1.1). Decision records 
 ## Unreleased
 
 RoboLang 2.1: incoming messages, iteration I5 of the [roadmap](docs/LANGUAGE_ROADMAP.md) (decision 0043; built, taught and
-relabelled in step L4; the acceptance run on benchmark set 10 is the next step).
+relabelled in step L4; the acceptance run on benchmark set 10 is the next step: it has not been made, and 2.1 is not
+accepted until it passes the bounds B1 to B9).
 
 - **RoboLang 2.1: incoming messages** (decision 0043, step L4 of iteration I5). A `.rob` file `robolang 2.1;` may use the
   condition `message_received "CH" with "TEXT"` (an exact text) and `message_received "CH"` (any message on the channel) in a
@@ -21,6 +22,14 @@ relabelled in step L4; the acceptance run on benchmark set 10 is the next step).
   `validate --world`), `X608` (`delegate` refuses a task that has a message condition), `S515` (the ROS 2 backend refuses
   one) and `I228` in the reader. Safety case hazard H23 ("a spoofed message changes what a robot does"). `robolang --version`
   shows language 2.1. Files of 1.1 to 2.0 are unchanged: there `message_received` is still `E211`.
+- **Taught and relabelled** (decision 0043, step L4 of iteration I5): `robolang reference` and both benchmark prompts teach 2.1
+  (an "Incoming messages" section; the world shown to the model lists each channel with its allowed senders and the scheduled
+  messages, or says "no message service"). Benchmark set 10 is labelled for 2.1 (`expect`; the 2.0 label is `expect_2_0`), `x05`
+  becomes a program (clarification C14) and leaves the atlas, the seven standing message tasks (`f_msg_line_docked`,
+  `f_msg_nurse_confirm`, `f_msg_wind_clear`, `x_wait_message`, `u11_wait_go`, `u12_radio_clearance`, `x_wait_ready_message`)
+  are programs, with world file 1.6 copies and references. The scorer has `message_ok`, `message_wait_replaced` (a dropped,
+  guessed or stood-in message wait), `channel_or_text_changed` and `no_message_added`. Errata
+  `docs/evidence/bench-errata-2-1.md`; the benchmark freeze is regenerated; the atlas gap G-MSG stays open until L6.
 
 ## 0.7.0 (2026-11-18)
 
