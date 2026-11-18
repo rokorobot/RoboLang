@@ -39,3 +39,10 @@ a bound, so under 0041 M2 none becomes a program (plan, "What this means for the
 ## Freeze
 
 `docs/evidence/bench-freeze-v2.json` is regenerated for all of the above.
+
+## Erratum W1 (2026-11-18): the paid answers are always kept
+
+The first baseline run of set 9 ([run 44252920152](https://github.com/rokorobot/RoboLang/actions/runs/44252920152))
+answered every request, but GitHub cancelled the job while it was scoring. Because of that the artifact upload was
+skipped and the answers were lost; no log survived. The upload now runs `if: always()`, and scoring has a 25-minute
+timeout and prints each directory as it starts. The baseline is run again.

@@ -167,8 +167,9 @@ jobs:
       - name: Score and gate
         id: gate
         if: steps.key.outputs.present == 'true'
+        timeout-minutes: 25
         run: |
-          for dir in bench/results/*/; do python bench/score.py "$dir"; done
+          for dir in bench/results/*/; do echo "scoring $dir"; python bench/score.py "$dir"; done
           if [ -d bench/results/set1 ]; then
             set +e
             python bench/gate.py bench/results/set1 bench/results/set2 --summary summary.md
@@ -206,7 +207,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: gh pr comment "${{ github.event.pull_request.number }}" --body-file summary.md
       - uses: actions/upload-artifact@v4
-        if: steps.key.outputs.present == 'true'
+        if: always() && steps.key.outputs.present == 'true'
         with:
           name: benchmark-results
           path: |
