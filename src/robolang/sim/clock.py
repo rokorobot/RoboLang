@@ -39,16 +39,19 @@ def _required(condition: ir.Condition):
         yield condition
 
 
-def clock_problems(task: ir.Task, world: World, bound: dict[str, str]) -> list[ActionProblem]:
+def clock_problems(task: ir.Task, world: World, bound: dict[str, str],
+                   elapsed_ms: Decimal = Decimal(0)) -> list[ActionProblem]:
     """
     K3: a `wait until clock_time >= T` (or `> T`) whose T is before the clock's start fails before the run: "at 09:00"
     must never silently mean "now". Only a wait that every run reaches is checked, that is, one in the plan's own
     sequence: a wait in an `if` branch or a failure handler may not run, and a time test around it is exactly how "if it
     is already after 9, go now" is written. A world with no clock is not checked here: the `time` reading fails the step
-    (T7).
+    (T7). `elapsed_ms` is the time already gone when the run starts: a run of a mission (RoboLang 2.0) starts after the
+    runs before it, and its start time is the clock's start plus that.
     """
     if world.clock is None:
         return []
+    now = world.clock.start_s + elapsed_ms / 1000
     problems = []
     for index, (label, step) in enumerate(ir.walk(task.steps), start=1):
         if not isinstance(step, ir.WaitUntil) or "." in label:
@@ -57,10 +60,11 @@ def clock_problems(task: ir.Task, world: World, bound: dict[str, str]) -> list[A
             if not (isinstance(atom.left, ir.LiveClock) and atom.left.reading == "time" and atom.op in (">=", ">")
                     and isinstance(atom.right, ir.TimeLit)):
                 continue
-            if _seconds(atom.right.value) < world.clock.start_s:
-                start = clock_text("time", Decimal(world.clock.start_s))
+            if _seconds(atom.right.value) < now:
+                start = clock_text("time", Decimal(int(now)))
                 problems.append(ActionProblem(
-                    "S010", f"'wait until clock_time {atom.op} {atom.right.value}': the clock starts at {start} on "
+                    "S010", f"'wait until clock_time {atom.op} {atom.right.value}': the clock "
+                            f"{'is at' if elapsed_ms else 'starts at'} {start} on "
                             f"{world.clock.date}, so {atom.right.value} has already passed and the wait would not "
                             "wait; to act at once when it is already past that time, read it with 'measure' and "
                             "use 'if'",

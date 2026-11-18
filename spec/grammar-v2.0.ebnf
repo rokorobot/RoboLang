@@ -1,0 +1,65 @@
+(* RoboLang v2.0 grammar, implemented in src/robolang/parser.py.
+   RoboLang 1.9 plus the mission layer (decision 0041). Differences from grammar-v1.9.ebnf are marked [2.0].
+   Everything not shown here is as in grammar-v1.9.ebnf (and grammar-v1.8.ebnf and those below it): a task is unchanged.
+   Normative text, diagnostics and static rules: spec/robolang-v2.0.md *)
+
+version_decl  = "robolang" , NUMBER , ";" ;                (* [2.0] NUMBER written exactly 2.0 *)
+
+program       = [ version_decl ] , { task | mission } ;    (* [2.0] a file holds tasks and missions, at least one task *)
+
+mission       = "mission" , NAME , "(" , [ param , { "," , param } ] , ")" ,
+                "{" , ( repeat | run ) , [ on_failure ] , "}" ;
+                                                            (* [2.0] the one new top-level declaration. Parameters are
+                                                               typed as a task's (param, as in 1.3) *)
+repeat        = "repeat" , [ bound , [ "," , bound ] ] ,    (* [2.0] at most one run count and one duration, either order *)
+                "{" , run , { run } , "}" , [ "until" , condition , ";" ] ;
+bound         = "at" , "most" , INTEGER , "runs"            (* [2.0] 1 to 1000 *)
+              | "for" , "at" , "most" , duration ;          (* [2.0] ms, s or min: there is no hour unit; 8 hours are 480 min *)
+run           = "run" , NAME , "(" , [ NAME , { "," , NAME } ] , ")" , ";" ;
+                                                            (* [2.0] a task of the file, the arguments are parameters of
+                                                               the mission. Without "repeat" a mission has one run line *)
+on_failure    = "on" , "failure" , "{" , ( "stop" | "continue" | "retry" , INTEGER ) , ";" , "}" ;
+                                                            (* [2.0] default stop; retry 1 to 100; "most", "on" and
+                                                               "failure" are recognised by position, not reserved *)
+
+(* [2.0] "mission", "repeat", "run", "runs", "stop", "continue" and "retry" are new reserved words (seven).
+   [2.0] "until" takes the conditions of a "pre" block and of a "wait until": the fact atoms (region_clear, object_at,
+   robot_at, holding, object_exists, robot_ready, sensor_ok, in_state) with and, or, not, and comparisons of a live
+   reading ("temperature of pan using probe < 40 degC") or the live clock ("clock_time >= 22:00") with a value.
+   [2.0] Static rules the grammar does not express (spec/robolang-v2.0.md section 3):
+   - every repeat has a hard bound: "at most N runs", "for at most D", or an until of the form clock_time >= T (or >),
+     alone or in an "or" (E325). A count is at most 1000 runs and 100 retries;
+   - each run names a task of the file, with its arguments in order: parameters of the mission, of the type the
+     task's parameter has (E326, E303, E304); a mission cannot run a mission;
+   - an until names parameters of the right types and never a "measure" binding (E303, E304, E317, E319, E320).
+   [2.0] Meaning (spec/robolang-v2.0.md sections 4 and 5, spec/simulation-v1.0.md section 18):
+   - a mission runs tasks one after another in one world with continuous time; each run is a complete, verified run;
+   - the until is checked after each run that verified; an unknown condition stops the mission (S402);
+   - the bounds are checked before each run, a started run is never cut, and a task that cannot fit the duration even
+     once fails the mission before any run (S401);
+   - on failure: stop (the default) ends the mission failed; continue records the run and goes on; retry N runs the same
+     line again, at most N more times, and the retries count against the bound;
+   - the mission ends completed (the until holds), bounded (a bound was reached), failed or stopped.
+   [2.0] What the mission layer cannot say (decision 0041 M2, M6, M7; erratum E5 of docs/evidence/bench-errata-1-8.md
+   states why this belongs in the grammar file):
+   - forever, and any repeat with no bound: "keep going", "until it works", "as long as it takes", "until I say stop".
+     There is no "forever" and there is no way to leave the bound out: a request that states no count, no duration and
+     no time of day to end at has no 2.0 program, and a bound that the request did not state is a false program. It is
+     inexpressible, so decline it;
+   - triggers: "every hour", "every morning", "every 10 minutes", "at 06:00", "on a message", "when a message arrives", "each time
+     the channel says go", "when the oven is hot". A mission starts a run when the previous one is done, never when a time
+     comes or something happens; "wait 60 min" at the end of a task is a different request ("every hour on the hour" is
+     not "an hour after the last run ended"). Triggers are a later version; decline the request as inexpressible;
+   - nesting: a loop inside a loop, a mission that runs a mission, a task that starts a mission, "do 12 rounds and in
+     each round repeat ... until ...". A repeat holds run lines only;
+   - choosing the next object at run time: "every part that arrives", "the next blank", "each tote in the list". A
+     mission repeats a task whose parameters are fixed, so it cannot pick a different object in each run;
+   - hours in a bound: write 8 hours as 480 min; and a bound longer than the task allows: a task whose waits alone are
+     longer than the duration bound cannot run even once, so that request is infeasible, not a program.
+   A fixed short count needs no mission: "three round trips" is one task with the steps written out (or a mission with
+   at most 3 runs; both are accepted), and a bounded number of retries of one step is a failure handler (1.5), not a
+   mission. A request that needs one of the cases above is declined as inexpressible. A mission with an invented bound,
+   a task run once for "keep doing it", or a "wait" in place of a trigger is a false program, never an answer. *)
+
+(* Reserved words in a 2.0 file: those of grammar-v1.9.ebnf, and "mission", "repeat", "run", "runs", "stop",
+   "continue" and "retry". *)

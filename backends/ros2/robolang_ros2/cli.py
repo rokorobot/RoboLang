@@ -37,6 +37,10 @@ def main() -> None:
     try:
         source = Path(args.source).read_text(encoding="utf-8")
         compiled = ir.compile_source(source, args.source).ir
+        if compiled.mission(args.task) is not None:
+            raise BackendFailure("S514", f"{args.task!r} is a mission: a mission runs on the planner's side and this "
+                                         "backend is sent tasks only, one task run at a time (RoboLang 2.0, "
+                                         "decision 0041 M8)")
         task = compiled.task(args.task)
         if task is None:
             raise BackendFailure("S507", f"unknown task {args.task!r}")

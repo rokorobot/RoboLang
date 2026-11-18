@@ -1,7 +1,7 @@
 """
 Recursive-descent parser for RoboLang v1.1 (spec/grammar.ebnf), v1.2 (spec/grammar-v1.2.ebnf) and
 v1.3 (spec/grammar-v1.3.ebnf), v1.4 (spec/grammar-v1.4.ebnf), v1.5 (grammar-v1.5.ebnf), v1.6 (grammar-v1.6.ebnf),
-v1.7 (grammar-v1.7.ebnf), v1.8 (grammar-v1.8.ebnf) and v1.9 (grammar-v1.9.ebnf).
+v1.7 (grammar-v1.7.ebnf), v1.8 (grammar-v1.8.ebnf), v1.9 (grammar-v1.9.ebnf) and v2.0 (grammar-v2.0.ebnf).
 
 Produces the AST of `nodes.py` or raises RoboLangError carrying every syntax error found.
 After a syntax error the parser resynchronises (see `_resync`) and carries on, so independent
@@ -47,7 +47,7 @@ from .tokens import (
 )
 
 DEFAULT_VERSION = "1.1"  # the version of a file without a marker
-SUPPORTED_VERSIONS = ("1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9")
+SUPPORTED_VERSIONS = ("1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "2.0")
 SUPPORTED_VERSION = DEFAULT_VERSION  # kept for existing imports
 MAX_CONDITION_DEPTH = 8  # spec/robolang-v1.2.md section 3.3
 MAX_IF_DEPTH = 4  # spec/robolang-v1.4.md section 3.3 (E216)
@@ -114,37 +114,42 @@ class _Parser:
     @property
     def _typed(self) -> bool:
         """True in 1.3 to 1.8 files: goal blocks, outcome atoms and sensor parameters."""
-        return self._language in ("1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9")
+        return self._language in ("1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "2.0")
 
     @property
     def _branching(self) -> bool:
         """True in 1.4 to 1.8 files: `if`, `else` and `fail`."""
-        return self._language in ("1.4", "1.5", "1.6", "1.7", "1.8", "1.9")
+        return self._language in ("1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "2.0")
 
     @property
     def _handlers(self) -> bool:
         """True in 1.5 to 1.8 files: a step may end with a failure handler `else { ... }`."""
-        return self._language in ("1.5", "1.6", "1.7", "1.8", "1.9")
+        return self._language in ("1.5", "1.6", "1.7", "1.8", "1.9", "2.0")
 
     @property
     def _values(self) -> bool:
         """True in 1.6 to 1.8 files: `measure`, comparisons, live readings and sending a binding (decision 0036)."""
-        return self._language in ("1.6", "1.7", "1.8", "1.9")
+        return self._language in ("1.6", "1.7", "1.8", "1.9", "2.0")
 
     @property
     def _regions(self) -> bool:
         """True in 1.7 and 1.8 files: `@safety no_go_region R;` and `@safety in_region R;` (decision 0039)."""
-        return self._language in ("1.7", "1.8", "1.9")
+        return self._language in ("1.7", "1.8", "1.9", "2.0")
 
     @property
     def _actions(self) -> bool:
         """True in 1.8 files: `do` and `in_state` (decision 0040)."""
-        return self._language in ("1.8", "1.9")
+        return self._language in ("1.8", "1.9", "2.0")
 
     @property
     def _clock(self) -> bool:
         """True in 1.9 files: `measure r time as t;`, time literals and `clock_time` (decision 0042)."""
-        return self._language == "1.9"
+        return self._language in ("1.9", "2.0")
+
+    @property
+    def _missions(self) -> bool:
+        """True in 2.0 files: the top-level `mission` (decision 0041)."""
+        return self._language == "2.0"
 
     @property
     def _statements(self) -> tuple[str, ...]:
@@ -180,7 +185,7 @@ class _Parser:
             self._advance()
         if skip and self._at(TokenKind.SEMICOLON):
             self._advance()
-        if self._at(TokenKind.EOF) or self._at_keyword("task"):
+        if self._at(TokenKind.EOF) or self._at_keyword("task", "mission"):
             raise _LostTask
 
     def _at_boundary(self) -> bool:
@@ -188,11 +193,11 @@ class _Parser:
             self._at(TokenKind.SEMICOLON)
             or self._at(TokenKind.RBRACE)
             or self._at(TokenKind.EOF)
-            or self._at_keyword("task")
+            or self._at_keyword("task", "mission")
         )
 
     def _skip_to_task(self):
-        while not (self._at(TokenKind.EOF) or self._at_keyword("task")):
+        while not (self._at(TokenKind.EOF) or self._at_keyword("task", "mission")):
             self._advance()
 
     def _warn(self, code: str, message: str, span: Span):
@@ -258,6 +263,7 @@ class _Parser:
         version = self._version() if self._at_keyword("robolang") else None
         self._lex_remaining()
         tasks = []
+        missions = []
         try:
             while not self._at(TokenKind.EOF):
                 if self._at_keyword("task"):
@@ -265,13 +271,19 @@ class _Parser:
                     if task is not None:
                         tasks.append(task)
                     continue
+                if self._at_keyword("mission"):  # a reserved word in 2.0 files only
+                    mission = self._mission()
+                    if mission is not None:
+                        missions.append(mission)
+                    continue
                 if self._at_keyword("robolang"):
                     message = "the version marker may appear only once, before the first task"
                 else:
-                    message = f"expected 'task', found {self._found()}"
+                    message = f"expected 'task' or 'mission', found {self._found()}" if self._missions \
+                        else f"expected 'task', found {self._found()}"
                 self._record(Diagnostic("E201", message, self._tok.span, filename=self._filename))
                 self._skip_to_task()
-            if not tasks and not self._errors:
+            if not tasks and not missions and not self._errors:
                 self._record(
                     Diagnostic("E210", "no task in file: a program must define at least one task",
                                self._tok.span, filename=self._filename)
@@ -279,7 +291,7 @@ class _Parser:
         except _Stop:
             pass
         return Parsed(
-            ast.Program(version, tuple(tasks), start.to(self._prev.span if self._prev else start)),
+            ast.Program(version, tuple(tasks), start.to(self._prev.span if self._prev else start), tuple(missions)),
             tuple(self._warnings),
             tuple(self._errors),
         )
@@ -297,6 +309,124 @@ class _Parser:
         self._lexer.set_language(self._language)  # the token after ';' is not lexed yet
         end = self._semicolon("the version marker")
         return ast.VersionDecl(number.text, start.span.to(end.span))
+
+    # -------- mission (RoboLang 2.0, decision 0041) --------
+
+    def _mission(self) -> ast.Mission | None:
+        """The mission, or None when it has a syntax error (the first error of a mission is recorded, none raised)."""
+        before = len(self._errors)
+        try:
+            mission = self._mission_body()
+        except RoboLangError as error:
+            if len(self._errors) == before:
+                self._record(error.diagnostic)
+            self._skip_to_task()
+            return None
+        return mission if len(self._errors) == before else None
+
+    def _mission_body(self) -> ast.Mission:
+        start = self._advance()
+        name = self._name("a mission name")
+        self._expect(TokenKind.LPAREN, "'(' after the mission name")
+        params = []
+        if not self._at(TokenKind.RPAREN):
+            params.append(self._param())
+            while self._at(TokenKind.COMMA):
+                self._advance()
+                params.append(self._param())
+        self._expect(TokenKind.RPAREN, "',' or ')' in the parameter list")
+        self._expect(TokenKind.LBRACE, "'{' to open the mission body")
+        repeat = None
+        if self._at_keyword("repeat"):
+            repeat, runs = self._repeat()
+        elif self._at_keyword("run"):
+            runs = [self._run()]
+            if self._at_keyword("run"):
+                self._error("E201", "a mission without 'repeat' has one 'run' line; put several in a 'repeat' block")
+        else:
+            self._error("E201", f"expected 'repeat' or 'run' in the mission body, found {self._found()}")
+        on_failure = self._on_failure() if self._at(TokenKind.IDENT) and self._tok.text == "on" else None
+        if self._at_keyword("repeat", "run"):
+            self._error("E201", "a mission has one 'repeat' block or one 'run' line, and missions do not nest; "
+                                f"found {self._found()} after it")
+        end = self._expect(TokenKind.RBRACE, "'}' to close the mission")
+        return ast.Mission(name, tuple(params), tuple(runs), repeat, on_failure, start.span.to(end.span))
+
+    def _count(self, where: str) -> ast.Count:
+        token = self._expect(TokenKind.NUMBER, f"a whole number {where}")
+        if not token.text.isdigit():
+            self._error("E201", f"expected a whole number {where}, found '{token.text}'", token.span)
+        return ast.Count(int(token.text), token.span)
+
+    def _repeat(self) -> tuple[ast.Repeat, list[ast.RunLine]]:
+        start = self._advance()
+        max_runs = max_duration = None
+        if self._at_keyword("at", "for"):
+            while True:
+                if self._at_keyword("at"):
+                    if max_runs is not None:
+                        self._error("E201", "'at most N runs' is given twice")
+                    self._advance()
+                    self._expect_word("most", "after 'at'")
+                    max_runs = self._count("after 'at most'")
+                    self._expect_keyword("runs", "after the number of runs")
+                elif self._at_keyword("for"):
+                    if max_duration is not None:
+                        self._error("E201", "'for at most D' is given twice")
+                    self._advance()
+                    self._expect_keyword("at", "after 'for'")
+                    self._expect_word("most", "after 'for at'")
+                    max_duration = self._duration("after 'for at most'")
+                else:
+                    self._error("E201", f"expected 'at most N runs' or 'for at most D' after ',', "
+                                        f"found {self._found()}")
+                if not self._at(TokenKind.COMMA):
+                    break
+                self._advance()
+        self._expect(TokenKind.LBRACE, "'{' to open the repeat block")
+        runs = []
+        while not self._at(TokenKind.RBRACE):
+            if not self._at_keyword("run"):
+                what = "missions do not nest: a 'repeat' block holds 'run' lines only" \
+                    if self._at_keyword("repeat", "mission") else "expected 'run' or '}'"
+                self._error("E201", f"{what}, found {self._found()}")
+            runs.append(self._run())
+        if not runs:
+            self._error("E208", "empty repeat: a repeat block must contain at least one 'run' line")
+        end = self._advance()
+        until = None
+        if self._at_keyword("until"):
+            self._advance()
+            until = self._condition("a condition after 'until'")
+            end = self._semicolon("the until condition")
+        return ast.Repeat(max_runs, max_duration, until, start.span.to(end.span)), runs
+
+    def _run(self) -> ast.RunLine:
+        start = self._advance()
+        task = self._name("a task name after 'run'")
+        self._expect(TokenKind.LPAREN, "'(' after the task name")
+        args = []
+        if not self._at(TokenKind.RPAREN):
+            args.append(self._name("an argument: a parameter of the mission"))
+            while self._at(TokenKind.COMMA):
+                self._advance()
+                args.append(self._name("an argument: a parameter of the mission"))
+        self._expect(TokenKind.RPAREN, "',' or ')' in the argument list")
+        end = self._semicolon("the run statement")
+        return ast.RunLine(task, tuple(args), start.span.to(end.span))
+
+    def _on_failure(self) -> ast.OnFailure:
+        start = self._advance()
+        self._expect_word("failure", "after 'on'")
+        self._expect(TokenKind.LBRACE, "'{' after 'on failure'")
+        if not self._at_keyword("stop", "continue", "retry"):
+            self._error("E201", f"expected 'stop;', 'continue;' or 'retry N;' after 'on failure {{', "
+                                f"found {self._found()}")
+        policy = self._advance()
+        retries = self._count("after 'retry'") if policy.text == "retry" else None
+        self._semicolon(f"'{policy.text}'")
+        end = self._expect(TokenKind.RBRACE, "'}' to close 'on failure'")
+        return ast.OnFailure(ast.Name(policy.text, policy.span), retries, start.span.to(end.span))
 
     # -------- task --------
 

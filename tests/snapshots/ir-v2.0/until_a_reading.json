@@ -1,0 +1,121 @@
+{
+  "ir_schema": "robolang.mission-ir",
+  "ir_schema_version": "1.0",
+  "task_ir_schema_version": "1.8",
+  "language_version": "2.0",
+  "tasks": [
+    {
+      "name": "read_pan",
+      "parameters": [
+        {
+          "name": "r",
+          "type": "robot"
+        },
+        {
+          "name": "pan",
+          "type": "object"
+        },
+        {
+          "name": "probe",
+          "type": "sensor"
+        },
+        {
+          "name": "st",
+          "type": "location"
+        }
+      ],
+      "safety": [],
+      "preconditions": [],
+      "goal": [
+        {
+          "kind": "object_at",
+          "object": "pan",
+          "location": "st"
+        }
+      ],
+      "steps": [
+        {
+          "kind": "move",
+          "robot": "r",
+          "target": "st"
+        },
+        {
+          "kind": "measure",
+          "robot": "r",
+          "reading": "temperature",
+          "object": "pan",
+          "sensor": "probe",
+          "binding": "t"
+        },
+        {
+          "kind": "communicate",
+          "robot": "r",
+          "channel": "pass",
+          "binding": "t"
+        },
+        {
+          "kind": "wait_for",
+          "duration": {
+            "value": "1",
+            "unit": "min"
+          }
+        }
+      ]
+    }
+  ],
+  "missions": [
+    {
+      "name": "cool_down",
+      "parameters": [
+        {
+          "name": "r",
+          "type": "robot"
+        },
+        {
+          "name": "pan",
+          "type": "object"
+        },
+        {
+          "name": "probe",
+          "type": "sensor"
+        },
+        {
+          "name": "st",
+          "type": "location"
+        }
+      ],
+      "repeat": {
+        "max_runs": 30,
+        "until": {
+          "kind": "compare",
+          "left": {
+            "kind": "live",
+            "reading": "temperature",
+            "object": "pan",
+            "sensor": "probe"
+          },
+          "op": "<",
+          "right": {
+            "kind": "quantity",
+            "value": "40",
+            "unit": "degC"
+          }
+        }
+      },
+      "runs": [
+        {
+          "task": "read_pan",
+          "arguments": [
+            "r",
+            "pan",
+            "probe",
+            "st"
+          ]
+        }
+      ],
+      "on_failure": {
+        "policy": "stop"
+      }
+    }
+  ]
+}

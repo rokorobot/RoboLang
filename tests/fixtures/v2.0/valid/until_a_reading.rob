@@ -1,0 +1,21 @@
+// RoboLang v2.0 fixture: valid
+// expect: ok
+// why: a live reading in until, read as in wait until (clarification 2)
+
+robolang 2.0;
+
+task read_pan(robot r, object pan, sensor probe, location st) {
+    goal { object_at pan st; }
+    plan {
+        move r to st;
+        measure r temperature of pan using probe as t;
+        communicate r to "pass" with t;
+        wait for 1 min;
+    }
+}
+
+mission cool_down(robot r, object pan, sensor probe, location st) {
+    repeat at most 30 runs {
+        run read_pan(r, pan, probe, st);
+    } until temperature of pan using probe < 40 degC;
+}

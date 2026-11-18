@@ -1,0 +1,18 @@
+// RoboLang v2.0 fixture: valid
+// expect: ok
+// why: several run lines in one repeat, until a fact, continue (clarification 1)
+
+robolang 2.0;
+
+task transfer(robot r, object item, location src, location dst) {
+    goal { object_at item dst; }
+    plan { move r to src; grasp r item; move r to dst; place r item at dst; }
+}
+
+mission alternate(robot r, object item, location a, location b, region lane) {
+    repeat at most 24 runs {
+        run transfer(r, item, a, b);
+        run transfer(r, item, b, a);
+    } until region_clear lane;
+    on failure { continue; }
+}

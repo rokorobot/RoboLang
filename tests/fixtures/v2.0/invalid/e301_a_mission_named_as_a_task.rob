@@ -1,0 +1,15 @@
+// RoboLang v2.0 fixture: invalid
+// expect: error E301 (static) line 12
+// why: a name is a task's or a mission's, not both
+
+robolang 2.0;
+
+task round(robot r, location home, location far) {
+    goal { robot_at r home; }
+    plan { move r to far; wait for 5 s; move r to home; }
+}
+
+mission round(robot r, location home, location far, region quay) {
+    run round(r, home, far);
+
+}

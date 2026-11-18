@@ -1,5 +1,5 @@
 """
-Static validation for RoboLang v1.1 to v1.9 (spec/robolang-v1.1.md, section 5; spec/robolang-v1.3.md, section 4;
+Static validation for RoboLang v1.1 to v2.0 (spec/robolang-v1.1.md, section 5; spec/robolang-v1.3.md, section 4;
 spec/robolang-v1.4.md, section 4; spec/robolang-v1.6.md, section 6 for bindings and kinds).
 
 Checks a parsed program for errors that the grammar cannot express: duplicate
@@ -25,7 +25,7 @@ from .measured import Atom, Operand, Scopes, View
 from .nodes import ParamType, Span
 from .paths import double_grasps, goalless_path
 from .parser import ParseResult, parse_recovering
-from .tokens import LIVE_CLOCK, MAX_REGION_LIMITS
+from .tokens import LIVE_CLOCK, MAX_MISSION_RUNS, MAX_REGION_LIMITS, MAX_RETRIES
 
 
 def _parts(statement: ast.Statement):
@@ -120,6 +120,15 @@ def _view(statement: ast.Statement) -> View:
     return View(handler=handler)
 
 
+def time_bound(condition: ast.Condition | None) -> bool:
+    """Clarification 2 of decision 0041: `clock_time >= T` (or `>`), alone or as one operand of an `or`, is a bound."""
+    if isinstance(condition, ast.Or):
+        return any(time_bound(operand) for operand in condition.operands)
+    return (isinstance(condition, ast.Compare) and isinstance(condition.left, ast.LiveClock)
+            and condition.left.word.text == "clock_time" and condition.op in (">", ">=")
+            and isinstance(condition.right, ast.TimeLit))
+
+
 def double_grasp_message(robot: str, obj: str, holder: str, held: str, earlier: str) -> str:
     """E315 and its IR form I216 (decision 0032)."""
     if holder == robot:
@@ -149,6 +158,8 @@ class _Validator:
         self._handlers = False  # RoboLang 1.5 to 1.8
         self._values = False  # RoboLang 1.6 to 1.8
         self._language = None
+        self._mission_names: set[str] = set()
+        self._owner = "task"  # what the names in scope are parameters of: "task", or "mission" (RoboLang 2.0)
 
     def _report(self, code: str, message: str, span: Span):
         self.errors.append(Diagnostic(code, message, span, filename=self._filename))
@@ -181,10 +192,10 @@ class _Validator:
     def _program(self, program: ast.Program):
         language = program.version.version if program.version is not None else None
         self._language = language
-        self._typed_sensors = language in ("1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9")
-        self._branching = language in ("1.4", "1.5", "1.6", "1.7", "1.8", "1.9")
-        self._handlers = language in ("1.5", "1.6", "1.7", "1.8", "1.9")
-        self._values = language in ("1.6", "1.7", "1.8", "1.9")
+        self._typed_sensors = language in ("1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "2.0")
+        self._branching = language in ("1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "2.0")
+        self._handlers = language in ("1.5", "1.6", "1.7", "1.8", "1.9", "2.0")
+        self._values = language in ("1.6", "1.7", "1.8", "1.9", "2.0")
         seen: dict[str, ast.Name] = {}
         for task in program.tasks:
             first = seen.setdefault(task.name.text, task.name)
@@ -195,9 +206,83 @@ class _Validator:
                     task.name.span,
                 )
             self._task(task)  # a duplicate name does not stop the body from being checked
+        tasks = {t.name.text: t for t in program.tasks}
+        self._mission_names = {m.name.text for m in program.missions}
+        for mission in program.missions:  # RoboLang 2.0: a name is a task's or a mission's, not both (E301)
+            first = seen.setdefault(mission.name.text, mission.name)
+            if first is not mission.name:
+                self._report("E301", f"duplicate name '{mission.name.text}': a mission and a task, or two missions, "
+                                     f"cannot share a name (first defined on line {first.span.line})",
+                             mission.name.span)
+            self._mission(mission, tasks)
+
+    # -------- mission (RoboLang 2.0, decision 0041 M7) --------
+
+    def _mission(self, mission: ast.Mission, tasks: dict[str, ast.Task]):
+        self._params = {}
+        self._owner = "mission"
+        for param in mission.params:
+            if param.name.text in self._params:
+                self._report("E302", f"duplicate parameter name '{param.name.text}' in mission "
+                                     f"'{mission.name.text}'", param.name.span)
+                continue
+            self._params[param.name.text] = param.type
+        for run in mission.runs:
+            self._checked(self._run, run, tasks)
+        repeat = mission.repeat
+        if repeat is not None:
+            self._checked(self._bound, repeat)
+            if repeat.until is not None:
+                self._condition(repeat.until)
+                scopes = Scopes({p: t.value for p, t in self._params.items()},
+                                lambda c: View(condition=c, live_ok=True), _atoms,
+                                lambda rule, message, at: self._report(_VALUE_CODES[rule], message, at))
+                scopes.plan((repeat.until,))  # a live value or the clock; no `measure` binding exists in a mission
+        failure = mission.on_failure
+        if failure is not None and failure.retries is not None:
+            self._checked(self._count, failure.retries, "retry", MAX_RETRIES)
+
+    def _count(self, count: ast.Count, what: str, most: int):
+        if count.value <= 0:
+            self._error("E305", f"{what} must be greater than zero", count.span)
+        if count.value > most:
+            self._error("E325", f"{what} is at most {most}; this one is {count.value}", count.span)
+
+    def _bound(self, repeat: ast.Repeat):
+        """M2: every repeat has a hard bound: a run count, a duration, or an `until clock_time >= T`."""
+        if repeat.max_runs is not None:
+            self._count(repeat.max_runs, "the number of runs", MAX_MISSION_RUNS)
+        if repeat.max_duration is not None:
+            self._positive(repeat.max_duration.value, "the duration bound", repeat.max_duration.span)
+        if repeat.max_runs is None and repeat.max_duration is None and not time_bound(repeat.until):
+            self._error("E325", "a repeat needs a hard bound (decision 0041 M2): 'at most N runs', 'for at most "
+                                "D', or an 'until clock_time >= T' that ends it at a time of day", repeat.span)
+
+    def _run(self, run: ast.RunLine, tasks: dict[str, ast.Task]):
+        """E326, E303, E304: a `run` names a task of the file and gives it arguments of the right types."""
+        name = run.task.text
+        task = tasks.get(name)
+        if task is None and name in self._mission_names:
+            self._error("E326", f"'run {name}': '{name}' is a mission, and a mission cannot run a mission "
+                                "(decision 0041 M7): run a task", run.task.span)
+        if task is None:
+            names = ", ".join(sorted(tasks)) or "(none)"
+            self._error("E326", f"'run {name}': there is no task '{name}' in this file; tasks: {names}", run.task.span)
+        if len(run.args) != len(task.params):
+            wanted = ", ".join(p.name.text for p in task.params)
+            self._error("E326", f"'run {name}' takes {len(task.params)} argument"
+                                f"{'' if len(task.params) == 1 else 's'} ({wanted}), found {len(run.args)}", run.span)
+        for arg, param in zip(run.args, task.params):
+            declared = self._params.get(arg.text)
+            if declared is None:
+                self._report("E303", f"undeclared name '{arg.text}': it is not a parameter of this mission", arg.span)
+            elif declared is not param.type:
+                self._report("E304", f"'{arg.text}' is {_article(declared)}, but parameter '{param.name.text}' of task "
+                                     f"'{name}' expects {_article(param.type)} here", arg.span)
 
     def _task(self, task: ast.Task):
         self._params = {}
+        self._owner = "task"
         for param in task.params:
             if param.name.text in self._params:
                 self._report(
@@ -453,10 +538,13 @@ class _Validator:
         else:
             self._not_empty(sensor, "sensor name")
 
+    def _undeclared(self, name: ast.Name):
+        self._error("E303", f"undeclared name '{name.text}': it is not a parameter of this {self._owner}", name.span)
+
     def _use(self, name: ast.Name, expected: ParamType, context: str):
         declared = self._params.get(name.text)
         if declared is None:
-            self._error("E303", f"undeclared name '{name.text}': it is not a parameter of this task", name.span)
+            self._undeclared(name)
         if declared is not expected:
             self._error(
                 "E304",
@@ -468,7 +556,7 @@ class _Validator:
         """RoboLang 1.8: the target of `do` or `in_state` is an object or a location parameter (E303, E304)."""
         declared = self._params.get(name.text)
         if declared is None:
-            self._error("E303", f"undeclared name '{name.text}': it is not a parameter of this task", name.span)
+            self._undeclared(name)
         if declared not in (ParamType.OBJECT, ParamType.LOCATION):
             self._error(
                 "E304",

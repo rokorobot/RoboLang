@@ -2,7 +2,7 @@
 
 **Status:** implemented in `src/robolang/ir_reader.py` (CORE-1); decision record
 [0021](decisions/0021-core-1-ir-reader.md).
-**Reads:** Task IR schemas [1.0](ir-schema-v1.0.md) to [1.8](ir-schema-v1.8.md)
+**Reads:** Task IR schemas [1.0](ir-schema-v1.0.md) to [1.8](ir-schema-v1.8.md), and the Mission IR schema [1.0](mission-ir-v1.0.md)
 **Duties implemented:** 1 and 2 of [ir-schema-v1.0.md](ir-schema-v1.0.md) section 2 (kernel rules K4 and K5
 of the domain contracts)
 
@@ -98,6 +98,8 @@ the whole document; a missing field is reported at the object that lacks it). Th
 | `I223` | Schema 1.5: a `live` operand outside the condition of a `wait_until` (E322) |
 | `I224` | Schema 1.6: a region named by more than one region limit (E323) |
 | `I225` | Schema 1.6: more than 8 region limits in a task (E324) |
+| `I226` | Mission IR 1.0: a `repeat` with no hard bound (no `max_runs`, `max_duration` or time-of-day `until`), or a count over its cap: 1000 runs, 100 retries (E325) |
+| `I227` | Mission IR 1.0: a `run` that names no task of the document (unknown, or a mission), or gives it the wrong number of arguments (E326) |
 
 `I211` is not used: a repeated `@verify` key (E311) cannot be written in a JSON object, where it is `I103`.
 
@@ -122,6 +124,12 @@ section 4), in the same order and with the same "one error per item" behaviour (
 - in schema 1.8 (RoboLang 1.9, [robolang-v1.9.md](robolang-v1.9.md) section 3): the robot of a `read_clock` is a `robot`
   parameter (`I203`, `I204`), a time literal is `HH:MM:SS` (`I126`), and the binding and kind rules of schema 1.5 extend to
   the two clock kinds (`I218` to `I223`).
+
+- in Mission IR 1.0 (RoboLang 2.0, [robolang-v2.0.md](robolang-v2.0.md) section 3, [mission-ir-v1.0.md](mission-ir-v1.0.md)
+  section 4): the tasks are checked as Task IR 1.8; a mission's name and parameters are unique (`I201`, `I202`), each `run`
+  names a task with the right arguments (`I227`, `I203`, `I204`), a repeat has a hard bound and counts in range (`I226`,
+  `I205`), and an `until` obeys the kind rules (`I218` to `I223`). A document with a form error in a mission is not
+  checked for that mission's meaning; other missions are.
 
 Not re-checked, because the IR cannot express a violation: the optional `robolang` marker, `;`, block
 structure, the mixing of `and` and `or` without parentheses, the source depth of parentheses.

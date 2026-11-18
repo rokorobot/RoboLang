@@ -1,19 +1,20 @@
 """
-Developer commands for RoboLang 1.1 to 1.9.
+Developer commands for RoboLang 1.1 to 2.0.
 
-    reference              print the shipped RoboLang 1.9 language reference
+    reference              print the shipped RoboLang 2.0 language reference
     example [DIR]          write a sample task (fetch.rob) and world (world.json) to start from
     validate FILE          check a .rob file against the language contract
     inspect  FILE          show what a validated file describes (text or JSON IR)
     simulate FILE --world WORLD
-                           run a validated task in a symbolic simulation
+                           run a validated task (or, with --mission, a mission) in a symbolic simulation
     export-goal FILE --world WORLD --from AGENT_ID
                            print the task's goal as a signed Core 0.1 propose_goal message
     delegate FILE --world WORLD --from AGENT_ID --to ROBOT_ID
                            send the task's goal to a robot that runs its own plan; print the delegate record
 
 validate, inspect, simulate, export-goal and delegate take `--ir IR` instead of FILE: a Task IR JSON
-document (schema 1.0 to 1.8), read strictly and re-validated in full (spec/ir-reader-v0.1.md).
+document (schema 1.0 to 1.8) or a Mission IR document (1.0), read strictly and re-validated in full
+(spec/ir-reader-v0.1.md). export-goal and delegate never take a mission: a robot is sent tasks only (X607).
     arch02 --scenario SCENARIO --cases CASES --case ID
                            run one case of the RFC-001 reference scenario in simulation
 
@@ -25,19 +26,20 @@ network, no ROS 2, no hardware.
 
 Exit status:
     0  validate/inspect: the file is valid (warnings do not change this);
-       simulate: the run ended SUCCEEDED
+       simulate: the run ended SUCCEEDED (a mission: completed or bounded)
     1  the file is not valid RoboLang (or, with --ir, not valid Task IR); diagnostics are on stderr
     2  the command could not be carried out: bad arguments or seed, unreadable file,
        unknown task name, several tasks and no --task
     3  simulate and export-goal: the world file is not valid; arch02: the scenario or cases file is not valid
-    4  simulate: the run ended FAILED
-    5  simulate: the run ended CANCELLED
-    6  export-goal and delegate: the goal has no Core 0.1 form, or an object lacks a class or mass
+    4  simulate: the run ended FAILED (a mission: failed)
+    5  simulate: the run ended CANCELLED (a mission: stopped)
+    6  export-goal and delegate: the goal has no Core 0.1 form, or an object lacks a class or mass, or a mission
     7  delegate: the robot rejected the goal (or its peer declined), or a participant rejected a message
 """
 
 from __future__ import annotations
 import argparse
+import dataclasses
 import json
 import re
 import sys
@@ -56,7 +58,8 @@ from .delegate_peer import DEFAULT_LEASE_MS, lease_ms
 from .export_goal import ExportError, default_recipient, export_goal, valid_participant
 from .ir_reader import IRDiagnostic, IRError, read_ir
 from .nodes import Program
-from .sim import DEFAULT_SEED, SEED, World, WorldError, load_world, run_id, sha256_normalized, to_json, to_record
+from .sim import DEFAULT_SEED, SEED, World, WorldError, load_world, mission_run_id, mission_task, run_id
+from .sim import run_mission, sha256_normalized, to_json, to_mission_record, to_record
 from .sim import run as simulate_task
 from .sim.check import Finding, check_task
 
@@ -80,9 +83,9 @@ NOT_A_SAFETY_CHECK_IR = (
 NOTHING_EXECUTED = "This is a description only. Nothing was executed."
 
 _DESCRIPTION = f"""\
-Tools for RoboLang 1.1 to 1.9 task files.
+Tools for RoboLang 1.1 to 2.0 task and mission files.
 
-reference prints the shipped 1.9 language reference. validate and inspect check and describe .rob
+reference prints the shipped 2.0 language reference. validate and inspect check and describe .rob
 files; they never execute anything.
 simulate runs a validated task in a symbolic, deterministic simulation only: it never loads a
 robot adapter or connects to ROS 2 or hardware, and its result is not evidence that a task is
@@ -97,9 +100,10 @@ exit status:
   1  the file is not valid (RoboLang, or with --ir Task IR); diagnostics are printed to stderr
   2  bad arguments, unreadable file, or unknown task name
   3  simulate only: the world file is not valid
-  4  simulate only: the run ended FAILED
-  5  simulate only: the run ended CANCELLED
-  6  export-goal and delegate only: the goal has no Core 0.1 form, or an object lacks a class or mass
+  4  simulate only: the run ended FAILED (a mission: failed)
+  5  simulate only: the run ended CANCELLED (a mission: stopped)
+  6  export-goal and delegate only: the goal has no Core 0.1 form, an object lacks a class or mass, or a mission
+     was named (X607: a robot is never sent a mission)
   7  delegate only: the robot rejected the goal (or its peer declined), or a participant rejected a message
 """
 
@@ -111,8 +115,9 @@ exit status:
      name that is not a parameter, unreadable file, unknown task name, or several tasks and no --task
   3  the world file is not valid, or a --bind names a missing or wrong-kind entity or leaves a
      parameter unbound; diagnostics are printed to stderr
-  4  the run ended FAILED; the run record is on stdout
-  5  the run ended CANCELLED; the run record is on stdout
+  4  the run ended FAILED (a mission: failed); the run record is on stdout
+  5  the run ended CANCELLED (a mission: stopped); the run record is on stdout
+  (a mission that ended completed or bounded exits 0; --mission and --task are exclusive)
 """
 
 _EXPORT_EPILOG = """\
@@ -165,17 +170,27 @@ def _joined(versions) -> str:
 
 
 def version_text() -> str:
-    """The three independent versions: distribution, language and IR schema."""
+    """The independent versions: distribution, language, Task IR schema and Mission IR schema."""
     distribution = distribution_version() or "unknown (not installed, running from source)"
     return (
         f"robolang {distribution} "
         f"(language {_joined(task_ir.IR_SCHEMA_VERSIONS)}, "
-        f"IR schema {_joined(task_ir.IR_SCHEMA_VERSIONS.values())})"
+        f"IR schema {_joined(dict.fromkeys(task_ir.IR_SCHEMA_VERSIONS.values()))}, "
+        f"mission IR {task_ir.MISSION_IR_SCHEMA_VERSION})"
     )
 
 
 class _CommandError(Exception):
     """The command cannot be carried out (exit status 2)."""
+
+
+class _IsMission(_CommandError):
+    """A command that takes a task was given a mission (decision 0041 M8: a robot never receives a mission)."""
+
+    def __init__(self, name: str, command: str):
+        super().__init__(f"'{name}' is a mission, not a task: {command} takes a task (use --mission to run a "
+                         "mission with simulate)")
+        self.name = name
 
 
 def _plural(count: int, noun: str) -> str:
@@ -292,11 +307,14 @@ def _validate(args, out, err) -> int:
         if findings:
             return EXIT_INVALID
     summary = _plural(len(document.tasks), "task")
+    if document.missions:
+        summary += f", {_plural(len(document.missions), 'mission')}"
     if loaded.warnings:
         summary += f", {_plural(loaded.warnings, 'warning')}"
     if loaded.kind == "ir":
-        print(f"{args.file}: valid Task IR {document.ir_schema_version} "
-              f"(RoboLang {document.language_version}, {summary})", file=out)
+        kind = f"Mission IR {task_ir.MISSION_IR_SCHEMA_VERSION}" if document.missions \
+            else f"Task IR {document.ir_schema_version}"
+        print(f"{args.file}: valid {kind} (RoboLang {document.language_version}, {summary})", file=out)
         print(NOT_A_SAFETY_CHECK_IR, file=out)
     else:
         print(f"{args.file}: valid RoboLang {document.language_version} ({summary})", file=out)
@@ -463,9 +481,38 @@ def _describe(task: task_ir.Task) -> list[str]:
     return lines
 
 
+def _describe_mission(mission: task_ir.Mission) -> list[str]:
+    lines = [f"mission {mission.name}"]
+    lines += _section("parameters", [f"{p.type} {p.name}" for p in mission.parameters])
+    repeat = mission.repeat
+    if repeat is None:
+        lines.append("  repeat: (none: one run)")
+    else:
+        bounds = []
+        if repeat.max_runs is not None:
+            bounds.append(f"at most {repeat.max_runs} runs")
+        if repeat.max_duration is not None:
+            bounds.append(f"for at most {_quantity(repeat.max_duration)}")
+        lines.append(f"  repeat: {', '.join(bounds) or '(no count or duration: ended by its time of day)'}")
+        if repeat.until is not None:
+            lines.append(f"  until: {_condition(repeat.until, True)}")
+    lines += _section("runs", [f"run {r.task}({', '.join(r.arguments)})" for r in mission.runs])
+    failure = mission.on_failure
+    lines.append(f"  on failure: {failure.policy}" + ("" if failure.retries is None else f" {failure.retries}"))
+    return lines
+
+
 def _inspect(args, out, err) -> int:
     whole = document = _load(args, err).document
-    if args.task is not None:
+    if args.task is not None and args.mission is not None:
+        raise _CommandError("give --task or --mission, not both")
+    if args.mission is not None:
+        chosen = whole.mission(args.mission)
+        if chosen is None:
+            names = ", ".join(m.name for m in whole.missions) or "(none)"
+            raise _CommandError(f"no mission named '{args.mission}' in '{args.file}'; missions in this file: {names}")
+        document = dataclasses.replace(whole, missions=(chosen,))  # its tasks stay: the Mission IR needs them
+    elif args.task is not None:
         try:
             document = document.select(args.task)
         except KeyError:
@@ -479,6 +526,8 @@ def _inspect(args, out, err) -> int:
     shown = _plural(len(document.tasks), "task")
     if args.task is not None:
         shown = f"task {args.task} (1 of {len(whole.tasks)})"
+    if document.missions:
+        shown += f", {_plural(len(document.missions), 'mission')}"
     print(args.file, file=out)
     print(
         f"RoboLang {document.language_version} | IR schema {document.ir_schema_version} | {shown}",
@@ -487,6 +536,9 @@ def _inspect(args, out, err) -> int:
     for task in document.tasks:
         print(file=out)
         print("\n".join(_describe(task)), file=out)
+    for mission in document.missions:
+        print(file=out)
+        print("\n".join(_describe_mission(mission)), file=out)
     print(file=out)
     print(NOTHING_EXECUTED, file=out)
     return EXIT_OK
@@ -531,6 +583,8 @@ _FAILURE_MEANING = {
     "S261": "the condition of an if is unknown; no branch was taken",
     "S262": "a fail statement was reached",
     "S301": "a goal condition is false after the last step",
+    "S401": "a mission's task cannot fit the duration bound even once (its waits alone are longer)",
+    "S402": "a mission's until condition is unknown, so the mission stops (it fails closed)",
     "S302": "a goal condition is unknown after the last step",
 }
 
@@ -578,6 +632,12 @@ def _run_inputs(args, err) -> _RunInputs:
     loaded = _load(args, err)  # read once: the run ID describes exactly what was run
     document = loaded.document
     tasks = document.tasks
+    if getattr(args, "mission", None) is not None or (args.task is not None and document.mission(args.task)):
+        name = args.mission if getattr(args, "mission", None) is not None else args.task
+        if document.mission(name) is None:
+            names = ", ".join(m.name for m in document.missions) or "(none)"
+            raise _CommandError(f"no mission named '{name}' in '{args.file}'; missions in this file: {names}")
+        raise _IsMission(name, args.command)
     if args.task is None:
         if len(tasks) != 1:
             names = ", ".join(t.name for t in tasks)
@@ -600,10 +660,61 @@ def _run_inputs(args, err) -> _RunInputs:
     return _RunInputs(loaded.data, world_bytes, document, task, world, cli_bindings, loaded.kind, loaded)
 
 
+_MISSION_EXIT = {"completed": EXIT_OK, "bounded": EXIT_OK, "failed": EXIT_FAILED, "stopped": EXIT_CANCELLED}
+
+
+def _simulate_mission(args, out, err) -> int:
+    """`simulate --mission`: run the mission's task runs in one world (spec/simulation-v1.0.md section 18)."""
+    if args.task is not None:
+        raise _CommandError("give --task or --mission, not both")
+    cli_bindings = _parse_bindings(args.bind)
+    loaded = _load(args, err)
+    document = loaded.document
+    mission = document.mission(args.mission)
+    if mission is None:
+        names = ", ".join(m.name for m in document.missions) or "(none)"
+        raise _CommandError(f"no mission named '{args.mission}' in '{args.file}'; missions in this file: {names}")
+    if cli_bindings is not None:
+        names = [p.name for p in mission.parameters]
+        for name in cli_bindings:
+            if name not in names:
+                listed = ", ".join(names) or "(none)"
+                raise _CommandError(f"--bind: '{name}' is not a parameter of mission '{mission.name}'; "
+                                    f"parameters: {listed}")
+    world_bytes = _read_bytes(args.world)
+    world = load_world(world_bytes, args.world, mission_task(mission), cli_bindings)
+    result = run_mission(document, mission, world)
+    identifier = mission_run_id(loaded.data, world_bytes, mission.name, args.seed, cli_bindings, loaded.kind)
+    record = to_mission_record(
+        result,
+        document=document,
+        run_id=identifier,
+        source_sha256=sha256_normalized(loaded.data),
+        world_sha256=sha256_normalized(world_bytes),
+        seed=args.seed,
+        bindings_source="world" if cli_bindings is None else "cli",
+        world_schema_version=world.schema_version,
+        source_kind=loaded.kind,
+        core=args.core,
+        world_clock=world.clock,
+    )
+    out.write(to_json(record))
+    summary = (f"simulation only: mission run {identifier}: {result.outcome} ({result.ended_by}; "
+               f"{_plural(len(result.runs), 'task run')}, {result.runs_verified} verified)")
+    if result.failure is not None:
+        where = "" if result.failure.run is None else f"run {result.failure.run}: "
+        meaning = _FAILURE_MEANING.get(result.failure.code, "see the simulation spec, section 18")
+        summary += f" ({result.failure.code}): {where}{result.failure.message or meaning}"
+    print(summary, file=err)
+    return _MISSION_EXIT[result.outcome]
+
+
 def _simulate(args, out, err) -> int:
     seed = args.seed
     if not SEED.fullmatch(seed):
         raise _CommandError("invalid --seed: use 1 to 64 characters from A-Z a-z 0-9 . _ -")
+    if args.mission is not None:
+        return _simulate_mission(args, out, err)
     inputs = _run_inputs(args, err)
     source_bytes, world_bytes, task, world = inputs.source_bytes, inputs.world_bytes, inputs.task, inputs.world
     cli_bindings = inputs.cli_bindings
@@ -651,6 +762,13 @@ def _export_failure(path: str, task: task_ir.Task, error: Exception, err) -> int
     return EXIT_NOT_EXPORTABLE
 
 
+def _mission_refused(path: str, name: str, err) -> int:
+    """X607 (decision 0041 M8): a mission is the planner's, so a robot is never sent one."""
+    print(f"{path}: error[X607]: '{name}' is a mission: a mission runs on the planner's side and a robot is sent "
+          "tasks only, one task run at a time; export or delegate one of its tasks instead", file=err)
+    return EXIT_NOT_EXPORTABLE
+
+
 def _export_goal(args, out, err) -> int:
     for flag, value in (("--from", args.sender), ("--to", args.recipient)):
         if value is not None and not valid_participant(value):
@@ -663,7 +781,10 @@ def _export_goal(args, out, err) -> int:
         except ValueError:
             example = "2026-10-19T10:14:00.400Z"
             raise _CommandError(f"invalid --at '{args.at}': use a Core time, for example {example}") from None
-    inputs = _run_inputs(args, err)
+    try:
+        inputs = _run_inputs(args, err)
+    except _IsMission as refused:
+        return _mission_refused(args.file, refused.name, err)
     task, world = inputs.task, inputs.world
     recipient = args.recipient or default_recipient(task, dict(world.task.bindings))
     if recipient is None:
@@ -735,7 +856,10 @@ def _delegate(args, out, err) -> int:
         lease = DEFAULT_LEASE_MS if args.lease is None else lease_ms(args.lease)
     except ValueError as error:
         raise _CommandError(str(error)) from None
-    inputs = _run_inputs(args, err)
+    try:
+        inputs = _run_inputs(args, err)
+    except _IsMission as refused:
+        return _mission_refused(args.file, refused.name, err)
     task = inputs.task
     if args.plans:
         plans = _load_plans(args.plans, err)
@@ -854,8 +978,8 @@ def _parser(prog: str) -> argparse.ArgumentParser:
 
     reference = commands.add_parser(
         "reference",
-        help="print the shipped RoboLang 1.9 language reference",
-        description="Print the exact RoboLang 1.9 reference shipped with this installation. Nothing is executed.",
+        help="print the shipped RoboLang 2.0 language reference",
+        description="Print the exact RoboLang 2.0 reference shipped with this installation. Nothing is executed.",
     )
     reference.set_defaults(run=_reference)
 
@@ -917,6 +1041,7 @@ def _parser(prog: str) -> argparse.ArgumentParser:
     )
     _input_arguments(inspect, "a .rob file")
     inspect.add_argument("--task", metavar="NAME", help="show only the task with this name")
+    inspect.add_argument("--mission", metavar="NAME", help="show only the mission with this name (and the tasks)")
     inspect.add_argument(
         "--json",
         action="store_true",
@@ -939,6 +1064,10 @@ def _parser(prog: str) -> argparse.ArgumentParser:
     _input_arguments(simulate, "a .rob file")
     simulate.add_argument("--world", metavar="WORLD", required=True, help="path to a world file (schema 1.0 to 1.2)")
     simulate.add_argument("--task", metavar="NAME", help="the task to run (required when FILE has several tasks)")
+    simulate.add_argument("--mission", metavar="NAME",
+                          help="run this mission instead of a task (RoboLang 2.0): each of its task runs is a "
+                               "complete run in one world with continuous time; --bind binds the mission's "
+                               "parameters")
     simulate.add_argument(
         "--seed",
         metavar="SEED",
@@ -980,6 +1109,7 @@ def _parser(prog: str) -> argparse.ArgumentParser:
     _input_arguments(export, "a .rob file (RoboLang 1.3)")
     export.add_argument("--world", metavar="WORLD", required=True, help="path to a world file (schema 1.1)")
     export.add_argument("--task", metavar="NAME", help="the task to export (required when FILE has several tasks)")
+    export.add_argument("--mission", metavar="NAME", help="refused (X607): a robot is never sent a mission")
     export.add_argument("--bind", metavar="NAME=ID", nargs="+", action="append",
                         help="bind a task parameter to a world entity, as for simulate")
     export.add_argument("--from", dest="sender", metavar="AGENT_ID", required=True,
@@ -1013,6 +1143,7 @@ def _parser(prog: str) -> argparse.ArgumentParser:
     delegation.add_argument("--world", metavar="WORLD", required=True,
                             help="path to the world file for the AI's task (schema 1.1)")
     delegation.add_argument("--task", metavar="NAME", help="the AI's task (required when FILE has several tasks)")
+    delegation.add_argument("--mission", metavar="NAME", help="refused (X607): a robot is never sent a mission")
     delegation.add_argument("--bind", metavar="NAME=ID", nargs="+", action="append",
                             help="bind a parameter of the AI's task to a world entity, as for simulate")
     delegation.add_argument("--from", dest="sender", metavar="AGENT_ID", required=True,

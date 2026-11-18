@@ -1,0 +1,10 @@
+// RoboLang v2.0 fixture: invalid
+// expect: error E212 (syntax) line 7
+// why: `run` is a reserved word in 2.0 and cannot be a name
+
+robolang 2.0;
+
+task run(robot r, location a) {
+    goal { robot_at r a; }
+    plan { move r to a; }
+}

@@ -5,10 +5,10 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "robolang"
 # Distribution version: the maturity of this package (0.2.0 was the first PyPI release; still alpha).
-# It is independent of the language versions (1.1 to 1.9) and the IR schema
-# versions (1.0 to 1.8), which are defined in src/robolang/.
+# It is independent of the language versions (1.1 to 2.0) and the IR schema
+# versions (1.0 to 1.8, mission IR 1.0), which are defined in src/robolang/.
 version = "0.6.0"
-description = "RoboLang: a checked robot task language (1.1 to 1.9) with a validator, symbolic simulation and RoboLang Core outcomes."
+description = "RoboLang: a checked robot task and mission language (1.1 to 2.0) with a validator, symbolic simulation and RoboLang Core outcomes."
 readme = "README.md"
 requires-python = ">=3.11"
 license = "Apache-2.0"

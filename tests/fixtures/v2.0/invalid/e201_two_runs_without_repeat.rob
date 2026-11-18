@@ -1,0 +1,15 @@
+// RoboLang v2.0 fixture: invalid
+// expect: error E201 (syntax) line 14
+// why: without repeat a mission has one run line
+
+robolang 2.0;
+
+task round(robot r, location home, location far) {
+    goal { robot_at r home; }
+    plan { move r to far; wait for 5 s; move r to home; }
+}
+
+mission m(robot r, location home, location far, region quay) {
+    run round(r, home, far);
+    run round(r, home, far);
+}

@@ -628,6 +628,8 @@ Section 3.9 (`E501`–`E518`). They stop processing with exit status 3; no run i
 | `S262` | step | RoboLang 1.4: a `fail "reason";` statement was reached (section 12) |
 | `S301` | goal | RoboLang 1.3: a `goal` condition is false after the last step (section 10) |
 | `S302` | goal | RoboLang 1.3: no `goal` condition is false, but at least one is unknown (section 10) |
+| `S401` | mission | RoboLang 2.0: a task of the mission cannot fit the duration bound even once, from its `wait for` steps alone; the mission fails before any run (section 18.3) |
+| `S402` | mission | RoboLang 2.0: the `until` condition is unknown after a run (a fact the world lacks, a reading that cannot be taken, the clock at the end of the day); the mission stops, fail closed (section 18.3) |
 
 ## 8. Acceptance tests and fixtures
 
@@ -1264,3 +1266,112 @@ reading (0036). `export-goal` and `delegate` are unaffected, and `delegate` does
 The ROS 2 backend refuses `measure r time` and `measure r elapsed` with `S510` before any motion
 ([ros2-backend-v0.1.md](ros2-backend-v0.1.md)); `wait until` and every step kind but `move`, `grasp`, `place` and
 `wait for` are refused already with `S508`.
+
+## 18. RoboLang 2.0: missions
+
+Decision record [0041](decisions/0041-mission-layer.md); language in [robolang-v2.0.md](robolang-v2.0.md). A task of
+language 1.1 to 1.9 runs exactly as before. `robolang simulate FILE --world WORLD --mission NAME [--bind ...]` runs a
+mission; `--task` runs a task, as before, in a file that also has missions.
+
+### 18.1 What a mission run is
+
+A mission is run on the planner's side (M8). It starts task runs one after another in **one world with continuous
+time** (clarification 9), and **each task run is a complete, verified run** exactly as section 4 describes it (M9): its
+own `pre`, its limits and authorization (`S001` to `S010`), its steps, and its goal. The mission decides only whether
+to start the next run, and it never claims more than its runs verified (M5).
+
+- **One world.** The mission starts one private state from the world, as a task run does. Objects, robots, readiness
+  and region facts stay as a run left them; `elapsed` of a task is the time since *that* run reached `RUNNING`; the
+  readings (`measure` bindings) of a run are gone when the next starts. The world's events are on mission time: an event at
+  25 minutes is applied when the simulated time first reaches or passes it, which is at the end of the run (or the wait
+  in it) that does. The mission's duration is the simulated time: moves take no time, waits do (a run that never waits
+  does not advance it).
+- **Bindings.** The mission's parameters are bound as a task's are (section 3.8): `tasks.<mission>.bindings` of the world
+  file, or `--bind NAME=ID` (which replaces them). The world file has **no new field** for a mission. A world file's
+  `faults` and `cancel` are steps of a task and do not apply to a mission. Each `run` binds the task's parameters to the
+  entities the mission's arguments are bound to.
+- **A run that fails** is a `FAILED` run record with its own code (`S101`, `S213`, `S251`, ...); what follows is the
+  mission's failure policy.
+- **Test form.** The Python function `run_mission(document, mission, world, fail_runs=...)` takes the numbers of the task
+  runs that fail (a scripted fault on the first step of the task, `S251`, which changes nothing in the world), or `"all"`.
+  This is for tests and the benchmark: it is not a world field.
+
+### 18.2 The loop
+
+```
+check, once, before any run: every task the mission runs fits the duration bound (S401)
+repeat, for each run line in order:
+    attempt = 1
+    loop:
+        if the bound is reached:              (checked before each run)
+            a retry pending            -> failed  (ended_by bound_with_retry)
+            every run so far failed    -> failed  (all_failed)
+            else                       -> bounded (run_bound | duration_bound)
+        run the task                           (a started run is never cut)
+        if it verified:
+            if the mission has an until: evaluate it
+                true -> completed (until)       unknown -> stopped (S402, until_unknown)
+            next run line
+        else by policy:
+            stop     -> failed (run_failed)
+            retry N  -> if attempt <= N: attempt += 1, run the same line again, else failed (retries_used)
+            continue -> next run line (the run is recorded, not counted as done)
+a mission with no repeat is one pass: completed when its run (or a retry) verified, failed when none did
+```
+
+The bound is reached when the number of task runs started (**retries included**, clarification 7) is the run count, or
+the simulated time is at or after the duration. Whatever the bounds say, a mission makes at most 1000 task runs in the
+simulation (a mission whose tasks never wait, with only a duration, never reaches it): the 1000th ends it `bounded`.
+
+### 18.3 `S401` and `S402`
+
+- **`S401`** (clarification 8): the shortest time a run of a task can take **and succeed**, from its `wait for` steps alone
+  (a `wait until` may end at once; a path that ends in `fail` does not succeed), is longer than the duration bound. The
+  mission ends `failed` with `ended_by` `cannot_fit`, before any run, and the record has no runs. It is the infeasible
+  request "twelve 5-minute rounds in half an hour": it names no run.
+- **`S402`** (M3): the `until` is evaluated after each run that verified, with the live readings and the clock of that
+  moment. `unknown` (a fact whose value the world lacks, a reading that cannot be taken, a `time` reading with no
+  clock (`S237`) or after the day's end (`S238`)) stops the mission: `stopped`, `ended_by` `until_unknown`. An unknown
+  condition is never read as false.
+
+### 18.4 The mission run record 1.0
+
+`mission_record_schema` `robolang.sim.mission-run`, `mission_record_schema_version` `1.0`; the key order is:
+
+| Key | Content |
+|---|---|
+| `run_record_schema_version` | the schema of the run records inside (`1.8` for 2.0) |
+| `mode` | `simulation` |
+| `run_id` | `sim-` and the SHA-256 of `robolang-sim-mission/1.0`, the source, the world, the mission, the seed and the bindings of `--bind` (as section 6) |
+| `inputs` | `source_sha256`, `source_kind` (IR input only), `world_sha256`, `mission`, `seed`, `language_version` (`2.0`), `ir_schema_version` (`1.0`: Mission IR), `task_ir_schema_version` (`1.8`), `world_schema_version`, `world_clock`, `bindings_source` (`cli` only) |
+| `mission` | the mission as Mission IR |
+| `tasks` | the tasks that were run, as Task IR 1.8, in order of first run |
+| `bindings` | the mission's parameters, in order |
+| `outcome` | `completed`, `bounded`, `failed` or `stopped` |
+| `ended_by` | `until`, `run_verified`, `run_bound`, `duration_bound`, `run_failed`, `retries_used`, `bound_with_retry`, `all_failed`, `cannot_fit`, `until_unknown` |
+| `failure` | `null`, or `{ "code", "run", "message" }`: for `failed` the code of the last failed run (`run` its number); `S401` (no run); `S402` for `stopped` |
+| `runs_started`, `runs_verified`, `runs_failed` | counts of task runs |
+| `runs` | every task run in order (below) |
+| `events_applied` | the world's events, on mission time |
+| `end_t_ms` | the simulated time at the end |
+| `final_world` | as section 5.4, with the states of 1.8 |
+
+A **run** entry has, in order: `index` (1-based, over all runs), `line` (its `run` line), `attempt` (1, or 2 and more for a
+retry), `task_name`, `run_id`, `t_start_ms`, `t_end_ms`, `until` (`true`, `false` or `unknown` after a run that verified,
+else `null`), and then the run record of section 5 of that run less its `run_record_schema`, `run_record_schema_version`,
+`mode`, `run_id`, `inputs`, `task` and `final_world`, which the mission holds once: `bindings`, `states`, `state`,
+`failure`, `cancelled_before_step`, `safety_limits`, `preconditions`, `goal`, `decisions`, `steps`, `events_applied` (the
+events applied during this run), `end_t_ms` (mission time), `core_outcome`. The `core_outcome` is the outcome of that
+run: the verified outcome of **that task run**, never of the mission.
+
+### 18.5 Exit status of `simulate --mission`
+
+`0` completed or bounded; `4` failed; `5` stopped; `1` the file is not valid; `2` bad arguments (`--task` and `--mission`
+together, an unknown mission, a `--bind` of a name that is not a parameter of the mission); `3` the world is not valid or
+a binding is missing or of the wrong kind. The run record is on stdout in every case that ran.
+
+### 18.6 Core, ROS 2, delegation
+
+`export-goal` and `delegate` refuse a mission with `X607`, and the ROS 2 backend with `S514`: a robot is sent tasks, never a
+mission (M8). `delegate` of a mission is refused, not built (see [robolang-v2.0.md](robolang-v2.0.md) section 7).
+

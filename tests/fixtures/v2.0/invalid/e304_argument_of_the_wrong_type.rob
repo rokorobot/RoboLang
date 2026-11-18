@@ -1,0 +1,16 @@
+// RoboLang v2.0 fixture: invalid
+// expect: error E304 (static) line 14
+// why: an argument has the type of the task's parameter (clarification 3)
+
+robolang 2.0;
+
+task round(robot r, location home, location far) {
+    goal { robot_at r home; }
+    plan { move r to far; wait for 5 s; move r to home; }
+}
+
+mission m(robot r, location home, location far, region quay) {
+    repeat at most 3 runs {
+        run round(r, far, quay);
+    }
+}
