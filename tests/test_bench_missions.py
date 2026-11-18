@@ -303,9 +303,10 @@ def test_the_inexpressible_tasks_each_stay_out_for_one_reason_of_0041():
                        "x03_for_each_go_message": {"message_trigger", "no_message_waits"},
                        "x04_rounds_inside_rounds": {"nested", "repeat_in_repeat"},
                        "x05_every_new_part": {"stream", "choose_object"}}
-    # G-TRIGGER (clarification 14): the time trigger moved out of G-LOOP; the message one stays in G-MSG
+    # G-TRIGGER (clarification 14; 0043 C13): the time and the message triggers
     assert {t: d["gap"] for t, d in INEXPRESSIBLE.items()} == {
-        "x01_never_stop": "G-UNBOUNDED", "x02_every_hour_on_the_hour": "G-TRIGGER", "x03_for_each_go_message": "G-TRIGGER",
+        "x01_never_stop": "G-UNBOUNDED", "x02_every_hour_on_the_hour": "G-TRIGGER",
+        "x03_for_each_go_message": "G-TRIGGER",
         "x04_rounds_inside_rounds": "G-UNBOUNDED", "x05_every_new_part": "G-CHOOSE"}
     # no bound is stated in x01; a bound is stated in the others, so only the named construct stays out
     assert not re.search(r"\d", SET["x01_never_stop"]["prompt"].replace("tug1", ""))
