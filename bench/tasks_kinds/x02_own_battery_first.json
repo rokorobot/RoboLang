@@ -1,0 +1,23 @@
+{
+  "id": "x02_own_battery_first",
+  "prompt": "With crawler1, if its own battery is below 20 percent, drive to charging first; then drive to pump_2.",
+  "world": "bench/worlds/plant_room.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_2": {
+    "decision": "cannot",
+    "category": "inexpressible",
+    "because": "0044 K8"
+  },
+  "gap": "G-SELF",
+  "tags": [
+    "battery",
+    "self_state",
+    "if"
+  ],
+  "why": "The robot's own battery (0044 K8, G-SELF): a reading of the robot itself belongs to iteration I8, which will reuse `fill`. 2.2 reads objects with a sensor, not the robot that carries it.",
+  "attempt_fails_with": "E101"
+}

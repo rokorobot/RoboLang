@@ -29,8 +29,11 @@ name: Benchmark
 # - On demand with `set_only: messages`: only set "messages" (decision 0043: incoming messages; pre-registered against
 #   2.0), full and grammar-only prompts, 3 repeats each, Sonnet and Haiku, each prompt capped at $3 (`--max-usd`), for
 #   information and not gated. Never run per pull request or weekly.
+# - On demand with `set_only: kinds`: only set "kinds" (decision 0044: more measured kinds; pre-registered against
+#   2.1), full and grammar-only prompts, 3 repeats each, Sonnet and Haiku, each prompt capped at $3 (`--max-usd`), for
+#   information and not gated. Never run per pull request or weekly.
 # One string input `set_only` replaces the per-set booleans (GitHub allows at most 10 `workflow_dispatch` inputs):
-# its values are set3, set4, future, regions, actions, clock, missions and messages; empty is the usual weekly or on-demand run.
+# its values are set3, set4, future, regions, actions, clock, missions, messages and kinds; empty is the usual weekly or on-demand run.
 # Needs the repository secret ANTHROPIC_API_KEY; without it (and on pull requests from forks) the
 # job is skipped and nothing is spent.
 
@@ -60,7 +63,7 @@ on:
   workflow_dispatch:
     inputs:
       set_only:
-        description: "Run only one set, not gated: set3 (branching), set4 (failure handling), future (gap probes), regions, actions, clock, missions or messages. Empty: the usual run"
+        description: "Run only one set, not gated: set3 (branching), set4 (failure handling), future (gap probes), regions, actions, clock, missions, messages or kinds. Empty: the usual run"
         type: string
         default: ""
       confirm_tasks:
@@ -155,6 +158,11 @@ jobs:
         run: |
           python bench/run.py --yes --set messages --prompt full --repeats 3 --models claude-sonnet-5-5,claude-haiku-5-5 --max-usd 3 --run-id messages
           python bench/run.py --yes --set messages --prompt minimal --repeats 3 --models claude-sonnet-5-5,claude-haiku-5-5 --max-usd 3 --run-id messages-minimal
+      - name: Run (set kinds, on demand)
+        if: steps.key.outputs.present == 'true' && inputs.set_only == 'kinds'
+        run: |
+          python bench/run.py --yes --set kinds --prompt full --repeats 3 --models claude-sonnet-5-5,claude-haiku-5-5 --max-usd 3 --run-id kinds
+          python bench/run.py --yes --set kinds --prompt minimal --repeats 3 --models claude-sonnet-5-5,claude-haiku-5-5 --max-usd 3 --run-id kinds-minimal
       - name: Run (confirming run, on demand)
         if: steps.key.outputs.present == 'true' && inputs.confirm_tasks != ''
         env:
@@ -201,7 +209,7 @@ jobs:
               echo "" >> summary.md; cat cascade.md >> summary.md
             fi
           done
-          for extra in set3 set3-minimal set4 set4-minimal set5 set5-minimal future regions regions-minimal actions actions-minimal clock clock-minimal missions missions-minimal messages messages-minimal confirm; do
+          for extra in set3 set3-minimal set4 set4-minimal set5 set5-minimal future regions regions-minimal actions actions-minimal clock clock-minimal missions missions-minimal messages messages-minimal kinds kinds-minimal confirm; do
             if [ -d "bench/results/$extra" ]; then
               echo "" >> summary.md
               echo "_For information, not gated: $extra._" >> summary.md

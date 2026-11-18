@@ -52,7 +52,8 @@ def test_the_mix_of_tasks():
     assert Counter(d["group"] for d in SET3.values()) == {"feasible": 12, "decoy": 11, "value": 4, "region": 2,
                                                           "action": 2, "clock": 1,
                                                           "message": 2,  # u11, u12: 2.1 programs (0043)
-                                                          "infeasible": 20, "inexpressible": 8, "clarify": 18}
+                                                          "infeasible": 22,  # u01, u02: erratum P2 (0044 K6)
+                                                          "inexpressible": 6, "clarify": 18}
     for task in SET3.values():
         assert task["world"] in {"bench/worlds/pharmacy.json", "bench/worlds/yard.json", "bench/worlds/kitchen.json",
                                  "bench/worlds/kitchen_values.json",  # u06: knife_1 put down, so the arm can grasp

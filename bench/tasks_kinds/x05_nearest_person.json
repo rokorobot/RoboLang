@@ -1,0 +1,23 @@
+{
+  "id": "x05_nearest_person",
+  "prompt": "With scanbot1, measure how far the nearest person is with cam_scan1 and, if it is less than 2 metres, tell channel \"lead\" \"person close\".",
+  "world": "bench/worlds/stockroom.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_2": {
+    "decision": "cannot",
+    "category": "inexpressible",
+    "because": "0044 K8"
+  },
+  "gap": "G-PROX",
+  "tags": [
+    "person",
+    "distance",
+    "proximity"
+  ],
+  "why": "A reading of a person (0044 K8, G-PROX): a person is not an object of the world, so there is nothing to bind and no sensor can declare a reading of one. Limits and reactions to people nearby are the gap G-PROX.",
+  "attempt_fails_with": "E505"
+}

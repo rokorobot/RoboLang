@@ -1,0 +1,17 @@
+// bench/reference_kinds/i05_count_then_carry_without_a_gripper.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 2.1;
+
+task restock_if_empty(robot r, object shelf, object carton, sensor reader, location aisle, location room) {
+    goal { robot_at r aisle; }
+    plan {
+        move r to aisle;
+        measure r count of shelf using reader as n;                                                 // @reading
+        if n == 0 {                                                                                 // @reading
+            goal { object_at carton aisle; }                                                        // @reading
+            move r to room;                                                                         // @reading
+            grasp r carton;                                                                         // @reading
+            move r to aisle;                                                                        // @reading
+            place r carton at aisle;                                                                // @reading
+        }                                                                                           // @reading
+    }
+}

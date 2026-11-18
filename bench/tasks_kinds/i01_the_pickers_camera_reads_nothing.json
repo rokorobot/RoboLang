@@ -1,0 +1,61 @@
+{
+  "id": "i01_the_pickers_camera_reads_nothing",
+  "prompt": "With picker_s, look at bin_1 with cam_picker and, if it is less than half full, tell channel \"lead\" \"refill bin_1\".",
+  "world": "bench/worlds/stockroom.json",
+  "group": "infeasible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_2": {
+    "decision": "cannot",
+    "category": "infeasible",
+    "because": "S234",
+    "world_2_2": {
+      "sensors": {
+        "cam_picker": {
+          "measures": {}
+        },
+        "cam_scan1": {
+          "measures": {
+            "fill": {
+              "unit": "%",
+              "uncertainty": "2",
+              "contact": false
+            }
+          }
+        },
+        "cam_scan2": {
+          "measures": {
+            "fill": {
+              "unit": "%",
+              "uncertainty": "2",
+              "contact": false
+            }
+          }
+        }
+      },
+      "objects": {
+        "bin_1": {
+          "properties": {
+            "fill": {
+              "value": "20",
+              "unit": "%"
+            }
+          }
+        }
+      }
+    }
+  },
+  "blockers": [
+    "cam_picker"
+  ],
+  "gap": "G-PERCEIVE",
+  "tags": [
+    "fill",
+    "sensor_does_not_measure_the_kind",
+    "no_else_path"
+  ],
+  "why": "Infeasible in 2.2: cam_picker, the only camera on picker_s, measures no kind (S234). `fill` is measured by the cameras of the two scanbots, which are not on picker_s. Under 2.1 the attempt fails earlier, with E217.",
+  "attempt_fails_with": "E101"
+}

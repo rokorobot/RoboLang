@@ -1,0 +1,9 @@
+{
+  "task": "read_gauge",
+  "bindings": {
+    "r": "crawler2",
+    "gauge": "gauge_p9",
+    "cam": "cam_crawler2",
+    "base": "pump_hall"
+  }
+}

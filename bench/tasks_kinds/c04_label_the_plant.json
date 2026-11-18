@@ -1,0 +1,70 @@
+{
+  "id": "c04_label_the_plant",
+  "prompt": "With weeder1, look at plant_7 with cam_weeder1. If it is labelled \"weed\", tell channel \"ops\" \"weed\"; if it is not, tell no one.",
+  "world": "bench/worlds/site.json",
+  "group": "control",
+  "expect": {
+    "decision": "program"
+  },
+  "expect_2_1": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "plant_7 is labelled weed",
+        "goal": [
+          [
+            "rl:robot:weeder1",
+            "located_in",
+            "rl:place:headland"
+          ]
+        ],
+        "messages": [
+          [
+            "ops",
+            "weed"
+          ]
+        ],
+        "world_patch": {}
+      },
+      {
+        "when": "plant_7 is labelled grass: nobody is told",
+        "goal": [
+          [
+            "rl:robot:weeder1",
+            "located_in",
+            "rl:place:headland"
+          ]
+        ],
+        "messages": [],
+        "world_patch": {
+          "objects": {
+            "plant_7": {
+              "properties": {
+                "label": {
+                  "value": "grass"
+                }
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "expect_2_2": {
+    "decision": "program"
+  },
+  "expected_readings": [
+    [
+      "weeder1",
+      "label",
+      "plant_7"
+    ]
+  ],
+  "tags": [
+    "measure",
+    "label",
+    "if",
+    "no_new_kind",
+    "no_confidence"
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "task": "check_pan",
+  "bindings": {
+    "r": "chef_arm",
+    "helper": "helper_arm",
+    "pan": "pan_1",
+    "cam": "cam_chef",
+    "src": "stove",
+    "basin": "sink"
+  }
+}

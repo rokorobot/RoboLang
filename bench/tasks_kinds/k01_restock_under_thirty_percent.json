@@ -1,0 +1,113 @@
+{
+  "id": "k01_restock_under_thirty_percent",
+  "prompt": "With scanbot1, drive to aisle_2 and look at shelf_2 with cam_scan1. If it is less than 30 percent full, tell channel \"lead\" \"restock shelf_2\"; if it is not, tell no one.",
+  "world": "bench/worlds/stockroom.json",
+  "group": "kind",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_2": {
+    "decision": "program",
+    "world_2_2": {
+      "sensors": {
+        "cam_scan1": {
+          "measures": {
+            "fill": {
+              "unit": "%",
+              "uncertainty": "2",
+              "contact": false
+            }
+          }
+        }
+      },
+      "objects": {
+        "shelf_2": {
+          "properties": {
+            "fill": {
+              "value": "12",
+              "unit": "%"
+            }
+          }
+        }
+      }
+    },
+    "expected_readings": [
+      [
+        "scanbot1",
+        "fill",
+        "shelf_2"
+      ]
+    ],
+    "expected_comparisons": [
+      {
+        "kind": "fill",
+        "op": "<",
+        "value": "30",
+        "unit": "%"
+      }
+    ],
+    "paths": [
+      {
+        "when": "shelf_2 is 12 % full: below 30 %, so the lead is told",
+        "goal": [
+          [
+            "rl:robot:scanbot1",
+            "located_in",
+            "rl:place:aisle_2"
+          ]
+        ],
+        "messages": [
+          [
+            "lead",
+            "restock shelf_2"
+          ]
+        ],
+        "world_patch": {
+          "objects": {
+            "shelf_2": {
+              "properties": {
+                "fill": {
+                  "value": "12",
+                  "unit": "%"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "when": "shelf_2 is 70 % full: not below 30 %, nobody is told",
+        "goal": [
+          [
+            "rl:robot:scanbot1",
+            "located_in",
+            "rl:place:aisle_2"
+          ]
+        ],
+        "messages": [],
+        "world_patch": {
+          "objects": {
+            "shelf_2": {
+              "properties": {
+                "fill": {
+                  "value": "70",
+                  "unit": "%"
+                }
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "gap": "G-PERCEIVE",
+  "tags": [
+    "fill",
+    "percent",
+    "if",
+    "threshold_below"
+  ],
+  "why": "A `fill` reading in percent (0044 K1, K2): the comparison `f < 30 %` is a quantity comparison as in 1.6, and the unit token `%` is new. Under 2.1 `fill` is no kind of `measure` (E217).",
+  "attempt_fails_with": "E101"
+}

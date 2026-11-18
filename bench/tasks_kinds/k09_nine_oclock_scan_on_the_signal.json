@@ -1,0 +1,181 @@
+{
+  "id": "k09_nine_oclock_scan_on_the_signal",
+  "prompt": "With scanbot1, wait up to 20 minutes for 09:00 and then up to 5 minutes for channel \"stock\" to send \"SCAN NOW\". Then count the items on shelf_1 with tag_scan1 and, if there are none, tell channel \"lead\" \"shelf_1 is empty\". If the time or the message does not come, stop the job as failed.",
+  "world": "bench/worlds/stockroom.json",
+  "group": "kind",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_2": {
+    "decision": "program",
+    "world_2_2": {
+      "sensors": {
+        "tag_scan1": {
+          "measures": {
+            "count": {
+              "contact": false
+            }
+          }
+        }
+      },
+      "objects": {
+        "shelf_1": {
+          "properties": {
+            "count": {
+              "value": "0"
+            }
+          }
+        }
+      }
+    },
+    "expected_readings": [
+      [
+        "scanbot1",
+        "count",
+        "shelf_1"
+      ]
+    ],
+    "expected_comparisons": [
+      {
+        "kind": "count",
+        "op": "==",
+        "value": "0"
+      }
+    ],
+    "expected_clock": [
+      {
+        "use": "wait",
+        "reading": "time",
+        "op": ">=",
+        "value": "09:00",
+        "timeout": "20 min"
+      }
+    ],
+    "expected_message_waits": [
+      {
+        "use": "wait",
+        "channel": "stock",
+        "text": "SCAN NOW",
+        "timeout": "5 min"
+      }
+    ],
+    "paths": [
+      {
+        "when": "SCAN NOW arrives at 100 s (counted when the wait is reached, S2); shelf_1 holds 0: lead told",
+        "goal": [
+          [
+            "rl:robot:scanbot1",
+            "located_in",
+            "rl:place:aisle_1"
+          ]
+        ],
+        "messages": [
+          [
+            "lead",
+            "shelf_1 is empty"
+          ]
+        ],
+        "end_ms": "600000",
+        "world_patch": {
+          "objects": {
+            "shelf_1": {
+              "properties": {
+                "count": {
+                  "value": "0"
+                }
+              }
+            }
+          },
+          "messages": [
+            {
+              "at": {
+                "value": "100",
+                "unit": "s"
+              },
+              "channel": "stock",
+              "text": "SCAN NOW",
+              "from": "rl:agent:store-ctl"
+            }
+          ]
+        }
+      },
+      {
+        "when": "SCAN NOW arrives at 700 s; shelf_1 holds 9: nobody is told",
+        "goal": [
+          [
+            "rl:robot:scanbot1",
+            "located_in",
+            "rl:place:aisle_1"
+          ]
+        ],
+        "messages": [],
+        "end_ms": "700000",
+        "world_patch": {
+          "objects": {
+            "shelf_1": {
+              "properties": {
+                "count": {
+                  "value": "9"
+                }
+              }
+            }
+          },
+          "messages": [
+            {
+              "at": {
+                "value": "700",
+                "unit": "s"
+              },
+              "channel": "stock",
+              "text": "SCAN NOW",
+              "from": "rl:agent:store-ctl"
+            }
+          ]
+        }
+      },
+      {
+        "when": "no message: the wait for SCAN NOW times out at 900 s (600 s + 5 min)",
+        "fails": true,
+        "end_ms": "900000",
+        "world_patch": {
+          "objects": {
+            "shelf_1": {
+              "properties": {
+                "count": {
+                  "value": "0"
+                }
+              }
+            }
+          },
+          "messages": []
+        }
+      }
+    ]
+  },
+  "gap": "G-PERCEIVE",
+  "tags": [
+    "count",
+    "equals",
+    "clock_time",
+    "message_wait",
+    "if",
+    "1_9_feature",
+    "2_1_feature"
+  ],
+  "why": "A `count` reading after a 1.9 clock wait (09:00 is 600 s after the 08:50 start) and a 2.1 message wait: both waits must stay. Under 2.1 `count` is no kind (E217); the program without its reading keeps both waits.",
+  "attempt_fails_with": "E217",
+  "attempt_world_patch": {
+    "messages": [
+      {
+        "at": {
+          "value": "100",
+          "unit": "s"
+        },
+        "channel": "stock",
+        "text": "SCAN NOW",
+        "from": "rl:agent:store-ctl"
+      }
+    ]
+  }
+}

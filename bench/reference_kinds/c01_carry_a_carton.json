@@ -1,0 +1,9 @@
+{
+  "task": "carry_carton",
+  "bindings": {
+    "r": "picker_s",
+    "item": "carton_1",
+    "src": "backroom",
+    "dst": "checkout"
+  }
+}

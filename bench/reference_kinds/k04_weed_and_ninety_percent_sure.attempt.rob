@@ -1,0 +1,16 @@
+// bench/reference_kinds/k04_weed_and_ninety_percent_sure.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 2.1;
+
+task weed_or_skip(robot r, object plant, sensor cam, location here) {
+    goal { robot_at r here; }
+    plan {
+        move r to here;
+        measure r label of plant using cam as what;                                                 // @reading
+        measure r confidence of plant using cam as sure;                                            // @reading
+        if what == "weed" and sure >= 90 % {                                                        // @reading
+            communicate r to "ops" with "weed confirmed";                                           // @reading
+        } else {                                                                                    // @reading
+            communicate r to "ops" with "plant_7 skipped";                                          // @reading
+        }                                                                                           // @reading
+    }
+}

@@ -1,0 +1,13 @@
+// bench/reference_kinds/x05_nearest_person.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 2.1;
+
+task person_close(robot r, object person, sensor cam, location aisle) {
+    goal { robot_at r aisle; }
+    plan {
+        move r to aisle;
+        measure r distance of person using cam as d;                                                // @reading
+        if d < 2 m {                                                                                // @reading
+            communicate r to "lead" with "person close";                                            // @reading
+        }                                                                                           // @reading
+    }
+}

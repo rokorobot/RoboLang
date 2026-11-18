@@ -1,0 +1,119 @@
+{
+  "id": "k08_open_the_relief_valve",
+  "prompt": "With crawler1, drive to pump_3, read gauge_p3 with cam_crawler1 and, if the pressure is above 6 bar, open relief_valve_3; if it is not, leave the valve closed.",
+  "world": "bench/worlds/plant_room.json",
+  "group": "kind",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_2": {
+    "decision": "program",
+    "world_2_2": {
+      "sensors": {
+        "cam_crawler1": {
+          "measures": {
+            "pressure": {
+              "unit": "bar",
+              "uncertainty": "0.1",
+              "contact": false
+            }
+          }
+        }
+      },
+      "objects": {
+        "gauge_p3": {
+          "properties": {
+            "pressure": {
+              "value": "7",
+              "unit": "bar"
+            }
+          }
+        }
+      }
+    },
+    "expected_readings": [
+      [
+        "crawler1",
+        "pressure",
+        "gauge_p3"
+      ]
+    ],
+    "expected_comparisons": [
+      {
+        "kind": "pressure",
+        "op": ">",
+        "value": "6",
+        "unit": "bar"
+      }
+    ],
+    "expected_actions": [
+      {
+        "robot": "crawler1",
+        "action": "open",
+        "target": "relief_valve_3"
+      }
+    ],
+    "paths": [
+      {
+        "when": "gauge_p3 reads 7 bar: above 6 bar, the valve is opened",
+        "goal": [
+          [
+            "rl:robot:crawler1",
+            "located_in",
+            "rl:place:pump_3"
+          ],
+          [
+            "rl:thing:relief_valve_3",
+            "in_state",
+            "open"
+          ]
+        ],
+        "world_patch": {
+          "objects": {
+            "gauge_p3": {
+              "properties": {
+                "pressure": {
+                  "value": "7",
+                  "unit": "bar"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "when": "gauge_p3 reads 5 bar: not above 6 bar, the valve stays closed",
+        "goal": [
+          [
+            "rl:robot:crawler1",
+            "located_in",
+            "rl:place:pump_3"
+          ]
+        ],
+        "world_patch": {
+          "objects": {
+            "gauge_p3": {
+              "properties": {
+                "pressure": {
+                  "value": "5",
+                  "unit": "bar"
+                }
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "gap": "G-PERCEIVE",
+  "tags": [
+    "pressure",
+    "bar",
+    "if",
+    "declared_action",
+    "1_8_feature"
+  ],
+  "why": "A reading with a 1.8 declared action (`do r open valve`): the `do` is conditional on the reading. Under 2.1 `pressure` is no kind (E217); the program without its reading keeps the drive.",
+  "attempt_fails_with": "E217"
+}

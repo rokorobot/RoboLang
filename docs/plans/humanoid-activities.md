@@ -84,6 +84,7 @@ before.
 
 | Date | Note | Added | Removed | Changed | Ranking |
 |---|---|---|---|---|---|
+| 2026-11-18 | I6 L3: set 11 kinds pre-registered (24 tasks) | — | — | — | 1. action 4.52 · 2. perception 2.78 · 3. cooperation 1.07 · 4. communication 0.95 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
 | 2026-11-18 | L6 of I5: G-MSG closed by RoboLang 2.1 messages | — | — | — | 1. action 4.52 · 2. perception 2.78 · 3. cooperation 1.07 · 4. communication 0.95 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
 | 2026-11-18 | I5 L5: 2.1 accepted; x05 declined again (erratum N3, G-EVENTGOAL out) | — | — | — | 1. action 4.52 · 2. perception 2.78 · 3. cooperation 1.07 · 4. communication 0.95 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
 | 2026-11-18 | I5 L4: RoboLang 2.1 built and taught | — | — | — | 1. action 4.52 · 2. perception 2.78 · 3. cooperation 1.07 · 4. communication 0.95 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
@@ -162,8 +163,8 @@ before.
 
 | Language gap | Scope | Priority | Near | Benchmark tasks |
 |---|---|---|---|---|
-| `G-CHOOSE` Choosing objects or robots at run time | open | 5.23 | yes | 7 |
-| `G-PERCEIVE` Conditions on perceived properties (dirty, damaged) | open | 4.94 | yes | 4 |
+| `G-CHOOSE` Choosing objects or robots at run time | open | 5.23 | yes | 8 |
+| `G-PERCEIVE` Conditions on perceived properties (dirty, damaged) | open | 4.94 | yes | 18 |
 | `G-OBSERVE` Tasks that only observe (inspect, scan, wait) and ask for no end state, so a goal must not be invented | open | 0.00 | — | 0 |
 
 ## Cooperation
@@ -234,7 +235,7 @@ before.
 
 | Language gap | Scope | Priority | Near | Benchmark tasks |
 |---|---|---|---|---|
-| `G-CALC` Arithmetic, counting and text built from values | open | 1.55 | yes | 12 |
+| `G-CALC` Arithmetic, counting and text built from values | open | 1.55 | yes | 13 |
 | `G-CLOCK` Clock readings and times of day | closed | 0.00 | — | 0 |
 | `G-DATE` Dates and times on another day: tomorrow, a weekday, a calendar date | open | 0.00 | — | 2 |
 | `G-FALLBACK` A different end state counts as done | out | 0.00 | — | 1 |
@@ -253,7 +254,7 @@ before.
 
 | Language gap | Scope | Priority | Near | Benchmark tasks |
 |---|---|---|---|---|
-| `G-SELF` The robot's own state as readings and conditions: battery level, health, faults; acting on them and asking for service | open | 1.50 | yes | 4 |
+| `G-SELF` The robot's own state as readings and conditions: battery level, health, faults; acting on them and asking for service | open | 1.50 | yes | 5 |
 
 ## Safety
 
@@ -268,7 +269,7 @@ before.
 | Language gap | Scope | Priority | Near | Benchmark tasks |
 |---|---|---|---|---|
 | `G-FORCE` Force limits and gentle handling | open | 0.98 | — | 2 |
-| `G-PROX` Limits and reactions that depend on people nearby: slow, stop or yield when a person is within a distance | open | 0.97 | — | 3 |
+| `G-PROX` Limits and reactions that depend on people nearby: slow, stop or yield when a person is within a distance | open | 0.97 | — | 4 |
 | `G-PATH` Staying inside or outside a region while moving | closed | 0.00 | — | 0 |
 | `G-STEPLIMIT` A region or speed limit on one step or one stretch of a route, not the whole task | open | 0.00 | — | 1 |
 | `G-WORKSPACE` Limits on the arm's workspace, not only on where the robot drives | open | 0.00 | — | 1 |

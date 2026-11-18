@@ -1,0 +1,9 @@
+{
+  "task": "check_wear",
+  "bindings": {
+    "r": "scanbot1",
+    "shelf": "shelf_1",
+    "cam": "cam_scan1",
+    "aisle": "aisle_1"
+  }
+}

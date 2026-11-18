@@ -1,0 +1,9 @@
+{
+  "task": "person_close",
+  "bindings": {
+    "r": "scanbot1",
+    "person": "person_1",
+    "cam": "cam_scan1",
+    "aisle": "aisle_1"
+  }
+}

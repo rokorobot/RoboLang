@@ -1,0 +1,21 @@
+// bench/reference_ask/u02_if_damaged.attempt.rob: hand-written (erratum K6: cam_c2 measures no `label`, so it fails with S234)
+robolang 2.1;
+
+task scan_container(robot r, object box, sensor cam, location berth, location shop, location bay) {
+    plan {
+        measure r label of box using cam as scan;
+        if scan == "damaged" {
+            goal { object_at box shop; }
+            move r to berth;
+            grasp r box;
+            move r to shop;
+            place r box at shop;
+        } else {
+            goal { object_at box bay; }
+            move r to berth;
+            grasp r box;
+            move r to bay;
+            place r box at bay;
+        }
+    }
+}

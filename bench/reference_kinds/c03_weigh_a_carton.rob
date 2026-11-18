@@ -1,0 +1,11 @@
+// bench/reference_kinds/c03_weigh_a_carton.rob: hand-written reference
+robolang 2.1;
+
+task weigh_carton(robot r, object item, sensor scale, location room) {
+    goal { robot_at r room; }
+    plan {
+        move r to room;
+        measure r mass of item using scale as m;
+        communicate r to "lead" with m;
+    }
+}

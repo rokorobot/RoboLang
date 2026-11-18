@@ -1,0 +1,13 @@
+// bench/reference_kinds/i02_the_camera_is_on_the_other_robot.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 2.1;
+
+task check_shelf(robot r, object shelf, sensor cam, location aisle) {
+    goal { robot_at r aisle; }
+    plan {
+        move r to aisle;
+        measure r fill of shelf using cam as f;                                                     // @reading
+        if f < 10 % {                                                                               // @reading
+            communicate r to "lead" with "restock shelf_3";                                         // @reading
+        }                                                                                           // @reading
+    }
+}

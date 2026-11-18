@@ -1,0 +1,18 @@
+// bench/reference_ask/u01_if_dirty.attempt.rob: hand-written (erratum K6: cam_chef measures no `label`, so it fails with S234)
+robolang 2.1;
+
+task check_pan(robot r, robot helper, object pan, sensor cam, location src, location basin) {
+    plan {
+        measure r label of pan using cam as state;
+        if state == "dirty" {
+            goal { object_at pan basin; }
+            move helper to src;
+            grasp helper pan;
+            move helper to basin;
+            place helper pan at basin;
+        } else {
+            goal { object_at pan src; }
+            move r to src;
+        }
+    }
+}

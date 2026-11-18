@@ -1,0 +1,11 @@
+{
+  "task": "carry_counted",
+  "bindings": {
+    "r": "picker_s",
+    "bin": "bin_1",
+    "carton": "carton_1",
+    "cam": "cam_picker",
+    "room": "backroom",
+    "out": "checkout"
+  }
+}

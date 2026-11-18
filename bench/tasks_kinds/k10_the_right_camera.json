@@ -1,0 +1,144 @@
+{
+  "id": "k10_the_right_camera",
+  "prompt": "With scanbot2, read how full shelf_3 is with its own camera and, if it is less than 10 percent full, tell channel \"lead\" \"shelf_3 is nearly empty\"; if it is not, tell no one.",
+  "world": "bench/worlds/stockroom.json",
+  "group": "kind",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_2": {
+    "decision": "program",
+    "world_2_2": {
+      "sensors": {
+        "cam_scan1": {
+          "measures": {
+            "fill": {
+              "unit": "%",
+              "uncertainty": "2",
+              "contact": false
+            }
+          }
+        },
+        "tag_scan1": {
+          "measures": {
+            "count": {
+              "contact": false
+            }
+          }
+        },
+        "cam_scan2": {
+          "measures": {
+            "fill": {
+              "unit": "%",
+              "uncertainty": "2",
+              "contact": false
+            }
+          }
+        },
+        "tag_scan2": {
+          "measures": {
+            "count": {
+              "contact": false
+            }
+          }
+        }
+      },
+      "objects": {
+        "shelf_3": {
+          "properties": {
+            "fill": {
+              "value": "6",
+              "unit": "%"
+            },
+            "count": {
+              "value": "3"
+            }
+          }
+        }
+      }
+    },
+    "expected_readings": [
+      [
+        "scanbot2",
+        "fill",
+        "shelf_3"
+      ]
+    ],
+    "expected_comparisons": [
+      {
+        "kind": "fill",
+        "op": "<",
+        "value": "10",
+        "unit": "%"
+      }
+    ],
+    "expected_sensors": [
+      "cam_scan2"
+    ],
+    "paths": [
+      {
+        "when": "shelf_3 is 6 % full: below 10 %",
+        "goal": [
+          [
+            "rl:robot:scanbot2",
+            "located_in",
+            "rl:place:aisle_3"
+          ]
+        ],
+        "messages": [
+          [
+            "lead",
+            "shelf_3 is nearly empty"
+          ]
+        ],
+        "world_patch": {
+          "objects": {
+            "shelf_3": {
+              "properties": {
+                "fill": {
+                  "value": "6",
+                  "unit": "%"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "when": "shelf_3 is 45 % full: not below 10 %",
+        "goal": [
+          [
+            "rl:robot:scanbot2",
+            "located_in",
+            "rl:place:aisle_3"
+          ]
+        ],
+        "messages": [],
+        "world_patch": {
+          "objects": {
+            "shelf_3": {
+              "properties": {
+                "fill": {
+                  "value": "45",
+                  "unit": "%"
+                }
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "gap": "G-PERCEIVE",
+  "tags": [
+    "fill",
+    "percent",
+    "if",
+    "decoy",
+    "near_miss_sensor",
+    "sensor_on_another_robot"
+  ],
+  "why": "A decoy: scanbot1 has `cam_scan1` (also `fill`), `tag_scan1` and scanbot2 has `tag_scan2` (a `count` sensor); only `cam_scan2` on scanbot2 reads `fill` for this robot. Using `cam_scan1` fails (S231), `tag_scan2` fails (S234).",
+  "attempt_fails_with": "E101"
+}

@@ -1,0 +1,114 @@
+{
+  "id": "k05_pump_one_below_450_kpa",
+  "prompt": "With crawler2, drive to pump_1 and read gauge_p1 with cam_crawler2. If the pressure is below 450 kPa, tell channel \"maintenance\" \"pump 1 low pressure\"; if it is not, tell no one.",
+  "world": "bench/worlds/plant_room.json",
+  "group": "kind",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_2": {
+    "decision": "program",
+    "world_2_2": {
+      "sensors": {
+        "cam_crawler2": {
+          "measures": {
+            "pressure": {
+              "unit": "bar",
+              "uncertainty": "0.05",
+              "contact": false
+            }
+          }
+        }
+      },
+      "objects": {
+        "gauge_p1": {
+          "properties": {
+            "pressure": {
+              "value": "4.2",
+              "unit": "bar"
+            }
+          }
+        }
+      }
+    },
+    "expected_readings": [
+      [
+        "crawler2",
+        "pressure",
+        "gauge_p1"
+      ]
+    ],
+    "expected_comparisons": [
+      {
+        "kind": "pressure",
+        "op": "<",
+        "value": "450",
+        "unit": "kPa"
+      }
+    ],
+    "paths": [
+      {
+        "when": "gauge_p1 reads 4.2 bar = 420 kPa: below 450 kPa",
+        "goal": [
+          [
+            "rl:robot:crawler2",
+            "located_in",
+            "rl:place:pump_1"
+          ]
+        ],
+        "messages": [
+          [
+            "maintenance",
+            "pump 1 low pressure"
+          ]
+        ],
+        "world_patch": {
+          "objects": {
+            "gauge_p1": {
+              "properties": {
+                "pressure": {
+                  "value": "4.2",
+                  "unit": "bar"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "when": "gauge_p1 reads 5.5 bar = 550 kPa: not below 450 kPa",
+        "goal": [
+          [
+            "rl:robot:crawler2",
+            "located_in",
+            "rl:place:pump_1"
+          ]
+        ],
+        "messages": [],
+        "world_patch": {
+          "objects": {
+            "gauge_p1": {
+              "properties": {
+                "pressure": {
+                  "value": "5.5",
+                  "unit": "bar"
+                }
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "gap": "G-PERCEIVE",
+  "tags": [
+    "pressure",
+    "kpa",
+    "bar",
+    "conversion",
+    "if"
+  ],
+  "why": "Units of one kind convert exactly (0044 K2: 1 bar = 100 kPa): the sensor reads in bar and the request limits in kPa. `4.2 bar < 450 kPa` is true, and a model that writes 450 against a bar reading (or 4.5 bar) differs only by a unit. Under 2.1 `pressure` is no kind (E217).",
+  "attempt_fails_with": "E217"
+}

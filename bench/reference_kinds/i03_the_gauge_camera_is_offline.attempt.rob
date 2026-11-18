@@ -1,0 +1,13 @@
+// bench/reference_kinds/i03_the_gauge_camera_is_offline.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 2.1;
+
+task read_gauge(robot r, object gauge, sensor cam, location pump) {
+    goal { robot_at r pump; }
+    plan {
+        move r to pump;
+        measure r pressure of gauge using cam as p;                                                 // @reading
+        if p > 6 bar {                                                                              // @reading
+            communicate r to "maintenance" with "pump 1 over pressure";                             // @reading
+        }                                                                                           // @reading
+    }
+}

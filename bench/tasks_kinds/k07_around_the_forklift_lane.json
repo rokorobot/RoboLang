@@ -1,0 +1,120 @@
+{
+  "id": "k07_around_the_forklift_lane",
+  "prompt": "With scanbot1, drive from aisle_1 to aisle_3 without ever entering forklift_lane, look at shelf_3 with cam_scan1 and, if it is less than 25 percent full, tell channel \"lead\" \"shelf_3 is low\".",
+  "world": "bench/worlds/stockroom.json",
+  "group": "kind",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_2": {
+    "decision": "program",
+    "world_2_2": {
+      "sensors": {
+        "cam_scan1": {
+          "measures": {
+            "fill": {
+              "unit": "%",
+              "uncertainty": "2",
+              "contact": false
+            }
+          }
+        }
+      },
+      "objects": {
+        "shelf_3": {
+          "properties": {
+            "fill": {
+              "value": "15",
+              "unit": "%"
+            }
+          }
+        }
+      }
+    },
+    "expected_readings": [
+      [
+        "scanbot1",
+        "fill",
+        "shelf_3"
+      ]
+    ],
+    "expected_comparisons": [
+      {
+        "kind": "fill",
+        "op": "<",
+        "value": "25",
+        "unit": "%"
+      }
+    ],
+    "expected_limits": [
+      [
+        "no_go_region",
+        "forklift_lane"
+      ]
+    ],
+    "paths": [
+      {
+        "when": "shelf_3 is 15 % full: below 25 %",
+        "goal": [
+          [
+            "rl:robot:scanbot1",
+            "located_in",
+            "rl:place:aisle_3"
+          ]
+        ],
+        "messages": [
+          [
+            "lead",
+            "shelf_3 is low"
+          ]
+        ],
+        "world_patch": {
+          "objects": {
+            "shelf_3": {
+              "properties": {
+                "fill": {
+                  "value": "15",
+                  "unit": "%"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "when": "shelf_3 is 60 % full: not below 25 %",
+        "goal": [
+          [
+            "rl:robot:scanbot1",
+            "located_in",
+            "rl:place:aisle_3"
+          ]
+        ],
+        "messages": [],
+        "world_patch": {
+          "objects": {
+            "shelf_3": {
+              "properties": {
+                "fill": {
+                  "value": "60",
+                  "unit": "%"
+                }
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "gap": "G-PERCEIVE",
+  "tags": [
+    "fill",
+    "percent",
+    "if",
+    "region_limit",
+    "1_7_feature"
+  ],
+  "why": "A reading with a 1.7 region limit (`@safety no_go_region`): the limit must stay and the `fill` reading must be added to it. Under 2.1 `fill` is no kind (E217); the program without its reading keeps the limit.",
+  "attempt_fails_with": "E101"
+}

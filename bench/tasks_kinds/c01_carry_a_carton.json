@@ -1,0 +1,23 @@
+{
+  "id": "c01_carry_a_carton",
+  "prompt": "With picker_s, carry carton_1 from the backroom to the checkout.",
+  "world": "bench/worlds/stockroom.json",
+  "group": "control",
+  "expect": {
+    "decision": "program"
+  },
+  "expect_2_2": {
+    "decision": "program"
+  },
+  "expected_goal": [
+    [
+      "rl:thing:carton_1",
+      "located_in",
+      "rl:place:checkout"
+    ]
+  ],
+  "tags": [
+    "pick_place",
+    "no_reading"
+  ]
+}

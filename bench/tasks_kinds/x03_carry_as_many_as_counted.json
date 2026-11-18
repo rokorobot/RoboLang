@@ -1,0 +1,23 @@
+{
+  "id": "x03_carry_as_many_as_counted",
+  "prompt": "With picker_s, count the items on bin_1 with cam_picker and carry that many cartons from the backroom to the checkout.",
+  "world": "bench/worlds/stockroom.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_2": {
+    "decision": "cannot",
+    "category": "inexpressible",
+    "because": "0044 K8"
+  },
+  "gap": "G-CHOOSE",
+  "tags": [
+    "count",
+    "run_time_choice",
+    "each"
+  ],
+  "why": "Counting objects and acting on each of them (0044 K8, G-CHOOSE): the number of carry steps would come from the reading, and a plan has a fixed number of steps. 2.2 can compare a count, not repeat or choose by it.",
+  "attempt_fails_with": "E217"
+}

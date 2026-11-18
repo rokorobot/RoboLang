@@ -1,0 +1,107 @@
+{
+  "id": "k03_shelf_three_out_of_stock",
+  "prompt": "With scanbot1, drive to aisle_3, count the items on shelf_3 with tag_scan1 and, if there are none, tell channel \"lead\" \"shelf_3 is out of stock\".",
+  "world": "bench/worlds/stockroom.json",
+  "group": "kind",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_2": {
+    "decision": "program",
+    "world_2_2": {
+      "sensors": {
+        "tag_scan1": {
+          "measures": {
+            "count": {
+              "contact": false
+            }
+          }
+        }
+      },
+      "objects": {
+        "shelf_3": {
+          "properties": {
+            "count": {
+              "value": "0"
+            }
+          }
+        }
+      }
+    },
+    "expected_readings": [
+      [
+        "scanbot1",
+        "count",
+        "shelf_3"
+      ]
+    ],
+    "expected_comparisons": [
+      {
+        "kind": "count",
+        "op": "==",
+        "value": "0"
+      }
+    ],
+    "paths": [
+      {
+        "when": "shelf_3 holds 0 items: out of stock",
+        "goal": [
+          [
+            "rl:robot:scanbot1",
+            "located_in",
+            "rl:place:aisle_3"
+          ]
+        ],
+        "messages": [
+          [
+            "lead",
+            "shelf_3 is out of stock"
+          ]
+        ],
+        "world_patch": {
+          "objects": {
+            "shelf_3": {
+              "properties": {
+                "count": {
+                  "value": "0"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "when": "shelf_3 holds 14 items: nobody is told",
+        "goal": [
+          [
+            "rl:robot:scanbot1",
+            "located_in",
+            "rl:place:aisle_3"
+          ]
+        ],
+        "messages": [],
+        "world_patch": {
+          "objects": {
+            "shelf_3": {
+              "properties": {
+                "count": {
+                  "value": "14"
+                }
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "gap": "G-PERCEIVE",
+  "tags": [
+    "count",
+    "equals",
+    "out_of_stock",
+    "if"
+  ],
+  "why": "A `count` reading, exact (0044 K1, K3): `count == 0` is allowed because a count has uncertainty 0 and takes `==`. Under 2.1 `count` is no kind of `measure` (E217).",
+  "attempt_fails_with": "E217"
+}

@@ -1,0 +1,12 @@
+// bench/reference_kinds/c01_carry_a_carton.rob: hand-written reference
+robolang 2.1;
+
+task carry_carton(robot r, object item, location src, location dst) {
+    goal { object_at item dst; }
+    plan {
+        move r to src;
+        grasp r item;
+        move r to dst;
+        place r item at dst;
+    }
+}

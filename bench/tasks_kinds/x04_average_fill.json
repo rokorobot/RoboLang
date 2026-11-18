@@ -1,0 +1,23 @@
+{
+  "id": "x04_average_fill",
+  "prompt": "With scanbot1, read how full shelf_1 and shelf_2 are with cam_scan1 and tell channel \"lead\" the average.",
+  "world": "bench/worlds/stockroom.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_2": {
+    "decision": "cannot",
+    "category": "inexpressible",
+    "because": "0044 K8"
+  },
+  "gap": "G-CALC",
+  "tags": [
+    "fill",
+    "arithmetic",
+    "average"
+  ],
+  "why": "Arithmetic on readings (0044 K8, G-CALC): an average of two readings has no representation, as in 1.6's `x01_average`. Reading both is possible in 2.2; computing is not.",
+  "attempt_fails_with": "E217"
+}

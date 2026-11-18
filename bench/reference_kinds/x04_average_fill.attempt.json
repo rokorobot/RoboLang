@@ -1,0 +1,10 @@
+{
+  "task": "report_fill",
+  "bindings": {
+    "r": "scanbot1",
+    "first": "shelf_1",
+    "second": "shelf_2",
+    "cam": "cam_scan1",
+    "aisle": "aisle_1"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "task": "check_tank",
+  "bindings": {
+    "r": "crawler2",
+    "tank": "tank_2",
+    "cam": "cam_crawler2",
+    "farm": "tank_farm"
+  }
+}

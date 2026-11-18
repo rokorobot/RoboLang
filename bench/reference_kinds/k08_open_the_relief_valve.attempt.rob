@@ -1,0 +1,14 @@
+// bench/reference_kinds/k08_open_the_relief_valve.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 2.1;
+
+task relieve(robot r, object gauge, object valve, sensor cam, location pump) {
+    goal { robot_at r pump; }
+    plan {
+        move r to pump;
+        measure r pressure of gauge using cam as p;                                                 // @reading
+        if p > 6 bar {                                                                              // @reading
+            goal { in_state valve "open"; }                                                         // @reading
+            do r open valve;                                                                        // @reading
+        }                                                                                           // @reading
+    }
+}

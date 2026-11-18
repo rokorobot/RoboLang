@@ -1,0 +1,14 @@
+// bench/reference_kinds/k07_around_the_forklift_lane.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 2.1;
+
+task scan_far_shelf(robot r, object shelf, sensor cam, location far, region lane) {
+    @safety no_go_region lane;
+    goal { robot_at r far; }
+    plan {
+        move r to far;
+        measure r fill of shelf using cam as f;                                                     // @reading
+        if f < 25 % {                                                                               // @reading
+            communicate r to "lead" with "shelf_3 is low";                                          // @reading
+        }                                                                                           // @reading
+    }
+}

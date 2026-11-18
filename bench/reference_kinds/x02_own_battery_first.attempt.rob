@@ -1,0 +1,13 @@
+// bench/reference_kinds/x02_own_battery_first.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 2.1;
+
+task patrol(robot r, sensor cam, location charger, location pump) {
+    goal { robot_at r pump; }
+    plan {
+        measure r fill of r using cam as b;                                                         // @reading
+        if b < 20 % {                                                                               // @reading
+            move r to charger;                                                                      // @reading
+        }                                                                                           // @reading
+        move r to pump;
+    }
+}
