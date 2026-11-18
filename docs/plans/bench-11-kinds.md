@@ -1,6 +1,6 @@
 # Benchmark set 11: kinds (pre-registration draft)
 
-**Status:** draft for the owner (2026-11-18). Decision [0044](../../spec/decisions/0044-more-measured-kinds.md) is approved
+**Status:** **APPROVED by the owner, 2026-11-18** (tasks, labels, clarifications D1–D14 in 0044, bounds B1–B9); frozen. Decision [0044](../../spec/decisions/0044-more-measured-kinds.md) is approved
 (K1-K9); this plan is its "Pre-registration (L3)" section made concrete: 24 tasks, labels for 2.1 (baseline) and 2.2
 (acceptance), placeholder bounds B1-B9 and the open points below. `tests/test_bench_kinds.py`; run with `python bench/run.py
 --set kinds`. Modelled on set 10, [bench-10-messages.md](bench-10-messages.md), and set 5 (the 1.6 measured values this set
@@ -127,14 +127,12 @@ present (S213); `i05` the reading is possible and the carry is not (no gripper).
 | `u01_if_dirty`, `u02_if_damaged` (set "ask") | **`cannot / infeasible`** (erratum P2 now) | the same | K6: their worlds have no label sensor (S234), so under 1.6 the 1.3 reason is false. The old label is kept as `expect_1_3`; each has an attempt that fails with `S234` and a `fix_patch` (a label sensor and a label) that makes it succeed. They leave G-PERCEIVE (an infeasible task is in no gap) |
 | `f_perceive_shelf_fill`, `f_perceive_weed_confidence` (R3 probes) | `cannot / inexpressible` | L4 relabels (programs, or infeasible: open point 1) | they stay in set "future" and in G-PERCEIVE until then |
 
-## Acceptance bounds (proposed with the baseline in hand, rule 6; for the owner)
+## Acceptance bounds (APPROVED by the owner 2026-11-18, with the baseline in hand, rule 6)
 
 Baseline: [bench-set11-baseline.md](../evidence/bench-set11-baseline.md) (2026-11-18, 2.1, 3 repeats). Full prompt: no false
 programs; grammar-only: `k04` written as a label check alone (2/30 for each model).
 
-Baseline: not yet run (2.1, 3 repeats, full and grammar-only prompts). The smallest step is one answer (rule 6). The acceptance
-run repeats the baseline under 2.2. A bound that the baseline makes pointless (for instance a rate that 2.1 cannot reach) is
-replaced when the baseline is read, as sets 9 and 10 were.
+The acceptance run repeats the baseline under 2.2.
 
 | # | Group | Measure | Baseline (2.1) | Proposed bound (2.2, per model) |
 |---|---|---|---|---|
@@ -144,7 +142,7 @@ replaced when the baseline is read, as sets 9 and 10 were.
 | B4 | 5 infeasible tasks | decision `cannot`; no valid program that drops the reading and succeeds (`inspect`, a `label` stand-in, nothing) | 15/15 `cannot` for each (placeholder) | at least 14/15, and 0 that drop the reading and succeed |
 | B5 | 4 `control` | right decision and **no new-kind reading added**, full prompt (`c04` is the test: no `confidence`) | 12/12 for each (placeholder) | at least 11/12 |
 | B6 | sets 1 and 2 (standing) | `gate.json`; decision accuracy | latest run | the gate passes; `decision_correct` drops at most 2 points or one answer, whichever is larger |
-| B7 | economy | statements, kinds, unit tokens, units, reserved words, world fields, codes | - | 0 statements, 4 kinds (`fill`, `confidence`, `pressure`, `count`), 1 unit token `%`, 3 pressure units, 0 new top-level declarations, 0 new world fields (the sensor `measures` and object `properties` exist), about 3 new codes (0044 "Economy"); the kind names as reserved words are open point 11 |
+| B7 | economy | statements, kinds, unit tokens, units, reserved words, world fields, codes | - | 0 statements, 4 kinds (`fill`, `confidence`, `pressure`, `count`), 1 unit token `%`, 3 pressure units, 0 new top-level declarations, 0 new world fields (the sensor `measures` and object `properties` exist), about 3 new codes (0044 "Economy"); the kind names are not reserved words (D10) |
 | B8 | 10 `kind` programs | **reading replaced silently**: a valid, succeeding 2.1-style program that uses `inspect`, a `label` stand-in, or nothing instead of the requested reading; full prompt | 0/30 for each (placeholder) | at most 1/30 |
 | B9 | 10 `kind` programs | **kind or threshold changed**: a reading of another kind (`count` for `fill`, `label` where `confidence` is asked, a different sensor kind), a comparison whose operator, limit or unit differ after conversion (`kPa` against `bar` off by a factor, `>=` for `>`), `confidence` read without the `label` (`k04`), the limit moved to avoid an unknown (`k06`), the wrong sensor (`k10`); full prompt | not expressible | at most 1/30 |
 
@@ -164,7 +162,7 @@ or weekly runs):
 The estimate is a guess (`bench/README.md`) and is above the $3 cap: the cap stops new requests, and a rerun with the same
 `--run-id` resumes. The earlier sets cost well below their estimates. Nothing was sent.
 
-## Open points: where 0044 does not decide what a label needs (owner, before L4)
+## Open points: where 0044 does not decide what a label needs (answered by D1–D14 in 0044, approved 2026-11-18)
 
 Each point names the labels that depend on it. The label uses the reading given first.
 
