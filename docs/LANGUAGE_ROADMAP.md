@@ -70,5 +70,6 @@ Frozen, dated copies with a git tag: [roadmap-snapshots/](roadmap-snapshots/READ
 | I4 G-LOOP (mission layer) | L1–L5 done (accepted 2026-11-18 with one exception, [acceptance](evidence/bench-2-0-acceptance.md): repetition replaced silently 4/30 → 0/30). **L6:** G-LOOP closed in the atlas, G-UNBOUNDED split off (out, 0041 M2/M7); release 0.7.0 with RoboLang 2.0 prepared, published by the owner (strategy D3) |
 | I5 G-MSG | L1–L5 done (accepted 2026-11-18, [acceptance](evidence/bench-2-1-acceptance.md): every bound met). **L6:** G-MSG closed in the atlas; release 0.8.0 with RoboLang 2.1, published after the owner approves the PyPI upload |
 | I6 G-PERCEIVE | L1–L5 done (accepted 2026-11-18 with erratum P7, [acceptance](evidence/bench-2-2-acceptance.md): no reading replaced or changed, 0/30). **L6:** G-PERCEIVE closed in the atlas, G-QUALITY split off (far); release 0.9.0 with RoboLang 2.2, published after the owner approves the PyPI upload |
-| I7–I10 | Not started |
+| I7 G-CHOOSE | **L1** done (first in the generated order, 2026-11-18). **L2:** decision record [0045](../spec/decisions/0045-choosing-at-run-time.md) drafted (`choose` with a finite candidate set, `where`, `nearest to`, a mandatory `else`; Core 0.2 unchanged), for the owner |
+| I8–I10 | Not started |
 | Mission layer decision record | [0041](../spec/decisions/0041-mission-layer.md) **approved 2026-11-17**: G-LOOP reopened (LE-9), mission layer with a hard bound, `stop`/`continue`/`retry N`; built at I4 |
