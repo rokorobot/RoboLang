@@ -1,7 +1,8 @@
 # Decision record 0045: Choosing at run time (I7, G-CHOOSE, RoboLang 2.3)
 
 **Date:** 2026-11-18
-**Status:** **PROPOSED, for the owner.** This is step L2 of iteration I7 in the
+**Status:** **APPROVED by the owner, 2026-11-18**: C1–C12 as recommended (positions and straight-line distance, C5;
+`delegate` accepts choices made before the first action, C8; choices inside missions, C10). This is step L2 of iteration I7 in the
 [language roadmap](../../docs/LANGUAGE_ROADMAP.md). L1 is done: G-CHOOSE is first in the generated
 [suggested order](../../docs/plans/humanoid-activities.md#suggested-order-of-language-work) (priority 5.23, the gap that
 unlocks the most).
@@ -98,7 +99,7 @@ task send_tugger(robot a, robot b, location handoff) {
 These two go to a new far gap, **G-EACH** (acting on each member of a set chosen at run time, by reading or by count), so
 that G-CHOOSE can close at L6. Object detection beyond what the world lists is a far gap, **G-DETECT**.
 
-## Open points for the owner
+## Open points (answered 2026-11-18)
 
 1. **Distance (C5):** straight lines from positions, or route lengths? I recommend positions: they are simple, and routes
    can be added later.
@@ -107,6 +108,13 @@ that G-CHOOSE can close at L6. Object detection beyond what the world lists is a
 3. **`delegate` (C8):** accept choices that come before the first action, or refuse every `choose` in 2.3? I recommend
    accepting them, so that "send the nearest free tugger" works end to end.
 4. **New gaps G-EACH and G-DETECT:** split them off now, so that G-CHOOSE has a clear end?
+
+## Owner's answers (2026-11-18)
+
+The owner approved C1–C12 as recommended. This answers open points 1–3: positions (C5), choices inside missions (C10),
+and `delegate` accepting choices made before the first action (C8). Point 4 follows the recommendation: G-EACH and
+G-DETECT are split off as far gaps, so that the L3 set can place the tasks that stay out. The owner can still change
+this before L6.
 
 ## Pre-registration (L3), before any code
 
