@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>RoboLang: how the language evolved</title>
+<!-- Source of docs/language-evolution.png. Render:
+     chromium --headless --hide-scrollbars --window-size=1600,1880 --screenshot=docs/language-evolution.png docs/language-evolution.html
+     Data: spec/robolang-v*.md (dates of first commit), spec/decisions/, CHANGELOG.md, docs/LANGUAGE_ROADMAP.md, docs/evidence/bench-*-acceptance.md -->
+<style>
+  :root {
+    --bg: #0d1117; --card: #161b22; --line: #30363d;
+    --t1: #f0efec; --t2: #c3c2b7; --t3: #8b949e;
+    --e1: #3987e5; --e2: #d95926; --e3: #199e70; --e4: #6e7681;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--t1); font: 14px/1.4 "Inter", "Segoe UI", "Helvetica Neue", Arial, sans-serif; }
+  .page { width: 1600px; padding: 32px 36px 28px; }
+  h1 { font-size: 28px; margin: 0 0 6px; letter-spacing: -0.2px; }
+  .sub { color: var(--t2); font-size: 15px; margin-bottom: 18px; }
+  .sub b { color: var(--t1); }
+  h2 { font-size: 15px; text-transform: uppercase; letter-spacing: .8px; color: var(--t3); margin: 22px 0 10px; font-weight: 600; }
+  .legend { display: flex; gap: 22px; color: var(--t2); font-size: 13px; margin-bottom: 4px; }
+  .legend span::before { content: ""; display: inline-block; width: 11px; height: 11px; border-radius: 3px; margin-right: 7px; vertical-align: -1px; background: var(--c); }
+  .legend .planned::before { background: transparent; border: 2px dashed var(--e4); width: 9px; height: 9px; }
+  .panel { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 18px; }
+  svg text { font-family: inherit; }
+  .era { display: grid; grid-template-columns: 210px 1fr; gap: 14px; margin-bottom: 12px; }
+  .era-head { border-left: 4px solid var(--c); padding: 4px 0 4px 12px; }
+  .era-head .n { font-weight: 700; font-size: 16px; }
+  .era-head .d { color: var(--t3); font-size: 12.5px; margin-top: 3px; }
+  .era-head .why { color: var(--t2); font-size: 12.5px; margin-top: 6px; }
+  .cards { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-top: 3px solid var(--c); border-radius: 8px; padding: 10px 12px 11px; min-height: 148px; display: flex; flex-direction: column; }
+  .card.planned { border: 1.5px dashed #3d444d; border-top: 3px dashed var(--e4); background: transparent; }
+  .card .v { font-size: 22px; font-weight: 750; }
+  .card .date { color: var(--t3); font-size: 12px; float: right; margin-top: 7px; }
+  .card .name { font-weight: 650; margin: 1px 0 6px; font-size: 14px; }
+  .card code { display: block; font: 11.5px/1.35 "JetBrains Mono", "DejaVu Sans Mono", monospace; color: #d2d0c5; background: #0d1117; border-radius: 5px; padding: 5px 7px; margin-bottom: 7px; white-space: pre-wrap; }
+  .card .meta { color: var(--t3); font-size: 11.5px; margin-top: auto; }
+  .card .meta b { color: var(--t2); font-weight: 600; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .chip { border: 1.5px dashed #3d444d; border-radius: 6px; padding: 5px 9px; color: var(--t2); font-size: 12.5px; }
+  .chip b { color: var(--t1); margin-right: 4px; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .arc { display: flex; align-items: stretch; gap: 0; }
+  .arc div { flex: 1; padding: 9px 10px 9px 22px; background: #1c2230; color: var(--t2); font-size: 12.5px; clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 0 100%, 14px 50%); margin-right: -8px; }
+  .arc div:first-child { clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 0 100%); padding-left: 12px; }
+  .arc b { display: block; color: var(--t1); font-size: 13.5px; }
+  .arc .future { background: transparent; outline: none; color: var(--t3); }
+  .arc .future b { color: var(--t3); }
+  .foot { color: var(--t3); font-size: 12px; margin-top: 14px; }
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>RoboLang: how the language evolved</h1>
+  <div class="sub">12 language versions in 37 days, <b>1.1 (2026-10-12) → 2.2 (2026-11-18)</b>. Each version is one decision record, one spec delta and one
+    acceptance run on a pre-registered LLM authoring benchmark. Next: 2.3 → 3.0. <b>Simulation only; physical execution is not authorized.</b></div>
+
+  <div class="legend">
+    <span style="--c: var(--e1)">Foundations: the core language</span>
+    <span style="--c: var(--e2)">Driven by benchmark failures</span>
+    <span style="--c: var(--e3)">Driven by the activity atlas (one gap per iteration)</span>
+    <span class="planned">Planned (roadmap)</span>
+  </div>
+
+  <h2>The arc: what a RoboLang program can say</h2>
+  <div class="arc">
+    <div><b>Instructions</b>1.1 · steps in order</div>
+    <div><b>Logic</b>1.2 · and / or / not</div>
+    <div><b>Intent</b>1.3 · a goal decides success</div>
+    <div><b>Adaptation</b>1.4–1.5 · branches, failure handlers</div>
+    <div><b>Measurement</b>1.6, 2.2 · typed readings</div>
+    <div><b>Real-world bounds</b>1.7–1.9 · regions, devices, clock</div>
+    <div><b>Autonomy</b>2.0–2.1 · missions, messages</div>
+    <div class="future"><b>Choice → teamwork</b>2.3–3.0 · choose, self, calc, concurrency, people</div>
+  </div>
+
+  <h2>Release cadence</h2>
+  <div class="panel"><svg id="cadence" width="1526" height="150"></svg></div>
+
+  <h2>Versions</h2>
+  <div class="era" style="--c: var(--e1)">
+    <div class="era-head"><div class="n">Foundations</div><div class="d">1.1 → 1.3 · Oct 12 – Oct 29</div>
+      <div class="why">A real grammar, parser, validator and Task IR replace the legacy v1 text scanner.</div></div>
+    <div class="cards" id="era1"></div>
+  </div>
+  <div class="era" style="--c: var(--e2)">
+    <div class="era-head"><div class="n">Benchmark-driven</div><div class="d">1.4 → 1.6 · Oct 29 – Nov 9</div>
+      <div class="why">Decision 0024: what LLMs fail to write in RoboLang picks the next construct.</div></div>
+    <div class="cards" id="era2"></div>
+  </div>
+  <div class="era" style="--c: var(--e3)">
+    <div class="era-head"><div class="n">Atlas-driven iterations I1–I6</div><div class="d">1.7 → 2.2 · Nov 17 – Nov 18</div>
+      <div class="why">What robots will need in the field picks the gap. Each closes in L1–L6 and ships a release (0.4.0 → 0.9.0).</div></div>
+    <div class="cards" id="era3"></div>
+  </div>
+  <div class="era" style="--c: var(--e4)">
+    <div class="era-head"><div class="n">Next: I7–I20</div><div class="d">2.3 → 3.0 · roadmap</div>
+      <div class="why">I7–I10 come from the generated order; I11–I20 are owner proposals, not yet in the atlas.</div></div>
+    <div>
+      <div class="cards" id="era4"></div>
+      <div class="chips" id="chips"></div>
+    </div>
+  </div>
+
+  <h2>Sub-activities RoboLang can fully express (atlas: 13 near-term, 38 total)</h2>
+  <div class="panel"><svg id="unlock" width="1526" height="270"></svg></div>
+
+  <div class="foot">Sources: spec/robolang-v*.md (first commit date), spec/decisions/0001–0045, CHANGELOG.md, docs/LANGUAGE_ROADMAP.md (“Unlocked near / all”),
+    docs/evidence/bench-*-acceptance.md. Snapshot 2026-11-19. Source of this image: docs/language-evolution.html.</div>
+</div>
+
+<script>
+const C = { 1: "#3987e5", 2: "#d95926", 3: "#199e70", 4: "#6e7681" };
+const V = [
+  { v: "1.1", d: "2026-10-12", e: 1, name: "Language correctness", code: "move r to src;\ngrasp r box;", meta: "<b>RL-11A–E</b> · 0001 · lexer, parser, validator, Task IR 1.0" },
+  { v: "1.2", d: "2026-10-27", e: 1, name: "Combined conditions", code: "pre { a and not b; }", meta: "<b>LANG-1</b> · 0006" },
+  { v: "1.3", d: "2026-10-29", e: 1, name: "Goals and typed sensors", code: "goal { object_at box dst; }", meta: "<b>LANG-2</b> · 0014 · a required goal decides success" },
+  { v: "1.4", d: "2026-10-29", e: 2, name: "Bounded branching", code: "if … { } else { }\nfail \"reason\";", meta: "<b>N4</b> · 0027 · half-programs 30/180 → 0/180 · first PyPI release 0.2.0" },
+  { v: "1.5", d: "2026-11-03", e: 2, name: "Observing and failure handlers", code: "grasp r box else {\n  move r to home; }", meta: "0031–0034 · region_clear, robot_ready, holder check" },
+  { v: "1.6", d: "2026-11-09", e: 2, name: "Measured values", code: "measure r temperature\n  of o using s as t;", meta: "<b>LANG-4</b> · 0036 · temperature, mass, distance, label" },
+  { v: "1.7", d: "2026-11-17", e: 3, name: "Region limits", code: "@safety no_go_region wet;", meta: "<b>I1 G-PATH</b> · 0039 · silent limit drops 3/27 → 0/27" },
+  { v: "1.8", d: "2026-11-17", e: 3, name: "Declared actions", code: "do r open closet;", meta: "<b>I2 G-ACT</b> · 0040 · silent action swaps 3/30 → 0/30" },
+  { v: "1.9", d: "2026-11-17", e: 3, name: "Clock readings", code: "measure r time as now;", meta: "<b>I3 G-CLOCK</b> · 0042 · time replaced silently 0/30" },
+  { v: "2.0", d: "2026-11-18", e: 3, name: "Mission layer", code: "mission patrol(…) {\n  repeat at most 12 runs", meta: "<b>I4 G-LOOP</b> · 0041 · silent repetition 4/30 → 0/30" },
+  { v: "2.1", d: "2026-11-18", e: 3, name: "Incoming messages", code: "message_received \"line\"\n  with \"docked\"", meta: "<b>I5 G-MSG</b> · 0043 · message programs 30/30" },
+  { v: "2.2", d: "2026-11-18", e: 3, name: "More measured kinds", code: "measure r fill of shelf\n  using cam as f;", meta: "<b>I6 G-PERCEIVE</b> · 0044 · fill %, confidence, pressure, count" },
+  { v: "2.3", e: 4, name: "Choosing at run time", code: "nearest tugger, nearest dock", meta: "<b>I7 G-CHOOSE</b> · 0045 approved · at L3 now" },
+  { v: "2.4", e: 4, name: "The robot's own battery", code: "low battery, enough for route", meta: "<b>I8 G-SELF</b> · not started" },
+  { v: "2.5", e: 4, name: "Minimal arithmetic", code: "totals, limits, text from values", meta: "<b>I9 G-CALC</b> · not started" },
+  { v: "2.6", e: 4, name: "Robots acting at once", code: "carry and drive, two-hand lift", meta: "<b>I10 G-CONC</b> · largest semantic change" },
+];
+const CHIPS = [["2.7","G-PROX people nearby"],["2.8","G-FORCE force limits"],["2.9","G-TRIGGER self-starting missions"],["2.10","G-SHIFT multi-day schedules"],
+  ["2.11","G-TEACH taught skills"],["2.12","G-QUALITY appearance judgements"],["2.13","G-CATEGORY learned categories"],["2.14","G-PREDICT predictions"],
+  ["2.15","G-NEGOTIATE who does what"],["3.0","G-SHARED robots and people in one space"]];
+
+const esc = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;");
+for (const x of V) {
+  const el = document.createElement("div");
+  el.className = "card" + (x.e === 4 ? " planned" : "");
+  el.style.setProperty("--c", C[x.e]);
+  el.innerHTML = `<div><span class="date">${x.d ? x.d.slice(5).replace("-", "/") : "planned"}</span><span class="v">${x.v}</span></div>
+    <div class="name">${x.name}</div>${x.e === 4 ? `<div class="meta" style="margin:0 0 7px;color:#c3c2b7">${x.code}</div>` : `<code>${esc(x.code)}</code>`}<div class="meta">${x.meta}</div>`;
+  document.getElementById("era" + x.e).appendChild(el);
+}
+for (const [v, t] of CHIPS) document.getElementById("chips").insertAdjacentHTML("beforeend", `<div class="chip"><b>${v}</b>${t}</div>`);
+
+const NS = "http://www.w3.org/2000/svg";
+function el(svg, tag, a, text) { const e = document.createElementNS(NS, tag); for (const k in a) e.setAttribute(k, a[k]); if (text != null) e.textContent = text; svg.appendChild(e); return e; }
+
+// Release cadence: date axis, one dot per version, stacked when on the same day.
+(() => {
+  const s = document.getElementById("cadence"), W = 1526, L = 40, R = 60, base = 112;
+  const t0 = Date.parse("2026-10-10"), t1 = Date.parse("2026-11-22");
+  const X = d => L + (Date.parse(d) - t0) / (t1 - t0) * (W - L - R);
+  el(s, "line", { x1: L, x2: W - R, y1: base, y2: base, stroke: "#30363d", "stroke-width": 2 });
+  for (const d of ["2026-10-12","2026-10-19","2026-10-26","2026-11-02","2026-11-09","2026-11-16"]) {
+    el(s, "line", { x1: X(d), x2: X(d), y1: base, y2: base + 6, stroke: "#484f58", "stroke-width": 1.5 });
+    const dt = new Date(d); el(s, "text", { x: X(d), y: base + 22, fill: "#8b949e", "font-size": 12, "text-anchor": "middle" }, dt.toLocaleString("en", { month: "short", day: "numeric", timeZone: "UTC" }));
+  }
+  const today = X("2026-11-19");
+  el(s, "line", { x1: today, x2: today, y1: 14, y2: base + 6, stroke: "#6e7681", "stroke-dasharray": "3 3" });
+  el(s, "text", { x: today + 6, y: 24, fill: "#8b949e", "font-size": 12 }, "today: 2.3 at L3");
+  const seen = {};
+  for (const x of V.filter(x => x.d)) {
+    const k = seen[x.d] = (seen[x.d] || 0) + 1, y = base - 4 - 26 * k + 12;
+    el(s, "circle", { cx: X(x.d), cy: y, r: 9, fill: C[x.e], stroke: "#161b22", "stroke-width": 2 });
+    const left = x.v === "1.2" || x.d === "2026-11-17";
+    el(s, "text", { x: X(x.d) + (left ? -14 : 14), y: y + 4.5, fill: "#f0efec", "font-size": 13, "font-weight": 650, "text-anchor": left ? "end" : "start" }, x.v);
+  }
+  el(s, "text", { x: X("2026-10-13"), y: 24, fill: "#c3c2b7", "font-size": 12.5 }, "6 versions in the first 28 days, paced by benchmark failures");
+  el(s, "text", { x: X("2026-11-16") - 8, y: 24, fill: "#c3c2b7", "font-size": 12.5, "text-anchor": "end" }, "6 versions in 2 days, once the atlas and L1–L6 loop were in place →");
+})();
+
+// Sub-activities fully expressible, per version (LANGUAGE_ROADMAP.md "Unlocked near / all").
+(() => {
+  const s = document.getElementById("unlock"), W = 1526, L = 54, R = 150, T = 18, B = 228;
+  const xs = ["1.6","1.7","1.8","1.9","2.0","2.1","2.2","2.3","2.4","2.5","2.6"];
+  const near = [0,0,1,1,2,4,5,9,10,12,13], all = [0,0,1,1,2,5,8,15,19,22,26];
+  const X = i => L + i * (W - L - R) / (xs.length - 1), Y = v => B - v / 40 * (B - T);
+  for (const g of [0,10,20,30,38]) {
+    el(s, "line", { x1: L, x2: W - R, y1: Y(g), y2: Y(g), stroke: g ? "#21262d" : "#484f58", "stroke-width": 1, "stroke-dasharray": g === 38 || g === 13 ? "4 4" : "" });
+    el(s, "text", { x: L - 10, y: Y(g) + 4, fill: "#8b949e", "font-size": 12, "text-anchor": "end" }, g);
+  }
+  el(s, "line", { x1: L, x2: W - R, y1: Y(13), y2: Y(13), stroke: "#30363d", "stroke-dasharray": "4 4" });
+  el(s, "text", { x: W - R + 10, y: Y(38) + 4, fill: "#8b949e", "font-size": 12 }, "38 in the atlas");
+  // shaded "done" region
+  el(s, "rect", { x: L, y: T, width: X(6) - L, height: B - T, fill: "#199e70", opacity: 0.06 });
+  el(s, "text", { x: X(6) - 8, y: T + 14, fill: "#8b949e", "font-size": 12, "text-anchor": "end" }, "shipped");
+  el(s, "text", { x: X(6) + 8, y: T + 14, fill: "#8b949e", "font-size": 12 }, "planned (I7–I10)");
+  xs.forEach((v, i) => el(s, "text", { x: X(i), y: B + 22, fill: i <= 6 ? "#c3c2b7" : "#8b949e", "font-size": 12.5, "text-anchor": "middle", "font-weight": i <= 6 ? 600 : 400 }, v));
+  const series = [[all, "#3987e5", "all sub-activities"], [near, "#d95926", "near-term (pilot within 3 years)"]];
+  for (const [d, c] of series) {
+    const pts = d.map((v, i) => [X(i), Y(v)]);
+    const path = a => a.map((p, i) => (i ? "L" : "M") + p[0] + " " + p[1]).join(" ");
+    el(s, "path", { d: path(pts.slice(0, 7)), fill: "none", stroke: c, "stroke-width": 2.5 });
+    el(s, "path", { d: path(pts.slice(6)), fill: "none", stroke: c, "stroke-width": 2, "stroke-dasharray": "6 5" });
+    pts.forEach((p, i) => el(s, "circle", { cx: p[0], cy: p[1], r: 5, fill: i <= 6 ? c : "#161b22", stroke: i <= 6 ? "#161b22" : c, "stroke-width": 2 }));
+  }
+  const lbl = (i, v, c, dy) => el(s, "text", { x: X(i), y: Y(v) + dy, fill: "#f0efec", "font-size": 12.5, "font-weight": 650, "text-anchor": "middle" }, v);
+  lbl(6, 8, "", -12); lbl(6, 5, "", 20); lbl(10, 26, "", -12); lbl(10, 13, "", 20);
+  el(s, "text", { x: W - R + 12, y: Y(26) + 4, fill: "#c3c2b7", "font-size": 12.5 }, "all (of 38)");
+  el(s, "text", { x: W - R + 12, y: Y(13) + 4, fill: "#c3c2b7", "font-size": 12.5 }, "near-term (of 13)");
+  el(s, "text", { x: X(0) + 4, y: Y(0) - 30, fill: "#8b949e", "font-size": 12 }, "1.6: no near-term sub-activity could be written in full (R3)");
+})();
+</script>
+</body>
+</html>
