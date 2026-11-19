@@ -93,11 +93,15 @@ CONDITIONS_V2_1 = CONDITIONS_V1_8 + ("message_received",)
 # RoboLang 2.2 adds four measured kinds (decision 0044 K1) and the unit token `%` (K2). The kind names are recognised by
 # position (after `measure r` and before `of`) and are not reserved (D10): `count` may still be a name.
 NEW_KINDS_V2_2 = ("fill", "confidence", "pressure", "count")
+# RoboLang 2.3 adds the statement `choose` (decision 0045 C1, point 10). `choose`, `from`, `where`, `nearest`,
+# `farthest`, `objects` and `robots` are recognised by position and are not reserved: a 2.2 program that uses them as
+# names still parses, and in a file below 2.3 `choose` is an unknown statement (E203).
+CHOOSE_TYPES = ("robot", "object", "location")
 # Language version -> its reserved words. Versions not listed read as 1.1.
 RESERVED_BY_VERSION = {
     "1.2": RESERVED_V1_2, "1.3": RESERVED_V1_3, "1.4": RESERVED_V1_4, "1.5": RESERVED_V1_4, "1.6": RESERVED_V1_6,
     "1.7": RESERVED_V1_6, "1.8": RESERVED_V1_8, "1.9": RESERVED_V1_9, "2.0": RESERVED_V2_0,
-    "2.1": RESERVED_V2_0, "2.2": RESERVED_V2_0,
+    "2.1": RESERVED_V2_0, "2.2": RESERVED_V2_0, "2.3": RESERVED_V2_0,
 }
 
 # Recognized only in their grammatical position; not reserved.

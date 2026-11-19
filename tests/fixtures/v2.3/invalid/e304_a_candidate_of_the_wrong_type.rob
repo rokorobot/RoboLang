@@ -1,0 +1,13 @@
+// RoboLang v2.3 fixture: invalid
+// expect: error E304 (static) line 10
+// why: every candidate has the type of the choice
+
+robolang 2.3;
+
+task t(robot a, location dst, object box) {
+    goal { robot_at s dst; }
+    plan {
+        choose robot s from (a, box) else { fail "none"; }
+        move s to dst;
+    }
+}

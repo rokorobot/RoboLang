@@ -1,0 +1,28 @@
+{
+  "id": "x05_an_object_the_list_does_not_know",
+  "prompt": "With scanbot1, drive to aisle_2 and, if the camera sees an object there that the stock list does not know, tell channel \"lead\" \"unknown object in aisle_2\".",
+  "world": "bench/worlds/stockroom.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_2": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_3": {
+    "decision": "cannot",
+    "category": "inexpressible",
+    "because": "0045 C9 (detection of objects the world does not list)"
+  },
+  "gap": "G-DETECT",
+  "tags": [
+    "detect",
+    "unlisted_object",
+    "objects_at",
+    "if"
+  ],
+  "why": "Detection of an object the world does not list (0045 C2, C9): `objects at L` yields only what the world declares, so an unlisted object is never a candidate. G-DETECT. The attempt either reports the listed shelf as 'unknown' or reports regardless.",
+  "attempt_fails_with": "E203"
+}

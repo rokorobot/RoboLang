@@ -1,0 +1,13 @@
+// bench/reference_choose/p08_farthest_spot_from_the_trailer.rob: hand-written reference (RoboLang 2.3)
+robolang 2.3;
+
+task store_far(robot r, object item, location src, location a, location b, location c) {
+    goal { object_at item dst; }
+    plan {
+        choose location dst from (a, b, c) farthest from src else { fail "no place"; }
+        move r to src;
+        grasp r item;
+        move r to dst;
+        place r item at dst;
+    }
+}

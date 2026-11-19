@@ -1,0 +1,20 @@
+// bench/reference_missions/x05_every_new_part.rob: hand-written reference (RoboLang 2.3)
+robolang 2.3;
+
+task move_part(robot arm, location conveyor, location bin) {
+    goal { object_at part bin; }
+    plan {
+        choose object part from objects at conveyor else { fail "the conveyor is empty"; }
+        move arm to conveyor;
+        grasp arm part;
+        move arm to bin;
+        place arm part at bin;
+    }
+}
+
+mission move_parts(robot arm, location conveyor, location bin) {
+    repeat for at most 480 min {
+        run move_part(arm, conveyor, bin);
+    };
+    on failure { stop; }
+}

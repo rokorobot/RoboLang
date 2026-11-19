@@ -86,6 +86,8 @@ def _goal_problems(task: ir.Task, world: World, bound: dict[str, str]) -> list[A
     robots = [bound[p.name] for p in task.parameters if p.type == "robot"]
     problems = []
     for i, atom in _required(task.goal or ()):
+        if atom.target not in bound:  # RoboLang 2.3: bound by a `choose`, known when the run reaches it
+            continue
         entity = bound[atom.target]
         kind = world.kind_of(entity)
         if entity_state(world, entity) == atom.label:
@@ -104,7 +106,7 @@ def action_problems(task: ir.Task, world: World, bound: dict[str, str]) -> list[
     """Every problem of the task's `do` steps (in step order) and then of its required goal states."""
     problems = []
     for index, (label, step) in enumerate(ir.walk(task.steps), start=1):
-        if isinstance(step, ir.Do):
+        if isinstance(step, ir.Do) and step.robot in bound and step.target in bound:  # else a `choose` binds it (2.3)
             found = _step_problem(world, bound, step)
             if found is not None:
                 problems.append(ActionProblem(found[0], found[1], bound[step.robot], index, label))

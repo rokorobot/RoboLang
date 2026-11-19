@@ -1,0 +1,8 @@
+{
+  "task": "send_nearest",
+  "bindings": {
+    "a": "tugger_a",
+    "b": "tugger_b",
+    "spot": "handoff_point"
+  }
+}

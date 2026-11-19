@@ -135,3 +135,14 @@ this before L6.
   fixed candidate, or the first of the list with the order dropped.
 - **Economy:** 1 statement, 1 world field (`position`), about 4 codes. Reserved words: `choose`, `nearest`, `farthest` (open:
   recognised by position, as with the kinds in 2.2?).
+
+## Clarifications (APPROVED by the owner 2026-11-19, from writing the L3 set)
+
+The 11 open points in [bench-12-choose.md](../../docs/plans/bench-12-choose.md#open-points-where-0045-does-not-decide-what-a-label-needs-approved-2026-11-19)
+are approved as recommended:
+
+- an `else` ends in `fail`;
+- an indifferent request accepts any candidate;
+- a finite named set compared by readings stays an `if`, and `choose` never reads a value;
+- C8 is unchanged;
+- `choose`, `nearest` and `farthest` are not reserved words.

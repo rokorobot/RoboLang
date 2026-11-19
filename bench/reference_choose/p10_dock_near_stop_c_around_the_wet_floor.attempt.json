@@ -1,0 +1,11 @@
+{
+  "task": "go_to_dock",
+  "bindings": {
+    "r": "printer1",
+    "d1": "dock_1",
+    "d2": "dock_2",
+    "d3": "dock_3",
+    "ref": "stop_c",
+    "wet": "wet_floor"
+  }
+}

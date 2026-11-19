@@ -1,0 +1,9 @@
+{
+  "task": "cool_the_hot_pan",
+  "bindings": {
+    "r": "chef_arm",
+    "probe": "probe_temp",
+    "stove": "stove",
+    "sink": "sink"
+  }
+}

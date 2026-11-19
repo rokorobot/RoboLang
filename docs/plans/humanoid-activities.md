@@ -83,6 +83,8 @@ before.
 
 | Date | Note | Added | Removed | Changed | Ranking |
 |---|---|---|---|---|---|
+| 2026-11-19 | I7 L4: RoboLang 2.3 built and taught | — | — | — | 1. action 4.52 · 2. perception 2.78 · 3. cooperation 1.07 · 4. communication 0.95 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
+| 2026-11-18 | I7 L3: set 12 choose pre-registered (25 tasks) | — | — | — | 1. action 4.52 · 2. perception 2.78 · 3. cooperation 1.07 · 4. communication 0.95 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
 | 2026-11-18 | L6 of I6: G-PERCEIVE closed by RoboLang 2.2 measured kinds | — | — | — | 1. action 4.52 · 2. perception 2.78 · 3. cooperation 1.07 · 4. communication 0.95 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
 | 2026-11-18 | I6 L4: RoboLang 2.2 built and taught | — | — | — | 1. action 4.52 · 2. perception 2.78 · 3. cooperation 1.07 · 4. communication 0.95 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
 | 2026-11-18 | I6 L3: set 11 kinds pre-registered (24 tasks) | — | — | — | 1. action 4.52 · 2. perception 2.78 · 3. cooperation 1.07 · 4. communication 0.95 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
@@ -164,7 +166,8 @@ before.
 
 | Language gap | Scope | Priority | Near | Benchmark tasks |
 |---|---|---|---|---|
-| `G-CHOOSE` Choosing objects or robots at run time | open | 5.23 | yes | 8 |
+| `G-CHOOSE` Choosing objects or robots at run time | open | 5.23 | yes | 0 |
+| `G-DETECT` Objects the world does not list: detecting what a sensor finds and acting on it | open | 0.00 | — | 1 |
 | `G-OBSERVE` Tasks that only observe (inspect, scan, wait) and ask for no end state, so a goal must not be invented | open | 0.00 | — | 0 |
 | `G-PERCEIVE` Conditions on perceived properties (dirty, damaged) | closed | 0.00 | — | 0 |
 | `G-QUALITY` Judgements of appearance or quality that no sensor kind declares (worn, dirty, damaged, burnt) | open | 0.00 | — | 1 |
@@ -240,6 +243,7 @@ before.
 | `G-CALC` Arithmetic, counting and text built from values | open | 1.55 | yes | 11 |
 | `G-CLOCK` Clock readings and times of day | closed | 0.00 | — | 0 |
 | `G-DATE` Dates and times on another day: tomorrow, a weekday, a calendar date | open | 0.00 | — | 2 |
+| `G-EACH` Acting on each member of a set chosen at run time, by a reading of each or by a count | open | 0.00 | — | 5 |
 | `G-FALLBACK` A different end state counts as done | out | 0.00 | — | 1 |
 | `G-LOOP` Repetition without a fixed bound: loops, retry until it works, schedules, event streams | closed | 0.00 | — | 0 |
 | `G-TRIGGER` Triggers on missions: every hour, at a time, on a message or an event, on the robot's own state | open | 0.00 | — | 11 |
@@ -271,7 +275,7 @@ before.
 | Language gap | Scope | Priority | Near | Benchmark tasks |
 |---|---|---|---|---|
 | `G-FORCE` Force limits and gentle handling | open | 0.98 | — | 2 |
-| `G-PROX` Limits and reactions that depend on people nearby: slow, stop or yield when a person is within a distance | open | 0.97 | — | 4 |
+| `G-PROX` Limits and reactions that depend on people nearby: slow, stop or yield when a person is within a distance | open | 0.97 | — | 5 |
 | `G-PATH` Staying inside or outside a region while moving | closed | 0.00 | — | 0 |
 | `G-STEPLIMIT` A region or speed limit on one step or one stretch of a route, not the whole task | open | 0.00 | — | 1 |
 | `G-WORKSPACE` Limits on the arm's workspace, not only on where the robot drives | open | 0.00 | — | 1 |

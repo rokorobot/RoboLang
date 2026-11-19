@@ -1,0 +1,77 @@
+{
+  "id": "c03_shuttle_p1_twelve_carries",
+  "prompt": "With arm_a, carry p1 from conveyor_in to the bin and back again, 12 carries in all.",
+  "world": "bench/worlds/parts_line.json",
+  "group": "control",
+  "expect": {
+    "decision": "program"
+  },
+  "expect_2_2": {
+    "decision": "program"
+  },
+  "expect_2_0": {
+    "decision": "program",
+    "expected_mission": {
+      "runs": [
+        {
+          "task": "carry",
+          "entities": [
+            "arm_a",
+            "p1",
+            "conveyor_in",
+            "bin"
+          ],
+          "goal": [
+            [
+              "rl:thing:p1",
+              "located_in",
+              "rl:place:bin"
+            ]
+          ]
+        },
+        {
+          "task": "carry",
+          "entities": [
+            "arm_a",
+            "p1",
+            "bin",
+            "conveyor_in"
+          ],
+          "goal": [
+            [
+              "rl:thing:p1",
+              "located_in",
+              "rl:place:conveyor_in"
+            ]
+          ]
+        }
+      ],
+      "repeat": {
+        "max_runs": 12,
+        "max_duration": null
+      },
+      "until": null,
+      "on_failure": "stop",
+      "policy_stated": false
+    },
+    "paths": [
+      {
+        "when": "12 carries run, p1 ends at conveyor_in",
+        "world_patch": {},
+        "outcome": "bounded",
+        "runs": 12,
+        "runs_verified": 12
+      }
+    ]
+  },
+  "expect_2_3": {
+    "decision": "program"
+  },
+  "tags": [
+    "mission",
+    "two_run_lines",
+    "count_bound",
+    "fixed_entities",
+    "no_choice"
+  ]
+}

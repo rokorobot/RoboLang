@@ -1,0 +1,13 @@
+// RoboLang v2.3 fixture: invalid
+// expect: error E203 (syntax) line 10
+// why: a file below 2.3 has no choose
+
+robolang 2.2;
+
+task t(robot a, robot b, location dst) {
+    goal { robot_at s dst; }
+    plan {
+        choose robot s from (a, b) else { fail "x"; }
+        move s to dst;
+    }
+}

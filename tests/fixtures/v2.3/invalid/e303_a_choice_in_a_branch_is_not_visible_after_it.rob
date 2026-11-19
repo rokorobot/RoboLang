@@ -1,0 +1,13 @@
+// RoboLang v2.3 fixture: invalid
+// expect: error E303 (static) line 11
+// why: a name chosen in a branch ends with the branch
+
+robolang 2.3;
+
+task t(robot a, robot b, location dst) {
+    goal { robot_at a dst; }
+    plan {
+        if robot_ready a { choose robot s from (a, b) else { fail "none"; } move s to dst; }
+        move s to dst;
+    }
+}

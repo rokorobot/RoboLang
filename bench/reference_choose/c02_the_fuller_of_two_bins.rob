@@ -1,0 +1,16 @@
+// bench/reference_choose/c02_the_fuller_of_two_bins.rob: hand-written reference (RoboLang 2.2)
+robolang 2.2;
+
+task fuller_bin(robot r, object a, object b, sensor cam, location row) {
+    goal { robot_at r row; }
+    plan {
+        move r to row;
+        measure r fill of a using cam as fa;
+        measure r fill of b using cam as fb;
+        if fa > fb {
+            communicate r to "lead" with "bin_1 is fuller";
+        } else {
+            communicate r to "lead" with "bin_2 is fuller";
+        }
+    }
+}

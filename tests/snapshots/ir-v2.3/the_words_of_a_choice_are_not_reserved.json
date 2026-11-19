@@ -1,0 +1,68 @@
+{
+  "ir_schema": "robolang.task-ir",
+  "ir_schema_version": "1.11",
+  "language_version": "2.3",
+  "tasks": [
+    {
+      "name": "choose",
+      "parameters": [
+        {
+          "name": "nearest",
+          "type": "robot"
+        },
+        {
+          "name": "farthest",
+          "type": "location"
+        },
+        {
+          "name": "objects",
+          "type": "object"
+        },
+        {
+          "name": "robots",
+          "type": "location"
+        },
+        {
+          "name": "from",
+          "type": "location"
+        },
+        {
+          "name": "where",
+          "type": "location"
+        }
+      ],
+      "safety": [],
+      "preconditions": [],
+      "goal": [
+        {
+          "kind": "object_at",
+          "object": "objects",
+          "location": "from"
+        }
+      ],
+      "steps": [
+        {
+          "kind": "move",
+          "robot": "nearest",
+          "target": "farthest"
+        },
+        {
+          "kind": "grasp",
+          "robot": "nearest",
+          "object": "objects"
+        },
+        {
+          "kind": "move",
+          "robot": "nearest",
+          "target": "robots"
+        },
+        {
+          "kind": "place",
+          "robot": "nearest",
+          "object": "objects",
+          "target": "from"
+        }
+      ]
+    }
+  ]
+}

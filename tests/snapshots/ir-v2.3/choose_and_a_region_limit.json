@@ -1,0 +1,75 @@
+{
+  "ir_schema": "robolang.task-ir",
+  "ir_schema_version": "1.11",
+  "language_version": "2.3",
+  "tasks": [
+    {
+      "name": "go_to_dock",
+      "parameters": [
+        {
+          "name": "r",
+          "type": "robot"
+        },
+        {
+          "name": "d1",
+          "type": "location"
+        },
+        {
+          "name": "d2",
+          "type": "location"
+        },
+        {
+          "name": "ref",
+          "type": "location"
+        },
+        {
+          "name": "wet",
+          "type": "region"
+        }
+      ],
+      "safety": [
+        {
+          "kind": "no_go_region",
+          "region": "wet"
+        }
+      ],
+      "preconditions": [],
+      "goal": [
+        {
+          "kind": "robot_at",
+          "robot": "r",
+          "location": "dock"
+        }
+      ],
+      "steps": [
+        {
+          "kind": "choose",
+          "type": "location",
+          "name": "dock",
+          "source": {
+            "kind": "list",
+            "candidates": [
+              "d1",
+              "d2"
+            ]
+          },
+          "order": {
+            "mode": "nearest",
+            "reference": "ref"
+          },
+          "else": [
+            {
+              "kind": "fail",
+              "reason": "no dock"
+            }
+          ]
+        },
+        {
+          "kind": "move",
+          "robot": "r",
+          "target": "dock"
+        }
+      ]
+    }
+  ]
+}

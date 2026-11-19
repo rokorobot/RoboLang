@@ -1,0 +1,241 @@
+{
+  "world_schema": "robolang.sim.world",
+  "world_schema_version": "1.8",
+  "locations": [
+    "cart_3",
+    "container_2",
+    "conveyor_b",
+    {
+      "id": "handoff_point",
+      "position": [
+        38,
+        6
+      ]
+    },
+    "inbound_conveyor",
+    {
+      "id": "line_feed",
+      "position": [
+        40,
+        0
+      ]
+    },
+    "outbound_conveyor",
+    "staging",
+    "trailer_4",
+    "trolley",
+    {
+      "id": "tugger_bay",
+      "position": [
+        0,
+        0
+      ]
+    }
+  ],
+  "regions": {
+    "worker_lane": {
+      "clear": false
+    },
+    "dock_door": {
+      "clear": true
+    }
+  },
+  "robots": {
+    "digit1": {
+      "ready": true,
+      "location": "staging",
+      "gripper": true,
+      "max_speed": [
+        {
+          "value": "1.2",
+          "unit": "m/s"
+        }
+      ]
+    },
+    "digit2": {
+      "ready": true,
+      "location": "staging",
+      "gripper": true,
+      "max_speed": [
+        {
+          "value": "1.2",
+          "unit": "m/s"
+        }
+      ]
+    },
+    "stretch1": {
+      "ready": true,
+      "location": "trailer_4",
+      "gripper": true,
+      "max_speed": [
+        {
+          "value": "1",
+          "unit": "m/s"
+        }
+      ]
+    },
+    "tugger_a": {
+      "ready": false,
+      "location": "tugger_bay",
+      "gripper": false,
+      "max_speed": [
+        {
+          "value": "1.5",
+          "unit": "m/s"
+        }
+      ]
+    },
+    "tugger_b": {
+      "ready": false,
+      "location": "line_feed",
+      "gripper": false,
+      "max_speed": [
+        {
+          "value": "1.5",
+          "unit": "m/s"
+        }
+      ]
+    }
+  },
+  "objects": {
+    "tote_1": {
+      "present": true,
+      "location": "inbound_conveyor",
+      "class": "tote",
+      "properties": {
+        "mass": {
+          "value": "4",
+          "unit": "kg"
+        }
+      }
+    },
+    "tote_2": {
+      "present": true,
+      "location": "inbound_conveyor",
+      "class": "tote",
+      "properties": {
+        "mass": {
+          "value": "6",
+          "unit": "kg"
+        }
+      }
+    },
+    "tote_3": {
+      "present": true,
+      "location": "inbound_conveyor",
+      "class": "tote",
+      "properties": {
+        "mass": {
+          "value": "9",
+          "unit": "kg"
+        }
+      }
+    },
+    "case_1": {
+      "present": true,
+      "location": "trailer_4",
+      "class": "case",
+      "properties": {
+        "mass": {
+          "value": "22",
+          "unit": "kg"
+        }
+      }
+    },
+    "case_2": {
+      "present": true,
+      "location": "trailer_4",
+      "class": "case",
+      "properties": {
+        "mass": {
+          "value": "14",
+          "unit": "kg"
+        }
+      }
+    },
+    "part_1": {
+      "present": true,
+      "location": "container_2",
+      "class": "part",
+      "properties": {
+        "mass": {
+          "value": "0.4",
+          "unit": "kg"
+        }
+      }
+    },
+    "part_2": {
+      "present": true,
+      "location": "container_2",
+      "class": "part",
+      "properties": {
+        "mass": {
+          "value": "0.6",
+          "unit": "kg"
+        }
+      }
+    },
+    "part_3": {
+      "present": true,
+      "location": "container_2",
+      "class": "part",
+      "properties": {
+        "mass": {
+          "value": "0.5",
+          "unit": "kg"
+        }
+      }
+    }
+  },
+  "sensors": {
+    "cam_digit1": {
+      "robot": "digit1",
+      "available": true
+    },
+    "scale_digit1": {
+      "robot": "digit1",
+      "available": true,
+      "measures": {
+        "mass": {
+          "unit": "kg",
+          "uncertainty": "0.05",
+          "contact": true
+        }
+      }
+    },
+    "scale_stretch1": {
+      "robot": "stretch1",
+      "available": true,
+      "measures": {
+        "mass": {
+          "unit": "kg",
+          "uncertainty": "0.05",
+          "contact": true
+        }
+      }
+    },
+    "lidar_digit1": {
+      "robot": "digit1",
+      "available": true,
+      "measures": {
+        "distance": {
+          "unit": "m",
+          "uncertainty": "0.05",
+          "contact": false
+        }
+      }
+    }
+  },
+  "events": [
+    {
+      "at": {
+        "value": "10",
+        "unit": "s"
+      },
+      "fact": "region_clear",
+      "target": "worker_lane",
+      "value": true
+    }
+  ],
+  "tasks": {}
+}

@@ -1,0 +1,13 @@
+// bench/reference_branch/x_nearest_robot.rob: hand-written reference (RoboLang 2.3)
+robolang 2.3;
+
+task bring(object item, location shelf, location dst) {
+    goal { object_at item dst; }
+    plan {
+        choose robot r from robots nearest to shelf else { fail "no robot"; }
+        move r to shelf;
+        grasp r item;
+        move r to dst;
+        place r item at dst;
+    }
+}

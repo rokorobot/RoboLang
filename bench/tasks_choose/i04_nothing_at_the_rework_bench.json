@@ -1,0 +1,52 @@
+{
+  "id": "i04_nothing_at_the_rework_bench",
+  "prompt": "With arm_a, take whichever part is at rework to the bin.",
+  "world": "bench/worlds/choose_i04_nothing_at_the_rework_bench.json",
+  "world_2_2": "bench/worlds/parts_line.json",
+  "group": "infeasible",
+  "expect": {
+    "decision": "cannot",
+    "category": "infeasible"
+  },
+  "expect_2_2": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_3": {
+    "decision": "cannot",
+    "category": "infeasible",
+    "because": "0045 C6 (`objects at rework` is empty: no candidate, `else` runs, no fallback in the request)",
+    "world_2_3": {
+      "objects_at": {
+        "rework": []
+      },
+      "objects": {
+        "p5": {
+          "location": "station2"
+        }
+      }
+    }
+  },
+  "expected_choices": [
+    {
+      "type": "object",
+      "from": {
+        "objects_at": "rework"
+      },
+      "where": null,
+      "order": null
+    }
+  ],
+  "blockers": [
+    "rework"
+  ],
+  "gap": "G-CHOOSE",
+  "tags": [
+    "choose",
+    "objects_at",
+    "no_candidate_left",
+    "no_fallback"
+  ],
+  "why": "Infeasible in 2.3: when the job starts no part is at the rework bench, so there is nothing to choose and the request names no fallback.",
+  "attempt_fails_with": "E203"
+}

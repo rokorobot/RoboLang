@@ -1,0 +1,10 @@
+// bench/reference_choose/i02_the_wall_has_no_position.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 2.2;
+
+task go_to_dock(robot r, location d1, location d2, location d3, location wall) {
+    goal { robot_at r dock; }
+    plan {
+        choose location dock from (d1, d2, d3) nearest to wall else { fail "no dock"; }             // @choice dock=d1
+        move r to dock;
+    }
+}

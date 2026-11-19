@@ -1,0 +1,28 @@
+{
+  "id": "x01_fullest_bin_on_the_row",
+  "prompt": "With picker_h, take the fullest bin at bin_row to dock_b. Bins are swapped in and out all shift, so go by what is on the row when you start.",
+  "world": "bench/worlds/bin_hall.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_2": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_3": {
+    "decision": "cannot",
+    "category": "inexpressible",
+    "because": "0045 C9 (choosing by a reading of each candidate)"
+  },
+  "gap": "G-EACH",
+  "tags": [
+    "fill",
+    "reading_of_each_candidate",
+    "objects_at",
+    "run_time_set"
+  ],
+  "why": "Choosing by a reading of each candidate (0045 C3, C9): `where` and `nearest to` use world facts, never a reading, because a reading is a sequence of robot actions, not a choice. G-EACH. With two or three named bins it is a 2.2 program (compare the names in an `if`, `c02`); here the set is whatever is on the row when the job starts.",
+  "attempt_fails_with": "E203"
+}

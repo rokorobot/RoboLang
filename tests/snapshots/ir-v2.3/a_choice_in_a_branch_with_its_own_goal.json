@@ -1,0 +1,90 @@
+{
+  "ir_schema": "robolang.task-ir",
+  "ir_schema_version": "1.11",
+  "language_version": "2.3",
+  "tasks": [
+    {
+      "name": "go",
+      "parameters": [
+        {
+          "name": "a",
+          "type": "robot"
+        },
+        {
+          "name": "b",
+          "type": "robot"
+        },
+        {
+          "name": "dst",
+          "type": "location"
+        },
+        {
+          "name": "home",
+          "type": "location"
+        }
+      ],
+      "safety": [],
+      "preconditions": [],
+      "goal": [],
+      "steps": [
+        {
+          "kind": "if",
+          "condition": {
+            "kind": "robot_ready",
+            "robot": "a"
+          },
+          "then": [
+            {
+              "kind": "choose",
+              "type": "robot",
+              "name": "t",
+              "source": {
+                "kind": "list",
+                "candidates": [
+                  "a",
+                  "b"
+                ]
+              },
+              "order": {
+                "mode": "nearest",
+                "reference": "dst"
+              },
+              "else": [
+                {
+                  "kind": "fail",
+                  "reason": "none"
+                }
+              ]
+            },
+            {
+              "kind": "move",
+              "robot": "t",
+              "target": "dst"
+            }
+          ],
+          "else": [
+            {
+              "kind": "move",
+              "robot": "b",
+              "target": "home"
+            }
+          ],
+          "goal_then": [
+            {
+              "kind": "robot_at",
+              "robot": "t",
+              "location": "dst"
+            }
+          ],
+          "goal_else": [
+            {
+              "kind": "robot_at",
+              "robot": "b",
+              "location": "home"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

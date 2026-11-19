@@ -1,0 +1,8 @@
+{
+  "task": "from_rework",
+  "bindings": {
+    "arm": "arm_a",
+    "bench": "rework",
+    "bin": "bin"
+  }
+}

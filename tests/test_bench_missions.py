@@ -38,8 +38,9 @@ UNTIL = {t: d for t, d in SET.items() if d["group"] == "mission_until"}  # x06, 
 MISSIONS = {**PROGRAMS, **UNTIL}
 INFEASIBLE = {t: d for t, d in SET.items() if d["group"] == "infeasible"}
 INEXPRESSIBLE = {t: d for t, d in SET.items() if d["group"] == "inexpressible"}
+RELABELLED = {t: d for t, d in SET.items() if d["group"] == "choose"}  # x05: a 2.3 program (0045 C10, erratum Q5)
 CONTROLS = {t: d for t, d in SET.items() if d["group"] == "control"}
-DECLINED = {**PROGRAMS, **UNTIL, **INFEASIBLE, **INEXPRESSIBLE}  # what 1.9 declines: an attempt each
+DECLINED = {**PROGRAMS, **UNTIL, **INFEASIBLE, **INEXPRESSIBLE, **RELABELLED}  # what 1.9 declines: an attempt each
 MISSION_LINE = re.compile(r"^[^\n]*// @mission\n", re.M)  # an attempt marks every line that is the mission
 OUTCOMES = ("completed", "bounded", "failed")
 
@@ -81,12 +82,13 @@ def world_ids(task: dict) -> set[str]:
 def test_the_mix_of_tasks():
     assert len(SET) == 26
     groups = Counter(d["group"] for d in SET.values())
-    assert groups == {"mission": 10, "mission_until": 2, "infeasible": 5, "inexpressible": 5, "control": 4}
+    assert groups == {"mission": 10, "mission_until": 2, "infeasible": 5, "inexpressible": 4, "control": 4, "choose": 1}
     for task_id, task in SET.items():
         assert task["id"] == task_id and (lib.MISSIONS_TASKS_DIR / f"{task_id}.json").is_file()
         assert (REPO / task["world"]).is_file() and task["tags"] and task["prompt"].endswith(".")
         assert task["prompt"].isascii() and "\r" not in read(lib.MISSIONS_TASKS_DIR / f"{task_id}.json")
-    prefixes = {"mission": "m", "mission_until": "x", "infeasible": "i", "inexpressible": "x", "control": "c"}
+    prefixes = {"mission": "m", "mission_until": "x", "infeasible": "i", "inexpressible": "x", "control": "c",
+                "choose": "x"}
     for task_id, task in SET.items():
         assert re.fullmatch(prefixes[task["group"]] + r"\d\d_[a-z0-9_]+", task_id), task_id
 
@@ -104,6 +106,10 @@ def test_labels_are_2_0_in_expect_1_9_is_the_baseline_and_expect_2_0_keeps_the_p
     for task_id, task in SET.items():
         later = task["expect_2_0"]
         assert later["decision"] in ("program", "cannot"), task_id
+        if task_id in RELABELLED:  # relabelled for 2.3 (erratum Q5): `expect` is the 2.3 label, 2.0 stays as it was
+            assert task["expect"] == {"decision": "program"} and task["expect_2_3"]["decision"] == "program"
+            assert task["expect_1_9"] == CANNOT and later["decision"] == "cannot" and task["erratum"] == "Q5"
+            continue
         assert task["expect"] == {k: later[k] for k in ("decision", "category") if k in later}, task_id
         if task["group"] == "control":
             assert task["expect"] == {"decision": "program"} and task["expect_1_9"]["decision"] == "program"
@@ -130,7 +136,7 @@ def test_labels_are_2_0_in_expect_1_9_is_the_baseline_and_expect_2_0_keeps_the_p
         assert {k: later[k] for k in ("decision", "category")} == CANNOT == task["expect"], task_id
         assert later["because"].startswith("0041 "), task_id
     reasons = sorted(t["expect_2_0"]["because"] for t in INEXPRESSIBLE.values())
-    assert reasons == ["0041 (G-CHOOSE, I7)", "0041 M2", "0041 M6", "0041 M6", "0041 M7"]
+    assert reasons == ["0041 M2", "0041 M6", "0041 M6", "0041 M7"]  # x05 left: a 2.3 program (0045 C10)
 
 
 def test_the_mission_programs_cover_the_cases_the_pre_registration_lists():
@@ -301,16 +307,15 @@ def test_the_inexpressible_tasks_each_stay_out_for_one_reason_of_0041():
     assert reasons == {"x01_never_stop": {"no_bound", "forever"},
                        "x02_every_hour_on_the_hour": {"every", "time_trigger"},
                        "x03_for_each_go_message": {"message_trigger", "no_message_waits"},
-                       "x04_rounds_inside_rounds": {"nested", "repeat_in_repeat"},
-                       "x05_every_new_part": {"stream", "choose_object"}}
+                       "x04_rounds_inside_rounds": {"nested", "repeat_in_repeat"}}
     # G-TRIGGER (clarification 14; 0043 C13): the time and the message triggers
     assert {t: d["gap"] for t, d in INEXPRESSIBLE.items()} == {
         "x01_never_stop": "G-UNBOUNDED", "x02_every_hour_on_the_hour": "G-TRIGGER",
         "x03_for_each_go_message": "G-TRIGGER",
-        "x04_rounds_inside_rounds": "G-UNBOUNDED", "x05_every_new_part": "G-CHOOSE"}
+        "x04_rounds_inside_rounds": "G-UNBOUNDED"}
     # no bound is stated in x01; a bound is stated in the others, so only the named construct stays out
     assert not re.search(r"\d", SET["x01_never_stop"]["prompt"].replace("tug1", ""))
-    for task_id in ("x03_for_each_go_message", "x04_rounds_inside_rounds", "x05_every_new_part"):
+    for task_id in ("x03_for_each_go_message", "x04_rounds_inside_rounds", "x05_every_new_part"):  # x05: now a program
         assert re.search(r"\b(\d+ (times|rounds|hours)|at most)\b", SET[task_id]["prompt"]), task_id
 
 
@@ -330,9 +335,12 @@ def test_x06_and_x07_became_programs_by_clarification_2():
 def test_no_new_world_file_is_needed():
     """Every world is one that another set already uses: set 9 adds none (the plan allows at most 2)."""
     elsewhere = {Path(t["world"]).name for name in lib.SETS if name != "missions" for t in lib.load_set(name).values()}
-    mine = {Path(t["world"]).name for t in SET.values()}
+    mine = {Path(t["world"]).name for t in SET.values() if t["group"] != "choose"}
     assert mine <= elsewhere, mine - elsewhere
     for task_id, task in SET.items():
+        if task["group"] == "choose":  # x05: the world file 1.8 copy of erratum Q5
+            assert task["world"] == "bench/worlds/choose_x05_every_new_part.json"
+            continue
         assert json.loads(read(REPO / task["world"]))["world_schema_version"] in ("1.1", "1.2", "1.3", "1.4", "1.5")
 
 
@@ -342,7 +350,8 @@ def test_references_and_attempts_are_where_they_should_be():
     names = [p.name for p in REF.iterdir()]
     refs = {n.split(".")[0] for n in names if ".attempt" not in n}  # the references, including c01's mission form
     attempts = {n.split(".")[0] for n in names if ".attempt." in n}
-    assert refs == set(CONTROLS) | set(MISSIONS) and attempts == set(DECLINED)  # a 2.0 reference for each program
+    # a 2.0 reference for each program; x05 has a 2.3 reference since erratum Q5
+    assert refs == set(CONTROLS) | set(MISSIONS) | set(RELABELLED) and attempts == set(DECLINED)
     assert (REF / "c01_three_round_trips.mission.rob").is_file()  # the other accepted form of c01 (clarification 10)
     for task_id in DECLINED:
         assert (REF / f"{task_id}.attempt.rob").is_file() and (REF / f"{task_id}.attempt.json").is_file()
@@ -460,10 +469,10 @@ def test_every_inexpressible_task_is_in_exactly_one_atlas_gap_and_nothing_else_i
     """After L4 only what 2.0 still declines is in a gap: programs, infeasible tasks and controls are not."""
     in_gaps = [(t, g["id"]) for g in ATLAS["gaps"] for t in g["tasks"] if t in SET]
     assert len(in_gaps) == len({t for t, _ in in_gaps}) == len(INEXPRESSIBLE)
-    assert {t for t, _ in in_gaps} == set(INEXPRESSIBLE)
+    assert {t for t, _ in in_gaps} == set(INEXPRESSIBLE)  # x05 left G-CHOOSE: a 2.3 program (erratum Q5)
     for task_id, gap in in_gaps:
         assert INEXPRESSIBLE[task_id]["gap"] == gap and GAPS[gap]["scope"] in ("open", "out")
-    assert Counter(gap for _, gap in in_gaps) == {"G-UNBOUNDED": 2, "G-TRIGGER": 2, "G-CHOOSE": 1}
+    assert Counter(gap for _, gap in in_gaps) == {"G-UNBOUNDED": 2, "G-TRIGGER": 2}
     assert GAPS["G-TRIGGER"]["scope"] == "open" and GAPS["G-TRIGGER"]["direction"] == "reasoning"
     assert {t["gap"] for t in PROGRAMS.values()} | {t["gap"] for t in INFEASIBLE.values()} == {"G-LOOP"}
     assert "I4 L4: RoboLang 2.0 built and taught" in [h["note"] for h in ATLAS["history"]]
@@ -471,7 +480,8 @@ def test_every_inexpressible_task_is_in_exactly_one_atlas_gap_and_nothing_else_i
 
 def test_the_standing_g_loop_tasks_are_relabelled_by_what_the_request_bounds():
     """None states a bound it can use, so none is a program; the triggers moved to G-TRIGGER (clarification 14), and
-    x_shuttle_until_five, whose 17:00 is a bound, needs the next part chosen at run time like x05 (G-CHOOSE)."""
+    x_shuttle_until_five, whose 17:00 is a bound, needed the next part chosen at run time like x05 (G-CHOOSE): both are
+    programs since 2.3 (erratum Q5)."""
     assert {  # later sets add their own triggers (set 10: x02_each_time_the_line_says_ready)
         "x_every_hour", "x_keep_feeding", "u03_until_stop", "u18_every_morning", "x_all_parts_ever",
         "x01_every_night_round", "x02_every_hour_on_the_hour", "x04_every_minute", "f13_retry_every_minute"
@@ -480,14 +490,15 @@ def test_the_standing_g_loop_tasks_are_relabelled_by_what_the_request_bounds():
         "x_retry_grasp", "x_wait_forever", "u04_back_and_forth", "x_retry_until_grasped", "f10_retry_until_works",
         "x04_open_until_open", "x01_never_stop", "x04_rounds_inside_rounds"}
     assert GAPS["G-LOOP"]["scope"] == "closed" and GAPS["G-LOOP"]["tasks"] == []
-    assert "x_shuttle_until_five" in GAPS["G-CHOOSE"]["tasks"]
+    assert "x_shuttle_until_five" not in GAPS["G-CHOOSE"]["tasks"]  # a 2.3 program now
     standing = {}
     for name in lib.SETS:
         if name != "missions":
             standing.update(lib.load_set(name))
-    for task_id in (*GAPS["G-TRIGGER"]["tasks"], *GAPS["G-LOOP"]["tasks"], "x_shuttle_until_five"):
+    for task_id in (*GAPS["G-TRIGGER"]["tasks"], *GAPS["G-LOOP"]["tasks"]):
         if task_id in standing:
             assert lib.expectation(standing[task_id]) == ("cannot", "inexpressible"), task_id
+    assert lib.expectation(standing["x_shuttle_until_five"]) == ("program", "none")
 
 
 # -------- the scorer and the workflow --------

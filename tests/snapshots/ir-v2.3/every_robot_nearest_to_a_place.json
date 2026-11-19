@@ -1,0 +1,54 @@
+{
+  "ir_schema": "robolang.task-ir",
+  "ir_schema_version": "1.11",
+  "language_version": "2.3",
+  "tasks": [
+    {
+      "name": "send_closest",
+      "parameters": [
+        {
+          "name": "probe",
+          "type": "robot"
+        },
+        {
+          "name": "lobby",
+          "type": "location"
+        }
+      ],
+      "safety": [],
+      "preconditions": [],
+      "goal": [
+        {
+          "kind": "robot_at",
+          "robot": "who",
+          "location": "lobby"
+        }
+      ],
+      "steps": [
+        {
+          "kind": "choose",
+          "type": "robot",
+          "name": "who",
+          "source": {
+            "kind": "robots"
+          },
+          "order": {
+            "mode": "nearest",
+            "reference": "lobby"
+          },
+          "else": [
+            {
+              "kind": "fail",
+              "reason": "no robot"
+            }
+          ]
+        },
+        {
+          "kind": "move",
+          "robot": "who",
+          "target": "lobby"
+        }
+      ]
+    }
+  ]
+}

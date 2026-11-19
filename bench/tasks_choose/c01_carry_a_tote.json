@@ -1,0 +1,27 @@
+{
+  "id": "c01_carry_a_tote",
+  "prompt": "With digit1, take tote_1 from inbound_conveyor to outbound_conveyor.",
+  "world": "bench/worlds/fulfilment.json",
+  "group": "control",
+  "expect": {
+    "decision": "program"
+  },
+  "expect_2_2": {
+    "decision": "program"
+  },
+  "expect_2_3": {
+    "decision": "program"
+  },
+  "expected_goal": [
+    [
+      "rl:thing:tote_1",
+      "located_in",
+      "rl:place:outbound_conveyor"
+    ]
+  ],
+  "tags": [
+    "pick_place",
+    "fixed_entities",
+    "no_choice"
+  ]
+}

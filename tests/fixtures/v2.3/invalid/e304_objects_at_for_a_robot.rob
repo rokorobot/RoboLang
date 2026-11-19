@@ -1,0 +1,13 @@
+// RoboLang v2.3 fixture: invalid
+// expect: error E304 (static) line 10
+// why: objects at gives objects
+
+robolang 2.3;
+
+task t(location dock, location dst) {
+    goal { robot_at s dst; }
+    plan {
+        choose robot s from objects at dock else { fail "none"; }
+        move s to dst;
+    }
+}

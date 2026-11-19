@@ -1,0 +1,120 @@
+{
+  "id": "c02_the_fuller_of_two_bins",
+  "prompt": "With picker_h, read how full bin_1 and bin_2 are with cam_h. If bin_1 is fuller, tell channel \"lead\" \"bin_1 is fuller\"; if not, tell channel \"lead\" \"bin_2 is fuller\".",
+  "world": "bench/worlds/bin_hall.json",
+  "group": "control",
+  "expect": {
+    "decision": "program"
+  },
+  "expect_2_2": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "bin_1 is 70 % full, bin_2 30 %",
+        "messages": [
+          [
+            "lead",
+            "bin_1 is fuller"
+          ]
+        ],
+        "world_patch": {
+          "objects": {
+            "bin_1": {
+              "properties": {
+                "fill": {
+                  "value": "70",
+                  "unit": "%"
+                }
+              }
+            },
+            "bin_2": {
+              "properties": {
+                "fill": {
+                  "value": "30",
+                  "unit": "%"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "when": "bin_1 is 20 % full, bin_2 60 %",
+        "messages": [
+          [
+            "lead",
+            "bin_2 is fuller"
+          ]
+        ],
+        "world_patch": {
+          "objects": {
+            "bin_1": {
+              "properties": {
+                "fill": {
+                  "value": "20",
+                  "unit": "%"
+                }
+              }
+            },
+            "bin_2": {
+              "properties": {
+                "fill": {
+                  "value": "60",
+                  "unit": "%"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "when": "bin_1 is 50 % and bin_2 51 % full: the ranges overlap, so the comparison is unknown and the run fails (S261)",
+        "fails": true,
+        "messages": [],
+        "world_patch": {
+          "objects": {
+            "bin_1": {
+              "properties": {
+                "fill": {
+                  "value": "50",
+                  "unit": "%"
+                }
+              }
+            },
+            "bin_2": {
+              "properties": {
+                "fill": {
+                  "value": "51",
+                  "unit": "%"
+                }
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "expect_2_3": {
+    "decision": "program"
+  },
+  "goal_free": true,
+  "expected_readings": [
+    [
+      "picker_h",
+      "fill",
+      "bin_1"
+    ],
+    [
+      "picker_h",
+      "fill",
+      "bin_2"
+    ]
+  ],
+  "tags": [
+    "fill",
+    "two_readings",
+    "if_else",
+    "no_choice",
+    "compare_two_names"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "task": "send_closest",
+  "bindings": {
+    "spot": "lobby"
+  }
+}

@@ -1,0 +1,71 @@
+{
+  "ir_schema": "robolang.task-ir",
+  "ir_schema_version": "1.11",
+  "language_version": "2.3",
+  "tasks": [
+    {
+      "name": "move_part",
+      "parameters": [
+        {
+          "name": "arm",
+          "type": "robot"
+        },
+        {
+          "name": "conveyor",
+          "type": "location"
+        },
+        {
+          "name": "bin",
+          "type": "location"
+        }
+      ],
+      "safety": [],
+      "preconditions": [],
+      "goal": [
+        {
+          "kind": "object_at",
+          "object": "part",
+          "location": "bin"
+        }
+      ],
+      "steps": [
+        {
+          "kind": "choose",
+          "type": "object",
+          "name": "part",
+          "source": {
+            "kind": "objects_at",
+            "location": "conveyor"
+          },
+          "else": [
+            {
+              "kind": "fail",
+              "reason": "the conveyor is empty"
+            }
+          ]
+        },
+        {
+          "kind": "move",
+          "robot": "arm",
+          "target": "conveyor"
+        },
+        {
+          "kind": "grasp",
+          "robot": "arm",
+          "object": "part"
+        },
+        {
+          "kind": "move",
+          "robot": "arm",
+          "target": "bin"
+        },
+        {
+          "kind": "place",
+          "robot": "arm",
+          "object": "part",
+          "target": "bin"
+        }
+      ]
+    }
+  ]
+}

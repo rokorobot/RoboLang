@@ -2,7 +2,7 @@
 
 **Status:** implemented in `src/robolang/ir_reader.py` (CORE-1); decision record
 [0021](decisions/0021-core-1-ir-reader.md).
-**Reads:** Task IR schemas [1.0](ir-schema-v1.0.md) to [1.10](ir-schema-v1.10.md), and the Mission IR schemas [1.0 to 1.2](mission-ir-v1.0.md)
+**Reads:** Task IR schemas [1.0](ir-schema-v1.0.md) to [1.11](ir-schema-v1.11.md), and the Mission IR schemas [1.0 to 1.3](mission-ir-v1.0.md)
 **Duties implemented:** 1 and 2 of [ir-schema-v1.0.md](ir-schema-v1.0.md) section 2 (kernel rules K4 and K5
 of the domain contracts)
 
@@ -102,6 +102,9 @@ the whole document; a missing field is reported at the object that lacks it). Th
 | `I227` | Mission IR 1.0: a `run` that names no task of the document (unknown, or a mission), or gives it the wrong number of arguments (E326) |
 | `I228` | Schema 1.9: a `message_received` in a goal (`goal`, `goal_then` or `goal_else`), however nested (E327) |
 | `I229` | Schema 1.10: a count compared with a number that is not whole (E328) |
+| `I230` | Schema 1.11: the `else` of a `choose` does not end in a `fail` (E329) |
+| `I231` | Schema 1.11: the `where` of a `choose` holds a `compare` or a `message_received`, or does not name the chosen name (E330) |
+| `I232` | Schema 1.11: a `choose` names a name that an earlier `choose` bound (E331) |
 
 `I211` is not used: a repeated `@verify` key (E311) cannot be written in a JSON object, where it is `I103`.
 
@@ -129,6 +132,10 @@ section 4), in the same order and with the same "one error per item" behaviour (
 - in schema 1.10 (RoboLang 2.2, [robolang-v2.2.md](robolang-v2.2.md) section 3): the four new kinds and the units `%`, `Pa`, `kPa` and
   `bar` are in no older schema (`I125`, `I117`); a `quantity` with no `unit` is a count's (`I117` against another kind, `I229` if not whole);
   the object of a `fill` or `count` reading may be a location (`I204` otherwise).
+- in schema 1.11 (RoboLang 2.3, [robolang-v2.3.md](robolang-v2.3.md) section 8): the step `choose` is in no older schema (`I115`); its
+  chosen name is new (`I202`), its candidates, place and reference are parameters of the right types (`I203`, `I204`), its `else` is
+  there and ends in `fail` (`I230`), its `where` names the chosen name and holds no reading or message (`I231`), and a choice uses no
+  name an earlier choice bound (`I232`); a goal may name what a `choose` at the top level of its plan or branch binds.
 - in schema 1.9 (RoboLang 2.1, [robolang-v2.1.md](robolang-v2.1.md) section 3): no `message_received` in a goal (`I228`), and
   its channel and text are not empty (`I207`; a text of spaces only is empty).
 

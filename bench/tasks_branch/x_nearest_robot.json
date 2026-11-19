@@ -1,19 +1,118 @@
 {
   "id": "x_nearest_robot",
   "prompt": "Use whichever robot is closest to shelf_b to bring box2 to the table.",
-  "world": "bench/worlds/warehouse.json",
-  "group": "inexpressible",
+  "world": "bench/worlds/choose_x_nearest_robot.json",
+  "world_2_2": "bench/worlds/warehouse.json",
+  "group": "choose",
   "expect": {
-    "decision": "cannot",
-    "category": "inexpressible"
+    "decision": "program"
   },
   "expect_1_4": {
     "decision": "cannot",
     "category": "inexpressible"
   },
-  "tags": [
-    "computed_choice"
+  "expect_2_2": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_3": {
+    "decision": "program",
+    "world_2_3": {
+      "positions": {
+        "shelf_a": [
+          10,
+          10
+        ],
+        "shelf_b": [
+          20,
+          10
+        ],
+        "table": [
+          60,
+          10
+        ],
+        "dock": [
+          40,
+          10
+        ],
+        "charging": [
+          60,
+          40
+        ]
+      }
+    },
+    "paths": [
+      {
+        "when": "arm1 waits at shelf_a, 10 m from shelf_b: the closest; amr1 is 20 m away, arm2 40 m, amr2 (charging) 50 m",
+        "chosen": [
+          "arm1"
+        ],
+        "goal": [
+          [
+            "rl:thing:box2",
+            "located_in",
+            "rl:place:table"
+          ]
+        ],
+        "messages": [],
+        "final": [
+          [
+            "rl:robot:arm1",
+            "located_in",
+            "rl:place:table"
+          ]
+        ],
+        "world_patch": {}
+      },
+      {
+        "when": "arm2 is at shelf_b itself: it is the closest",
+        "chosen": [
+          "arm2"
+        ],
+        "goal": [
+          [
+            "rl:thing:box2",
+            "located_in",
+            "rl:place:table"
+          ]
+        ],
+        "messages": [],
+        "final": [
+          [
+            "rl:robot:arm2",
+            "located_in",
+            "rl:place:table"
+          ]
+        ],
+        "world_patch": {
+          "robots": {
+            "arm2": {
+              "location": "shelf_b"
+            }
+          }
+        }
+      }
+    ]
+  },
+  "expected_choices": [
+    {
+      "type": "robot",
+      "from": "robots",
+      "where": null,
+      "order": {
+        "nearest_to": "shelf_b"
+      }
+    }
   ],
-  "why": "Choosing by distance needs geometry and a computed comparison. A 1.4 `if` tests world facts (ready, at, clear, holding), not distances.",
-  "attempt_fails_with": "E203"
+  "gap": "G-CHOOSE",
+  "tags": [
+    "choose",
+    "robots",
+    "all_robots",
+    "nearest",
+    "pick_place"
+  ],
+  "why": "RoboLang 2.3 (0045 C2, C4, C5): `choose robot r from robots nearest to shelf_b`, then bring box2 to the table with it. The robot that ends at the table is the one chosen: a program that fixes one robot is another answer on some path. Before 2.3: no choice at run time.",
+  "attempt_fails_with": "E203",
+  "erratum": "Q5"
 }

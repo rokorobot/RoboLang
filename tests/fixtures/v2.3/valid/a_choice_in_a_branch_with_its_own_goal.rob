@@ -1,0 +1,18 @@
+// RoboLang v2.3 fixture: valid
+// expect: ok
+// why: a branch goal may name what a choose at the top of the branch binds (C7)
+
+robolang 2.3;
+
+task go(robot a, robot b, location dst, location home) {
+    plan {
+        if robot_ready a {
+            goal { robot_at t dst; }
+            choose robot t from (a, b) nearest to dst else { fail "none"; }
+            move t to dst;
+        } else {
+            goal { robot_at b home; }
+            move b to home;
+        }
+    }
+}

@@ -1,0 +1,10 @@
+// bench/reference_choose/p07_equally_near_docks.rob: hand-written reference (RoboLang 2.3)
+robolang 2.3;
+
+task to_dock(robot r, location d3, location d1, location hall) {
+    goal { robot_at r dock; }
+    plan {
+        choose location dock from (d3, d1) nearest to hall else { fail "no dock"; }
+        move r to dock;
+    }
+}

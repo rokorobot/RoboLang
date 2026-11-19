@@ -1,0 +1,10 @@
+// bench/reference_choose/p02_nearest_dock_to_the_hall.rob: hand-written reference (RoboLang 2.3)
+robolang 2.3;
+
+task go_to_dock(robot r, location d1, location d2, location d3, location hall) {
+    goal { robot_at r dock; }
+    plan {
+        choose location dock from (d1, d2, d3) nearest to hall else { fail "no dock"; }
+        move r to dock;
+    }
+}
