@@ -64,3 +64,31 @@ MUJOCO_GL=egl venv/bin/python -I g1-spike/stand_still.py $M $P                  
 venv/bin/python -I g1-spike/loco_rpc.py                                            # LocoClient → sim service
 venv/bin/python -I g1-spike/loco_rpc.py serve & venv/bin/python -I g1-spike/loco_rpc.py call   # two processes
 ```
+
+## Phase 1 research: no free stance after walking (2026-11-19, aarch64)
+
+Run after the owner approved 0046, on a fresh **aarch64** sandbox (4 cores, MuJoCo 4.0.1, onnxruntime 1.32.0), with
+[`free_stance.py`](g1-spike/free_stance.py): stand 4 s, walk 5 s at 0.5 m/s, stop, then 10 s at zero command with no
+support.
+
+| Way of stopping | Moved in the 10 s after | Torso sway (x, y) | Upright |
+|---|---|---|---|
+| Zero command | 1.64 m | 111, 45 cm | yes |
+| Command ramped to zero over 3 s | 1.55 m | 113, 46 cm | yes |
+| Pelvis spring-damper faded in, legs eased to the standing pose, faded out | 0.56 m | 41, 25 cm | yes |
+| Pelvis welded to a mocap body, moved upright to standing height, legs eased to the standing pose, released from a still state | 0.84 m | 79, 46 cm | yes |
+
+**Result: the whole-body policy cannot provide a free stance**, even when released from the still, upright state it
+starts from. On aarch64 it also drifts about 10 cm in its first 3 s from rest (1 cm on x86_64), so its standing is
+marginal on any machine. Phase 1 therefore uses the supported stance the owner approved (0046 open point 1). Two
+findings for the implementation:
+
+- **Support with a weld, not a spring.** A weld to a mocap body (a MuJoCo constraint) holds the pelvis stably. Stiff
+  external springs became numerically unstable at a 5 ms step (pelvis height jumping to metres), and soft ones did
+  not stop the stepping.
+- **Physics differs between CPU types.** The same 5 s walk ends 0.23 m sideways in world coordinates on aarch64 and
+  0.03 m on x86_64, mostly from a slight turn while standing first. Checks should measure drift in the robot's own
+  heading, and CI on x86_64 is the reference.
+
+Reproduce: `venv/bin/python -I g1-spike/free_stance.py $M $D/exported/policy.onnx $D/params/deploy.yaml MODE` with
+`MODE` one of `none`, `ramp`, `spring`, `weld`.
