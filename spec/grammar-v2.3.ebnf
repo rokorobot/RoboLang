@@ -1,0 +1,62 @@
+(* RoboLang v2.3 grammar, implemented in src/robolang/parser.py.
+   RoboLang 2.2 plus one statement, "choose" (decision 0045). Differences from grammar-v2.2.ebnf are marked [2.3].
+   Everything not shown here is as in grammar-v2.2.ebnf (and the grammars below it): a task and a mission are unchanged.
+   Normative text, diagnostics and static rules: spec/robolang-v2.3.md *)
+
+version_decl  = "robolang" , NUMBER , ";" ;                (* [2.3] NUMBER written exactly 2.3 *)
+
+statement     = ... | choose ;                              (* [2.3] a statement that takes no ";": it ends at its else block *)
+
+choose        = "choose" , type , NAME , "from" , candidates
+              , [ "where" , condition ]
+              , [ order ]
+              , "else" , branch ;                           (* [2.3] the else is mandatory (E316) and ends in fail (E329) *)
+type          = "robot" | "object" | "location" ;
+candidates    = "(" , NAME , { "," , NAME } , ")"           (* a list of parameters, in the order written *)
+              | "objects" , "at" , NAME                      (* the objects at the location when the choice is made *)
+              | "robots" ;                                   (* every robot the world declares *)
+order         = "nearest" , "to" , NAME
+              | "farthest" , "from" , NAME ;                 (* NAME: a location, robot or object parameter *)
+
+(* [2.3] "choose", "from", "where", "nearest", "farthest", "objects" and "robots" are recognised by their position and are NOT
+   reserved: a program of any version may still use them as names. In a file below 2.3 "choose" is E203.
+   [2.3] Example:
+       choose robot t from (a, b) where robot_ready t nearest to handoff else { fail "no tugger is free"; }
+       move t to handoff;
+   [2.3] The name after the type is new, and is used like a parameter from the end of the statement to the end of its block, and in
+   a goal block of the plan or branch that holds the choose at its top level (the goal is checked for the entity chosen). A
+   choice uses parameters only, never a name an earlier choice bound (E331).
+   [2.3] where is a task condition over the chosen name that states world facts only: robot_ready, object_at, robot_at, holding,
+   object_exists, region_clear, sensor_ok, in_state, with and, or, not. It is evaluated from the world state at the choice, and an
+   unknown value excludes the candidate. It never holds a reading, the clock or a message (E330).
+   [2.3] Order: straight-line distance between the positions of two locations (world file 1.8; a robot or an object is at its
+   location). A candidate or a reference point with no position is unknown and excluded. Ties, and a choice with no order, go to
+   the FIRST candidate in the order written (a list) or listed by the world (objects at L, robots). A different order of the
+   list is a different choice when two candidates are equally near.
+   [2.3] The else block runs when no candidate is left. It MUST END IN fail (E329), and a message may come before the fail:
+       else { communicate r to "ops" with "no tugger"; fail "no tugger is free"; }
+   [2.3] A choice that uses only world facts may come first, before any action, even when the request mentions it late: the choice
+   is the same whether the robot holds the tote yet or not. Such a task can be delegated: the planner makes the choices from the
+   world model and sends the task with them filled in. A choose after an action, or inside an if, cannot be delegated (X609), but
+   it runs in simulation.
+   [2.3] choose NEVER READS A VALUE. A finite named set that is compared by readings ("which of bin_1 and bin_2 is fuller", with
+   two or three named candidates) is not a choose: measure each, compare the bindings in an if (a 2.2 program).
+   [2.3] A task with a choose may run in a mission, and each run chooses afresh: "move every part from the conveyor for 8
+   hours" is a mission that repeats a task that chooses object p from objects at conveyor_in.
+   [2.3] What 2.3 cannot say (decision 0045 C9; erratum E5 of docs/evidence/bench-errata-1-8.md states why this belongs in the
+   grammar file). Decline each as inexpressible:
+   - choosing by a reading of each candidate: "the fullest bin on the row", "any pan above 80 degC", "the bin with the lowest
+     fill". "where" and the order use world facts, never a reading, because a reading is a sequence of robot actions;
+   - acting on each candidate in turn, with a memory of which are done: "check every pan", "carry as many as counted". A choice
+     picks ONE entity; a plan has a fixed number of steps;
+   - detecting objects the world does not list: "if the camera sees something the list does not know". "objects at L" yields
+     only what the world declares;
+   - choosing a person: "the robot nearest the person who called". A person is not an entity of the world;
+   - several choices that depend on each other (E331).
+   [2.3] Do not replace a choice: a request for "whichever is nearest", "the farthest" or "one that is ready" is never one
+   candidate fixed in advance, never the first of the list with the order dropped, and never a stand-in place for something that
+   is not an entity. Either write the choose with the criteria the request states, or decline. Do not add a choose to a request
+   that names its candidates by a reading (that stays an if), or invent a criterion the request does not state.
+   [2.3] A request whose choice leaves no candidate in the world, and that names no fallback, is infeasible, not a program. *)
+
+(* Reserved words in a 2.3 file: those of grammar-v2.2.ebnf. The words of the choose are not reserved. *)

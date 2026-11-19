@@ -1,9 +1,14 @@
 {
   "id": "i03_the_ready_robot_has_no_gripper",
   "prompt": "Use whichever of digit2 and tugger_a is ready and closer to inbound_conveyor to carry tote_1 from inbound_conveyor to outbound_conveyor.",
-  "world": "bench/worlds/fulfilment.json",
+  "world": "bench/worlds/choose_i03_the_ready_robot_has_no_gripper.json",
+  "world_2_2": "bench/worlds/fulfilment.json",
   "group": "infeasible",
   "expect": {
+    "decision": "cannot",
+    "category": "infeasible"
+  },
+  "expect_2_2": {
     "decision": "cannot",
     "category": "inexpressible"
   },
@@ -11,19 +16,6 @@
     "decision": "cannot",
     "category": "infeasible",
     "because": "S211",
-    "choices": [
-      {
-        "type": "robot",
-        "from": [
-          "digit2",
-          "tugger_a"
-        ],
-        "where": "robot_ready",
-        "order": {
-          "nearest_to": "inbound_conveyor"
-        }
-      }
-    ],
     "world_2_3": {
       "positions": {
         "staging": [
@@ -50,6 +42,19 @@
       }
     }
   },
+  "expected_choices": [
+    {
+      "type": "robot",
+      "from": [
+        "digit2",
+        "tugger_a"
+      ],
+      "where": "robot_ready",
+      "order": {
+        "nearest_to": "inbound_conveyor"
+      }
+    }
+  ],
   "blockers": [
     "tugger_a"
   ],

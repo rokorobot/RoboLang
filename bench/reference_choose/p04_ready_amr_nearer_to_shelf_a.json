@@ -1,0 +1,10 @@
+{
+  "task": "bring",
+  "bindings": {
+    "a": "amr1",
+    "b": "amr2",
+    "item": "box1",
+    "src": "shelf_a",
+    "dst": "handoff"
+  }
+}

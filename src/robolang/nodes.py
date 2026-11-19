@@ -1,5 +1,5 @@
 """
-Abstract syntax tree for RoboLang v1.1 to v2.2 (robolang-v1.1.md section 7, v1.2 section 6, v1.3 section 6).
+Abstract syntax tree for RoboLang v1.1 to v2.3 (robolang-v1.1.md section 7, v1.2 section 6, v1.3 section 6).
 
 Nodes are immutable and record the source faithfully: names are unresolved,
 units are kept as written and nothing is normalized. Binding and type checks
@@ -368,8 +368,58 @@ class If:
     span: Span
 
 
-Statement = Union[Move, Grasp, Place, Inspect, Measure, MeasureClock, Do, WaitFor, WaitUntil, Communicate, If, Fail]
-HANDLED = (Move, Grasp, Place, Inspect, Measure, MeasureClock, Do, WaitUntil)  # the statements with a failure handler
+@dataclass(frozen=True)
+class ChooseList:
+    """RoboLang 2.3 (decision 0045 C2): the candidates written as a list `(a, b, c)`, in the order written."""
+
+    names: tuple[Name, ...]
+    span: Span
+
+
+@dataclass(frozen=True)
+class ObjectsAt:
+    """RoboLang 2.3: `objects at L`, the objects at the location when the choice is made, in the world's order."""
+
+    location: Name
+    span: Span
+
+
+@dataclass(frozen=True)
+class AllRobots:
+    """RoboLang 2.3: `robots`, every robot the world declares, in the world's order."""
+
+    span: Span
+
+
+@dataclass(frozen=True)
+class ChooseOrder:
+    """RoboLang 2.3 (C4): `nearest to X` (`word.text` "nearest") or `farthest from X` ("farthest")."""
+
+    word: Name
+    reference: Name
+    span: Span
+
+
+@dataclass(frozen=True)
+class Choose:
+    """
+    RoboLang 2.3 (decision 0045 C1): `choose TYPE NAME from CANDIDATES [where C] [nearest to X | farthest from X]
+    else { ... }`. `type` is `robot`, `object` or `location`. `handler` is the mandatory `else` (C6); it is None only in
+    a statement that was reported (E316) while parsing.
+    """
+
+    type: Name
+    name: Name
+    source: ChooseList | ObjectsAt | AllRobots
+    where: Condition | None
+    order: ChooseOrder | None
+    span: Span
+    handler: Branch | None = None
+
+
+Statement = Union[Move, Grasp, Place, Inspect, Measure, MeasureClock, Do, WaitFor, WaitUntil, Communicate, If, Fail,
+                 Choose]
+HANDLED = (Move, Grasp, Place, Inspect, Measure, MeasureClock, Do, WaitUntil, Choose)  # the statements with a handler
 
 
 # -------- structure --------

@@ -1,0 +1,13 @@
+// RoboLang v2.3 fixture: invalid
+// expect: error E330 (static) line 10
+// why: where states world facts only (C3, C9)
+
+robolang 2.3;
+
+task t(robot a, robot b, object bin, location dst, sensor cam) {
+    goal { robot_at s dst; }
+    plan {
+        choose robot s from (a, b) where temperature of bin using cam > 40 degC else { fail "none"; }
+        move s to dst;
+    }
+}

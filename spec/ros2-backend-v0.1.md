@@ -69,7 +69,7 @@ A closed gripper whose object marker no camera sees gives `unknown`; so does `ro
 | S505 | Gripper controller rejected, failed or could not reach its goal |
 | S506 | Gazebo attachment/detachment failed, or place has no matching grasp |
 | S507 | Site or binding is invalid or incomplete |
-| S508 | Task feature has no observation or is unsupported by this backend: a condition, a step kind, a failure handler, a speed limit, a region limit, a declared action or a state |
+| S508 | Task feature has no observation or is unsupported by this backend: a condition, a step kind, a failure handler, a speed limit, a region limit, a declared action or a state, or (RoboLang 2.3) a `choose` |
 | S509 | The task has a `measure` (RoboLang 1.6): this backend has no value sensors; refused before any motion |
 | S510 | The task reads the clock (`measure r time` or `measure r elapsed`, RoboLang 1.9): this backend has no wall clock and no value bindings; refused before any motion |
 | S511 | The run was cancelled (stop file) |

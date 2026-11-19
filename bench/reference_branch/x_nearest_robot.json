@@ -1,0 +1,8 @@
+{
+  "task": "bring",
+  "bindings": {
+    "item": "box2",
+    "shelf": "shelf_b",
+    "dst": "table"
+  }
+}

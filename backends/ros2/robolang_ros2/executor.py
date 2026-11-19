@@ -172,6 +172,10 @@ def execute(task: ir.Task, bindings: dict[str, str], site: Site, ops: Operations
         if has_message(task):
             raise BackendFailure("S515", "message_received is refused: this backend has no message service, and no "
                                          "channel or sender is declared for it (RoboLang 2.1, decision 0043 S8)")
+        if any(isinstance(step, ir.Choose) for _, step in ir.walk(task.steps)):
+            raise BackendFailure("S508", "choose (RoboLang 2.3) is refused: this backend has no world model to choose "
+                                         "from and no positions, and a goal names the entity chosen only when the "
+                                         "run reaches it (decision 0045 C8)")
         if any(isinstance(step, ir.Do) for _, step in ir.walk(task.steps)) or task.goal_states:
             raise BackendFailure("S508", "declared actions (do) and states (in_state) can be neither run nor observed "
                                          "by this backend")

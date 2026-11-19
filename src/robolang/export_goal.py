@@ -15,6 +15,7 @@ from dataclasses import dataclass
 from . import bridge, ir
 from .core import SIM_HMAC, Key, canonical_bytes, sign_sim
 from .sim import World
+from .sim.ground import GroundError, ground
 
 DEFAULT_MIN_CONFIDENCE = "0.9"
 DEFAULT_MAX_AGE = {"value": "10", "unit": "s"}
@@ -51,6 +52,7 @@ class ExportError(Exception):
 class Exported:
     message: dict
     warnings: tuple[str, ...]
+    choices: tuple = ()  # RoboLang 2.3: the choices the planner made (sim.choice.Choice), in order
 
 
 def valid_participant(text: str) -> bool:
@@ -147,6 +149,11 @@ def export_goal(task: ir.Task, world: World, *, sender: str, recipient: str | No
     """
     if core not in CORE_VERSIONS:
         raise ValueError(f"unknown Core version '{core}': use one of {', '.join(CORE_VERSIONS)}")
+    try:  # RoboLang 2.3 (decision 0045 C8): the planner makes the choices and sends the goal with them filled in
+        grounded = ground(task, world)
+    except GroundError as error:
+        raise ExportError(error.code, error.message) from None
+    task, world, choices = grounded.task, grounded.world, grounded.choices
     if task.goal_states:  # never dropped: a goal sent without its state would be a silent goal (A8)
         shown = ", ".join(f'in_state {s.target} "{s.label}"' for s in task.goal_states)
         raise ExportError("X606", f"the goal has {shown}; Core {core} has no state triples, so the task is refused "
@@ -194,4 +201,4 @@ def export_goal(task: ir.Task, world: World, *, sender: str, recipient: str | No
         "payload": payload,
     }
     key_ref = f"{sender}#k1"
-    return Exported(sign_sim(message, key_ref, simulation_key(key_ref)), tuple(warnings))
+    return Exported(sign_sim(message, key_ref, simulation_key(key_ref)), tuple(warnings), choices)

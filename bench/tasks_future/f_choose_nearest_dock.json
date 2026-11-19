@@ -1,19 +1,126 @@
 {
   "id": "f_choose_nearest_dock",
   "prompt": "Move spot1 to whichever of dock_1, dock_2 and dock_3 is nearest to where it is now.",
-  "world": "bench/worlds/site.json",
-  "group": "inexpressible",
+  "world": "bench/worlds/choose_f_choose_nearest_dock.json",
+  "world_2_2": "bench/worlds/site.json",
+  "group": "choose",
   "expect": {
+    "decision": "program"
+  },
+  "expect_2_2": {
     "decision": "cannot",
     "category": "inexpressible"
   },
+  "expect_2_3": {
+    "decision": "program",
+    "world_2_3": {
+      "positions": {
+        "stop_a": [
+          44,
+          20
+        ],
+        "stop_b": [
+          60,
+          10
+        ],
+        "dock_1": [
+          50,
+          30
+        ],
+        "dock_2": [
+          42,
+          18
+        ],
+        "dock_3": [
+          55,
+          12
+        ]
+      }
+    },
+    "paths": [
+      {
+        "when": "spot1 is at stop_a: dock_2 is the nearest (2.8 m), dock_1 11.7 m, dock_3 13.6 m",
+        "chosen": [
+          "dock_2"
+        ],
+        "goal": [
+          [
+            "rl:robot:spot1",
+            "located_in",
+            "rl:place:dock_2"
+          ]
+        ],
+        "messages": [],
+        "world_patch": {}
+      },
+      {
+        "when": "spot1 is at stop_b: dock_3 is the nearest",
+        "chosen": [
+          "dock_3"
+        ],
+        "goal": [
+          [
+            "rl:robot:spot1",
+            "located_in",
+            "rl:place:dock_3"
+          ]
+        ],
+        "messages": [],
+        "world_patch": {
+          "robots": {
+            "spot1": {
+              "location": "stop_b"
+            }
+          }
+        }
+      },
+      {
+        "when": "dock_2 has no position: unknown, left out; dock_1 is then the nearest",
+        "chosen": [
+          "dock_1"
+        ],
+        "goal": [
+          [
+            "rl:robot:spot1",
+            "located_in",
+            "rl:place:dock_1"
+          ]
+        ],
+        "messages": [],
+        "world_patch": {
+          "positions": {
+            "dock_2": null
+          }
+        }
+      }
+    ]
+  },
+  "expected_choices": [
+    {
+      "type": "location",
+      "from": [
+        "dock_1",
+        "dock_2",
+        "dock_3"
+      ],
+      "where": null,
+      "order": {
+        "nearest_to": "spot1"
+      }
+    }
+  ],
   "activity": "ACT-AUTO-001",
   "gap": "G-CHOOSE",
   "tags": [
     "choose",
-    "distance",
-    "locations"
+    "locations",
+    "list",
+    "nearest",
+    "named_in_goal",
+    "no_position_excluded",
+    "reference_is_a_robot"
   ],
-  "why": "Choosing by distance needs a reading of each candidate: `measure` takes an object, never a location, so the distance to a dock cannot be read (language reference: 'Measured values').",
-  "attempt_fails_with": "E304"
+  "why": "RoboLang 2.3 (0045 C4, C5): `choose location d from (d1, d2, d3) nearest to r`, where r is the robot itself (a robot is at the position of its location), then `move r to d`. The goal names the dock chosen. Before 2.3 (E304): `measure` takes an object, never a location.",
+  "attempt_fails_with": "E304",
+  "erratum": "Q5"
 }

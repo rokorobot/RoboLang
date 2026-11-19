@@ -1,0 +1,13 @@
+// RoboLang v2.3 fixture: valid
+// expect: ok
+// why: `robots`: every robot the world declares (C2)
+
+robolang 2.3;
+
+task send_closest(robot probe, location lobby) {
+    goal { robot_at who lobby; }
+    plan {
+        choose robot who from robots nearest to lobby else { fail "no robot"; }
+        move who to lobby;
+    }
+}

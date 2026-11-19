@@ -16,6 +16,7 @@ about any robot: it must never be taken to mean the task is safe to execute.
 """
 
 from __future__ import annotations
+from contextlib import contextmanager
 from decimal import Decimal
 from pathlib import Path
 
@@ -163,6 +164,8 @@ class _Validator:
         self._kinds = False  # RoboLang 2.2: four more kinds and `%`
         self._language = None
         self._mission_names: set[str] = set()
+        self._chosen: set[str] = set()  # RoboLang 2.3: the names a `choose` binds, visible here (also in _params)
+        self._measured: set[str] = set()  # the names a `measure` has bound so far in the plan
         self._owner = "task"  # what the names in scope are parameters of: "task", or "mission" (RoboLang 2.0)
 
     def _report(self, code: str, message: str, span: Span):
@@ -196,11 +199,11 @@ class _Validator:
     def _program(self, program: ast.Program):
         language = program.version.version if program.version is not None else None
         self._language = language
-        self._typed_sensors = language in ("1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "2.0", "2.1", "2.2")
-        self._branching = language in ("1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "2.0", "2.1", "2.2")
-        self._handlers = language in ("1.5", "1.6", "1.7", "1.8", "1.9", "2.0", "2.1", "2.2")
-        self._values = language in ("1.6", "1.7", "1.8", "1.9", "2.0", "2.1", "2.2")
-        self._kinds = language == "2.2"
+        self._typed_sensors = language in ("1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "2.0", "2.1", "2.2", "2.3")
+        self._branching = language in ("1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "2.0", "2.1", "2.2", "2.3")
+        self._handlers = language in ("1.5", "1.6", "1.7", "1.8", "1.9", "2.0", "2.1", "2.2", "2.3")
+        self._values = language in ("1.6", "1.7", "1.8", "1.9", "2.0", "2.1", "2.2", "2.3")
+        self._kinds = language in ("2.2", "2.3")
         seen: dict[str, ast.Name] = {}
         for task in program.tasks:
             first = seen.setdefault(task.name.text, task.name)
@@ -287,6 +290,8 @@ class _Validator:
 
     def _task(self, task: ast.Task):
         self._params = {}
+        self._chosen = set()
+        self._measured = set()
         self._owner = "task"
         for param in task.params:
             if param.name.text in self._params:
@@ -303,17 +308,19 @@ class _Validator:
         if task.pre is not None:
             for condition in task.pre.conditions:
                 self._condition(condition)
-        self._goal(task)
+        with self._goal_names(task.plan.statements):
+            self._goal(task)
+        task_params = dict(self._params)  # the parameters alone: a name a `choose` binds is no parameter of the task
         before = len(self.errors)
         self._statements(task.plan.statements, branch=False)
         if self._values:
-            self._bindings(task)
+            self._bindings(task, task_params)
         if len(self.errors) == before:  # names and types are right, so the plan's grasps can be followed
             self._holders(task.plan.statements)
 
-    def _bindings(self, task: ast.Task):
+    def _bindings(self, task: ast.Task, params: dict[str, ParamType]):
         """RoboLang 1.6 (decision 0036): bindings, kinds, units and where a comparison may stand."""
-        scopes = Scopes({p: t.value for p, t in self._params.items()}, _view, _atoms,
+        scopes = Scopes({p: t.value for p, t in params.items()}, _view, _atoms,
                         lambda rule, message, at: self._report(_VALUE_CODES[rule], message, at))
         scopes.forbid((c for block in (task.pre, task.goal) if block is not None for c in block.conditions),
                       "a 'pre' or 'goal' block")
@@ -326,13 +333,44 @@ class _Validator:
             self._report("E315", double_grasp_message(grasp.robot.text, grasp.obj.text, holder, held, at), grasp.span)
 
     def _statements(self, statements: tuple[ast.Statement, ...], branch: bool):
-        """`branch`: the statements are the body of an if or else, where `fail` may be the last one (E313)."""
+        """
+        `branch`: the statements are the body of an if or else, where `fail` may be the last one (E313). A name that a
+        `choose` binds (RoboLang 2.3) is visible from the end of that statement to the end of its block.
+        """
+        outer_params, outer_chosen = dict(self._params), set(self._chosen)
         for i, statement in enumerate(statements):
             if isinstance(statement, ast.Fail) and not (branch and i == len(statements) - 1):
                 where = "the last statement of an if or else branch" if branch else "inside an if or else branch"
                 self._report("E313", f"'fail' is allowed only as {where}; nothing may follow it", statement.span)
             self._checked(self._statement, statement)
             self._handler(statement)
+            if isinstance(statement, ast.Choose):
+                self._bind_chosen(statement)
+        if branch:
+            self._params, self._chosen = outer_params, outer_chosen
+
+    @contextmanager
+    def _goal_names(self, statements: tuple[ast.Statement, ...]):
+        """
+        RoboLang 2.3 (decision 0045 C7): a goal block may name what a `choose` at the top level of its own plan or
+        branch binds, though the block comes first. Those names are visible to the goal and then taken away again.
+        """
+        added = {}
+        for statement in statements:
+            if isinstance(statement, ast.Choose) and statement.name.text not in self._params:
+                added[statement.name.text] = ParamType(statement.type.text)
+        self._params.update(added)
+        try:
+            yield
+        finally:
+            for name in added:
+                self._params.pop(name, None)
+
+    def _bind_chosen(self, statement: ast.Choose):
+        name = statement.name.text
+        if name not in self._params:  # a clash was reported by the statement itself
+            self._params[name] = ParamType(statement.type.text)
+        self._chosen.add(name)
 
     def _handler(self, statement: ast.Statement):
         """RoboLang 1.5 (decision 0033): a `wait until` needs a failure handler (E316); a handler is a branch."""
@@ -509,7 +547,11 @@ class _Validator:
             self._use(statement.robot, ParamType.ROBOT, "inspect")
             self._use(statement.obj, ParamType.OBJECT, "inspect")
             self._sensor(statement.sensor, "inspect ... using")
+        elif isinstance(statement, ast.Choose):
+            self._choose(statement)
         elif isinstance(statement, ast.Measure):
+            self._binding_is_new(statement.binding)
+            self._measured.add(statement.binding.text)
             self._use(statement.robot, ParamType.ROBOT, "measure")
             if statement.kind.text in AREA_KINDS and self._kinds:  # RoboLang 2.2 (decision 0044 D1): or a location
                 self._use_any(statement.obj, f"measure {statement.kind.text}")
@@ -517,6 +559,8 @@ class _Validator:
                 self._use(statement.obj, ParamType.OBJECT, "measure")
             self._sensor(statement.sensor, "measure ... using")
         elif isinstance(statement, ast.MeasureClock):  # RoboLang 1.9 (decision 0042 T1): the robot is recorded
+            self._binding_is_new(statement.binding)
+            self._measured.add(statement.binding.text)
             self._use(statement.robot, ParamType.ROBOT, "measure")
         elif isinstance(statement, ast.Do):  # RoboLang 1.8 (decision 0040 A6): the action is checked against the world
             self._use(statement.robot, ParamType.ROBOT, "do")
@@ -533,8 +577,9 @@ class _Validator:
             for branch in (statement.then, statement.orelse):
                 if branch is not None:
                     if branch.goal is not None:
-                        for condition in branch.goal.conditions:
-                            self._goal_condition(condition)
+                        with self._goal_names(branch.statements):
+                            for condition in branch.goal.conditions:
+                                self._goal_condition(condition)
                     self._statements(branch.statements, branch=True)
         elif isinstance(statement, ast.Fail):
             self._not_empty(statement.reason, "reason")
@@ -546,6 +591,86 @@ class _Validator:
             self._not_empty(statement.channel, "channel name")
             if isinstance(statement.message, ast.StringLit):  # a Name is a binding, checked by `_bindings`
                 self._not_empty(statement.message, "message")
+
+    # -------- choose (RoboLang 2.3, decision 0045) --------
+
+    def _candidate(self, name: ast.Name, expected: ParamType, context: str):
+        """A candidate, the place of `objects at` or the reference of an order: a parameter, never an earlier choice."""
+        if name.text in self._chosen:
+            self._error("E331", f"'{name.text}' was chosen earlier: a choice cannot use another choice, as several "
+                                "choices that depend on each other are not in RoboLang 2.3 (decision 0045 C9); "
+                                "use a parameter", name.span)
+        self._use(name, expected, context)
+
+    def _binding_is_new(self, binding: ast.Name):
+        """E318: a binding of `measure` must not share a name with an entity a `choose` bound (RoboLang 2.3)."""
+        if binding.text in self._chosen:
+            self._error("E318", f"binding '{binding.text}' has the name of {_article(self._params[binding.text])} "
+                                "that a 'choose' bound; a binding must not share a name with an entity", binding.span)
+
+    def _choose(self, statement: ast.Choose):
+        """C1 to C7: the type, the candidates, `where` (world facts only, E330), the order and the `else` (E329)."""
+        kind = ParamType(statement.type.text)
+        name = statement.name.text
+        if name in self._params or name in self._measured:
+            what = "a parameter or an earlier choice" if name in self._params else "the binding of a 'measure'"
+            self._error("E302", f"'{name}' is already {what}: a 'choose' binds a name of its own", statement.name.span)
+        source = statement.source
+        if isinstance(source, ast.ChooseList):
+            for candidate in source.names:
+                self._candidate(candidate, kind, f"a candidate of a choice of {_article(kind)}")
+        elif isinstance(source, ast.ObjectsAt):
+            if kind is not ParamType.OBJECT:
+                self._error("E304", f"'objects at {source.location.text}' gives objects, but this choice is "
+                                    f"{_article(kind)}: write 'choose object {name} from objects at ...'", source.span)
+            self._candidate(source.location, ParamType.LOCATION, "objects at")
+        elif kind is not ParamType.ROBOT:
+            self._error("E304", f"'robots' gives robots, but this choice is {_article(kind)}: write "
+                                f"'choose robot {name} from robots'", source.span)
+        order = statement.order
+        if order is not None:
+            reference = order.reference
+            if reference.text in self._chosen:
+                self._candidate(reference, ParamType.LOCATION, "an order")  # reports E331
+            declared = self._params.get(reference.text)
+            if declared is None:
+                self._undeclared(reference)
+            if declared not in (ParamType.ROBOT, ParamType.OBJECT, ParamType.LOCATION):
+                self._error("E304", f"'{reference.text}' is {_article(declared)}, but '{order.word.text}' expects a "
+                                    "location, a robot or an object here", reference.span)
+        if statement.where is not None:
+            self._where(statement.where, name, kind)
+        handler = statement.handler
+        if handler is not None and not (handler.statements and isinstance(handler.statements[-1], ast.Fail)):
+            self._report("E329", "the 'else' of a 'choose' must end in 'fail' (decision 0045 C6, point 1): with no "
+                                 "candidate left the name stays unbound, so the plan cannot go on; a message may "
+                                 "come before the 'fail'", handler.span)
+
+    def _where(self, condition: ast.Condition, name: str, kind: ParamType):
+        """C3: a condition over the chosen name that states world facts only: no reading, no clock, no message."""
+        names, stack = False, [condition]
+        while stack:
+            node = stack.pop()
+            if isinstance(node, (ast.And, ast.Or)):
+                stack.extend(node.operands)
+            elif isinstance(node, ast.Not):
+                stack.append(node.operand)
+            elif isinstance(node, (ast.Compare, ast.MessageReceived)):
+                what = "a message" if isinstance(node, ast.MessageReceived) else "a reading or the clock"
+                self._error("E330", f"'where' states world facts only, not {what}: a reading is a sequence of robot "
+                                    "actions, not a choice (decision 0045 C3, C9); choose by the facts, then "
+                                    "'measure' the entity chosen", node.span)
+            else:
+                names = names or any(getattr(node, f, None) is not None and getattr(node, f).text == name
+                                     for f in ("robot", "obj", "location", "target"))
+        if not names:
+            self._error("E330", f"'where' must be a condition over the chosen name '{name}': none of its conditions "
+                                f"names it", condition.span)
+        self._params[name] = kind  # the name is visible inside its own `where`
+        try:
+            self._condition(condition)
+        finally:
+            del self._params[name]
 
     # -------- individual rules --------
 

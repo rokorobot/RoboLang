@@ -1,0 +1,20 @@
+// bench/reference_branch/x_shuttle_until_five.rob: hand-written reference (RoboLang 2.3)
+robolang 2.3;
+
+task move_part(robot arm, location conveyor, location bin) {
+    goal { object_at part bin; }
+    plan {
+        choose object part from objects at conveyor else { fail "the conveyor is empty"; }
+        move arm to conveyor;
+        grasp arm part;
+        move arm to bin;
+        place arm part at bin;
+    }
+}
+
+mission move_parts(robot arm, location conveyor, location bin) {
+    repeat {
+        run move_part(arm, conveyor, bin);
+    } until clock_time >= 17:00;
+    on failure { stop; }
+}

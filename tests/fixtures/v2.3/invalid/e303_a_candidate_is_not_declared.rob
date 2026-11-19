@@ -1,0 +1,13 @@
+// RoboLang v2.3 fixture: invalid
+// expect: error E303 (static) line 10
+// why: a candidate is a parameter
+
+robolang 2.3;
+
+task t(robot a, location dst) {
+    goal { robot_at s dst; }
+    plan {
+        choose robot s from (a, spare) else { fail "none"; }
+        move s to dst;
+    }
+}

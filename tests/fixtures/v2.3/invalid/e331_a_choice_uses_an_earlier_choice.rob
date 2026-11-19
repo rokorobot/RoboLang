@@ -1,0 +1,14 @@
+// RoboLang v2.3 fixture: invalid
+// expect: error E331 (static) line 11
+// why: a choice cannot depend on another choice (C9)
+
+robolang 2.3;
+
+task t(robot a, robot b, location x, location y) {
+    goal { robot_at s y; }
+    plan {
+        choose robot s from (a, b) nearest to x else { fail "none"; }
+        choose location p from (x, y) nearest to s else { fail "none"; }
+        move s to y;
+    }
+}

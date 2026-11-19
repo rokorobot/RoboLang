@@ -55,19 +55,21 @@ MESSAGES_TASKS_DIR = BENCH / "tasks_messages"  # set 10: incoming messages, pre-
 MESSAGES_REFERENCE_DIR = BENCH / "reference_messages"
 KINDS_TASKS_DIR = BENCH / "tasks_kinds"  # set 11: more measured kinds, pre-registered on 2.1, labelled for 2.2 (0044)
 KINDS_REFERENCE_DIR = BENCH / "reference_kinds"
-CHOOSE_TASKS_DIR = BENCH / "tasks_choose"  # set 12: choosing at run time, pre-registered against 2.2 (decision 0045)
+# set 12: choosing at run time, pre-registered on 2.2, labelled for 2.3 (0045)
+CHOOSE_TASKS_DIR = BENCH / "tasks_choose"
 CHOOSE_REFERENCE_DIR = BENCH / "reference_choose"
 PROMPT_FILE = BENCH / "prompt.md"
 REFERENCE_FILE = ROOT / "docs" / "language-reference.md"
 MINIMAL_PROMPT_FILE = BENCH / "prompt_minimal.md"
-# 2.2 is a delta over 2.1, over 2.0, over 1.9, over 1.8, over 1.7, over 1.6, over 1.5, over 1.4, over 1.3: the
-# grammar-only prompt pastes all ten
-GRAMMAR_FILE = ROOT / "spec" / "grammar-v2.2.ebnf"
+# 2.3 is a delta over 2.2, over 2.1, over 2.0, over 1.9, over 1.8, over 1.7, over 1.6, over 1.5, over 1.4, over 1.3: the
+# grammar-only prompt pastes all eleven
+GRAMMAR_FILE = ROOT / "spec" / "grammar-v2.3.ebnf"
 BASE_GRAMMAR_FILE = ROOT / "spec" / "grammar-v1.3.ebnf"
 GRAMMAR_FILES = (BASE_GRAMMAR_FILE, ROOT / "spec" / "grammar-v1.4.ebnf", ROOT / "spec" / "grammar-v1.5.ebnf",
                  ROOT / "spec" / "grammar-v1.6.ebnf", ROOT / "spec" / "grammar-v1.7.ebnf",
                  ROOT / "spec" / "grammar-v1.8.ebnf", ROOT / "spec" / "grammar-v1.9.ebnf",
-                 ROOT / "spec" / "grammar-v2.0.ebnf", ROOT / "spec" / "grammar-v2.1.ebnf", GRAMMAR_FILE)
+                 ROOT / "spec" / "grammar-v2.0.ebnf", ROOT / "spec" / "grammar-v2.1.ebnf",
+                 ROOT / "spec" / "grammar-v2.2.ebnf", GRAMMAR_FILE)
 GRAMMAR_MARK = "{{GRAMMAR}}"  # in prompt_minimal.md: replaced by the text of the grammar file
 REFERENCE_MARK = "{{LANGUAGE_REFERENCE}}"  # in prompt.md: replaced by the shipped, tested reference
 
@@ -115,13 +117,13 @@ ANSWER_SCHEMA = {
                      "description": "\"program\" to answer with RoboLang source, \"cannot\" to decline the request, "
                                     "\"clarify\" to ask which reading is meant."},
         "category": {"type": "string", "enum": list(CATEGORIES),
-                     "description": "Why it cannot be done: \"inexpressible\" (RoboLang 2.2 cannot say it) or "
+                     "description": "Why it cannot be done: \"inexpressible\" (RoboLang 2.3 cannot say it) or "
                                     "\"infeasible\" (this world or robot cannot do it). \"none\" for a program."},
         "reason": {"type": "string", "description": "One sentence: what the program does, or why it cannot be done."},
         "entities": {"type": "array", "items": {"type": "string"},
                      "description": "World entity IDs: for cannot, the ones that block the request; for clarify, every "
                                     "candidate the request could mean. Empty for a program."},
-        "rob": {"type": "string", "description": "The complete RoboLang 2.2 source. Empty when decision is cannot."},
+        "rob": {"type": "string", "description": "The complete RoboLang 2.3 source. Empty when decision is cannot."},
         "task": {"type": "string", "description": "The name of the task in the source to run. Empty when cannot, "
                                                   "and when the answer is a mission."},
         "bindings": {  # a list of pairs: structured outputs require additionalProperties false on objects
@@ -197,7 +199,16 @@ def world_bytes(task_def: dict) -> bytes:
 # -------- what the model is shown --------
 
 def _locations(world: dict) -> list[str]:
-    return [f"locations: {', '.join(world['locations'])}"]
+    """The locations; in a world file 1.8 each with its position in metres, or `no position` (decision 0045 C5)."""
+    if world.get("world_schema_version") != "1.8":
+        return [f"locations: {', '.join(world['locations'])}"]
+    shown = []
+    for item in world["locations"]:
+        entry = item if isinstance(item, dict) else {"id": item}
+        position = entry.get("position")
+        shown.append(f"{entry['id']} ({', '.join(str(c) for c in position)})" if position
+                     else f"{entry['id']} (no position)")
+    return [f"locations (position x, y in metres): {', '.join(shown)}"]
 
 
 def _measures(sensor: dict) -> str:
@@ -239,11 +250,11 @@ def _channels(world: dict) -> str:
 
 def _facts(world: dict) -> list[str]:
     version = world.get("world_schema_version")
-    lines = [_clock(world)] if version in ("1.5", "1.6", "1.7") else []
-    if version in ("1.6", "1.7"):
+    lines = [_clock(world)] if version in ("1.5", "1.6", "1.7", "1.8") else []
+    if version in ("1.6", "1.7", "1.8"):
         lines.append(_channels(world))
     # 0039: what a region holds, what a robot honours (shown only where the file says; a file 1.4 may omit both)
-    limits = world.get("world_schema_version") in ("1.3", "1.4", "1.5", "1.6", "1.7") and (
+    limits = world.get("world_schema_version") in ("1.3", "1.4", "1.5", "1.6", "1.7", "1.8") and (
         any("honours" in r for r in world.get("robots", {}).values())
         or any("contains" in r for r in world.get("regions", {}).values()))
     regions = world.get("regions", {})
@@ -261,7 +272,7 @@ def _facts(world: dict) -> list[str]:
             parts.append(f"max speed {speeds}")
         if limits:
             parts.append(f"honours {', '.join(r['honours'])}" if r.get("honours") else "honours no region limit")
-        if world.get("world_schema_version") in ("1.4", "1.5", "1.6", "1.7"):  # 0040 C12: names are exact: all listed
+        if world.get("world_schema_version") in ("1.4", "1.5", "1.6", "1.7", "1.8"):  # 0040 C12: all names listed
             parts.append(f"can do: {_declared(r['actions'])}" if r.get("actions") else "can do no declared action")
         robots.append(f"{name} ({', '.join(parts)})")
     if robots:
@@ -473,6 +484,12 @@ class Judgement:
     reading_replaced: bool | None = None  # 0044 (B8, B4): valid, SUCCEEDED, an asked new-kind reading missing
     kind_or_threshold_changed: bool | None = None  # 0044 (B9): another kind, test, limit, unit or sensor than asked
     kind_added: bool | None = None      # 0044 (B5): a new-kind reading where the request asks for none (a control)
+    choice_ok: bool | None = None       # decision 0045 (B1): exactly the choices asked (a ladder where Q4 allows it)
+    # 0045 (B8, B4): valid, SUCCEEDED, a candidate fixed or an asked criterion dropped
+    choice_replaced: bool | None = None
+    # 0045 (B9): another order, reference, `where`, list order on a tie, bound or stop
+    criterion_changed: bool | None = None
+    choose_added: bool | None = None    # 0045 (B5): a `choose` where the request names its candidates (a control)
     mission_ok: bool | None = None      # decision 0041 (B1): the runs, bound, until and policy asked; None: no mission
     repetition_replaced: bool | None = None  # 0041 (B8): a valid, succeeding 1.x program for a mission task
     bound_dropped_or_invented: bool | None = None  # 0041 (B9): a mission without a stated bound, or with another
@@ -491,6 +508,35 @@ def _merge(base: dict, patch: dict) -> dict:
     return merged
 
 
+def patched_world(task_def: dict, patch: dict) -> dict:
+    """
+    The task's world with a path's `world_patch` laid over it (`_merge`). A world file 1.8 has `positions` in its
+    `locations`: a patch may give `positions: {location: [x, y] or null}`, which sets or removes a position (decision
+    0045
+    C5), and is then applied to the entries of `locations`.
+    """
+    patch = dict(patch)
+    positions = patch.pop("positions", None)
+    world = _merge(json.loads(world_bytes(task_def)), patch)
+    if positions:
+        entries = []
+        for item in world["locations"]:
+            entry = dict(item) if isinstance(item, dict) else {"id": item}
+            if entry["id"] in positions:
+                if positions[entry["id"]] is None:
+                    entry.pop("position", None)
+                else:
+                    entry["position"] = list(positions[entry["id"]])
+            entries.append(entry["id"] if set(entry) == {"id"} else entry)
+        world["locations"] = entries
+    return world
+
+
+def chosen_bindings(bindings: dict[str, str], result) -> dict[str, str]:
+    """The bindings of an answer and, for each choice a run made, the name bound to the entity chosen (RoboLang 2.3)."""
+    return {**bindings, **{c.name: c.chosen for c in getattr(result, "choices", ()) if c.chosen is not None}}
+
+
 def _safety_set(limits) -> set[tuple[str, str, str | None]]:
     return {(s.kind, task_ir.decimal_text(s.limit.value), s.limit.unit) for s in limits
             if isinstance(s, task_ir.SafetyLimit)}
@@ -503,7 +549,7 @@ def _check_safety(task_def: dict, checked: Checked) -> bool:
 
 def _check_probe(task_def: dict, checked: Checked, probe: dict, bindings: dict[str, str]) -> bool:
     """A correct plan must not succeed in the changed world: it noticed what the request said about it."""
-    patched = _merge(json.loads(world_bytes(task_def)), probe["world_patch"])
+    patched = patched_world(task_def, probe["world_patch"])
     try:
         world = load_world(json.dumps(patched).encode("utf-8"), "world.json", checked.task, bindings)
         return simulate_task(checked.task, world).state != "SUCCEEDED"
@@ -516,9 +562,12 @@ def task_paths(task_def: dict) -> list[dict] | None:
     The paths of a branching task (set 2 and 3, `expect_1_4.paths`; set 4 and pre-registered 1.5 labels,
     `expect_1_5.paths`; sets that teach 1.6, `expect_1_6.paths`; 1.7, `expect_1_7.paths`; 1.8, `expect_1_8.paths`; 1.9,
     `expect_1_9.paths`; set 10, `expect_2_0.paths` of a control and `expect_2_1.paths` of a message program that is no
-    mission; set 11, `expect_2_2.paths` of a reading program), each with
-    the world that forces it, or None.
+    mission; set 11, `expect_2_2.paths` of a reading program; set 12, `expect_2_3.paths` of a choice that is no
+    mission), each with the world that forces it, or None.
     """
+    chosen = task_def.get("expect_2_3") or {}  # RoboLang 2.3 (0045): the paths of a choice program (set 12, the probes)
+    if chosen.get("paths") and not chosen.get("expected_mission") and not task_def.get("expected_mission"):
+        return chosen["paths"]
     kinds = task_def.get("expect_2_2") or {}  # RoboLang 2.2 (0044): the paths of a reading program (set 11, the probes)
     if kinds.get("paths"):
         return kinds["paths"]
@@ -822,7 +871,7 @@ def _do_faults(checked: Checked, bindings: dict[str, str], fault: dict) -> list[
             and bindings.get(step.target, step.target) == fault["target"]]
 
 
-def judge_paths(task_def: dict, checked: Checked, bindings: dict[str, str]) -> list[dict]:
+def judge_paths(task_def: dict, checked: Checked, answer_bindings: dict[str, str]) -> list[dict]:
     """
     Run the answer once per expected path, in that path's patched world (decision 0027 B6, N4 PR 3).
 
@@ -836,7 +885,8 @@ def judge_paths(task_def: dict, checked: Checked, bindings: dict[str, str]) -> l
     for path in task_paths(task_def):
         entry = {"when": path["when"], "goal_ok": False, "plan_ok": False, "state": None, "failure_code": None,
                  "value_ok": None}
-        patched = _merge(json.loads(world_bytes(task_def)), path["world_patch"])
+        bindings = answer_bindings
+        patched = patched_world(task_def, path["world_patch"])
         if "scripted_fault" in path:  # 0040 C6: fail the program's `do` steps that match, as the world's fault script
             faults = _do_faults(checked, bindings, path["scripted_fault"])
             patched["tasks"] = {**patched.get("tasks", {}), checked.task.name: {"faults": faults}}
@@ -848,6 +898,7 @@ def judge_paths(task_def: dict, checked: Checked, bindings: dict[str, str]) -> l
             results.append(entry)
             continue
         entry["state"], entry["failure_code"] = result.state, result.failure.code if result.failure else None
+        bindings = chosen_bindings(answer_bindings, result)  # RoboLang 2.3: a goal may name what a choice bound
         sent = {(s.message.channel, s.message.message) for s in result.steps if s.message and s.status == "succeeded"}
         # [channel, text]; a null text accepts any message on that channel (the request did not fix the wording).
         # A {"channel", "value_of"} entry is a reading sent as a value: judged by value_ok, not here (0036 V13)
@@ -1010,7 +1061,7 @@ def _bound_action(node, bindings: dict[str, str]):
     """An executed IR action/condition with parameter references replaced by world IDs."""
     if not is_dataclass(node):
         return node
-    action = {"kind": node.KIND}
+    action = {"kind": node.KIND} if hasattr(node, "KIND") else {}  # an `Order` of a `choose` has no kind
     for field in fields(node):
         value = getattr(node, field.name)
         if field.name in ("robot", "obj", "target", "location", "region", "sensor"):
@@ -1290,6 +1341,222 @@ def judge_kinds(task_def: dict, checked: Checked, bindings: dict[str, str], stat
         judgement.checks["kinds"] = judgement.kind_ok
 
 
+# -------- choosing at run time (decision 0045, RoboLang 2.3) --------
+
+def _choose_steps(checked: Checked) -> list[task_ir.Choose]:
+    """Every `choose` the answer holds on any path (a mission's tasks once, however often they run)."""
+    return [step for task in _answer_tasks(checked) for _, step in task_ir.walk(task.steps)
+            if isinstance(step, task_ir.Choose)]
+
+
+def _where_text(condition: task_ir.Condition | None) -> str | None:
+    """The `where` as the label writes it: the kinds of its atoms, sorted and joined by `+` (None: no `where`)."""
+    if condition is None:
+        return None
+    if isinstance(condition, (task_ir.And, task_ir.Or, task_ir.Not)):
+        inner = condition.conditions if hasattr(condition, "conditions") else (condition.condition,)
+        return f"{condition.KIND}({'+'.join(sorted(_where_text(c) for c in inner))})"
+    return condition.KIND
+
+
+def _choice_key(step: task_ir.Choose, bindings: dict[str, str]) -> tuple:
+    """A choice as (type, source, where, order): entities for names, so it can be set beside the label's."""
+    source = step.source
+    if isinstance(source, task_ir.ChooseList):
+        shown = ("list", tuple(bindings.get(n, n) for n in source.candidates))
+    elif isinstance(source, task_ir.ObjectsAt):
+        shown = ("objects_at", bindings.get(source.location, source.location))
+    else:
+        shown = ("robots",)
+    order = None if step.order is None else (step.order.mode, bindings.get(step.order.reference, step.order.reference))
+    return step.type, shown, _where_text(step.where), order
+
+
+def _expected_choice(entry: dict) -> tuple:
+    source = entry["from"]
+    shown = ("robots",) if source == "robots" else ("objects_at", source["objects_at"]) if isinstance(source, dict) \
+        else ("list", tuple(source))
+    order = None
+    if entry.get("order"):
+        (kind, reference), = entry["order"].items()
+        order = ({"nearest_to": "nearest", "farthest_from": "farthest"}[kind], reference)
+    return entry["type"], shown, entry.get("where"), order
+
+
+def _tie_task(task_def: dict) -> bool:
+    """The request says what happens on a tie (`p07`): then the order a list is written in is part of the choice."""
+    return "tie" in task_def.get("tags", [])
+
+
+def _same_source(found: tuple, wanted: tuple, ordered: bool) -> bool:
+    if found[0] != wanted[0]:
+        return False
+    if found[0] != "list":  # `robots`, or `objects at L`
+        return found == wanted
+    return found[1] == wanted[1] if ordered else set(found[1]) == set(wanted[1])
+
+
+def _same_choice(found: tuple, wanted: tuple, ordered: bool) -> bool:
+    return found[0] == wanted[0] and _same_source(found[1], wanted[1], ordered) and found[2:] == wanted[2:]
+
+
+def _ladder(checked: Checked, bindings: dict[str, str], place: str) -> bool:
+    """
+    Erratum Q4: the simulated world lists every object, so an `if object_at p1 L ... else if object_at p2 L ...` over
+    the
+    listed objects does what `choose object p from objects at L` does. True when an answer with no `choose` has such a
+    ladder: `object_at` tests of at least two distinct objects at `place` in its `if` conditions.
+    """
+    seen = set()
+    for task in _answer_tasks(checked):
+        for _, step in task_ir.walk(task.steps):
+            if isinstance(step, task_ir.If):
+                for atom in _atoms_of(step.condition):
+                    if isinstance(atom, task_ir.ObjectAt) and bindings.get(atom.location, atom.location) == place:
+                        seen.add(bindings.get(atom.obj, atom.obj))
+    return len(seen) >= 2
+
+
+def _atoms_of(condition: task_ir.Condition):
+    if isinstance(condition, (task_ir.And, task_ir.Or)):
+        for inner in condition.conditions:
+            yield from _atoms_of(inner)
+    elif isinstance(condition, task_ir.Not):
+        yield from _atoms_of(condition.condition)
+    else:
+        yield condition
+
+
+def _ladder_allowed(task_def: dict, checked: Checked, bindings: dict[str, str]) -> bool:
+    """Q4 applies where the choice is `objects at L` with no `where` and no order (`p05`, `p09`, `p11`)."""
+    entries = task_def.get("expected_choices", [])
+    wanted = [_expected_choice(c) for c in entries]
+    return len(wanted) == 1 and bool(entries[0].get("ladder_ok")) and wanted[0][1][0] == "objects_at" \
+        and wanted[0][2] is None and wanted[0][3] is None and _ladder(checked, bindings, wanted[0][1][1])
+
+
+def choice_ok(task_def: dict, checked: Checked, bindings: dict[str, str]) -> bool | None:
+    """
+    Decision 0045 (B1). A task with `expected_choices` is judged on its choices: exactly those asked, each of the
+    asked type
+    and source (a list in any order, unless the request settles a tie by the order written), with the `where` and the
+    order
+    asked and the reference point asked; none more and none fewer. Erratum Q4: where the label says `ladder_ok` (the
+    choice is
+    `objects at L` with no `where` and no order), an `if` ladder over the objects at `L` (and no `choose`) is also
+    right. None when the task has
+    no `expected_choices`.
+    """
+    if "expected_choices" not in task_def:
+        return None
+    wanted = [_expected_choice(c) for c in task_def["expected_choices"]]
+    found = [_choice_key(step, bindings) for step in _choose_steps(checked)]
+    if not found:
+        return _ladder_allowed(task_def, checked, bindings)
+    ordered = _tie_task(task_def)
+    rest = list(found)
+    for want in wanted:
+        match = next((f for f in rest if _same_choice(f, want, ordered)), None)
+        if match is None:
+            return False
+        rest.remove(match)
+    return not rest
+
+
+def _nearest_wanted(found: tuple, wanted: list[tuple]) -> tuple | None:
+    """The asked choice a found one is meant to be: the same type and the same kind of source."""
+    return next((w for w in wanted if w[0] == found[0] and w[1][0] == found[1][0]), None)
+
+
+def _differences(found: tuple, want: tuple, tie: bool) -> set[str]:
+    """How a found `choose` differs from the asked one: narrowed, order_dropped, order_changed, where_dropped,
+    where_invented, where_changed, tie_reordered."""
+    out = set()
+    if found[1][0] == "list" and want[1][0] == "list" and set(found[1][1]) < set(want[1][1]):
+        out.add("narrowed")  # one candidate (or some) fixed in advance
+    if found[1][0] == "list" and want[1][0] == "list" and tie and set(found[1][1]) == set(want[1][1]) \
+            and found[1][1] != want[1][1]:
+        out.add("tie_reordered")
+    if found[3] != want[3]:
+        out.add("order_dropped" if found[3] is None else "order_changed")
+    if found[2] != want[2]:
+        out.add("where_dropped" if found[2] is None else "where_invented" if want[2] is None else "where_changed")
+    return out
+
+
+def choice_replaced(task_def: dict, checked: Checked, bindings: dict[str, str], ok_when_run: bool) -> bool | None:
+    """
+    Decision 0045 (B8; and B4 for an infeasible request): a valid program whose run ends well (SUCCEEDED; a mission that
+    completes or is bounded) that fixes one candidate (no `choose`, or a list cut down to some of the candidates), or
+    has a
+    `choose` that drops an order or a `where` the request states. With Q4 an `if` ladder counts only if it drops a
+    stated
+    criterion, and a request that states none (`objects at L`) has none to drop. For an infeasible request any valid
+    program that ends well counts: there was nothing to choose from. None when the task has no `expected_choices`.
+    """
+    if "expected_choices" not in task_def:
+        return None
+    if task_def.get("group") == "infeasible":
+        return ok_when_run
+    if not ok_when_run:
+        return False
+    wanted = [_expected_choice(c) for c in task_def["expected_choices"]]
+    found = [_choice_key(step, bindings) for step in _choose_steps(checked)]
+    if not found:
+        return not _ladder_allowed(task_def, checked, bindings)
+    for key in found:
+        near = _nearest_wanted(key, wanted)
+        if near is not None and _differences(key, near, _tie_task(task_def)) & {"narrowed", "order_dropped",
+                                                                                  "where_dropped"}:
+            return True
+    return False
+
+
+def criterion_changed(task_def: dict, checked: Checked, bindings: dict[str, str]) -> bool | None:
+    """
+    Decision 0045 (B9): a `choose` whose criterion is not the request's: the other order (`nearest` for `farthest`) or
+    another reference point, a `where` dropped, invented or another, the list written the other way round where a tie is
+    settled by it, or a mission with a bound or a stop rule the request did not state. A program with no `choose` is no
+    change (it is `choice_replaced`), nor is a `choose` that only drops the order (that is too). None when the task has
+    no `expected_choices`, or is infeasible.
+    """
+    if "expected_choices" not in task_def or task_def.get("group") == "infeasible":
+        return None
+    wanted = [_expected_choice(c) for c in task_def["expected_choices"]]
+    changed = False
+    for step in _choose_steps(checked):
+        key = _choice_key(step, bindings)
+        near = _nearest_wanted(key, wanted)
+        if near is None:
+            changed = True  # a choice of another type or from another kind of set than the request asks for
+        elif _differences(key, near, _tie_task(task_def)) & {"order_changed", "where_dropped", "where_invented",
+                                                              "where_changed", "tie_reordered"}:
+            changed = True
+    label = mission_label(task_def)
+    if checked.mission is not None and label is not None:
+        changed = changed or bound_dropped_or_invented(label, checked) or _mission_bounds(checked.mission) != \
+            _label_bounds(label) or _mission_policy(checked.mission) != label["on_failure"]
+    return changed
+
+
+def choose_added(task_def: dict, checked: Checked) -> bool | None:
+    """Decision 0045 (B5): a control (a request that names its candidates) whose answer chooses. None otherwise."""
+    if task_def.get("group") != "control" or "expect_2_3" not in task_def:
+        return None
+    return bool(_choose_steps(checked))
+
+
+def judge_choices(task_def: dict, checked: Checked, bindings: dict[str, str], ok_when_run: bool,
+                  judgement: Judgement) -> None:
+    """Set the 2.3 choice measures of a judgement (a task or a mission answer)."""
+    judgement.choice_ok = choice_ok(task_def, checked, bindings)
+    judgement.choice_replaced = choice_replaced(task_def, checked, bindings, ok_when_run)
+    judgement.criterion_changed = criterion_changed(task_def, checked, bindings)
+    judgement.choose_added = choose_added(task_def, checked)
+    if judgement.choice_ok is not None and (task_def.get("expect") or {}).get("decision") == "program":
+        judgement.checks["choices"] = judgement.choice_ok
+
+
 # -------- missions (decision 0041, RoboLang 2.0) --------
 
 MISSION_OUTCOMES_OK = ("completed", "bounded")  # ended without failing: B4 allows no valid mission that succeeds
@@ -1305,6 +1572,8 @@ def mission_label(task_def: dict) -> dict | None:
         label = task_def.get(key) or {}
         if label.get("expected_mission"):
             return {**label["expected_mission"], "paths": label.get("paths", [])}
+    if task_def.get("expected_mission"):  # set 12 (0045 C10): a choice in a mission, the mission is a task key
+        return {**task_def["expected_mission"], "paths": (task_def.get("expect_2_3") or {}).get("paths", [])}
     return (task_def.get("expect_2_0") or {}).get("accepted_mission")
 
 
@@ -1418,13 +1687,15 @@ def _mission_runs_ok(label: dict, checked: Checked, bindings: dict[str, str], ba
                     if s.status == "succeeded" and s.message and s.message.value is not None}
             if (message["channel"], *message["value_of"]) not in sent:
                 structure = False
-        if expected.get("goal_free"):  # the request names no end state: a run that ends SUCCEEDED is right
+        if expected.get("goal_free") or not ({"goal", "goals"} & set(expected)):
+            # the request names no end state, or (a choice, 0045) the entity chosen is the run's own: a run that
+            # ends SUCCEEDED has verified the goal of its task for the entity it chose
             goals = goals and first.result.state == "SUCCEEDED"
             continue
         reached = bool(first.result.goal) and all(g.result is not None for g in first.result.goal)
         effective = replace(task, goal=tuple(g.condition for g in first.result.goal) if reached else ())
         readings = [{tuple(t) for t in g} for g in expected.get("goals", [expected["goal"]])]  # "goals": erratum M1
-        goals = goals and bool(goal_means(effective, run_bound, readings))
+        goals = goals and bool(goal_means(effective, chosen_bindings(run_bound, first.result), readings))
     return structure, goals
 
 
@@ -1484,7 +1755,7 @@ def judge_mission_paths(task_def: dict, label: dict, checked: Checked, bindings:
     for path in label.get("paths", []):
         entry = {"when": path["when"], "goal_ok": False, "plan_ok": False, "state": None, "failure_code": None,
                  "value_ok": None}
-        patched = _merge(json.loads(world_bytes(task_def)), path["world_patch"])
+        patched = patched_world(task_def, path["world_patch"])
         try:
             world = load_world(json.dumps(patched).encode("utf-8"), "world.json", mission_task(checked.mission),
                                bindings)
@@ -1517,6 +1788,7 @@ def judge_mission(task_def: dict, checked: Checked, bindings: dict[str, str]) ->
     state = "SUCCEEDED" if judgement.plan_succeeds else "FAILED"
     if label is None:
         judge_kinds(task_def, checked, bindings, state, judgement)
+        judge_choices(task_def, checked, bindings, judgement.plan_succeeds, judgement)
         judge_messages(task_def, checked, judgement.plan_succeeds, judgement)
         expect = task_def.get("expect_2_0") or {}
         judgement.mission_added = expect.get("decision") == "program"
@@ -1527,6 +1799,7 @@ def judge_mission(task_def: dict, checked: Checked, bindings: dict[str, str]) ->
     judge_kinds(task_def, checked, bindings, state, judgement)
     judge_messages(task_def, checked, judgement.plan_succeeds, judgement)
     _, goals = _mission_runs_ok(label, checked, bindings, result)
+    judge_choices(task_def, checked, bindings, judgement.plan_succeeds, judgement)  # as the base world ended
     judgement.paths = judge_mission_paths(task_def, label, checked, bindings)
     judgement.goal_correct = goals
     judgement.plan_succeeds = bool(judgement.paths) and all(p["plan_ok"] for p in judgement.paths)
@@ -1541,11 +1814,13 @@ def judge(task_def: dict, checked: Checked, bindings: dict[str, str]) -> Judgeme
     """Goal, simulation and the task's optional checks, for an answer that `check_answer` accepted."""
     if checked.mission is not None:
         return judge_mission(task_def, checked, bindings)
+    result = simulate_task(checked.task, checked.world)
+    answer_bindings = bindings
+    bindings = chosen_bindings(answer_bindings, result)  # RoboLang 2.3: the entities this run's choices bound
     try:
         exported = {(t.subject, t.property, t.value) for t in bridge.goal_triples(checked.task, bindings)}
-    except bridge.NotExportable:
+    except (bridge.NotExportable, KeyError):  # a goal that names a choice the run never made has no triples
         exported = None
-    result = simulate_task(checked.task, checked.world)
     actions = [_bound_action(s.step, bindings) for s in result.steps if s.status == "succeeded"]
     checks = {}
     if "expected_safety" in task_def:
@@ -1570,7 +1845,7 @@ def judge(task_def: dict, checked: Checked, bindings: dict[str, str]) -> Judgeme
     if "expected_end_ms" in task_def:
         checks["end_ms"] = result.end_t_ms == Decimal(task_def["expected_end_ms"])
     if "probes" in task_def:
-        checks["probes"] = all(_check_probe(task_def, checked, p, bindings) for p in task_def["probes"])
+        checks["probes"] = all(_check_probe(task_def, checked, p, answer_bindings) for p in task_def["probes"])
     goal_exact = exported is not None and exported in expected_goals(task_def)
     judged = checked.task
     if checked.task.branching:  # 1.4: the goal of the path this run took, and only if the run reached its goal check
@@ -1584,7 +1859,7 @@ def judge(task_def: dict, checked: Checked, bindings: dict[str, str]) -> Judgeme
     if has_value_expectations(task_def):
         judgement.value_ok = _value_ok(task_def, bindings, result, task_def.get("expected_readings", []), [])
     if task_paths(task_def):  # a task with paths: right only if every path is (the state above is the unpatched run)
-        judgement.paths = judge_paths(task_def, checked, bindings)
+        judgement.paths = judge_paths(task_def, checked, answer_bindings)
         judgement.goal_correct = all(p["goal_ok"] for p in judgement.paths)
         judgement.plan_succeeds = all(p["plan_ok"] for p in judgement.paths)
         right = judgement.goal_correct and judgement.plan_succeeds
@@ -1592,6 +1867,7 @@ def judge(task_def: dict, checked: Checked, bindings: dict[str, str]) -> Judgeme
         if has_value_expectations(task_def):  # every path that is not a stop must have read and sent as asked
             judged = [p["value_ok"] for p in judgement.paths if p["value_ok"] is not None]
             judgement.value_ok = bool(judged) and all(judged)
+    bindings = answer_bindings
     judgement.unsafe_continue = unsafe_continue(task_def, checked, bindings)
     judgement.silent_substitution = silent_substitution(task_def, checked, bindings)
     judgement.limit_ok = limit_ok(task_def, checked, bindings)
@@ -1610,6 +1886,7 @@ def judge(task_def: dict, checked: Checked, bindings: dict[str, str]) -> Judgeme
         judgement.checks["clock"] = judgement.clock_ok
     judge_messages(task_def, checked, result.state == "SUCCEEDED", judgement)
     judge_kinds(task_def, checked, bindings, result.state, judgement)
+    judge_choices(task_def, checked, bindings, result.state == "SUCCEEDED", judgement)
     return judgement
 
 

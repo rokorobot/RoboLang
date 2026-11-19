@@ -1,9 +1,13 @@
 {
   "id": "p03_nearer_cart_for_tote_2",
   "prompt": "With digit1, take tote_2 from inbound_conveyor to whichever of cart_3 and conveyor_b is closer to outbound_conveyor and place it there.",
-  "world": "bench/worlds/fulfilment.json",
+  "world": "bench/worlds/choose_p03_nearer_cart_for_tote_2.json",
+  "world_2_2": "bench/worlds/fulfilment.json",
   "group": "choose",
   "expect": {
+    "decision": "program"
+  },
+  "expect_2_2": {
     "decision": "cannot",
     "category": "inexpressible"
   },
@@ -29,19 +33,6 @@
         ]
       }
     },
-    "choices": [
-      {
-        "type": "location",
-        "from": [
-          "cart_3",
-          "conveyor_b"
-        ],
-        "where": null,
-        "order": {
-          "nearest_to": "outbound_conveyor"
-        }
-      }
-    ],
     "paths": [
       {
         "when": "conveyor_b is 28 m from outbound_conveyor, cart_3 42 m",
@@ -82,6 +73,19 @@
       }
     ]
   },
+  "expected_choices": [
+    {
+      "type": "location",
+      "from": [
+        "cart_3",
+        "conveyor_b"
+      ],
+      "where": null,
+      "order": {
+        "nearest_to": "outbound_conveyor"
+      }
+    }
+  ],
   "gap": "G-CHOOSE",
   "tags": [
     "choose",

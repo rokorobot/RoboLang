@@ -1,9 +1,13 @@
 {
   "id": "p01_nearer_tugger_to_the_trailer",
   "prompt": "Send whichever of tugger_a and tugger_b is nearer to trailer_4 to trailer_4, then tell channel \"ops\" \"tugger sent\".",
-  "world": "bench/worlds/fulfilment.json",
+  "world": "bench/worlds/choose_p01_nearer_tugger_to_the_trailer.json",
+  "world_2_2": "bench/worlds/fulfilment.json",
   "group": "choose",
   "expect": {
+    "decision": "program"
+  },
+  "expect_2_2": {
     "decision": "cannot",
     "category": "inexpressible"
   },
@@ -29,19 +33,6 @@
         ]
       }
     },
-    "choices": [
-      {
-        "type": "robot",
-        "from": [
-          "tugger_a",
-          "tugger_b"
-        ],
-        "where": null,
-        "order": {
-          "nearest_to": "trailer_4"
-        }
-      }
-    ],
     "paths": [
       {
         "when": "tugger_b waits at line_feed, about 28 m from trailer_4; tugger_a is 63 m away",
@@ -91,6 +82,19 @@
       }
     ]
   },
+  "expected_choices": [
+    {
+      "type": "robot",
+      "from": [
+        "tugger_a",
+        "tugger_b"
+      ],
+      "where": null,
+      "order": {
+        "nearest_to": "trailer_4"
+      }
+    }
+  ],
   "gap": "G-CHOOSE",
   "tags": [
     "choose",

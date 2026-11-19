@@ -1,0 +1,14 @@
+// RoboLang v2.3 fixture: valid
+// expect: ok
+// why: a choice and a region limit together
+
+robolang 2.3;
+
+task go_to_dock(robot r, location d1, location d2, location ref, region wet) {
+    @safety no_go_region wet;
+    goal { robot_at r dock; }
+    plan {
+        choose location dock from (d1, d2) nearest to ref else { fail "no dock"; }
+        move r to dock;
+    }
+}

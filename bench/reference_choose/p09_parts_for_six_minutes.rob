@@ -1,0 +1,21 @@
+// bench/reference_choose/p09_parts_for_six_minutes.rob: hand-written reference (RoboLang 2.3)
+robolang 2.3;
+
+task move_part(robot arm, location conveyor, location bin) {
+    goal { object_at part bin; }
+    plan {
+        choose object part from objects at conveyor else { fail "the conveyor is empty"; }
+        move arm to conveyor;
+        grasp arm part;
+        move arm to bin;
+        place arm part at bin;
+        wait for 2 min;
+    }
+}
+
+mission move_parts(robot arm, location conveyor, location bin) {
+    repeat for at most 6 min {
+        run move_part(arm, conveyor, bin);
+    };
+    on failure { stop; }
+}

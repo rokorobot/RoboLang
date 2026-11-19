@@ -24,13 +24,16 @@ from .values import DURATION_UNITS, SPEED_UNITS, Speed, duration_ms, parse_decim
 WORLD_SCHEMA = "robolang.sim.world"
 WORLD_SCHEMA_VERSION = "1.0"
 # 1.1 adds `class` and `mass` to objects (3.3); 1.2 measured values (14); 1.3 region limits (15); 1.4 actions (16);
-# 1.5 the clock (17); 1.6 channels and incoming messages (19); 1.7 four more measured kinds (20)
-WORLD_SCHEMA_VERSIONS = ("1.0", "1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7")
-_MEASURED = ("1.2", "1.3", "1.4", "1.5", "1.6", "1.7")  # the world files with measured values
-_REGIONS = ("1.3", "1.4", "1.5", "1.6", "1.7")  # the world files with `contains` and `honours`
-_ACTIONS = ("1.4", "1.5", "1.6", "1.7")  # the world files with `actions`, `state` and `location_states`
-_CLOCKS = ("1.5", "1.6", "1.7")  # the world files with a `clock`
-_CHANNELS = ("1.6", "1.7")  # the world files with `channels` and `messages`
+# 1.5 the clock (17); 1.6 channels and incoming messages (19); 1.7 four more measured kinds (20); 1.8 the position of
+# a location (21, decision 0045 C5)
+WORLD_SCHEMA_VERSIONS = ("1.0", "1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8")
+_MEASURED = ("1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8")  # the world files with measured values
+_REGIONS = ("1.3", "1.4", "1.5", "1.6", "1.7", "1.8")  # the world files with `contains` and `honours`
+_ACTIONS = ("1.4", "1.5", "1.6", "1.7", "1.8")  # the world files with `actions`, `state` and `location_states`
+_CLOCKS = ("1.5", "1.6", "1.7", "1.8")  # the world files with a `clock`
+_CHANNELS = ("1.6", "1.7", "1.8")  # the world files with `channels` and `messages`
+_KINDS = ("1.7", "1.8")  # the world files with the kinds fill, confidence, pressure, count; `location_properties`
+MAX_POSITION_CHARS = 32
 SENDER = re.compile(r"rl:(agent|robot):[A-Za-z0-9][A-Za-z0-9._:@-]{0,127}")  # a sender of a message (world file 1.6)
 FACT_MESSAGE = "message"  # the fact of a `messages` entry, which is an event like the others (decision 0043 S6)
 HONOURS = ("no_go_region", "in_region")  # what a robot profile may declare it honours (world file 1.3)
@@ -39,6 +42,7 @@ CLI_BINDINGS_SOURCE = "--bind"
 
 _CLOCK_START = re.compile(r"([0-9]{4})-([0-9]{2})-([0-9]{2})T([0-9]{2}):([0-9]{2}):([0-9]{2})")  # local time, no offset
 _ZONE = re.compile(r"UTC|[A-Za-z][A-Za-z_]*(/[A-Za-z0-9_+-]+)+")  # an IANA zone name, by form: no database is read
+_COORDINATE = re.compile(r"-?[0-9]+(\.[0-9]+)?")
 _ID = re.compile(r"[A-Za-z][A-Za-z0-9_]*")
 _ACTION_NAME = re.compile(r"[a-z][a-z0-9_]*")  # a declared action's name (world file 1.4)
 _CLASS = re.compile(r"[a-z][a-z_]{0,63}")  # a Core 0.1 thing class (core-v0.1.md section 5.5)
@@ -214,6 +218,8 @@ class World:
     # world file 1.7 (decision 0044 D1): location -> the fill and count a sensor would read of it, in file order
     location_properties: Mapping[str, tuple["Property", ...]] = dataclasses.field(
         default_factory=lambda: MappingProxyType({}))
+    # world file 1.8 (decision 0045 C5): location -> its (x, y) position in metres; a location not here has none
+    positions: Mapping[str, tuple[Decimal, Decimal]] = dataclasses.field(default_factory=lambda: MappingProxyType({}))
 
     def kind_of(self, entity_id: str) -> str | None:
         if entity_id in self.locations:
@@ -279,6 +285,7 @@ class _Loader:
         self.task = task
         self.cli_bindings = cli_bindings
         self.version = WORLD_SCHEMA_VERSION
+        self.positions: dict[str, tuple[Decimal, Decimal]] = {}
 
     def fail(self, code: str, pointer: str, message: str, filename: str | None = None):
         raise WorldError(code, pointer, message, self.filename if filename is None else filename)
@@ -399,7 +406,7 @@ class _Loader:
             "objects", "sensors", "events", "tasks",
         ) + (("location_states",) if self.version in _ACTIONS else ()) + (("clock",) if self.version in _CLOCKS else ())
         top += ("channels", "messages") if self.version in _CHANNELS else ()
-        top += ("location_properties",) if self.version == "1.7" else ()
+        top += ("location_properties",) if self.version in _KINDS else ()
         self.obj(doc, "", top, "the world file")
         self.require(doc, "", "locations", "tasks")
         locations = self.locations(self.need(doc, "", "locations"))
@@ -461,6 +468,7 @@ class _Loader:
             clock,
             MappingProxyType(channels),
             MappingProxyType(location_properties),
+            MappingProxyType(self.positions),
         )
 
     # -- sections: form --
@@ -468,11 +476,40 @@ class _Loader:
     def locations(self, value):
         if not isinstance(value, list):
             self.fail("E504", "/locations", "'locations' must be an array")
+        if self.version == "1.8":  # an entry is an ID, or `{ "id": ID, "position": [x, y] }` (decision 0045 C5)
+            value = [self.positioned(item, i) for i, item in enumerate(value)]
         out = [self.entity_id(item, _pointer("locations", i)) for i, item in enumerate(value)]
         for i, item in enumerate(out):
             if item in out[:i]:
                 self.fail("E509", _pointer("locations", i), f"duplicate entity ID '{item}'")
         return out
+
+    def positioned(self, item, index):
+        """A 1.8 location entry: its ID. The position, when it has one, is kept in `self.positions`."""
+        if not isinstance(item, dict):
+            return item
+        pointer = _pointer("locations", index)
+        self.obj(item, pointer, ("id", "position"), "a location")
+        self.require(item, pointer, "id")
+        entity = self.entity_id(item["id"], pointer + _pointer("id"))
+        if "position" in item:
+            at = pointer + _pointer("position")
+            raw = item["position"]
+            if not isinstance(raw, list) or len(raw) != 2:
+                self.fail("E504", at, "a position is [x, y]: two numbers, in metres")
+            if entity in self.positions:  # a duplicate ID is reported by the caller; keep the first
+                return entity
+            self.positions[entity] = tuple(self.coordinate(c, at + _pointer(i)) for i, c in enumerate(raw))
+        return entity
+
+    def coordinate(self, value, pointer):
+        """One coordinate in metres: a whole number, or an exact decimal in a string ("12.5", "-3"): never a float."""
+        if type(value) is int:
+            return Decimal(value)
+        if isinstance(value, str) and len(value) <= MAX_POSITION_CHARS and _COORDINATE.fullmatch(value):
+            return Decimal(value)
+        self.fail("E504", pointer, "a coordinate is a whole number or an exact decimal in a string such as \"12.5\" "
+                                   "(no float, no exponent)")
 
     def label(self, value, pointer, what="a state"):
         """A state label (world file 1.4): a non-empty string."""
@@ -702,7 +739,7 @@ class _Loader:
         """A measured kind (E512)."""
         if not isinstance(kind, str):
             self.fail("E504", pointer, "a kind must be a string")
-        kinds = KINDS_V2_2 if self.version == "1.7" else KINDS
+        kinds = KINDS_V2_2 if self.version in _KINDS else KINDS
         if kind not in kinds:
             self.fail("E512", pointer, f"unknown kind '{kind}'; the kinds are {', '.join(kinds)}")
         return kind

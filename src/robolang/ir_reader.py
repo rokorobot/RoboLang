@@ -14,6 +14,7 @@ form error is not checked for meaning; other tasks are. Nothing here executes an
 from __future__ import annotations
 import re
 import dataclasses
+from contextlib import contextmanager
 from dataclasses import dataclass, fields
 from decimal import Decimal
 
@@ -24,6 +25,7 @@ from .measured import AREA_KINDS, KINDS, KINDS_V2_2, Atom, Operand, Scopes, View
 from .parser import MAX_CONDITION_DEPTH, MAX_IF_DEPTH
 from .paths import double_grasps, goalless_path
 from .tokens import (
+    CHOOSE_TYPES,
     CLOCK_KINDS,
     COMPARISON_OPERATORS,
     DURATION_UNITS,
@@ -51,6 +53,7 @@ _ACTIONS_RANK = 7  # the first schema with the step `do` and the condition `in_s
 _CLOCK_RANK = 8  # the first schema with the step `read_clock`, `time` and `clock` operands (RoboLang 1.9)
 _MESSAGE_RANK = 9  # the first schema with the condition `message_received` (RoboLang 2.1)
 _KINDS_RANK = 10  # the first schema with the kinds fill, confidence, pressure, count and a unitless count literal (2.2)
+_CHOOSE_RANK = 11  # the first schema with the step `choose` (RoboLang 2.3, decision 0045)
 MAX_DECIMAL_CHARS = 64
 _POLICIES = ("stop", "continue", "retry")  # a mission's failure policy (Mission IR 1.0)
 
@@ -115,7 +118,8 @@ _USES = {
 _PARAM_TYPES = {"robot": 0, "object": 0, "location": 0, "region": 0, "sensor": 2}
 _BRANCH_STEPS = {"if": 3, "fail": 3}  # kind -> first schema rank that has it
 # a failure handler: schema 1.4 (rank 4)
-_HANDLED = ("move", "grasp", "place", "inspect", "measure", "read_clock", "do", "wait_until")
+_HANDLED = ("move", "grasp", "place", "inspect", "measure", "read_clock", "do", "wait_until", "choose")
+_CHOOSE_SOURCES = {"list": ("candidates",), "objects_at": ("location",), "robots": ()}  # kind -> its other keys
 _HANDLER_KEYS = ("else",)  # a handler has no goal (decision 0034)
 
 
@@ -185,6 +189,8 @@ class _Reader:
         self._schema = SCHEMA_VERSIONS[0]
         self._reserved = RESERVED
         self._mission_names: set = set()
+        self._chosen: set[str] = set()  # schema 1.11: the names a `choose` binds, visible here (also in _params)
+        self._measured: set[str] = set()  # the names a `measure` has bound so far in the task
         self._owner = "task"  # what the names in scope are parameters of: "task", or "mission" (Mission IR)
 
     def error(self, code: str, message: str, pointer: str):
@@ -491,6 +497,9 @@ class _Reader:
         if kind == "do":
             known = self._needs("step kind 'do'", _ACTIONS_RANK, _pointer(ptr, "kind"))
             return known and self.do(node, ptr, ifs, handled)
+        if kind == "choose":
+            known = self._needs("step kind 'choose'", _CHOOSE_RANK, _pointer(ptr, "kind"))
+            return known and self.choose(node, ptr, ifs)
         if kind == "communicate" and self._rank >= _VALUES_RANK:
             return self.communicate(node, ptr)
         if kind in _STEPS:
@@ -510,6 +519,62 @@ class _Reader:
             return self.handler(node, ptr, ifs) and ok
         self.error("I114", f"unknown step kind '{kind}'", _pointer(ptr, "kind"))
         return False
+
+    def choose(self, node, ptr: str, ifs: int) -> bool:
+        """Schema 1.11: `type`, `name`, `source`, an optional `where` and `order`, and the `else` always there."""
+        ok = self.shape(node, ptr, ("kind", "type", "name", "source", "else"), ("where", "order"))
+        if not isinstance(node, dict):
+            return False
+        if "type" in node and self.string(node["type"], _pointer(ptr, "type")):
+            if node["type"] not in CHOOSE_TYPES:
+                self.error("I114", f"unknown type '{node['type']}' of a choice; expected one of "
+                                   f"{', '.join(CHOOSE_TYPES)}", _pointer(ptr, "type"))
+                ok = False
+        elif "type" in node:
+            ok = False
+        if "name" in node:
+            ok = self.name(node["name"], _pointer(ptr, "name")) and ok
+        if "source" in node:
+            ok = self.source(node["source"], _pointer(ptr, "source")) and ok
+        if "where" in node:
+            ok = self.condition(node["where"], _pointer(ptr, "where")) and ok
+        if "order" in node:
+            at, order = _pointer(ptr, "order"), node["order"]
+            ok = self.shape(order, at, ("mode", "reference")) and ok
+            if isinstance(order, dict):
+                if "mode" in order and self.string(order["mode"], _pointer(at, "mode")):
+                    if order["mode"] not in ("nearest", "farthest"):
+                        self.error("I114", f"unknown order '{order['mode']}'; expected nearest or farthest",
+                                   _pointer(at, "mode"))
+                        ok = False
+                elif "mode" in order:
+                    ok = False
+                if "reference" in order:
+                    ok = self.string(order["reference"], _pointer(at, "reference")) and ok
+        return self.handler(node, ptr, ifs) and ok
+
+    def source(self, node, ptr: str) -> bool:
+        kind = self.kind(node, ptr)
+        if kind is None:
+            return False
+        if kind not in _CHOOSE_SOURCES:
+            self.error("I114", f"unknown source '{kind}' of a choice; expected one of "
+                               f"{', '.join(_CHOOSE_SOURCES)}", _pointer(ptr, "kind"))
+            return False
+        keys = _CHOOSE_SOURCES[kind]
+        ok = self.shape(node, ptr, ("kind", *keys))
+        if kind == "objects_at" and "location" in node:
+            ok = self.string(node["location"], _pointer(ptr, "location")) and ok
+        if kind == "list" and "candidates" in node:
+            at = _pointer(ptr, "candidates")
+            if not self.array(node["candidates"], at):
+                return False
+            if not node["candidates"]:
+                self.error("I120", "a list of candidates needs at least one name", at)
+                ok = False
+            for i, name in enumerate(node["candidates"]):
+                ok = self.string(name, _pointer(at, i)) and ok
+        return ok
 
     def do(self, node, ptr: str, ifs: int, handled) -> bool:
         """Schema 1.7: `robot`, `action` and `target` names, an optional `value` (a quantity or a text), a handler."""
@@ -655,13 +720,16 @@ class _Reader:
         self.limits(task["safety"], _pointer(ptr, "safety"))
         if "verify" in task:
             self.verify_meaning(task["verify"], _pointer(ptr, "verify"))
+        self._chosen, self._measured = set(), set()
         self.condition_list(task["preconditions"], _pointer(ptr, "preconditions"))
         if self._rank >= 2:
-            self.goal_list(task.get("goal", []), _pointer(ptr, "goal"))
+            with self.goal_names(task["steps"]):
+                self.goal_list(task.get("goal", []), _pointer(ptr, "goal"))
+        params = dict(self._params)  # the parameters alone: a name a `choose` binds is no parameter of the task
         before = len(self.errors)
         self.steps_meaning(task["steps"], _pointer(ptr, "steps"), branch=False)
         if self._rank >= _VALUES_RANK:
-            self.bindings(task, ptr)
+            self.bindings(task, ptr, params)
         if len(self.errors) == before:  # names and types are right, so the grasps can be followed
             self.holders(task["steps"], _pointer(ptr, "steps"))
         if self._rank >= 3 and "goal" in task and not task["goal"]:  # a missing key was reported as I209 above
@@ -671,11 +739,11 @@ class _Reader:
                 self.error("I209", f"no goal on {where}: the task 'goal' is empty and a path that does not end in "
                                    "'fail' has no branch goal", _pointer(ptr, "goal"))
 
-    def bindings(self, task: dict, ptr: str):
+    def bindings(self, task: dict, ptr: str, params: dict[str, str]):
         """Schema 1.5: bindings, kinds, units and where a comparison may stand (E317 to E322, as I218 to I223)."""
         def report(rule: str, message: str, at: str):
             self.error(_VALUE_CODES[rule], message, at)
-        scopes = Scopes(self._params, _view, _atoms, report)
+        scopes = Scopes(params, _view, _atoms, report)
         scopes.forbid(_handles(task["preconditions"], _pointer(ptr, "preconditions")), "a 'pre' or 'goal' block")
         scopes.forbid(_handles(task.get("goal", []), _pointer(ptr, "goal")), "a 'pre' or 'goal' block")
         scopes.plan(_handles(task["steps"], _pointer(ptr, "steps")))
@@ -698,12 +766,33 @@ class _Reader:
             self.error("I216", message, pointers[id(grasp)])
 
     def steps_meaning(self, steps: list, ptr: str, branch: bool):
-        """`branch`: the steps are an `if` or `else` body, where a `fail` may be the last step (I214)."""
+        """
+        `branch`: the steps are an `if` or `else` body, where a `fail` may be the last step (I214). A name that a
+        `choose` binds (schema 1.11) is visible from the end of that step to the end of its block.
+        """
+        outer_params, outer_chosen = dict(self._params), set(self._chosen)
         for i, step in enumerate(steps):
             at = _pointer(ptr, i)
             if step["kind"] == "fail" and not (branch and i == len(steps) - 1):
                 self.error("I214", "'fail' is allowed only as the last step of an if or else branch", at)
             self.step_meaning(step, at)
+            if step["kind"] == "choose" and step["name"] not in self._params:
+                self._params[step["name"]] = step["type"]
+            if step["kind"] == "choose":
+                self._chosen.add(step["name"])
+        if branch:
+            self._params, self._chosen = outer_params, outer_chosen
+
+    @contextmanager
+    def goal_names(self, steps: list):
+        """Decision 0045 C7: a goal may name what a `choose` at the top level of its plan or branch binds."""
+        added = {s["name"]: s["type"] for s in steps if s["kind"] == "choose" and s["name"] not in self._params}
+        self._params.update(added)
+        try:
+            yield
+        finally:
+            for name in added:
+                self._params.pop(name, None)
 
     def region_limits(self, entry: dict, at: str, earlier: dict[str, tuple[int, str]], index: int):
         """Schema 1.6 (E303, E304, E323, E324): a region parameter, named by one region limit only, at most 8."""
@@ -795,6 +884,72 @@ class _Reader:
             elif kind == "in_state":
                 self.not_empty(node["label"], "state label", _pointer(ptr, "label"))
 
+    def candidate(self, name: str, expected: str, context: str, ptr: str):
+        """A candidate, the place of `objects at` or the reference of an order: a parameter, never an earlier choice."""
+        if name in self._chosen:
+            self.error("I232", f"'{name}' was chosen earlier: a choice cannot use another choice, as several choices "
+                               "that depend on each other are not in RoboLang 2.3 (decision 0045 C9)", ptr)
+            return
+        declared = self._params.get(name)
+        if declared is None:
+            self.error("I203", f"undeclared name '{name}': it is not a parameter of this {self._owner}", ptr)
+        elif declared not in ((expected,) if isinstance(expected, str) else expected):
+            wanted = _article(expected) if isinstance(expected, str) else ", ".join(map(_article, expected))
+            self.error("I204", f"'{name}' is {_article(declared)}, but {context} expects {wanted} here", ptr)
+
+    def choose_meaning(self, node: dict, ptr: str):
+        """Schema 1.11, the rules of E302, E303, E304, E329, E330 and E331 on a `choose` step object."""
+        kind, name = node["type"], node["name"]
+        if name in self._params or name in self._measured:
+            what = "a parameter or an earlier choice" if name in self._params else "the binding of a 'measure'"
+            self.error("I202", f"'{name}' is already {what}: a 'choose' binds a name of its own", _pointer(ptr, "name"))
+            return
+        source, at = node["source"], _pointer(ptr, "source")
+        if source["kind"] == "list":
+            for i, candidate in enumerate(source["candidates"]):
+                self.candidate(candidate, kind, f"a candidate of a choice of {_article(kind)}",
+                               _pointer(_pointer(at, "candidates"), i))
+        elif source["kind"] == "objects_at":
+            if kind != "object":
+                self.error("I204", f"'objects at' gives objects, but this choice is {_article(kind)}", at)
+            self.candidate(source["location"], "location", "'objects at'", _pointer(at, "location"))
+        elif kind != "robot":
+            self.error("I204", f"'robots' gives robots, but this choice is {_article(kind)}", at)
+        order = node.get("order")
+        if order is not None:
+            self.candidate(order["reference"], ("robot", "object", "location"), f"'{order['mode']}'",
+                           _pointer(_pointer(ptr, "order"), "reference"))
+        if "where" in node:
+            self.where_meaning(node["where"], _pointer(ptr, "where"), name, kind)
+        body = node["else"]
+        if not body or body[-1]["kind"] != "fail":
+            self.error("I230", "the 'else' of a 'choose' must end in 'fail' (decision 0045 C6, point 1)",
+                       _pointer(ptr, "else"))
+
+    def where_meaning(self, condition: dict, ptr: str, name: str, kind: str):
+        """C3 (E330): world facts only, and over the chosen name; the name is visible inside its own `where`."""
+        names, stack = False, [(condition, ptr)]
+        while stack:
+            node, at = stack.pop()
+            if node["kind"] in ("and", "or"):
+                stack.extend((c, _pointer(_pointer(at, "conditions"), i)) for i, c in enumerate(node["conditions"]))
+            elif node["kind"] == "not":
+                stack.append((node["condition"], _pointer(at, "condition")))
+            elif node["kind"] in ("compare", "message_received"):
+                self.error("I231", "'where' states world facts only: not a reading, the clock or a message "
+                                   "(decision 0045 C3, C9)", at)
+                return
+            else:
+                names = names or name in (node.get(f) for f in ("robot", "object", "location", "target"))
+        if not names:
+            self.error("I231", f"'where' must be a condition over the chosen name '{name}'", ptr)
+            return
+        self._params[name] = kind
+        try:
+            self.condition_meaning(condition, ptr)
+        finally:
+            del self._params[name]
+
     def live(self, node: dict, ptr: str):
         """The object and sensor of a live reading are parameters of the right types (E303, E304, E310)."""
         self.uses({"kind": "live", "object": node["object"], "reading": node["reading"]}, ptr)
@@ -811,8 +966,11 @@ class _Reader:
             self.condition_meaning(node["condition"], _pointer(ptr, "condition"))
             for side, key in (("then", "then"), ("else", "else")):
                 if node[f"goal_{side}"] is not None:
-                    self.goal_list(node[f"goal_{side}"], _pointer(ptr, f"goal_{side}"))
+                    with self.goal_names(node[key]):
+                        self.goal_list(node[f"goal_{side}"], _pointer(ptr, f"goal_{side}"))
                 self.steps_meaning(node[key], _pointer(ptr, key), branch=True)
+        elif kind == "choose":
+            self.choose_meaning(node, ptr)
         elif kind == "fail":
             self.not_empty(node["reason"], "reason", _pointer(ptr, "reason"))
             problem = fail_reason_problem(node["reason"])
@@ -827,6 +985,12 @@ class _Reader:
                 self.error("I217", "in IR schema 1.4 a 'wait_until' needs a failure handler ('else') (E316)", ptr)
         else:
             self.uses(node, ptr)
+            if kind in ("measure", "read_clock"):
+                if node["binding"] in self._chosen:
+                    taken = _article(self._params[node["binding"]])
+                    self.error("I219", f"binding '{node['binding']}' has the name of {taken} that a 'choose' bound",
+                               _pointer(ptr, "binding"))
+                self._measured.add(node["binding"])
             if kind in ("inspect", "measure"):
                 self.sensor(node["sensor"], _pointer(ptr, "sensor"), kind)
             elif kind == "do":
@@ -1300,6 +1464,15 @@ def _plain_step(node: dict) -> ir.Step:
                      tuple(_step(s) for s in node["else"]), _goal(node["goal_then"]), _goal(node["goal_else"]))
     if kind == "fail":
         return ir.Fail(node["reason"])
+    if kind == "choose":
+        source = node["source"]
+        order = node.get("order")
+        return ir.Choose(
+            node["type"], node["name"],
+            ir.ChooseList(tuple(source["candidates"])) if source["kind"] == "list"
+            else ir.ObjectsAt(source["location"]) if source["kind"] == "objects_at" else ir.AllRobots(),
+            _condition(node["where"]) if "where" in node else None,
+            None if order is None else ir.Order(order["mode"], order["reference"]), ())
     if kind == "wait_for":
         return ir.WaitFor(_quantity(node["duration"]))
     if kind == "wait_until":

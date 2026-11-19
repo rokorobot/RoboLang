@@ -1,0 +1,16 @@
+// RoboLang v2.3 fixture: valid
+// expect: ok
+// why: `farthest from`, a choice of a location after an action (C4)
+
+robolang 2.3;
+
+task store_far(robot r, object item, location src, location a, location b, location trailer) {
+    goal { object_at item spot; }
+    plan {
+        move r to src;
+        grasp r item;
+        choose location spot from (a, b) farthest from trailer else { fail "no place"; }
+        move r to spot;
+        place r item at spot;
+    }
+}

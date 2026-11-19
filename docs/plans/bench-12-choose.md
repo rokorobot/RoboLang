@@ -7,7 +7,7 @@
 **The labels follow 0045 C1-C12 as approved. Where 0045 does not decide what a label needs, the label states the reading used and
 the question is listed under "Open points" below: an owner answer that differs changes the labels named there.** The acceptance
 bounds are placeholders, to be fixed with the baseline in hand (rule 6, [STRATEGY.md](../STRATEGY.md); LE-11). No language, spec,
-validator or simulator change: that is L4.
+validator or simulator change: that is L4. **L4 done (2026-11-19):** RoboLang 2.3 is built and taught, the labels are `expect` (2.3) with the 2.2 label in `expect_2_2`, the 2.3 references and the world file 1.8 copies are in ([errata Q5 to Q7](../evidence/bench-errata-2-3.md)); the acceptance run (L5) is next.
 
 ## How the set is used
 
