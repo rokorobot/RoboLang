@@ -1,5 +1,5 @@
 {
-  "sha256": "46c33cf842e308d9b817272a76f4809c276f22025cca8102941b476fde6823f2",
+  "sha256": "4ab8bf3d7f895f33af94af08d9db8aff8e28d53f440fa3a504ca029083139345",
   "schema": "robolang.bench.freeze.v2",
   "patterns": [
     "bench/tasks*/*.json",
@@ -1677,7 +1677,7 @@
     "tests/test_bench_ask.py": "727c7903a8a044233f263df3bcc4a4d45a242daadc9e219c8bf8932f502449ff",
     "tests/test_bench_branch.py": "b444b5175b269434baccecc0e068a8378bfc99807b69b8d303a66c3bd4f2dbc8",
     "tests/test_bench_cascade.py": "5bb726f33ea9f6f23c2dfad8df07b43d551d9697e94409b4fb2798366f323e50",
-    "tests/test_bench_choose.py": "f7a9e8ba240062dfbaaf0da45d4e0e170a0f70a03976f9878c0dcb2c57dfd0d0",
+    "tests/test_bench_choose.py": "c518ab9e4b6d28e2def97e29a183f114ca30c6f0c9990654adeda50b00436800",
     "tests/test_bench_clock.py": "fbaea9ce7855109f11a4c26ba630bc897dc7baee4046e6628d1a799a0416294f",
     "tests/test_bench_failure.py": "0eaf64464bcc628431f079147266c73fd23ccb746894c0e7965c6db569633958",
     "tests/test_bench_future.py": "002b68f074485fad33cd717c7e3659153894a12508073f84d17ca87a68a7f228",

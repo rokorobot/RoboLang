@@ -1,6 +1,6 @@
 # Benchmark set 12: choose (pre-registration draft)
 
-**Status:** **draft for the owner** (2026-11-18). Decision [0045](../../spec/decisions/0045-choosing-at-run-time.md) is approved
+**Status:** tasks, labels and open points 1–11 **APPROVED by the owner, 2026-11-19** (see the end of the open points); bounds are proposed with the baseline. Drafted 2026-11-18. Decision [0045](../../spec/decisions/0045-choosing-at-run-time.md) is approved
 (C1-C12 as recommended); this plan is its "Pre-registration (L3)" section made concrete: 25 tasks, labels for 2.2 (baseline) and 2.3
 (acceptance), placeholder bounds B1-B9 and the open points below. `tests/test_bench_choose.py`; run with `python bench/run.py
 --set choose`. Modelled on set 11, [bench-11-kinds.md](bench-11-kinds.md), and set 10. No model was run and no money was spent.
@@ -177,7 +177,7 @@ runs it with `set_only: choose` (full and grammar-only prompts, `--max-usd 3` ea
 The estimate is a guess (`bench/README.md`) and is above the $3 cap: the cap stops new requests, and a rerun with the same `--run-id`
 resumes. The earlier sets cost well below their estimates (set 11: $1.21 for ~$7.4). Nothing was sent.
 
-## Open points: where 0045 does not decide what a label needs
+## Open points: where 0045 does not decide what a label needs (approved 2026-11-19)
 
 Each point names the labels that depend on it. The label uses the reading given first; the owner decides before L4.
 
@@ -226,3 +226,11 @@ Each point names the labels that depend on it. The label uses the reading given 
 11. **A mission's silent form is not a success (B8; `p09`, `p11`).** The strict reading of "the attempt without its choice succeeds"
     does not hold for a mission: a fixed part cannot be moved twice. The silent form that does succeed is the list of parts the world
     shows, named in `run` lines. B8 counts it; the tests do not build it (it would be a different program for each world).
+
+**Owner's answers (2026-11-19):** all 11 recommended readings are approved, with these precisions:
+
+- **Point 1:** an `else` must end in `fail` (its own code). A fallback such as a message comes before the `fail`.
+- **Point 5:** `c02` is a control, and the 2.3 reference says that `choose` never reads a value.
+- **Point 8:** C8 stays as approved, so `p03` and `p08` are programs that cannot be delegated. The reference teaches that a
+  choice using only world facts may come first, so that such a task can be delegated.
+- **Point 10:** `choose`, `nearest` and `farthest` are recognised by position and are not reserved, as the kinds were in 2.2.
