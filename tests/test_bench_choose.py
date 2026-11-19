@@ -669,7 +669,7 @@ def test_the_readme_the_errata_and_the_plan_name_the_set():
     readme = read(REPO / "bench" / "README.md")
     assert "## Set 12: choosing at run time (`--set choose`)" in readme and "set_only: choose" in readme
     plan = read(REPO / "docs" / "plans" / "bench-12-choose.md")
-    assert "draft for the owner" in plan[:700].lower()
+    assert "APPROVED by the owner" in plan[:700]
     for task_id in SET:
         assert f"`{task_id}`" in plan, task_id
     for bound in ("B1", "B2", "B3", "B4", "B5", "B6", "B7", "B8", "B9"):

@@ -1,13 +1,12 @@
 # Benchmark set 12: choose (pre-registration draft)
 
-**Status:** **draft for the owner** (2026-11-18). Decision [0045](../../spec/decisions/0045-choosing-at-run-time.md) is approved
-(C1-C12 as recommended); this plan is its "Pre-registration (L3)" section made concrete: 25 tasks, labels for 2.2 (baseline) and 2.3
-(acceptance), placeholder bounds B1-B9 and the open points below. `tests/test_bench_choose.py`; run with `python bench/run.py
---set choose`. Modelled on set 11, [bench-11-kinds.md](bench-11-kinds.md), and set 10. No model was run and no money was spent.
-**The labels follow 0045 C1-C12 as approved. Where 0045 does not decide what a label needs, the label states the reading used and
-the question is listed under "Open points" below: an owner answer that differs changes the labels named there.** The acceptance
-bounds are placeholders, to be fixed with the baseline in hand (rule 6, [STRATEGY.md](../STRATEGY.md); LE-11). No language, spec,
-validator or simulator change: that is L4.
+**Status:** **APPROVED by the owner, 2026-11-19** (tasks, labels and open points 1-11 as recommended); frozen. The acceptance bounds
+B1-B9 are still placeholders, to be fixed with the baseline in hand (rule 6, [STRATEGY.md](../STRATEGY.md); LE-11). Decision
+[0045](../../spec/decisions/0045-choosing-at-run-time.md) is approved (C1-C12 as recommended); this plan is its "Pre-registration (L3)"
+section made concrete: 25 tasks, labels for 2.2 (baseline) and 2.3 (acceptance), bounds B1-B9 and the open points below.
+`tests/test_bench_choose.py`; run with `python bench/run.py --set choose`. Modelled on set 11, [bench-11-kinds.md](bench-11-kinds.md),
+and set 10. The labels follow 0045 C1-C12 as approved and the owner's answers to the open points. No language, spec, validator or
+simulator change: that is L4. The baseline run is next (a first attempt on 2026-11-19, run 44425853969, made no request that was answered: the API key's credit balance was too low, so nothing was spent and nothing was scored).
 
 ## How the set is used
 
@@ -177,9 +176,9 @@ runs it with `set_only: choose` (full and grammar-only prompts, `--max-usd 3` ea
 The estimate is a guess (`bench/README.md`) and is above the $3 cap: the cap stops new requests, and a rerun with the same `--run-id`
 resumes. The earlier sets cost well below their estimates (set 11: $1.21 for ~$7.4). Nothing was sent.
 
-## Open points: where 0045 does not decide what a label needs
+## Open points: where 0045 does not decide what a label needs (answered 2026-11-19: all 11 as recommended)
 
-Each point names the labels that depend on it. The label uses the reading given first; the owner decides before L4.
+Each point names the labels that depend on it. The label uses the reading given first; the owner approved the recommended reading of every point on 2026-11-19, so no label changes.
 
 1. **Must an `else` end in `fail`? (C6; every program, `i01`, `i04`.)** 0045 says `else { ... }` is mandatory, as the timeout of `wait until` is.
    A `wait until` handler may recover and go on; a `choose` that recovers leaves its name unbound, so the next statement cannot use it.
