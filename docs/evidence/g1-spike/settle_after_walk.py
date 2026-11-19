@@ -13,6 +13,7 @@ Ways of stopping (argument 4):
 
 import collections
 import json
+import os
 import sys
 
 import mujoco
@@ -28,7 +29,9 @@ dflt = np.array(cfg["default_joint_pos"])  # policy order
 off = np.array(cfg["actions"]["JointPositionAction"]["offset"])
 m = mujoco.MjModel.from_xml_path(scene)
 d = mujoco.MjData(m)
-dt, dec, H = 0.005, 4, 5
+dt = float(os.environ.get("DT", "0.002"))  # 0.005 makes the explicit arm PD chatter (dt * kd / I > 2)
+dec = round(0.02 / dt)  # policy at 50 Hz
+H = 5
 m.opt.timestep = dt
 sess = ort.InferenceSession(onnx_path)
 iname = sess.get_inputs()[0].name
