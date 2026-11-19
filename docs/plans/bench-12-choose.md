@@ -144,9 +144,9 @@ location. Where a path's patch moves a robot (`p01`, `p06`), the candidate is at
 | `x05_every_new_part`, `x_shuttle_until_five` | `cannot / inexpressible` | programs as missions (C10) | stay in G-CHOOSE until L4 |
 | `x03_any_hot_pan`, `x03_carry_as_many_as_counted` | `cannot / inexpressible` | stay out (C9) | **move from G-CHOOSE to G-EACH** by erratum Q2 now; the old gap is kept in the task as `gap_before` |
 
-## Acceptance bounds (PROPOSED, placeholders: to be fixed with the baseline in hand, rule 6)
+## Acceptance bounds (APPROVED by the owner 2026-11-19, with the baseline in hand, rule 6)
 
-Nothing was run: the baseline numbers are placeholders. The acceptance run repeats the baseline under 2.3.
+Baseline: [bench-set12-baseline.md](../evidence/bench-set12-baseline.md) (full prompt; grammar-only cut short by API credit). B8 is read with erratum Q4, B4 with Q3. The acceptance run repeats the baseline under 2.3.
 
 | # | Group | Measure | Baseline (2.2) | Proposed bound (2.3, per model) |
 |---|---|---|---|---|

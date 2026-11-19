@@ -47,6 +47,26 @@ of G-DETECT (`x05_an_object_the_list_does_not_know`) and one of G-PROX (`x04_the
 `x_shuttle_until_five` stay in G-CHOOSE: under C10 they are programs (missions that choose afresh). The two new gaps are far and open and no
 sub-activity claims them yet (`needs` unchanged).
 
+## Erratum Q3 (2026-11-19, L3, approved by the owner): infeasible tasks whose 2.2 world says otherwise
+
+In `i03_the_ready_robot_has_no_gripper`, `i04_nothing_at_the_rework_bench` and `i05_the_ready_scanbot_has_the_wrong_camera`,
+the facts that make the task infeasible are only in the 2.3 notes (`world_2_3`). The 2.2 world files shown in the baseline
+say the opposite:
+
+- `digit2` is ready;
+- `p5` is at `rework`;
+- `scanbot2` is ready.
+
+In the baseline ([bench-set12-baseline.md](bench-set12-baseline.md)), a program that is right for the world shown is
+therefore not a false program. No label changes for 2.3, because the world 1.8 copies of L4 carry the facts.
+
+## Erratum Q4 (2026-11-19, L3, approved by the owner): the if-ladder over listed objects is a right answer
+
+The simulated world is closed: it lists every object. An `if object_at p1 L … else if object_at p2 L …` ladder over the
+listed objects therefore does what `choose object p from objects at L` does. For `p05_any_part_from_the_conveyor`, and
+for the runs of `p09` and `p11`, the ladder counts as a right answer in 2.2 and in 2.3. B8 counts a ladder only when it
+drops a criterion that the request states, such as "nearer" in `p04`. L4 applies this to the labels and the scorer.
+
 ## Freeze
 
 `docs/evidence/bench-freeze-v2.json` is regenerated for all of the above (the old manifest deleted, then

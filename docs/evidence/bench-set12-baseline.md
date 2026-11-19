@@ -49,7 +49,7 @@ is for information only and must be rerun once the key has credit. A second disp
 5. **Haiku asks rather than guesses.** It answered `clarify` on 18 of the 33 choice-program answers. That is a right kind of
    decline, but it is not the `cannot` the label expects.
 
-## Recommended errata (owner)
+## Errata (approved by the owner 2026-11-19)
 
 - **Q3** (`i03`, `i04`, `i05`): in the baseline, a program that is right for the 2.2 world shown is not a false
   program. No label changes for 2.3.
@@ -57,7 +57,7 @@ is for information only and must be rerun once the key has credit. A second disp
   ladder that drops a criterion the request states, such as `p04`'s "nearer". `p09` and `p11` (missions) get the
   same reading.
 
-## Proposed bounds (rule 6, for the owner)
+## Bounds (APPROVED by the owner 2026-11-19, rule 6)
 
 The bounds of the [plan](../plans/bench-12-choose.md) are kept, with the baseline in hand:
 
