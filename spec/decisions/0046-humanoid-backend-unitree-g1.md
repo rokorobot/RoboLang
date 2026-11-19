@@ -1,11 +1,11 @@
 # Decision record 0046: a humanoid backend, Unitree G1 in MuJoCo (simulation only)
 
 **Date:** 2026-11-19
-**Status:** **PROPOSED for the owner, 2026-11-19**, revised the same day after review (section 8). Direction given by
-the owner: "use Unitree G1 open SDK and a good simulator for it". The owner picks U1–U13 and answers the open points
-(section 6); the recommendation comes first. Design only: no backend code yet. **Physical execution stays
-unauthorized** ([0038](0038-physical-mode-authorization-stop-approval.md); strategy H4).
-**Applies to (when decided):** a new optional package `robolang-g1` in `backends/unitree_g1/` (not part of
+**Status:** **APPROVED by the owner, 2026-11-19**: U1–U13 as recommended, and open points 1–4 as recommended
+(section 6). Proposed and reviewed the same day (section 8). Direction given by the owner: "use Unitree G1 open SDK
+and a good simulator for it". Phase 1 (section 7) starts. **Physical execution stays unauthorized**
+([0038](0038-physical-mode-authorization-stop-approval.md); strategy H4).
+**Applies to:** a new optional package `robolang-g1` in `backends/unitree_g1/` (not part of
 `pip install robolang`), a new `spec/g1-backend-v0.1.md`, two new run failure codes, a CI workflow `g1-sim.yml`, an
 acceptance run, and two new hazards in the [safety case draft](../../docs/safety-case-draft.md).
 **Evidence and direction:** [STRATEGY](../../docs/STRATEGY.md) pillar P4 ("the same task runs in the symbolic
@@ -137,6 +137,14 @@ Walking, balance and inverse kinematics are new. Estimate one to three weeks, wi
    benchmark, so the two do not compete for the same files or gates.
 
 An approval can read: "U1–U13 as recommended; open points 1–4 as recommended".
+
+## Owner's answers (2026-11-19)
+
+The owner approved U1–U13 as recommended and answered the open points as recommended: (1) a supported stance during
+arm work may stand in for the robot's own balance if phase 1 cannot make it stand free, recorded in every run as
+`stance_model: "supported"`; (2) the visibility rule for the five scenes is accepted; (3) the G1 stays a simulation
+target only, and the hardware pilot (G7) is decided on its own; (4) this backend runs beside I7. Hazards H25 and H26
+are added to the [safety case draft](../../docs/safety-case-draft.md).
 
 ## 7. Phase 1 plan (starts on approval)
 
