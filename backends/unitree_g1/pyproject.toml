@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "robolang-g1"
+version = "0.1.0"
+description = "RoboLang backend for the Unitree G1 humanoid in MuJoCo (simulation only; decision record 0046)."
+readme = "README.md"
+requires-python = ">=3.11"
+license = "Apache-2.0"
+authors = [{ name = "Robert Konecny" }]
+# Exactly the dependencies of decision 0046 U10. No PyTorch. unitree_sdk2py is not listed here on purpose:
+# scripts/fetch_assets.sh builds the CycloneDDS C library and installs cyclonedds and unitree_sdk2py (pinned, from the
+# fetched checkout, with the headless OpenCV) first. A direct reference to the SDK here would make pip fetch it again
+# and pull in its GUI OpenCV build next to the headless one. The `sdk` extra records the pin.
+dependencies = [
+    "robolang>=0.9.0",
+    "mujoco>=3.3,<5",
+    "numpy>=1.26",
+    "opencv-python-headless>=4.8",
+    "onnxruntime>=1.17",
+    "cyclonedds==0.10.2",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=8"]
+sdk = ["unitree_sdk2py @ git+https://github.com/unitreerobotics/unitree_sdk2_python@814556d15970dd2ecf1c9984e845ca02ab07e206"]
+
+[tool.setuptools.packages.find]
+include = ["robolang_g1*"]
+
+[tool.setuptools.package-data]
+robolang_g1 = ["sites/*.json"]

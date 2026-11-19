@@ -1,0 +1,19 @@
+{
+  "schema": "robolang-g1-site/1",
+  "name": "phase1",
+  "floor": {"center": [-5.0, 0.0], "half_size": [8.0, 3.0], "friction": 1.0},
+  "robot": {"start": [-9.5, 0.0, 0.0]},
+  "tables": [
+    {"name": "table", "pos": [0.95, 0.0, 0.375], "half_size": [0.5, 0.6, 0.375]}
+  ],
+  "objects": [
+    {"name": "box_far", "pos": [0.9, 0.2, 0.81], "half_size": [0.06, 0.06, 0.06], "mass": 0.2,
+     "marker": {"id": 7, "face": "-x"}},
+    {"name": "payload", "pos": [0.7, -0.25, 0.79], "half_size": [0.04, 0.04, 0.04], "mass": 0.3,
+     "rgba": [0.2, 0.4, 0.8, 1], "marker": {"id": 8, "face": "top"}}
+  ],
+  "stations": [
+    {"name": "table", "pose": [-0.55, 0.0, 0.0],
+     "marker": {"id": 20, "pos": [0.5, -0.45, 0.95], "facing": 3.14159265, "size": 0.15}}
+  ]
+}
