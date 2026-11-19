@@ -32,18 +32,15 @@ SITE_SCHEMA = "robolang-g1-site/1"
 TIMESTEP = 0.002  # 500 Hz, the robot's own low-level rate; see the note in standin.py on why not 0.005
 CAMERA_SIZE = (640, 480)  # width, height
 CAMERA_FOVY = 58.0
-# The G1's head camera (Intel RealSense D435) on the torso link: Unitree's description puts it at this position,
-# pitched down 0.83 rad. Direction: the camera looks along the torso's +x, up is +z, then tilts down about +y.
-CAMERA_POS = (0.0576, 0.0175, 0.43)
-CAMERA_PITCH = 0.83
+# The G1's head camera (an Intel RealSense D435) is a fixed joint on the torso link in Unitree's with-hand description:
+# unitree_rl_gym g1_29dof_with_hand.urdf:623-624: origin xyz 0.0576235 0.01753 0.41987, rpy 0 0.8307767 0 (pitched
+# down).
+# A MuJoCo camera looks along its -z with +y up, so the orientation below builds "looks along the torso's +x, up is +z"
+# and then tilts it down about +y.
+CAMERA_POS = (0.0576235, 0.01753, 0.41987)
+CAMERA_PITCH = 0.8307767
 MARKER_BORDER = 0.2  # white border around an ArUco marker, as a fraction of its side
 STAND_HEIGHT = 0.788  # pelvis height of the standing pose (measured: the policy's standing pose on this model)
-# Collision groups. The finger links of the hand model touch the thighs in the policy's standing arm pose, which pushes
-# the arms and ruins walking (docs/evidence/g1-phase1-harness.md). Fingers collide with objects, tables and the floor,
-# not with the robot itself: robot geoms are contype 1 / conaffinity 1, fingers contype FINGER only, the world
-# conaffinity WORLD (= robot bit | finger bit).
-FINGER = 4
-WORLD = 1 | FINGER
 # Geom groups. The robot's meshes come twice (a visual copy in group 1 and a collision copy in group 0); the camera
 # draws group 1 only, which halves the triangles it has to rasterise on the CPU. The world is in group 1 too.
 VISIBLE = 1
@@ -253,8 +250,7 @@ def build_spec(site) -> mujoco.MjSpec:
             children = [b for b in spec.bodies if b.parent is not None and b.parent.name == link.name]
             tip = np.array(children[0].pos) if children else np.array(link.pos) / np.linalg.norm(link.pos) * FINGER_TIP
             link.add_geom(type=mujoco.mjtGeom.mjGEOM_CAPSULE, fromto=[0, 0, 0, *tip], size=[FINGER_RADIUS, 0, 0],
-                          contype=FINGER, conaffinity=0, group=VISIBLE, rgba=[0.85, 0.85, 0.88, 1], mass=0.0,
-                          density=0.0)
+                          group=VISIBLE, rgba=[0.85, 0.85, 0.88, 1], mass=0.0, density=0.0)
     pelvis.add_site(name="imu", pos=[0.04525, 0, -0.08339], size=[0.01, 0, 0])
     spec.add_sensor(name="imu_quat", type=mujoco.mjtSensor.mjSENS_FRAMEQUAT, objtype=mujoco.mjtObj.mjOBJ_SITE,
                     objname="imu")
@@ -284,7 +280,7 @@ def build_spec(site) -> mujoco.MjSpec:
     ground.texrepeat = [half_x, half_y]
     ground.specular = 0
     spec.worldbody.add_geom(name="floor", type=mujoco.mjtGeom.mjGEOM_PLANE, size=[half_x, half_y, 0.05],
-                            pos=[cx, cy, 0], material="ground", conaffinity=WORLD, group=VISIBLE,
+                            pos=[cx, cy, 0], material="ground", group=VISIBLE,
                             friction=[floor.get("friction", 1.0), 0.005, 0.0001])
     spec.add_texture(name="sky", type=mujoco.mjtTexture.mjTEXTURE_SKYBOX, builtin=mujoco.mjtBuiltin.mjBUILTIN_GRADIENT,
                      rgb1=[0.55, 0.65, 0.75], rgb2=[0.2, 0.25, 0.3], width=256, height=512)
@@ -292,7 +288,7 @@ def build_spec(site) -> mujoco.MjSpec:
                                 diffuse=[0.5, 0.5, 0.5], castshadow=0)
     for table in site["tables"]:
         spec.worldbody.add_geom(name=table["name"], type=mujoco.mjtGeom.mjGEOM_BOX, pos=table["pos"],
-                                size=table["half_size"], conaffinity=WORLD, group=VISIBLE,
+                                size=table["half_size"], group=VISIBLE,
                                 rgba=table.get("rgba", [0.55, 0.42, 0.3, 1]))
     for obj in site["objects"]:
         body = spec.worldbody.add_body(name=obj["name"], pos=obj["pos"])
@@ -300,7 +296,7 @@ def build_spec(site) -> mujoco.MjSpec:
         half = obj["half_size"]
         body.add_geom(name=f"{obj['name']}_box", type=mujoco.mjtGeom.mjGEOM_BOX, size=half,
                       rgba=obj.get("rgba", [0.8, 0.2, 0.2, 1]), mass=obj.get("mass", 0.2), friction=[1.0, 0.01, 0.001],
-                      conaffinity=WORLD, group=VISIBLE)
+                      group=VISIBLE)
         marker = obj.get("marker")
         if marker:
             normal, quat = FACES[marker["face"]]

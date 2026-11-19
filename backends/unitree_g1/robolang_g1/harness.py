@@ -33,11 +33,12 @@ from .sim.policy import load_deploy
 WALK_SPEED, WALK_SECONDS = 0.5, 4.0
 FORWARD_RANGE, SIDEWAYS_MAX = (1.6, 2.4), 0.15  # P2
 SWAY_MAX, SWAY_SECONDS = 0.02, 10.0  # P3
+SETTLED_M, SETTLED_S, SETTLE_TIMEOUT_S = 0.01, 1.0, 30.0  # at rest: at most 1 cm of pelvis path in 1 s
 ARM_TOLERANCE = 0.05  # P4, rad
 MARKER_ERROR_MAX, CAMERA_RANGE = 0.02, (0.5, 1.0)  # P5, m
 REALTIME_MIN = 0.95  # P6
 # arm_sdk gains the harness uses (the executor will choose its own): waist, shoulders and elbows, wrists
-ARM_GAINS = {"waist": (300.0, 8.0), "arm": (200.0, 5.0), "wrist": (60.0, 2.0)}
+ARM_GAINS = {"waist": (500.0, 10.0), "arm": (200.0, 5.0), "wrist": (60.0, 2.0)}
 
 
 # ------------------------------------------------------------------------------------------------ fixtures
@@ -81,14 +82,15 @@ def plain_robot(count_file: str) -> int:
 class StandIn:
     """The stand-in as a subprocess."""
 
-    def __init__(self, site: str, run_dir: Path):
+    def __init__(self, site: str, run_dir: Path, stance: str = "free"):
         self.run_dir, self.oracle = run_dir, run_dir / "oracle.json"
         env = dict(os.environ)
         env.setdefault("MUJOCO_GL", "egl")
         self.log = open(run_dir / "standin.log", "w")
         self.proc = subprocess.Popen(
             [sys.executable, "-m", "robolang_g1.sim.standin", "--site", site, "--run-dir", str(run_dir),
-             "--oracle", str(self.oracle)], stdout=subprocess.PIPE, stderr=self.log, text=True, env=env)
+             "--oracle", str(self.oracle), "--stance", stance], stdout=subprocess.PIPE, stderr=self.log, text=True,
+            env=env)
         self.ready = None
         self.last_line = None
 
@@ -330,6 +332,21 @@ def p1_ok(d: dict) -> bool:
     return bool(refused and clean and accepted and damp.get("code") == ERR_REFUSED and damp.get("still_standing"))
 
 
+def settled_at(samples: list[dict], t_from: float):
+    """First oracle time after `t_from` with at most SETTLED_M of pelvis travel in the last SETTLED_S."""
+    window = [s for s in samples if s["sim_time"] >= t_from]
+    start = 0
+    for i, s in enumerate(window):
+        while s["sim_time"] - window[start]["sim_time"] > SETTLED_S:
+            start += 1
+        if s["sim_time"] - window[0]["sim_time"] < SETTLED_S:
+            continue
+        pts = np.array([w["pelvis"]["pos"] for w in window[start:i + 1]])
+        if np.linalg.norm(np.diff(pts, axis=0), axis=1).sum() <= SETTLED_M:
+            return s["sim_time"]
+    return None
+
+
 def check_p2_p3(robot: Robot, tail: OracleTail) -> tuple[dict, dict]:
     runs, p3_runs = [], []
     for k in range(3):
@@ -339,7 +356,7 @@ def check_p2_p3(robot: Robot, tail: OracleTail) -> tuple[dict, dict]:
         code = robot.loco.SetVelocity(WALK_SPEED, 0.0, 0.0, WALK_SECONDS)
         issued = tail.wait(lambda s: s["velocity_command"][0] != 0, 5, "the velocity command")
         until = issued["command_until"]
-        end = tail.wait(lambda s: s["sim_time"] >= until, WALK_SECONDS + 5, "the end of the walk")
+        tail.wait(lambda s: s["sim_time"] >= until, WALK_SECONDS + 5, "the end of the walk")
         end = tail.nearest(until)
         forward, sideways = in_frame(p0, end["pelvis"]["pos"], yaw0)
         run = {"set_velocity_code": code, "forward_m": round(forward, 3), "sideways_m": round(sideways, 3),
@@ -348,22 +365,36 @@ def check_p2_p3(robot: Robot, tail: OracleTail) -> tuple[dict, dict]:
         run["pass"] = (code == 0 and FORWARD_RANGE[0] <= forward <= FORWARD_RANGE[1]
                        and abs(sideways) <= SIDEWAYS_MAX and not end["fallen"])
         runs.append(run)
-        # P3: after the stand-in's stop, wait until it stands, then watch the torso
-        stood = tail.wait(lambda s: s["stance"]["standing"], 40, "the stop to settle")
-        window = tail.between(stood["sim_time"], stood["sim_time"] + SWAY_SECONDS)
-        tail.wait(lambda s: s["sim_time"] >= stood["sim_time"] + SWAY_SECONDS, SWAY_SECONDS + 5, "the sway window")
-        window = tail.between(stood["sim_time"], stood["sim_time"] + SWAY_SECONDS)
+        # P3. First the coast: from the stop until the pelvis is at rest (at most SETTLED_M of travel in SETTLED_S).
+        p3 = {"stance_model": end["stance"]["model"], "settled": False, "pass": False}
+        p3_runs.append(p3)
+        deadline = time.monotonic() + SETTLE_TIMEOUT_S
+        rest = None
+        while rest is None and time.monotonic() < deadline and not tail.latest()["fallen"]:
+            time.sleep(0.2)
+            rest = settled_at(list(tail.samples), until)
+        if rest is None:
+            p3["error"] = f"the robot was not at rest within {SETTLE_TIMEOUT_S} s of the stop (or it fell)"
+            break
+        at_rest = tail.nearest(rest)
+        p3.update(settled=True, coast_s=round(rest - until, 2),
+                  coast_m=round(float(np.linalg.norm(np.array(at_rest["pelvis"]["pos"][:2])
+                                                     - np.array(end["pelvis"]["pos"][:2]))), 3))
+        # then the stillness window, measured at rest: torso sway over SWAY_SECONDS
+        tail.wait(lambda s: s["sim_time"] >= rest + SWAY_SECONDS, SWAY_SECONDS + 10, "the stillness window")
+        window = tail.between(rest, rest + SWAY_SECONDS)
         pos = np.array([s["torso"]["pos"] for s in window])
-        sway = (pos.max(0) - pos.min(0))
-        p3_runs.append({"torso_sway_cm_xyz": np.round(sway * 100, 2).tolist(), "samples": len(window),
-                        "settled_after_s": round(stood["sim_time"] - end["sim_time"], 2),
-                        "stance_model": stood["stance"]["model"], "pass": bool(sway.max() <= SWAY_MAX
-                                                                                and not tail.latest()["fallen"])})
-    p2 = {"pass": all(r["pass"] for r in runs), "details": {"runs": runs, "command": f"SetVelocity({WALK_SPEED}, 0, 0, "
-                                                                                      f"{WALK_SECONDS})",
-                                                            "frame": "robot heading at the start of each walk"}}
-    p3 = {"pass": all(r["pass"] for r in p3_runs), "details": {"runs": p3_runs,
-                                                               "stance_model": tail.latest()["stance"]["model"]}}
+        sway = pos.max(0) - pos.min(0)
+        p3.update(torso_sway_cm_xyz=np.round(sway * 100, 2).tolist(), window_samples=len(window),
+                  window_start_after_stop_s=round(rest - until, 2))
+        p3["pass"] = bool(sway.max() <= SWAY_MAX and not tail.latest()["fallen"])
+    p2 = {"pass": len(runs) == 3 and all(r["pass"] for r in runs),
+          "details": {"runs": runs, "command": f"SetVelocity({WALK_SPEED}, 0, 0, {WALK_SECONDS})",
+                      "frame": "robot heading at the start of each walk"}}
+    p3 = {"pass": len(p3_runs) == 3 and all(r["pass"] for r in p3_runs),
+          "details": {"runs": p3_runs, "stance_model": tail.latest()["stance"]["model"],
+                      "settled": f"pelvis path <= {SETTLED_M * 100:g} cm in {SETTLED_S:g} s, within "
+                                 f"{SETTLE_TIMEOUT_S:g} s of the stop; the sway window starts then"}}
     return p2, p3
 
 
@@ -519,15 +550,18 @@ def check_p5_camera(robot: Robot, tail: OracleTail, run_dir: Path, site: dict) -
     return {"pass": bool(ok), "details": d}
 
 
-def check_p6_time(sim_client, started: dict, tail: OracleTail) -> dict:
+def check_p6_time(robot: Robot, sim_client, started: dict, tail: OracleTail) -> dict:
     code, status = sim_client.Status()
     now = tail.latest()
     wall = time.perf_counter() - started["wall"]
     ratio = (now["sim_time"] - started["sim"]) / wall
-    d = {"harness_ratio": round(ratio, 4), "harness_wall_s": round(wall, 1), "stand_in": status}
+    low_hz = (robot.low_count - started["low_count"]) / wall
+    d = {"harness_ratio": round(ratio, 4), "harness_wall_s": round(wall, 1), "lowstate_hz": round(low_hz, 1),
+         "lowstate_tick_s_minus_sim_time_s": round(robot.low_tick / 1000 - now["sim_time"], 2), "stand_in": status}
     cam = (status or {}).get("camera", {})
     ok = (code == 0 and ratio >= REALTIME_MIN and status["realtime_ratio"] >= REALTIME_MIN
-          and (status["worst_second_ratio"] or 0) >= REALTIME_MIN and cam.get("hz", 0) >= 4.5)
+          and (status["worst_second_ratio"] or 0) >= REALTIME_MIN and cam.get("hz", 0) >= 4.5
+          and low_hz >= 100 and abs(d["lowstate_tick_s_minus_sim_time_s"]) < 1.0)
     return {"pass": bool(ok), "details": d}
 
 
@@ -539,6 +573,9 @@ def main(argv=None) -> int:
     parser.add_argument("--out", default="harness.json")
     parser.add_argument("--run-dir", help="where frames, the oracle and logs go (default: <out>.run next to --out)")
     parser.add_argument("--site", default=str(Path(__file__).parent / "sites" / "phase1.json"))
+    parser.add_argument("--stance", default="free", choices=["free", "supported"],
+                        help="the stand-in's stance when the robot stands still (default: free; supported is the "
+                             "approved fallback, 0046 U4)")
     parser.add_argument("--skip", default="", help="development only: comma list of checks to skip (P2 also skips P3, "
                                                    "P4); the go rule then fails")
     parser.add_argument("--plain-robot", help=argparse.SUPPRESS)
@@ -564,8 +601,9 @@ def main(argv=None) -> int:
     p1: dict = {}
     try:
         p1 = check_p1_guard(run_dir)
-        standin = StandIn(args.site, run_dir)
+        standin = StandIn(args.site, run_dir, args.stance)
         result["stand_in_ready"] = standin.wait_ready()
+        result["stance_model"] = result["stand_in_ready"]["stance_model"]
         client, identity = guard.require_simulation(timeout=30.0)
         p1["stand_in_accepted"] = identity
         tail = OracleTail(standin.oracle)
@@ -575,12 +613,12 @@ def main(argv=None) -> int:
         time.sleep(1.0)
         code = robot.loco.SetFsmId(1)  # Damp: must be refused
         time.sleep(1.0)
-        p1["damp_refused"] = {"code": code, "still_standing": bool(tail.latest()["stance"]["standing"]
+        p1["damp_refused"] = {"code": code, "still_standing": bool(tail.latest()["pelvis"]["pos"][2] > 0.6
                                                                   and not tail.latest()["fallen"]),
                               "fsm_id_after": robot.loco.GetFsmId()}
         result["checks"]["P1"] = {"pass": p1_ok(p1), "details": p1}
         print(f"P1: {'pass' if result['checks']['P1']['pass'] else 'FAIL'}", flush=True)
-        started = {"wall": time.perf_counter(), "sim": tail.latest()["sim_time"]}
+        started = {"wall": time.perf_counter(), "sim": tail.latest()["sim_time"], "low_count": robot.low_count}
 
         p23 = {}
 
@@ -599,8 +637,7 @@ def main(argv=None) -> int:
             record("P4", lambda: check_p4_arms(robot, tail, client, policy_cfg))
         if "P5" not in skip:
             record("P5", lambda: check_p5_camera(robot, tail, run_dir, site))
-        record("P6", lambda: check_p6_time(client, started, tail))
-        result["stance_model"] = tail.latest()["stance"]["model"]
+        record("P6", lambda: check_p6_time(robot, client, started, tail))
     except Exception as exc:
         result["error"] = f"{type(exc).__name__}: {exc}"
         if "P1" not in result["checks"]:

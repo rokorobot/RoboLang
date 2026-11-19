@@ -1,20 +1,23 @@
-"""What the stand-in does when the robot is told to stand still: the `Stance` interface and the `supported` stance.
+"""What the stand-in does when the robot is told to stand still: the `Stance` interface and two stances.
 
-Why this exists (decision 0046, U4 and open point 1): the whole-body policy walks well, but after walking it never
-comes to rest on its own. At zero command it keeps stepping on (about 0.15 m/s) and every way of stopping it free
-failed, on x86 and on aarch64. Unitree's own controller does this on the robot; the stand-in cannot. So the stand-in
-holds the torso while the robot stands, and says so: every record carries `stance_model: "supported"`.
+* `free` (the default): the policy alone, at zero command. Unsupported. The spike and the first phase 1 experiments
+  found that the whole-body policy never came to rest after walking; that was at dt 0.005, where the arm PD chatters
+  (see standin.py and docs/evidence/g1-phase1-harness.md). At dt 0.002 it comes to rest, and takes a recovery step
+  of about 0.3 m every 45 s or so while it stands.
+* `supported` (the approved fallback, decision 0046 open point 1): the torso is welded to a mocap body whenever the
+  robot stands, so the policy's balance is replaced by a constraint: no steps. Every record says its `stance_model`.
 
 The interface is deliberately small. A stance is asked once per physics step for the 29 joint targets and may reach
 the simulation (model, data, robot, policy) to do it. It owns the policy while it is in use. The stand-in adds the
 `arm_sdk` blend and the hands on top of the targets, so a stance only decides about the body and the legs:
 
-    stance = make_stance("supported", body)
+    stance = make_stance("free", body)
     targets = stance.targets(command, policy_due)     # every physics step; (29,) joint position targets, SDK order
     stance.phase, stance.standing                      # for the oracle and for the harness
 
 `command` is the current velocity command (vx, vy, wz) after the SetVelocity duration has been applied, so it is
-exactly (0, 0, 0) when the robot is asked to stand. `policy_due` is True every fourth physics step (50 Hz).
+exactly (0, 0, 0) when the robot is asked to stand. `policy_due` is True on every physics step that is a 50 Hz policy
+tick. `standing` means the robot stands still and is ready for arm work (the harness waits for it before measuring).
 """
 from __future__ import annotations
 
@@ -181,7 +184,58 @@ class SupportedStance(Stance):
         return target
 
 
-STANCES = {"supported": SupportedStance}
+class FreeStance(Stance):
+    """No support: the policy alone, at zero command when the robot is asked to stand.
+
+    Phases: `walking` (non-zero command), `stopping` (zero command, but the pelvis still moves: the robot coasts), and
+    `standing`: zero command and the pelvis has travelled at most STILL_M in the last STILL_S (1 cm/s). At dt 0.002
+    the whole-body policy comes to rest on its own after walking (it coasts 5-15 cm), and stands still for 40-45 s
+    at a time; then it takes one recovery step of about 0.3 m and stands again (docs/evidence/g1-phase1-harness.md).
+    At dt 0.005 the arm PD chatters and none of this holds.
+    """
+
+    name = "free"
+    STILL_S, STILL_M = 1.0, 0.01
+
+    def __init__(self, body: Body):
+        super().__init__(body)
+        self._target = body.policy.default.copy()
+        self._moving = False
+        self._path = 0.0  # distance the pelvis has travelled, summed over policy ticks
+        self._last_pos = body.data.xpos[body.robot.pelvis].copy()
+        self._trail: list[tuple[float, float]] = []  # (time, path) over the last STILL_S
+        body.policy.reset()
+
+    @property
+    def phase(self) -> str:
+        if self._moving:
+            return "walking"
+        t = self.body.data.time
+        long_enough = bool(self._trail) and t - self._trail[0][0] >= self.STILL_S - 0.05
+        still = long_enough and self._path - self._trail[0][1] <= self.STILL_M
+        return "standing" if still else "stopping"
+
+    @property
+    def standing(self) -> bool:
+        return self.phase == "standing"
+
+    def targets(self, command, policy_due: bool) -> np.ndarray:
+        d, r = self.body.data, self.body.robot
+        self._moving = any(abs(c) > 1e-9 for c in command)
+        if policy_due:
+            q, dq = d.qpos[r.qadr], d.qvel[r.dadr]
+            self._target = self.body.policy.act(d.sensordata[r.imu_gyro:r.imu_gyro + 3],
+                                                d.sensordata[r.imu_quat:r.imu_quat + 4], command, q, dq)
+            pos = d.xpos[r.pelvis]
+            self._path += float(np.linalg.norm(pos - self._last_pos))
+            self._last_pos = pos.copy()
+            self._trail.append((d.time, self._path))
+            while self._trail and d.time - self._trail[0][0] > self.STILL_S + 0.05:
+                self._trail.pop(0)
+        return self._target
+
+
+STANCES = {"supported": SupportedStance, "free": FreeStance}
 
 
 def make_stance(name: str, body: Body) -> Stance:

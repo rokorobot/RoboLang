@@ -10,7 +10,7 @@ pytestmark = needs_assets
 
 @pytest.fixture(scope="module")
 def sim_factory():
-    return lambda: Simulator(SITE, camera=False)
+    return lambda stance="supported": Simulator(SITE, stance=stance, camera=False)
 
 
 def run(sim, seconds):
@@ -19,10 +19,11 @@ def run(sim, seconds):
 
 
 def test_stance_interface_and_registry():
-    assert set(stance.STANCES) == {"supported"}
-    assert stance.STANCES["supported"].name == "supported"
+    assert set(stance.STANCES) == {"supported", "free"}
+    assert all(cls.name == name for name, cls in stance.STANCES.items())
     with pytest.raises(ValueError, match="unknown stance"):
-        stance.make_stance("free", None)
+        stance.make_stance("bogus", None)
+    assert Simulator(SITE, camera=False).stance.name == "free"  # the default
 
 
 def test_starts_held_walks_stops_settles_and_walks_again(sim_factory):
@@ -44,6 +45,25 @@ def test_starts_held_walks_stops_settles_and_walks_again(sim_factory):
     sim.set_velocity(0.5, 0, 0, 1.0)  # the next non-zero velocity releases the hold
     run(sim, 1.0)
     assert sim.stance.phase in ("walking", "stopping") and sim.fell_at is None
+
+
+def test_free_stance_comes_to_rest_after_walking(sim_factory):
+    import numpy as np
+
+    sim = sim_factory("free")
+    run(sim, 4.0)
+    assert sim.stance.standing
+    sim.set_velocity(0.5, 0, 0, 4.0)
+    run(sim, 4.5)
+    assert sim.stance.phase in ("walking", "stopping")
+    run(sim, 6.0)  # coast and settle
+    assert sim.stance.standing and sim.fell_at is None
+    torso = []
+    for _ in range(round(10.0 / sim.model.opt.timestep)):
+        sim.step()
+        torso.append(sim.data.xpos[sim.robot.torso].copy())
+    sway = np.ptp(np.array(torso), axis=0)
+    assert sway.max() < 0.02  # P3: at most 2 cm over 10 s at rest
 
 
 def test_velocity_is_clipped_to_the_policy_range_and_expires(sim_factory):

@@ -1,6 +1,6 @@
 """The G1 stand-in process: MuJoCo paced to real time behind the interfaces the real robot answers on (decision 0046).
 
-    python -m robolang_g1.sim.standin --site SITE.json --run-dir DIR [--oracle PATH]
+    python -m robolang_g1.sim.standin --site SITE.json --run-dir DIR [--oracle PATH] [--stance free|supported]
 
 What it serves, on DDS domain 1 and the loopback interface only (both fixed):
 
@@ -24,14 +24,19 @@ What it serves, on DDS domain 1 and the loopback interface only (both fixed):
   rendering. `DIR/head/latest.png` and `latest.json` (frame, sim_time) are replaced atomically; read the JSON, then the
   PNG, then the JSON again and keep the frame if both JSONs agree. On the robot the camera is read directly, not
   through the SDK, so a file frame source is a fair stand-in.
+* The stance (`stance.py`) decides what the robot does when it is asked to stand: `free` (default: the policy alone,
+  which comes to rest by itself at dt 0.002) or `supported` (the torso welded to a mocap body: the approved fallback).
+  Its name is `stance_model` in the identity API, the status and the oracle.
 * With `--oracle PATH` only: ground truth for the test harness (poses, markers, a fallen flag), written 50 times a
   second. Nothing else reads MuJoCo state.
 
 Real time (U13): physics runs at dt 0.002 against the wall clock and the PD law is evaluated on every physics step
-(500 Hz, the robot's own low-level rate); the policy runs at 50 Hz. 0046's dt of 0.005 does not work: with the
-policy's arm gains (kd 10) and the arm joints' inertia (about 0.02 kg m^2) an explicit PD at 200 Hz is unstable
-(dt x kd / inertia > 2): the shoulders chattered between +-25 N m and the walk was irreproducible. The loop measures its
-own lag (`status`): the overall ratio and the worst one-second ratio.
+(500 Hz, the robot's own low-level rate); the policy runs at 50 Hz. 0046's dt of 0.005 does not work: MuJoCo
+integrates a torque explicitly, which is stable only for dt x kd / I < 2, and with the policy's arm gain kd = 10 on
+arm joints of inertia I down to 0.011 kg m^2 that is 4.5 at dt 0.005 (1.8 at 0.002). At 0.005 the arm torques chatter
+between their limits (64% of steps saturated at rest) and nothing downstream is reproducible; see
+docs/evidence/g1-phase1-harness.md. The loop measures its own lag (`status`): the overall ratio and the worst
+one-second ratio.
 """
 from __future__ import annotations
 
@@ -105,7 +110,7 @@ class Timing:
 class Simulator:
     """MuJoCo, the policy, a stance, the arm blend, the hands, the camera thread and the oracle. No DDS in here."""
 
-    def __init__(self, site, stance: str = "supported", run_dir=None, oracle=None, camera: bool = True):
+    def __init__(self, site, stance: str = "free", run_dir=None, oracle=None, camera: bool = True):
         self.model, self.robot, self.site = scene.build(site)
         self.data = mujoco.MjData(self.model)
         m, d, r = self.model, self.data, self.robot
@@ -577,7 +582,9 @@ def main(argv=None) -> int:
     parser.add_argument("--run-dir", required=True, help="where the head camera frames go (DIR/head/)")
     parser.add_argument("--oracle", help="write ground truth for the test harness to this file (the only reader of "
                                          "MuJoCo state besides the simulator itself)")
-    parser.add_argument("--stance", default="supported", choices=sorted(STANCES))
+    parser.add_argument("--stance", default="free", choices=sorted(STANCES),
+                        help="what the robot does when it stands still: free (the policy alone) or "
+                             "supported (the torso welded to a mocap body; the approved fallback)")
     args = parser.parse_args(argv)
 
     from unitree_sdk2py.core.channel import ChannelFactoryInitialize

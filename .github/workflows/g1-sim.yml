@@ -1,0 +1,67 @@
+name: G1 simulation harness
+
+# Decision 0046, phase 1: the Unitree G1 stand-in in MuJoCo and the checks P1-P6 (backends/unitree_g1). On demand and
+# nightly; never on pull requests. 05:11 UTC is clear of the benchmark (Monday 06:00) and the ROS 2 harness (03:17).
+on:
+  workflow_dispatch:
+    inputs:
+      stance:
+        description: "what the robot does when it stands still"
+        type: choice
+        options: [free, supported]
+        default: free
+  schedule:
+    - cron: "11 5 * * *"
+
+permissions:
+  contents: read
+
+jobs:
+  harness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      G1_ASSETS: ${{ github.workspace }}/.g1-assets
+      MUJOCO_GL: egl
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: System packages (software OpenGL through EGL, a C toolchain for CycloneDDS)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends cmake build-essential python3-dev \
+            libegl1 libegl-mesa0 libgl1 libgl1-mesa-dri libglu1-mesa libgles2 libosmesa6
+      - name: Cache the assets (models, policy, SDK, CycloneDDS build), keyed on the fetch script
+        uses: actions/cache@v6
+        with:
+          path: .g1-assets
+          key: g1-assets-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('backends/unitree_g1/scripts/fetch_assets.sh') }}
+      - name: Install robolang, fetch the assets, install the backend
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e .
+          bash backends/unitree_g1/scripts/fetch_assets.sh
+          python -m pip install -e "backends/unitree_g1[test]"
+      - name: Backend tests
+        run: python -m pytest -q backends/unitree_g1/tests
+      - name: Harness (P1-P6)
+        run: python -m robolang_g1.harness --stance "${{ inputs.stance || 'free' }}" --out out/harness.json
+      - name: Summary
+        if: always()
+        run: |
+          python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json, pathlib
+          p = pathlib.Path("out/harness.json")
+          if p.exists():
+              d = json.loads(p.read_text())
+              print(f"stance_model: `{d['stance_model']}`, arch: `{d['arch']}`, go: **{d['go']}**\n")
+              for name, c in d["checks"].items():
+                  print(f"- {name}: {'pass' if c['pass'] else '**FAIL**'}")
+          PY
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: g1-harness
+          path: out/
