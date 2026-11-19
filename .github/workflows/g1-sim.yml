@@ -64,6 +64,10 @@ jobs:
               print(f"stance_model: `{d['stance_model']}`, arch: `{d['arch']}`, go: **{d['go']}**\n")
               for name, c in d["checks"].items():
                   print(f"- {name}: {'pass' if c['pass'] else '**FAIL**'}")
+              p6 = d["checks"].get("P6", {}).get("details", {})
+              st = p6.get("stand_in") or {}
+              print(f"\nrealtime_valid (U13): `{p6.get('realtime_valid')}`, worst second `{st.get('worst_second_ratio')}`, "
+                    f"stalls `{st.get('stalls')}`, step compute ms `{st.get('step_compute_ms')}`")
           PY
       - uses: actions/upload-artifact@v6
         if: always()

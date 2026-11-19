@@ -41,6 +41,7 @@ one-second ratio.
 from __future__ import annotations
 
 import argparse
+import collections
 import json
 import os
 import queue
@@ -105,6 +106,7 @@ class Timing:
     camera_ms: float = 0.0
     camera_stamps: list = field(default_factory=list)
     slow_windows: list = field(default_factory=list)  # (sim time, ratio) of seconds below 0.95
+    step_ms: collections.deque = field(default_factory=lambda: collections.deque(maxlen=20000))  # compute per step
 
 
 class Simulator:
@@ -351,6 +353,15 @@ class Simulator:
 
     # ------------------------------------------------------------------------------------------ the loop
 
+    def _step_stats(self) -> dict | None:
+        """Compute time of one loop pass (service, physics, PD, policy, camera hand-off, oracle) vs the step budget."""
+        ms = sorted(self.timing.step_ms)
+        if not ms:
+            return None
+        budget = float(self.model.opt.timestep) * 1000
+        return {"budget": budget, "mean": round(sum(ms) / len(ms), 3), "p99": round(ms[int(0.99 * (len(ms) - 1))], 3),
+                "max": round(ms[-1], 1), "over_budget": round(sum(m > budget for m in ms) / len(ms), 4)}
+
     def status(self) -> dict:
         t = self.timing
         wall = time.perf_counter() - t.wall0 if t.wall0 else 0.0
@@ -363,6 +374,7 @@ class Simulator:
             "worst_second_ratio": None if t.window_ratio_min == float("inf") else round(t.window_ratio_min, 4),
             "stalls": t.stalls,
             "slow_windows": t.slow_windows[-10:],
+            "step_compute_ms": self._step_stats(),
             "camera": {"frames": t.camera_frames, "dropped": t.camera_dropped, "render_ms": round(t.camera_ms, 1),
                        "hz": round(hz, 2)},
             "stance": {"model": self.stance.name, "phase": self.stance.phase},
@@ -401,6 +413,7 @@ class Simulator:
         oracle_every = max(1, round(1 / (ORACLE_HZ * dt)))
         steps_per_second = round(1 / dt)
         while not stop.is_set():
+            loop_start = time.perf_counter()
             self._service()
             self.step()
             if self.camera and self.n % cam_every == 0:
@@ -414,6 +427,7 @@ class Simulator:
                 if ratio < 0.95:
                     t.slow_windows.append((round(self.sim_time, 2), round(ratio, 3)))
                 t.window_wall = now
+            t.step_ms.append((time.perf_counter() - loop_start) * 1000)
             if not realtime:
                 continue
             slack = anchor + (self.n - n0) * dt - time.perf_counter()

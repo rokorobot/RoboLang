@@ -209,6 +209,19 @@ What `scene.py` changes in the model, and why:
   question, not the guard's. Two unit tests cover the fix: a slow but moving clock is accepted, and a frozen one is
   refused.
 
+- [Run 3](https://github.com/rokorobot/RoboLang/actions/runs/44626998204), with the guard fix: P1–P5 passed and
+  **P6 failed** on the harness's own extra rule. Over the whole check the simulation kept 97.7% of real time and the
+  camera 4.52 Hz, which meets P6 as 0046 section 7 states it. But its worst second was 0.72 of real time, with 6
+  stalls of more than 0.25 s, starting 26 s in. 0046 U13 says such a run "is a harness failure: recorded, and not
+  counted towards acceptance", so it is an invalid run, not a failed backend. The harness had made it a P6 failure.
+  **Aligned with the record:** P6 passes on the whole-check ratio, the camera rate, the `lowstate` rate and the tick;
+  `realtime_valid` (every second within 5%, no stalls) is reported beside it, for phase 4 to exclude invalid runs.
+  The stand-in now also reports `step_compute_ms`, the compute time of each 2 ms step: on the aarch64 sandbox, 0.47 ms
+  mean and 1.25 ms at the 99th percentile. Squeezed onto 2 aarch64 cores, the harness still kept every second within
+  5%, so the stalls are not reproduced here. Two of three CI runs showed a slow runner (run 2 at start-up, run 3
+  mid-run). **Follow-up for phase 4:** if CI keeps producing invalid runs, acceptance needs more headroom (less
+  Python work per step, or a larger runner).
+
 ## `harness-free-1.json`
 
 ```json

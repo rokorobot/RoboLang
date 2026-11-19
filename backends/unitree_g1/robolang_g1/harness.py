@@ -559,9 +559,12 @@ def check_p6_time(robot: Robot, sim_client, started: dict, tail: OracleTail) -> 
     d = {"harness_ratio": round(ratio, 4), "harness_wall_s": round(wall, 1), "lowstate_hz": round(low_hz, 1),
          "lowstate_tick_s_minus_sim_time_s": round(robot.low_tick / 1000 - now["sim_time"], 2), "stand_in": status}
     cam = (status or {}).get("camera", {})
+    # 0046 section 7, P6: within 5% of real time over the whole check, with the camera streaming at 5 Hz. A second
+    # that falls further behind does not fail P6; it makes the run invalid for acceptance (U13), reported here.
+    d["realtime_valid"] = bool(code == 0 and (status["worst_second_ratio"] or 0) >= REALTIME_MIN
+                               and status["stalls"] == 0)
     ok = (code == 0 and ratio >= REALTIME_MIN and status["realtime_ratio"] >= REALTIME_MIN
-          and (status["worst_second_ratio"] or 0) >= REALTIME_MIN and cam.get("hz", 0) >= 4.5
-          and low_hz >= 100 and abs(d["lowstate_tick_s_minus_sim_time_s"]) < 1.0)
+          and cam.get("hz", 0) >= 4.5 and low_hz >= 100 and abs(d["lowstate_tick_s_minus_sim_time_s"]) < 1.0)
     return {"pass": bool(ok), "details": d}
 
 
