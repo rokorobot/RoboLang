@@ -1,9 +1,14 @@
 {
   "id": "i01_no_tugger_is_ready",
   "prompt": "Send whichever of tugger_a and tugger_b is ready and nearer to handoff_point to handoff_point.",
-  "world": "bench/worlds/fulfilment.json",
+  "world": "bench/worlds/choose_i01_no_tugger_is_ready.json",
+  "world_2_2": "bench/worlds/fulfilment.json",
   "group": "infeasible",
   "expect": {
+    "decision": "cannot",
+    "category": "infeasible"
+  },
+  "expect_2_2": {
     "decision": "cannot",
     "category": "inexpressible"
   },
@@ -11,19 +16,6 @@
     "decision": "cannot",
     "category": "infeasible",
     "because": "0045 C6 (no candidate is left: every candidate is excluded by `where`, so `else` runs and the request names no fallback)",
-    "choices": [
-      {
-        "type": "robot",
-        "from": [
-          "tugger_a",
-          "tugger_b"
-        ],
-        "where": "robot_ready",
-        "order": {
-          "nearest_to": "handoff_point"
-        }
-      }
-    ],
     "world_2_3": {
       "positions": {
         "tugger_bay": [
@@ -49,6 +41,19 @@
       }
     }
   },
+  "expected_choices": [
+    {
+      "type": "robot",
+      "from": [
+        "tugger_a",
+        "tugger_b"
+      ],
+      "where": "robot_ready",
+      "order": {
+        "nearest_to": "handoff_point"
+      }
+    }
+  ],
   "blockers": [
     "tugger_a",
     "tugger_b"

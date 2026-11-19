@@ -1,9 +1,13 @@
 {
   "id": "p11_parts_until_five",
   "prompt": "Keep moving parts from conveyor_in to the bin with arm_a, taking whichever part is on the conveyor each time and waiting 20 minutes after each, until 17:00. If the conveyor is empty when a part is due, stop the job as failed.",
-  "world": "bench/worlds/parts_line.json",
+  "world": "bench/worlds/choose_p11_parts_until_five.json",
+  "world_2_2": "bench/worlds/parts_line.json",
   "group": "choose",
   "expect": {
+    "decision": "program"
+  },
+  "expect_2_2": {
     "decision": "cannot",
     "category": "inexpressible"
   },
@@ -18,46 +22,6 @@
           "p4"
         ]
       }
-    },
-    "choices": [
-      {
-        "type": "object",
-        "from": {
-          "objects_at": "conveyor_in"
-        },
-        "where": null,
-        "order": null
-      }
-    ],
-    "expected_clock": [
-      {
-        "use": "until",
-        "reading": "time",
-        "op": ">=",
-        "value": "17:00"
-      }
-    ],
-    "expected_mission": {
-      "runs": [
-        {
-          "task": "a task that chooses a part from `objects at conveyor_in`, moves it to the bin and waits 20 min",
-          "entities": [
-            "arm_a",
-            "conveyor_in",
-            "bin"
-          ],
-          "wait_min": 20
-        }
-      ],
-      "repeat": {
-        "max_runs": null,
-        "max_duration": null
-      },
-      "until": {
-        "condition": "clock_time >= 17:00"
-      },
-      "on_failure": "stop",
-      "policy_stated": true
     },
     "paths": [
       {
@@ -114,7 +78,49 @@
         "runs_verified": 1,
         "parts_moved": 1
       }
+    ],
+    "expected_clock": [
+      {
+        "use": "until",
+        "reading": "time",
+        "op": ">=",
+        "value": "17:00"
+      }
     ]
+  },
+  "expected_choices": [
+    {
+      "type": "object",
+      "from": {
+        "objects_at": "conveyor_in"
+      },
+      "where": null,
+      "order": null,
+      "ladder_ok": true
+    }
+  ],
+  "expected_mission": {
+    "runs": [
+      {
+        "task": "a task that chooses a part from `objects at conveyor_in`, moves it to the bin and waits 20 min",
+        "entities": [
+          "arm_a",
+          "conveyor_in",
+          "bin"
+        ],
+        "wait_min": 20,
+        "extra_entities_ok": true
+      }
+    ],
+    "repeat": {
+      "max_runs": null,
+      "max_duration": null
+    },
+    "until": {
+      "condition": "clock_time >= 17:00"
+    },
+    "on_failure": "stop",
+    "policy_stated": true
   },
   "gap": "G-CHOOSE",
   "tags": [

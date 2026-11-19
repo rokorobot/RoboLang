@@ -1,0 +1,8 @@
+{
+  "task": "one_part",
+  "bindings": {
+    "arm": "arm_a",
+    "conveyor": "conveyor_in",
+    "bin": "bin"
+  }
+}

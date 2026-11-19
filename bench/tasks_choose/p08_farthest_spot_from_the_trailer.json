@@ -1,9 +1,13 @@
 {
   "id": "p08_farthest_spot_from_the_trailer",
   "prompt": "With digit1, take case_1 from trailer_4 and store it at whichever of trolley, cart_3 and conveyor_b is farthest from trailer_4.",
-  "world": "bench/worlds/fulfilment.json",
+  "world": "bench/worlds/choose_p08_farthest_spot_from_the_trailer.json",
+  "world_2_2": "bench/worlds/fulfilment.json",
   "group": "choose",
   "expect": {
+    "decision": "program"
+  },
+  "expect_2_2": {
     "decision": "cannot",
     "category": "inexpressible"
   },
@@ -29,20 +33,6 @@
         ]
       }
     },
-    "choices": [
-      {
-        "type": "location",
-        "from": [
-          "trolley",
-          "cart_3",
-          "conveyor_b"
-        ],
-        "where": null,
-        "order": {
-          "farthest_from": "trailer_4"
-        }
-      }
-    ],
     "paths": [
       {
         "when": "cart_3 is 48 m from trailer_4, conveyor_b 30 m, trolley 5 m",
@@ -83,6 +73,20 @@
       }
     ]
   },
+  "expected_choices": [
+    {
+      "type": "location",
+      "from": [
+        "trolley",
+        "cart_3",
+        "conveyor_b"
+      ],
+      "where": null,
+      "order": {
+        "farthest_from": "trailer_4"
+      }
+    }
+  ],
   "gap": "G-CHOOSE",
   "tags": [
     "choose",

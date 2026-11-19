@@ -1,9 +1,13 @@
 {
   "id": "p05_any_part_from_the_conveyor",
   "prompt": "With arm_a, move one part from conveyor_in to the bin: take whichever part is on the conveyor when the job starts. If the conveyor is empty, stop the job as failed.",
-  "world": "bench/worlds/parts_line.json",
+  "world": "bench/worlds/choose_p05_any_part_from_the_conveyor.json",
+  "world_2_2": "bench/worlds/parts_line.json",
   "group": "choose",
   "expect": {
+    "decision": "program"
+  },
+  "expect_2_2": {
     "decision": "cannot",
     "category": "inexpressible"
   },
@@ -19,16 +23,6 @@
         ]
       }
     },
-    "choices": [
-      {
-        "type": "object",
-        "from": {
-          "objects_at": "conveyor_in"
-        },
-        "where": null,
-        "order": null
-      }
-    ],
     "paths": [
       {
         "when": "four parts are on the conveyor: any of them",
@@ -131,6 +125,17 @@
       }
     ]
   },
+  "expected_choices": [
+    {
+      "type": "object",
+      "from": {
+        "objects_at": "conveyor_in"
+      },
+      "where": null,
+      "order": null,
+      "ladder_ok": true
+    }
+  ],
   "gap": "G-CHOOSE",
   "tags": [
     "choose",

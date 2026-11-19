@@ -1,0 +1,11 @@
+// bench/reference_choose/p10_dock_near_stop_c_around_the_wet_floor.rob: hand-written reference (RoboLang 2.3)
+robolang 2.3;
+
+task go_to_dock(robot r, location d1, location d2, location d3, location ref, region wet) {
+    @safety no_go_region wet;
+    goal { robot_at r dock; }
+    plan {
+        choose location dock from (d1, d2, d3) nearest to ref else { fail "no dock"; }
+        move r to dock;
+    }
+}

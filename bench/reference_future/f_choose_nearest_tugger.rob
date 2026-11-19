@@ -1,0 +1,10 @@
+// bench/reference_future/f_choose_nearest_tugger.rob: hand-written reference (RoboLang 2.3)
+robolang 2.3;
+
+task send_nearest(robot a, robot b, location spot) {
+    goal { robot_at t spot; }
+    plan {
+        choose robot t from (a, b) nearest to spot else { fail "no tugger can be sent"; }
+        move t to spot;
+    }
+}

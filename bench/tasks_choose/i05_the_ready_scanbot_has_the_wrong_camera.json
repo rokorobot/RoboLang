@@ -1,9 +1,14 @@
 {
   "id": "i05_the_ready_scanbot_has_the_wrong_camera",
   "prompt": "Have whichever of scanbot2 and scanbot1 is ready and nearer to aisle_2 read how full shelf_3 is with cam_scan2 and, if it is under 10 percent full, tell channel \"lead\" \"restock shelf_3\".",
-  "world": "bench/worlds/kinds_k10_the_right_camera.json",
+  "world": "bench/worlds/choose_i05_the_ready_scanbot_has_the_wrong_camera.json",
+  "world_2_2": "bench/worlds/kinds_k10_the_right_camera.json",
   "group": "infeasible",
   "expect": {
+    "decision": "cannot",
+    "category": "infeasible"
+  },
+  "expect_2_2": {
     "decision": "cannot",
     "category": "inexpressible"
   },
@@ -11,19 +16,6 @@
     "decision": "cannot",
     "category": "infeasible",
     "because": "S231",
-    "choices": [
-      {
-        "type": "robot",
-        "from": [
-          "scanbot2",
-          "scanbot1"
-        ],
-        "where": "robot_ready",
-        "order": {
-          "nearest_to": "aisle_2"
-        }
-      }
-    ],
     "world_2_3": {
       "positions": {
         "aisle_1": [
@@ -46,6 +38,19 @@
       }
     }
   },
+  "expected_choices": [
+    {
+      "type": "robot",
+      "from": [
+        "scanbot2",
+        "scanbot1"
+      ],
+      "where": "robot_ready",
+      "order": {
+        "nearest_to": "aisle_2"
+      }
+    }
+  ],
   "blockers": [
     "cam_scan2"
   ],

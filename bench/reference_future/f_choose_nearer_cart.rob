@@ -1,0 +1,13 @@
+// bench/reference_future/f_choose_nearer_cart.rob: hand-written reference (RoboLang 2.3)
+robolang 2.3;
+
+task to_closer(robot r, object tote, location src, location a, location b) {
+    goal { object_at tote dst; }
+    plan {
+        choose location dst from (a, b) nearest to src else { fail "no place"; }
+        move r to src;
+        grasp r tote;
+        move r to dst;
+        place r tote at dst;
+    }
+}

@@ -83,6 +83,7 @@ before.
 
 | Date | Note | Added | Removed | Changed | Ranking |
 |---|---|---|---|---|---|
+| 2026-11-19 | I7 L4: RoboLang 2.3 built and taught | — | — | — | 1. action 4.52 · 2. perception 2.78 · 3. cooperation 1.07 · 4. communication 0.95 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
 | 2026-11-18 | I7 L3: set 12 choose pre-registered (25 tasks) | — | — | — | 1. action 4.52 · 2. perception 2.78 · 3. cooperation 1.07 · 4. communication 0.95 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
 | 2026-11-18 | L6 of I6: G-PERCEIVE closed by RoboLang 2.2 measured kinds | — | — | — | 1. action 4.52 · 2. perception 2.78 · 3. cooperation 1.07 · 4. communication 0.95 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
 | 2026-11-18 | I6 L4: RoboLang 2.2 built and taught | — | — | — | 1. action 4.52 · 2. perception 2.78 · 3. cooperation 1.07 · 4. communication 0.95 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
@@ -165,7 +166,7 @@ before.
 
 | Language gap | Scope | Priority | Near | Benchmark tasks |
 |---|---|---|---|---|
-| `G-CHOOSE` Choosing objects or robots at run time | open | 5.23 | yes | 22 |
+| `G-CHOOSE` Choosing objects or robots at run time | open | 5.23 | yes | 0 |
 | `G-DETECT` Objects the world does not list: detecting what a sensor finds and acting on it | open | 0.00 | — | 1 |
 | `G-OBSERVE` Tasks that only observe (inspect, scan, wait) and ask for no end state, so a goal must not be invented | open | 0.00 | — | 0 |
 | `G-PERCEIVE` Conditions on perceived properties (dirty, damaged) | closed | 0.00 | — | 0 |

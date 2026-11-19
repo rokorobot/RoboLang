@@ -1,9 +1,13 @@
 {
   "id": "p02_nearest_dock_to_the_hall",
   "prompt": "Move spot1 to whichever of dock_1, dock_2 and dock_3 is nearest to the hall.",
-  "world": "bench/worlds/site.json",
+  "world": "bench/worlds/choose_p02_nearest_dock_to_the_hall.json",
+  "world_2_2": "bench/worlds/site.json",
   "group": "choose",
   "expect": {
+    "decision": "program"
+  },
+  "expect_2_2": {
     "decision": "cannot",
     "category": "inexpressible"
   },
@@ -29,20 +33,6 @@
         ]
       }
     },
-    "choices": [
-      {
-        "type": "location",
-        "from": [
-          "dock_1",
-          "dock_2",
-          "dock_3"
-        ],
-        "where": null,
-        "order": {
-          "nearest_to": "hall"
-        }
-      }
-    ],
     "paths": [
       {
         "when": "dock_2 is 8 m from the hall, dock_3 15 m, dock_1 22 m",
@@ -102,6 +92,20 @@
       }
     ]
   },
+  "expected_choices": [
+    {
+      "type": "location",
+      "from": [
+        "dock_1",
+        "dock_2",
+        "dock_3"
+      ],
+      "where": null,
+      "order": {
+        "nearest_to": "hall"
+      }
+    }
+  ],
   "gap": "G-CHOOSE",
   "tags": [
     "choose",

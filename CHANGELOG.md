@@ -24,6 +24,16 @@ the acceptance run on benchmark set 12 is the next step (L5) and 2.3 is not acce
   the chosen name), `E331` (a choice cannot use an earlier choice), `S272` (no candidate left), `S273` (the place an order
   measures from has no position), `X609` and the reader forms `I230` to `I232`. Safety case hazard H25 (a stale or wrong world
   model makes a choice wrong). `robolang --version` shows language 2.3. Files of 1.1 to 2.2 are unchanged.
+- **Taught and relabelled** (decision 0045, step L4 of iteration I7): `robolang reference` and both benchmark prompts teach 2.3 (a section
+  "Choosing at run time"; the grammar-only prompt pastes `spec/grammar-v2.3.ebnf`, which says what 2.3 cannot say: a choice by a reading of
+  each candidate, acting on each member, unlisted objects, a person; that `choose` never reads a value; that a choice using world facts only may
+  come first so the task can be delegated). The world shown to the model lists each location's position. Benchmark set 12 is labelled for 2.3
+  (`expect`; the 2.2 label is `expect_2_2`) with a world file 1.8 copy and a 2.3 reference for each of the 11 programs, valid and ending as
+  labelled on every path, and the infeasible tasks made infeasible by their 2.3 world (erratum Q3); an `if` ladder over the listed objects is
+  also right where erratum Q4 says so. The R3 probes `f_choose_nearest_tugger`, `f_choose_nearest_dock` and `f_choose_nearer_cart` and the standing
+  tasks `x_nearest_robot`, `x05_every_new_part` and `x_shuttle_until_five` are programs. New scorer measures `choice_ok`, `choice_replaced`,
+  `criterion_changed` and `choose_added`, per model like `kind_or_threshold_changed`. Errata `docs/evidence/bench-errata-2-3.md` (Q5 to Q7);
+  freeze regenerated; atlas snapshot (G-CHOOSE stays open until L6 and holds none of the tasks).
 
 ## 0.9.0 (2026-11-18)
 

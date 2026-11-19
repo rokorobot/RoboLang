@@ -1,9 +1,13 @@
 {
   "id": "p06_closest_robot_to_the_lobby",
   "prompt": "Send whichever robot is closest to the lobby to the lobby.",
-  "world": "bench/worlds/site.json",
+  "world": "bench/worlds/choose_p06_closest_robot_to_the_lobby.json",
+  "world_2_2": "bench/worlds/site.json",
   "group": "choose",
   "expect": {
+    "decision": "program"
+  },
+  "expect_2_2": {
     "decision": "cannot",
     "category": "inexpressible"
   },
@@ -37,16 +41,6 @@
         ]
       }
     },
-    "choices": [
-      {
-        "type": "robot",
-        "from": "robots",
-        "where": null,
-        "order": {
-          "nearest_to": "lobby"
-        }
-      }
-    ],
     "paths": [
       {
         "when": "cleaner1 is at dock_2, 7 m from the lobby",
@@ -86,6 +80,16 @@
       }
     ]
   },
+  "expected_choices": [
+    {
+      "type": "robot",
+      "from": "robots",
+      "where": null,
+      "order": {
+        "nearest_to": "lobby"
+      }
+    }
+  ],
   "gap": "G-CHOOSE",
   "tags": [
     "choose",
