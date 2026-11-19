@@ -9,6 +9,7 @@ simulation backend. Sources: [development plan](DEVELOPMENT_PLAN.md), [strategy]
 The Mermaid diagram below is the editable source. Update it when a step lands.
 [`development-steps.png`](development-steps.png) is a static snapshot as of 2026-11-07.
 For the language versions 1.1 → 2.2 and the roadmap to 3.0, see [`language-evolution.png`](language-evolution.png) (source: [`language-evolution.html`](language-evolution.html)).
+For how each language skill builds on earlier ones and what it opens next, see the skill tree [`skill-tree.png`](skill-tree.png) (source: [`skill-tree.html`](skill-tree.html)).
 
 ```mermaid
 timeline
