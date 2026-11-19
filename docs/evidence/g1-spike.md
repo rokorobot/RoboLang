@@ -75,7 +75,7 @@ it (thread branch `room/g1-phase-1-harness-ewa2`); I confirmed it with the scrip
 step** with the policy every 10th step (50 Hz). Every result above marked "2 ms step" is from this round. The
 "no free stance" result and the 0.15 m/s creep of the earlier rounds came from the 5 ms step; they are withdrawn.
 `DT=0.005` reproduces them. The x86_64-versus-aarch64 differences seen at 5 ms were amplified by that instability;
-whether any remain at 2 ms is for the x86_64 CI run to show.
+at 2 ms the x86_64 CI run of phase 1 matches aarch64 within a few centimetres ([run](https://github.com/rokorobot/RoboLang/actions/runs/44559535665)).
 
 [`free_stance.py`](g1-spike/free_stance.py): stand 4 s, walk 5 s at 0.5 m/s, stop, then 10 s at zero command with no
 support (sway over the last 8 s):
