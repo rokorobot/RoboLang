@@ -196,6 +196,19 @@ What `scene.py` changes in the model, and why:
 * `GetFsmId` always answers 500; the standing/walking distinction of U8's `robot_ready` is in the oracle and the
   `status` API, not in `sport`.
 
+## x86_64 on the pull request (#174)
+
+- [Run 1](https://github.com/rokorobot/RoboLang/actions/runs/44559535665) passed, with the same results as aarch64
+  within a few centimetres: P2 1.72–1.74 m forward and at most 8 cm sideways; P3 coast 0.11–0.16 m, then sway at
+  most 1.12 cm; P5 0.49 cm median and 0.94 cm maximum marker error at 0.91 m; P6 ratio 1.000.
+- [Run 2](https://github.com/rokorobot/RoboLang/actions/runs/44561181964), on a commit that changed only documents,
+  **failed P1**: `simulation time does not advance (0.640 then 0.738)`. The stand-in had just started and was still
+  running slowly (0.1 simulated s in at least 0.4 s of real time). The guard demanded a quarter of real time within
+  0.4 s, so it confused a slow start with a frozen clock. **Fixed:** the guard now requires the clock to advance at
+  least 0.1 simulated s before its timeout, and refuses a frozen clock. How fast the simulation runs is P6's
+  question, not the guard's. Two unit tests cover the fix: a slow but moving clock is accepted, and a frozen one is
+  refused.
+
 ## `harness-free-1.json`
 
 ```json

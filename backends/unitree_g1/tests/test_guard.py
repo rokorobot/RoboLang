@@ -56,7 +56,46 @@ def test_no_way_to_switch_it_off():
     import inspect
 
     assert set(inspect.signature(guard.require_simulation).parameters) == {"domain", "interface", "timeout",
-                                                                           "advance_after"}
+                                                                           "min_advance"}
+
+
+class FakeStandIn:
+    """Answers the identity API with a clock that moves `step` simulated seconds per call."""
+
+    def __init__(self, step):
+        self.t, self.step = 5.0, step
+
+    def Identity(self):
+        self.t += self.step
+        return 0, {"simulation": True, "domain": 1, "sim_time": self.t, "stance_model": "free"}
+
+
+@pytest.fixture
+def fake_dds(monkeypatch):
+    import unitree_sdk2py.core.channel as channel
+
+    monkeypatch.setattr(channel, "ChannelFactoryInitialize", lambda *a, **k: None)
+
+    def use(step):
+        fake = FakeStandIn(step)
+        monkeypatch.setattr(guard, "sim_client", lambda: fake)
+        return fake
+
+    return use
+
+
+def test_a_slow_but_moving_clock_is_accepted(fake_dds):
+    """A stand-in still warming up (here 0.02 simulated s per 0.1 s poll, a fifth of real time) is a simulation."""
+    fake_dds(0.02)
+    client, identity = guard.require_simulation(timeout=5.0)
+    assert identity["simulation"] is True
+
+
+def test_a_frozen_clock_is_refused(fake_dds):
+    fake_dds(0.0)
+    with pytest.raises(guard.GuardError) as caught:
+        guard.require_simulation(timeout=1.0)
+    assert caught.value.code == "S501" and "does not advance" in caught.value.reason
 
 
 def test_missing_identity_api_is_refused_and_no_command_is_sent(tmp_path):

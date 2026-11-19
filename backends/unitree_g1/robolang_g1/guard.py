@@ -79,7 +79,7 @@ def sim_client():
 
 
 def require_simulation(domain: int = DOMAIN, interface: str = INTERFACE, timeout: float = 8.0,
-                       advance_after: float = 0.4):
+                       min_advance: float = 0.1):
     """Run the guard. Returns `(client, identity)` where `client` is the stand-in's `SimClient`.
 
     Initialises the DDS channel factory (once per process) only after the network checks passed.
@@ -103,11 +103,17 @@ def require_simulation(domain: int = DOMAIN, interface: str = INTERFACE, timeout
         raise GuardError(f"the identity API says it is not a simulation: {identity}")
     if identity.get("domain") != domain:
         raise GuardError(f"the identity API is on domain {identity.get('domain')}, expected {domain}")
-    t0, wall0 = identity["sim_time"], time.monotonic()
-    time.sleep(advance_after)
-    code, later = client.Identity()
-    if code != 0 or later is None:
-        raise GuardError("the simulation identity API stopped answering")
-    if not later["sim_time"] > t0 + 0.25 * (time.monotonic() - wall0):
-        raise GuardError(f"simulation time does not advance ({t0} then {later['sim_time']})")
+    # The clock must move: at least `min_advance` simulated seconds before the deadline. How fast it moves is not the
+    # guard's question (real time is checked by P6 and recorded in every run, U13): a stand-in still warming up runs
+    # slowly for a moment, and a CI run once failed here when this step demanded a quarter of real time within 0.4 s.
+    t0 = identity["sim_time"]
+    later = identity
+    while later["sim_time"] < t0 + min_advance:
+        if time.monotonic() >= deadline:
+            raise GuardError(f"simulation time does not advance ({t0} then {later['sim_time']} "
+                             f"before the {timeout} s timeout)")
+        time.sleep(0.1)
+        code, later = client.Identity()
+        if code != 0 or later is None:
+            raise GuardError("the simulation identity API stopped answering")
     return client, later
