@@ -1,8 +1,13 @@
 name: G1 simulation harness
 
 # Decision 0046, phase 1: the Unitree G1 stand-in in MuJoCo and the checks P1-P6 (backends/unitree_g1). On demand and
-# nightly; never on pull requests. 05:11 UTC is clear of the benchmark (Monday 06:00) and the ROS 2 harness (03:17).
+# nightly, and on pull requests that change the backend or this workflow (so x86_64 is checked before a backend change
+# merges). 05:11 UTC is clear of the benchmark (Monday 06:00) and the ROS 2 harness (03:17).
 on:
+  pull_request:
+    paths:
+      - "backends/unitree_g1/**"
+      - ".github/workflows/g1-sim.yml"
   workflow_dispatch:
     inputs:
       stance:

@@ -168,6 +168,26 @@ the `g1-sim.yml` workflow (on demand and nightly).
 walk-while-holding tasks from the family (U6). **No-go**, back to the owner with the evidence, when P2 or P3 cannot pass
 at all. The phase 1 PR's evidence document gives `harness.json` and the commands that produced it.
 
+## Resolved in phase 1 (2026-11-19)
+
+Phase 1 passed on aarch64: P1–P6 pass, twice with the free stance and once supported, and once more when re-run
+independently ([evidence](../../docs/evidence/g1-phase1-harness.md); contract in
+[`g1-backend-v0.1.md`](../g1-backend-v0.1.md)). Decided by it:
+
+- **U1:** the hands come from `unitree_rl_gym`'s `g1_29dof_with_hand.xml` (the same 35.11 kg body as
+  `unitree_mujoco`, torque motors, 36.17 kg with the hands). Menagerie's model is a different body revision with
+  position actuators. Finger collision and visual shapes are capsules, because the meshes cost about 120 ms per
+  camera frame.
+- **U4:** `stance_model: "free"` by default; `supported` (a weld) remains the fallback. `free` takes a recovery step
+  about every 45 s while standing, so arm work longer than about 40 s uses `supported`.
+- **U13:** a 2 ms step, PD every step, policy at 50 Hz. 5 ms is unstable (dt·kd/I up to 4.5).
+- **U9:** the stand-in refuses every walking-service state change except standing or walking (code 7400), `Damp`
+  included.
+- **U12:** the workflow also runs on pull requests that change the backend, so x86_64 is checked before merge.
+
+Not yet run on x86_64; margins are tight in places (P3 free sway 1.1 cm against 2 cm; supported sideways drift
+0.118 m against 0.15 m; dt·kd/I 1.8 against 2). Listed in the evidence's open issues.
+
 ## 8. Review and corrections (2026-11-19)
 
 Reviewed before approval. Changed: U4 now rests on a corrected port of the whole-body policy (the first port applied
