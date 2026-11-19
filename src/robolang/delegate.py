@@ -26,6 +26,7 @@ from .delegate_peer import (
 from .export_goal import MESSAGE_LIFETIME_MS, ExportError, export_goal, simulation_key
 from .sim import DEFAULT_SEED, RunResult, World, WorldError, load_world, run, run_id, sha256_normalized, to_record
 from .sim.messages import has_message
+from .sim.record import choice_entry
 from .sim.outcome import SIM_KEY, SIM_KEY_REF, core_outcome, object_triple
 
 RECORD_SCHEMA = "robolang.delegate"
@@ -133,6 +134,8 @@ def _consider(plan: Plan, task: ir.Task, robot_world: bytes, world_name: str, ro
     """How one library task relates to the proposed goal, and the match if it is one."""
     if task.goal is None:
         return "no_goal", None
+    if any(isinstance(step, ir.Choose) for _, step in ir.walk(task.steps)):
+        return "choose_unsupported", None  # a robot runs a plan with every ID fixed (RoboLang 2.3, 0045 C8)
     if any(isinstance(step, (ir.Measure, ir.ReadClock)) for _, step in ir.walk(task.steps)):
         return "measure_unsupported", None  # RoboLang 1.6 values are not delegated yet (spec/robolang-v1.6.md)
     if has_message(task):
@@ -667,5 +670,14 @@ def delegate(task: ir.Task, world: World, *, sender: str, recipient: str, librar
         raise ExportError("X608", "the task waits for a message ('message_received'): a robot is sent no task that "
                                   "needs a channel and its allowed senders, which are the integrator's configuration "
                                   "(decision 0043 S8)")
-    proposal = export_goal(task, world, sender=sender, recipient=recipient, core=core).message
-    return _Exchange(proposal, library, robot_world, robot_world_name, intercept, lease_ms).finish()
+    exported = export_goal(task, world, sender=sender, recipient=recipient, core=core)
+    delegation = _Exchange(exported.message, library, robot_world, robot_world_name, intercept, lease_ms).finish()
+    if not exported.choices:
+        return delegation
+    # RoboLang 2.3 (decision 0045 C8): the planner chose before it sent the goal; the choices are in the record
+    record = {}
+    for key, value in delegation.record.items():
+        record[key] = value
+        if key == "robot":
+            record["choices"] = [choice_entry(c) for c in exported.choices]
+    return replace(delegation, record=record)

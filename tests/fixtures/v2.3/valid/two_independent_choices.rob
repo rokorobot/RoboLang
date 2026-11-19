@@ -1,0 +1,14 @@
+// RoboLang v2.3 fixture: valid
+// expect: ok
+// why: two choices, neither using the other (C9)
+
+robolang 2.3;
+
+task pair(robot a, robot b, location x, location y, location ref) {
+    goal { robot_at r1 ref; }
+    plan {
+        choose robot r1 from (a, b) nearest to x else { fail "none"; }
+        choose location p from (x, y) farthest from ref else { fail "none"; }
+        move r1 to ref;
+    }
+}

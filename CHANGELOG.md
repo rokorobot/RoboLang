@@ -1,7 +1,29 @@
 # Changelog
 
-The distribution version (this file) is independent of the language versions (1.1 to 2.2), the Task IR schema
-versions (1.0 to 1.10) and the Mission IR schema (1.0 to 1.2). Decision records are in [`spec/decisions/`](https://github.com/rokorobot/RoboLang/tree/main/spec/decisions).
+The distribution version (this file) is independent of the language versions (1.1 to 2.3), the Task IR schema
+versions (1.0 to 1.11) and the Mission IR schema (1.0 to 1.3). Decision records are in [`spec/decisions/`](https://github.com/rokorobot/RoboLang/tree/main/spec/decisions).
+
+## Unreleased
+
+RoboLang 2.3, choosing at run time: iteration I7 of the [roadmap](docs/LANGUAGE_ROADMAP.md) (decision 0045). Built in step L4;
+the acceptance run on benchmark set 12 is the next step (L5) and 2.3 is not accepted until it passes the bounds B1 to B9.
+
+- **RoboLang 2.3: choosing at run time** (decision 0045, step L4 of iteration I7). A `.rob` file `robolang 2.3;` may use the
+  statement `choose TYPE NAME from CANDIDATES [where COND] [nearest to X | farthest from X] else { ... }`. `TYPE` is `robot`,
+  `object` or `location`; the candidates are a list `(a, b, c)`, `objects at L` or `robots`; `where` is a world-fact condition
+  over the chosen name (an unknown value excludes the candidate); the order is the straight-line distance between positions, and a
+  tie, or no order, goes to the first candidate; the `else` is mandatory and ends in `fail`. The name is used like a parameter
+  afterwards, in the goal too, and the goal is checked for the entity chosen. `choose`, `nearest` and `farthest` are recognised
+  by position and are not reserved; in a file below 2.3 `choose` is still `E203`. A task with `choose` may run in a mission, and
+  each run chooses afresh; under a time bound a failed run that changes neither world nor clock now stops the mission
+  (`no_progress`) instead of repeating. World file 1.8 gives a location a `position`; Task IR 1.11 (and Mission IR 1.3), run
+  record 1.11 (a `choices` entry per choice: candidates, those excluded and why, the order, the entity chosen) and mission record
+  1.3. `export-goal` and `delegate` accept a task whose choices come before the first action: the planner makes them from the
+  world model, records them and sends the goal with them filled in (Core 0.2 is unchanged); otherwise `X609`. The ROS 2 backend
+  refuses `choose` (`S508`). New codes `E329` (an `else` must end in `fail`), `E330` (`where` states world facts only and names
+  the chosen name), `E331` (a choice cannot use an earlier choice), `S272` (no candidate left), `S273` (the place an order
+  measures from has no position), `X609` and the reader forms `I230` to `I232`. Safety case hazard H25 (a stale or wrong world
+  model makes a choice wrong). `robolang --version` shows language 2.3. Files of 1.1 to 2.2 are unchanged.
 
 ## 0.9.0 (2026-11-18)
 

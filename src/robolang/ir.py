@@ -7,6 +7,7 @@ ir-schema-v1.8.md). RoboLang 2.0 keeps Task IR 1.8 for its tasks and adds the Mi
 (`robolang.mission-ir`, spec/mission-ir-v1.0.md), which holds the tasks and the missions of a file. RoboLang 2.1 has
 Task IR 1.9 (ir-schema-v1.9.md: the condition `message_received`) and, for a file with a mission, Mission IR 1.1.
 RoboLang 2.2 has Task IR 1.10 (ir-schema-v1.10.md: the kinds fill, confidence, pressure and count) and Mission IR 1.2.
+RoboLang 2.3 has Task IR 1.11 (ir-schema-v1.11.md: the step `choose`) and Mission IR 1.3.
 
 The IR is a description of validated tasks with source details removed:
 no spans, comments or formatting. Two sources that differ only in layout
@@ -37,15 +38,16 @@ LANGUAGE_VERSION = DEFAULT_VERSION
 # Language version -> the IR schema version it compiles to (ir-schema-v1.1.md section 1).
 IR_SCHEMA_VERSIONS = {"1.1": "1.0", "1.2": "1.1", "1.3": "1.2", "1.4": "1.3", "1.5": "1.4", "1.6": "1.5", "1.7": "1.6",
                      "1.8": "1.7", "1.9": "1.8", "2.0": "1.8", "2.1": "1.9",
-                     "2.2": "1.10"}  # 2.0: no new task, so Task IR 1.8
+                     "2.2": "1.10", "2.3": "1.11"}  # 2.0: no new task, so Task IR 1.8
 MISSION_IR_SCHEMA = "robolang.mission-ir"
 # Language version (of a file that has a mission) -> Mission IR version: 1.1 holds Task IR 1.9 tasks (RoboLang 2.1),
 # 1.2 holds Task IR 1.10 tasks (RoboLang 2.2)
-MISSION_IR_SCHEMA_VERSIONS = {"2.0": "1.0", "2.1": "1.1", "2.2": "1.2"}
+MISSION_IR_SCHEMA_VERSIONS = {"2.0": "1.0", "2.1": "1.1", "2.2": "1.2", "2.3": "1.3"}
 MISSION_IR_SCHEMA_VERSION = MISSION_IR_SCHEMA_VERSIONS["2.0"]  # the first version
 
 
-_BRANCHING = ("1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "2.0", "2.1", "2.2")  # a task has no goal of its own (1.4 on)
+# a task has no goal of its own (1.4 on)
+_BRANCHING = ("1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "2.0", "2.1", "2.2", "2.3")
 
 
 def _key(name: str):
@@ -400,8 +402,56 @@ class Fail:
     reason: str
 
 
-Step = Union[Move, Grasp, Place, Inspect, Measure, ReadClock, Do, WaitFor, WaitUntil, Communicate, If, Fail]
-HANDLED = (Move, Grasp, Place, Inspect, Measure, ReadClock, Do, WaitUntil)  # the step kinds with a failure handler
+@dataclass(frozen=True)
+class ChooseList:
+    """Schema 1.11 (RoboLang 2.3, decision 0045 C2): the candidates written as a list, in the order written."""
+
+    KIND: ClassVar[str] = "list"
+    candidates: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class ObjectsAt:
+    """Schema 1.11: the objects at `location` when the choice is made, in the order the world lists them."""
+
+    KIND: ClassVar[str] = "objects_at"
+    location: str
+
+
+@dataclass(frozen=True)
+class AllRobots:
+    """Schema 1.11: every robot the world declares, in the order the world lists them."""
+
+    KIND: ClassVar[str] = "robots"
+
+
+@dataclass(frozen=True)
+class Order:
+    """Schema 1.11: `mode` is "nearest" or "farthest"; `reference` names a location, robot or object parameter."""
+
+    mode: str
+    reference: str
+
+
+@dataclass(frozen=True)
+class Choose:
+    """
+    Schema 1.11 (RoboLang 2.3, decision 0045 C1): bind `name` to one entity of `type` (robot, object or location) from
+    `source`, keeping those for which `where` holds, ordered by `order`; with none left, `orelse` runs (it always ends
+    in a `fail`). From here on `name` is used as a parameter is.
+    """
+
+    KIND: ClassVar[str] = "choose"
+    type: str
+    name: str
+    source: ChooseList | ObjectsAt | AllRobots
+    where: Condition | None = field(metadata={"omit_none": True})
+    order: Order | None = field(metadata={"omit_none": True})
+    orelse: tuple[Step, ...] = _key("else")
+
+
+Step = Union[Move, Grasp, Place, Inspect, Measure, ReadClock, Do, WaitFor, WaitUntil, Communicate, If, Fail, Choose]
+HANDLED = (Move, Grasp, Place, Inspect, Measure, ReadClock, Do, WaitUntil, Choose)  # the step kinds with a handler
 
 
 def handler_of(step: Step) -> tuple[Step, ...] | None:
@@ -650,9 +700,19 @@ def _plain_step(node: ast.Statement) -> Step:
         return WaitFor(_quantity(node.duration))
     if isinstance(node, ast.WaitUntil):
         return WaitUntil(_condition(node.condition), _quantity(node.timeout))
+    if isinstance(node, ast.Choose):
+        return Choose(node.type.text, node.name.text, _source(node.source),
+                      None if node.where is None else _condition(node.where),
+                      None if node.order is None else Order(node.order.word.text, node.order.reference.text), ())
     if isinstance(node.message, ast.Name):
         return Communicate(node.robot.text, node.channel.value, binding=node.message.text)
     return Communicate(node.robot.text, node.channel.value, node.message.value)
+
+
+def _source(node: ast.ChooseList | ast.ObjectsAt | ast.AllRobots) -> ChooseList | ObjectsAt | AllRobots:
+    if isinstance(node, ast.ChooseList):
+        return ChooseList(tuple(n.text for n in node.names))
+    return ObjectsAt(node.location.text) if isinstance(node, ast.ObjectsAt) else AllRobots()
 
 
 def _verify(node: ast.Task) -> Verify | None:

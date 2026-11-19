@@ -24,6 +24,7 @@ COMPLETED, BOUNDED, FAILED, STOPPED = "completed", "bounded", "failed", "stopped
 S401 = "S401"  # a task cannot fit the duration bound even once (clarification 8): the mission fails before any run
 S402 = "S402"  # the `until` condition is unknown (M3, fails closed): the mission stops
 S011 = "S011"  # RoboLang 2.1: the `until` names a channel the world does not declare: the mission fails before any run
+NO_PROGRESS = "no_progress"  # RoboLang 2.3: a failed run left the world and the clock as found, under a time bound
 
 
 @dataclass(frozen=True)
@@ -57,7 +58,7 @@ class MissionResult:
     bindings: tuple[tuple[str, str], ...]
     outcome: str  # completed, bounded, failed or stopped
     ended_by: str  # until, run_bound, duration_bound, run_failed, retries_used, bound_with_retry, all_failed,
-    #                until_unknown, cannot_fit or undeclared_channel
+    #                until_unknown, cannot_fit, undeclared_channel or no_progress
     failure: MissionFailure | None
     runs: tuple[TaskRun, ...]
     events_applied: tuple[AppliedEvent, ...]
@@ -72,6 +73,15 @@ class MissionResult:
     @property
     def runs_failed(self) -> int:
         return len(self.runs) - self.runs_verified
+
+
+def _time_bound(condition: ir.Condition | None) -> bool:
+    """`clock_time >= T` (or `>`), alone or as one operand of an `or`: an `until` that is a bound (decision 0041)."""
+    if isinstance(condition, ir.Or):
+        return any(_time_bound(c) for c in condition.conditions)
+    return (isinstance(condition, ir.Compare) and isinstance(condition.left, ir.LiveClock)
+            and condition.left.reading == "time" and condition.op in (">", ">=")
+            and isinstance(condition.right, ir.TimeLit))
 
 
 def mission_task(mission: ir.Mission) -> ir.Task:
@@ -131,6 +141,11 @@ def run_mission(document: ir.TaskIR, mission: ir.Mission, world: World, *,
     max_runs = None if repeat is None else repeat.max_runs
     max_ms = None if repeat is None or repeat.max_duration is None else duration_ms_of(repeat.max_duration)
     until = None if repeat is None else repeat.until
+    # RoboLang 2.3 (decision 0045 C10, open point 3): under a time bound, `continue` after a run that changed neither
+    # the world nor the clock would repeat that run for ever (a choice that finds no candidate fails at once), so it
+    # stops
+    from_2_3 = tuple(map(int, document.language_version.split("."))) >= (2, 3)
+    timed = (max_ms is not None or _time_bound(until)) and from_2_3
     runs: list[TaskRun] = []
     state = _State(world)
 
@@ -191,6 +206,7 @@ def run_mission(document: ir.TaskIR, mission: ir.Mission, world: World, *,
                 faults = (_faulted_step(task),) if fail_runs == "all" or number in fail_runs else ()
                 run_world = dataclasses.replace(world, task=TaskScript(task.name, bindings, faults, None))
                 started_at = state.clock
+                before = state.freeze() if timed else None
                 outcome = run(task, run_world, state)
                 entry = TaskRun(number, place, attempt, started_at, task, bindings, outcome, None)
                 runs.append(entry)
@@ -211,6 +227,8 @@ def run_mission(document: ir.TaskIR, mission: ir.Mission, world: World, *,
                         return result(FAILED, "retries_used", last_failure())
                     attempt += 1
                     continue
+                if timed and state.clock == started_at and state.freeze() == before:
+                    return result(FAILED, NO_PROGRESS, last_failure())  # the next run would be this one again
                 break  # continue: the failed run is recorded, never counted as done, and the mission goes on
         if repeat is None:
             if not any(r.verified for r in runs):

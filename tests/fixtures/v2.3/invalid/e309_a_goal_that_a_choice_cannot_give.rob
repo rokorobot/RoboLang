@@ -1,0 +1,12 @@
+// RoboLang v2.3 fixture: invalid
+// expect: error E309 (static) line 7
+// why: a path through a choice still needs a goal
+
+robolang 2.3;
+
+task t(robot a, robot b, location dst) {
+    plan {
+        choose robot s from (a, b) else { fail "none"; }
+        move s to dst;
+    }
+}

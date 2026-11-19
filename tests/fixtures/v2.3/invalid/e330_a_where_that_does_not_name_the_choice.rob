@@ -1,0 +1,13 @@
+// RoboLang v2.3 fixture: invalid
+// expect: error E330 (static) line 10
+// why: where is a condition over the chosen name (C3)
+
+robolang 2.3;
+
+task t(robot a, robot b, location dst) {
+    goal { robot_at s dst; }
+    plan {
+        choose robot s from (a, b) where robot_ready a else { fail "none"; }
+        move s to dst;
+    }
+}

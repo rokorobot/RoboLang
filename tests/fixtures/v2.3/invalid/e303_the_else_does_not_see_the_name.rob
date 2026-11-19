@@ -1,0 +1,13 @@
+// RoboLang v2.3 fixture: invalid
+// expect: error E303 (static) line 10
+// why: with no candidate left the name is unbound in the else
+
+robolang 2.3;
+
+task t(robot a, robot b, location dst) {
+    goal { robot_at s dst; }
+    plan {
+        choose robot s from (a, b) else { move s to dst; fail "none"; }
+        move s to dst;
+    }
+}

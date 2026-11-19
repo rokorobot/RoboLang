@@ -149,7 +149,7 @@ def test_version_1_6_selects_ir_schema_1_5_and_older_versions_keep_theirs():
     assert (document["language_version"], document["ir_schema_version"]) == ("1.6", "1.5")
     assert ir.IR_SCHEMA_VERSIONS == {"1.1": "1.0", "1.2": "1.1", "1.3": "1.2", "1.4": "1.3", "1.5": "1.4",
                                      "1.6": "1.5", "1.7": "1.6", "1.8": "1.7", "1.9": "1.8", "2.0": "1.8", "2.1": "1.9",
-                                     "2.2": "1.10"}
+                                     "2.2": "1.10", "2.3": "1.11"}
 
 
 def test_only_measure_and_as_are_reserved_and_only_in_1_6():

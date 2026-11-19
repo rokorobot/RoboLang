@@ -194,5 +194,17 @@
   "I229_count_not_whole.json": [
     "I229",
     "/tasks/0/steps/2/condition/right"
+  ],
+  "I230_choose_else_does_not_end_in_fail.json": [
+    "I230",
+    "/tasks/0/steps/0/else"
+  ],
+  "I231_choose_where_reads_a_message.json": [
+    "I231",
+    "/tasks/0/steps/0/where"
+  ],
+  "I232_choose_uses_an_earlier_choice.json": [
+    "I232",
+    "/tasks/0/steps/1/order/reference"
   ]
 }
