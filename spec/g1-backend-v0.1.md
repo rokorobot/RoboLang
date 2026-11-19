@@ -1,7 +1,8 @@
 # RoboLang Unitree G1 backend 0.1 (MuJoCo, simulation only)
 
 **Status:** phase 1 of decision [0046](decisions/0046-humanoid-backend-unitree-g1.md): the stand-in, the guard and the
-harness checks P1–P6, passing on aarch64 ([evidence](../docs/evidence/g1-phase1-harness.md)). The executor (`move`,
+harness checks P1–P6, passing on aarch64 ([evidence](../docs/evidence/g1-phase1-harness.md)) and x86_64
+([CI run](https://github.com/rokorobot/RoboLang/actions/runs/44559535665)). The executor (`move`,
 `grasp`, `place`, `wait for`), the observations and the run records are phases 2 and 3; their sections below are the
 contract they must meet. Code: [`backends/unitree_g1/`](../backends/unitree_g1/).
 

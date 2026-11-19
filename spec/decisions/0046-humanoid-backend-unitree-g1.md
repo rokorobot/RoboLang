@@ -185,7 +185,8 @@ independently ([evidence](../../docs/evidence/g1-phase1-harness.md); contract in
   included.
 - **U12:** the workflow also runs on pull requests that change the backend, so x86_64 is checked before merge.
 
-Not yet run on x86_64; margins are tight in places (P3 free sway 1.1 cm against 2 cm; supported sideways drift
+On x86_64 the first `g1-sim.yml` run on the phase 1 pull request passed too, with numbers within a few centimetres
+of aarch64 ([run](https://github.com/rokorobot/RoboLang/actions/runs/44559535665)). Margins are tight in places (P3 free sway 1.1 cm against 2 cm; supported sideways drift
 0.118 m against 0.15 m; dt·kd/I 1.8 against 2). Listed in the evidence's open issues.
 
 ## 8. Review and corrections (2026-11-19)
