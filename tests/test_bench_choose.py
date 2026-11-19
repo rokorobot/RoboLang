@@ -679,4 +679,4 @@ def test_the_readme_the_errata_and_the_plan_name_the_set():
     for task_id in ("x03_any_hot_pan", "x03_carry_as_many_as_counted", "G-EACH", "G-DETECT"):
         assert task_id in errata, task_id
     roadmap = read(REPO / "docs" / "LANGUAGE_ROADMAP.md")
-    assert "L3: set 12 pre-registered; baseline next" in roadmap
+    assert "plans/bench-12-choose.md" in roadmap
