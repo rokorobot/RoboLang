@@ -27,6 +27,7 @@ from pathlib import Path
 import numpy as np
 
 from . import DOMAIN, ERR_REFUSED, INTERFACE, assets, guard
+from .robot import Robot, arm_gains, read_frame
 from .sim import scene
 from .sim.policy import load_deploy
 
@@ -37,8 +38,6 @@ SETTLED_M, SETTLED_S, SETTLE_TIMEOUT_S = 0.01, 1.0, 30.0  # at rest: at most 1 c
 ARM_TOLERANCE = 0.05  # P4, rad
 MARKER_ERROR_MAX, CAMERA_RANGE = 0.02, (0.5, 1.0)  # P5, m
 REALTIME_MIN = 0.95  # P6
-# arm_sdk gains the harness uses (the executor will choose its own): waist, shoulders and elbows, wrists
-ARM_GAINS = {"waist": (500.0, 10.0), "arm": (200.0, 5.0), "wrist": (60.0, 2.0)}
 
 
 # ------------------------------------------------------------------------------------------------ fixtures
@@ -82,15 +81,15 @@ def plain_robot(count_file: str) -> int:
 class StandIn:
     """The stand-in as a subprocess."""
 
-    def __init__(self, site: str, run_dir: Path, stance: str = "free"):
+    def __init__(self, site: str, run_dir: Path, stance: str = "free", extra_args: list[str] | None = None):
         self.run_dir, self.oracle = run_dir, run_dir / "oracle.json"
         env = dict(os.environ)
         env.setdefault("MUJOCO_GL", "egl")
         self.log = open(run_dir / "standin.log", "w")
         self.proc = subprocess.Popen(
             [sys.executable, "-m", "robolang_g1.sim.standin", "--site", site, "--run-dir", str(run_dir),
-             "--oracle", str(self.oracle), "--stance", stance], stdout=subprocess.PIPE, stderr=self.log, text=True,
-            env=env)
+             "--oracle", str(self.oracle), "--stance", stance, *(extra_args or [])], stdout=subprocess.PIPE,
+            stderr=self.log, text=True, env=env)
         self.ready = None
         self.last_line = None
 
@@ -184,106 +183,6 @@ def factory_initialized() -> bool:
     from unitree_sdk2py.core.channel import ChannelFactory
 
     return bool(ChannelFactory._ChannelFactory__initialized)
-
-
-# ------------------------------------------------------------------------------------------------ SDK clients
-
-
-class Robot:
-    """What the harness uses to talk to the robot: the SDK's own clients and topics."""
-
-    def __init__(self):
-        from unitree_sdk2py.core.channel import ChannelPublisher, ChannelSubscriber
-        from unitree_sdk2py.g1.loco.g1_loco_client import LocoClient
-        from unitree_sdk2py.idl.default import unitree_hg_msg_dds__HandCmd_, unitree_hg_msg_dds__LowCmd_
-        from unitree_sdk2py.idl.unitree_hg.msg.dds_ import HandCmd_, HandState_, LowCmd_, LowState_
-
-        self.loco = LocoClient()
-        self.loco.SetTimeout(3.0)
-        self.loco.Init()
-        self.low_q, self.low_tick, self.low_count = np.zeros(29), 0, 0
-        self.hand_q = {"left": np.zeros(7), "right": np.zeros(7)}
-        sub = ChannelSubscriber("rt/lowstate", LowState_)
-        sub.Init(self._on_low, 10)
-        self._subs = [sub]
-        for side in ("left", "right"):
-            hs = ChannelSubscriber(f"rt/dex3/{side}/state", HandState_)
-            hs.Init(lambda m, side=side: self.hand_q.__setitem__(side, np.array([x.q for x in m.motor_state[:7]])), 10)
-            self._subs.append(hs)
-        self.arm_pub = ChannelPublisher("rt/arm_sdk", LowCmd_)
-        self.arm_pub.Init()
-        self.hand_pub = {s: ChannelPublisher(f"rt/dex3/{s}/cmd", HandCmd_) for s in ("left", "right")}
-        for pub in self.hand_pub.values():
-            pub.Init()
-        self._arm_msg, self._hand_msg = unitree_hg_msg_dds__LowCmd_(), unitree_hg_msg_dds__HandCmd_()
-        self.arm_target = None  # (q, kp, kd) the arm thread publishes; None until set
-        self.arm_weight = 0.0
-        self._arm_thread = None
-        self._arm_stop = threading.Event()
-        self._lock = threading.Lock()
-
-    def _on_low(self, msg):
-        self.low_q = np.array([m.q for m in msg.motor_state[:29]])
-        self.low_tick, self.low_count = msg.tick, self.low_count + 1
-
-    # arm_sdk: published at 50 Hz while the thread runs; q, gains and weight can change at any time
-    def start_arm_sdk(self):
-        self._arm_stop.clear()
-        self._arm_thread = threading.Thread(target=self._arm_loop, daemon=True)
-        self._arm_thread.start()
-
-    def stop_arm_sdk(self):
-        self._arm_stop.set()
-        if self._arm_thread:
-            self._arm_thread.join(timeout=2)
-
-    def _arm_loop(self):
-        msg = self._arm_msg
-        while not self._arm_stop.is_set():
-            with self._lock:
-                target, weight = self.arm_target, self.arm_weight
-            if target is not None:
-                q, kp, kd = target
-                for i in range(29):
-                    c = msg.motor_cmd[i]
-                    c.q, c.dq, c.tau, c.kp, c.kd = float(q[i]), 0.0, 0.0, float(kp[i]), float(kd[i])
-                msg.motor_cmd[29].q = float(weight)  # kNotUsedJoint: the arm_sdk weight
-                self.arm_pub.Write(msg)
-            time.sleep(0.02)
-
-    def set_arm(self, q, kp, kd, weight):
-        with self._lock:
-            self.arm_target, self.arm_weight = (np.array(q, float), np.array(kp, float), np.array(kd, float)), weight
-
-    def ramp_arm(self, q_to, kp, kd, w_to, seconds, q_from=None, w_from=None):
-        """Move the arm_sdk targets and weight linearly over `seconds`."""
-        q0 = self.low_q.copy() if q_from is None else np.array(q_from, float)
-        w0 = self.arm_weight if w_from is None else w_from
-        steps = max(1, int(seconds / 0.02))
-        for i in range(1, steps + 1):
-            a = i / steps
-            self.set_arm((1 - a) * q0 + a * np.array(q_to), kp, kd, (1 - a) * w0 + a * w_to)
-            time.sleep(0.02)
-
-    def hand_command(self, side, q, kp=1.5, kd=0.2, seconds=2.0):
-        msg = self._hand_msg
-        t_end = time.monotonic() + seconds
-        while time.monotonic() < t_end:
-            for i in range(7):
-                c = msg.motor_cmd[i]
-                c.q, c.dq, c.tau, c.kp, c.kd = float(q[i]), 0.0, 0.0, kp, kd
-            self.hand_pub[side].Write(msg)
-            time.sleep(0.02)
-
-
-def arm_gains(policy_kp, policy_kd) -> tuple[np.ndarray, np.ndarray]:
-    """The gains the harness gives arm_sdk for joints 12-28 (the rest keep the policy's)."""
-    kp, kd = np.array(policy_kp, float), np.array(policy_kd, float)
-    for j in range(12, 15):
-        kp[j], kd[j] = ARM_GAINS["waist"]
-    for j in range(15, 29):
-        kp[j], kd[j] = ARM_GAINS["wrist" if (j - 15) % 7 >= 4 else "arm"]
-    return kp, kd
 
 
 # ------------------------------------------------------------------------------------------------ the checks
@@ -445,25 +344,6 @@ def check_p4_arms(robot: Robot, tail: OracleTail, sim_client, policy_cfg: dict) 
     ok = (d["tracking_max_error_rad"] <= ARM_TOLERANCE and not d["carry_walk"]["fallen"]
           and d["carry_walk"]["walked_m"] >= 1.5 and d["carry_walk"]["payload_attached"])
     return {"pass": bool(ok), "details": d}
-
-
-def read_frame(head: Path, after_frame: int = 0, timeout: float = 5.0):
-    """A consistent (png path, meta): the JSON, the PNG, and the JSON again must name the same frame."""
-    import cv2
-
-    deadline = time.monotonic() + timeout
-    while time.monotonic() < deadline:
-        try:
-            a = json.loads((head / "latest.json").read_text())
-            image = cv2.imread(str(head / "latest.png"))
-            b = json.loads((head / "latest.json").read_text())
-        except (OSError, ValueError):
-            time.sleep(0.02)
-            continue
-        if a["frame"] == b["frame"] and a["frame"] > after_frame and image is not None:
-            return image, a
-        time.sleep(0.02)
-    raise TimeoutError("no new camera frame")
 
 
 def detect_markers(image, sizes: dict[int, float]):

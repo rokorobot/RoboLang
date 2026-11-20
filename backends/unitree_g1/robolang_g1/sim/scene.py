@@ -18,28 +18,23 @@ half-extents in metres, poses are in the world frame (x forward at yaw 0, z up).
 """
 from __future__ import annotations
 
-import json
 import re
 from dataclasses import dataclass
-from pathlib import Path
 
 import mujoco
 import numpy as np
 
 from .. import assets
+from ..site import DEFAULT_CAMERA, MARKER_BORDER, SITE_SCHEMA, SiteError, intrinsics, load_site, marker_frame
 
-SITE_SCHEMA = "robolang-g1-site/1"
+__all__ = ["SiteError", "load_site", "SITE_SCHEMA"]  # the site loader lives in ../site.py; these names stay here
+
 TIMESTEP = 0.002  # 500 Hz, the robot's own low-level rate; see the note in standin.py on why not 0.005
-CAMERA_SIZE = (640, 480)  # width, height
-CAMERA_FOVY = 58.0
-# The G1's head camera (an Intel RealSense D435) is a fixed joint on the torso link in Unitree's with-hand description:
-# unitree_rl_gym g1_29dof_with_hand.urdf:623-624: origin xyz 0.0576235 0.01753 0.41987, rpy 0 0.8307767 0 (pitched
-# down).
-# A MuJoCo camera looks along its -z with +y up, so the orientation below builds "looks along the torso's +x, up is +z"
-# and then tilts it down about +y.
-CAMERA_POS = (0.0576235, 0.01753, 0.41987)
-CAMERA_PITCH = 0.8307767
-MARKER_BORDER = 0.2  # white border around an ArUco marker, as a fraction of its side
+# The head camera's calibration comes from the site (`site.DEFAULT_CAMERA`: Unitree's mount, pitched down).
+CAMERA_SIZE = (DEFAULT_CAMERA["width"], DEFAULT_CAMERA["height"])  # width, height
+CAMERA_FOVY = DEFAULT_CAMERA["fovy"]
+CAMERA_POS = tuple(DEFAULT_CAMERA["pos"])
+CAMERA_PITCH = DEFAULT_CAMERA["pitch"]
 STAND_HEIGHT = 0.788  # pelvis height of the standing pose (measured: the policy's standing pose on this model)
 # Geom groups. The robot's meshes come twice (a visual copy in group 1 and a collision copy in group 0); the camera
 # draws group 1 only, which halves the triangles it has to rasterise on the CPU. The world is in group 1 too.
@@ -81,76 +76,6 @@ FACES = {  # face of an object box -> (outward normal, rotation that makes the m
 }
 
 
-class SiteError(ValueError):
-    """The site file is not valid; the message names the entry and the field."""
-
-
-def load_site(site) -> dict:
-    """Read and check a site (a path or an already parsed dict); returns it with defaults filled in."""
-    data = json.loads(Path(site).read_text()) if not isinstance(site, dict) else dict(site)
-    if data.get("schema") != SITE_SCHEMA:
-        raise SiteError(f"schema must be {SITE_SCHEMA!r}")
-    names: set[tuple[str, str]] = set()
-
-    def need(entry, field, size=None, where=""):
-        value = entry.get(field)
-        if value is None:
-            raise SiteError(f"{where}: missing {field!r}")
-        if size is not None and (not isinstance(value, list) or len(value) != size
-                                 or not all(isinstance(x, (int, float)) for x in value)):
-            raise SiteError(f"{where}: {field!r} must be a list of {size} numbers")
-        return value
-
-    def name_of(entry, kind):
-        name = entry.get("name")
-        if not isinstance(name, str) or not name or (kind, name) in names:
-            raise SiteError(f"{kind}: missing or duplicate name {name!r}")
-        names.add((kind, name))
-        return f"{kind} {name}"
-
-    def check_marker(marker, where, size_required):
-        mid = need(marker, "id", where=where)
-        if not isinstance(mid, int) or not 0 <= mid < 50:
-            raise SiteError(f"{where}: marker id must be an integer 0-49 (ArUco 4x4_50)")
-        if size_required and not (isinstance(marker.get("size"), (int, float)) and marker["size"] > 0):
-            raise SiteError(f"{where}: marker needs a positive 'size' (side of the black square, m)")
-
-    data.setdefault("name", "site")
-    data.setdefault("floor", {})
-    data.setdefault("robot", {})
-    for kind in ("tables", "objects", "stations"):
-        data.setdefault(kind, [])
-    start = data["robot"].setdefault("start", [0.0, 0.0, 0.0])
-    if not isinstance(start, list) or len(start) != 3:
-        raise SiteError("robot.start must be [x, y, yaw]")
-    for t in data["tables"]:
-        where = name_of(t, "table")
-        need(t, "pos", 3, where)
-        need(t, "half_size", 3, where)
-    for o in data["objects"]:
-        where = name_of(o, "object")
-        need(o, "pos", 3, where)
-        need(o, "half_size", 3, where)
-        if not isinstance(o.get("mass", 0.2), (int, float)) or o.get("mass", 0.2) <= 0:
-            raise SiteError(f"{where}: mass must be positive")
-        marker = o.get("marker")
-        if marker is not None:
-            check_marker(marker, where, False)
-            if marker.setdefault("face", "-x") not in FACES:
-                raise SiteError(f"{where}: marker face must be one of {sorted(FACES)}")
-            # the plate (marker plus its white border) fills the smaller side of the face
-            plate = float(min(np.delete(o["half_size"], int(np.argmax(np.abs(FACES[marker["face"]][0]))))))
-            marker.setdefault("size", 2 * plate / (1 + 2 * MARKER_BORDER))
-    for s in data["stations"]:
-        where = name_of(s, "station")
-        need(s, "pose", 3, where)
-        marker = need(s, "marker", where=where)
-        check_marker(marker, where, True)
-        need(marker, "pos", 3, where)
-        need(marker, "facing", where=where)
-    return data
-
-
 def marker_png(marker_id: int) -> bytes:
     """An ArUco 4x4_50 marker with a white border, as PNG bytes (the texture of a marker plate)."""
     import cv2
@@ -173,21 +98,20 @@ def _yaw_quat(yaw: float):
     return np.array([np.cos(yaw / 2), 0, 0, np.sin(yaw / 2)])
 
 
-def head_camera_quat() -> np.ndarray:
-    """Orientation of the head camera in the torso frame (MuJoCo cameras look along their -z with +y up)."""
+def head_camera_quat(pitch: float = CAMERA_PITCH) -> np.ndarray:
+    """Orientation of the head camera in the torso frame (MuJoCo cameras look along their -z with +y up): it looks
+    along the torso's +x, up is +z, and then it tilts down by `pitch` about +y."""
     r = np.array([[0, 0, -1], [-1, 0, 0], [0, 1, 0]], float)  # columns: camera x, y, z in the torso frame
     q_base = np.zeros(4)
     mujoco.mju_mat2Quat(q_base, r.flatten())
     q_pitch = np.zeros(4)
-    mujoco.mju_axisAngle2Quat(q_pitch, [0, 1, 0], CAMERA_PITCH)
+    mujoco.mju_axisAngle2Quat(q_pitch, [0, 1, 0], pitch)
     return _quat_mul(q_pitch, q_base)
 
 
 def camera_intrinsics() -> tuple[float, float, float, float]:
-    """fx, fy, cx, cy in pixels (square pixels, principal point at the image centre)."""
-    w, h = CAMERA_SIZE
-    f = (h / 2) / np.tan(np.radians(CAMERA_FOVY) / 2)
-    return f, f, w / 2, h / 2
+    """fx, fy, cx, cy in pixels of the default calibration (a site may give its own: `site.intrinsics`)."""
+    return intrinsics(DEFAULT_CAMERA)
 
 
 def _add_marker_plate(spec, body, name, marker_id, plate_half, pos, quat):
@@ -208,7 +132,8 @@ def build_spec(site) -> mujoco.MjSpec:
     site = load_site(site)
     spec = mujoco.MjSpec.from_file(str(assets.asset(*assets.HAND_MODEL)))
     spec.option.timestep = TIMESTEP
-    spec.visual.global_.offwidth, spec.visual.global_.offheight = CAMERA_SIZE
+    cam = site["camera"]
+    spec.visual.global_.offwidth, spec.visual.global_.offheight = cam["width"], cam["height"]
     spec.visual.quality.offsamples = 4
     spec.stat.extent = 4.0  # znear is a fraction of this; the camera sits inside the head link, so keep it small
     spec.visual.map.znear = 0.002
@@ -260,7 +185,7 @@ def build_spec(site) -> mujoco.MjSpec:
                     objname="imu")
 
     torso = spec.body("torso_link")
-    torso.add_camera(name="head", pos=list(CAMERA_POS), quat=list(head_camera_quat()), fovy=CAMERA_FOVY)
+    torso.add_camera(name="head", pos=list(cam["pos"]), quat=list(head_camera_quat(cam["pitch"])), fovy=cam["fovy"])
 
     # The support: a mocap body the pelvis can be welded to (inactive until the supported stance uses it).
     spec.worldbody.add_body(name="support", mocap=True)
@@ -313,9 +238,11 @@ def build_spec(site) -> mujoco.MjSpec:
         m = station["marker"]
         side = float(m["size"]) * (1 + 2 * MARKER_BORDER)
         pos = list(m["pos"])
-        # a vertical panel facing `facing` (yaw of its outward normal in the world), standing on a thin post
-        panel = spec.worldbody.add_body(name=f"station_{station['name']}", pos=pos,
-                                        quat=list(_quat_mul(_yaw_quat(float(m["facing"])), FACES["+x"][1])))
+        # a vertical panel facing `facing` (yaw of its outward normal in the world); its frame is the marker frame
+        # of the site (x right, y up, z out), so the printed marker is upright
+        quat = np.zeros(4)
+        mujoco.mju_mat2Quat(quat, marker_frame(m)[0].flatten())
+        panel = spec.worldbody.add_body(name=f"station_{station['name']}", pos=pos, quat=list(quat))
         _add_marker_plate(spec, panel, f"marker_station_{station['name']}", m["id"], side / 2, [0, 0, 0],
                           [1, 0, 0, 0])
         panel.add_geom(type=mujoco.mjtGeom.mjGEOM_BOX, size=[side / 2, side / 2, 0.004], pos=[0, 0, -0.0045],
@@ -372,3 +299,9 @@ def build(site) -> tuple[mujoco.MjModel, Robot, dict]:
     site = load_site(site)
     model = build_spec(site).compile()
     return model, Robot.of(model), site
+
+
+def robot_spec(camera: dict | None = None) -> mujoco.MjSpec:
+    """Only the robot, with the head camera of `camera` (a site's calibration): what the executor uses as its own
+    kinematic model. No floor, tables or objects, and no marker textures."""
+    return build_spec({"schema": SITE_SCHEMA, "camera": camera or {}})
