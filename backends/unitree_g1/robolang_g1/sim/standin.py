@@ -158,7 +158,7 @@ class Simulator:
         # harness reads it from the oracle and `status` ("no further command after a fall"); nothing else does.
         self.commands = {k: {"count": 0, "last_sim_time": None} for k in ("sport", "arm_sdk", "hand_left", "hand_right",
                                                                            "attach", "detach")}
-        self._push: tuple[np.ndarray, float] | None = None  # test hook: (force on the torso, until)
+        self._push: tuple[np.ndarray, np.ndarray, float] | None = None  # test hook: (force, torque on the torso, until)
         self.camera_covered = False  # test hook: the head camera shows black frames
         self._torso_dof_body = self.robot.torso
 
@@ -169,10 +169,11 @@ class Simulator:
         c["count"] += 1
         c["last_sim_time"] = self.sim_time
 
-    def push(self, force, duration: float) -> dict:
-        """Test hook (simulation thread): a force in N on the torso, world frame, for `duration` simulated seconds."""
-        self._push = (np.asarray(force, float), self.sim_time + float(duration))
-        return {"force": [float(x) for x in force], "until": self._push[1]}
+    def push(self, force, duration: float, torque=(0.0, 0.0, 0.0)) -> dict:
+        """Test hook (simulation thread): a force in N and a torque in N m on the torso, world frame, for `duration`
+        simulated seconds. A steady torque about the vertical is a heading creep the stress check can dial in."""
+        self._push = (np.asarray(force, float), np.asarray(torque, float), self.sim_time + float(duration))
+        return {"force": [float(x) for x in force], "torque": [float(x) for x in torque], "until": self._push[2]}
 
     def cover_camera(self, covered: bool) -> dict:
         """Test hook: a covered head camera renders black frames (the camera thread reads the flag)."""
@@ -268,9 +269,11 @@ class Simulator:
                 ctrl[first:first + 7] = c.kp * (c.q - hq) + c.kd * (c.dq - hdq) + c.tau
         d.ctrl[:] = np.clip(ctrl, self._lo, self._hi)
         if self._push is not None:
-            force, until = self._push
-            d.xfrc_applied[self._torso_dof_body, :3] = force if self.sim_time < until else 0.0
-            if self.sim_time >= until:
+            force, torque, until = self._push
+            on = self.sim_time < until
+            d.xfrc_applied[self._torso_dof_body, :3] = force if on else 0.0
+            d.xfrc_applied[self._torso_dof_body, 3:] = torque if on else 0.0
+            if not on:
                 self._push = None
         mujoco.mj_step(m, d)
         self.n += 1
@@ -687,7 +690,7 @@ def make_services(sim: Simulator, test_hooks: bool = False):
 
         def push(self, parameter):
             p = json.loads(parameter)
-            return 0, json.dumps(sim.request(sim.push, p["force"], p["duration"]))
+            return 0, json.dumps(sim.request(sim.push, p["force"], p["duration"], p.get("torque", (0.0, 0.0, 0.0))))
 
         def cover_camera(self, parameter):
             return 0, json.dumps(sim.request(sim.cover_camera, bool(json.loads(parameter)["covered"])))

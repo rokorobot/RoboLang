@@ -390,4 +390,6 @@ def test_the_burst_tables_pick_the_step_that_cancels_the_error():
     assert ops._burst("forward", -0.07) == (-0.4, 0.0, 0.2)
     vx, vy, seconds = ops._burst("lateral", -0.05)
     assert (vx, vy) == (0.1, -0.3) and seconds == 0.5
-    assert ops._burst("lateral", 0.20)[1] == 0.3 and ops._burst("forward", 1.2)[2] == pytest.approx(4.0)
+    assert ops._burst("lateral", 0.20)[1] == 0.3
+    assert ops._burst("forward", 1.2)[2] == pytest.approx(1.2 / ops.FORWARD_WALK_M_S)
+    assert ops._burst("forward", 2.0)[2] == pytest.approx(4.0)  # a walk is never longer than this
