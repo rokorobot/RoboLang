@@ -188,9 +188,9 @@ def test_robot_at_true_within_the_tolerance_and_reports_the_measured_offset():
         ((0.048, 0.0, 0.0), "unknown"),  # inside 5 cm but inside the 5 mm margin of it
         ((0.052, 0.0, 0.0), "unknown"),
         ((0.06, 0.0, 0.0), "false"),
-        ((0.0, 0.0, 0.085), "true"),
-        ((0.0, 0.0, 0.095), "unknown"),  # inside 0.1 rad, within the 0.01 rad margin
-        ((0.0, 0.0, 0.105), "unknown"),
+        ((0.0, 0.0, 0.09), "true"),
+        ((0.0, 0.0, 0.097), "unknown"),  # inside 0.1 rad, within the 0.005 rad margin
+        ((0.0, 0.0, 0.103), "unknown"),
         ((0.0, 0.0, 0.12), "false"),
         ((0.0, -0.08, 0.0), "false"),
         ((0.5, 0.0, 0.0), "false"),

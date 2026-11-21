@@ -187,18 +187,19 @@ def test_the_grasp_and_place_paths_clear_the_declared_tables_with_the_margins_an
     assert err.value.code == "S502" and "no clear path" in err.value.message
 
 
-def test_the_pinch_height_keeps_the_open_fingers_off_the_table_top(kin, default):
-    """At the pinch the phase 2 grasp used (1 cm below the object's centre) the open fingers reached 3 cm into the
-    table in the robot's own model; at the planned height they stay above it."""
+def test_the_planned_grasp_keeps_the_open_fingers_out_of_the_table_where_phase_2s_went_3_cm_into_it(kin, default):
+    """With phase 2's grasp (hand pitched 15 degrees, the pinch 1 cm below the object's centre) the open fingers reached
+    3 cm into the table in the robot's own model; with the planned one (flat, the pinch at the centre) the hand just
+    touches the table top, within the 5 mm the contact legs allow."""
     o = clearance_ops(kin, default, "pick_place", "bench")
     boxes = o.site["tables"]
-    for rise, want_above in ((-0.01, False), (ops.GRASP_RISE, True)):
+    for deg, rise, inside in ((15, -0.01, True), (0, ops.GRASP_RISE, False)):
         plan = o._plan_reach(
-            "right", lambda R: BOX_CENTRE + np.array([0, 0, rise]), extra=(("lift", (0, 0, 0.1)),), degs=(15,)
+            "right", lambda R: BOX_CENTRE + np.array([0, 0, rise]), extra=(("lift", (0, 0, 0.1)),), degs=(deg,)
         )
         o.clr.set_boxes(boxes, tuple(o.pose), 0.0, 0.0)  # the real table, no margin
         found = o.clr.to_boxes("right", plan["grasp"], held=False)
-        assert (found["hand"][0] > 0) is want_above, (rise, found["hand"])
+        assert (found["hand"][0] < -ops.CONTACT_OVERLAP_M) is inside, (deg, rise, found["hand"])
 
 
 def test_the_view_path_is_clear_over_the_shelf_table_and_not_through_an_obstacle_on_it(kin, default):

@@ -74,12 +74,16 @@ HAND_CLOSE = HAND_CLOSED  # the Dex3 closing pose (observe.py judges a hand "clo
 SEGMENT_S = 1.6  # the shortest arm motion between two poses (min-jerk, and always at least 1 s)
 # (HELD_RADIUS_M, observe.py: the object's marker is "at the hand" within this of the grasp point; 5-6 cm when held)
 APPROACH_BACK, APPROACH_UP = 0.09, 0.03  # the pre-grasp: behind the grasp point along the fingers, and above it
-# The pinch point is this far above the object's centre. It was -0.01 (phase 2); at that height the open fingers
-# reached 3.2 cm into the table in the robot's own model (the scene's hands touch nothing, so it never showed). At +0.03
-# they clear the table top by 0.9 cm at the grasp, and the closed fingers still stay below the object's top face (4 cm
-# above its centre), where the marker is.
-GRASP_RISE = 0.03
-FINGERS_DOWN_DEG = (15, 30, 0, 45)  # hand orientations tried, in this order
+# The pinch point is this far above the object's centre, and the hand's pitch is tried flat first. In phase 2 the
+# pitch was 15 degrees and the pinch 1 cm below the centre; in the robot's own model the open fingers then reached
+# 3.2 cm into the table at the grasp (the scene's hands touch nothing, so it was not seen). Measured over pitches of
+# 0-30 degrees and pinches of -1 to +3 cm (docs/evidence/g1-phase3-observations.md): no hand pose keeps the open
+# hand off the table by a margin and the closed fingers off the object's top face (where the marker is) at once: a
+# pinch 1 cm up cleared the table by 0.8 cm and the closed fingers hid a corner of the marker (S506, "not seen at the
+# hand"). Flat with the pinch at the centre, the hand just touches the table top (0.0 cm; the contact legs allow 5 mm)
+# and the closed fingers stay level with the object's top face.
+GRASP_RISE = 0.0
+FINGERS_DOWN_DEG = (0, 15, 30, 45)  # hand orientations tried, in this order
 WAIST_LEAN_RAD = (0.0, 0.15, 0.3)  # waist pitch allowed, tried in this order
 HAND_REST_Y = {"right": -0.10, "left": 0.10}
 # ---- snapshots (phase 3)
@@ -88,16 +92,16 @@ HAND_STATE_AGE_S = 1.0  # a hand state older than this (wall clock) is not used
 # The arm paths of grasp, place and the observation motion are checked, before any arm motion, against the site's
 # declared tables and obstacles with the robot's own geometry (kinematics.Clearance). Margins: 3 cm sideways and 1.5 cm
 # vertical; on the legs where the hand is meant to be at the object (the last approach, the first lift, the lowering and
-# the release) the hand is checked with no vertical margin and the object, which rests on the table there, may overlap
-# its own table by 5 mm (its position is known to about a centimetre).
-CONTACT_OVERLAP_M = 0.005
+# the release) the hand and the object, which rests on the table there, are checked with no vertical margin and may
+# overlap the table by 5 mm (the object's position is known to about a centimetre).
+CONTACT_OVERLAP_M = 0.005  # (see above)
 RAISED_ABOVE_PRE_M = (
     0.08,
     0.06,
     0.04,
 )  # the hand is raised this far above the pre-grasp height (the first that solves)
 CARRY_CLEARANCE_M = 0.02  # a held object clears every link of the robot by at least this in the carry pose ...
-CARRY_PLAN_M = 0.025  # ... and the pose is planned for this, so that what is measured after the grasp still clears
+CARRY_PLAN_M = (0.03, 0.0275, 0.025)  # ... planned for the first of these that exists (tracking error costs ~0.5 cm)
 # Before the arm shows a held object, the whole path of the arm and the object is checked against the site's declared
 # tables and obstacles. The belief pose is corrected by the station marker (0.3-1.5 cm from the truth in the phase 2
 # runs) and the pelvis height is known to about 1.5 cm, so the declared boxes are grown by 3 cm sideways and 1.5 cm
@@ -962,9 +966,10 @@ class G1Operations:
     def _plan_carry(self, side: str, half, offset_in_hand, rotation_in_hand) -> np.ndarray | None:
         """The carry pose for a held object: the walking controller's own arm pose moved only as far as it takes for the
         object, welded as it is held, to clear **every link of the robot** (the holding hand's own palm and fingers
-        excepted, they touch it by design) by CARRY_PLAN_M, from the robot's own model (MuJoCo distances). The default
-        pose has the object against the hip (0.1-0.6 cm). Alternates a pull of the arm's joints back toward the default
-        with a gradient step that restores the clearance, and keeps the closest feasible pose. None if there is none."""
+        excepted, they touch it by design) by the first of CARRY_PLAN_M that exists, from the robot's own model
+        (MuJoCo distances). The default pose has the object against the hip (0.1-0.6 cm). Alternates a pull of the arm's
+        joints back toward the default with a gradient step that restores the clearance, and keeps the closest feasible
+        pose. None if there is none."""
         self.clr.set_held(side, half, offset_in_hand, rotation_in_hand)
         joints = ARM_JOINTS[side]
         lo, hi = self.kin.limits[joints, 0], self.kin.limits[joints, 1]
@@ -981,22 +986,27 @@ class G1Operations:
                 g[i] = (clearance(q2) - base) / 1e-3
             return g
 
-        q, best = q0.copy(), None
-        for _ in range(120):
-            for _ in range(40):  # restore the clearance
-                if clearance(q) >= CARRY_PLAN_M:
-                    break
-                g = gradient(q)
-                if np.linalg.norm(g) < 1e-9:
-                    break
-                q[joints] = np.clip(q[joints] + 0.02 * g / np.linalg.norm(g), lo, hi)
-            if clearance(q) >= CARRY_PLAN_M:
-                dev = float(np.linalg.norm(q[joints] - q0[joints]))
-                if best is None or dev < best[0] - 1e-4:
-                    best = (dev, q.copy())
-                elif dev >= best[0] - 1e-4:
-                    break
-            q[joints] = q[joints] - 0.25 * (q[joints] - q0[joints])  # toward the walking controller's pose
+        for target in CARRY_PLAN_M:
+            q, best = q0.copy(), None
+            for outer in range(120):
+                if best is None and outer >= 20:
+                    break  # not found by now: this clearance is out of reach
+                for _ in range(40):  # restore the clearance
+                    if clearance(q) >= target:
+                        break
+                    g = gradient(q)
+                    if np.linalg.norm(g) < 1e-9:
+                        break
+                    q[joints] = np.clip(q[joints] + 0.02 * g / np.linalg.norm(g), lo, hi)
+                if clearance(q) >= target:
+                    dev = float(np.linalg.norm(q[joints] - q0[joints]))
+                    if best is None or dev < best[0] - 1e-4:
+                        best = (dev, q.copy())
+                    elif dev >= best[0] - 1e-4:
+                        break
+                q[joints] = q[joints] - 0.25 * (q[joints] - q0[joints])  # toward the walking controller's pose
+            if best is not None:
+                break
         self.clr.clear_held(side)
         return None if best is None else best[1]
 
@@ -1031,7 +1041,7 @@ class G1Operations:
                 q = lg["q0"] + a * (lg["q1"] - lg["q0"])
                 found = self.clr.to_boxes(side, q, held=lg["held"], hand_q=closed if lg["closed"] else None)
                 for group, (dist, link, box) in found.items():
-                    limit = -CONTACT_OVERLAP_M if (lg["contact"] and group == "held") else 0.0
+                    limit = -CONTACT_OVERLAP_M if (lg["contact"] and group in ("hand", "held")) else 0.0
                     over = dist - limit
                     if worst is None or over < worst["over_limit_m"]:
                         worst = {

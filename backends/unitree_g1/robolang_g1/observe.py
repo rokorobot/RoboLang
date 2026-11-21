@@ -44,7 +44,7 @@ DEFAULT_MAX_AGE_MS = 10_000
 ROBOT_AT_M, ROBOT_AT_RAD = 0.05, 0.1
 # ... and the verdict is `true` only if the measured offset is at least this far inside, `false` only if at least this
 # far outside, `unknown` in between: what the camera cannot tell from the tolerance's edge.
-ROBOT_AT_MARGIN_M, ROBOT_AT_MARGIN_RAD = 0.005, 0.01
+ROBOT_AT_MARGIN_M, ROBOT_AT_MARGIN_RAD = 0.005, 0.005
 # object_at: the marker's position must be this far inside the region to be `true`, this far outside to be `false`.
 REGION_MARGIN_M = 0.015
 # holding: the object's marker is "at the hand" within this of the hand's grasp point (5-6 cm when held right).
