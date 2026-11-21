@@ -23,7 +23,7 @@ import numpy as np
 from . import assets, guard
 from . import site as site_mod
 from .executor import STOP_CODES, STOP_MESSAGES, BackendFailure, Stop
-from .kinematics import ARM_JOINTS, STAND_HEIGHT, WAIST_PITCH, Kinematics
+from .kinematics import ARM_JOINTS, STAND_HEIGHT, WAIST_PITCH, Clearance, Kinematics
 from .observe import HAND_CLOSED, HELD_RADIUS_M, READY_LOWSTATE_AGE_S, Hand, Ready, Snapshot
 from .observe import hand_state
 from .perception import (
@@ -74,20 +74,35 @@ HAND_CLOSE = HAND_CLOSED  # the Dex3 closing pose (observe.py judges a hand "clo
 SEGMENT_S = 1.6  # the shortest arm motion between two poses (min-jerk, and always at least 1 s)
 # (HELD_RADIUS_M, observe.py: the object's marker is "at the hand" within this of the grasp point; 5-6 cm when held)
 APPROACH_BACK, APPROACH_UP = 0.09, 0.03  # the pre-grasp: behind the grasp point along the fingers, and above it
-GRASP_RISE = (
-    -0.01
-)  # the pinch point is this far above the object's centre: below it, the fingers stay under the top face
+# The pinch point is this far above the object's centre. It was -0.01 (phase 2); at that height the open fingers
+# reached 3.2 cm into the table in the robot's own model (the scene's hands touch nothing, so it never showed). At +0.03
+# they clear the table top by 0.9 cm at the grasp, and the closed fingers still stay below the object's top face (4 cm
+# above its centre), where the marker is.
+GRASP_RISE = 0.03
 FINGERS_DOWN_DEG = (15, 30, 0, 45)  # hand orientations tried, in this order
 WAIST_LEAN_RAD = (0.0, 0.15, 0.3)  # waist pitch allowed, tried in this order
 HAND_REST_Y = {"right": -0.10, "left": 0.10}
 # ---- snapshots (phase 3)
 SNAPSHOT_FRAMES = 10  # head-camera frames per snapshot (2 s at the camera's 5 Hz)
 HAND_STATE_AGE_S = 1.0  # a hand state older than this (wall clock) is not used
+# The arm paths of grasp, place and the observation motion are checked, before any arm motion, against the site's
+# declared tables and obstacles with the robot's own geometry (kinematics.Clearance). Margins: 3 cm sideways and 1.5 cm
+# vertical; on the legs where the hand is meant to be at the object (the last approach, the first lift, the lowering and
+# the release) the hand is checked with no vertical margin and the object, which rests on the table there, may overlap
+# its own table by 5 mm (its position is known to about a centimetre).
+CONTACT_OVERLAP_M = 0.005
+RAISED_ABOVE_PRE_M = (
+    0.08,
+    0.06,
+    0.04,
+)  # the hand is raised this far above the pre-grasp height (the first that solves)
+CARRY_CLEARANCE_M = 0.02  # a held object clears every link of the robot by at least this in the carry pose ...
+CARRY_PLAN_M = 0.025  # ... and the pose is planned for this, so that what is measured after the grasp still clears
 # Before the arm shows a held object, the whole path of the arm and the object is checked against the site's declared
 # tables and obstacles. The belief pose is corrected by the station marker (0.3-1.5 cm from the truth in the phase 2
 # runs) and the pelvis height is known to about 1.5 cm, so the declared boxes are grown by 3 cm sideways and 1.5 cm
 # up and down before the arm's spheres and the object's points are tested against them.
-CLEARANCE_XY_M, CLEARANCE_Z_M, CLEARANCE_SAMPLES = 0.03, 0.015, 12
+CLEARANCE_XY_M, CLEARANCE_Z_M, CLEARANCE_SAMPLES = 0.03, 0.015, 10
 RAISE_M = 0.08  # the raised waypoint is this far above the view pose (the joint-space line down to it dips less)
 
 
@@ -142,6 +157,7 @@ class G1Operations:
         self.sim = None
         self.robot: Robot | None = None
         self.kin: Kinematics | None = None
+        self.clr: Clearance | None = None
         self.perc: Perception | None = None
         self.q_carry: np.ndarray | None = None
         self.fallen = False
@@ -163,6 +179,7 @@ class G1Operations:
         self.robot = Robot()
         self.robot.wait_state()
         self.kin = Kinematics(self.site["camera"])
+        self.clr = Clearance(self.site["camera"], n_boxes=len(site_mod.declared_boxes(self.site)))
         self.perc = Perception(self.robot, self.kin, self.site, head)
         self.q_carry = self.robot.low_q.copy()  # the arms as the walking controller holds them: the carry pose
         self.q_carry[WAIST_PITCH - 2 : WAIST_PITCH + 1] = 0.0
@@ -234,11 +251,13 @@ class G1Operations:
     def look(self, frames: int = 4, ids=None) -> dict:
         """Take frames, correct the belief from the best station marker seen, and return the readings."""
         readings = self.perc.observe(ids=ids, frames=frames, check=self.check)
-        self.observations.append({
-            "t_ms": self.now_ms(),
-            "frames": frames,
-            "markers": {str(k): v.as_dict(self.now_ms()) for k, v in sorted(readings.items())},
-        })
+        self.observations.append(
+            {
+                "t_ms": self.now_ms(),
+                "frames": frames,
+                "markers": {str(k): v.as_dict(self.now_ms()) for k, v in sorted(readings.items())},
+            }
+        )
         best = None
         for mid, reading in readings.items():
             if (
@@ -255,20 +274,24 @@ class G1Operations:
             imu_up = np.array([2 * (x * z - w * y), 2 * (y * z + w * x), 1 - 2 * (x * x + y * y)])
             disagree = float(np.arccos(np.clip(up @ imu_up, -1, 1)))
             if disagree > MAX_UP_DISAGREEMENT_RAD:  # the wrong solution of the marker's pose: ignore this reading
-                self.events.append({
-                    "t_ms": self.now_ms(),
-                    "event": "rejected",
-                    "marker": mid,
-                    "vertical_vs_imu_rad": round(disagree, 3),
-                })
+                self.events.append(
+                    {
+                        "t_ms": self.now_ms(),
+                        "event": "rejected",
+                        "marker": mid,
+                        "vertical_vs_imu_rad": round(disagree, 3),
+                    }
+                )
             else:
-                self.events.append({
-                    "t_ms": self.now_ms(),
-                    "event": "localized",
-                    "marker": mid,
-                    "from": [round(float(v), 3) for v in self.pose],
-                    "to": [round(v, 3) for v in new],
-                })
+                self.events.append(
+                    {
+                        "t_ms": self.now_ms(),
+                        "event": "localized",
+                        "marker": mid,
+                        "from": [round(float(v), 3) for v in self.pose],
+                        "to": [round(v, 3) for v in new],
+                    }
+                )
                 self.pose = list(new)
         return readings
 
@@ -288,9 +311,13 @@ class G1Operations:
             return self._take(ready), {}
         clearance = self._view_clearance()
         if not clearance["clear"]:
-            note = {"performed": False, "object": self.held["object"], "hand": self.held["hand"],
-                    "reason": "the path of the arm and the object is not shown clear of the declared tables and "
-                    "obstacles", "clearance": clearance}
+            note = {
+                "performed": False,
+                "object": self.held["object"],
+                "hand": self.held["hand"],
+                "reason": "the path of the arm and the object is not shown clear of the declared tables and obstacles",
+                "clearance": clearance,
+            }
             return self._take(ready), {"observation_motion": note}
         return self._snapshot_showing(ready, clearance)
 
@@ -312,47 +339,24 @@ class G1Operations:
         return [("carry", self.robot.low_q.copy()), ("clear of the hip", clear), ("raised", up), ("show", lift)]
 
     def _view_clearance(self) -> dict:
-        """Whether the arm and the held object stay clear of the site's declared tables and obstacles all the way
-        from the carry pose to the view pose (and back along the same path), from the robot's own kinematic model
-        fed with the planned joint targets and the belief pose at this station (the declared boxes grown by
-        CLEARANCE_XY_M and CLEARANCE_Z_M). The arm is covered by spheres (`Kinematics.arm_spheres`) and the object
-        by a 3 x 3 x 3 grid of points on and in its box, in its pose in the hand. `clear` is true only if nothing
-        sampled comes within the margins; if no path can be planned, or in doubt, it is false and the arm stays."""
+        """Whether the arm and the held object stay clear of the site's declared tables and obstacles all the way from
+        the carry pose to the view pose (and back along the same path): `_path_clearance` over the legs of
+        `_view_path`, with the object in the hand and the fingers closed. `clear` is true only if every distance is over
+        its limit; if no path can be planned, or in doubt, it is false and the arm stays."""
         held, side = self.held, self.held["hand"]
-        half = np.array(site_mod.obj(self.site, held["object"])["half_size"], float)
-        boxes = site_mod.declared_boxes(self.site)
-        x, y, yaw = self.pose
-        out = {
-            "clear": False,
-            "boxes": [b["name"] for b in boxes],
-            "pelvis_in_map": [round(float(v), 3) for v in (x, y, yaw)],
-            "margins_m": {"sideways": CLEARANCE_XY_M, "vertical": CLEARANCE_Z_M},
-            "closest": None,
-        }
         path = self._view_path()
         if path is None:
-            out["why"] = "no inverse-kinematics solution for the raised waypoint"
-            return out
+            return {"clear": False, "why": "no inverse-kinematics solution for the raised waypoint", "closest": None}
+        half = site_mod.obj(self.site, held["object"])["half_size"]
+        legs = [self._leg(a, b, held=True, closed=True) for a, b in zip(path, path[1:])]
+        out = self._path_clearance(side, legs, (half, held["offset_in_hand"], held["rotation_in_hand"]))
         out["waypoints"] = [name for name, _ in path]
-        R, base = site_mod.rot_z(yaw), np.array([x, y, STAND_HEIGHT])  # the pelvis in the map
-        grid = [np.array([a, b, c]) * half for a in (-1, 0, 1) for b in (-1, 0, 1) for c in (-1, 0, 1)]
-        worst = {"clearance_m": float("inf")}
-        for (n0, q0), (n1, q1) in zip(path, path[1:]):
-            for a in np.linspace(0.0, 1.0, CLEARANCE_SAMPLES):
-                q = q0 + a * (q1 - q0)  # the arm moves along this line in joint space (min-jerk in time)
-                items = [(R @ c + base, r, link) for c, r, link in self.kin.arm_spheres(side, q)]
-                hand_R, grasp = self.kin.grasp_frame(side, q)
-                centre, R_obj = grasp + hand_R @ held["offset_in_hand"], hand_R @ held["rotation_in_hand"]
-                items += [(R @ (centre + R_obj @ g) + base, 0.01, held["object"]) for g in grid]
-                for c, r, link in items:
-                    for box in boxes:
-                        gap = site_mod.box_clearance(c, r, box, CLEARANCE_XY_M, CLEARANCE_Z_M)
-                        if gap < worst["clearance_m"]:
-                            worst = {"clearance_m": round(float(gap), 4), "link": link, "box": box["name"],
-                                     "between": f"{n0} and {n1}", "at": round(float(a), 2)}
-        out["closest"] = worst if boxes else None
-        out["clear"] = bool(not boxes or worst["clearance_m"] > 0)
         return out
+
+    @staticmethod
+    def _leg(a: tuple, b: tuple, contact: bool = False, held: bool = False, closed: bool = False) -> dict:
+        """One straight move in joint space between two named poses, for `_path_clearance`."""
+        return {"from": a[0], "q0": a[1], "to": b[0], "q1": b[1], "contact": contact, "held": held, "closed": closed}
 
     def _take(self, ready: bool) -> Snapshot:
         readings, frames = self.perc.snapshot(ids=set(self.perc.sizes), frames=SNAPSHOT_FRAMES, check=self.check)
@@ -416,7 +420,7 @@ class G1Operations:
         snap = self._take(ready)
         self._arm_move(raised, 1.6, label="back raised")
         self._arm_move(clear, 1.6, label="back clear of the hip")
-        self._arm_move(self.q_carry, 1.6, label="carry")
+        self._arm_move(held["carry"], 1.6, label="carry")
         self._arm_stance("free")
         note = {
             "performed": True,
@@ -765,14 +769,16 @@ class G1Operations:
                     f"(tolerance {ARM_TRACK_TOL_RAD})",
                 )
             time.sleep(0.02)
-        self.events.append({
-            "t_ms": self.now_ms(),
-            "event": "arm",
-            "label": label,
-            "seconds": round(seconds, 2),
-            "tracking_rad": round(err, 4),
-            "took_ms": self.now_ms() - t0,
-        })
+        self.events.append(
+            {
+                "t_ms": self.now_ms(),
+                "event": "arm",
+                "label": label,
+                "seconds": round(seconds, 2),
+                "tracking_rad": round(err, 4),
+                "took_ms": self.now_ms() - t0,
+            }
+        )
 
     def _hand_to(self, side: str, q: list[float], label: str) -> None:
         self.robot.hand_command(side, q, seconds=2.0, check=self.check)
@@ -793,10 +799,13 @@ class G1Operations:
                 return q, info
         return None, None
 
-    def _plan_reach(self, side: str, target_for, extra: tuple = (), degs=FINGERS_DOWN_DEG) -> dict:
+    def _plan_reach(self, side: str, target_for, extra: tuple = (), degs=FINGERS_DOWN_DEG, accept=None) -> dict:
         """Inverse kinematics for a reach: `target_for(R)` gives the pinch point (pelvis frame) for hand orientation R.
-        Solves the pre-grasp (behind and above it), the grasp, and any `extra` offsets (a lift), each in the same hand
-        orientation and joined by small joint moves. Tries the hand's pitch and the waist's lean in order; S502 if no
+        Solves the pre-grasp (behind and above it), the grasp, any `extra` offsets (a lift), and two **raised** poses
+        (the hand where it is when clear of the hip lifted above the pre-grasp's height, and that height straight above
+        the pre-grasp), so that the hand comes in over a table and not through its edge, each in the same hand
+        orientation and joined by small joint moves. Tries the hand's pitch and the waist's lean in order; with
+        `accept(plan) -> (ok, info)` a combination is also tried against that (the path clearance); S502 if no
         combination works, before any motion."""
         rng = np.random.default_rng(7)
         joints = ARM_JOINTS[side]
@@ -809,6 +818,7 @@ class G1Operations:
                 f"no inverse-kinematics solution: the target is {np.linalg.norm(p0 - shoulder):.2f} "
                 "m from the shoulder, further than the arm reaches",
             )
+        rejected = None
         for waist in WAIST_LEAN_RAD:
             for deg in degs:
                 R = _frame(math.radians(deg))
@@ -821,7 +831,21 @@ class G1Operations:
                 q_grasp, info = self._solve(side, p, R, [q_pre], waist)
                 if q_grasp is None:
                     continue
+                clear_p = self.kin.grasp_frame(side, self._clear_pose(side))[1]
+                q_above = q_raised = None
+                for height in RAISED_ABOVE_PRE_M:  # as high as the arm can go, in steps: the path check judges the rest
+                    q_above, _ = self._solve(side, pre + np.array([0, 0, height]), R, [q_pre], waist)
+                    if q_above is None:
+                        continue
+                    raised = np.array([clear_p[0], clear_p[1], pre[2] + height])
+                    q_raised, _ = self._solve(side, raised, R, [self._clear_pose(side), q_above, q_pre], waist)
+                    if q_raised is not None:
+                        break
+                if q_above is None or q_raised is None:
+                    continue
                 plan = {
+                    "above": q_above,
+                    "raised": q_raised,
                     "pre": q_pre,
                     "grasp": q_grasp,
                     "fingers_down_deg": deg,
@@ -836,14 +860,193 @@ class G1Operations:
                         ok = False
                         break
                     plan[name] = q
+                if ok and accept is not None:
+                    ok, verdict = accept(plan)
+                    if not ok:
+                        rejected = verdict
+                        continue
+                    plan["clearance"] = verdict
                 if ok:
                     return plan
+        if rejected is not None:
+            raise BackendFailure(
+                "S502",
+                "no clear path for the arm: every reach that has an inverse-kinematics solution comes within the "
+                f"margins of a declared table or obstacle, or leaves no carry pose that clears the object ({rejected})",
+            )
         raise BackendFailure(
             "S502",
             "no inverse-kinematics solution for the reach (hand pitch 0-45 degrees, waist lean up "
             f"to {WAIST_LEAN_RAD[-1]} rad): the target {np.round(p0, 3).tolist()} (pelvis frame) is "
             "out of reach",
         )
+
+    def _grasp_accept(self, side: str, centre, half, walking: np.ndarray):
+        """The test a reach must pass to be taken for a grasp: there is a carry pose for the object as this grasp would
+        hold it, and every arm path clears the declared tables and obstacles (`_path_clearance`): carry to clear of the
+        hip, raised beside the body, the pre-grasp, the grasp, the lift (contact legs: the hand is at the object on its
+        table), and back to the carry pose. `walking` is where the arms start."""
+
+        def accept(plan: dict):
+            clear = self._clear_pose(side)
+            R_hand, p_hand = self.kin.grasp_frame(side, plan["grasp"])
+            offset, rotation = R_hand.T @ (centre - p_hand), R_hand.T  # the object's place in the hand, as planned
+            carry = self._plan_carry(side, half, offset, rotation)
+            if carry is None:
+                return False, "no carry pose clears the object from every link by 2 cm"
+            plan["carry"] = carry
+            w = [
+                ("carry", walking),
+                ("clear of the hip", clear),
+                ("raised", plan["raised"]),
+                ("above", plan["above"]),
+                ("pre-grasp", plan["pre"]),
+                ("grasp", plan["grasp"]),
+                ("lift", plan["lift"]),
+                ("carry", carry),
+            ]
+            held = {"held": True, "closed": True}
+            legs = [
+                self._leg(w[0], w[1]),
+                self._leg(w[1], w[2]),
+                self._leg(w[2], w[3]),
+                self._leg(w[3], w[4]),
+                self._leg(w[4], w[5], contact=True),
+                self._leg(w[5], w[6], contact=True, **held),
+                self._leg(w[6], w[4], **held),
+                self._leg(w[4], w[3], **held),
+                self._leg(w[3], w[2], **held),
+                self._leg(w[2], w[1], **held),
+                self._leg(w[1], w[7], **held),
+            ]
+            info = self._path_clearance(side, legs, (half, offset, rotation))
+            return info["clear"], info
+
+        return accept
+
+    def _place_accept(self, side: str, half, start: np.ndarray):
+        """The same for a place: the object is carried to the clear pose, raised, brought over the table, lowered
+        (contact), released, and the open hand backs out the same way; `start` is the carry pose as measured."""
+        held = self.held
+        geometry = (half, held["offset_in_hand"], held["rotation_in_hand"])
+
+        def accept(plan: dict):
+            clear = self._clear_pose(side)
+            w = [
+                ("carry", start),
+                ("clear of the hip", clear),
+                ("raised", plan["raised"]),
+                ("above", plan["above"]),
+                ("pre-place", plan["pre"]),
+                ("place", plan["grasp"]),
+                ("carry", self.q_carry),
+            ]
+            holding = {"held": True, "closed": True}
+            legs = [
+                self._leg(w[0], w[1], **holding),
+                self._leg(w[1], w[2], **holding),
+                self._leg(w[2], w[3], **holding),
+                self._leg(w[3], w[4], **holding),
+                self._leg(w[4], w[5], contact=True, **holding),
+                self._leg(w[5], w[4], contact=True),  # the object is released: the open hand backs away
+                self._leg(w[4], w[3]),
+                self._leg(w[3], w[2]),
+                self._leg(w[2], w[1]),
+                self._leg(w[1], w[6]),
+            ]
+            info = self._path_clearance(side, legs, geometry)
+            return info["clear"], info
+
+        return accept
+
+    def _plan_carry(self, side: str, half, offset_in_hand, rotation_in_hand) -> np.ndarray | None:
+        """The carry pose for a held object: the walking controller's own arm pose moved only as far as it takes for the
+        object, welded as it is held, to clear **every link of the robot** (the holding hand's own palm and fingers
+        excepted, they touch it by design) by CARRY_PLAN_M, from the robot's own model (MuJoCo distances). The default
+        pose has the object against the hip (0.1-0.6 cm). Alternates a pull of the arm's joints back toward the default
+        with a gradient step that restores the clearance, and keeps the closest feasible pose. None if there is none."""
+        self.clr.set_held(side, half, offset_in_hand, rotation_in_hand)
+        joints = ARM_JOINTS[side]
+        lo, hi = self.kin.limits[joints, 0], self.kin.limits[joints, 1]
+        q0 = self.q_carry.copy()
+
+        def clearance(q) -> float:
+            return self.clr.held_to_links(side, q)[0]
+
+        def gradient(q) -> np.ndarray:
+            base, g = clearance(q), np.zeros(len(joints))
+            for i, j in enumerate(joints):
+                q2 = q.copy()
+                q2[j] += 1e-3
+                g[i] = (clearance(q2) - base) / 1e-3
+            return g
+
+        q, best = q0.copy(), None
+        for _ in range(120):
+            for _ in range(40):  # restore the clearance
+                if clearance(q) >= CARRY_PLAN_M:
+                    break
+                g = gradient(q)
+                if np.linalg.norm(g) < 1e-9:
+                    break
+                q[joints] = np.clip(q[joints] + 0.02 * g / np.linalg.norm(g), lo, hi)
+            if clearance(q) >= CARRY_PLAN_M:
+                dev = float(np.linalg.norm(q[joints] - q0[joints]))
+                if best is None or dev < best[0] - 1e-4:
+                    best = (dev, q.copy())
+                elif dev >= best[0] - 1e-4:
+                    break
+            q[joints] = q[joints] - 0.25 * (q[joints] - q0[joints])  # toward the walking controller's pose
+        self.clr.clear_held(side)
+        return None if best is None else best[1]
+
+    def _path_clearance(self, side: str, legs: list[dict], held=None) -> dict:
+        """Whether the arm (and the held object) stays clear of the site's declared tables and obstacles along `legs`,
+        from the robot's own geometry (`Clearance`) and the belief pose at this station; every leg is the straight line
+        in joint space that `_arm_move` follows. A leg is `{"from", "q0", "to", "q1", "contact", "held", "closed"}`;
+        `held` = (half_size, offset in hand, rotation in hand) of the object, for the legs that carry it. Margins:
+        CLEARANCE_XY_M sideways and CLEARANCE_Z_M vertical, except on a `contact` leg (the hand is meant to be at the
+        object on a table): the hand has no vertical margin and may not touch the table, and the object may overlap its
+        table by CONTACT_OVERLAP_M. `clear` is true only if every sampled distance is over its limit."""
+        boxes = site_mod.declared_boxes(self.site)
+        x, y, yaw = self.pose
+        out = {
+            "clear": False,
+            "boxes": [b["name"] for b in boxes],
+            "pelvis_in_map": [round(float(v), 3) for v in (x, y, yaw)],
+            "margins_m": {"sideways": CLEARANCE_XY_M, "vertical": CLEARANCE_Z_M, "contact_overlap": CONTACT_OVERLAP_M},
+            "legs": [f"{lg['from']}->{lg['to']}" for lg in legs],
+            "closest": None,
+        }
+        if not boxes:
+            out["clear"] = True
+            return out
+        if held is not None:
+            self.clr.set_held(side, *held)
+        closed = np.array(HAND_CLOSE[side])
+        worst = None
+        for lg in legs:
+            self.clr.set_boxes(boxes, (x, y, yaw), CLEARANCE_XY_M, 0.0 if lg["contact"] else CLEARANCE_Z_M)
+            for a in np.linspace(0.0, 1.0, CLEARANCE_SAMPLES):
+                q = lg["q0"] + a * (lg["q1"] - lg["q0"])
+                found = self.clr.to_boxes(side, q, held=lg["held"], hand_q=closed if lg["closed"] else None)
+                for group, (dist, link, box) in found.items():
+                    limit = -CONTACT_OVERLAP_M if (lg["contact"] and group == "held") else 0.0
+                    over = dist - limit
+                    if worst is None or over < worst["over_limit_m"]:
+                        worst = {
+                            "over_limit_m": round(float(over), 4),
+                            "clearance_m": round(float(dist), 4),
+                            "group": group,
+                            "link": link,
+                            "box": box,
+                            "leg": f"{lg['from']}->{lg['to']}",
+                            "at": round(float(a), 2),
+                        }
+        if held is not None:
+            self.clr.clear_held(side)
+        out["closest"], out["clear"] = worst, bool(worst["over_limit_m"] > 0)
+        return out
 
     def _jitter(self, q: np.ndarray, joints, rng) -> np.ndarray:
         out = q.copy()
@@ -924,16 +1127,21 @@ class G1Operations:
             marker_confidence=seen.confidence,
             marker_range_m=round(seen.range_m, 3),
         )
+        half = obj["half_size"]
+        accept = self._grasp_accept(side, centre, half, self.robot.low_q.copy())
         plan = self._plan_reach(
-            side, lambda R: centre + np.array([0, 0, GRASP_RISE]), extra=(("lift", (0.0, 0.0, 0.10)),)
+            side, lambda R: centre + np.array([0, 0, GRASP_RISE]), extra=(("lift", (0.0, 0.0, 0.10)),), accept=accept
         )  # S502 here, before any motion
         details["reach"] = {k: plan[k] for k in ("fingers_down_deg", "waist_rad", "position_error_m")}
+        details["clearance"] = plan["clearance"]
         details["arm_work_ms"] = [self.now_ms(), None]  # from here the arms move: what the checks judge the stance by
         self.events.append({"t_ms": self.now_ms(), "event": "arm_work"})
         details["arm_work_stance"] = self._arm_stance(self.site["robot"]["arm_stance"])
         self._arm_begin()
         self._arm_move(self._clear_pose(side), 1.6, label="clear of the hip")
-        self._arm_move(plan["pre"], 2.0, label="pre-grasp")
+        self._arm_move(plan["raised"], 1.6, label="raised")
+        self._arm_move(plan["above"], 1.6, label="above the object")
+        self._arm_move(plan["pre"], 1.6, label="pre-grasp")
         self._arm_move(plan["grasp"], 1.6, label="grasp")
         self._hand_to(side, HAND_CLOSE[side], "closed")
         # the object must be seen at the hand, from the measured joints, before it is welded
@@ -948,6 +1156,10 @@ class G1Operations:
         details["marker_at_hand_m"] = round(float(np.linalg.norm(held.position - hand_p)), 4)
         hand_R, _ = self.kin.grasp_frame(side, self.robot.low_q)
         offset_hand = hand_R.T @ (object_centre(held, obj["half_size"][axis]) - hand_p)  # where it sits in the hand
+        # the carry pose for the object as it is really held (planned before for the object as the grasp would hold it)
+        carry = self._plan_carry(side, half, offset_hand, hand_R.T)
+        if carry is None:
+            raise BackendFailure("S502", "no carry pose clears the held object from every link of the robot by 2 cm")
         code, attached = self.sim.Attach(obj_name, side)
         if code != 0:
             raise BackendFailure("S506", f"the simulator could not attach {obj_name} to the {side} hand (code {code})")
@@ -957,18 +1169,31 @@ class G1Operations:
             "offset_in_hand": offset_hand,
             "fingers_down_deg": plan["fingers_down_deg"],
             "rotation_in_hand": hand_R.T,  # the object lies flat (the world's axes) when it is grasped
+            "carry": carry,  # where the arm holds it while the robot walks: clear of every link by CARRY_CLEARANCE_M
             "lift_waypoint": plan["lift"],  # where the object was lifted: the view pose (_snapshot_showing)
         }
         details["object_in_hand_m"] = [round(float(v), 4) for v in offset_hand]
-        self.events.append({
-            "t_ms": self.now_ms(),
-            "event": "attached",
-            "relative_position": attached.get("relative_position"),
-        })
+        self.events.append(
+            {
+                "t_ms": self.now_ms(),
+                "event": "attached",
+                "relative_position": attached.get("relative_position"),
+            }
+        )
         self._arm_move(plan["lift"], 1.6, label="lift")
         self._arm_move(plan["pre"], 1.6, label="retreat")
+        self._arm_move(plan["above"], 1.6, label="above the object")
+        self._arm_move(plan["raised"], 1.6, label="raised")
         self._arm_move(self._clear_pose(side), 1.6, label="clear of the hip")
-        self._arm_move(self.q_carry, 1.6, label="carry")
+        self._arm_move(carry, 1.6, label="carry")
+        d, link = self.clr.held_to_links_with(side, self.robot.low_q, half, offset_hand, hand_R.T)
+        details["carry_pose"] = {
+            "object_to_nearest_link_m": round(float(d), 4),
+            "link": link,
+            "arm_deviation_rad": round(
+                float(np.linalg.norm(carry[ARM_JOINTS[side]] - self.q_carry[ARM_JOINTS[side]])), 3
+            ),
+        }
         self._arm_stance("free")  # walking is the policy's: back to the free stance
         details["arm_work_ms"][1] = self.now_ms()
         details["events"] = self.events
@@ -996,19 +1221,25 @@ class G1Operations:
         # the marker frame is (x right, y up, z out) with a vertical panel: y is the height above the marker's centre
         centre = reading.rotation @ target_marker + reading.position
         details["target_in_pelvis"] = [round(float(v), 4) for v in centre]
+        half = obj["half_size"]
+        accept = self._place_accept(side, half, self.robot.low_q.copy())
         plan = self._plan_reach(
             side,
             lambda R: centre - R @ self.held["offset_in_hand"],
             extra=(("above", (0.0, 0.0, 0.10)),),
             degs=(self.held["fingers_down_deg"],),
+            accept=accept,
         )
         details["reach"] = {k: plan[k] for k in ("fingers_down_deg", "waist_rad", "position_error_m")}
+        details["clearance"] = plan["clearance"]
         details["arm_work_ms"] = [self.now_ms(), None]
         self.events.append({"t_ms": self.now_ms(), "event": "arm_work"})
         details["arm_work_stance"] = self._arm_stance(self.site["robot"]["arm_stance"])
         self._arm_begin()
         self._arm_move(self._clear_pose(side), 1.0, label="clear of the hip")
-        self._arm_move(plan["pre"], 2.0, label="pre-place")
+        self._arm_move(plan["raised"], 1.6, label="raised")
+        self._arm_move(plan["above"], 1.6, label="above the target")
+        self._arm_move(plan["pre"], 1.6, label="pre-place")
         self._arm_move(plan["grasp"], 1.6, label="place")
         self._hand_to(side, [0.0] * 7, "open")
         code, _ = self.sim.Detach(obj_name)
@@ -1017,6 +1248,8 @@ class G1Operations:
         self.held = None
         self.events.append({"t_ms": self.now_ms(), "event": "detached"})
         self._arm_move(plan["pre"], 1.6, label="retreat")
+        self._arm_move(plan["above"], 1.6, label="above the target")
+        self._arm_move(plan["raised"], 1.6, label="raised")
         self._arm_move(self._clear_pose(side), 1.6, label="clear of the hip")
         self._arm_move(self.q_carry, 1.6, weight_to=0.0, label="carry")
         self.robot.stop_arm_sdk()

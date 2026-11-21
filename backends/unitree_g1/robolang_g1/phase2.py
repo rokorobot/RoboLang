@@ -9,7 +9,9 @@ the physical effect; the executor never does. Exit status 0 only if every check 
 
 E1 move: three stations in turn, twice, and a covered marker (S517). E2 grasp: lifted and welded, twice; an absent box
 (S506 before the hand closes); a box out of reach (S502 before any arm motion). E3 place: in the region, released, hand
-retracted. E4 the two reference tasks, unchanged, through the CLI. E5 stop: cancel mid-walk, revoke mid-reach, a
+retracted. E4 the two reference tasks, unchanged, through the CLI: since phase 3 they end `SUCCEEDED` (exit 0) from the
+observations, not `STEPS_COMPLETED`; E1, E2, E3 and E7 ask the same of their short tasks (every step ran and the goal
+is true). E5 stop: cancel mid-walk, revoke mid-reach, a
 deadline while holding, and a push (S516). E6 refusals. E7 the free stance during arm work.
 """
 
@@ -298,7 +300,7 @@ def check_e1(ctx: Ctx) -> dict:
             })
         ok = (
             rec is not None
-            and rec["state"] == "STEPS_COMPLETED"
+            and rec["state"] == "SUCCEEDED"
             and len(errs) == 3
             and all(
                 e["status"] == "succeeded" and e["error_m"] <= STATION_TOL_M and e["error_rad"] <= STATION_TOL_RAD
@@ -354,7 +356,7 @@ def check_e2(ctx: Ctx) -> dict:
         status, rec, log, s, samples, _ = run_scenario(
             ctx, f"e2_grasp_{k + 1}", SITES / "pick_place.json", "pick_place", src, "grab", bind
         )
-        if rec and rec["state"] == "STEPS_COMPLETED":
+        if rec and rec["state"] == "SUCCEEDED":
             fx = grasp_effect(rec, samples, "box")
             ctx.stay.append({"scenario": f"e2_grasp_{k + 1}", "step": "grasp", "robot_moved_m": fx["robot_moved_m"]})
             ok = (
@@ -433,7 +435,7 @@ def check_e3_e4(ctx: Ctx) -> tuple[dict, dict]:
     )
     e3 = {"pass": False, "details": {"state": rec and rec["state"], "failure": rec and rec["failure"]}}
     e4a = dict(e3)
-    if rec and rec["state"] == "STEPS_COMPLETED":
+    if rec and rec["state"] == "SUCCEEDED":
         fx = pick_place_effect(rec, samples, site_pp)
         place = next(x for x in rec["steps"] if x["kind"] == "place")
         w = between(samples, *place["details"]["arm_work_ms"])
@@ -459,8 +461,9 @@ def check_e3_e4(ctx: Ctx) -> tuple[dict, dict]:
                 fx["in_dst_region"]
                 and all(x["status"] == "succeeded" for x in rec["steps"])
                 and len(rec["steps"]) == 4
-                and rec["goal_evaluated"] is False
-                and rec["state"] != "SUCCEEDED"
+                and rec["goal_evaluated"] is True
+                and rec["state"] == "SUCCEEDED"
+                and status == 0
             ),
             "details": {
                 "steps": [
@@ -483,7 +486,7 @@ def check_e3_e4(ctx: Ctx) -> tuple[dict, dict]:
         BIND_CH,
     )
     e4b: dict = {"pass": False, "details": {"state": rec and rec["state"], "failure": rec and rec["failure"]}}
-    if rec and rec["state"] == "STEPS_COMPLETED":
+    if rec and rec["state"] == "SUCCEEDED":
         last = samples[-1]
         err = station_error(last, site_mod.station(site_ch, "dst"))
         grasp = grasp_effect(rec, samples, "crate")
@@ -497,8 +500,9 @@ def check_e3_e4(ctx: Ctx) -> tuple[dict, dict]:
             and not last["fallen"]
             and float(np.linalg.norm(crate - right)) < 0.25
             and len(rec["steps"]) == 3
-            and rec["goal_evaluated"] is False
-            and rec["state"] != "SUCCEEDED"
+            and rec["goal_evaluated"] is True
+            and rec["state"] == "SUCCEEDED"
+            and status == 0
         )
         e4b = {
             "pass": bool(ok),

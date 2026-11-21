@@ -182,3 +182,179 @@ def _rotation_error(R_target: np.ndarray, R: np.ndarray) -> np.ndarray:
     if norm < 1e-9:  # a half turn: any axis perpendicular to the error will do
         return np.array([math.pi, 0, 0])
     return axis / norm * angle
+
+
+class Clearance:
+    """Distances from the robot's own geometry to boxes, with MuJoCo's own distance queries on the robot's collision
+    shapes (the meshes' convex hulls, the palm, the finger capsules): to the site's declared tables and obstacles, and
+    between a held object and the robot's links.
+
+    A private model of the robot, the declared boxes (put in the pelvis frame for the pose at hand, each grown by a
+    sideways and a vertical margin) and one box per hand for the held object, fixed to its wrist. Like `Kinematics` it
+    is fed joints only; it never sees the stand-in. The arm is described in three groups: the **arm** (shoulder to wrist
+    pitch), the **hand** (the wrist's last link, the palm and the fingers) and the **held** object.
+    """
+
+    ARM = ("shoulder_pitch", "shoulder_roll", "shoulder_yaw", "elbow", "wrist_roll", "wrist_pitch")
+    HAND = ("wrist_yaw",)  # and the finger links
+
+    def __init__(self, camera: dict | None = None, n_boxes: int = 0):
+        spec = scene.robot_spec(camera)
+        for side in ("left", "right"):
+            body = spec.body(scene.HAND_BODY[side])
+            body.add_site(name=f"grasp_{side}", pos=list(PINCH[side]), size=[0.005, 0, 0])
+            body.add_geom(
+                name=f"held_{side}",
+                type=mujoco.mjtGeom.mjGEOM_BOX,
+                size=[1e-3] * 3,
+                pos=[0, 0, 0],
+                contype=0,
+                conaffinity=0,
+                group=5,
+            )
+        for i in range(n_boxes):
+            spec.worldbody.add_geom(
+                name=f"declared_{i}",
+                type=mujoco.mjtGeom.mjGEOM_BOX,
+                size=[1e-3] * 3,
+                pos=[0, 0, -9.0 - i],
+                contype=0,
+                conaffinity=0,
+                group=5,
+            )
+        self.model = spec.compile()
+        self.data = mujoco.MjData(self.model)
+        self.idx = scene.Robot.of(self.model)
+        m = self.model
+        self.n_boxes = n_boxes
+        self.boxes = [m.geom(f"declared_{i}").id for i in range(n_boxes)]
+        self.names: list[str] = []
+        self.held = {s: m.geom(f"held_{s}").id for s in ("left", "right")}
+        self.hand_geoms = {}
+        self.arm_geoms = {}
+        for side in ("left", "right"):
+            self.arm_geoms[side] = self._geoms([f"{side}_{n}_link" for n in self.ARM])
+            self.hand_geoms[side] = self._geoms(
+                [f"{side}_wrist_yaw_link"]
+                + [m.body(b).name for b in range(m.nbody) if m.body(b).name.startswith(f"{side}_hand_")],
+                fingers=True,
+            )
+        # every collision shape of the robot's body and the other links, for the held object's clearance
+        self.links = {m.body(m.geom_bodyid[g]).name: [] for g in range(m.ngeom)}
+        for g in range(m.ngeom):
+            body = m.body(m.geom_bodyid[g]).name
+            if (
+                body != "world"
+                and m.geom_group[g] == 0
+                and m.geom_contype[g] in (1, 4)
+                or (m.geom_group[g] == 1 and m.geom_contype[g] == 4)
+            ):
+                self.links[body].append(g)
+        self._fromto = np.zeros(6)
+
+    def _geoms(self, bodies: list[str], fingers: bool = False) -> list[int]:
+        m = self.model
+        out = []
+        for g in range(m.ngeom):
+            body = m.body(m.geom_bodyid[g]).name
+            if body not in bodies or g in self.held.values():
+                continue
+            if (m.geom_group[g] == 0 and m.geom_contype[g] in (1, 4)) or (
+                fingers and m.geom_group[g] == 1 and m.geom_contype[g] == 4
+            ):
+                out.append(g)
+        return out
+
+    # ------------------------------------------------------------------------------------------ what is where
+
+    def set_boxes(self, boxes: list[dict], pelvis_map: tuple[float, float, float], xy_margin: float, z_margin: float):
+        """Put the declared boxes (map frame: `pos`, `half_size`) in the pelvis frame of a pelvis standing at
+        `pelvis_map` (x, y, yaw), each grown by the margins. At most `n_boxes`."""
+        assert len(boxes) <= self.n_boxes
+        m = self.model
+        x, y, yaw = pelvis_map
+        c, s = math.cos(yaw), math.sin(yaw)
+        R = np.array([[c, s, 0], [-s, c, 0], [0, 0, 1.0]])  # map -> pelvis
+        base = np.array([x, y, scene.STAND_HEIGHT])
+        self.names = [b["name"] for b in boxes]
+        for i, g in enumerate(self.boxes):
+            if i < len(boxes):
+                half = np.array(boxes[i]["half_size"], float) + np.array([xy_margin, xy_margin, z_margin])
+                m.geom_pos[g] = R @ (np.array(boxes[i]["pos"], float) - base)
+                m.geom_quat[g] = (math.cos(-yaw / 2), 0, 0, math.sin(-yaw / 2))
+                m.geom_size[g] = half
+            else:
+                m.geom_pos[g], m.geom_size[g] = (0, 0, -9.0 - i), (1e-3, 1e-3, 1e-3)
+            m.geom_rbound[g] = float(np.linalg.norm(m.geom_size[g]))
+
+    def set_held(self, side: str, half_size, offset_in_hand, rotation_in_hand) -> None:
+        """The held object as a box fixed to the hand: `offset_in_hand` is its centre from the pinch point and
+        `rotation_in_hand` its axes, both in the hand's frame (`Operations.held`)."""
+        m, g = self.model, self.held[side]
+        quat = np.zeros(4)
+        mujoco.mju_mat2Quat(quat, np.asarray(rotation_in_hand, float).flatten())
+        m.geom_pos[g] = PINCH[side] + np.asarray(offset_in_hand, float)
+        m.geom_sameframe[g] = 0  # the placeholder sat on its body's frame, which MuJoCo then skips transforming
+        m.geom_quat[g] = quat
+        m.geom_size[g] = np.asarray(half_size, float)
+        m.geom_rbound[g] = float(np.linalg.norm(half_size))
+
+    def clear_held(self, side: str) -> None:
+        self.model.geom_size[self.held[side]] = (1e-3, 1e-3, 1e-3)
+
+    def _pose(self, q29, hand_q: dict | None = None) -> None:
+        d, r = self.data, self.idx
+        d.qpos[0:3], d.qpos[3:7] = 0, (1, 0, 0, 0)
+        d.qpos[r.qadr] = q29
+        for side in ("left", "right"):  # the fingers: open unless a pose is given
+            d.qpos[r.hand_qadr[side]] = (hand_q or {}).get(side, np.zeros(7))
+        mujoco.mj_kinematics(self.model, d)
+
+    def _min(self, geoms_a: list[int], geoms_b: list[int], reach: float = 0.5) -> tuple[float, tuple[int, int] | None]:
+        best, pair = reach, None
+        for a in geoms_a:
+            for b in geoms_b:
+                dist = mujoco.mj_geomDistance(self.model, self.data, a, b, reach, self._fromto)
+                if dist < best:
+                    best, pair = dist, (a, b)
+        return best, pair
+
+    # ------------------------------------------------------------------------------------------ queries
+
+    def to_boxes(self, side: str, q29, held: bool = True, hand_q=None) -> dict[str, tuple[float, str, str]]:
+        """For the arm, the hand and (if one is set and `held`) the held object: the smallest distance to the declared
+        boxes grown by the margins (negative: inside the grown box), with the link and the box it is to. `hand_q` is
+        the working hand's seven finger joints (open if None)."""
+        self._pose(q29, {side: hand_q} if hand_q is not None else None)
+        m = self.model
+        out = {}
+        groups = {"arm": self.arm_geoms[side], "hand": self.hand_geoms[side]}
+        if held and m.geom_size[self.held[side]][0] > 0.002:
+            groups["held"] = [self.held[side]]
+        for name, geoms in groups.items():
+            dist, pair = self._min(geoms, self.boxes)
+            link = "" if pair is None else m.body(m.geom_bodyid[pair[0]]).name
+            box = "" if pair is None else self.names[self.boxes.index(pair[1])]
+            out[name] = (dist, link, box)
+        return out
+
+    def held_to_links(self, side: str, q29) -> tuple[float, str]:
+        """The smallest distance from the held object to any link of the robot except the hand that holds it (its
+        wrist's last link, palm and fingers touch it by design): (distance, link)."""
+        self._pose(q29)
+        mine = {f"{side}_wrist_yaw_link"} | {n for n in self.links if n.startswith(f"{side}_hand_")}
+        best, who = 1.0, ""
+        for body, geoms in self.links.items():
+            if body in mine or body == "world":
+                continue
+            dist, _ = self._min([self.held[side]], geoms, 1.0)
+            if dist < best:
+                best, who = dist, body
+        return best, who
+
+    def held_to_links_with(self, side: str, q29, half_size, offset_in_hand, rotation_in_hand) -> tuple[float, str]:
+        """`held_to_links` for an object given here (and not kept afterwards)."""
+        self.set_held(side, half_size, offset_in_hand, rotation_in_hand)
+        out = self.held_to_links(side, q29)
+        self.clear_held(side)
+        return out
