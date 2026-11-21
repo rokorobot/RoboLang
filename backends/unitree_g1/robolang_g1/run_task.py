@@ -8,6 +8,7 @@ which is how an absent object or a covered marker is made), runs `robolang_g1.cl
 stops the stand-in and prints where the record is. The stand-in writes the oracle file (`DIR/oracle.json`) for the
 checks; the executor never reads it. Exit status is the CLI's (4: every step ran, goal not evaluated; 1: failed).
 """
+
 from __future__ import annotations
 
 import argparse
@@ -63,12 +64,33 @@ class Session:
         """The per-channel command counts the stand-in has received so far (from its oracle)."""
         return self.tail.latest()["commands"]
 
-    def run(self, rob: str | Path, task: str, site: str | Path, bind: dict[str, str], out: Path, *,
-            stop_file: Path | None = None, deadline_s: float | None = None, timeout: float = 900.0,
-            watch=None) -> tuple[int, dict | None, str]:
+    def run(
+        self,
+        rob: str | Path,
+        task: str,
+        site: str | Path,
+        bind: dict[str, str],
+        out: Path,
+        *,
+        stop_file: Path | None = None,
+        deadline_s: float | None = None,
+        timeout: float = 900.0,
+        watch=None,
+    ) -> tuple[int, dict | None, str]:
         """Run `robolang_g1.cli` against this stand-in. `watch(proc)`, if given, is called every 50 ms while it runs (a
-        check uses it to cancel, revoke or push at the moment it wants). Returns (exit status, record or None, stderr)."""
-        cmd = [sys.executable, "-m", "robolang_g1.cli", str(rob), "--task", task, "--site", str(site), "--out", str(out)]
+        check uses it to cancel, revoke or push at the moment it wants). Returns (status, record or None, stderr)."""
+        cmd = [
+            sys.executable,
+            "-m",
+            "robolang_g1.cli",
+            str(rob),
+            "--task",
+            task,
+            "--site",
+            str(site),
+            "--out",
+            str(out),
+        ]
         for name, value in bind.items():
             cmd += ["--bind", f"{name}={value}"]
         if stop_file is not None:
@@ -106,15 +128,29 @@ def main(argv=None) -> int:
     run_dir = Path(args.run_dir) if args.run_dir else Path(tempfile.mkdtemp(prefix="g1_run_"))
     bind = dict(item.split("=", 1) for item in args.bind)
     with Session(args.scene or args.site, run_dir, args.stance) as session:
-        status, record, log = session.run(args.source, args.task, args.site, bind, Path(args.out),
-                                          stop_file=Path(args.stop_file) if args.stop_file else None,
-                                          deadline_s=args.deadline_s)
+        status, record, log = session.run(
+            args.source,
+            args.task,
+            args.site,
+            bind,
+            Path(args.out),
+            stop_file=Path(args.stop_file) if args.stop_file else None,
+            deadline_s=args.deadline_s,
+        )
     print(log.strip(), file=sys.stderr)
     final = session.final or {}
-    print(json.dumps({"exit": status, "state": record and record["state"], "failure": record and record["failure"],
-                      "stand_in": {k: final.get(k) for k in ("realtime_ratio", "worst_second_ratio", "stalls",
-                                                              "step_compute_ms")},
-                      "record": args.out, "run_dir": str(run_dir)}))
+    print(
+        json.dumps({
+            "exit": status,
+            "state": record and record["state"],
+            "failure": record and record["failure"],
+            "stand_in": {
+                k: final.get(k) for k in ("realtime_ratio", "worst_second_ratio", "stalls", "step_compute_ms")
+            },
+            "record": args.out,
+            "run_dir": str(run_dir),
+        })
+    )
     return status
 
 

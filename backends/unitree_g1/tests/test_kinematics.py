@@ -1,4 +1,5 @@
 """The executor's own kinematic model: FK from measured joints (camera, hand) and damped-least-squares IK."""
+
 import math
 
 import mujoco
@@ -28,7 +29,7 @@ def default():
 
 
 def test_camera_pose_from_joints_matches_the_scenes_camera(kin, default):
-    """The model the executor uses and the stand-in's scene are built from the same description: the head camera is where
+    """The model the executor uses and the stand-in's scene are built from one description: the head camera is where
     the scene puts it (a test may read the scene; the executor does not)."""
     m, r, _ = scene.build(SITE)
     d = mujoco.MjData(m)

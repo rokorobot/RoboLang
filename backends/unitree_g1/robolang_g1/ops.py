@@ -12,6 +12,7 @@ was. So a move is: turn to face the target (shuffle), walk in legs and look betw
 heading (shuffle), then correct the last few centimetres with short bursts, looking at the station marker each time. The
 executor does not depend on any of these numbers being exact: it commands, looks and corrects.
 """
+
 from __future__ import annotations
 
 import math
@@ -35,14 +36,24 @@ CONFIRM_JOINT_VEL = 0.09  # rad/s: ... and no joint moves faster than this (the 
 CONFIRM_TILT_RAD = math.radians(15)
 SETTLE_GYRO, SETTLE_LEG_VEL, SETTLE_WINDOW_MS, SETTLE_TIMEOUT_S = 0.03, 0.05, 600, 9.0
 # ---- localization and walking
-REPOSITION_M, REPOSITION_RAD = 0.08, 0.15  # before arm work the robot is put back only if it has moved further than this
-STATION_TOL_M, STATION_TOL_RAD = 0.047, 0.09  # `move` promises 5 cm and 0.1 rad (0046 U5): this, after settling, leaves margin
+REPOSITION_M, REPOSITION_RAD = (
+    0.08,
+    0.15,
+)  # before arm work the robot is put back only if it has moved further than this
+STATION_TOL_M, STATION_TOL_RAD = (
+    0.047,
+    0.09,
+)  # `move` promises 5 cm and 0.1 rad (0046 U5): this, after settling, leaves margin
 SERVO_TOL_M, SERVO_TOL_RAD = 0.044, 0.09
-SERVO_SHUFFLE_RAD = 0.11  # a heading error below this is left to the corrections' own yaw rate: a shuffle moves the robot
+SERVO_SHUFFLE_RAD = (
+    0.11  # a heading error below this is left to the corrections' own yaw rate: a shuffle moves the robot
+)
 MARKER_MAX_RANGE_M, MARKER_MIN_CONF = 2.9, 0.5  # a station marker corrects the belief only when seen this well
 MAX_UP_DISAGREEMENT_RAD = 0.03  # ... and only if the vertical it implies is the IMU's, to within this
 APPROACH_M = 0.5  # the walk ends this far before the station, facing it, and the marker is looked for there
-STAGING_M = 1.5  # ... after passing through a point this much further out on the station's axis, where the marker is in view
+STAGING_M = (
+    1.5  # ... after passing through a point this much further out on the station's axis, where the marker is in view
+)
 WALK_SPEED = 0.5
 WALK_GAIN, BACK_GAIN, SIDE_GAIN, YAW_GAIN = 0.95, 0.9, 0.64, 0.7  # travel (coast included) per unit commanded, measured
 SHUFFLE_S = 1.2  # one burst of the turn-in-place shuffle ...
@@ -57,7 +68,9 @@ HAND_CLOSE = {"right": [0.0, -0.6, -1.0, 1.0, 1.2, 1.0, 1.2], "left": [0.0, 0.6,
 SEGMENT_S = 1.6  # the shortest arm motion between two poses (min-jerk, and always at least 1 s)
 HELD_RADIUS_M = 0.06  # the object's marker is "at the hand" within this of the hand's grasp point
 APPROACH_BACK, APPROACH_UP = 0.09, 0.03  # the pre-grasp: behind the grasp point along the fingers, and above it
-GRASP_RISE = -0.01  # the pinch point is this far above the object's centre: below it, the fingers stay under the top face
+GRASP_RISE = (
+    -0.01
+)  # the pinch point is this far above the object's centre: below it, the fingers stay under the top face
 FINGERS_DOWN_DEG = (15, 30, 0, 45)  # hand orientations tried, in this order
 WAIST_LEAN_RAD = (0.0, 0.15, 0.3)  # waist pitch allowed, tried in this order
 HAND_REST_Y = {"right": -0.10, "left": 0.10}
@@ -81,8 +94,10 @@ RIGHT_BURSTS = [(0.5, 0.05), (0.8, 0.09), (1.2, 0.15)]  # (vx 0.1, vy -0.3)
 def _burst(axis: str, error: float) -> tuple[float, float, float]:
     """The (vx, vy, seconds) of the burst that should cancel `error` (metres along the axis: forward, or left), chosen
     from the measured steps. Long errors are walked: about 0.3 m per second."""
-    table = {"forward": FORWARD_BURSTS if error > 0 else BACK_BURSTS,
-             "lateral": LEFT_BURSTS if error > 0 else RIGHT_BURSTS}[axis]
+    table = {
+        "forward": FORWARD_BURSTS if error > 0 else BACK_BURSTS,
+        "lateral": LEFT_BURSTS if error > 0 else RIGHT_BURSTS,
+    }[axis]
     want = abs(error)
     if want > table[-1][1] * 1.3:
         seconds = min(want / 0.30, 4.0)
@@ -133,7 +148,7 @@ class G1Operations:
         self.kin = Kinematics(self.site["camera"])
         self.perc = Perception(self.robot, self.kin, self.site, head)
         self.q_carry = self.robot.low_q.copy()  # the arms as the walking controller holds them: the carry pose
-        self.q_carry[WAIST_PITCH - 2:WAIST_PITCH + 1] = 0.0
+        self.q_carry[WAIST_PITCH - 2 : WAIST_PITCH + 1] = 0.0
         self.arm_kp, self.arm_kd = arm_gains(np.zeros(29), np.zeros(29))
 
     def now_ms(self) -> int:
@@ -158,8 +173,11 @@ class G1Operations:
             if not self.fallen:
                 self.fallen = True
                 self.robot.silence()  # from here on nothing is sent, whatever is asked (S516)
-            raise BackendFailure("S516", f"the robot's IMU tilt reached {math.degrees(self.tilt_rad()):.0f} degrees "
-                                         f"(limit {math.degrees(TILT_LIMIT_RAD):.0f}): it fell or is falling")
+            raise BackendFailure(
+                "S516",
+                f"the robot's IMU tilt reached {math.degrees(self.tilt_rad()):.0f} degrees "
+                f"(limit {math.degrees(TILT_LIMIT_RAD):.0f}): it fell or is falling",
+            )
         if self.stop is not None:
             reason = self.stop.due(self.now_ms())
             if reason is not None:
@@ -199,11 +217,18 @@ class G1Operations:
     def look(self, frames: int = 4, ids=None) -> dict:
         """Take frames, correct the belief from the best station marker seen, and return the readings."""
         readings = self.perc.observe(ids=ids, frames=frames, check=self.check)
-        self.observations.append({"t_ms": self.now_ms(), "frames": frames,
-                                  "markers": {str(k): v.as_dict(self.now_ms()) for k, v in sorted(readings.items())}})
+        self.observations.append({
+            "t_ms": self.now_ms(),
+            "frames": frames,
+            "markers": {str(k): v.as_dict(self.now_ms()) for k, v in sorted(readings.items())},
+        })
         best = None
         for mid, reading in readings.items():
-            if mid in self.by_marker and reading.range_m <= MARKER_MAX_RANGE_M and reading.confidence >= MARKER_MIN_CONF:
+            if (
+                mid in self.by_marker
+                and reading.range_m <= MARKER_MAX_RANGE_M
+                and reading.confidence >= MARKER_MIN_CONF
+            ):
                 if best is None or reading.range_m < best[1].range_m:
                     best = (mid, reading)
         if best is not None:
@@ -213,11 +238,20 @@ class G1Operations:
             imu_up = np.array([2 * (x * z - w * y), 2 * (y * z + w * x), 1 - 2 * (x * x + y * y)])
             disagree = float(np.arccos(np.clip(up @ imu_up, -1, 1)))
             if disagree > MAX_UP_DISAGREEMENT_RAD:  # the wrong solution of the marker's pose: ignore this reading
-                self.events.append({"t_ms": self.now_ms(), "event": "rejected", "marker": mid,
-                                    "vertical_vs_imu_rad": round(disagree, 3)})
+                self.events.append({
+                    "t_ms": self.now_ms(),
+                    "event": "rejected",
+                    "marker": mid,
+                    "vertical_vs_imu_rad": round(disagree, 3),
+                })
             else:
-                self.events.append({"t_ms": self.now_ms(), "event": "localized", "marker": mid,
-                                    "from": [round(float(v), 3) for v in self.pose], "to": [round(v, 3) for v in new]})
+                self.events.append({
+                    "t_ms": self.now_ms(),
+                    "event": "localized",
+                    "marker": mid,
+                    "from": [round(float(v), 3) for v in self.pose],
+                    "to": [round(v, 3) for v in new],
+                })
                 self.pose = list(new)
         return readings
 
@@ -228,14 +262,23 @@ class G1Operations:
         about 0.64 of what is asked). A shuffle turns by its measured step and goes nowhere."""
         x, y, yaw = self.pose
         if shuffle:
-            self.pose = [x, y, site_mod.wrap(yaw + SHUFFLE_RAD[1 if wz > 0 else -1] * np.sign(wz) * seconds / SHUFFLE_S)]
+            self.pose = [
+                x,
+                y,
+                site_mod.wrap(yaw + SHUFFLE_RAD[1 if wz > 0 else -1] * np.sign(wz) * seconds / SHUFFLE_S),
+            ]
             return
         forward = (WALK_GAIN if vx > 0 else BACK_GAIN) * vx * seconds
         left = SIDE_GAIN * vy * seconds
-        self.pose = [x + forward * math.cos(yaw) - left * math.sin(yaw), y + forward * math.sin(yaw) + left * math.cos(yaw),
-                     site_mod.wrap(yaw + YAW_GAIN * wz * seconds)]
+        self.pose = [
+            x + forward * math.cos(yaw) - left * math.sin(yaw),
+            y + forward * math.sin(yaw) + left * math.cos(yaw),
+            site_mod.wrap(yaw + YAW_GAIN * wz * seconds),
+        ]
 
-    def command(self, vx: float, vy: float, wz: float, seconds: float, wait: bool = True, shuffle: bool = False) -> None:
+    def command(
+        self, vx: float, vy: float, wz: float, seconds: float, wait: bool = True, shuffle: bool = False
+    ) -> None:
         """One SetVelocity, the belief advanced by what it should do, and (unless `wait` is False) the wait for it."""
         self.check()
         code = self.robot.set_velocity(vx, vy, wz, seconds)
@@ -269,7 +312,8 @@ class G1Operations:
     def walk_to(self, x: float, y: float, yaw: float, stop_short: float = 0.25, deadline_ms: int | None = None) -> None:
         """Walk to within `stop_short` of (x, y) in legs, looking between them, ending with the heading `yaw`.
 
-        The stand-in turns slowly and badly in place, and strafes well, so the robot does not turn to face where it goes:
+        The stand-in turns slowly and badly in place, and strafes well, so the robot does not turn to face where it
+        goes:
         each leg commands the direction to the target in the robot's frame (forward, diagonal, sideways or backward,
         whichever it is) and a yaw rate that works toward the final heading as it goes."""
         while True:
@@ -297,7 +341,7 @@ class G1Operations:
             self.look(frames=3)
 
     def move(self, station_name: str) -> dict:
-        """Walk to the station, then servo on its marker to within 5 cm and 0.1 rad, then wait for the stance to settle."""
+        """Walk to the station, servo on its marker to within 5 cm and 0.1 rad, wait for the stance to settle."""
         station = self.stations[station_name]
         gx, gy, gyaw = station["pose"]
         self.events = []
@@ -306,7 +350,7 @@ class G1Operations:
         self.look(frames=3)
         ax, ay = gx - APPROACH_M * math.cos(gyaw), gy - APPROACH_M * math.sin(gyaw)
         sx, sy = gx - (APPROACH_M + STAGING_M) * math.cos(gyaw), gy - (APPROACH_M + STAGING_M) * math.sin(gyaw)
-        # A station's marker stands behind its table: from the side the table hides it. Come in along the station's axis.
+        # A station's marker stands behind its table: from the side the table hides it. Come in along the axis.
         if math.hypot(ax - self.pose[0], ay - self.pose[1]) > 0.4 + STAGING_M:
             self.walk_to(sx, sy, gyaw, stop_short=0.35, deadline_ms=deadline)
         if math.hypot(ax - self.pose[0], ay - self.pose[1]) > 0.4:
@@ -319,7 +363,7 @@ class G1Operations:
         return result
 
     def _find_marker(self, station: dict, deadline_ms: int):
-        """Look at the approach point for the station's marker; if it is not there, scan by turning. S517 if not seen."""
+        """Look at the approach point for the station's marker, scanning by turning if it is not in view (S517)."""
         mid = station["marker"]["id"]
         scan_end = self.now_ms() + int(MARKER_TIMEOUT_S * 1000)
         mx, my = station["marker"]["pos"][:2]
@@ -330,8 +374,11 @@ class G1Operations:
             if reading is not None and reading.confidence >= MARKER_MIN_CONF and reading.range_m <= MARKER_MAX_RANGE_M:
                 return reading
             if self.now_ms() > scan_end or self.now_ms() > deadline_ms:
-                raise BackendFailure("S517", f"station marker {mid} was not seen within {MARKER_TIMEOUT_S:.0f} s "
-                                             f"(scanned from the approach point; belief {[round(float(v), 2) for v in self.pose]})")
+                raise BackendFailure(
+                    "S517",
+                    f"station marker {mid} was not seen within {MARKER_TIMEOUT_S:.0f} s "
+                    f"(scanned from the approach point; belief {[round(float(v), 2) for v in self.pose]})",
+                )
             # not seen: face where the belief says it is, then sweep round in steps (a station marker seen on the way
             # corrects the belief, and the next step aims again)
             aim = self._angle_to(mx, my) if first else SCAN_STEP_RAD
@@ -341,7 +388,7 @@ class G1Operations:
                 self.turn_by(aim)
 
     def _servo(self, station: dict, reading, deadline_ms: int) -> dict:
-        """Correct the last centimetres: look at the station marker, command a short burst along the axis that is furthest
+        """Correct the last centimetres: look at the station marker, command a short burst along the furthest-out
         out (yaw by the shuffle, forward or back, sideways), settle, look again. The policy moves in steps (0.06-0.15 m
         forward, 0.05 m sideways, 0.12 rad of yaw), so a burst is chosen from the error and what a burst of that length
         has been measured to do; a correction that did not take is repeated a little longer, once."""
@@ -358,14 +405,25 @@ class G1Operations:
             iterations.append([round(float(ex), 3), round(float(ey), 3), round(float(eyaw), 3)])
             if math.hypot(ex, ey) <= SERVO_TOL_M and abs(eyaw) <= SERVO_TOL_RAD:
                 if self.settle() and self._confirm_pose(station):
-                    return {"iterations": iterations, "error_m": round(math.hypot(ex, ey), 4),
-                            "error_rad": round(abs(eyaw), 4), "settled": True}
+                    return {
+                        "iterations": iterations,
+                        "error_m": round(math.hypot(ex, ey), 4),
+                        "error_rad": round(abs(eyaw), 4),
+                        "settled": True,
+                    }
                 continue
             if self.now_ms() > end:
-                raise BackendFailure("S504", f"did not converge on station {station['name']} in time (errors forward, left, "
-                                             f"yaw, last {len(iterations[-14:])} looks: {iterations[-14:]})")
+                raise BackendFailure(
+                    "S504",
+                    f"did not converge on station {station['name']} in time (errors forward, left, "
+                    f"yaw, last {len(iterations[-14:])} looks: {iterations[-14:]})",
+                )
             # the axis that is furthest out, each error in units of its tolerance
-            scores = {"yaw": abs(eyaw) / SERVO_SHUFFLE_RAD, "forward": abs(ex) / SERVO_TOL_M, "lateral": abs(ey) / SERVO_TOL_M}
+            scores = {
+                "yaw": abs(eyaw) / SERVO_SHUFFLE_RAD,
+                "forward": abs(ex) / SERVO_TOL_M,
+                "lateral": abs(ey) / SERVO_TOL_M,
+            }
             # (a heading error smaller than a shuffle's is corrected by the yaw rate the other bursts carry)
             axis = max(scores, key=scores.get)
             bias = 0.2 * float(np.sign(eyaw)) if abs(eyaw) > 0.04 else 0.0
@@ -394,8 +452,10 @@ class G1Operations:
         gx, gy, gyaw = station["pose"]
         if station["marker"]["id"] not in readings:
             return False
-        return (math.hypot(gx - self.pose[0], gy - self.pose[1]) <= STATION_TOL_M
-                and abs(site_mod.wrap(gyaw - self.pose[2])) <= STATION_TOL_RAD)
+        return (
+            math.hypot(gx - self.pose[0], gy - self.pose[1]) <= STATION_TOL_M
+            and abs(site_mod.wrap(gyaw - self.pose[2])) <= STATION_TOL_RAD
+        )
 
     # ------------------------------------------------------------------------------------------ arms
 
@@ -433,7 +493,9 @@ class G1Operations:
         for i in range(1, steps + 1):
             self.check()
             a = i / steps
-            self.robot.set_arm(q0 + _minjerk(a) * (q_to - q0), self.arm_kp, self.arm_kd, w0 + (weight_to - w0) * _minjerk(a))
+            self.robot.set_arm(
+                q0 + _minjerk(a) * (q_to - q0), self.arm_kp, self.arm_kd, w0 + (weight_to - w0) * _minjerk(a)
+            )
             time.sleep(0.02)
         joints = list(range(12, 29))
         end = self.now_ms() + 1500
@@ -444,11 +506,20 @@ class G1Operations:
                 break
             if self.now_ms() > end:
                 worst = 12 + int(np.argmax(np.abs(self.robot.low_q[joints] - q_to[joints])))
-                raise BackendFailure("S503", f"arm joint {worst} is {err:.3f} rad from its target after {label or 'a motion'} "
-                                             f"(tolerance {ARM_TRACK_TOL_RAD})")
+                raise BackendFailure(
+                    "S503",
+                    f"arm joint {worst} is {err:.3f} rad from its target after {label or 'a motion'} "
+                    f"(tolerance {ARM_TRACK_TOL_RAD})",
+                )
             time.sleep(0.02)
-        self.events.append({"t_ms": self.now_ms(), "event": "arm", "label": label, "seconds": round(seconds, 2),
-                            "tracking_rad": round(err, 4), "took_ms": self.now_ms() - t0})
+        self.events.append({
+            "t_ms": self.now_ms(),
+            "event": "arm",
+            "label": label,
+            "seconds": round(seconds, 2),
+            "tracking_rad": round(err, 4),
+            "took_ms": self.now_ms() - t0,
+        })
 
     def _hand_to(self, side: str, q: list[float], label: str) -> None:
         self.robot.hand_command(side, q, seconds=2.0, check=self.check)
@@ -456,19 +527,21 @@ class G1Operations:
         err = float(np.max(np.abs(self.robot.hand_q[side] - np.array(q))))
         self.events.append({"t_ms": self.now_ms(), "event": "hand", "label": label, "error_rad": round(err, 4)})
         if err > HAND_TOL_RAD:
-            raise BackendFailure("S505", f"the {side} hand did not reach its {label} pose: {err:.3f} rad off "
-                                         f"(tolerance {HAND_TOL_RAD})")
+            raise BackendFailure(
+                "S505", f"the {side} hand did not reach its {label} pose: {err:.3f} rad off (tolerance {HAND_TOL_RAD})"
+            )
 
     def _solve(self, side: str, target, R, seeds, waist: float):
         for seed in seeds:
-            q, info = self.kin.solve(side, target, R, seed, posture=self._ready_pose(side), rot_weight=0.5, iters=250,
-                                     waist_max=waist)
+            q, info = self.kin.solve(
+                side, target, R, seed, posture=self._ready_pose(side), rot_weight=0.5, iters=250, waist_max=waist
+            )
             if q is not None:
                 return q, info
         return None, None
 
     def _plan_reach(self, side: str, target_for, extra: tuple = (), degs=FINGERS_DOWN_DEG) -> dict:
-        """Inverse kinematics for a reach: `target_for(R)` gives the pinch point (pelvis frame) for a hand orientation R.
+        """Inverse kinematics for a reach: `target_for(R)` gives the pinch point (pelvis frame) for hand orientation R.
         Solves the pre-grasp (behind and above it), the grasp, and any `extra` offsets (a lift), each in the same hand
         orientation and joined by small joint moves. Tries the hand's pitch and the waist's lean in order; S502 if no
         combination works, before any motion."""
@@ -478,8 +551,11 @@ class G1Operations:
         shoulder = np.array([0.0, HAND_REST_Y[side], 0.29])
         p0 = np.asarray(target_for(_frame(math.radians(degs[0]))), float)
         if np.linalg.norm(p0 - shoulder) > 0.62:  # beyond the arm's length with the waist leaning: no search
-            raise BackendFailure("S502", f"no inverse-kinematics solution: the target is {np.linalg.norm(p0 - shoulder):.2f} "
-                                         "m from the shoulder, further than the arm reaches")
+            raise BackendFailure(
+                "S502",
+                f"no inverse-kinematics solution: the target is {np.linalg.norm(p0 - shoulder):.2f} "
+                "m from the shoulder, further than the arm reaches",
+            )
         for waist in WAIST_LEAN_RAD:
             for deg in degs:
                 R = _frame(math.radians(deg))
@@ -492,8 +568,14 @@ class G1Operations:
                 q_grasp, info = self._solve(side, p, R, [q_pre], waist)
                 if q_grasp is None:
                     continue
-                plan = {"pre": q_pre, "grasp": q_grasp, "fingers_down_deg": deg, "waist_rad": float(q_grasp[WAIST_PITCH]),
-                        "position_error_m": round(info["position_error_m"], 4), "pinch": p}
+                plan = {
+                    "pre": q_pre,
+                    "grasp": q_grasp,
+                    "fingers_down_deg": deg,
+                    "waist_rad": float(q_grasp[WAIST_PITCH]),
+                    "position_error_m": round(info["position_error_m"], 4),
+                    "pinch": p,
+                }
                 ok = max(abs(q_grasp[joints] - q_pre[joints])) < 1.2
                 for name, offset in extra:
                     q, _ = self._solve(side, p + np.array(offset), R, [q_grasp], waist)
@@ -503,14 +585,18 @@ class G1Operations:
                     plan[name] = q
                 if ok:
                     return plan
-        raise BackendFailure("S502", "no inverse-kinematics solution for the reach (hand pitch 0-45 degrees, waist lean up "
-                                     f"to {WAIST_LEAN_RAD[-1]} rad): the target {np.round(p0, 3).tolist()} (pelvis frame) is "
-                                     "out of reach")
+        raise BackendFailure(
+            "S502",
+            "no inverse-kinematics solution for the reach (hand pitch 0-45 degrees, waist lean up "
+            f"to {WAIST_LEAN_RAD[-1]} rad): the target {np.round(p0, 3).tolist()} (pelvis frame) is "
+            "out of reach",
+        )
 
     def _jitter(self, q: np.ndarray, joints, rng) -> np.ndarray:
         out = q.copy()
-        out[joints] = np.clip(q[joints] + rng.uniform(-0.8, 0.8, len(joints)), self.kin.limits[joints, 0],
-                              self.kin.limits[joints, 1])
+        out[joints] = np.clip(
+            q[joints] + rng.uniform(-0.8, 0.8, len(joints)), self.kin.limits[joints, 0], self.kin.limits[joints, 1]
+        )
         return out
 
     def _reposition(self) -> dict:
@@ -529,8 +615,11 @@ class G1Operations:
             if reading is None or reading.confidence < MARKER_MIN_CONF:
                 raise BackendFailure("S517", f"station marker {mid} was not seen before arm work")
             err = math.hypot(gx - self.pose[0], gy - self.pose[1])
-            info = {"error_m": round(err, 4), "error_rad": round(abs(site_mod.wrap(gyaw - self.pose[2])), 4),
-                    "reservoed": attempt > 0}
+            info = {
+                "error_m": round(err, 4),
+                "error_rad": round(abs(site_mod.wrap(gyaw - self.pose[2])), 4),
+                "reservoed": attempt > 0,
+            }
             if err <= REPOSITION_M and abs(site_mod.wrap(gyaw - self.pose[2])) <= REPOSITION_RAD:
                 return info  # the reach is planned from what the camera sees now, so a few centimetres do not matter
             self._servo(station, reading, self.now_ms() + int(SERVO_TIMEOUT_S * 1000))
@@ -557,7 +646,7 @@ class G1Operations:
         return model
 
     def grasp(self, obj_name: str) -> dict:
-        """Reach, close the hand, check the object's marker is at the hand, weld it, lift to the carry pose (0046 U5, U7)."""
+        """Reach, close the hand, check the object's marker is at the hand, weld it, lift to carry (0046 U5, U7)."""
         self.events = []
         obj = site_mod.obj(self.site, obj_name)
         face, mid = obj["marker"]["face"], obj["marker"]["id"]
@@ -567,15 +656,23 @@ class G1Operations:
         readings = self.look(frames=10)
         seen = readings.get(mid)
         if seen is None or seen.confidence < 0.6:
-            raise BackendFailure("S506", f"the marker of {obj_name} (id {mid}) was not seen at the station: the object is "
-                                         "absent or has been moved (checked before the hand moves)")
+            raise BackendFailure(
+                "S506",
+                f"the marker of {obj_name} (id {mid}) was not seen at the station: the object is "
+                "absent or has been moved (checked before the hand moves)",
+            )
         axis = int(np.argmax(np.abs(site_mod.FACE_NORMALS[face])))
         centre = object_centre(seen, obj["half_size"][axis])
         side = obj["grasp"]["hand"] if obj["grasp"]["hand"] != "nearest" else ("right" if centre[1] < 0 else "left")
-        details.update(hand=side, object_in_pelvis=[round(float(v), 4) for v in centre], marker_confidence=seen.confidence,
-                       marker_range_m=round(seen.range_m, 3))
-        plan = self._plan_reach(side, lambda R: centre + np.array([0, 0, GRASP_RISE]),
-                                extra=(("lift", (0.0, 0.0, 0.10)),))  # S502 here, before any motion
+        details.update(
+            hand=side,
+            object_in_pelvis=[round(float(v), 4) for v in centre],
+            marker_confidence=seen.confidence,
+            marker_range_m=round(seen.range_m, 3),
+        )
+        plan = self._plan_reach(
+            side, lambda R: centre + np.array([0, 0, GRASP_RISE]), extra=(("lift", (0.0, 0.0, 0.10)),)
+        )  # S502 here, before any motion
         details["reach"] = {k: plan[k] for k in ("fingers_down_deg", "waist_rad", "position_error_m")}
         details["arm_work_ms"] = [self.now_ms(), None]  # from here the arms move: what the checks judge the stance by
         details["arm_work_stance"] = self._arm_stance(self.site["robot"]["arm_stance"])
@@ -588,17 +685,29 @@ class G1Operations:
         held = self.look(frames=5, ids={mid}).get(mid)
         _, hand_p = self.kin.grasp_frame(side, self.robot.low_q)
         if held is None or float(np.linalg.norm(held.position - hand_p)) > HELD_RADIUS_M:
-            raise BackendFailure("S506", f"the marker of {obj_name} is not seen at the {side} hand "
-                                         f"({'not seen' if held is None else f'{np.linalg.norm(held.position - hand_p):.3f} m from the hand'})")
+            raise BackendFailure(
+                "S506",
+                f"the marker of {obj_name} is not seen at the {side} hand "
+                f"({'not seen' if held is None else f'{np.linalg.norm(held.position - hand_p):.3f} m from the hand'})",
+            )
         details["marker_at_hand_m"] = round(float(np.linalg.norm(held.position - hand_p)), 4)
         hand_R, _ = self.kin.grasp_frame(side, self.robot.low_q)
         offset_hand = hand_R.T @ (object_centre(held, obj["half_size"][axis]) - hand_p)  # where it sits in the hand
         code, attached = self.sim.Attach(obj_name, side)
         if code != 0:
             raise BackendFailure("S506", f"the simulator could not attach {obj_name} to the {side} hand (code {code})")
-        self.held = {"object": obj_name, "hand": side, "offset_in_hand": offset_hand, "fingers_down_deg": plan["fingers_down_deg"]}
+        self.held = {
+            "object": obj_name,
+            "hand": side,
+            "offset_in_hand": offset_hand,
+            "fingers_down_deg": plan["fingers_down_deg"],
+        }
         details["object_in_hand_m"] = [round(float(v), 4) for v in offset_hand]
-        self.events.append({"t_ms": self.now_ms(), "event": "attached", "relative_position": attached.get("relative_position")})
+        self.events.append({
+            "t_ms": self.now_ms(),
+            "event": "attached",
+            "relative_position": attached.get("relative_position"),
+        })
         self._arm_move(plan["lift"], 1.6, label="lift")
         self._arm_move(plan["pre"], 1.6, label="retreat")
         self._arm_move(self._clear_pose(side), 1.6, label="clear of the hip")
@@ -630,8 +739,12 @@ class G1Operations:
         # the marker frame is (x right, y up, z out) with a vertical panel: y is the height above the marker's centre
         centre = reading.rotation @ target_marker + reading.position
         details["target_in_pelvis"] = [round(float(v), 4) for v in centre]
-        plan = self._plan_reach(side, lambda R: centre - R @ self.held["offset_in_hand"],
-                                extra=(("above", (0.0, 0.0, 0.10)),), degs=(self.held["fingers_down_deg"],))
+        plan = self._plan_reach(
+            side,
+            lambda R: centre - R @ self.held["offset_in_hand"],
+            extra=(("above", (0.0, 0.0, 0.10)),),
+            degs=(self.held["fingers_down_deg"],),
+        )
         details["reach"] = {k: plan[k] for k in ("fingers_down_deg", "waist_rad", "position_error_m")}
         details["arm_work_ms"] = [self.now_ms(), None]
         details["arm_work_stance"] = self._arm_stance(self.site["robot"]["arm_stance"])
@@ -669,21 +782,39 @@ class G1Operations:
         """Confirm from lowstate that the robot is upright and still: over a window of 0.5 s of simulation time the
         pelvis IMU's rate, the tilt and every joint's velocity are within tolerance, within 3 s of the stop."""
         t0 = self.now_ms()
-        result = {"confirmed": False, "timeout_ms": int(CONFIRM_TIMEOUT_S * 1000), "window_ms": CONFIRM_WINDOW_MS,
-                  "tolerances": {"gyro_rad_s": CONFIRM_GYRO, "joint_velocity_rad_s": CONFIRM_JOINT_VEL,
-                                 "tilt_deg": round(math.degrees(CONFIRM_TILT_RAD), 1)}, "t_stop_ms": t0}
+        result = {
+            "confirmed": False,
+            "timeout_ms": int(CONFIRM_TIMEOUT_S * 1000),
+            "window_ms": CONFIRM_WINDOW_MS,
+            "tolerances": {
+                "gyro_rad_s": CONFIRM_GYRO,
+                "joint_velocity_rad_s": CONFIRM_JOINT_VEL,
+                "tilt_deg": round(math.degrees(CONFIRM_TILT_RAD), 1),
+            },
+            "t_stop_ms": t0,
+        }
         while self.now_ms() - t0 <= CONFIRM_TIMEOUT_S * 1000:
             now = self.now_ms()
             s = self.robot.samples_since(now - CONFIRM_WINDOW_MS)
-            if s and s[0].tick >= t0 and len(s) >= CONFIRM_WINDOW_MS / 4 * 0.6 and s[-1].tick - s[0].tick >= CONFIRM_WINDOW_MS * 0.9:
+            if (
+                s
+                and s[0].tick >= t0
+                and len(s) >= CONFIRM_WINDOW_MS / 4 * 0.6
+                and s[-1].tick - s[0].tick >= CONFIRM_WINDOW_MS * 0.9
+            ):
                 gyro = max(float(np.linalg.norm(x.gyro)) for x in s)
                 joints = max(float(np.max(np.abs(x.dq))) for x in s)
                 tilt = max(math.acos(max(-1.0, min(1.0, 1 - 2 * (x.quat[1] ** 2 + x.quat[2] ** 2)))) for x in s)
-                result.update(max_gyro_rad_s=round(gyro, 4), max_joint_velocity_rad_s=round(joints, 4),
-                              max_tilt_deg=round(math.degrees(tilt), 2), samples=len(s))
+                result.update(
+                    max_gyro_rad_s=round(gyro, 4),
+                    max_joint_velocity_rad_s=round(joints, 4),
+                    max_tilt_deg=round(math.degrees(tilt), 2),
+                    samples=len(s),
+                )
                 if gyro <= CONFIRM_GYRO and joints <= CONFIRM_JOINT_VEL and tilt <= CONFIRM_TILT_RAD:
-                    result.update(confirmed=True, window_start_ms=s[0].tick, window_end_ms=s[-1].tick,
-                                  after_ms=s[-1].tick - t0)
+                    result.update(
+                        confirmed=True, window_start_ms=s[0].tick, window_end_ms=s[-1].tick, after_ms=s[-1].tick - t0
+                    )
                     return result
             time.sleep(0.02)
         result["after_ms"] = self.now_ms() - t0

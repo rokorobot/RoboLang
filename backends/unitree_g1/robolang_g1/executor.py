@@ -10,6 +10,7 @@ steps in order, then the record. What differs:
   observed yet. The goal is recorded as `not_evaluated`, and the run never says SUCCEEDED from completed steps alone:
   it ends `STEPS_COMPLETED` (exit status 4 of the CLI) or `FAILED`.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -25,8 +26,11 @@ from . import site as site_mod
 SCHEMA, SCHEMA_VERSION = "robolang.g1.run", "0.1"
 GRASP_MODEL = "weld_after_hand_close"
 STOP_CODES = {"cancelled": "S511", "expired": "S512", "revoked": "S513"}
-STOP_MESSAGES = {"cancelled": "the run was cancelled", "expired": "the run's deadline passed",
-                 "revoked": "the run's authorization was revoked"}
+STOP_MESSAGES = {
+    "cancelled": "the run was cancelled",
+    "expired": "the run's deadline passed",
+    "revoked": "the run's authorization was revoked",
+}
 # The safe state of a biped (0046 U9): not power-off, which is falling.
 SAFE_STATE = {"velocity": "zero", "arms": "hold", "hands": "unchanged", "balance": "kept"}
 REALTIME_MIN = 0.95  # U13: a run in which a second falls more than 5% behind real time is not valid for acceptance
@@ -82,6 +86,7 @@ def verify_policy(task: ir.Task) -> dict:
     """The `@verify` thresholds, or the RoboLang 1.3 defaults (0.9, 10 s). Phase 3 uses them; the record keeps them."""
     verify = task.verify
     from robolang.sim.values import duration_ms_of
+
     age = int(duration_ms_of(verify.max_age)) if verify and verify.max_age is not None else 10_000
     conf = str(verify.min_confidence) if verify and verify.min_confidence is not None else "0.9"
     return {"min_confidence": conf, "max_age_ms": age}
@@ -133,21 +138,33 @@ def refuse(task: ir.Task, bindings: dict[str, str], site: dict) -> dict[str, str
     if any(isinstance(step, ir.Measure) for _, step in ir.walk(task.steps)):
         raise BackendFailure("S509", "measure reads values, and this backend has no value sensors")
     if any(isinstance(step, ir.ReadClock) for _, step in ir.walk(task.steps)):
-        raise BackendFailure("S510", "a clock reading (measure r time, measure r elapsed) is refused: this backend has "
-                                     "no wall clock, and `elapsed` needs value bindings it does not have")
+        raise BackendFailure(
+            "S510",
+            "a clock reading (measure r time, measure r elapsed) is refused: this backend has "
+            "no wall clock, and `elapsed` needs value bindings it does not have",
+        )
     if has_message(task):
-        raise BackendFailure("S515", "message_received is refused: this backend has no message service, and no "
-                                     "channel or sender is declared for it")
+        raise BackendFailure(
+            "S515",
+            "message_received is refused: this backend has no message service, and no "
+            "channel or sender is declared for it",
+        )
     if any(isinstance(step, ir.Do) for _, step in ir.walk(task.steps)) or task.goal_states:
-        raise BackendFailure("S508", "declared actions (do) and states (in_state) can be neither run nor observed by "
-                                     "this backend")
+        raise BackendFailure(
+            "S508", "declared actions (do) and states (in_state) can be neither run nor observed by this backend"
+        )
     if task.preconditions:
-        raise BackendFailure("S508", "preconditions are evaluated from observations in phase 3 of this backend; in "
-                                     "phase 2 a task with a precondition is refused before any motion")
+        raise BackendFailure(
+            "S508",
+            "preconditions are evaluated from observations in phase 3 of this backend; in "
+            "phase 2 a task with a precondition is refused before any motion",
+        )
     for condition in task.goal or ():
         _check_goal_atoms(condition, names, site)
     if task.region_limits:
-        raise BackendFailure("S508", "declared region limits (no_go_region, in_region) are not enforced by this backend")
+        raise BackendFailure(
+            "S508", "declared region limits (no_go_region, in_region) are not enforced by this backend"
+        )
     if task.safety:
         raise BackendFailure("S508", "declared speed limits are not enforced by this backend")
     for step in task.steps:
@@ -187,19 +204,32 @@ def execute(task: ir.Task, bindings: dict[str, str], site: dict, ops, stop: Stop
     robot is put in the biped's safe state, and the record's `stop` says why and what was done.
     """
     record = {
-        "run_record_schema": SCHEMA, "run_record_schema_version": SCHEMA_VERSION, "mode": "simulation",
+        "run_record_schema": SCHEMA,
+        "run_record_schema_version": SCHEMA_VERSION,
+        "mode": "simulation",
         "backend": {"kind": "unitree-g1-mujoco", "versions": None, "grasp_model": GRASP_MODEL, "stance_model": None},
-        "task": ir.to_dict(task), "bindings": dict(sorted(bindings.items())),
-        "site": {"name": site["name"], "schema": site["schema"]}, "verify": verify_policy(task),
-        "state": "FAILED", "failure": None,
-        "preconditions": [{"index": i, "condition": ir.to_dict(c), "result": "not_evaluated"}
-                          for i, c in enumerate(task.preconditions, 1)],
+        "task": ir.to_dict(task),
+        "bindings": dict(sorted(bindings.items())),
+        "site": {"name": site["name"], "schema": site["schema"]},
+        "verify": verify_policy(task),
+        "state": "FAILED",
+        "failure": None,
+        "preconditions": [
+            {"index": i, "condition": ir.to_dict(c), "result": "not_evaluated"}
+            for i, c in enumerate(task.preconditions, 1)
+        ],
         "steps": [],
-        "goal": [{"index": i, "condition": ir.to_dict(c), "result": "not_evaluated"} for i, c in enumerate(task.goal or (), 1)],
+        "goal": [
+            {"index": i, "condition": ir.to_dict(c), "result": "not_evaluated"}
+            for i, c in enumerate(task.goal or (), 1)
+        ],
         "goal_evaluated": False,
         "goal_note": "goal verdicts from observations are phase 3 of this backend: the goal was not evaluated, and "
-                     "completed steps are not a success",
-        "observations": [], "stop": None, "realtime": None, "core_outcome": None,
+        "completed steps are not a success",
+        "observations": [],
+        "stop": None,
+        "realtime": None,
+        "core_outcome": None,
     }
     status_before = None
     try:
@@ -225,6 +255,7 @@ def execute(task: ir.Task, bindings: dict[str, str], site: dict, ops, stop: Stop
                     entry["details"] = ops.place(names[step.obj], names[step.target])
                 else:  # WaitFor
                     from robolang.sim.values import duration_ms_of
+
                     ops.wait_ms(int(duration_ms_of(step.duration)))
             except BackendFailure:
                 entry["status"] = "failed"
@@ -238,21 +269,27 @@ def execute(task: ir.Task, bindings: dict[str, str], site: dict, ops, stop: Stop
     except BackendFailure as exc:
         record["state"] = "FAILED"
         stepped = bool(record["steps"])
-        record["failure"] = {"code": exc.code, "message": exc.message, "step": record["steps"][-1]["index"] if stepped else None}
+        record["failure"] = {
+            "code": exc.code,
+            "message": exc.message,
+            "step": record["steps"][-1]["index"] if stepped else None,
+        }
         if stepped:
             record["stop"] = _hold(ops, exc.code)
     if getattr(ops, "perc", None) is not None:
         record["observations"] = ops.observations
         record["pose_belief_end"] = [round(v, 4) for v in ops.pose]
     record["realtime"] = _realtime(status_before, ops)
-    run_id = hashlib.sha256(json.dumps([record["task"], record["bindings"], record["steps"][:1]],
-                                       sort_keys=True).encode()).hexdigest()[:16]
+    run_id = hashlib.sha256(
+        json.dumps([record["task"], record["bindings"], record["steps"][:1]], sort_keys=True).encode()
+    ).hexdigest()[:16]
     record["run_id"] = run_id
     return record
 
 
 def _realtime(before: dict | None, ops) -> dict | None:
-    """The stand-in's real-time report for this run (U13): the ratio over the run, whether any second in it fell more than
+    """The stand-in's real-time report for this run (U13): the ratio over the run, whether any second in it fell more
+    than
     5% behind real time or any step stalled, and the compute time per step. `realtime_valid` is False if so."""
     try:
         after = ops.status()
@@ -264,11 +301,18 @@ def _realtime(before: dict | None, ops) -> dict | None:
     wall = after["wall_elapsed"] - before["wall_elapsed"]
     slow = [w for w in after["slow_windows"] if t0 <= w[0] <= t1]
     stalls = after["stalls"] - before["stalls"]
-    return {"realtime_valid": bool(not slow and stalls == 0),
-            "ratio": round((t1 - t0) / wall, 4) if wall > 0 else None, "sim_s": round(t1 - t0, 2),
-            "wall_s": round(wall, 2), "slow_seconds": slow, "stalls": stalls,
-            "worst_second_ratio_overall": after["worst_second_ratio"], "step_compute_ms": after["step_compute_ms"],
-            "gc": after.get("gc"), "camera": after.get("camera")}
+    return {
+        "realtime_valid": bool(not slow and stalls == 0),
+        "ratio": round((t1 - t0) / wall, 4) if wall > 0 else None,
+        "sim_s": round(t1 - t0, 2),
+        "wall_s": round(wall, 2),
+        "slow_seconds": slow,
+        "stalls": stalls,
+        "worst_second_ratio_overall": after["worst_second_ratio"],
+        "step_compute_ms": after["step_compute_ms"],
+        "gc": after.get("gc"),
+        "camera": after.get("camera"),
+    }
 
 
 def _hold(ops, code: str) -> dict:
@@ -276,9 +320,14 @@ def _hold(ops, code: str) -> dict:
     from lowstate. After a fall (S516) nothing is sent."""
     reason = next((r for r, c in STOP_CODES.items() if c == code), "fallen" if code == "S516" else "step_failed")
     if code == "S516":
-        return {"reason": reason, "code": code, "kind": "no_further_command",
-                "safe_state": {"commands": "none: a fallen robot is not commanded"},
-                "hold": "none sent", "confirmation": {"confirmed": False, "error": "the robot fell; nothing was sent"}}
+        return {
+            "reason": reason,
+            "code": code,
+            "kind": "no_further_command",
+            "safe_state": {"commands": "none: a fallen robot is not commanded"},
+            "hold": "none sent",
+            "confirmation": {"confirmed": False, "error": "the robot fell; nothing was sent"},
+        }
     entry = {"reason": reason, "code": code, "kind": "controlled_stand", "safe_state": dict(SAFE_STATE)}
     try:
         entry["hold"] = ops.hold()

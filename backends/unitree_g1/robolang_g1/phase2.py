@@ -12,6 +12,7 @@ E1 move: three stations in turn, twice, and a covered marker (S517). E2 grasp: l
 retracted. E4 the two reference tasks, unchanged, through the CLI. E5 stop: cancel mid-walk, revoke mid-reach, a
 deadline while holding, and a push (S516). E6 refusals. E7 the free stance during arm work.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -69,20 +70,37 @@ task grab_and_wait(robot r, object o, location l) {
 }
 """
 REFUSALS = {
-    "S508": ("robolang 1.3;\ntask t(robot r, object o, location a, sensor cam) {\n    goal { robot_at r a; }\n"
-             "    plan { move r to a; inspect r o using cam; }\n}\n", "t", {"r": "robot_1", "o": "box_1", "a": "loc_a",
-                                                                          "cam": "cam_1"}),
-    "S509": ("robolang 1.6;\ntask t(robot r, object o, location a, sensor scale) {\n    goal { robot_at r a; }\n"
-             "    plan { measure r mass of o using scale as m; move r to a; }\n}\n", "t",
-             {"r": "robot_1", "o": "box_1", "a": "loc_a", "scale": "scale_1"}),
-    "S510": ("robolang 1.9;\ntask t(robot r, location a) {\n    goal { robot_at r a; }\n"
-             "    plan { measure r time as now; move r to a; }\n}\n", "t", {"r": "robot_1", "a": "loc_a"}),
-    "S514": ("robolang 2.0;\ntask patrol(robot r, location a, location b) {\n    goal { robot_at r a; }\n"
-             "    plan { move r to b; move r to a; }\n}\nmission rounds(robot r, location a, location b) {\n"
-             "    repeat at most 2 runs {\n        run patrol(r, a, b);\n    };\n    on failure { continue; }\n}\n",
-             "rounds", {"r": "robot_1", "a": "loc_a", "b": "loc_b"}),
-    "S515": ("robolang 2.1;\ntask t(robot r, location a) {\n    pre { message_received \"ops\" with \"GO\"; }\n"
-             "    goal { robot_at r a; }\n    plan { move r to a; }\n}\n", "t", {"r": "robot_1", "a": "loc_a"}),
+    "S508": (
+        "robolang 1.3;\ntask t(robot r, object o, location a, sensor cam) {\n    goal { robot_at r a; }\n"
+        "    plan { move r to a; inspect r o using cam; }\n}\n",
+        "t",
+        {"r": "robot_1", "o": "box_1", "a": "loc_a", "cam": "cam_1"},
+    ),
+    "S509": (
+        "robolang 1.6;\ntask t(robot r, object o, location a, sensor scale) {\n    goal { robot_at r a; }\n"
+        "    plan { measure r mass of o using scale as m; move r to a; }\n}\n",
+        "t",
+        {"r": "robot_1", "o": "box_1", "a": "loc_a", "scale": "scale_1"},
+    ),
+    "S510": (
+        "robolang 1.9;\ntask t(robot r, location a) {\n    goal { robot_at r a; }\n"
+        "    plan { measure r time as now; move r to a; }\n}\n",
+        "t",
+        {"r": "robot_1", "a": "loc_a"},
+    ),
+    "S514": (
+        "robolang 2.0;\ntask patrol(robot r, location a, location b) {\n    goal { robot_at r a; }\n"
+        "    plan { move r to b; move r to a; }\n}\nmission rounds(robot r, location a, location b) {\n"
+        "    repeat at most 2 runs {\n        run patrol(r, a, b);\n    };\n    on failure { continue; }\n}\n",
+        "rounds",
+        {"r": "robot_1", "a": "loc_a", "b": "loc_b"},
+    ),
+    "S515": (
+        'robolang 2.1;\ntask t(robot r, location a) {\n    pre { message_received "ops" with "GO"; }\n'
+        "    goal { robot_at r a; }\n    plan { move r to a; }\n}\n",
+        "t",
+        {"r": "robot_1", "a": "loc_a"},
+    ),
 }
 
 
@@ -109,8 +127,10 @@ def in_region(point, site: dict, location: str) -> bool:
     loc = site_mod.location(site, location)
     R, p = site_mod.marker_frame(site_mod.station(site, loc["station"])["marker"])
     q = R.T @ (np.asarray(point, float) - p)
-    return bool(np.all(q >= np.array(loc["region"]["min"]) - REGION_SLACK) and
-                np.all(q <= np.array(loc["region"]["max"]) + REGION_SLACK))
+    return bool(
+        np.all(q >= np.array(loc["region"]["min"]) - REGION_SLACK)
+        and np.all(q <= np.array(loc["region"]["max"]) + REGION_SLACK)
+    )
 
 
 def path_length(samples, key="pelvis") -> float:
@@ -119,27 +139,48 @@ def path_length(samples, key="pelvis") -> float:
 
 
 def stop_agrees(record: dict, tail, expect_code: str) -> dict:
-    """E5/E1: the recorded stop is for the expected code, the stop was confirmed within 3 s, and the oracle agrees that the
-    robot is upright and still (not fallen, tilt and pelvis path over the confirmation window small, velocity command 0)."""
+    """E5/E1: the recorded stop is for the expected code, the stop was confirmed within 3 s, and the oracle agrees that
+    the robot is upright and still (not fallen, tilt and pelvis path over the confirmation window small, velocity 0)."""
     stop = record.get("stop") or {}
     c = stop.get("confirmation") or {}
-    out = {"code": (record.get("failure") or {}).get("code"), "confirmed": bool(c.get("confirmed")),
-           "after_ms": c.get("after_ms"), "recorded": {k: c.get(k) for k in ("max_gyro_rad_s", "max_joint_velocity_rad_s",
-                                                                           "max_tilt_deg", "window_start_ms")}}
+    out = {
+        "code": (record.get("failure") or {}).get("code"),
+        "confirmed": bool(c.get("confirmed")),
+        "after_ms": c.get("after_ms"),
+        "recorded": {
+            k: c.get(k) for k in ("max_gyro_rad_s", "max_joint_velocity_rad_s", "max_tilt_deg", "window_start_ms")
+        },
+    }
     ok = out["code"] == expect_code and out["confirmed"] and (c.get("after_ms") or 1e9) <= STOP_WITHIN_MS
     if out["confirmed"]:
         w = tail.between(c["window_start_ms"] / 1000, c["window_end_ms"] / 1000)
         last = tail.nearest(c["window_end_ms"] / 1000)
-        out["oracle"] = {"pelvis_path_m": round(path_length(w), 4) if w else None,
-                         "max_tilt_deg": round(max(tilt_deg(s) for s in w), 2) if w else None,
-                         "fallen": bool(last["fallen"]), "velocity_command": last["velocity_command"],
-                         "wrist_path_m": {side: round(path_length(w, "wrists") if False else
-                                                      float(np.linalg.norm(np.array(w[-1]["wrists"][side]) -
-                                                                           np.array(w[0]["wrists"][side]))), 4)
-                                          for side in ("left", "right")} if w else None}
+        out["oracle"] = {
+            "pelvis_path_m": round(path_length(w), 4) if w else None,
+            "max_tilt_deg": round(max(tilt_deg(s) for s in w), 2) if w else None,
+            "fallen": bool(last["fallen"]),
+            "velocity_command": last["velocity_command"],
+            "wrist_path_m": {
+                side: round(
+                    path_length(w, "wrists")
+                    if False
+                    else float(np.linalg.norm(np.array(w[-1]["wrists"][side]) - np.array(w[0]["wrists"][side]))),
+                    4,
+                )
+                for side in ("left", "right")
+            }
+            if w
+            else None,
+        }
         o = out["oracle"]
-        ok = ok and bool(w) and o["pelvis_path_m"] <= SETTLED_PATH_M and o["max_tilt_deg"] <= UPRIGHT_DEG and not o["fallen"] \
+        ok = (
+            ok
+            and bool(w)
+            and o["pelvis_path_m"] <= SETTLED_PATH_M
+            and o["max_tilt_deg"] <= UPRIGHT_DEG
+            and not o["fallen"]
             and o["velocity_command"] == [0.0, 0.0, 0.0]
+        )
     out["pass"] = bool(ok)
     return out
 
@@ -147,10 +188,15 @@ def stop_agrees(record: dict, tail, expect_code: str) -> dict:
 def realtime_of(session: Session) -> dict:
     f = session.final or {}
     worst, stalls = f.get("worst_second_ratio"), f.get("stalls")
-    return {"realtime_ratio": f.get("realtime_ratio"), "worst_second_ratio": worst, "stalls": stalls,
-            "realtime_valid": bool(worst is not None and worst >= 0.95 and stalls == 0),
-            "step_compute_ms": f.get("step_compute_ms"), "gc": (f.get("gc") or {}).get("max_ms"),
-            "slow_steps": (f.get("gc") or {}).get("slow_steps")}
+    return {
+        "realtime_ratio": f.get("realtime_ratio"),
+        "worst_second_ratio": worst,
+        "stalls": stalls,
+        "realtime_valid": bool(worst is not None and worst >= 0.95 and stalls == 0),
+        "step_compute_ms": f.get("step_compute_ms"),
+        "gc": (f.get("gc") or {}).get("max_ms"),
+        "slow_steps": (f.get("gc") or {}).get("slow_steps"),
+    }
 
 
 # ------------------------------------------------------------------------------------------------ context
@@ -180,13 +226,17 @@ class Ctx:
         return Session(scene, self.dir / name, self.stance)
 
     def done(self, name: str, session: Session, record: dict | None, extra: dict | None = None) -> None:
-        self.runs.append({"scenario": name, **realtime_of(session), "failure": record and record.get("failure"),
-                          "record": str((self.dir / name / "record.json").relative_to(self.dir)),
-                          **(extra or {})})
+        self.runs.append({
+            "scenario": name,
+            **realtime_of(session),
+            "failure": record and record.get("failure"),
+            "record": str((self.dir / name / "record.json").relative_to(self.dir)),
+            **(extra or {}),
+        })
 
 
 def run_scenario(ctx: Ctx, name: str, scene, site_name: str, source: Path, task: str, bind: dict, **kw):
-    """One scenario: a fresh stand-in on `scene`, the CLI on the executor's site `site_name`; returns what a check needs."""
+    """One scenario: a fresh stand-in on `scene`, the CLI on the executor's site; returns what a check needs."""
     site_path = site_name if isinstance(site_name, Path) else SITES / f"{site_name}.json"
     out = ctx.dir / name / "record.json"
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -226,41 +276,74 @@ def check_e1(ctx: Ctx) -> dict:
     src = ctx.source("tour", TOUR)
     runs = []
     for k in range(2):
-        status, rec, log, s, samples, _ = run_scenario(ctx, f"e1_tour_{k + 1}", SITES / "pick_place.json", "pick_place",
-                                                       src, "tour", {"r": "robot_1", "a": "loc_a", "b": "loc_b", "c": "loc_c"})
+        status, rec, log, s, samples, _ = run_scenario(
+            ctx,
+            f"e1_tour_{k + 1}",
+            SITES / "pick_place.json",
+            "pick_place",
+            src,
+            "tour",
+            {"r": "robot_1", "a": "loc_a", "b": "loc_b", "c": "loc_c"},
+        )
         tail, errs = _Tail(samples), []
         for step, station in zip((rec or {}).get("steps", []), ("bench", "shelf", "pad")):
             e = station_error(tail.nearest(step["t_end_ms"] / 1000), site_mod.station(site, station))
-            errs.append({"station": station, "status": step["status"], "error_m": round(e[0], 4),
-                         "error_rad": round(e[1], 4), "wall_s": step["wall_s"],
-                         "sim_s": round((step["t_end_ms"] - step["t_start_ms"]) / 1000, 1)})
-        ok = (rec is not None and rec["state"] == "STEPS_COMPLETED" and len(errs) == 3 and
-              all(e["status"] == "succeeded" and e["error_m"] <= STATION_TOL_M and e["error_rad"] <= STATION_TOL_RAD
-                  for e in errs))
+            errs.append({
+                "station": station,
+                "status": step["status"],
+                "error_m": round(e[0], 4),
+                "error_rad": round(e[1], 4),
+                "wall_s": step["wall_s"],
+                "sim_s": round((step["t_end_ms"] - step["t_start_ms"]) / 1000, 1),
+            })
+        ok = (
+            rec is not None
+            and rec["state"] == "STEPS_COMPLETED"
+            and len(errs) == 3
+            and all(
+                e["status"] == "succeeded" and e["error_m"] <= STATION_TOL_M and e["error_rad"] <= STATION_TOL_RAD
+                for e in errs
+            )
+        )
         runs.append({"pass": ok, "state": rec and rec["state"], "failure": rec and rec["failure"], "stations": errs})
     # a covered station marker: S517 and a confirmed stop
     covered = ctx.variant("pick_place", lambda d: d["stations"][0]["marker"].update(covered=True))
-    status, rec, log, s, samples, _ = run_scenario(ctx, "e1_covered", covered, "pick_place", ctx.source("go", GO), "go",
-                                                   {"r": "robot_1", "a": "loc_a"})
+    status, rec, log, s, samples, _ = run_scenario(
+        ctx, "e1_covered", covered, "pick_place", ctx.source("go", GO), "go", {"r": "robot_1", "a": "loc_a"}
+    )
     stop = stop_agrees(rec, _Tail(samples), "S517") if rec and rec.get("stop") else {"pass": False, "error": "no stop"}
-    return {"pass": all(r["pass"] for r in runs) and stop["pass"],
-            "details": {"tour_runs": runs, "covered_marker": {"state": rec and rec["state"], "stop": stop,
-                                                               "message": rec and rec["failure"]["message"]}}}
+    return {
+        "pass": all(r["pass"] for r in runs) and stop["pass"],
+        "details": {
+            "tour_runs": runs,
+            "covered_marker": {
+                "state": rec and rec["state"],
+                "stop": stop,
+                "message": rec and rec["failure"]["message"],
+            },
+        },
+    }
 
 
 def grasp_effect(rec: dict, samples: list, obj: str) -> dict:
     """What the oracle saw during the grasp step: how far the object rose, whether it is welded to the hand, how far the
     robot moved (E7)."""
     step = next(s for s in rec["steps"] if s["kind"] == "grasp")
-    a0, a1 = step["details"]["arm_work_ms"]  # the arms move from a0 to a1; before it the robot may be put back on station
+    a0, a1 = step["details"][
+        "arm_work_ms"
+    ]  # the arms move from a0 to a1; before it the robot may be put back on station
     w = between(samples, a0, a1)
     z = [x["objects"][obj]["pos"][2] for x in w]
     p0 = pelvis_xy(w[0])
     last = w[-1]
-    return {"lift_m": round(max(z) - z[0], 4), "attached": last["attached"], "hand": step.get("details", {}).get("hand"),
-            "marker_at_hand_m": step.get("details", {}).get("marker_at_hand_m"),
-            "robot_moved_m": round(max(float(np.linalg.norm(pelvis_xy(x) - p0)) for x in w), 4),
-            "grasp_s": round((step["t_end_ms"] - step["t_start_ms"]) / 1000, 1)}
+    return {
+        "lift_m": round(max(z) - z[0], 4),
+        "attached": last["attached"],
+        "hand": step.get("details", {}).get("hand"),
+        "marker_at_hand_m": step.get("details", {}).get("marker_at_hand_m"),
+        "robot_moved_m": round(max(float(np.linalg.norm(pelvis_xy(x) - p0)) for x in w), 4),
+        "grasp_s": round((step["t_end_ms"] - step["t_start_ms"]) / 1000, 1),
+    }
 
 
 def check_e2(ctx: Ctx) -> dict:
@@ -268,38 +351,58 @@ def check_e2(ctx: Ctx) -> dict:
     bind = {"r": "robot_1", "o": "box_1", "l": "loc_a"}
     runs = []
     for k in range(2):
-        status, rec, log, s, samples, _ = run_scenario(ctx, f"e2_grasp_{k + 1}", SITES / "pick_place.json", "pick_place",
-                                                       src, "grab", bind)
+        status, rec, log, s, samples, _ = run_scenario(
+            ctx, f"e2_grasp_{k + 1}", SITES / "pick_place.json", "pick_place", src, "grab", bind
+        )
         if rec and rec["state"] == "STEPS_COMPLETED":
             fx = grasp_effect(rec, samples, "box")
             ctx.stay.append({"scenario": f"e2_grasp_{k + 1}", "step": "grasp", "robot_moved_m": fx["robot_moved_m"]})
-            ok = (fx["lift_m"] >= LIFT_MIN_M and fx["attached"].get("box") == fx["hand"] and
-                  (fx["marker_at_hand_m"] or 1) <= 0.06)
+            ok = (
+                fx["lift_m"] >= LIFT_MIN_M
+                and fx["attached"].get("box") == fx["hand"]
+                and (fx["marker_at_hand_m"] or 1) <= 0.06
+            )
             runs.append({"pass": ok, **fx})
         else:
             runs.append({"pass": False, "state": rec and rec["state"], "failure": rec and rec["failure"]})
     # the box is not there: S506 before the hand closes (no hand, arm or attach command reached the robot)
     absent = ctx.variant("pick_place", lambda d: (d["objects"].clear(), d["bindings"]["objects"].clear()))
     status, rec, log, s, samples, commands = run_scenario(ctx, "e2_absent", absent, "pick_place", src, "grab", bind)
-    absent_ok = bool(rec and rec["failure"] and rec["failure"]["code"] == "S506" and rec["failure"]["step"] == 2 and
-                     commands["hand_left"]["count"] == commands["hand_right"]["count"] == 0 and
-                     commands["arm_sdk"]["count"] == commands["attach"]["count"] == 0)
+    absent_ok = bool(
+        rec
+        and rec["failure"]
+        and rec["failure"]["code"] == "S506"
+        and rec["failure"]["step"] == 2
+        and commands["hand_left"]["count"] == commands["hand_right"]["count"] == 0
+        and commands["arm_sdk"]["count"] == commands["attach"]["count"] == 0
+    )
     # the box is on the far side of a deeper table, out of reach: S502 before any arm motion
 
     def far(d):
         d["tables"][0].update(pos=[3.03, -0.065, 0.375], half_size=[0.35, 0.185, 0.375])
         d["objects"][0]["pos"] = [3.15, -0.10, 0.79]  # 0.70 m ahead of the pelvis: seen, and beyond the arm
 
-    status, rec2, log, s, samples2, commands2 = run_scenario(ctx, "e2_far", ctx.variant("pick_place", far), "pick_place",
-                                                             src, "grab", bind)
+    status, rec2, log, s, samples2, commands2 = run_scenario(
+        ctx, "e2_far", ctx.variant("pick_place", far), "pick_place", src, "grab", bind
+    )
     box0, box1 = samples2[0]["objects"]["box"]["pos"], samples2[-1]["objects"]["box"]["pos"]
-    far_ok = bool(rec2 and rec2["failure"] and rec2["failure"]["code"] == "S502" and rec2["failure"]["step"] == 2 and
-                  commands2["arm_sdk"]["count"] == 0 and commands2["hand_right"]["count"] == 0 and
-                  float(np.linalg.norm(np.array(box1) - np.array(box0))) < 0.01)
-    return {"pass": all(r["pass"] for r in runs) and absent_ok and far_ok,
-            "details": {"grasp_runs": runs,
-                        "absent": {"pass": absent_ok, "failure": rec and rec["failure"], "commands": commands},
-                        "out_of_reach": {"pass": far_ok, "failure": rec2 and rec2["failure"], "commands": commands2}}}
+    far_ok = bool(
+        rec2
+        and rec2["failure"]
+        and rec2["failure"]["code"] == "S502"
+        and rec2["failure"]["step"] == 2
+        and commands2["arm_sdk"]["count"] == 0
+        and commands2["hand_right"]["count"] == 0
+        and float(np.linalg.norm(np.array(box1) - np.array(box0))) < 0.01
+    )
+    return {
+        "pass": all(r["pass"] for r in runs) and absent_ok and far_ok,
+        "details": {
+            "grasp_runs": runs,
+            "absent": {"pass": absent_ok, "failure": rec and rec["failure"], "commands": commands},
+            "out_of_reach": {"pass": far_ok, "failure": rec2 and rec2["failure"], "commands": commands2},
+        },
+    }
 
 
 def pick_place_effect(rec: dict, samples: list, site: dict) -> dict:
@@ -307,41 +410,78 @@ def pick_place_effect(rec: dict, samples: list, site: dict) -> dict:
     box = last["objects"]["box"]["pos"]
     right = np.array(last["wrists"]["right"]) - np.array(last["pelvis"]["pos"])
     w, x, y, z = last["pelvis"]["quat"]
-    R = np.array([[1 - 2 * (y * y + z * z), 2 * (x * y - w * z), 2 * (x * z + w * y)],
-                  [2 * (x * y + w * z), 1 - 2 * (x * x + z * z), 2 * (y * z - w * x)],
-                  [2 * (x * z - w * y), 2 * (y * z + w * x), 1 - 2 * (x * x + y * y)]])
+    R = np.array([
+        [1 - 2 * (y * y + z * z), 2 * (x * y - w * z), 2 * (x * z + w * y)],
+        [2 * (x * y + w * z), 1 - 2 * (x * x + z * z), 2 * (y * z - w * x)],
+        [2 * (x * z - w * y), 2 * (y * z + w * x), 1 - 2 * (x * x + y * y)],
+    ])
     wrist_pelvis = R.T @ right  # the wrist in the pelvis frame; its carry position is (0.002, -0.238, -0.056)
-    return {"box_world": [round(v, 3) for v in box], "in_dst_region": in_region(box, site, "shelf"),
-            "released": "box" not in last["attached"], "box_on_table": abs(box[2] - 0.79) < 0.02,
-            "wrist_from_carry_m": round(float(np.linalg.norm(wrist_pelvis - np.array([0.002, -0.238, -0.056]))), 3)}
+    return {
+        "box_world": [round(v, 3) for v in box],
+        "in_dst_region": in_region(box, site, "shelf"),
+        "released": "box" not in last["attached"],
+        "box_on_table": abs(box[2] - 0.79) < 0.02,
+        "wrist_from_carry_m": round(float(np.linalg.norm(wrist_pelvis - np.array([0.002, -0.238, -0.056]))), 3),
+    }
 
 
 def check_e3_e4(ctx: Ctx) -> tuple[dict, dict]:
     """E3 and E4 share two runs: e_pick_place.rob and w_carry_hold.rob, unchanged, through the CLI."""
     site_pp, site_ch = ctx.sites["pick_place"], ctx.sites["carry_hold"]
-    status, rec, log, s, samples, _ = run_scenario(ctx, "e4_pick_place", SITES / "pick_place.json", "pick_place",
-                                                   BENCH / "e_pick_place.rob", "pick_place", BIND_PP)
+    status, rec, log, s, samples, _ = run_scenario(
+        ctx, "e4_pick_place", SITES / "pick_place.json", "pick_place", BENCH / "e_pick_place.rob", "pick_place", BIND_PP
+    )
     e3 = {"pass": False, "details": {"state": rec and rec["state"], "failure": rec and rec["failure"]}}
     e4a = dict(e3)
     if rec and rec["state"] == "STEPS_COMPLETED":
         fx = pick_place_effect(rec, samples, site_pp)
         place = next(x for x in rec["steps"] if x["kind"] == "place")
         w = between(samples, *place["details"]["arm_work_ms"])
-        ctx.stay.append({"scenario": "e4_pick_place", "step": "grasp",
-                         **{k: v for k, v in grasp_effect(rec, samples, "box").items() if k == "robot_moved_m"}})
-        ctx.stay.append({"scenario": "e4_pick_place", "step": "place",
-                         "robot_moved_m": round(max(float(np.linalg.norm(pelvis_xy(x) - pelvis_xy(w[0]))) for x in w), 4)})
-        e3 = {"pass": bool(fx["in_dst_region"] and fx["released"] and fx["box_on_table"] and fx["wrist_from_carry_m"] < 0.08),
-              "details": fx}
+        ctx.stay.append({
+            "scenario": "e4_pick_place",
+            "step": "grasp",
+            **{k: v for k, v in grasp_effect(rec, samples, "box").items() if k == "robot_moved_m"},
+        })
+        ctx.stay.append({
+            "scenario": "e4_pick_place",
+            "step": "place",
+            "robot_moved_m": round(max(float(np.linalg.norm(pelvis_xy(x) - pelvis_xy(w[0]))) for x in w), 4),
+        })
+        e3 = {
+            "pass": bool(
+                fx["in_dst_region"] and fx["released"] and fx["box_on_table"] and fx["wrist_from_carry_m"] < 0.08
+            ),
+            "details": fx,
+        }
         gone = station_error(samples[-1], site_mod.station(site_pp, "shelf"))
-        e4a = {"pass": bool(fx["in_dst_region"] and all(x["status"] == "succeeded" for x in rec["steps"]) and
-                            len(rec["steps"]) == 4 and rec["goal_evaluated"] is False and rec["state"] != "SUCCEEDED"),
-               "details": {"steps": [(x["kind"], x["status"], round((x["t_end_ms"] - x["t_start_ms"]) / 1000, 1))
-                                     for x in rec["steps"]], "end_state": fx,
-                           "robot_at_dst_error": [round(gone[0], 4), round(gone[1], 4)], "exit": status,
-                           "record_state": rec["state"], "goal_evaluated": rec["goal_evaluated"]}}
-    status, rec, log, s, samples, _ = run_scenario(ctx, "e4_carry_hold", SITES / "carry_hold.json", "carry_hold",
-                                                   BENCH / "w_carry_hold.rob", "carry_crate", BIND_CH)
+        e4a = {
+            "pass": bool(
+                fx["in_dst_region"]
+                and all(x["status"] == "succeeded" for x in rec["steps"])
+                and len(rec["steps"]) == 4
+                and rec["goal_evaluated"] is False
+                and rec["state"] != "SUCCEEDED"
+            ),
+            "details": {
+                "steps": [
+                    (x["kind"], x["status"], round((x["t_end_ms"] - x["t_start_ms"]) / 1000, 1)) for x in rec["steps"]
+                ],
+                "end_state": fx,
+                "robot_at_dst_error": [round(gone[0], 4), round(gone[1], 4)],
+                "exit": status,
+                "record_state": rec["state"],
+                "goal_evaluated": rec["goal_evaluated"],
+            },
+        }
+    status, rec, log, s, samples, _ = run_scenario(
+        ctx,
+        "e4_carry_hold",
+        SITES / "carry_hold.json",
+        "carry_hold",
+        BENCH / "w_carry_hold.rob",
+        "carry_crate",
+        BIND_CH,
+    )
     e4b: dict = {"pass": False, "details": {"state": rec and rec["state"], "failure": rec and rec["failure"]}}
     if rec and rec["state"] == "STEPS_COMPLETED":
         last = samples[-1]
@@ -350,14 +490,32 @@ def check_e3_e4(ctx: Ctx) -> tuple[dict, dict]:
         ctx.stay.append({"scenario": "e4_carry_hold", "step": "grasp", "robot_moved_m": grasp["robot_moved_m"]})
         crate = np.array(last["objects"]["crate"]["pos"])
         right = np.array(last["wrists"]["right"])
-        ok = (last["attached"].get("crate") == "right" and err[0] <= STATION_TOL_M and err[1] <= STATION_TOL_RAD and
-              not last["fallen"] and float(np.linalg.norm(crate - right)) < 0.25 and
-              len(rec["steps"]) == 3 and rec["goal_evaluated"] is False and rec["state"] != "SUCCEEDED")
-        e4b = {"pass": bool(ok), "details": {"crate_attached_to": last["attached"], "robot_at_dst_error": [round(err[0], 4),
-               round(err[1], 4)], "crate_to_wrist_m": round(float(np.linalg.norm(crate - right)), 3), "fallen": last["fallen"],
-               "steps": [(x["kind"], x["status"], round((x["t_end_ms"] - x["t_start_ms"]) / 1000, 1)) for x in rec["steps"]],
-               "exit": status, "record_state": rec["state"], "goal_evaluated": rec["goal_evaluated"],
-               "grasp": grasp}}
+        ok = (
+            last["attached"].get("crate") == "right"
+            and err[0] <= STATION_TOL_M
+            and err[1] <= STATION_TOL_RAD
+            and not last["fallen"]
+            and float(np.linalg.norm(crate - right)) < 0.25
+            and len(rec["steps"]) == 3
+            and rec["goal_evaluated"] is False
+            and rec["state"] != "SUCCEEDED"
+        )
+        e4b = {
+            "pass": bool(ok),
+            "details": {
+                "crate_attached_to": last["attached"],
+                "robot_at_dst_error": [round(err[0], 4), round(err[1], 4)],
+                "crate_to_wrist_m": round(float(np.linalg.norm(crate - right)), 3),
+                "fallen": last["fallen"],
+                "steps": [
+                    (x["kind"], x["status"], round((x["t_end_ms"] - x["t_start_ms"]) / 1000, 1)) for x in rec["steps"]
+                ],
+                "exit": status,
+                "record_state": rec["state"],
+                "goal_evaluated": rec["goal_evaluated"],
+                "grasp": grasp,
+            },
+        }
     e4 = {"pass": e4a["pass"] and e4b["pass"], "details": {"e_pick_place": e4a, "w_carry_hold": e4b}}
     return e3, e4
 
@@ -401,7 +559,11 @@ def check_e5(ctx: Ctx) -> dict:
     state: dict = {}
 
     def cancel_when_walking(proc):
-        if "t" not in state and session[0].tail.latest()["velocity_command"][0] > 0.3 and session[0].tail.latest()["sim_time"] > 6:
+        if (
+            "t" not in state
+            and session[0].tail.latest()["velocity_command"][0] > 0.3
+            and session[0].tail.latest()["sim_time"] > 6
+        ):
             state["t"] = session[0].tail.latest()["sim_time"]
         if "t" in state and session[0].tail.latest()["sim_time"] > state["t"] + 1.0 and not stop_file.exists():
             stop_file.write_text("cancel")
@@ -409,8 +571,9 @@ def check_e5(ctx: Ctx) -> dict:
             state["walking_at_cancel"] = session[0].tail.latest()["velocity_command"]
 
     session: list = [None]
-    out["cancel_mid_walk"] = _e5_run(ctx, "e5_cancel", pp, go, "go", bind_go, "S511", session, state,
-                                     watch=cancel_when_walking, stop_file=stop_file)
+    out["cancel_mid_walk"] = _e5_run(
+        ctx, "e5_cancel", pp, go, "go", bind_go, "S511", session, state, watch=cancel_when_walking, stop_file=stop_file
+    )
     # revoke while the arm is reaching
     stop_file = ctx.dir / "e5_revoke.stop"
     stop_file.unlink(missing_ok=True)
@@ -424,12 +587,35 @@ def check_e5(ctx: Ctx) -> dict:
             stop_file.write_text("revoke")
             state["written"] = t["sim_time"]
 
-    out["revoke_mid_reach"] = _e5_run(ctx, "e5_revoke", pp, grab, "grab", bind_grab, "S513", session, state,
-                                      watch=revoke_mid_reach, stop_file=stop_file, hands_untouched=True)
+    out["revoke_mid_reach"] = _e5_run(
+        ctx,
+        "e5_revoke",
+        pp,
+        grab,
+        "grab",
+        bind_grab,
+        "S513",
+        session,
+        state,
+        watch=revoke_mid_reach,
+        stop_file=stop_file,
+        hands_untouched=True,
+    )
     # a deadline that passes while the robot holds the box (after the grasp, during a wait)
     state = {}
-    out["deadline_holding"] = _e5_run(ctx, "e5_deadline", pp, ctx.source("hold", GRAB_AND_WAIT), "grab_and_wait", bind_grab,
-                                      "S512", session, state, deadline_s=130, holding="box")
+    out["deadline_holding"] = _e5_run(
+        ctx,
+        "e5_deadline",
+        pp,
+        ctx.source("hold", GRAB_AND_WAIT),
+        "grab_and_wait",
+        bind_grab,
+        "S512",
+        session,
+        state,
+        deadline_s=130,
+        holding="box",
+    )
     # a push while walking: S516, and no command after the fall
     pusher: list = []
     state = {}
@@ -444,25 +630,48 @@ def check_e5(ctx: Ctx) -> dict:
             state["pushed"] = t["sim_time"]
             state["push_reply"] = pusher[0].push(PUSH_N, PUSH_S)[0]
 
-    out["push_falls"] = _e5_run(ctx, "e5_push", pp, go, "go", bind_go, "S516", session, state, watch=push_when_walking,
-                                fall=True)
+    out["push_falls"] = _e5_run(
+        ctx, "e5_push", pp, go, "go", bind_go, "S516", session, state, watch=push_when_walking, fall=True
+    )
     return {"pass": all(v["pass"] for v in out.values()), "details": out}
 
 
-def _e5_run(ctx: Ctx, name: str, scene, source: Path, task: str, bind: dict, code: str, session_box: list, state: dict, *,
-            watch=None, stop_file: Path | None = None, deadline_s: float | None = None, hands_untouched: bool = False,
-            holding: str | None = None, fall: bool = False) -> dict:
+def _e5_run(
+    ctx: Ctx,
+    name: str,
+    scene,
+    source: Path,
+    task: str,
+    bind: dict,
+    code: str,
+    session_box: list,
+    state: dict,
+    *,
+    watch=None,
+    stop_file: Path | None = None,
+    deadline_s: float | None = None,
+    hands_untouched: bool = False,
+    holding: str | None = None,
+    fall: bool = False,
+) -> dict:
     site_path = SITES / "pick_place.json"
     out = ctx.dir / name / "record.json"
     out.parent.mkdir(parents=True, exist_ok=True)
     with ctx.session(name, scene) as s:
         session_box[0] = s
-        status, rec, log = s.run(source, task, site_path, bind, out, watch=watch, stop_file=stop_file, deadline_s=deadline_s)
+        status, rec, log = s.run(
+            source, task, site_path, bind, out, watch=watch, stop_file=stop_file, deadline_s=deadline_s
+        )
         time.sleep(0.5)
         samples, commands = list(s.tail.samples), s.commands()
     ctx.done(name, s, rec, {"exit": status})
     tail = _Tail(samples)
-    result: dict = {"exit": status, "state": rec and rec["state"], "failure": rec and rec["failure"], "trigger": dict(state)}
+    result: dict = {
+        "exit": status,
+        "state": rec and rec["state"],
+        "failure": rec and rec["failure"],
+        "trigger": dict(state),
+    }
     if rec is None or not rec.get("failure"):
         result["pass"] = False
         return result
@@ -471,29 +680,49 @@ def _e5_run(ctx: Ctx, name: str, scene, source: Path, task: str, bind: dict, cod
         fell = final["fallen"]
         stop = rec.get("stop") or {}
         last_cmd = {k: v["last_sim_time"] for k, v in commands.items()}
-        after = {k: (v is not None and fell and final["fell_at"] is not None and v > final["fell_at"]) for k, v in last_cmd.items()}
-        result.update({"fallen_per_oracle": fell, "fell_at": final["fell_at"], "last_command_sim_time": last_cmd,
-                       "command_after_fall": after, "stop_kind": stop.get("kind"),
-                       "tilt_at_detection": rec["failure"]["message"]})
-        result["pass"] = bool(rec["failure"]["code"] == code and fell and not any(after.values()) and
-                              stop.get("kind") == "no_further_command")
+        after = {
+            k: (v is not None and fell and final["fell_at"] is not None and v > final["fell_at"])
+            for k, v in last_cmd.items()
+        }
+        result.update({
+            "fallen_per_oracle": fell,
+            "fell_at": final["fell_at"],
+            "last_command_sim_time": last_cmd,
+            "command_after_fall": after,
+            "stop_kind": stop.get("kind"),
+            "tilt_at_detection": rec["failure"]["message"],
+        })
+        result["pass"] = bool(
+            rec["failure"]["code"] == code
+            and fell
+            and not any(after.values())
+            and stop.get("kind") == "no_further_command"
+        )
         return result
     agree = stop_agrees(rec, tail, code)
     result["stop"] = agree
     result["pass"] = bool(agree["pass"])
     if hands_untouched:  # a reach stopped before the hand was commanded: nothing welded, no hand command
         result["hand_commands"] = [commands["hand_left"]["count"], commands["hand_right"]["count"]]
-        result["pass"] = result["pass"] and commands["hand_left"]["count"] == commands["hand_right"]["count"] == 0 \
+        result["pass"] = (
+            result["pass"]
+            and commands["hand_left"]["count"] == commands["hand_right"]["count"] == 0
             and not final["attached"]
+        )
     if holding is not None:  # the object is still welded to the hand, and no hand command went out after the stop
         t_stop = (rec["stop"]["confirmation"] or {}).get("t_stop_ms", 0) / 1000
         before = tail.nearest(t_stop - 0.1)["commands"]
         result["held_object_attached"] = final["attached"]
-        result["hand_commands_before_after_stop"] = [[before["hand_left"]["count"], before["hand_right"]["count"]],
-                                                     [commands["hand_left"]["count"], commands["hand_right"]["count"]]]
-        result["pass"] = bool(result["pass"] and holding in final["attached"] and
-                              before["hand_left"]["count"] == commands["hand_left"]["count"] and
-                              before["hand_right"]["count"] == commands["hand_right"]["count"])
+        result["hand_commands_before_after_stop"] = [
+            [before["hand_left"]["count"], before["hand_right"]["count"]],
+            [commands["hand_left"]["count"], commands["hand_right"]["count"]],
+        ]
+        result["pass"] = bool(
+            result["pass"]
+            and holding in final["attached"]
+            and before["hand_left"]["count"] == commands["hand_left"]["count"]
+            and before["hand_right"]["count"] == commands["hand_right"]["count"]
+        )
     return result
 
 
@@ -509,8 +738,13 @@ def check_e6(ctx: Ctx) -> dict:
             after = s.commands()
             sent = {k: after[k]["count"] - before[k]["count"] for k in after}
             got = (rec or {}).get("failure", {}) or {}
-            out[code] = {"pass": bool(got.get("code") == code and not any(sent.values()) and status == 1),
-                         "exit": status, "code": got.get("code"), "commands_sent": sent, "message": got.get("message")}
+            out[code] = {
+                "pass": bool(got.get("code") == code and not any(sent.values()) and status == 1),
+                "exit": status,
+                "code": got.get("code"),
+                "commands_sent": sent,
+                "message": got.get("message"),
+            }
     ctx.done("e6_refusals", s, None)
     return {"pass": all(v["pass"] for v in out.values()), "details": out}
 
@@ -518,8 +752,15 @@ def check_e6(ctx: Ctx) -> dict:
 def free_stance_trial(ctx: Ctx) -> dict:
     """The same grasp with the executor told `arm_stance: free` (reported, not judged): how far the robot moves."""
     exec_site = ctx.variant("pick_place", lambda d: d["robot"].update(arm_stance="free"))
-    status, rec, log, s, samples, _ = run_scenario(ctx, "e7_free_stance", SITES / "pick_place.json", exec_site, ctx.source("grab", GRAB),
-                                                   "grab", {"r": "robot_1", "o": "box_1", "l": "loc_a"})
+    status, rec, log, s, samples, _ = run_scenario(
+        ctx,
+        "e7_free_stance",
+        SITES / "pick_place.json",
+        exec_site,
+        ctx.source("grab", GRAB),
+        "grab",
+        {"r": "robot_1", "o": "box_1", "l": "loc_a"},
+    )
     out: dict = {"state": rec and rec["state"], "failure": rec and rec["failure"]}
     step = next((x for x in (rec or {}).get("steps", []) if x["kind"] == "grasp" and "details" in x), None)
     if step and "arm_work_ms" in step["details"] and step["details"]["arm_work_ms"][0]:
@@ -536,12 +777,19 @@ def check_e7(ctx: Ctx) -> dict:
         trial = free_stance_trial(ctx)
     except Exception as exc:
         trial = {"error": f"{type(exc).__name__}: {exc}"}
-    return {"pass": bool(ctx.stay and worst <= STAY_M),
-            "details": {"limit_m": STAY_M, "worst_m": worst, "stance_model": ctx.stance, "steps": ctx.stay,
-                        "free_stance_trial": trial,
-                        "note": "the robot's largest pelvis displacement from where it was when the step began, per grasp "
-                                "or place step (oracle); the free stance takes a recovery step of 0.2-0.35 m about every "
-                                "45 s, and a step that long would show here"}}
+    return {
+        "pass": bool(ctx.stay and worst <= STAY_M),
+        "details": {
+            "limit_m": STAY_M,
+            "worst_m": worst,
+            "stance_model": ctx.stance,
+            "steps": ctx.stay,
+            "free_stance_trial": trial,
+            "note": "the robot's largest pelvis displacement from where it was when the step began, per grasp "
+            "or place step (oracle); the free stance takes a recovery step of 0.2-0.35 m about every "
+            "45 s, and a step that long would show here",
+        },
+    }
 
 
 # ------------------------------------------------------------------------------------------------ main
@@ -558,7 +806,12 @@ def main(argv=None) -> int:
     ctx = Ctx(Path(args.run_dir) if args.run_dir else out.with_suffix(".run"), args.stance)
     ctx.dir.mkdir(parents=True, exist_ok=True)
     only = set(filter(None, args.only.split(",")))
-    result: dict = {"checks": {}, "stance_model": args.stance, "versions": assets.versions(), "arch": os.uname().machine}
+    result: dict = {
+        "checks": {},
+        "stance_model": args.stance,
+        "versions": assets.versions(),
+        "arch": os.uname().machine,
+    }
     t0 = time.perf_counter()
 
     def record(name, fn):
@@ -567,6 +820,7 @@ def main(argv=None) -> int:
             r = fn()
         except Exception as exc:  # a failed check must not stop the report
             import traceback
+
             r = {"pass": False, "details": {"error": f"{type(exc).__name__}: {exc}", "trace": traceback.format_exc()}}
         r["elapsed_s"] = round(time.perf_counter() - started, 1)
         result["checks"][name] = r
@@ -586,6 +840,7 @@ def main(argv=None) -> int:
         def e34():
             pair.extend(check_e3_e4(ctx))
             return pair[0]
+
         record("E3", e34)
         if pair:
             result["checks"]["E4"] = pair[1]

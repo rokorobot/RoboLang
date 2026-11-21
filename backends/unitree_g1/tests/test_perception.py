@@ -1,4 +1,5 @@
 """Perception on rendered frames (a test may read MuJoCo state to judge it; the executor never does)."""
+
 import math
 import os
 from pathlib import Path
@@ -16,7 +17,10 @@ from robolang_g1.robot import LowSample
 from robolang_g1.sim import scene
 from robolang_g1.sim.policy import load_deploy
 
-pytestmark = [needs_assets, pytest.mark.skipif(not os.environ.get("MUJOCO_GL"), reason="needs a GL context: MUJOCO_GL=egl")]
+pytestmark = [
+    needs_assets,
+    pytest.mark.skipif(not os.environ.get("MUJOCO_GL"), reason="needs a GL context: MUJOCO_GL=egl"),
+]
 SITE = Path(__file__).resolve().parents[1] / "robolang_g1" / "sites" / "pick_place.json"
 
 
@@ -37,7 +41,11 @@ class Fixture:
                 return LowSample(int(ms), q, np.zeros(29), (1, 0, 0, 0), (0, 0, 0))
 
         self.perc = perception.Perception.__new__(perception.Perception)
-        self.perc.robot, self.perc.kin, self.perc.camera = FakeRobot(), K.Kinematics(self.site["camera"]), self.site["camera"]
+        self.perc.robot, self.perc.kin, self.perc.camera = (
+            FakeRobot(),
+            K.Kinematics(self.site["camera"]),
+            self.site["camera"],
+        )
         fx, fy, cx, cy = S.intrinsics(self.site["camera"])
         self.perc.K = np.array([[fx, 0, cx], [0, fy, cy], [0, 0, 1.0]])
         self.perc.sizes = {s["marker"]["id"]: s["marker"]["size"] for s in self.site["stations"]}
@@ -48,7 +56,11 @@ class Fixture:
 
     def frame(self, x, y, yaw):
         d = self.data
-        d.qpos[0:3], d.qpos[3:7], d.qpos[self.robot.qadr] = [x, y, scene.STAND_HEIGHT], [math.cos(yaw / 2), 0, 0, math.sin(yaw / 2)], self.q
+        d.qpos[0:3], d.qpos[3:7], d.qpos[self.robot.qadr] = (
+            [x, y, scene.STAND_HEIGHT],
+            [math.cos(yaw / 2), 0, 0, math.sin(yaw / 2)],
+            self.q,
+        )
         mujoco.mj_forward(self.model, d)
         self.renderer.update_scene(d, camera="head", scene_option=self.opts)
         return cv2.cvtColor(self.renderer.render(), cv2.COLOR_RGB2BGR)
@@ -99,7 +111,9 @@ def test_a_covered_marker_is_not_detected(fx):
 
 def test_fusing_frames_takes_the_median_and_the_fraction_that_agrees(fx):
     R = np.eye(3)
-    obs = [(R, np.array([1.0, 0.0, 0.0]), 1.0, t) for t in (100, 200, 300, 400)] + [(R, np.array([1.2, 0, 0]), 1.0, 500)]
+    obs = [(R, np.array([1.0, 0.0, 0.0]), 1.0, t) for t in (100, 200, 300, 400)] + [
+        (R, np.array([1.2, 0, 0]), 1.0, 500)
+    ]
     reading = perception._fuse(7, obs, 10)
     assert reading.position == pytest.approx([1.0, 0, 0]) and reading.confidence == pytest.approx(0.4)
     assert reading.stamp_ms == 400 and reading.detections == 5 and reading.age_ms(1400) == 1000

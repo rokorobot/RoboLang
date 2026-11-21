@@ -10,6 +10,7 @@ held at its measured joints (the arms' base does not move); each arm is 7 joints
 frame**: its origin is the pinch point of the Dex3-1 hand (between the thumb and the curling fingers, in the wrist link
 frame, thumb side y: +0.04 for the right hand, -0.04 for the left), its x axis points along the fingers.
 """
+
 from __future__ import annotations
 
 import math
@@ -76,8 +77,17 @@ class Kinematics:
 
     # ------------------------------------------------------------------------------------------ inverse
 
-    def solve(self, side: str, p_target, R_target, q_seed, rot_weight: float = 0.25, iters: int = 300,
-              posture: np.ndarray | None = None, waist_max: float = 0.0) -> tuple[np.ndarray | None, dict]:
+    def solve(
+        self,
+        side: str,
+        p_target,
+        R_target,
+        q_seed,
+        rot_weight: float = 0.25,
+        iters: int = 300,
+        posture: np.ndarray | None = None,
+        waist_max: float = 0.0,
+    ) -> tuple[np.ndarray | None, dict]:
         """Damped least squares for the arm `side`: the grasp frame at (R_target, p_target) in the pelvis frame.
 
         `q_seed` (29 joints) starts the search and gives every other joint its value. The waist is held, except that
@@ -114,7 +124,9 @@ class Kinematics:
                 Jf = J[:, free]
                 JJt = Jf @ Jf.T + lam**2 * np.eye(6)
                 step_f = Jf.T @ np.linalg.solve(JJt, e)
-                null = np.eye(int(free.sum())) - Jf.T @ np.linalg.solve(JJt, Jf)  # pull to the posture in the null space
+                null = np.eye(int(free.sum())) - Jf.T @ np.linalg.solve(
+                    JJt, Jf
+                )  # pull to the posture in the null space
                 step_f += null @ (0.15 * (home[joints] - q[joints])[free] / scale[free])
                 dq = np.zeros(len(joints))
                 dq[free] = step_f * scale[free]

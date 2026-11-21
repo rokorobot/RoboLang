@@ -1,6 +1,6 @@
-"""The executor's logic with fake operations: refusals before any motion, the stop, and a record that never says SUCCEEDED."""
+"""The executor with fake operations: refusals before any motion, the stop, a record that never says SUCCEEDED."""
+
 import json
-import tempfile
 from pathlib import Path
 
 import pytest
@@ -19,7 +19,7 @@ def task_of(source: str, name: str = "t"):
 
 
 class FakeOps:
-    """What `G1Operations` offers the executor, recording what was asked. `fail` maps an operation to a BackendFailure."""
+    """What `G1Operations` offers the executor, recording what was asked. `fail` maps an operation to a failure."""
 
     def __init__(self, fail=None, held_fall=False):
         self.calls, self.fail, self.pose, self.events, self.observations = [], fail or {}, [0.0, 0.0, 0.0], [], []
@@ -32,11 +32,26 @@ class FakeOps:
         if "guard" in self.fail:
             raise self.fail["guard"]
 
-    def now_ms(self): return self.t
-    def versions(self): return {"arch": "test"}
-    def status(self): return {"sim_time": self.t / 1000, "wall_elapsed": self.t / 1000, "slow_windows": [], "stalls": 0,
-                              "worst_second_ratio": 1.0, "step_compute_ms": {"max": 1.0}, "gc": None, "camera": None}
-    def check(self): self.calls.append("check")
+    def now_ms(self):
+        return self.t
+
+    def versions(self):
+        return {"arch": "test"}
+
+    def status(self):
+        return {
+            "sim_time": self.t / 1000,
+            "wall_elapsed": self.t / 1000,
+            "slow_windows": [],
+            "stalls": 0,
+            "worst_second_ratio": 1.0,
+            "step_compute_ms": {"max": 1.0},
+            "gc": None,
+            "camera": None,
+        }
+
+    def check(self):
+        self.calls.append("check")
 
     def _do(self, name, *args):
         self.calls.append((name, *args))
@@ -45,10 +60,17 @@ class FakeOps:
             raise self.fail[name]
         return {"did": name}
 
-    def move(self, station): return self._do("move", station)
-    def grasp(self, obj): return self._do("grasp", obj)
-    def place(self, obj, loc): return self._do("place", obj, loc)
-    def wait_ms(self, d): return self._do("wait", d)
+    def move(self, station):
+        return self._do("move", station)
+
+    def grasp(self, obj):
+        return self._do("grasp", obj)
+
+    def place(self, obj, loc):
+        return self._do("place", obj, loc)
+
+    def wait_ms(self, d):
+        return self._do("wait", d)
 
     def hold(self):
         self.calls.append("hold")
@@ -59,7 +81,9 @@ class FakeOps:
         return {"confirmed": True, "after_ms": 1500}
 
 
-GO = "robolang 1.3;\ntask t(robot r, location a) {\n  goal { robot_at r a; }\n  plan { move r to a; wait for 2 s; }\n}\n"
+GO = (
+    "robolang 1.3;\ntask t(robot r, location a) {\n  goal { robot_at r a; }\n  plan { move r to a; wait for 2 s; }\n}\n"
+)
 
 
 def moves(ops):
@@ -86,19 +110,41 @@ def test_the_guard_runs_first_and_a_refused_guard_sends_nothing():
     assert ops.calls == ["guard"]
 
 
-@pytest.mark.parametrize("code, source, bind", [
-    ("S509", "robolang 1.6;\ntask t(robot r, object o, location a, sensor scale) {\n  goal { robot_at r a; }\n"
-             "  plan { measure r mass of o using scale as m; move r to a; }\n}\n",
-     {"r": "robot_1", "o": "box_1", "a": "loc_a", "scale": "s1"}),
-    ("S510", "robolang 1.9;\ntask t(robot r, location a) {\n  goal { robot_at r a; }\n"
-             "  plan { measure r time as now; move r to a; }\n}\n", BIND),
-    ("S515", "robolang 2.1;\ntask t(robot r, location a) {\n  pre { message_received \"ops\" with \"GO\"; }\n"
-             "  goal { robot_at r a; }\n  plan { move r to a; }\n}\n", BIND),
-    ("S508", "robolang 1.3;\ntask t(robot r, object o, location a, sensor cam) {\n  goal { robot_at r a; }\n"
-            "  plan { move r to a; inspect r o using cam; }\n}\n", {"r": "robot_1", "o": "box_1", "a": "loc_a", "cam": "c"}),
-    ("S508", "robolang 1.3;\ntask t(robot r, location a) {\n  pre { robot_ready r; }\n  goal { robot_at r a; }\n"
-            "  plan { move r to a; }\n}\n", BIND),
-])
+@pytest.mark.parametrize(
+    "code, source, bind",
+    [
+        (
+            "S509",
+            "robolang 1.6;\ntask t(robot r, object o, location a, sensor scale) {\n  goal { robot_at r a; }\n"
+            "  plan { measure r mass of o using scale as m; move r to a; }\n}\n",
+            {"r": "robot_1", "o": "box_1", "a": "loc_a", "scale": "s1"},
+        ),
+        (
+            "S510",
+            "robolang 1.9;\ntask t(robot r, location a) {\n  goal { robot_at r a; }\n"
+            "  plan { measure r time as now; move r to a; }\n}\n",
+            BIND,
+        ),
+        (
+            "S515",
+            'robolang 2.1;\ntask t(robot r, location a) {\n  pre { message_received "ops" with "GO"; }\n'
+            "  goal { robot_at r a; }\n  plan { move r to a; }\n}\n",
+            BIND,
+        ),
+        (
+            "S508",
+            "robolang 1.3;\ntask t(robot r, object o, location a, sensor cam) {\n  goal { robot_at r a; }\n"
+            "  plan { move r to a; inspect r o using cam; }\n}\n",
+            {"r": "robot_1", "o": "box_1", "a": "loc_a", "cam": "c"},
+        ),
+        (
+            "S508",
+            "robolang 1.3;\ntask t(robot r, location a) {\n  pre { robot_ready r; }\n  goal { robot_at r a; }\n"
+            "  plan { move r to a; }\n}\n",
+            BIND,
+        ),
+    ],
+)
 def test_refusals_come_before_any_step_with_the_ros2_backends_codes(code, source, bind):
     ops = FakeOps()
     rec = execute(task_of(source), bind, SITE, ops)
@@ -159,12 +205,27 @@ def test_a_mission_is_refused_by_the_cli_before_the_guard(tmp_path):
     from robolang_g1 import cli
 
     rob = tmp_path / "m.rob"
-    rob.write_text("robolang 2.0;\ntask p(robot r, location a, location b) {\n  goal { robot_at r a; }\n"
-                   "  plan { move r to b; move r to a; }\n}\nmission rounds(robot r, location a, location b) {\n"
-                   "  repeat at most 2 runs { run p(r, a, b); };\n  on failure { continue; }\n}\n")
+    rob.write_text(
+        "robolang 2.0;\ntask p(robot r, location a, location b) {\n  goal { robot_at r a; }\n"
+        "  plan { move r to b; move r to a; }\n}\nmission rounds(robot r, location a, location b) {\n"
+        "  repeat at most 2 runs { run p(r, a, b); };\n  on failure { continue; }\n}\n"
+    )
     out = tmp_path / "rec.json"
-    status = cli.main([str(rob), "--task", "rounds", "--site", str(SITES / "pick_place.json"), "--out", str(out),
-                       "--bind", "r=robot_1", "--bind", "a=loc_a", "--bind", "b=loc_b"])
+    status = cli.main([
+        str(rob),
+        "--task",
+        "rounds",
+        "--site",
+        str(SITES / "pick_place.json"),
+        "--out",
+        str(out),
+        "--bind",
+        "r=robot_1",
+        "--bind",
+        "a=loc_a",
+        "--bind",
+        "b=loc_b",
+    ])
     assert status == 1 and json.loads(out.read_text())["failure"]["code"] == "S514"
 
 

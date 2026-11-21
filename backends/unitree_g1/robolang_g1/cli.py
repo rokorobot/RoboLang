@@ -5,13 +5,16 @@
 
 `--bind P=ID` binds the task's parameter P to the entity ID `ID`; the site's `bindings` say which robot, object and
 location of the site each ID is. `--stop-file F` stops the run when F holds `cancel` (S511) or `revoke` (S513), even
-during a motion; `--deadline-s S` stops it S simulation seconds after the guard passes (S512). The head camera's frames are
+during a motion; `--deadline-s S` stops it S simulation seconds after the guard passes (S512). The head camera's
+frames are
 found through the stand-in's identity API; `--head-dir` names them when it does not say.
 
 Exit status: 4 when every step ran (the goal is **not evaluated** in phase 2: this is not a success), 1 when the run
-failed or was refused (the record has the code), 2 for a usage or source error. The record is written to `--out` in every
+failed or was refused (the record has the code), 2 for a usage or source error. The record is written to `--out` in
+every
 case where the task was understood.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -36,12 +39,25 @@ def _json_default(obj):
 
 def refusal_record(task_name: str, bindings: dict, failure: BackendFailure) -> dict:
     """The record of a run refused before the guard (S514: a mission is not a task)."""
-    return {"run_record_schema": "robolang.g1.run", "run_record_schema_version": "0.1", "mode": "simulation",
-            "backend": {"kind": "unitree-g1-mujoco", "versions": None, "grasp_model": "weld_after_hand_close",
-                        "stance_model": None},
-            "task": {"name": task_name}, "bindings": bindings, "state": "FAILED", "steps": [], "stop": None,
-            "failure": {"code": failure.code, "message": failure.message, "step": None}, "goal_evaluated": False,
-            "core_outcome": None}
+    return {
+        "run_record_schema": "robolang.g1.run",
+        "run_record_schema_version": "0.1",
+        "mode": "simulation",
+        "backend": {
+            "kind": "unitree-g1-mujoco",
+            "versions": None,
+            "grasp_model": "weld_after_hand_close",
+            "stance_model": None,
+        },
+        "task": {"name": task_name},
+        "bindings": bindings,
+        "state": "FAILED",
+        "steps": [],
+        "stop": None,
+        "failure": {"code": failure.code, "message": failure.message, "step": None},
+        "goal_evaluated": False,
+        "core_outcome": None,
+    }
 
 
 def main(argv=None) -> int:
@@ -51,10 +67,17 @@ def main(argv=None) -> int:
     ap.add_argument("--site", required=True)
     ap.add_argument("--bind", action="append", default=[], metavar="NAME=ID")
     ap.add_argument("--out", required=True)
-    ap.add_argument("--deadline-s", type=float, metavar="S",
-                    help="stop the run S seconds of simulation time after the guard passes (S512, decision 0038 P7)")
-    ap.add_argument("--stop-file", metavar="PATH",
-                    help="stop the run when PATH holds 'cancel' (S511) or 'revoke' (S513), even during a motion")
+    ap.add_argument(
+        "--deadline-s",
+        type=float,
+        metavar="S",
+        help="stop the run S seconds of simulation time after the guard passes (S512, decision 0038 P7)",
+    )
+    ap.add_argument(
+        "--stop-file",
+        metavar="PATH",
+        help="stop the run when PATH holds 'cancel' (S511) or 'revoke' (S513), even during a motion",
+    )
     ap.add_argument("--head-dir", help="the head camera's frame directory, if the stand-in does not report it")
     args = ap.parse_args(argv)
     try:
@@ -67,9 +90,15 @@ def main(argv=None) -> int:
             bindings[name] = value
         record = None
         if compiled.mission(args.task) is not None:
-            record = refusal_record(args.task, bindings, BackendFailure(
-                "S514", f"{args.task!r} is a mission: a mission runs on the planner's side and this backend is sent "
-                        "tasks only, one task run at a time (RoboLang 2.0, decision 0041 M8)"))
+            record = refusal_record(
+                args.task,
+                bindings,
+                BackendFailure(
+                    "S514",
+                    f"{args.task!r} is a mission: a mission runs on the planner's side and this backend is sent "
+                    "tasks only, one task run at a time (RoboLang 2.0, decision 0041 M8)",
+                ),
+            )
         else:
             task = compiled.task(args.task)
             if task is None:

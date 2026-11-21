@@ -303,7 +303,8 @@ class Simulator:
         return {"object": obj, "hand": side, "relative_position": [round(float(x), 4) for x in rel_pos]}
 
     def set_stance(self, model: str) -> dict:
-        """Switch the balance support (simulation thread). Only while the robot stands still: `supported` welds the pelvis
+        """Switch the balance support (simulation thread). Only while the robot stands still: `supported` welds the
+        pelvis
         where it is, `free` lets go and hands the legs to the policy from a clean history."""
         if model not in STANCES:
             raise ValueError(f"unknown stance {model!r}")

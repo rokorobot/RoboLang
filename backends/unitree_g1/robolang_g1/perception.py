@@ -15,6 +15,7 @@ detection lies within 1 cm of that median (the ROS 2 backend's rule, `observe.fu
 is that time minus the stamp of the newest agreeing frame (`Reading.age_ms`). Phase 3 builds goal verdicts on these
 readings, so nothing here is specific to a task.
 """
+
 from __future__ import annotations
 
 import time
@@ -48,10 +49,16 @@ class Reading:
         return now_ms - self.stamp_ms
 
     def as_dict(self, now_ms: int | None = None) -> dict:
-        out = {"id": self.marker_id, "position": [round(float(x), 4) for x in self.position],
-               "normal": [round(float(x), 4) for x in self.rotation[:, 2]], "confidence": round(self.confidence, 3),
-               "stamp_ms": self.stamp_ms, "frames": self.frames, "detections": self.detections,
-               "range_m": round(self.range_m, 3)}
+        out = {
+            "id": self.marker_id,
+            "position": [round(float(x), 4) for x in self.position],
+            "normal": [round(float(x), 4) for x in self.rotation[:, 2]],
+            "confidence": round(self.confidence, 3),
+            "stamp_ms": self.stamp_ms,
+            "frames": self.frames,
+            "detections": self.detections,
+            "range_m": round(self.range_m, 3),
+        }
         if now_ms is not None:
             out["age_ms"] = self.age_ms(now_ms)
         return out
@@ -86,8 +93,15 @@ class Perception:
             side = self.sizes.get(int(mid))
             if side is None:
                 continue
-            obj = np.array([[-side / 2, side / 2, 0], [side / 2, side / 2, 0], [side / 2, -side / 2, 0],
-                            [-side / 2, -side / 2, 0]], np.float32)
+            obj = np.array(
+                [
+                    [-side / 2, side / 2, 0],
+                    [side / 2, side / 2, 0],
+                    [side / 2, -side / 2, 0],
+                    [-side / 2, -side / 2, 0],
+                ],
+                np.float32,
+            )
             ok, rvec, tvec = cv2.solvePnP(obj, c.reshape(4, 2), self.K, None, flags=cv2.SOLVEPNP_IPPE_SQUARE)
             if ok:
                 found[int(mid)] = (rvec, tvec.flatten())
@@ -147,8 +161,16 @@ def _fuse(mid: int, obs: list, frames: int) -> Reading:
     agree = [i for i, d in enumerate(dist) if d <= SPREAD_M]
     best = int(np.argmin(dist))  # the rotation of the frame closest to the median (rotations do not average)
     stamp = max(obs[i][3] for i in agree) if agree else obs[best][3]
-    return Reading(mid, median, obs[best][0], len(agree) / max(frames, 1), stamp, frames, len(obs),
-                   float(np.median([o[2] for o in obs])))
+    return Reading(
+        mid,
+        median,
+        obs[best][0],
+        len(agree) / max(frames, 1),
+        stamp,
+        frames,
+        len(obs),
+        float(np.median([o[2] for o in obs])),
+    )
 
 
 # ---------------------------------------------------------------------------------------- geometry from readings
@@ -182,7 +204,7 @@ def in_view(camera_R: np.ndarray, camera_p: np.ndarray, point, camera: dict, mar
     return bool(u <= cx * margin and w <= cy * margin)
 
 
-# ---------------------------------------------------------------------------------------- the visibility rule (0046 section 3)
+# ------------------------------------------------------------ the visibility rule (0046 section 3)
 
 
 def visibility_violations(site: dict, task, names: dict[str, str], kin: Kinematics) -> list[str]:
@@ -197,8 +219,11 @@ def visibility_violations(site: dict, task, names: dict[str, str], kin: Kinemati
 
     Rc, pc = kin.camera_pose(np.zeros(29))
     moves = [s for _, s in ir.walk(task.steps) if isinstance(s, ir.Move)]
-    end = site_mod.station(site, site_mod.location(site, names[moves[-1].target])["station"])["pose"] if moves else \
-        site["robot"]["start"]
+    end = (
+        site_mod.station(site, site_mod.location(site, names[moves[-1].target])["station"])["pose"]
+        if moves
+        else site["robot"]["start"]
+    )
     start = site["robot"]["start"]
 
     def seen(pose, point) -> bool:
@@ -222,11 +247,14 @@ def visibility_violations(site: dict, task, names: dict[str, str], kin: Kinemati
                 R, p = site_mod.marker_frame(site_mod.station(site, loc["station"])["marker"])
                 point = R @ site_mod.region_centre_in_marker(loc) + p
             elif isinstance(atom, ir.RobotAt):
-                point = site_mod.marker_frame(site_mod.station(site, site_mod.location(site, names[atom.location])
-                                                               ["station"])["marker"])[1]
+                point = site_mod.marker_frame(
+                    site_mod.station(site, site_mod.location(site, names[atom.location])["station"])["marker"]
+                )[1]
             else:
                 continue
             if not seen(pose, point):
-                bad.append(f"{label} {atom.KIND} {names[atom.location]}: out of the camera's view from "
-                           f"{[round(float(v), 2) for v in pose]}")
+                bad.append(
+                    f"{label} {atom.KIND} {names[atom.location]}: out of the camera's view from "
+                    f"{[round(float(v), 2) for v in pose]}"
+                )
     return bad

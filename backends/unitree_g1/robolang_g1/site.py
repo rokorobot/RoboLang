@@ -9,7 +9,7 @@ site the executor is given (an object removed, a marker covered): that is how th
     {
       "schema": "robolang-g1-site/2", "name": "...",
       "floor":  {"center": [x, y], "half_size": [hx, hy], "friction": 1.0},
-      "robot":  {"name": "g1", "start": [x, y, yaw], "arm_stance": "free" | "supported"},   # the start is the pelvis pose
+      "robot":  {"name": "g1", "start": [x, y, yaw], "arm_stance": "free" | "supported"},   # start: pelvis pose
                                                                        # in the map at start (what the robot is told)
       "camera": {"width": 640, "height": 480, "fovy": 58.0, "pos": [x, y, z], "pitch": 0.83},  # head calibration
       "tables": [{"name", "pos", "half_size", "rgba"?}],
@@ -29,6 +29,7 @@ the left of it (seen from the marker), and the pelvis yaw is `facing + pi + a`, 
 marker. A location's `region` is a box in its station's marker frame: an object whose marker is inside it is "at" the
 location. Positions in the executor's own frame (the pelvis) never appear in a site.
 """
+
 from __future__ import annotations
 
 import json
@@ -67,8 +68,11 @@ def load_site(site) -> dict:
         value = entry.get(field)
         if value is None:
             raise SiteError(f"{where}: missing {field!r}")
-        if size is not None and (not isinstance(value, list) or len(value) != size
-                                 or not all(isinstance(x, (int, float)) and not isinstance(x, bool) for x in value)):
+        if size is not None and (
+            not isinstance(value, list)
+            or len(value) != size
+            or not all(isinstance(x, (int, float)) and not isinstance(x, bool) for x in value)
+        ):
             raise SiteError(f"{where}: {field!r} must be a list of {size} numbers")
         return value
 
@@ -106,8 +110,13 @@ def load_site(site) -> dict:
         raise SiteError("robot.start must be [x, y, yaw]")
     camera = {**DEFAULT_CAMERA, **dict(data.get("camera") or {})}
     need(camera, "pos", 3, "camera")
-    if not (isinstance(camera["pitch"], (int, float)) and 0 <= camera["pitch"] < math.pi / 2 and camera["fovy"] > 0
-            and isinstance(camera["width"], int) and isinstance(camera["height"], int)):
+    if not (
+        isinstance(camera["pitch"], (int, float))
+        and 0 <= camera["pitch"] < math.pi / 2
+        and camera["fovy"] > 0
+        and isinstance(camera["width"], int)
+        and isinstance(camera["height"], int)
+    ):
         raise SiteError("camera: width and height are integers, fovy is positive, pitch is in [0, pi/2)")
     data["camera"] = camera
     for t in data["tables"]:
@@ -155,8 +164,11 @@ def load_site(site) -> dict:
             lo, hi = need(region, "min", 3, where), need(region, "max", 3, where)
             if not all(a < b for a, b in zip(lo, hi)):
                 raise SiteError(f"{where}: region min must be below max")
-    kinds = {"robots": {data["robot"]["name"]}, "objects": {o["name"] for o in data["objects"]},
-             "locations": {loc["name"] for loc in data["locations"]}}
+    kinds = {
+        "robots": {data["robot"]["name"]},
+        "objects": {o["name"] for o in data["objects"]},
+        "locations": {loc["name"] for loc in data["locations"]},
+    }
     for kind, table in data["bindings"].items():
         if kind not in kinds:
             raise SiteError(f"bindings: unknown kind {kind!r}")
