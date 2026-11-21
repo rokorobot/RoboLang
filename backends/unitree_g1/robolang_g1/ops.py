@@ -96,7 +96,7 @@ CONTACT_OVERLAP_M = 0.01  # (see above)
 RAISED_ABOVE_PRE_M = (0.08, 0.06, 0.04)  # the hand is raised this far above the pre-grasp height, in turn
 RAISED_OUT_M = (0.0, 0.05, 0.10)  # the raised pose beside the body is tried this much further out, in turn
 CARRY_CLEARANCE_M = 0.02  # a held object clears every link of the robot by at least this in the carry pose ...
-CARRY_PLAN_M = (0.03, 0.0275, 0.025)  # ... planned for the first of these that exists (tracking error costs ~0.5 cm)
+CARRY_PLAN_M = (0.021,)  # ... planned for this: the walking pose moved as little as clearing it by 2 cm takes
 # Before the arm shows a held object, the whole path of the arm and the object is checked against the site's declared
 # tables and obstacles. The belief pose is corrected by the station marker (0.3-1.5 cm from the truth in the phase 2
 # runs) and the pelvis height is known to about 1.5 cm, so the declared boxes are grown by 3 cm sideways and 1.5 cm
