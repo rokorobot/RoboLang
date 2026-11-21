@@ -207,7 +207,10 @@ def execute(task: ir.Task, bindings: dict[str, str], site: dict, ops, stop: Stop
         "run_record_schema": SCHEMA,
         "run_record_schema_version": SCHEMA_VERSION,
         "mode": "simulation",
-        "backend": {"kind": "unitree-g1-mujoco", "versions": None, "grasp_model": GRASP_MODEL, "stance_model": None},
+        # stance_model: when the robot walks or stands; arm_work_stance: while the arms work (0046 U4: `supported`
+        # is a weld standing in for the robot's own balance, so a run with it never shows that the arm work balances)
+        "backend": {"kind": "unitree-g1-mujoco", "versions": None, "grasp_model": GRASP_MODEL, "stance_model": None,
+                    "arm_work_stance": site["robot"]["arm_stance"]},
         "task": ir.to_dict(task),
         "bindings": dict(sorted(bindings.items())),
         "site": {"name": site["name"], "schema": site["schema"]},

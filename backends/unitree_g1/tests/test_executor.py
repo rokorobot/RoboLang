@@ -99,6 +99,7 @@ def test_a_run_whose_steps_all_ran_is_steps_completed_and_never_succeeded():
     assert [s["status"] for s in rec["steps"]] == ["succeeded", "succeeded"]
     assert rec["backend"]["kind"] == "unitree-g1-mujoco" and rec["backend"]["grasp_model"] == "weld_after_hand_close"
     assert rec["backend"]["stance_model"] == "free" and rec["realtime"]["realtime_valid"] is True
+    assert rec["backend"]["arm_work_stance"] == SITE["robot"]["arm_stance"]  # the weld during arm work is on record
     assert moves(ops) == [("move", "bench"), ("wait", 2000)]
     assert "SUCCEEDED" not in json.dumps(rec)
 

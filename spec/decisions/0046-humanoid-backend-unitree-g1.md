@@ -189,6 +189,27 @@ On x86_64 the first `g1-sim.yml` run on the phase 1 pull request passed too, wit
 of aarch64 ([run](https://github.com/rokorobot/RoboLang/actions/runs/44559535665)). Margins are tight in places (P3 free sway 1.1 cm against 2 cm; supported sideways drift
 0.118 m against 0.15 m; dt·kd/I 1.8 against 2). Listed in the evidence's open issues.
 
+## Resolved in phase 2 (2026-11-21)
+
+The executor passed checks E1–E7 twice on aarch64 ([evidence](../../docs/evidence/g1-phase2-executor.md)): walking to
+stations within 0.7–3.8 cm and 0.06 rad, grasp and place, both reference tasks unchanged through the CLI, the biped
+stop for cancel, revoke, deadline and a fall, and refusals before motion. Decided or changed by it:
+
+- **U4 during arm work: `supported`.** The free stance stands after walking, but arm work moved it 12–18 cm; with
+  the weld it moved at most 2.1 cm. So every site sets `robot.arm_stance: "supported"`, and every record says so
+  (`backend.arm_work_stance`, and per step). This applies the fallback the owner approved (open point 1) to arm
+  work rather than to standing after walking. A pass therefore never shows that the robot balances while reaching.
+- **U5 `move`:** the policy ignores velocity commands of norm below about 0.3, so it cannot turn on the spot. `move`
+  walks towards the target in the robot's own frame, comes in along the station's axis, and turns by a sideways
+  shuffle. The station marker servo stops at 3.5 cm and confirms within 4.2 cm and 0.09 rad (inside 5 cm and
+  0.1 rad). Moves take 24–145 s.
+- **U7:** hands collide with neither objects nor tables (the grasp is a weld); objects are 8–9 cm cubes with the
+  marker on top, where a closed hand does not cover it; station markers are low panels beside the approach axis.
+- **Records:** until phase 3, a run whose steps all ran ends `STEPS_COMPLETED` (CLI exit 4), never `SUCCEEDED`, and
+  every precondition is refused before motion (S508).
+- **Real time:** Python's garbage collector was not the cause of the long step on x86 CI; the stand-in now reports
+  slow steps with the collections in them.
+
 ## 8. Review and corrections (2026-11-19)
 
 Reviewed before approval. Changed: U4 now rests on a corrected port of the whole-body policy (the first port applied
