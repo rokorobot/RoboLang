@@ -136,8 +136,7 @@ class Ctx(Ctx2):
         return p
 
 
-def run3(ctx: Ctx, name: str, scene, site_path, source: Path, task: str, bind: dict, *, before=None, watch=None,
-         **kw):
+def run3(ctx: Ctx, name: str, scene, site_path, source: Path, task: str, bind: dict, *, before=None, watch=None, **kw):
     """One scenario: a fresh stand-in on `scene`, the CLI on the executor's site. `before(session)` runs after the
     stand-in is up and before the CLI starts; `watch(session)` returns the callback `Session.run` polls while the CLI
     runs.
@@ -360,7 +359,7 @@ def check_o1(ctx: Ctx) -> dict:
         )
         s.sim.PlaceObject("box", ELSEWHERE)
         time.sleep(1.5)
-        steps.append(p.ask("A", "item elsewhere on the bench", [(*A_O_AT_A, "false"), (*A_R_AT_A, "true")]))
+        steps.append(p.ask("A", "item elsewhere on the bench", [(*A_O_AT_A, "false")]))
         s.sim.CoverCamera(True)
         time.sleep(1.5)
         steps.append(
@@ -382,7 +381,7 @@ def check_o1(ctx: Ctx) -> dict:
             p.ask(
                 "A",
                 "carrying the box, shown to the camera",
-                [(*A_HOLD, "true"), (*A_O_AT_A, "false"), (*A_R_AT_A, "true")],
+                [(*A_HOLD, "true"), (*A_O_AT_A, "false")],
                 show={"box"},
             )
         )

@@ -93,6 +93,7 @@ HAND_STATE_AGE_S = 1.0  # a hand state older than this (wall clock) is not used
 # the release) the hand and the object, which rests on the table there, are checked with no vertical margin and may
 # overlap the table by 1 cm (the object's position, from its marker, is known to about a centimetre).
 CONTACT_OVERLAP_M = 0.01  # (see above)
+PLACE_ABOVE_M = 0.012  # the object is released this far above the table's surface and drops (the hand then clears it)
 RAISED_ABOVE_PRE_M = (0.12, 0.10, 0.08, 0.06, 0.04)  # the hand is raised this far above the pre-grasp height, in turn
 RAISED_OUT_M = (0.0, 0.05, 0.10)  # the raised pose beside the body is tried this much further out, in turn
 CARRY_CLEARANCE_M = 0.02  # a held object clears every link of the robot by at least this in the carry pose ...
@@ -410,7 +411,7 @@ class G1Operations:
         t0 = self.now_ms()
         (_, _), (_, clear), (_, raised), (_, lift) = self._view_path()
         self.events.append({"t_ms": t0, "event": "show_held"})
-        stance = self._arm_stance(self.site["robot"]["arm_stance"])
+        stance = self._arm_stance(self.site["robot"]["arm_stance"], settle=False)
         self._arm_begin()
         self._arm_move(clear, 1.6, label="clear of the hip")
         self._arm_move(raised, 1.6, label="raised")
@@ -1080,13 +1081,17 @@ class G1Operations:
             self._servo(station, reading, self.now_ms() + int(SERVO_TIMEOUT_S * 1000))
         raise BackendFailure("S504", f"could not return to station {self.station} before arm work")
 
-    def _arm_stance(self, model: str) -> str:
+    def _arm_stance(self, model: str, settle: bool = True) -> str:
         """Ask the stand-in for the balance support the site names for arm work (0046 U4: the free stance moved the
         robot about 12 cm when the arm reached; `supported` welds the pelvis, which stands in for balance the robot's
-        own controller provides). Waits for the stand-in to report it holding. Returns the model now in force."""
+        own controller provides). Waits for the stand-in to report it holding. Returns the model now in force. `settle`
+        False skips the wait for a quiet stance first: the free stance drifts in heading by about 0.01 rad a second, so
+        the observation motion, which follows a `move` that has just settled, welds at once (measured: 0.03 rad of
+        heading between the move's last look and the goal snapshot otherwise)."""
         if self.stance_now == model:
             return model
-        self.settle()
+        if settle:
+            self.settle()
         code, info = self.sim.SetStance(model)
         if code != 0:
             raise BackendFailure("S503", f"the stand-in did not switch to the {model} stance (code {code})")
@@ -1216,7 +1221,9 @@ class G1Operations:
         if reading is None or reading.confidence < MARKER_MIN_CONF:
             raise BackendFailure("S517", f"station marker {station['marker']['id']} was not seen before placing")
         lo, hi = np.array(loc["region"]["min"], float), np.array(loc["region"]["max"], float)
-        target_marker = np.array([(lo[0] + hi[0]) / 2, lo[1] + obj["half_size"][2] + 0.002, (lo[2] + hi[2]) / 2])
+        target_marker = np.array(
+            [(lo[0] + hi[0]) / 2, lo[1] + obj["half_size"][2] + PLACE_ABOVE_M, (lo[2] + hi[2]) / 2]
+        )
         # the marker frame is (x right, y up, z out) with a vertical panel: y is the height above the marker's centre
         centre = reading.rotation @ target_marker + reading.position
         details["target_in_pelvis"] = [round(float(v), 4) for v in centre]
