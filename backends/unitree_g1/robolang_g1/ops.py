@@ -314,7 +314,6 @@ class G1Operations:
         stance = self._arm_stance(self.site["robot"]["arm_stance"], settle=False)
         clearance = self._view_clearance()
         if not clearance["clear"]:
-            self._arm_stance("free", settle=False)
             note = {
                 "performed": False,
                 "object": self.held["object"],
@@ -424,7 +423,8 @@ class G1Operations:
         self._arm_move(raised, 1.6, label="back raised")
         self._arm_move(clear, 1.6, label="back clear of the hip")
         self._arm_move(held["carry"], 1.6, label="carry")
-        self._arm_stance("free")
+        # The pelvis stays welded: nothing walks after the goal snapshot, and releasing it let the free stance turn the
+        # robot by 0.017 rad in the next second (measured), after the snapshot that read it. `move` frees it again.
         note = {
             "performed": True,
             "object": held["object"],
@@ -529,6 +529,7 @@ class G1Operations:
         station = self.stations[station_name]
         gx, gy, gyaw = station["pose"]
         self.events = []
+        self._arm_stance("free")  # walking is the policy's (a no-op unless an observation left the pelvis welded)
         t0 = self.now_ms()
         deadline = t0 + int(MOVE_TIMEOUT_S * 1000)
         self.look(frames=3)
@@ -1123,6 +1124,12 @@ class G1Operations:
         details = {"object": obj_name, "station_check": self._reposition()}
         if self.held is not None:
             raise BackendFailure("S506", f"the robot already holds {self.held['object']}")
+        # The pelvis is welded before the object is measured and the reach planned, not after: the free stance drifts
+        # in heading (about 0.01 rad a second) and a plan can take a minute on a loaded host (measured: 0.33 rad and
+        # 0.3 m of drift, the hand closed on air: S506), so the plan is made for the pose the arm will really work from.
+        details["arm_work_stance"] = self._arm_stance(self.site["robot"]["arm_stance"])
+        details["arm_work_ms"] = [self.now_ms(), None]  # from here the stance is the arm-work one (the checks judge it)
+        self.events.append({"t_ms": self.now_ms(), "event": "arm_work"})
         readings = self.look(frames=10)
         seen = readings.get(mid)
         if seen is None or seen.confidence < 0.6:
@@ -1147,9 +1154,6 @@ class G1Operations:
         )  # S502 here, before any motion
         details["reach"] = {k: plan[k] for k in ("fingers_down_deg", "waist_rad", "position_error_m")}
         details["clearance"] = plan["clearance"]
-        details["arm_work_ms"] = [self.now_ms(), None]  # from here the arms move: what the checks judge the stance by
-        self.events.append({"t_ms": self.now_ms(), "event": "arm_work"})
-        details["arm_work_stance"] = self._arm_stance(self.site["robot"]["arm_stance"])
         self._arm_begin()
         self._arm_move(self._clear_pose(side), 1.6, label="clear of the hip")
         self._arm_move(plan["raised"], 1.6, label="raised")
@@ -1224,6 +1228,9 @@ class G1Operations:
         obj = site_mod.obj(self.site, obj_name)
         side = self.held["hand"]
         details = {"object": obj_name, "location": location, "hand": side, "station_check": self._reposition()}
+        details["arm_work_stance"] = self._arm_stance(self.site["robot"]["arm_stance"])  # welded first, as in grasp
+        details["arm_work_ms"] = [self.now_ms(), None]
+        self.events.append({"t_ms": self.now_ms(), "event": "arm_work"})
         # the region's centre, in the pelvis frame, through the station marker seen now
         readings = self.look(frames=10, ids={station["marker"]["id"]})
         reading = readings.get(station["marker"]["id"])
@@ -1247,9 +1254,6 @@ class G1Operations:
         )
         details["reach"] = {k: plan[k] for k in ("fingers_down_deg", "waist_rad", "position_error_m")}
         details["clearance"] = plan["clearance"]
-        details["arm_work_ms"] = [self.now_ms(), None]
-        self.events.append({"t_ms": self.now_ms(), "event": "arm_work"})
-        details["arm_work_stance"] = self._arm_stance(self.site["robot"]["arm_stance"])
         self._arm_begin()
         self._arm_move(self._clear_pose(side), 1.0, label="clear of the hip")
         self._arm_move(plan["raised"], 1.6, label="raised")

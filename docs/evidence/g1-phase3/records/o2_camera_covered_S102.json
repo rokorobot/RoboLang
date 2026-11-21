@@ -1,0 +1,257 @@
+{
+  "run_record_schema": "robolang.g1.run",
+  "run_record_schema_version": "0.2",
+  "mode": "simulation",
+  "backend": {
+    "kind": "unitree-g1-mujoco",
+    "versions": {
+      "arch": "aarch64",
+      "python": "3.11.2",
+      "assets": {
+        "unitree_mujoco": "1eb6642e3f3fdfb7fb13a9794fd6a2dd93ea0e7d",
+        "unitree_rl_lab": "4960b84732b0c2ec593dccbfe963fda1bcd7b1e3",
+        "mujoco_menagerie": "370c43965323c0944b433b202aac5058b5f907a9",
+        "unitree_rl_gym": "276801e46c5d433564f24658bac64f254b7d2d4b",
+        "unitree_sdk2_python": "814556d15970dd2ecf1c9984e845ca02ab07e206",
+        "cyclonedds_c": "abb064e35b6fbc79554c255ff8b371333e87b029"
+      },
+      "packages": {
+        "mujoco": "4.0.1",
+        "onnxruntime": "1.32.0",
+        "numpy": "2.4.6",
+        "opencv-python-headless": "5.1.0.95",
+        "cyclonedds": "0.10.2",
+        "unitree_sdk2py": "1.0.1"
+      }
+    },
+    "grasp_model": "weld_after_hand_close",
+    "stance_model": "free",
+    "arm_work_stance": "supported"
+  },
+  "task": {
+    "name": "move_if_present",
+    "parameters": [
+      {
+        "name": "r",
+        "type": "robot"
+      },
+      {
+        "name": "item",
+        "type": "object"
+      },
+      {
+        "name": "src",
+        "type": "location"
+      },
+      {
+        "name": "dst",
+        "type": "location"
+      }
+    ],
+    "safety": [],
+    "preconditions": [
+      {
+        "kind": "object_at",
+        "object": "item",
+        "location": "src"
+      }
+    ],
+    "goal": [
+      {
+        "kind": "object_at",
+        "object": "item",
+        "location": "dst"
+      }
+    ],
+    "steps": [
+      {
+        "kind": "move",
+        "robot": "r",
+        "target": "src"
+      },
+      {
+        "kind": "grasp",
+        "robot": "r",
+        "object": "item"
+      },
+      {
+        "kind": "move",
+        "robot": "r",
+        "target": "dst"
+      },
+      {
+        "kind": "place",
+        "robot": "r",
+        "object": "item",
+        "target": "dst"
+      }
+    ]
+  },
+  "bindings": {
+    "dst": "loc_b",
+    "item": "box_1",
+    "r": "robot_1",
+    "src": "loc_a"
+  },
+  "site": {
+    "name": "part_precheck",
+    "schema": "robolang-g1-site/2"
+  },
+  "verify": {
+    "min_confidence": "0.9",
+    "max_age_ms": 10000
+  },
+  "state": "FAILED",
+  "failure": {
+    "code": "S102",
+    "message": "a precondition is unknown from the observations",
+    "step": null
+  },
+  "preconditions": [
+    {
+      "index": 1,
+      "condition": {
+        "kind": "object_at",
+        "object": "item",
+        "location": "src"
+      },
+      "result": "unknown",
+      "atoms": [
+        {
+          "atom": {
+            "kind": "object_at",
+            "object": "item",
+            "location": "src"
+          },
+          "result": "unknown",
+          "why": "the marker of box: not seen"
+        }
+      ]
+    }
+  ],
+  "steps": [],
+  "goal": [
+    {
+      "index": 1,
+      "condition": {
+        "kind": "object_at",
+        "object": "item",
+        "location": "dst"
+      },
+      "result": "not_evaluated"
+    }
+  ],
+  "goal_evaluated": false,
+  "snapshots": [
+    {
+      "purpose": "preconditions",
+      "t_ms": 6611,
+      "frames": 10,
+      "markers": {},
+      "hands": {
+        "left": {
+          "state": "open",
+          "grasp_point": [
+            0.0433,
+            0.2315,
+            -0.1563
+          ],
+          "q": [
+            0.004,
+            0.106,
+            0.044,
+            -0.007,
+            -0.001,
+            -0.007,
+            -0.001
+          ]
+        },
+        "right": {
+          "state": "open",
+          "grasp_point": [
+            -0.0348,
+            -0.2168,
+            -0.1649
+          ],
+          "q": [
+            0.0,
+            -0.022,
+            -0.003,
+            0.007,
+            0.001,
+            0.007,
+            0.001
+          ]
+        }
+      }
+    }
+  ],
+  "observation_motion": [],
+  "observations": [],
+  "stop": null,
+  "realtime": {
+    "realtime_valid": true,
+    "ratio": 0.9995,
+    "sim_s": 1.9,
+    "wall_s": 1.9,
+    "slow_seconds": [],
+    "stalls": 0,
+    "worst_second_ratio_overall": 0.9998,
+    "step_compute_ms": {
+      "budget": 2.0,
+      "mean": 0.567,
+      "p99": 1.455,
+      "max": 6.9,
+      "over_budget": 0.0015
+    },
+    "gc": {
+      "collections": [
+        7,
+        1,
+        1
+      ],
+      "max_ms": [
+        0.1,
+        1.0,
+        13.51
+      ],
+      "slow_steps": [],
+      "frozen": 70638,
+      "enabled": true,
+      "threshold": [
+        700,
+        10,
+        1000000
+      ]
+    },
+    "camera": {
+      "frames": 33,
+      "dropped": 0,
+      "render_ms": 6.3,
+      "hz": 5.0
+    }
+  },
+  "core_outcome": {
+    "outcome": {
+      "kind": "outcome",
+      "goal": "rl:goal:move_if_present",
+      "status": "failed",
+      "verification": null,
+      "reasons": [],
+      "reported_by": "rl:sim:g1-mujoco",
+      "reported_at": "2000-01-01T00:00:00.000Z"
+    },
+    "evidence": []
+  },
+  "start_pose": [
+    2.25,
+    0.0,
+    0.0
+  ],
+  "pose_belief_end": [
+    2.25,
+    0.0,
+    0.0
+  ],
+  "run_id": "4debf979aabbd4d7"
+}

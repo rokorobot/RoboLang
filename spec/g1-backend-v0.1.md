@@ -39,7 +39,11 @@ real-time ratio. A run in which any second falls more than 5% behind real time d
 at 0.5 m/s, then about 1 cm of torso sway). `free` takes a recovery step of 0.2–0.35 m about every 45 s while standing,
 so arm work longer than about 40 s uses `supported`: the torso welded to a mocap body (the fallback the owner approved,
 0046 open point 1). Every record states the stance model. The free stance also **drifts in heading by about 0.01 rad a second** after a move
-(measured), so the observation motion welds at once after the move's last look.
+(measured), so `grasp`, `place` and the observation motion weld the pelvis (`arm_stance: supported`) **before** they measure the
+object and plan the reach, not after: a plan made on a loaded host took a minute and the robot had turned 0.33 rad, the hand closed on
+air (S506). The pelvis stays welded from then to the end of the step; after an observation motion it stays welded to the end of the run
+(nothing walks after the goal snapshot, and releasing it let the free stance turn the robot 0.017 rad in the next second, measured), and a
+`move` frees it first.
 
 The stand-in never collapses the robot: `SetFsmId` accepts only 500 (standing or walking) and refuses every other id
 with code 7400, `Damp` included. The backend's stop is zero velocity, the arms held through `arm_sdk`, the
@@ -120,8 +124,8 @@ the pinch at the object's centre (the closed fingers stay level with the object'
 hand just touches the table top, to within 1 cm), the hand comes in through a pose raised beside the body (tried further out if the object
 would pass the table's corner) and one straight above the pre-grasp. The **carry pose** of a held object is the walking
 controller's own arm pose moved only as far as it takes for the object, welded as grasped, to clear **every link of the robot**
-(the holding hand's own palm and fingers excepted) by 2.5-3 cm in the model; in the walking pose it is 0.1-0.6 cm from the
-right hip link. It is planned before the arm moves (S502 if there is none) and again from the object as it is actually held.
+(the holding hand's own palm and fingers excepted) by 2.1 cm in the model (measured at rest, with the arm's tracking error: 1.6-2.2 cm);
+in the walking pose it is 0.1-0.6 cm from the right hip link. It is planned before the arm moves (S502 if there is none) and again from the object as it is actually held.
 
 **Arm work stance.** The free stance moved the robot by centimetres to decimetres when an arm reached (measured in the
 evidence), so a site may set `robot.arm_stance: "supported"`: the stand-in welds the pelvis for the arm step and frees it

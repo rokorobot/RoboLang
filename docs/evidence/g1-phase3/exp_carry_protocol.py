@@ -50,8 +50,9 @@ def detect_in_background(ops, frames, store):
 
 with Session(SCENE, out / "run", "free") as s:
     ops = G1Operations(site); ops.guard("g1"); ops.station = "dock"
-    ops.grasp("crate")
+    d = ops.grasp("crate")
     print("grasped; attached:", s.tail.latest()["attached"], flush=True)
+    print("carry pose:", d.get("carry_pose"), "closest to a declared table:", d["clearance"]["closest"], flush=True)
     result = {"mode": mode, "target_pinch_pelvis": target.tolist(), "runs": []}
     if mode == "view":
         deg = ops.held["fingers_down_deg"]; R = OPS._frame(math.radians(deg))

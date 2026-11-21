@@ -684,7 +684,6 @@ def check_o4(ctx: Ctx) -> dict:
         and (motion.get("clearance") or {}).get("closest", {}).get("box") == "post"
         and wrist_m is not None
         and wrist_m <= 0.01
-        and stance_after == {"free"}
         and tail.latest()["attached"] == {"box": "right"}
     )
     out["view_pose_blocked"] = {

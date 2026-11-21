@@ -1,0 +1,1646 @@
+{
+  "run_record_schema": "robolang.g1.run",
+  "run_record_schema_version": "0.2",
+  "mode": "simulation",
+  "backend": {
+    "kind": "unitree-g1-mujoco",
+    "versions": {
+      "arch": "aarch64",
+      "python": "3.11.2",
+      "assets": {
+        "unitree_mujoco": "1eb6642e3f3fdfb7fb13a9794fd6a2dd93ea0e7d",
+        "unitree_rl_lab": "4960b84732b0c2ec593dccbfe963fda1bcd7b1e3",
+        "mujoco_menagerie": "370c43965323c0944b433b202aac5058b5f907a9",
+        "unitree_rl_gym": "276801e46c5d433564f24658bac64f254b7d2d4b",
+        "unitree_sdk2_python": "814556d15970dd2ecf1c9984e845ca02ab07e206",
+        "cyclonedds_c": "abb064e35b6fbc79554c255ff8b371333e87b029"
+      },
+      "packages": {
+        "mujoco": "4.0.1",
+        "onnxruntime": "1.32.0",
+        "numpy": "2.4.6",
+        "opencv-python-headless": "5.1.0.95",
+        "cyclonedds": "0.10.2",
+        "unitree_sdk2py": "1.0.1"
+      }
+    },
+    "grasp_model": "weld_after_hand_close",
+    "stance_model": "free",
+    "arm_work_stance": "supported"
+  },
+  "task": {
+    "name": "pick_no_place",
+    "parameters": [
+      {
+        "name": "r",
+        "type": "robot"
+      },
+      {
+        "name": "box",
+        "type": "object"
+      },
+      {
+        "name": "src",
+        "type": "location"
+      },
+      {
+        "name": "dst",
+        "type": "location"
+      }
+    ],
+    "safety": [],
+    "preconditions": [],
+    "goal": [
+      {
+        "kind": "object_at",
+        "object": "box",
+        "location": "dst"
+      }
+    ],
+    "steps": [
+      {
+        "kind": "move",
+        "robot": "r",
+        "target": "src"
+      },
+      {
+        "kind": "grasp",
+        "robot": "r",
+        "object": "box"
+      },
+      {
+        "kind": "move",
+        "robot": "r",
+        "target": "dst"
+      }
+    ]
+  },
+  "bindings": {
+    "box": "box_1",
+    "dst": "loc_b",
+    "r": "robot_1",
+    "src": "loc_a"
+  },
+  "site": {
+    "name": "pick_place",
+    "schema": "robolang-g1-site/2"
+  },
+  "verify": {
+    "min_confidence": "0.9",
+    "max_age_ms": 10000
+  },
+  "state": "FAILED",
+  "failure": {
+    "code": "S301",
+    "message": "a goal condition is false from the observations",
+    "step": null
+  },
+  "preconditions": [],
+  "steps": [
+    {
+      "index": 1,
+      "kind": "move",
+      "status": "succeeded",
+      "t_start_ms": 3807,
+      "details": {
+        "iterations": [
+          [
+            0.535,
+            -0.002,
+            -0.016
+          ],
+          [
+            -0.11,
+            0.012,
+            0.012
+          ],
+          [
+            -0.005,
+            0.005,
+            0.022
+          ]
+        ],
+        "error_m": 0.0068,
+        "error_rad": 0.0216,
+        "settled": true,
+        "events": [
+          {
+            "t_ms": 12900,
+            "event": "localized",
+            "marker": 20,
+            "from": [
+              1.7,
+              0.0,
+              0.0
+            ],
+            "to": [
+              1.617,
+              0.02,
+              0.05
+            ]
+          },
+          {
+            "t_ms": 15884,
+            "event": "localized",
+            "marker": 20,
+            "from": [
+              1.854,
+              0.014,
+              0.024
+            ],
+            "to": [
+              1.825,
+              -0.008,
+              -0.028
+            ]
+          },
+          {
+            "t_ms": 16484,
+            "event": "localized",
+            "marker": 20,
+            "from": [
+              1.825,
+              -0.008,
+              -0.028
+            ],
+            "to": [
+              1.827,
+              -0.007,
+              -0.031
+            ]
+          },
+          {
+            "t_ms": 19284,
+            "event": "localized",
+            "marker": 20,
+            "from": [
+              1.941,
+              -0.01,
+              -0.031
+            ],
+            "to": [
+              1.915,
+              -0.007,
+              0.016
+            ]
+          },
+          {
+            "t_ms": 24083,
+            "event": "localized",
+            "marker": 20,
+            "from": [
+              2.593,
+              0.004,
+              0.016
+            ],
+            "to": [
+              2.559,
+              -0.013,
+              -0.012
+            ]
+          },
+          {
+            "t_ms": 26875,
+            "event": "localized",
+            "marker": 20,
+            "from": [
+              2.451,
+              -0.012,
+              -0.012
+            ],
+            "to": [
+              2.455,
+              -0.005,
+              -0.022
+            ]
+          },
+          {
+            "t_ms": 28291,
+            "event": "localized",
+            "marker": 20,
+            "from": [
+              2.455,
+              -0.005,
+              -0.022
+            ],
+            "to": [
+              2.452,
+              -0.004,
+              -0.016
+            ]
+          }
+        ]
+      },
+      "t_end_ms": 28291,
+      "wall_s": 24.48
+    },
+    {
+      "index": 2,
+      "kind": "grasp",
+      "status": "succeeded",
+      "t_start_ms": 28291,
+      "details": {
+        "object": "box",
+        "station_check": {
+          "error_m": 0.0061,
+          "error_rad": 0.0078,
+          "reservoed": false
+        },
+        "arm_work_stance": "supported",
+        "arm_work_ms": [
+          30391,
+          56100
+        ],
+        "hand": "right",
+        "object_in_pelvis": [
+          0.2768,
+          -0.098,
+          -0.0018
+        ],
+        "marker_confidence": 1.0,
+        "marker_range_m": 0.502,
+        "reach": {
+          "fingers_down_deg": 0,
+          "waist_rad": 0.0,
+          "position_error_m": 0.0046
+        },
+        "clearance": {
+          "clear": true,
+          "boxes": [
+            "bench_table",
+            "shelf_table"
+          ],
+          "pelvis_in_map": [
+            2.452,
+            -0.005,
+            -0.004
+          ],
+          "margins_m": {
+            "sideways": 0.03,
+            "vertical": 0.015,
+            "contact_overlap": 0.01
+          },
+          "legs": [
+            "carry->clear of the hip",
+            "clear of the hip->raised",
+            "raised->above",
+            "above->pre-grasp",
+            "pre-grasp->grasp",
+            "grasp->lift",
+            "lift->pre-grasp",
+            "pre-grasp->above",
+            "above->raised",
+            "raised->clear of the hip",
+            "clear of the hip->carry"
+          ],
+          "closest": {
+            "over_limit_m": 0.0058,
+            "clearance_m": 0.0058,
+            "group": "held",
+            "link": "right_wrist_yaw_link",
+            "box": "bench_table",
+            "leg": "lift->pre-grasp",
+            "at": 1.0
+          }
+        },
+        "marker_at_hand_m": 0.0486,
+        "object_in_hand_m": [
+          0.0071,
+          0.0002,
+          0.0085
+        ],
+        "carry_pose": {
+          "object_to_nearest_link_m": 0.0208,
+          "link": "right_hip_pitch_link",
+          "arm_deviation_rad": 0.06
+        },
+        "events": [
+          {
+            "t_ms": 29883,
+            "event": "localized",
+            "marker": 20,
+            "from": [
+              2.452,
+              -0.004,
+              -0.016
+            ],
+            "to": [
+              2.453,
+              -0.005,
+              -0.008
+            ]
+          },
+          {
+            "t_ms": 30391,
+            "event": "stance",
+            "model": "supported"
+          },
+          {
+            "t_ms": 30391,
+            "event": "arm_work"
+          },
+          {
+            "t_ms": 32295,
+            "event": "localized",
+            "marker": 20,
+            "from": [
+              2.453,
+              -0.005,
+              -0.008
+            ],
+            "to": [
+              2.452,
+              -0.005,
+              -0.004
+            ]
+          },
+          {
+            "t_ms": 34523,
+            "event": "arm",
+            "label": "clear of the hip",
+            "seconds": 1.6,
+            "tracking_rad": 0.0245,
+            "took_ms": 1608
+          },
+          {
+            "t_ms": 36131,
+            "event": "arm",
+            "label": "raised",
+            "seconds": 1.6,
+            "tracking_rad": 0.0242,
+            "took_ms": 1608
+          },
+          {
+            "t_ms": 37752,
+            "event": "arm",
+            "label": "above the object",
+            "seconds": 1.6,
+            "tracking_rad": 0.0181,
+            "took_ms": 1621
+          },
+          {
+            "t_ms": 39388,
+            "event": "arm",
+            "label": "pre-grasp",
+            "seconds": 1.6,
+            "tracking_rad": 0.0223,
+            "took_ms": 1636
+          },
+          {
+            "t_ms": 41012,
+            "event": "arm",
+            "label": "grasp",
+            "seconds": 1.6,
+            "tracking_rad": 0.0218,
+            "took_ms": 1624
+          },
+          {
+            "t_ms": 43524,
+            "event": "hand",
+            "label": "closed",
+            "error_rad": 0.0126
+          },
+          {
+            "t_ms": 44500,
+            "event": "attached",
+            "relative_position": [
+              0.1036,
+              0.0418,
+              0.013
+            ]
+          },
+          {
+            "t_ms": 46108,
+            "event": "arm",
+            "label": "lift",
+            "seconds": 1.6,
+            "tracking_rad": 0.0226,
+            "took_ms": 1608
+          },
+          {
+            "t_ms": 47728,
+            "event": "arm",
+            "label": "retreat",
+            "seconds": 1.6,
+            "tracking_rad": 0.0267,
+            "took_ms": 1620
+          },
+          {
+            "t_ms": 49356,
+            "event": "arm",
+            "label": "above the object",
+            "seconds": 1.6,
+            "tracking_rad": 0.0227,
+            "took_ms": 1628
+          },
+          {
+            "t_ms": 50976,
+            "event": "arm",
+            "label": "raised",
+            "seconds": 1.6,
+            "tracking_rad": 0.0262,
+            "took_ms": 1620
+          },
+          {
+            "t_ms": 52596,
+            "event": "arm",
+            "label": "clear of the hip",
+            "seconds": 1.6,
+            "tracking_rad": 0.0251,
+            "took_ms": 1620
+          },
+          {
+            "t_ms": 54208,
+            "event": "arm",
+            "label": "carry",
+            "seconds": 1.6,
+            "tracking_rad": 0.0122,
+            "took_ms": 1612
+          },
+          {
+            "t_ms": 56100,
+            "event": "stance",
+            "model": "free"
+          }
+        ]
+      },
+      "t_end_ms": 56100,
+      "wall_s": 27.81
+    },
+    {
+      "index": 3,
+      "kind": "move",
+      "status": "succeeded",
+      "t_start_ms": 56100,
+      "details": {
+        "iterations": [
+          [
+            0.529,
+            -0.104,
+            -0.066
+          ],
+          [
+            -0.104,
+            -0.025,
+            0.101
+          ],
+          [
+            0.007,
+            -0.021,
+            0.076
+          ]
+        ],
+        "error_m": 0.0224,
+        "error_rad": 0.0757,
+        "settled": true,
+        "events": [
+          {
+            "t_ms": 56700,
+            "event": "localized",
+            "marker": 20,
+            "from": [
+              2.452,
+              -0.005,
+              -0.004
+            ],
+            "to": [
+              2.436,
+              -0.007,
+              0.019
+            ]
+          },
+          {
+            "t_ms": 63092,
+            "event": "localized",
+            "marker": 20,
+            "from": [
+              1.695,
+              0.632,
+              0.019
+            ],
+            "to": [
+              1.797,
+              0.668,
+              0.126
+            ]
+          },
+          {
+            "t_ms": 69488,
+            "event": "localized",
+            "marker": 20,
+            "from": [
+              1.176,
+              1.247,
+              -0.325
+            ],
+            "to": [
+              1.488,
+              1.376,
+              -0.227
+            ]
+          },
+          {
+            "t_ms": 86083,
+            "event": "sidestep",
+            "toward": 1.0,
+            "n": 1
+          },
+          {
+            "t_ms": 90091,
+            "event": "sidestep",
+            "toward": 1.0,
+            "n": 2
+          },
+          {
+            "t_ms": 94283,
+            "event": "localized",
+            "marker": 21,
+            "from": [
+              2.183,
+              2.805,
+              -0.056
+            ],
+            "to": [
+              2.039,
+              2.443,
+              0.086
+            ]
+          },
+          {
+            "t_ms": 97683,
+            "event": "localized",
+            "marker": 21,
+            "from": [
+              1.931,
+              2.434,
+              0.044
+            ],
+            "to": [
+              1.921,
+              2.452,
+              0.111
+            ]
+          },
+          {
+            "t_ms": 100699,
+            "event": "localized",
+            "marker": 21,
+            "from": [
+              1.886,
+              2.448,
+              -0.0
+            ],
+            "to": [
+              1.912,
+              2.454,
+              0.085
+            ]
+          },
+          {
+            "t_ms": 103691,
+            "event": "localized",
+            "marker": 21,
+            "from": [
+              1.877,
+              2.451,
+              -0.026
+            ],
+            "to": [
+              1.917,
+              2.456,
+              0.061
+            ]
+          },
+          {
+            "t_ms": 104879,
+            "event": "localized",
+            "marker": 21,
+            "from": [
+              1.917,
+              2.456,
+              0.061
+            ],
+            "to": [
+              1.916,
+              2.469,
+              0.066
+            ]
+          },
+          {
+            "t_ms": 109675,
+            "event": "localized",
+            "marker": 21,
+            "from": [
+              2.584,
+              2.513,
+              -0.18
+            ],
+            "to": [
+              2.556,
+              2.414,
+              -0.101
+            ]
+          },
+          {
+            "t_ms": 113083,
+            "event": "localized",
+            "marker": 21,
+            "from": [
+              2.448,
+              2.425,
+              -0.059
+            ],
+            "to": [
+              2.445,
+              2.422,
+              -0.076
+            ]
+          },
+          {
+            "t_ms": 114495,
+            "event": "localized",
+            "marker": 21,
+            "from": [
+              2.445,
+              2.422,
+              -0.076
+            ],
+            "to": [
+              2.441,
+              2.42,
+              -0.064
+            ]
+          },
+          {
+            "t_ms": 114499,
+            "event": "stance",
+            "model": "supported"
+          },
+          {
+            "t_ms": 114511,
+            "event": "show_held"
+          },
+          {
+            "t_ms": 116135,
+            "event": "arm",
+            "label": "clear of the hip",
+            "seconds": 1.6,
+            "tracking_rad": 0.0262,
+            "took_ms": 1624
+          },
+          {
+            "t_ms": 117747,
+            "event": "arm",
+            "label": "raised",
+            "seconds": 1.6,
+            "tracking_rad": 0.0253,
+            "took_ms": 1612
+          },
+          {
+            "t_ms": 119375,
+            "event": "arm",
+            "label": "show",
+            "seconds": 1.6,
+            "tracking_rad": 0.0244,
+            "took_ms": 1628
+          },
+          {
+            "t_ms": 123911,
+            "event": "arm",
+            "label": "back raised",
+            "seconds": 1.6,
+            "tracking_rad": 0.0261,
+            "took_ms": 1612
+          },
+          {
+            "t_ms": 125539,
+            "event": "arm",
+            "label": "back clear of the hip",
+            "seconds": 1.6,
+            "tracking_rad": 0.0252,
+            "took_ms": 1628
+          },
+          {
+            "t_ms": 127163,
+            "event": "arm",
+            "label": "carry",
+            "seconds": 1.6,
+            "tracking_rad": 0.0122,
+            "took_ms": 1624
+          }
+        ]
+      },
+      "t_end_ms": 114495,
+      "wall_s": 58.39
+    }
+  ],
+  "goal": [
+    {
+      "index": 1,
+      "condition": {
+        "kind": "object_at",
+        "object": "box",
+        "location": "dst"
+      },
+      "result": "false",
+      "atoms": [
+        {
+          "atom": {
+            "kind": "object_at",
+            "object": "box",
+            "location": "dst"
+          },
+          "result": "false",
+          "seen_at_hand": "right"
+        }
+      ]
+    }
+  ],
+  "goal_evaluated": true,
+  "snapshots": [
+    {
+      "purpose": "goal",
+      "t_ms": 122299,
+      "frames": 10,
+      "markers": {
+        "7": {
+          "id": 7,
+          "position": [
+            0.2838,
+            -0.0982,
+            0.1286
+          ],
+          "normal": [
+            0.0086,
+            -0.0022,
+            1.0
+          ],
+          "confidence": 1.0,
+          "stamp_ms": 122200,
+          "frames": 10,
+          "detections": 10,
+          "range_m": 0.429,
+          "agreeing": 10,
+          "spread_m": 0.0,
+          "spread_rad": 0.0002,
+          "age_ms": 99
+        },
+        "21": {
+          "id": 21,
+          "position": [
+            1.2807,
+            0.5086,
+            -0.5933
+          ],
+          "normal": [
+            -0.9981,
+            -0.0603,
+            -0.008
+          ],
+          "confidence": 1.0,
+          "stamp_ms": 122200,
+          "frames": 10,
+          "detections": 10,
+          "range_m": 1.695,
+          "agreeing": 10,
+          "spread_m": 0.0002,
+          "spread_rad": 0.0002,
+          "age_ms": 99
+        }
+      },
+      "hands": {
+        "left": {
+          "state": "open",
+          "grasp_point": [
+            0.0381,
+            0.2286,
+            -0.1591
+          ],
+          "q": [
+            0.006,
+            0.139,
+            0.06,
+            -0.007,
+            -0.001,
+            -0.007,
+            -0.001
+          ]
+        },
+        "right": {
+          "state": "closed",
+          "grasp_point": [
+            0.2766,
+            -0.0993,
+            0.0786
+          ],
+          "q": [
+            0.013,
+            -0.601,
+            -1.0,
+            0.999,
+            1.2,
+            0.999,
+            1.2
+          ]
+        }
+      },
+      "observation_motion": 0
+    }
+  ],
+  "observation_motion": [
+    {
+      "phase": "goal",
+      "why": [
+        {
+          "kind": "object_at",
+          "object": "box",
+          "location": "dst"
+        }
+      ],
+      "performed": true,
+      "object": "box",
+      "hand": "right",
+      "waypoints": [
+        "clear of the hip",
+        "raised",
+        "show",
+        "raised",
+        "clear of the hip",
+        "carry"
+      ],
+      "clearance": {
+        "clear": true,
+        "boxes": [
+          "bench_table",
+          "shelf_table"
+        ],
+        "pelvis_in_map": [
+          2.441,
+          2.42,
+          -0.064
+        ],
+        "margins_m": {
+          "sideways": 0.03,
+          "vertical": 0.015,
+          "contact_overlap": 0.01
+        },
+        "legs": [
+          "carry->clear of the hip",
+          "clear of the hip->raised",
+          "raised->show"
+        ],
+        "closest": {
+          "over_limit_m": 0.0321,
+          "clearance_m": 0.0321,
+          "group": "hand",
+          "link": "right_wrist_yaw_link",
+          "box": "shelf_table",
+          "leg": "raised->show",
+          "at": 0.67
+        },
+        "waypoints": [
+          "carry",
+          "clear of the hip",
+          "raised",
+          "show"
+        ]
+      },
+      "arm_stance": "supported",
+      "t_start_ms": 114511,
+      "t_end_ms": 127163,
+      "events": [
+        {
+          "t_ms": 114511,
+          "event": "show_held"
+        },
+        {
+          "t_ms": 116135,
+          "event": "arm",
+          "label": "clear of the hip",
+          "seconds": 1.6,
+          "tracking_rad": 0.0262,
+          "took_ms": 1624
+        },
+        {
+          "t_ms": 117747,
+          "event": "arm",
+          "label": "raised",
+          "seconds": 1.6,
+          "tracking_rad": 0.0253,
+          "took_ms": 1612
+        },
+        {
+          "t_ms": 119375,
+          "event": "arm",
+          "label": "show",
+          "seconds": 1.6,
+          "tracking_rad": 0.0244,
+          "took_ms": 1628
+        },
+        {
+          "t_ms": 123911,
+          "event": "arm",
+          "label": "back raised",
+          "seconds": 1.6,
+          "tracking_rad": 0.0261,
+          "took_ms": 1612
+        },
+        {
+          "t_ms": 125539,
+          "event": "arm",
+          "label": "back clear of the hip",
+          "seconds": 1.6,
+          "tracking_rad": 0.0252,
+          "took_ms": 1628
+        },
+        {
+          "t_ms": 127163,
+          "event": "arm",
+          "label": "carry",
+          "seconds": 1.6,
+          "tracking_rad": 0.0122,
+          "took_ms": 1624
+        }
+      ]
+    }
+  ],
+  "observations": [
+    {
+      "t_ms": 4483,
+      "frames": 3,
+      "markers": {}
+    },
+    {
+      "t_ms": 7675,
+      "frames": 3,
+      "markers": {}
+    },
+    {
+      "t_ms": 12900,
+      "frames": 3,
+      "markers": {
+        "20": {
+          "id": 20,
+          "position": [
+            2.1652,
+            0.32,
+            -0.5658
+          ],
+          "normal": [
+            -0.9985,
+            0.0501,
+            -0.0233
+          ],
+          "confidence": 1.0,
+          "stamp_ms": 12800,
+          "frames": 3,
+          "detections": 3,
+          "range_m": 2.37,
+          "age_ms": 100
+        }
+      }
+    },
+    {
+      "t_ms": 15884,
+      "frames": 3,
+      "markers": {
+        "20": {
+          "id": 20,
+          "position": [
+            1.9226,
+            0.5037,
+            -0.5819
+          ],
+          "normal": [
+            -0.9995,
+            -0.0279,
+            -0.0176
+          ],
+          "confidence": 1.0,
+          "stamp_ms": 15800,
+          "frames": 3,
+          "detections": 3,
+          "range_m": 2.205,
+          "age_ms": 84
+        }
+      }
+    },
+    {
+      "t_ms": 16484,
+      "frames": 3,
+      "markers": {
+        "20": {
+          "id": 20,
+          "position": [
+            1.9198,
+            0.5086,
+            -0.579
+          ],
+          "normal": [
+            -0.9993,
+            -0.0308,
+            -0.0189
+          ],
+          "confidence": 1.0,
+          "stamp_ms": 16400,
+          "frames": 3,
+          "detections": 3,
+          "range_m": 2.199,
+          "age_ms": 84
+        }
+      }
+    },
+    {
+      "t_ms": 19284,
+      "frames": 4,
+      "markers": {
+        "20": {
+          "id": 20,
+          "position": [
+            1.8535,
+            0.4261,
+            -0.5702
+          ],
+          "normal": [
+            -0.9997,
+            0.0165,
+            -0.019
+          ],
+          "confidence": 1.0,
+          "stamp_ms": 19200,
+          "frames": 4,
+          "detections": 4,
+          "range_m": 2.117,
+          "age_ms": 84
+        }
+      }
+    },
+    {
+      "t_ms": 24083,
+      "frames": 4,
+      "markers": {
+        "20": {
+          "id": 20,
+          "position": [
+            1.1955,
+            0.4753,
+            -0.5857
+          ],
+          "normal": [
+            -0.9998,
+            -0.0117,
+            -0.0174
+          ],
+          "confidence": 1.0,
+          "stamp_ms": 24000,
+          "frames": 4,
+          "detections": 4,
+          "range_m": 1.622,
+          "age_ms": 83
+        }
+      }
+    },
+    {
+      "t_ms": 26875,
+      "frames": 4,
+      "markers": {
+        "20": {
+          "id": 20,
+          "position": [
+            1.2983,
+            0.4797,
+            -0.5798
+          ],
+          "normal": [
+            -0.9995,
+            -0.0217,
+            -0.0218
+          ],
+          "confidence": 1.0,
+          "stamp_ms": 26800,
+          "frames": 4,
+          "detections": 4,
+          "range_m": 1.694,
+          "age_ms": 75
+        }
+      }
+    },
+    {
+      "t_ms": 28291,
+      "frames": 5,
+      "markers": {
+        "20": {
+          "id": 20,
+          "position": [
+            1.3006,
+            0.4721,
+            -0.585
+          ],
+          "normal": [
+            -0.9997,
+            -0.0165,
+            -0.0165
+          ],
+          "confidence": 1.0,
+          "stamp_ms": 28200,
+          "frames": 5,
+          "detections": 5,
+          "range_m": 1.697,
+          "age_ms": 91
+        }
+      }
+    },
+    {
+      "t_ms": 29883,
+      "frames": 5,
+      "markers": {
+        "20": {
+          "id": 20,
+          "position": [
+            1.3037,
+            0.462,
+            -0.5863
+          ],
+          "normal": [
+            -0.9998,
+            -0.0079,
+            -0.0169
+          ],
+          "confidence": 1.0,
+          "stamp_ms": 29800,
+          "frames": 5,
+          "detections": 5,
+          "range_m": 1.698,
+          "age_ms": 83
+        }
+      }
+    },
+    {
+      "t_ms": 32295,
+      "frames": 10,
+      "markers": {
+        "7": {
+          "id": 7,
+          "position": [
+            0.2772,
+            -0.0978,
+            0.0382
+          ],
+          "normal": [
+            0.0108,
+            0.004,
+            0.9999
+          ],
+          "confidence": 1.0,
+          "stamp_ms": 32200,
+          "frames": 10,
+          "detections": 10,
+          "range_m": 0.502,
+          "age_ms": 95
+        },
+        "20": {
+          "id": 20,
+          "position": [
+            1.2957,
+            0.458,
+            -0.6042
+          ],
+          "normal": [
+            -1.0,
+            -0.0038,
+            0.0009
+          ],
+          "confidence": 0.9,
+          "stamp_ms": 32200,
+          "frames": 10,
+          "detections": 10,
+          "range_m": 1.702,
+          "age_ms": 95
+        }
+      }
+    },
+    {
+      "t_ms": 44492,
+      "frames": 5,
+      "markers": {
+        "7": {
+          "id": 7,
+          "position": [
+            0.2771,
+            -0.0985,
+            0.0387
+          ],
+          "normal": [
+            -0.0027,
+            0.0094,
+            1.0
+          ],
+          "confidence": 1.0,
+          "stamp_ms": 44400,
+          "frames": 5,
+          "detections": 5,
+          "range_m": 0.501,
+          "age_ms": 92
+        }
+      }
+    },
+    {
+      "t_ms": 56700,
+      "frames": 3,
+      "markers": {
+        "20": {
+          "id": 20,
+          "position": [
+            1.329,
+            0.4299,
+            -0.5909
+          ],
+          "normal": [
+            -0.9998,
+            0.0195,
+            -0.0105
+          ],
+          "confidence": 1.0,
+          "stamp_ms": 56600,
+          "frames": 3,
+          "detections": 3,
+          "range_m": 1.713,
+          "age_ms": 100
+        }
+      }
+    },
+    {
+      "t_ms": 63092,
+      "frames": 3,
+      "markers": {
+        "20": {
+          "id": 20,
+          "position": [
+            1.9153,
+            -0.4622,
+            -0.5865
+          ],
+          "normal": [
+            -0.992,
+            0.1259,
+            -0.0096
+          ],
+          "confidence": 1.0,
+          "stamp_ms": 63000,
+          "frames": 3,
+          "detections": 3,
+          "range_m": 2.197,
+          "age_ms": 92
+        }
+      }
+    },
+    {
+      "t_ms": 69488,
+      "frames": 3,
+      "markers": {
+        "20": {
+          "id": 20,
+          "position": [
+            2.4193,
+            -0.3935,
+            -0.5817
+          ],
+          "normal": [
+            -0.9743,
+            -0.2251,
+            -0.0109
+          ],
+          "confidence": 1.0,
+          "stamp_ms": 69400,
+          "frames": 3,
+          "detections": 3,
+          "range_m": 2.624,
+          "age_ms": 88
+        }
+      }
+    },
+    {
+      "t_ms": 75092,
+      "frames": 3,
+      "markers": {}
+    },
+    {
+      "t_ms": 77891,
+      "frames": 3,
+      "markers": {}
+    },
+    {
+      "t_ms": 82491,
+      "frames": 3,
+      "markers": {}
+    },
+    {
+      "t_ms": 85467,
+      "frames": 3,
+      "markers": {}
+    },
+    {
+      "t_ms": 86083,
+      "frames": 3,
+      "markers": {}
+    },
+    {
+      "t_ms": 90091,
+      "frames": 4,
+      "markers": {}
+    },
+    {
+      "t_ms": 94283,
+      "frames": 4,
+      "markers": {
+        "21": {
+          "id": 21,
+          "position": [
+            1.747,
+            0.256,
+            -0.5886
+          ],
+          "normal": [
+            -0.9962,
+            0.086,
+            -0.0126
+          ],
+          "confidence": 1.0,
+          "stamp_ms": 94200,
+          "frames": 4,
+          "detections": 4,
+          "range_m": 2.014,
+          "age_ms": 83
+        }
+      }
+    },
+    {
+      "t_ms": 97683,
+      "frames": 4,
+      "markers": {
+        "21": {
+          "id": 21,
+          "position": [
+            1.8669,
+            0.1912,
+            -0.5874
+          ],
+          "normal": [
+            -0.9938,
+            0.1107,
+            -0.008
+          ],
+          "confidence": 1.0,
+          "stamp_ms": 97600,
+          "frames": 4,
+          "detections": 4,
+          "range_m": 2.109,
+          "age_ms": 83
+        }
+      }
+    },
+    {
+      "t_ms": 100699,
+      "frames": 2,
+      "markers": {
+        "21": {
+          "id": 21,
+          "position": [
+            1.8656,
+            0.2352,
+            -0.591
+          ],
+          "normal": [
+            -0.9964,
+            0.085,
+            -0.0007
+          ],
+          "confidence": 1.0,
+          "stamp_ms": 100600,
+          "frames": 2,
+          "detections": 2,
+          "range_m": 2.114,
+          "age_ms": 99
+        }
+      }
+    },
+    {
+      "t_ms": 103691,
+      "frames": 2,
+      "markers": {
+        "21": {
+          "id": 21,
+          "position": [
+            1.8589,
+            0.2794,
+            -0.5932
+          ],
+          "normal": [
+            -0.9981,
+            0.0611,
+            -0.0082
+          ],
+          "confidence": 1.0,
+          "stamp_ms": 103600,
+          "frames": 2,
+          "detections": 2,
+          "range_m": 2.114,
+          "age_ms": 91
+        }
+      }
+    },
+    {
+      "t_ms": 104879,
+      "frames": 4,
+      "markers": {
+        "21": {
+          "id": 21,
+          "position": [
+            1.8623,
+            0.2586,
+            -0.5945
+          ],
+          "normal": [
+            -0.9977,
+            0.0664,
+            -0.011
+          ],
+          "confidence": 1.0,
+          "stamp_ms": 104800,
+          "frames": 4,
+          "detections": 4,
+          "range_m": 2.115,
+          "age_ms": 79
+        }
+      }
+    },
+    {
+      "t_ms": 109675,
+      "frames": 4,
+      "markers": {
+        "21": {
+          "id": 21,
+          "position": [
+            1.1512,
+            0.5522,
+            -0.5923
+          ],
+          "normal": [
+            -0.9949,
+            -0.1007,
+            -0.0114
+          ],
+          "confidence": 1.0,
+          "stamp_ms": 109600,
+          "frames": 4,
+          "detections": 4,
+          "range_m": 1.622,
+          "age_ms": 75
+        }
+      }
+    },
+    {
+      "t_ms": 113083,
+      "frames": 4,
+      "markers": {
+        "21": {
+          "id": 21,
+          "position": [
+            1.2775,
+            0.523,
+            -0.5897
+          ],
+          "normal": [
+            -0.997,
+            -0.0757,
+            -0.0138
+          ],
+          "confidence": 1.0,
+          "stamp_ms": 113000,
+          "frames": 4,
+          "detections": 4,
+          "range_m": 1.699,
+          "age_ms": 83
+        }
+      }
+    },
+    {
+      "t_ms": 114495,
+      "frames": 5,
+      "markers": {
+        "21": {
+          "id": 21,
+          "position": [
+            1.2838,
+            0.5102,
+            -0.5917
+          ],
+          "normal": [
+            -0.9979,
+            -0.0643,
+            -0.0074
+          ],
+          "confidence": 1.0,
+          "stamp_ms": 114400,
+          "frames": 5,
+          "detections": 5,
+          "range_m": 1.701,
+          "age_ms": 95
+        }
+      }
+    }
+  ],
+  "stop": null,
+  "realtime": {
+    "realtime_valid": true,
+    "ratio": 1.0,
+    "sim_s": 123.36,
+    "wall_s": 123.36,
+    "slow_seconds": [],
+    "stalls": 0,
+    "worst_second_ratio_overall": 0.9974,
+    "step_compute_ms": {
+      "budget": 2.0,
+      "mean": 0.574,
+      "p99": 1.632,
+      "max": 11.2,
+      "over_budget": 0.0052
+    },
+    "gc": {
+      "collections": [
+        7,
+        1,
+        1
+      ],
+      "max_ms": [
+        0.1,
+        0.97,
+        12.52
+      ],
+      "slow_steps": [
+        [
+          3.39,
+          80.1,
+          0
+        ],
+        [
+          3.832,
+          34.4,
+          0
+        ],
+        [
+          35.16,
+          21.2,
+          0
+        ]
+      ],
+      "frozen": 70627,
+      "enabled": true,
+      "threshold": [
+        700,
+        10,
+        1000000
+      ]
+    },
+    "camera": {
+      "frames": 634,
+      "dropped": 1,
+      "render_ms": 73.6,
+      "hz": 5.01
+    }
+  },
+  "core_outcome": {
+    "outcome": {
+      "kind": "outcome",
+      "goal": "rl:goal:pick_no_place",
+      "status": "failed",
+      "verification": {
+        "verified_by": "rl:sim:g1-mujoco",
+        "method": "criteria_evaluated",
+        "evaluated_at": "2000-01-01T00:02:02.299Z",
+        "criteria_results": [
+          {
+            "criterion": 0,
+            "met": false,
+            "evidence": []
+          }
+        ]
+      },
+      "reasons": [],
+      "reported_by": "rl:sim:g1-mujoco",
+      "reported_at": "2000-01-01T00:02:02.299Z"
+    },
+    "evidence": []
+  },
+  "start_pose": [
+    0.0,
+    0.0,
+    0.0
+  ],
+  "pose_belief_end": [
+    2.4405,
+    2.4198,
+    -0.0643
+  ],
+  "run_id": "7846c96686225f0f"
+}
