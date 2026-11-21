@@ -1,0 +1,182 @@
+{
+  "schema": "robolang-g1-site/2",
+  "name": "pick_place",
+  "floor": {
+    "center": [
+      2.0,
+      1.2
+    ],
+    "half_size": [
+      5.5,
+      4.0
+    ],
+    "friction": 1.0
+  },
+  "robot": {
+    "name": "g1",
+    "start": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "arm_stance": "supported"
+  },
+  "tables": [
+    {
+      "name": "bench_table",
+      "pos": [
+        2.81,
+        -0.065,
+        0.375
+      ],
+      "half_size": [
+        0.13,
+        0.185,
+        0.375
+      ]
+    },
+    {
+      "name": "shelf_table",
+      "pos": [
+        2.81,
+        2.335,
+        0.375
+      ],
+      "half_size": [
+        0.13,
+        0.185,
+        0.375
+      ]
+    }
+  ],
+  "objects": [
+    {
+      "name": "box",
+      "pos": [
+        2.73,
+        -0.1,
+        0.78
+      ],
+      "half_size": [
+        0.03,
+        0.03,
+        0.03
+      ],
+      "mass": 0.2,
+      "marker": {
+        "id": 7,
+        "face": "top"
+      },
+      "grasp": {
+        "hand": "right"
+      }
+    }
+  ],
+  "stations": [
+    {
+      "name": "bench",
+      "marker": {
+        "id": 20,
+        "size": 0.24,
+        "pos": [
+          3.75,
+          0.45,
+          0.19
+        ],
+        "facing": 3.14159265
+      },
+      "stand": [
+        1.3,
+        0.45,
+        0.0
+      ]
+    },
+    {
+      "name": "shelf",
+      "marker": {
+        "id": 21,
+        "size": 0.24,
+        "pos": [
+          3.75,
+          2.85,
+          0.19
+        ],
+        "facing": 3.14159265
+      },
+      "stand": [
+        1.3,
+        0.45,
+        0.0
+      ]
+    },
+    {
+      "name": "pad",
+      "marker": {
+        "id": 22,
+        "size": 0.24,
+        "pos": [
+          0.55,
+          2.5,
+          0.19
+        ],
+        "facing": -1.570796325
+      },
+      "stand": [
+        1.3,
+        0.45,
+        0.0
+      ]
+    }
+  ],
+  "locations": [
+    {
+      "name": "bench",
+      "station": "bench",
+      "region": {
+        "min": [
+          0.35,
+          0.56,
+          0.91
+        ],
+        "max": [
+          0.75,
+          0.76,
+          1.09
+        ]
+      }
+    },
+    {
+      "name": "shelf",
+      "station": "shelf",
+      "region": {
+        "min": [
+          0.35,
+          0.56,
+          0.91
+        ],
+        "max": [
+          0.75,
+          0.76,
+          1.09
+        ]
+      }
+    },
+    {
+      "name": "pad",
+      "station": "pad"
+    }
+  ],
+  "bindings": {
+    "robots": {
+      "robot_1": "g1"
+    },
+    "objects": {
+      "box_1": "box"
+    },
+    "locations": {
+      "loc_a": "bench",
+      "loc_b": "shelf",
+      "loc_c": "pad"
+    }
+  }
+}

@@ -56,7 +56,8 @@ from pathlib import Path
 import mujoco
 import numpy as np
 
-from .. import API_ATTACH, API_DETACH, API_IDENTITY, API_PUSH, API_STATUS, DOMAIN, ERR_REFUSED, INTERFACE
+from .. import API_ATTACH, API_DETACH, API_IDENTITY, API_PUSH, API_SET_STANCE, API_STATUS, DOMAIN, ERR_REFUSED
+from .. import INTERFACE
 from .. import SIM_API_VERSION
 from .. import SIM_SERVICE, assets
 from . import scene
@@ -301,6 +302,19 @@ class Simulator:
         self.note_command("attach")
         return {"object": obj, "hand": side, "relative_position": [round(float(x), 4) for x in rel_pos]}
 
+    def set_stance(self, model: str) -> dict:
+        """Switch the balance support (simulation thread). Only while the robot stands still: `supported` welds the pelvis
+        where it is, `free` lets go and hands the legs to the policy from a clean history."""
+        if model not in STANCES:
+            raise ValueError(f"unknown stance {model!r}")
+        if model != self.stance.name:
+            if not self.stance.standing:
+                raise ValueError("the robot is not standing still")
+            if hasattr(self.stance, "_release"):
+                self.stance._release()
+            self.stance = make_stance(model, Body(self.model, self.data, self.robot, self.policy))
+        return {"model": self.stance.name, "phase": self.stance.phase}
+
     def detach(self, obj: str) -> dict:
         m, d = self.model, self.data
         if obj not in self.attached:
@@ -342,6 +356,9 @@ class Simulator:
             "markers": {name: {"id": mid, "size": size, "pos": np.round(d.geom_xpos[g], 5).tolist()}
                         for name, (g, mid, size) in self._markers.items()},
             "attached": dict(self.attached),
+            "hands": {side: np.round(d.qpos[r.hand_qadr[side]], 4).tolist() for side in ("left", "right")},
+            "wrists": {side: np.round(d.xpos[self.model.body(HAND_BODY[side]).id], 4).tolist()
+                       for side in ("left", "right")},
             "commands": {k: dict(v) for k, v in self.commands.items()},
             "stance": {"model": self.stance.name, "phase": self.stance.phase, "standing": self.stance.standing},
             "velocity_command": list(self._command()),
@@ -632,8 +649,15 @@ def make_services(sim: Simulator, test_hooks: bool = False):
             self._RegistHandler(API_STATUS, lambda p: (0, json.dumps(sim.status())), False)
             self._RegistHandler(API_ATTACH, self.attach, False)
             self._RegistHandler(API_DETACH, self.detach, False)
+            self._RegistHandler(API_SET_STANCE, self.set_stance, False)
             if test_hooks:  # only with --test-hooks: a push for the harness's fall test
                 self._RegistHandler(API_PUSH, self.push, False)
+
+        def set_stance(self, parameter):
+            try:
+                return 0, json.dumps(sim.request(sim.set_stance, json.loads(parameter)["model"]))
+            except (ValueError, KeyError):
+                return RPC_ERR_SERVER_API_PARAMETER, ""
 
         def push(self, parameter):
             p = json.loads(parameter)

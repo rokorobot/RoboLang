@@ -35,6 +35,13 @@ CAMERA_SIZE = (DEFAULT_CAMERA["width"], DEFAULT_CAMERA["height"])  # width, heig
 CAMERA_FOVY = DEFAULT_CAMERA["fovy"]
 CAMERA_POS = tuple(DEFAULT_CAMERA["pos"])
 CAMERA_PITCH = DEFAULT_CAMERA["pitch"]
+# Collision bits. Robot links and the floor are contype 1, conaffinity 1. Hands are contype 4 and conaffinity 1; objects
+# contype 2 and conaffinity 3; tables contype 8 and conaffinity 3. A pair collides when one's contype meets the other's
+# conaffinity, so: hands touch the floor and the robot's own body, but never an object or a table; objects rest on the
+# floor and on tables, and the robot's other links (forearms, legs) do touch them. Grasping is a weld after the hand
+# closes (0046 U7), so there is no finger contact to tune, and the hand cannot knock over the object it is about to
+# hold or catch on the table it reaches over. The executor plans no collision-free arm paths yet (phase 4).
+HAND_BIT, OBJECT_BIT, TABLE_BIT = 4, 2, 8
 STAND_HEIGHT = 0.788  # pelvis height of the standing pose (measured: the policy's standing pose on this model)
 # Geom groups. The robot's meshes come twice (a visual copy in group 1 and a collision copy in group 0); the camera
 # draws group 1 only, which halves the triangles it has to rasterise on the CPU. The world is in group 1 too.
@@ -76,13 +83,15 @@ FACES = {  # face of an object box -> (outward normal, rotation that makes the m
 }
 
 
-def marker_png(marker_id: int) -> bytes:
+def marker_png(marker_id: int, blank: bool = False) -> bytes:
     """An ArUco 4x4_50 marker with a white border, as PNG bytes (the texture of a marker plate)."""
     import cv2
 
     dictionary = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50)
     side = 200
     image = cv2.aruco.generateImageMarker(dictionary, marker_id, side)
+    if blank:
+        image[:] = 255
     border = int(side * MARKER_BORDER)
     image = cv2.copyMakeBorder(image, border, border, border, border, cv2.BORDER_CONSTANT, value=255)
     return cv2.imencode(".png", image)[1].tobytes()
@@ -114,9 +123,9 @@ def camera_intrinsics() -> tuple[float, float, float, float]:
     return intrinsics(DEFAULT_CAMERA)
 
 
-def _add_marker_plate(spec, body, name, marker_id, plate_half, pos, quat):
-    """A thin textured plate (visual only) whose +z face carries the marker."""
-    spec.assets[f"{name}.png"] = marker_png(marker_id)
+def _add_marker_plate(spec, body, name, marker_id, plate_half, pos, quat, blank=False):
+    """A thin textured plate (visual only) whose +z face carries the marker (or, `blank`, a plain white sheet)."""
+    spec.assets[f"{name}.png"] = marker_png(marker_id, blank)
     spec.add_texture(name=name, type=mujoco.mjtTexture.mjTEXTURE_2D, file=f"{name}.png")
     material = spec.add_material(name=name)
     material.textures[mujoco.mjtTextureRole.mjTEXROLE_RGB] = name
@@ -175,7 +184,11 @@ def build_spec(site) -> mujoco.MjSpec:
             children = [b for b in spec.bodies if b.parent is not None and b.parent.name == link.name]
             tip = np.array(children[0].pos) if children else np.array(link.pos) / np.linalg.norm(link.pos) * FINGER_TIP
             link.add_geom(type=mujoco.mjtGeom.mjGEOM_CAPSULE, fromto=[0, 0, 0, *tip], size=[FINGER_RADIUS, 0, 0],
-                          group=VISIBLE, rgba=[0.85, 0.85, 0.88, 1], mass=0.0, density=0.0)
+                          group=VISIBLE, rgba=[0.85, 0.85, 0.88, 1], mass=0.0, density=0.0, contype=HAND_BIT,
+                          conaffinity=1)
+    for geom in spec.geoms:  # the palm is in the wrist link: hands touch the world and the robot, never an object
+        if geom.parent.name in HAND_BODY.values() and geom.contype:
+            geom.contype, geom.conaffinity = HAND_BIT, 1
     pelvis.add_site(name="imu", pos=[0.04525, 0, -0.08339], size=[0.01, 0, 0])
     spec.add_sensor(name="imu_quat", type=mujoco.mjtSensor.mjSENS_FRAMEQUAT, objtype=mujoco.mjtObj.mjOBJ_SITE,
                     objname="imu")
@@ -213,7 +226,7 @@ def build_spec(site) -> mujoco.MjSpec:
                                 diffuse=[0.5, 0.5, 0.5], castshadow=0)
     for table in site["tables"]:
         spec.worldbody.add_geom(name=table["name"], type=mujoco.mjtGeom.mjGEOM_BOX, pos=table["pos"],
-                                size=table["half_size"], group=VISIBLE,
+                                size=table["half_size"], group=VISIBLE, contype=TABLE_BIT, conaffinity=1 | OBJECT_BIT,
                                 rgba=table.get("rgba", [0.55, 0.42, 0.3, 1]))
     for obj in site["objects"]:
         body = spec.worldbody.add_body(name=obj["name"], pos=obj["pos"])
@@ -221,7 +234,7 @@ def build_spec(site) -> mujoco.MjSpec:
         half = obj["half_size"]
         body.add_geom(name=f"{obj['name']}_box", type=mujoco.mjtGeom.mjGEOM_BOX, size=half,
                       rgba=obj.get("rgba", [0.8, 0.2, 0.2, 1]), mass=obj.get("mass", 0.2), friction=[1.0, 0.01, 0.001],
-                      group=VISIBLE)
+                      group=VISIBLE, contype=OBJECT_BIT, conaffinity=1 | OBJECT_BIT)
         marker = obj.get("marker")
         if marker:
             normal, quat = FACES[marker["face"]]
@@ -243,8 +256,9 @@ def build_spec(site) -> mujoco.MjSpec:
         quat = np.zeros(4)
         mujoco.mju_mat2Quat(quat, marker_frame(m)[0].flatten())
         panel = spec.worldbody.add_body(name=f"station_{station['name']}", pos=pos, quat=list(quat))
+        # `covered`: the marker is hidden (a cloth over it). Only a scene says so; the executor's site does not.
         _add_marker_plate(spec, panel, f"marker_station_{station['name']}", m["id"], side / 2, [0, 0, 0],
-                          [1, 0, 0, 0])
+                          [1, 0, 0, 0], blank=bool(m.get("covered")))
         panel.add_geom(type=mujoco.mjtGeom.mjGEOM_BOX, size=[side / 2, side / 2, 0.004], pos=[0, 0, -0.0045],
                        rgba=[0.9, 0.9, 0.9, 1], contype=0, conaffinity=0)
     return spec

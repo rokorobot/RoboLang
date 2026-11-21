@@ -9,12 +9,14 @@ site the executor is given (an object removed, a marker covered): that is how th
     {
       "schema": "robolang-g1-site/2", "name": "...",
       "floor":  {"center": [x, y], "half_size": [hx, hy], "friction": 1.0},
-      "robot":  {"name": "g1", "start": [x, y, yaw]},        # the pelvis pose in the map at start (what it is told)
+      "robot":  {"name": "g1", "start": [x, y, yaw], "arm_stance": "free" | "supported"},   # the start is the pelvis pose
+                                                                       # in the map at start (what the robot is told)
       "camera": {"width": 640, "height": 480, "fovy": 58.0, "pos": [x, y, z], "pitch": 0.83},  # head calibration
       "tables": [{"name", "pos", "half_size", "rgba"?}],
       "objects": [{"name", "pos", "half_size", "mass"?, "rgba"?, "marker": {"id", "face", "size"?},
                    "grasp"?: {"hand": "nearest" | "left" | "right"}}],
-      "stations": [{"name", "marker": {"id", "size", "pos": [x, y, z], "facing": yaw}, "stand": [d, l, a]}],
+      "stations": [{"name", "marker": {"id", "size", "pos": [x, y, z], "facing": yaw, "tilt"?: 0.0, "covered"?: false},
+                    "stand": [d, l, a]}],
       "locations": [{"name", "station", "region"?: {"min": [x, y, z], "max": [x, y, z]}}],
       "bindings": {"robots": {ID: robot}, "objects": {ID: object}, "locations": {ID: location}}
     }
@@ -97,6 +99,8 @@ def load_site(site) -> dict:
     data.setdefault("bindings", {})
     data["robot"] = dict(data["robot"])
     data["robot"].setdefault("name", "g1")
+    if data["robot"].setdefault("arm_stance", "free") not in ("free", "supported"):
+        raise SiteError("robot.arm_stance must be 'free' or 'supported'")
     start = data["robot"].setdefault("start", [0.0, 0.0, 0.0])
     if not isinstance(start, list) or len(start) != 3:
         raise SiteError("robot.start must be [x, y, yaw]")
@@ -177,11 +181,16 @@ def yaw_of(R: np.ndarray) -> float:
 
 
 def marker_frame(marker: dict) -> tuple[np.ndarray, np.ndarray]:
-    """(R, p) of a station marker in the map: the columns of R are the marker's x (right), y (up), z (out)."""
-    f = float(marker["facing"])
+    """(R, p) of a station marker in the map: the columns of R are the marker's x (right), y (up), z (out).
+
+    `facing` is the yaw of the plate's outward normal; `tilt` (default 0, a vertical panel) leans the plate back so its
+    face looks up by that angle: a head camera that looks down sees a tilted panel more squarely."""
+    f, tilt = float(marker["facing"]), float(marker.get("tilt", 0.0))
     out = np.array([math.cos(f), math.sin(f), 0.0])
     up = np.array([0.0, 0.0, 1.0])
-    return np.column_stack([np.cross(up, out), up, out]), np.array(marker["pos"], float)
+    z = out * math.cos(tilt) + up * math.sin(tilt)
+    y = up * math.cos(tilt) - out * math.sin(tilt)
+    return np.column_stack([np.cross(y, z), y, z]), np.array(marker["pos"], float)
 
 
 def station(site: dict, name: str) -> dict:
