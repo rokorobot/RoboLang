@@ -124,7 +124,7 @@ the pinch at the object's centre (the closed fingers stay level with the object'
 hand just touches the table top, to within 1 cm), the hand comes in through a pose raised beside the body (tried further out if the object
 would pass the table's corner) and one straight above the pre-grasp. The **carry pose** of a held object is the walking
 controller's own arm pose moved only as far as it takes for the object, welded as grasped, to clear **every link of the robot**
-(the holding hand's own palm and fingers excepted) by 2.1 cm in the model (measured at rest, with the arm's tracking error: 1.6-2.2 cm);
+(the holding hand's own palm and fingers excepted) by 2.1 cm in the model (measured at rest, with the arm's tracking error: 1.6-2.2 cm, accepted by the owner 2026-11-21);
 in the walking pose it is 0.1-0.6 cm from the right hip link. It is planned before the arm moves (S502 if there is none) and again from the object as it is actually held.
 
 **Arm work stance.** The free stance moved the robot by centimetres to decimetres when an arm reached (measured in the
