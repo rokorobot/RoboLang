@@ -7,6 +7,7 @@ task does (walking, arm_sdk at 50 Hz, a hand), then prints the stand-in's `step_
 collections of each generation ran and the longest one. With --no-gc-freeze the stand-in leaves the collector as it
 was before phase 2 (but still times it).
 """
+
 import argparse
 import json
 import tempfile
@@ -24,8 +25,9 @@ ap = argparse.ArgumentParser()
 ap.add_argument("--out", required=True)
 ap.add_argument("--seconds", type=float, default=90)
 ap.add_argument("--no-gc-freeze", action="store_true")
-ap.add_argument("--site", default=str(Path(__file__).resolve().parents[3] / "backends/unitree_g1/robolang_g1/sites"
-                                       / "phase1.json"))
+ap.add_argument(
+    "--site", default=str(Path(__file__).resolve().parents[3] / "backends/unitree_g1/robolang_g1/sites" / "phase1.json")
+)
 args = ap.parse_args()
 run_dir = Path(tempfile.mkdtemp(prefix="gc_check_"))
 standin = StandIn(args.site, run_dir, extra_args=["--no-gc-freeze"] if args.no_gc_freeze else [])
@@ -50,8 +52,18 @@ while time.monotonic() < t_end:
 robot.stop_arm_sdk()
 status = client.Status()[1]
 final = standin.stop()
-Path(args.out).write_text(json.dumps({"no_gc_freeze": args.no_gc_freeze, "seconds": args.seconds,
-                                      "step_compute_ms": final["step_compute_ms"], "gc": final["gc"],
-                                      "realtime_ratio": final["realtime_ratio"], "stalls": final["stalls"],
-                                      "worst_second_ratio": final["worst_second_ratio"]}, indent=2))
+Path(args.out).write_text(
+    json.dumps(
+        {
+            "no_gc_freeze": args.no_gc_freeze,
+            "seconds": args.seconds,
+            "step_compute_ms": final["step_compute_ms"],
+            "gc": final["gc"],
+            "realtime_ratio": final["realtime_ratio"],
+            "stalls": final["stalls"],
+            "worst_second_ratio": final["worst_second_ratio"],
+        },
+        indent=2,
+    )
+)
 print(json.dumps({k: final[k] for k in ("step_compute_ms", "gc", "stalls", "worst_second_ratio")}))

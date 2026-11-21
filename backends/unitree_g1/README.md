@@ -1,9 +1,10 @@
 # robolang-g1
 
 The Unitree G1 humanoid in MuJoCo, behind Unitree's own SDK. **Simulation only.** Decision record
-[0046](../../spec/decisions/0046-humanoid-backend-unitree-g1.md); this is its phase 1: the stand-in and the harness
-that decide whether the backend can go ahead. There is no executor yet. Nothing here can reach a real robot: the guard
-refuses DDS domain 0, any interface but loopback, and anything that does not answer as the simulator.
+[0046](../../spec/decisions/0046-humanoid-backend-unitree-g1.md): phase 1 is the stand-in and the harness (P1-P6);
+phase 2 is the **executor** (`move`, `grasp`, `place`, `wait for`, the biped's stop, run records; checks E1-E7). Goal
+verdicts from observations are phase 3. Nothing here can reach a real robot: the guard refuses DDS domain 0, any interface
+but loopback, and anything that does not answer as the simulator.
 
 ## Run it
 
@@ -13,7 +14,18 @@ bash backends/unitree_g1/scripts/fetch_assets.sh             # models, policy, S
 python -m pip install -e "backends/unitree_g1[test]"         # mujoco, numpy, opencv (headless), onnxruntime, cyclonedds
 python -m pytest -q backends/unitree_g1/tests
 MUJOCO_GL=egl python -m robolang_g1.harness --out harness.json    # P1-P6; exit 0 = go; takes about 2 minutes
+MUJOCO_GL=egl python -m robolang_g1.phase2 --out phase2.json      # E1-E7; exit 0 = all pass; about half an hour
 ```
+
+Run a task (the stand-in starts for it; `python -m robolang_g1.cli` runs one against a stand-in that is already up):
+
+```sh
+MUJOCO_GL=egl python -m robolang_g1.run_task bench/reference/e_pick_place.rob --task pick_place \
+    --site backends/unitree_g1/robolang_g1/sites/pick_place.json \
+    --bind r=robot_1 --bind box=box_1 --bind src=loc_a --bind dst=loc_b --out record.json   # exit 4: every step ran
+```
+
+**One stand-in at a time**: two on one DDS domain mix their `lowstate`, frames and commands.
 
 Assets go to `${G1_ASSETS:-$HOME/.cache/robolang-g1}` (about 200 MB with the CycloneDDS build), each with its licence.
 The fetch script is idempotent and prints a versions JSON. Use a virtual environment; set `PYTHON` to its interpreter
@@ -31,7 +43,12 @@ if you do not activate it. It needs `git`, `cmake`, a C compiler and `python3-de
 | `robolang_g1/sim/stance.py` | what the robot does when it stands still: `free` (default) or `supported` |
 | `robolang_g1/guard.py` | the simulation guard (S501) |
 | `robolang_g1/harness.py` | checks P1-P6 through the real SDK clients, writes `harness.json` |
-| `robolang_g1/sites/phase1.json` | the site the harness uses; its schema is `robolang-g1-site/1` (see `scene.py`) |
+| `robolang_g1/robot.py` | the SDK clients (`LocoClient`, `rt/arm_sdk`, `rt/dex3/*`, `rt/lowstate`) and the camera source, shared by the harness and the executor |
+| `robolang_g1/site.py` | the site file, `robolang-g1-site/2` (`/1` still loads) |
+| `robolang_g1/kinematics.py`, `perception.py` | the robot's own kinematic model, damped-least-squares IK; ArUco poses in the pelvis frame |
+| `robolang_g1/ops.py`, `executor.py`, `cli.py` | what is done to the robot; the run, the stop and the record; the command line |
+| `robolang_g1/phase2.py`, `run_task.py` | checks E1-E7 (they read the oracle; the executor never does); start a stand-in and run one task |
+| `robolang_g1/sites/` | `phase1.json` (the harness's, `/1`), `pick_place.json` and `carry_hold.json` (for `bench/reference/e_pick_place.rob` and `w_carry_hold.rob`) |
 
 ## The stand-in
 
@@ -43,7 +60,8 @@ if you do not activate it. It needs `git`, `cmake`, a C compiler and `python3-de
   state change except Start (500), is refused with code 7400**: the stand-in never collapses the robot.
 * `rt/arm_sdk` blends joints 12-28 over the walking controller by the weight in `motor_cmd[29].q`; the Dex3 hands take
   `rt/dex3/{left,right}/cmd` and publish `.../state`. `robolang_sim` also attaches an object to a hand (a MuJoCo weld,
-  U7) for the carry test.
+  U7), switches the stance (`SetStance`), and counts the commands it receives (`status`). Started with `--test-hooks` it
+  also answers a push on the torso, for the fall test; the executor never calls it.
 * The head camera (640x480, 5 Hz) is rendered on its own thread from a copy of the state. Frames: `DIR/head/latest.png`
   and `latest.json`. Read the JSON, then the PNG, then the JSON again; keep the frame if both name the same `frame`.
 * `--oracle PATH` writes ground truth (poses, marker positions, a fallen flag) for the harness. Nothing else reads
@@ -64,4 +82,5 @@ record carries its `stance_model`. A new stance implements the small `Stance` in
 [docs/evidence/g1-phase1-harness.md](../../docs/evidence/g1-phase1-harness.md): what ran, `harness.json`, the hand-model
 decision, the timestep finding, and everything that differs from 0046. The stand-in is **not** Unitree's controller:
 gait, speed and drift on the robot will differ, so an executor must close every motion on observation. CI is
-`.github/workflows/g1-sim.yml` (on demand and nightly, x86_64, not on pull requests).
+`.github/workflows/g1-sim.yml` (on demand and nightly, and on pull requests that change the backend; x86_64).
+Phase 2: [docs/evidence/g1-phase2-executor.md](../../docs/evidence/g1-phase2-executor.md).

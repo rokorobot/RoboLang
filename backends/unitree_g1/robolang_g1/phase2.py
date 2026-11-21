@@ -762,12 +762,13 @@ def free_stance_trial(ctx: Ctx) -> dict:
         {"r": "robot_1", "o": "box_1", "l": "loc_a"},
     )
     out: dict = {"state": rec and rec["state"], "failure": rec and rec["failure"]}
-    step = next((x for x in (rec or {}).get("steps", []) if x["kind"] == "grasp" and "details" in x), None)
-    if step and "arm_work_ms" in step["details"] and step["details"]["arm_work_ms"][0]:
-        a0, a1 = step["details"]["arm_work_ms"]
-        w = between(samples, a0, a1 or samples[-1]["sim_time"] * 1000)
+    step = next((x for x in (rec or {}).get("steps", []) if x["kind"] == "grasp"), None)
+    started = [e["t_ms"] for e in ((step or {}).get("details") or {}).get("events", []) if e.get("event") == "arm_work"]
+    if step and started:  # a failed step keeps its events, so the window is known either way
+        w = between(samples, started[-1], step["t_end_ms"])
         if w:
             out["robot_moved_m"] = round(max(float(np.linalg.norm(pelvis_xy(x) - pelvis_xy(w[0]))) for x in w), 4)
+            out["pelvis_path_m"] = round(path_length(w), 4)
     return out
 
 

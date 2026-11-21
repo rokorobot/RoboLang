@@ -131,6 +131,7 @@ class G1Operations:
         self.q_carry: np.ndarray | None = None
         self.fallen = False
         self._last_score = 0.0
+        self.stance_now: str | None = None  # the stand-in's balance support, as last set
 
     # ------------------------------------------------------------------------------------------ set-up
 
@@ -140,6 +141,7 @@ class G1Operations:
             self.sim, self.identity = guard.require_simulation()
         except guard.GuardError as exc:
             raise BackendFailure(guard.CODE, exc.reason) from exc
+        self.stance_now = self.identity.get("stance_model")
         head = self.head_dir or self.identity.get("head_camera_dir")
         if not head:
             raise BackendFailure("S501", "the robot reports no head camera frame source and none was given")
@@ -629,7 +631,7 @@ class G1Operations:
         """Ask the stand-in for the balance support the site names for arm work (0046 U4: the free stance moved the
         robot about 12 cm when the arm reached; `supported` welds the pelvis, which stands in for balance the robot's
         own controller provides). Waits for the stand-in to report it holding. Returns the model now in force."""
-        if self.identity.get("stance_model") == model and model == "free":
+        if self.stance_now == model:
             return model
         self.settle()
         code, info = self.sim.SetStance(model)
@@ -642,6 +644,7 @@ class G1Operations:
             if status and status["stance"]["model"] == model and status["stance"]["phase"] in ("hold", "standing"):
                 break
             time.sleep(0.1)
+        self.stance_now = model
         self.events.append({"t_ms": self.now_ms(), "event": "stance", "model": model})
         return model
 
@@ -675,6 +678,7 @@ class G1Operations:
         )  # S502 here, before any motion
         details["reach"] = {k: plan[k] for k in ("fingers_down_deg", "waist_rad", "position_error_m")}
         details["arm_work_ms"] = [self.now_ms(), None]  # from here the arms move: what the checks judge the stance by
+        self.events.append({"t_ms": self.now_ms(), "event": "arm_work"})
         details["arm_work_stance"] = self._arm_stance(self.site["robot"]["arm_stance"])
         self._arm_begin()
         self._arm_move(self._clear_pose(side), 1.6, label="clear of the hip")
@@ -747,6 +751,7 @@ class G1Operations:
         )
         details["reach"] = {k: plan[k] for k in ("fingers_down_deg", "waist_rad", "position_error_m")}
         details["arm_work_ms"] = [self.now_ms(), None]
+        self.events.append({"t_ms": self.now_ms(), "event": "arm_work"})
         details["arm_work_stance"] = self._arm_stance(self.site["robot"]["arm_stance"])
         self._arm_begin()
         self._arm_move(self._clear_pose(side), 1.0, label="clear of the hip")
