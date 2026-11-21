@@ -40,7 +40,7 @@ REGION_SLACK = 0.0  # E3: the object's centre inside the region, no slack
 STAY_M = 0.03  # E7
 STOP_WITHIN_MS = 3000  # E5: upright and settled within this of the stop
 SETTLED_PATH_M, UPRIGHT_DEG = 0.015, 15.0
-PUSH_N, PUSH_S = (0.0, 700.0, 0.0), 0.5  # E5: the force on the torso (world frame) and how long
+PUSH_N, PUSH_S = (0.0, 500.0, 0.0), 0.4  # E5: the force on the torso (world frame) and how long
 BIND_PP = {"r": "robot_1", "box": "box_1", "src": "loc_a", "dst": "loc_b"}  # e_pick_place.rob
 BIND_CH = {"r": "robot_1", "crate": "crate_1", "dock": "loc_dock", "dst": "loc_dst"}  # w_carry_hold.rob
 
@@ -187,7 +187,7 @@ class Ctx:
 
 def run_scenario(ctx: Ctx, name: str, scene, site_name: str, source: Path, task: str, bind: dict, **kw):
     """One scenario: a fresh stand-in on `scene`, the CLI on the executor's site `site_name`; returns what a check needs."""
-    site_path = SITES / f"{site_name}.json"
+    site_path = site_name if isinstance(site_name, Path) else SITES / f"{site_name}.json"
     out = ctx.dir / name / "record.json"
     out.parent.mkdir(parents=True, exist_ok=True)
     with ctx.session(name, scene) as s:
@@ -252,7 +252,8 @@ def grasp_effect(rec: dict, samples: list, obj: str) -> dict:
     """What the oracle saw during the grasp step: how far the object rose, whether it is welded to the hand, how far the
     robot moved (E7)."""
     step = next(s for s in rec["steps"] if s["kind"] == "grasp")
-    w = between(samples, step["t_start_ms"], step["t_end_ms"])
+    a0, a1 = step["details"]["arm_work_ms"]  # the arms move from a0 to a1; before it the robot may be put back on station
+    w = between(samples, a0, a1)
     z = [x["objects"][obj]["pos"][2] for x in w]
     p0 = pelvis_xy(w[0])
     last = w[-1]
@@ -278,7 +279,7 @@ def check_e2(ctx: Ctx) -> dict:
         else:
             runs.append({"pass": False, "state": rec and rec["state"], "failure": rec and rec["failure"]})
     # the box is not there: S506 before the hand closes (no hand, arm or attach command reached the robot)
-    absent = ctx.variant("pick_place", lambda d: d["objects"].clear())
+    absent = ctx.variant("pick_place", lambda d: (d["objects"].clear(), d["bindings"]["objects"].clear()))
     status, rec, log, s, samples, commands = run_scenario(ctx, "e2_absent", absent, "pick_place", src, "grab", bind)
     absent_ok = bool(rec and rec["failure"] and rec["failure"]["code"] == "S506" and rec["failure"]["step"] == 2 and
                      commands["hand_left"]["count"] == commands["hand_right"]["count"] == 0 and
@@ -287,7 +288,7 @@ def check_e2(ctx: Ctx) -> dict:
 
     def far(d):
         d["tables"][0].update(pos=[3.03, -0.065, 0.375], half_size=[0.35, 0.185, 0.375])
-        d["objects"][0]["pos"] = [3.23, -0.10, 0.78]
+        d["objects"][0]["pos"] = [3.15, -0.10, 0.79]  # 0.70 m ahead of the pelvis: seen, and beyond the arm
 
     status, rec2, log, s, samples2, commands2 = run_scenario(ctx, "e2_far", ctx.variant("pick_place", far), "pick_place",
                                                              src, "grab", bind)
@@ -311,7 +312,7 @@ def pick_place_effect(rec: dict, samples: list, site: dict) -> dict:
                   [2 * (x * z - w * y), 2 * (y * z + w * x), 1 - 2 * (x * x + y * y)]])
     wrist_pelvis = R.T @ right  # the wrist in the pelvis frame; its carry position is (0.002, -0.238, -0.056)
     return {"box_world": [round(v, 3) for v in box], "in_dst_region": in_region(box, site, "shelf"),
-            "released": "box" not in last["attached"], "box_on_table": abs(box[2] - 0.78) < 0.02,
+            "released": "box" not in last["attached"], "box_on_table": abs(box[2] - 0.79) < 0.02,
             "wrist_from_carry_m": round(float(np.linalg.norm(wrist_pelvis - np.array([0.002, -0.238, -0.056]))), 3)}
 
 
@@ -325,7 +326,7 @@ def check_e3_e4(ctx: Ctx) -> tuple[dict, dict]:
     if rec and rec["state"] == "STEPS_COMPLETED":
         fx = pick_place_effect(rec, samples, site_pp)
         place = next(x for x in rec["steps"] if x["kind"] == "place")
-        w = between(samples, place["t_start_ms"], place["t_end_ms"])
+        w = between(samples, *place["details"]["arm_work_ms"])
         ctx.stay.append({"scenario": "e4_pick_place", "step": "grasp",
                          **{k: v for k, v in grasp_effect(rec, samples, "box").items() if k == "robot_moved_m"}})
         ctx.stay.append({"scenario": "e4_pick_place", "step": "place",
@@ -514,10 +515,30 @@ def check_e6(ctx: Ctx) -> dict:
     return {"pass": all(v["pass"] for v in out.values()), "details": out}
 
 
+def free_stance_trial(ctx: Ctx) -> dict:
+    """The same grasp with the executor told `arm_stance: free` (reported, not judged): how far the robot moves."""
+    exec_site = ctx.variant("pick_place", lambda d: d["robot"].update(arm_stance="free"))
+    status, rec, log, s, samples, _ = run_scenario(ctx, "e7_free_stance", SITES / "pick_place.json", exec_site, ctx.source("grab", GRAB),
+                                                   "grab", {"r": "robot_1", "o": "box_1", "l": "loc_a"})
+    out: dict = {"state": rec and rec["state"], "failure": rec and rec["failure"]}
+    step = next((x for x in (rec or {}).get("steps", []) if x["kind"] == "grasp" and "details" in x), None)
+    if step and "arm_work_ms" in step["details"] and step["details"]["arm_work_ms"][0]:
+        a0, a1 = step["details"]["arm_work_ms"]
+        w = between(samples, a0, a1 or samples[-1]["sim_time"] * 1000)
+        if w:
+            out["robot_moved_m"] = round(max(float(np.linalg.norm(pelvis_xy(x) - pelvis_xy(w[0]))) for x in w), 4)
+    return out
+
+
 def check_e7(ctx: Ctx) -> dict:
     worst = max((x["robot_moved_m"] for x in ctx.stay), default=None)
+    try:
+        trial = free_stance_trial(ctx)
+    except Exception as exc:
+        trial = {"error": f"{type(exc).__name__}: {exc}"}
     return {"pass": bool(ctx.stay and worst <= STAY_M),
             "details": {"limit_m": STAY_M, "worst_m": worst, "stance_model": ctx.stance, "steps": ctx.stay,
+                        "free_stance_trial": trial,
                         "note": "the robot's largest pelvis displacement from where it was when the step began, per grasp "
                                 "or place step (oracle); the free stance takes a recovery step of 0.2-0.35 m about every "
                                 "45 s, and a step that long would show here"}}

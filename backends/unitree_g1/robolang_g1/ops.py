@@ -30,11 +30,12 @@ from .robot import Robot, arm_gains
 TILT_LIMIT_RAD = math.radians(40)  # S516: the IMU's tilt from upright beyond this means the robot is falling or fallen
 CONFIRM_TIMEOUT_S = 3.0  # a stop must be confirmed (upright and still, from lowstate) within this, in simulation time
 CONFIRM_WINDOW_MS = 500
-CONFIRM_GYRO = 0.06  # rad/s: the pelvis rotates no faster than this ...
-CONFIRM_JOINT_VEL = 0.12  # rad/s: ... and no joint moves faster than this (the held arms included)
+CONFIRM_GYRO = 0.045  # rad/s: the pelvis rotates no faster than this ...
+CONFIRM_JOINT_VEL = 0.09  # rad/s: ... and no joint moves faster than this (the held arms included)
 CONFIRM_TILT_RAD = math.radians(15)
 SETTLE_GYRO, SETTLE_LEG_VEL, SETTLE_WINDOW_MS, SETTLE_TIMEOUT_S = 0.03, 0.05, 600, 9.0
 # ---- localization and walking
+REPOSITION_M, REPOSITION_RAD = 0.08, 0.15  # before arm work the robot is put back only if it has moved further than this
 STATION_TOL_M, STATION_TOL_RAD = 0.047, 0.09  # `move` promises 5 cm and 0.1 rad (0046 U5): this, after settling, leaves margin
 SERVO_TOL_M, SERVO_TOL_RAD = 0.044, 0.09
 SERVO_SHUFFLE_RAD = 0.11  # a heading error below this is left to the corrections' own yaw rate: a shuffle moves the robot
@@ -530,8 +531,8 @@ class G1Operations:
             err = math.hypot(gx - self.pose[0], gy - self.pose[1])
             info = {"error_m": round(err, 4), "error_rad": round(abs(site_mod.wrap(gyaw - self.pose[2])), 4),
                     "reservoed": attempt > 0}
-            if err <= STATION_TOL_M and abs(site_mod.wrap(gyaw - self.pose[2])) <= STATION_TOL_RAD:
-                return info
+            if err <= REPOSITION_M and abs(site_mod.wrap(gyaw - self.pose[2])) <= REPOSITION_RAD:
+                return info  # the reach is planned from what the camera sees now, so a few centimetres do not matter
             self._servo(station, reading, self.now_ms() + int(SERVO_TIMEOUT_S * 1000))
         raise BackendFailure("S504", f"could not return to station {self.station} before arm work")
 
@@ -576,6 +577,7 @@ class G1Operations:
         plan = self._plan_reach(side, lambda R: centre + np.array([0, 0, GRASP_RISE]),
                                 extra=(("lift", (0.0, 0.0, 0.10)),))  # S502 here, before any motion
         details["reach"] = {k: plan[k] for k in ("fingers_down_deg", "waist_rad", "position_error_m")}
+        details["arm_work_ms"] = [self.now_ms(), None]  # from here the arms move: what the checks judge the stance by
         details["arm_work_stance"] = self._arm_stance(self.site["robot"]["arm_stance"])
         self._arm_begin()
         self._arm_move(self._clear_pose(side), 1.6, label="clear of the hip")
@@ -602,6 +604,7 @@ class G1Operations:
         self._arm_move(self._clear_pose(side), 1.6, label="clear of the hip")
         self._arm_move(self.q_carry, 1.6, label="carry")
         self._arm_stance("free")  # walking is the policy's: back to the free stance
+        details["arm_work_ms"][1] = self.now_ms()
         details["events"] = self.events
         return details
 
@@ -630,6 +633,7 @@ class G1Operations:
         plan = self._plan_reach(side, lambda R: centre - R @ self.held["offset_in_hand"],
                                 extra=(("above", (0.0, 0.0, 0.10)),), degs=(self.held["fingers_down_deg"],))
         details["reach"] = {k: plan[k] for k in ("fingers_down_deg", "waist_rad", "position_error_m")}
+        details["arm_work_ms"] = [self.now_ms(), None]
         details["arm_work_stance"] = self._arm_stance(self.site["robot"]["arm_stance"])
         self._arm_begin()
         self._arm_move(self._clear_pose(side), 1.0, label="clear of the hip")
@@ -646,6 +650,7 @@ class G1Operations:
         self._arm_move(self.q_carry, 1.6, weight_to=0.0, label="carry")
         self.robot.stop_arm_sdk()
         self._arm_stance("free")
+        details["arm_work_ms"][1] = self.now_ms()
         details["events"] = self.events
         return details
 
