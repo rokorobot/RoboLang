@@ -24,7 +24,9 @@ from . import assets, guard
 from . import site as site_mod
 from .executor import STOP_CODES, STOP_MESSAGES, BackendFailure, Stop
 from .kinematics import ARM_JOINTS, WAIST_PITCH, Kinematics
-from .perception import Perception, object_centre, pelvis_pose_in_map
+from .observe import HAND_CLOSED, HELD_RADIUS_M, READY_LOWSTATE_AGE_S, Hand, Ready, Snapshot
+from .observe import hand_state
+from .perception import MAX_UP_DISAGREEMENT_RAD, Perception, imu_up, object_centre, pelvis_pose_in_map
 from .robot import Robot, arm_gains
 
 # ---- safety and stop
@@ -44,7 +46,7 @@ SERVO_TOL_M, SERVO_TOL_RAD = 0.035, 0.09
 # a heading error below this is left to the corrections' own yaw rate: a shuffle moves the robot
 SERVO_SHUFFLE_RAD = 0.11
 MARKER_MAX_RANGE_M, MARKER_MIN_CONF = 2.9, 0.5  # a station marker corrects the belief only when seen this well
-MAX_UP_DISAGREEMENT_RAD = 0.03  # ... and only if the vertical it implies is the IMU's, to within this
+# ... and only if the vertical it implies is the IMU's, to within MAX_UP_DISAGREEMENT_RAD (perception.py)
 APPROACH_M = 0.5  # the walk ends this far before the station, facing it, and the marker is looked for there
 # ... after passing through a point this much further out on the station's axis, where the marker is in view
 STAGING_M = 1.5
@@ -58,9 +60,9 @@ MOVE_TIMEOUT_S, SERVO_TIMEOUT_S, MARKER_TIMEOUT_S = 240.0, 90.0, 70.0  # simulat
 # ---- arms
 ARM_TRACK_TOL_RAD = 0.12  # S503: a joint further than this from its target when a motion has finished
 HAND_TOL_RAD = 0.25  # S505
-HAND_CLOSE = {"right": [0.0, -0.6, -1.0, 1.0, 1.2, 1.0, 1.2], "left": [0.0, 0.6, 1.0, -1.0, -1.2, -1.0, -1.2]}
+HAND_CLOSE = HAND_CLOSED  # the Dex3 closing pose (observe.py judges a hand "closed" against the same pose)
 SEGMENT_S = 1.6  # the shortest arm motion between two poses (min-jerk, and always at least 1 s)
-HELD_RADIUS_M = 0.09  # the object's marker is "at the hand" within this of the grasp point (5-6 cm when held right)
+# (HELD_RADIUS_M, observe.py: the object's marker is "at the hand" within this of the grasp point; 5-6 cm when held)
 APPROACH_BACK, APPROACH_UP = 0.09, 0.03  # the pre-grasp: behind the grasp point along the fingers, and above it
 GRASP_RISE = (
     -0.01
@@ -68,6 +70,9 @@ GRASP_RISE = (
 FINGERS_DOWN_DEG = (15, 30, 0, 45)  # hand orientations tried, in this order
 WAIST_LEAN_RAD = (0.0, 0.15, 0.3)  # waist pitch allowed, tried in this order
 HAND_REST_Y = {"right": -0.10, "left": 0.10}
+# ---- snapshots (phase 3)
+SNAPSHOT_FRAMES = 10  # head-camera frames per snapshot (2 s at the camera's 5 Hz)
+HAND_STATE_AGE_S = 1.0  # a hand state older than this (wall clock) is not used
 
 
 def _frame(theta: float) -> np.ndarray:
@@ -250,6 +255,90 @@ class G1Operations:
                 })
                 self.pose = list(new)
         return readings
+
+    # ------------------------------------------------------------------------------------------ snapshots (phase 3)
+
+    def snapshot(self, show: set | frozenset = frozenset(), ready: bool = False) -> tuple[Snapshot, dict]:
+        """One observation snapshot for verdicts, and a note for the record: about SNAPSHOT_FRAMES head-camera frames
+        fused per marker, the hands (state from `rt/dex3/*/state`, grasp point from the measured joints), the IMU's
+        vertical and, if `ready`, what `robot_ready` needs. A held object named in `show` is first brought into the
+        camera's view and the arm put back afterwards (the carry pose hangs it out of view)."""
+        if self.held is not None and self.held["object"] in show:
+            return self._snapshot_showing(ready)
+        return self._take(ready), {}
+
+    def _take(self, ready: bool) -> Snapshot:
+        readings, frames = self.perc.snapshot(ids=set(self.perc.sizes), frames=SNAPSHOT_FRAMES, check=self.check)
+        q, hands = self.robot.low_q.copy(), {}
+        for side in ("left", "right"):
+            if time.monotonic() - self.robot.hand_wall[side] > HAND_STATE_AGE_S:
+                continue  # no state for this hand, or a stale one: it is left out, which makes `holding` unknown
+            hq = self.robot.hand_q[side].copy()
+            hands[side] = Hand(
+                side,
+                hand_state(side, hq),
+                tuple(float(x) for x in hq),
+                tuple(float(x) for x in self.kin.grasp_frame(side, q)[1]),
+                self.robot.hand_tick[side],
+            )
+        up = tuple(float(x) for x in imu_up(self.robot.last.quat))
+        return Snapshot(self.now_ms(), frames, readings, hands, up, self._ready() if ready else None)
+
+    def _ready(self) -> Ready:
+        """What `robot_ready` rests on: lowstate arriving (fresh), no motor error word, the IMU's tilt, and the walking
+        service's state id from `GetFsmId` (a read)."""
+        r = self.robot
+        count, tick = r.low_count, r.low_tick
+        self.sleep(0.2)
+        sample = r.last
+        fresh = (
+            r.low_count - count >= 10 and r.low_tick > tick and time.monotonic() - r.low_wall <= READY_LOWSTATE_AGE_S
+        )
+        try:
+            code, fsm = r.fsm_id()
+        except Exception:  # the walking service did not answer: the atom is unknown
+            code, fsm = -1, None
+        return Ready(bool(fresh), sample.motor_error, self._tilt_of(sample), fsm if code == 0 else None, sample.tick)
+
+    @staticmethod
+    def _tilt_of(sample) -> float:
+        w, x, y, z = sample.quat
+        return math.acos(max(-1.0, min(1.0, 1 - 2 * (x * x + y * y))))
+
+    def _snapshot_showing(self, ready: bool) -> tuple[Snapshot, dict]:
+        """Bring the held object into the camera's view, take the snapshot, and put the arm back in the carry pose.
+
+        The carry pose hangs the object at the side of the thigh, outside the camera's field of view (measured: 46
+        degrees below the axis against 29 of field), so the arm shows it where the grasp lifted it: the object's place
+        at the table, 10 cm up, where the camera sees the object and the arm has already been. The waypoints are the
+        grasp's own (`pre` and `lift`, joint targets planned then), so there is no new planning and no motion beyond
+        the grasp's own path. The arm works in the site's arm-work stance, as in `grasp` and `place`."""
+        held, mark = self.held, len(self.events)
+        side = held["hand"]
+        t0 = self.now_ms()
+        pre, lift = held["show_waypoints"]
+        self.events.append({"t_ms": t0, "event": "show_held"})
+        stance = self._arm_stance(self.site["robot"]["arm_stance"])
+        self._arm_begin()
+        self._arm_move(self._clear_pose(side), 1.6, label="clear of the hip")
+        self._arm_move(pre, 2.0, label="pre-show")
+        self._arm_move(lift, 1.6, label="show")
+        self.sleep(1.0)  # let the arm and the object settle before the frames are taken
+        snap = self._take(ready)
+        self._arm_move(pre, 1.6, label="retreat from show")
+        self._arm_move(self._clear_pose(side), 1.6, label="clear of the hip")
+        self._arm_move(self.q_carry, 1.6, label="carry")
+        self._arm_stance("free")
+        note = {
+            "shown": {
+                "object": held["object"],
+                "hand": side,
+                "arm_stance": stance,
+                "arm_work_ms": [t0, self.now_ms()],
+                "events": self.events[mark:],
+            }
+        }
+        return snap, note
 
     # ------------------------------------------------------------------------------------------ walking
 
@@ -739,6 +828,7 @@ class G1Operations:
             "hand": side,
             "offset_in_hand": offset_hand,
             "fingers_down_deg": plan["fingers_down_deg"],
+            "show_waypoints": (plan["pre"], plan["lift"]),  # to show the object to the camera later (_snapshot_showing)
         }
         details["object_in_hand_m"] = [round(float(v), 4) for v in offset_hand]
         self.events.append({

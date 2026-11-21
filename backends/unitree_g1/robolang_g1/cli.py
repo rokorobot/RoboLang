@@ -9,10 +9,9 @@ during a motion; `--deadline-s S` stops it S simulation seconds after the guard 
 frames are
 found through the stand-in's identity API; `--head-dir` names them when it does not say.
 
-Exit status: 4 when every step ran (the goal is **not evaluated** in phase 2: this is not a success), 1 when the run
-failed or was refused (the record has the code), 2 for a usage or source error. The record is written to `--out` in
-every
-case where the task was understood.
+Exit status, as the ROS 2 backend's: 0 `SUCCEEDED` (the goal is true from the observations), 3 when the goal is unknown
+from them (S302), 1 for every other failure or refusal (the record has the code: S101 and S301 among them), 2 for a
+usage or source error. The record is written to `--out` in every case where the task was understood.
 """
 
 from __future__ import annotations
@@ -26,9 +25,9 @@ from robolang import ir
 from robolang.diagnostics import RoboLangError
 
 from . import site as site_mod
-from .executor import BackendFailure, Stop, execute
+from .executor import GRASP_MODEL, SCHEMA, SCHEMA_VERSION, BackendFailure, Stop, execute
 
-EXIT_STEPS_COMPLETED, EXIT_FAILED, EXIT_USAGE = 4, 1, 2
+EXIT_SUCCEEDED, EXIT_FAILED, EXIT_USAGE, EXIT_UNKNOWN = 0, 1, 2, 3
 
 
 def _json_default(obj):
@@ -40,13 +39,13 @@ def _json_default(obj):
 def refusal_record(task_name: str, bindings: dict, failure: BackendFailure) -> dict:
     """The record of a run refused before the guard (S514: a mission is not a task)."""
     return {
-        "run_record_schema": "robolang.g1.run",
-        "run_record_schema_version": "0.1",
+        "run_record_schema": SCHEMA,
+        "run_record_schema_version": SCHEMA_VERSION,
         "mode": "simulation",
         "backend": {
             "kind": "unitree-g1-mujoco",
             "versions": None,
-            "grasp_model": "weld_after_hand_close",
+            "grasp_model": GRASP_MODEL,
             "stance_model": None,
         },
         "task": {"name": task_name},
@@ -126,11 +125,12 @@ def main(argv=None) -> int:
         print(f"{exc.code}: {exc.message}", file=sys.stderr)
         return EXIT_USAGE
     Path(args.out).write_text(json.dumps(record, indent=2, default=_json_default) + "\n", encoding="utf-8")
-    if record["state"] == "STEPS_COMPLETED":
-        print("every step ran; the goal was not evaluated (phase 3 of this backend): not a success", file=sys.stderr)
-        return EXIT_STEPS_COMPLETED
+    if record["state"] == "SUCCEEDED":
+        return EXIT_SUCCEEDED
     failure = record["failure"]
     print(f"{failure['code']}: {failure['message']}", file=sys.stderr)
+    if failure["code"] == "S302":
+        return EXIT_UNKNOWN
     confirmation = (record.get("stop") or {}).get("confirmation")
     if confirmation is not None and not confirmation.get("confirmed") and failure["code"] != "S516":
         print("warning: the robot was not confirmed standing and still after the stop; check the cell", file=sys.stderr)

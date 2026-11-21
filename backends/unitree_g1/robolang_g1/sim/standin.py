@@ -56,7 +56,8 @@ from pathlib import Path
 import mujoco
 import numpy as np
 
-from .. import API_ATTACH, API_DETACH, API_IDENTITY, API_PUSH, API_SET_STANCE, API_STATUS, DOMAIN, ERR_REFUSED
+from .. import (API_ATTACH, API_COVER_CAMERA, API_DETACH, API_IDENTITY, API_PLACE_OBJECT, API_PUSH, API_SET_STANCE,
+                API_STATUS, DOMAIN, ERR_REFUSED)
 from .. import INTERFACE
 from .. import SIM_API_VERSION
 from .. import SIM_SERVICE, assets
@@ -158,6 +159,7 @@ class Simulator:
         self.commands = {k: {"count": 0, "last_sim_time": None} for k in ("sport", "arm_sdk", "hand_left", "hand_right",
                                                                            "attach", "detach")}
         self._push: tuple[np.ndarray, float] | None = None  # test hook: (force on the torso, until)
+        self.camera_covered = False  # test hook: the head camera shows black frames
         self._torso_dof_body = self.robot.torso
 
     # ------------------------------------------------------------------------------------------ inputs
@@ -171,6 +173,24 @@ class Simulator:
         """Test hook (simulation thread): a force in N on the torso, world frame, for `duration` simulated seconds."""
         self._push = (np.asarray(force, float), self.sim_time + float(duration))
         return {"force": [float(x) for x in force], "until": self._push[1]}
+
+    def cover_camera(self, covered: bool) -> dict:
+        """Test hook: a covered head camera renders black frames (the camera thread reads the flag)."""
+        self.camera_covered = bool(covered)
+        return {"covered": self.camera_covered}
+
+    def place_object(self, obj: str, position, yaw: float = 0.0) -> dict:
+        """Test hook (simulation thread): put a free object upright at `position` (world, its centre), at rest."""
+        m, d = self.model, self.data
+        if obj in self.attached:
+            raise ValueError(f"{obj} is attached to a hand")
+        body = m.body(obj).id  # KeyError for an unknown object
+        jadr, dadr = int(m.jnt_qposadr[m.body_jntadr[body]]), int(m.jnt_dofadr[m.body_jntadr[body]])
+        d.qpos[jadr:jadr + 3] = position
+        d.qpos[jadr + 3:jadr + 7] = [np.cos(yaw / 2), 0, 0, np.sin(yaw / 2)]
+        d.qvel[dadr:dadr + 6] = 0
+        mujoco.mj_forward(m, d)
+        return {"object": obj, "position": [float(x) for x in position]}
 
     def watch_gc(self) -> None:
         """Time every garbage collection (a full one on a large heap can stall the 2 ms loop for hundreds of ms)."""
@@ -399,8 +419,11 @@ class Simulator:
             except queue.Empty:
                 continue
             started = time.perf_counter()
-            renderer.update_scene(snapshot, camera="head", scene_option=options)
-            rgb = renderer.render()
+            if self.camera_covered:
+                rgb = np.zeros((height, width, 3), np.uint8)  # a covered lens: black
+            else:
+                renderer.update_scene(snapshot, camera="head", scene_option=options)
+                rgb = renderer.render()
             ok, png = cv2.imencode(".png", cv2.cvtColor(rgb, cv2.COLOR_RGB2BGR), [cv2.IMWRITE_PNG_COMPRESSION, 1])
             if ok:
                 frame += 1
@@ -651,8 +674,10 @@ def make_services(sim: Simulator, test_hooks: bool = False):
             self._RegistHandler(API_ATTACH, self.attach, False)
             self._RegistHandler(API_DETACH, self.detach, False)
             self._RegistHandler(API_SET_STANCE, self.set_stance, False)
-            if test_hooks:  # only with --test-hooks: a push for the harness's fall test
+            if test_hooks:  # only with --test-hooks: a push for the fall test, a covered camera, a moved object
                 self._RegistHandler(API_PUSH, self.push, False)
+                self._RegistHandler(API_COVER_CAMERA, self.cover_camera, False)
+                self._RegistHandler(API_PLACE_OBJECT, self.place_object, False)
 
         def set_stance(self, parameter):
             try:
@@ -663,6 +688,16 @@ def make_services(sim: Simulator, test_hooks: bool = False):
         def push(self, parameter):
             p = json.loads(parameter)
             return 0, json.dumps(sim.request(sim.push, p["force"], p["duration"]))
+
+        def cover_camera(self, parameter):
+            return 0, json.dumps(sim.request(sim.cover_camera, bool(json.loads(parameter)["covered"])))
+
+        def place_object(self, parameter):
+            p = json.loads(parameter)
+            try:
+                return 0, json.dumps(sim.request(sim.place_object, p["object"], p["position"], p.get("yaw", 0.0)))
+            except (ValueError, KeyError):
+                return RPC_ERR_SERVER_API_PARAMETER, ""
 
         def identity(self, parameter):
             return 0, json.dumps({"simulation": True, "domain": DOMAIN, "interface": INTERFACE,

@@ -1,9 +1,11 @@
-"""The executor with fake operations: refusals before any motion, the stop, a record that never says SUCCEEDED."""
+"""The executor with fake operations: refusals before any motion, preconditions and the goal from one snapshot each
+(S101, S102, S301, S302, `SUCCEEDED`), the stop, and the record."""
 
 import json
 from pathlib import Path
 
 import pytest
+from test_observe import hand, object_reading, snap, station_reading
 
 from robolang import ir
 from robolang_g1 import executor, site as S
@@ -18,14 +20,26 @@ def task_of(source: str, name: str = "t"):
     return ir.compile_source(source, "t.rob").ir.task(name)
 
 
-class FakeOps:
-    """What `G1Operations` offers the executor, recording what was asked. `fail` maps an operation to a failure."""
+AT_BENCH = station_reading(S.station(SITE, "bench"), S.station(SITE, "bench")["pose"], stamp=0)
 
-    def __init__(self, fail=None, held_fall=False):
+
+class FakeOps:
+    """What `G1Operations` offers the executor, recording what was asked. `fail` maps an operation to a failure.
+    `snaps` are the snapshots the sensors give, in turn (the last one repeats): by default the robot is at the bench."""
+
+    def __init__(self, fail=None, held_fall=False, snaps=None):
         self.calls, self.fail, self.pose, self.events, self.observations = [], fail or {}, [0.0, 0.0, 0.0], [], []
         self.identity = {"stance_model": "free"}
         self.t = 0
         self.perc = None
+        self.snaps = list(snaps) if snaps is not None else [snap([AT_BENCH])]
+
+    def snapshot(self, show=frozenset(), ready=False):
+        self.calls.append(("snapshot", sorted(show), ready))
+        if "snapshot" in self.fail:
+            raise self.fail["snapshot"]
+        s = self.snaps.pop(0) if len(self.snaps) > 1 else self.snaps[0]
+        return s, ({"shown": {"object": sorted(show)[0]}} if show else {})
 
     def guard(self, model=None):
         self.calls.append("guard")
@@ -90,18 +104,128 @@ def moves(ops):
     return [c for c in ops.calls if isinstance(c, tuple)]
 
 
-def test_a_run_whose_steps_all_ran_is_steps_completed_and_never_succeeded():
+def test_a_run_whose_goal_is_true_from_the_observations_succeeds_and_says_how():
     ops = FakeOps()
     rec = execute(task_of(GO), BIND, SITE, ops)
-    assert rec["state"] == "STEPS_COMPLETED" and rec["failure"] is None and rec["stop"] is None
-    assert rec["goal_evaluated"] is False and rec["core_outcome"] is None
-    assert [g["result"] for g in rec["goal"]] == ["not_evaluated"]
+    assert rec["state"] == "SUCCEEDED" and rec["failure"] is None and rec["stop"] is None
+    assert rec["goal_evaluated"] is True and [g["result"] for g in rec["goal"]] == ["true"]
     assert [s["status"] for s in rec["steps"]] == ["succeeded", "succeeded"]
     assert rec["backend"]["kind"] == "unitree-g1-mujoco" and rec["backend"]["grasp_model"] == "weld_after_hand_close"
     assert rec["backend"]["stance_model"] == "free" and rec["realtime"]["realtime_valid"] is True
     assert rec["backend"]["arm_work_stance"] == SITE["robot"]["arm_stance"]  # the weld during arm work is on record
-    assert moves(ops) == [("move", "bench"), ("wait", 2000)]
+    assert rec["verify"] == {"min_confidence": "0.9", "max_age_ms": 10000}
+    assert moves(ops) == [("move", "bench"), ("wait", 2000), ("snapshot", [], False)]  # one, after the last step
+    (snapshot,) = rec["snapshots"]
+    assert snapshot["purpose"] == "goal" and snapshot["markers"]["20"]["confidence"] == 1.0
+    assert "age_ms" in snapshot["markers"]["20"] and snapshot["t_ms"] == 5000
+    (atom,) = rec["goal"][0]["atoms"]
+    assert atom["result"] == "true" and atom["offset_m"] == 0.0 and atom["tolerance_m"] == 0.05
+    assert rec["core_outcome"]["outcome"]["status"] == "succeeded"
+    assert rec["core_outcome"]["evidence"][0]["value"] == "rl:place:loc_a"
+
+
+def test_a_goal_that_is_false_from_the_observations_is_s301_with_no_stop_and_no_step():
+    far = station_reading(S.station(SITE, "bench"), (1.0, 0.0, 0.0), stamp=0)  # the robot is 1.45 m from the bench
+    ops = FakeOps(snaps=[snap([far])])
+    rec = execute(task_of(GO), BIND, SITE, ops)
+    assert rec["state"] == "FAILED" and rec["failure"]["code"] == "S301" and rec["failure"]["step"] is None
+    assert [g["result"] for g in rec["goal"]] == ["false"] and rec["stop"] is None and "hold" not in ops.calls
+    assert rec["goal"][0]["atoms"][0]["offset_m"] == pytest.approx(1.45, abs=1e-3)
+    assert rec["core_outcome"]["outcome"]["status"] == "failed" and rec["goal_evaluated"] is True
+
+
+@pytest.mark.parametrize(
+    "bad",
+    [
+        snap([]),
+        snap([station_reading(S.station(SITE, "bench"), (2.45, 0, 0), conf=0.8, stamp=0)]),
+        snap([station_reading(S.station(SITE, "bench"), (2.45, 0, 0), stamp=-20000)], t=2000),
+    ],
+    ids=["not seen", "low confidence", "stale"],
+)
+def test_a_goal_that_cannot_be_decided_is_s302_never_a_success(bad):
+    ops = FakeOps(snaps=[bad])
+    rec = execute(task_of(GO), BIND, SITE, ops)
+    assert rec["state"] == "FAILED" and rec["failure"]["code"] == "S302" and rec["failure"]["step"] is None
+    assert [g["result"] for g in rec["goal"]] == ["unknown"] and rec["stop"] is None
+    core = rec["core_outcome"]
+    assert core["outcome"]["status"] == "unknown" and core["evidence"] == []
     assert "SUCCEEDED" not in json.dumps(rec)
+
+
+def test_a_goal_with_one_false_and_one_unknown_atom_is_false():
+    two = task_of("robolang 1.3;\ntask t(robot r, location a, location b) {\n  goal { robot_at r a; robot_at r b; }\n"
+                  "  plan { move r to a; }\n}\n")
+    far = station_reading(S.station(SITE, "bench"), (1.0, 0.0, 0.0), stamp=0)
+    rec = execute(two, {"r": "robot_1", "a": "loc_a", "b": "loc_b"}, SITE, FakeOps(snaps=[snap([far])]))
+    assert [g["result"] for g in rec["goal"]] == ["false", "unknown"] and rec["failure"]["code"] == "S301"
+
+
+PRE = (
+    "robolang 1.3;\ntask t(robot r, object o, location a, location b) {\n  pre { object_at o a; }\n"
+    "  goal { robot_at r b; }\n  plan { move r to b; }\n}\n"
+)
+PRE_BIND = {"r": "robot_1", "o": "box_1", "a": "loc_a", "b": "loc_b"}
+BENCH_ST = S.station(SITE, "bench")
+ON_BENCH = [AT_BENCH, object_reading(AT_BENCH, (0.55, 0.64, 1.0), stamp=0)]
+
+
+def test_a_true_precondition_lets_the_run_start_and_the_snapshot_is_taken_before_any_command():
+    at_shelf = station_reading(S.station(SITE, "shelf"), S.station(SITE, "shelf")["pose"], stamp=0)
+    ops = FakeOps(snaps=[snap(ON_BENCH, t=0), snap([at_shelf])])
+    rec = execute(task_of(PRE), PRE_BIND, SITE, ops)
+    assert rec["state"] == "SUCCEEDED" and [p["result"] for p in rec["preconditions"]] == ["true"]
+    assert [c[0] for c in moves(ops)] == ["snapshot", "move", "snapshot"]  # the precondition snapshot comes first
+    assert [s["purpose"] for s in rec["snapshots"]] == ["preconditions", "goal"]
+
+
+def test_a_false_precondition_is_s101_and_nothing_is_sent():
+    elsewhere = object_reading(AT_BENCH, (0.55, 0.64, 1.4), stamp=0)
+    ops = FakeOps(snaps=[snap([AT_BENCH, elsewhere])])
+    rec = execute(task_of(PRE), PRE_BIND, SITE, ops)
+    assert rec["state"] == "FAILED" and rec["failure"] == {"code": "S101", "message": rec["failure"]["message"],
+                                                           "step": None}
+    assert [p["result"] for p in rec["preconditions"]] == ["false"] and rec["steps"] == [] and rec["stop"] is None
+    assert [c[0] for c in moves(ops)] == ["snapshot"] and "hold" not in ops.calls  # no step, no hold, no command
+    assert rec["goal_evaluated"] is False and [g["result"] for g in rec["goal"]] == ["not_evaluated"]
+    assert rec["preconditions"][0]["atoms"][0]["region_clearance_m"] < 0
+
+
+def test_an_unknown_precondition_is_s102_and_nothing_is_sent():
+    ops = FakeOps(snaps=[snap([])])  # the camera sees nothing
+    rec = execute(task_of(PRE), PRE_BIND, SITE, ops)
+    assert rec["failure"]["code"] == "S102" and rec["steps"] == [] and rec["stop"] is None
+    assert [p["result"] for p in rec["preconditions"]] == ["unknown"] and [c[0] for c in moves(ops)] == ["snapshot"]
+
+
+def test_the_goal_snapshot_asks_to_see_a_held_object_and_for_readiness_only_when_the_goal_needs_them():
+    holding = "robolang 1.3;\ntask t(robot r, object o, location a) {\n  goal { holding r o; robot_ready r; }\n" \
+              "  plan { move r to a; grasp r o; }\n}\n"
+    marker = object_reading(AT_BENCH, (0.0, 0.0, 0.0), stamp=0)
+    closed = hand("right", "closed", tuple(marker.position + [0, 0, -0.05]))
+    from test_observe import ready
+
+    ops = FakeOps(snaps=[snap([marker], [closed], ready(stamp_ms=0), t=0)])
+    rec = execute(task_of(holding), {"r": "robot_1", "o": "box_1", "a": "loc_a"}, SITE, ops)
+    assert ("snapshot", ["box"], True) in moves(ops) and rec["snapshots"][0]["purpose"] == "goal"
+    assert rec["state"] == "SUCCEEDED" and rec["snapshots"][0]["shown"] == {"object": "box"}
+    assert rec["core_outcome"] is None  # robot_ready has no Core form
+    ops2 = FakeOps()
+    execute(task_of(GO), BIND, SITE, ops2)
+    assert ("snapshot", [], False) in moves(ops2)
+
+
+def test_a_failure_while_showing_the_held_object_stops_the_robot_and_is_not_a_verdict():
+    ops = FakeOps(fail={"snapshot": BackendFailure("S503", "arm joint 23 is off")})
+    rec = execute(task_of(GO), BIND, SITE, ops)
+    assert rec["failure"]["code"] == "S503" and rec["failure"]["step"] == 2 and rec["stop"]["reason"] == "step_failed"
+    assert ops.calls[-2:] == ["hold", "confirm"] and rec["goal_evaluated"] is False
+
+
+def test_a_task_without_a_goal_is_refused():
+    source = "robolang 1.2;\ntask t(robot r, location a) { plan { move r to a; } }\n"
+    rec = execute(task_of(source), BIND, SITE, FakeOps())
+    assert rec["failure"]["code"] == "S508" and rec["steps"] == []
 
 
 def test_the_guard_runs_first_and_a_refused_guard_sends_nothing():
@@ -140,9 +264,21 @@ def test_the_guard_runs_first_and_a_refused_guard_sends_nothing():
         ),
         (
             "S508",
-            "robolang 1.3;\ntask t(robot r, location a) {\n  pre { robot_ready r; }\n  goal { robot_at r a; }\n"
+            "robolang 1.3;\ntask t(robot r, location a, sensor s) {\n  pre { sensor_ok s; }\n  goal { robot_at r a; }\n"
             "  plan { move r to a; }\n}\n",
-            BIND,
+            {"r": "robot_1", "a": "loc_a", "s": "s1"},
+        ),
+        (
+            "S508",
+            "robolang 1.3;\ntask t(robot r, location a, sensor s) {\n  goal { robot_at r a and sensor_ok s; }\n"
+            "  plan { move r to a; }\n}\n",
+            {"r": "robot_1", "a": "loc_a", "s": "s1"},
+        ),
+        (
+            "S507",
+            "robolang 1.3;\ntask t(robot r, object o, location a) {\n  pre { object_at o a; }\n"
+            "  goal { robot_at r a; }\n  plan { move r to a; }\n}\n",
+            {"r": "robot_1", "o": "box_1", "a": "loc_c"},  # loc_c is the pad: a station without a region
         ),
     ],
 )

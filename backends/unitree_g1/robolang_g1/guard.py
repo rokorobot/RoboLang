@@ -15,7 +15,8 @@ from __future__ import annotations
 import json
 import time
 
-from . import API_ATTACH, API_DETACH, API_IDENTITY, API_SET_STANCE, API_STATUS, DOMAIN, INTERFACE, SIM_API_VERSION
+from . import (API_ATTACH, API_COVER_CAMERA, API_DETACH, API_IDENTITY, API_PLACE_OBJECT, API_SET_STANCE, API_STATUS,
+               DOMAIN, INTERFACE, SIM_API_VERSION)
 from . import SIM_SERVICE
 
 CODE = "S501"
@@ -51,7 +52,8 @@ def sim_client():
 
         def Init(self):
             self._SetApiVerson(SIM_API_VERSION)
-            for api in (API_IDENTITY, API_STATUS, API_ATTACH, API_DETACH, API_SET_STANCE):
+            for api in (API_IDENTITY, API_STATUS, API_ATTACH, API_DETACH, API_SET_STANCE, API_COVER_CAMERA,
+                        API_PLACE_OBJECT):
                 self._RegistApi(api, 0)
 
         def _json(self, api, parameter=None):
@@ -76,6 +78,14 @@ def sim_client():
         def SetStance(self, model: str):
             """Switch the stand-in's balance support ('free' or 'supported'); the robot must be standing still."""
             return self._json(API_SET_STANCE, {"model": model})
+
+        def CoverCamera(self, covered: bool):
+            """Test hook (a stand-in started with --test-hooks): the head camera shows black frames while covered."""
+            return self._json(API_COVER_CAMERA, {"covered": bool(covered)})
+
+        def PlaceObject(self, obj: str, position, yaw: float = 0.0):
+            """Test hook: put an object upright at `position` (world frame, its centre), at rest."""
+            return self._json(API_PLACE_OBJECT, {"object": obj, "position": list(position), "yaw": float(yaw)})
 
     client = SimClient()
     client.SetTimeout(1.0)
