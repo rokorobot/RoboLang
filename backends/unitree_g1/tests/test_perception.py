@@ -50,6 +50,7 @@ class Fixture:
         self.perc.K = np.array([[fx, 0, cx], [0, fy, cy], [0, 0, 1.0]])
         self.perc.sizes = {s["marker"]["id"]: s["marker"]["size"] for s in self.site["stations"]}
         self.perc.sizes |= {o["marker"]["id"]: o["marker"]["size"] for o in self.site["objects"]}
+        self.perc.station_markers = {s["marker"]["id"]: s["marker"] for s in self.site["stations"]}
         params = cv2.aruco.DetectorParameters()
         params.cornerRefinementMethod = cv2.aruco.CORNER_REFINE_SUBPIX
         self.perc.detector = cv2.aruco.ArucoDetector(cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50), params)
@@ -125,3 +126,25 @@ def test_the_visible_cone_of_the_camera():
     assert perception.in_view(R, p, [0, 0, -2], cam)
     assert not perception.in_view(R, p, [0, 0, 2], cam)  # behind
     assert not perception.in_view(R, p, [3, 0, -2], cam)  # far off to the side
+
+
+def test_the_pose_that_puts_the_vertical_where_the_imu_does_is_chosen_over_the_better_fitting_one():
+    """A planar marker has two poses; at a long range the wrong one often fits the image better. The IMU says which one
+    has the pelvis upright."""
+    import math
+
+    from robolang_g1 import site as S
+    from robolang_g1.perception import pick_by_gravity
+
+    marker = {"pos": [3.75, 0.45, 0.19], "facing": math.pi}
+    R_map = S.marker_frame(marker)[0]
+
+    def pose_for(roll):  # the marker as seen by a pelvis that is `roll` rad off upright about its x axis
+        c, s = math.cos(roll), math.sin(roll)
+        R_pelvis_in_map = S.rot_z(0.1) @ np.array([[1, 0, 0], [0, c, -s], [0, s, c]])
+        return (R_pelvis_in_map.T @ R_map, np.array([2.0, 0.3, -0.6]), 2.3)
+
+    upright, tilted = pose_for(0.0), pose_for(0.13)
+    imu = np.array([0.0, 0.0, 1.0])  # an upright pelvis
+    assert pick_by_gravity([tilted, upright], marker, imu)[0] is upright  # the better fit (first) is the wrong one
+    assert pick_by_gravity([upright, tilted], marker, imu)[0] is upright

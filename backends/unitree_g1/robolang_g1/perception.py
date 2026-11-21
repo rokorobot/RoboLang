@@ -108,8 +108,9 @@ class Perception:
 
     # ------------------------------------------------------------------------------------------ one frame
 
-    def _detect(self, image) -> dict[int, tuple[np.ndarray, np.ndarray]]:
-        """{id: (rvec, tvec) in the OpenCV camera frame} for the known markers in the image."""
+    def _detect(self, image) -> dict[int, list[tuple[np.ndarray, np.ndarray]]]:
+        """{id: [(rvec, tvec), ...] in the OpenCV camera frame} for the known markers in the image: the two poses a
+        planar target allows (IPPE), the better-fitting one first."""
         import cv2
 
         corners, ids, _ = self.detector.detectMarkers(cv2.cvtColor(image, cv2.COLOR_BGR2GRAY))
@@ -127,9 +128,9 @@ class Perception:
                 ],
                 np.float32,
             )
-            ok, rvec, tvec = cv2.solvePnP(obj, c.reshape(4, 2), self.K, None, flags=cv2.SOLVEPNP_IPPE_SQUARE)
-            if ok:
-                found[int(mid)] = (rvec, tvec.flatten())
+            n, rvecs, tvecs, _ = cv2.solvePnPGeneric(obj, c.reshape(4, 2), self.K, None, flags=cv2.SOLVEPNP_IPPE_SQUARE)
+            if n:
+                found[int(mid)] = [(r, t.flatten()) for r, t in zip(rvecs, tvecs)]
         return found
 
     def frame_poses(self, image, stamp_ms: int) -> dict[int, tuple[np.ndarray, np.ndarray, float]]:
@@ -145,9 +146,16 @@ class Perception:
             return {}
         Rc, pc = self.kin.camera_pose(sample.q)
         out = {}
-        for mid, (rvec, tvec) in found.items():
-            Rm_cv, _ = cv2.Rodrigues(rvec)
-            out[mid] = (Rc @ CV_TO_MJ @ Rm_cv, pc + Rc @ CV_TO_MJ @ tvec, float(np.linalg.norm(tvec)))
+        for mid, solutions in found.items():
+            poses = []
+            for rvec, tvec in solutions:
+                Rm_cv, _ = cv2.Rodrigues(rvec)
+                poses.append((Rc @ CV_TO_MJ @ Rm_cv, pc + Rc @ CV_TO_MJ @ tvec, float(np.linalg.norm(tvec))))
+            if (
+                mid in self.station_markers
+            ):  # its orientation is known: the pose that puts the vertical where the IMU does
+                poses = pick_by_gravity(poses, self.station_markers[mid], imu_up(sample.quat))
+            out[mid] = poses[0]
         return out
 
     # ------------------------------------------------------------------------------------------ several frames
@@ -214,6 +222,19 @@ class Perception:
                     up_error = float(np.arccos(np.clip(up @ imu_up(sample.quat), -1, 1)))
                 per_id.setdefault(mid, []).append(Detection(p, R, rng, stamp_ms, up_error, mid in self.station_markers))
         return {mid: fuse_frames(mid, det, got, spread_m, spread_rad) for mid, det in per_id.items()}, got
+
+
+def pick_by_gravity(poses: list, station_marker: dict, imu_vertical: np.ndarray) -> list:
+    """The poses (R, p, range) of a station marker in the pelvis frame, the one whose implied vertical is nearest the
+    IMU's first. A planar target has two poses and at a long range the wrong one often fits the image better; the wrong
+    one has a pelvis several degrees off upright, which the IMU shows."""
+    R_marker = site_mod.marker_frame(station_marker)[0]  # the marker in the map
+
+    def error(pose) -> float:
+        up = (R_marker @ pose[0].T)[2, :]  # the map's vertical in the pelvis frame
+        return float(np.arccos(np.clip(up @ imu_vertical, -1, 1)))
+
+    return sorted(poses, key=error)
 
 
 def imu_up(quat) -> np.ndarray:
@@ -371,10 +392,7 @@ def visibility_violations(site: dict, task, names: dict[str, str], kin: Kinemati
         R = site_mod.rot_z(pose[2])
         eye = np.array([pose[0], pose[1], STAND_HEIGHT]) + R @ pc
         # in the field of view, and not behind a declared table (the head camera looks over them)
-        return (
-            in_view(R @ Rc, eye, point, site["camera"])
-            and line_of_sight_blocked(eye, point, site["tables"]) is None
-        )
+        return in_view(R @ Rc, eye, point, site["camera"]) and line_of_sight_blocked(eye, point, site["tables"]) is None
 
     def atoms(condition):
         if isinstance(condition, (ir.And, ir.Or)):
