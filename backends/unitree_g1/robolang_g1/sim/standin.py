@@ -42,6 +42,7 @@ from __future__ import annotations
 
 import argparse
 import collections
+import gc
 import json
 import os
 import queue
@@ -55,7 +56,9 @@ from pathlib import Path
 import mujoco
 import numpy as np
 
-from .. import API_ATTACH, API_DETACH, API_IDENTITY, API_STATUS, DOMAIN, ERR_REFUSED, INTERFACE, SIM_API_VERSION
+from .. import API_ATTACH, API_DETACH, API_IDENTITY, API_PUSH, API_SET_STANCE, API_STATUS, DOMAIN, ERR_REFUSED
+from .. import INTERFACE
+from .. import SIM_API_VERSION
 from .. import SIM_SERVICE, assets
 from . import scene
 from .policy import STEP_DT, WholeBodyPolicy
@@ -107,6 +110,10 @@ class Timing:
     camera_stamps: list = field(default_factory=list)
     slow_windows: list = field(default_factory=list)  # (sim time, ratio) of seconds below 0.95
     step_ms: collections.deque = field(default_factory=lambda: collections.deque(maxlen=20000))  # compute per step
+    gc_count: list = field(default_factory=lambda: [0, 0, 0])  # collections by generation since start-up
+    gc_max_ms: list = field(default_factory=lambda: [0.0, 0.0, 0.0])  # longest collection by generation
+    gc_started: float = 0.0
+    slow_steps: list = field(default_factory=list)  # (sim time, ms, collections during it) of passes > 20 ms
 
 
 class Simulator:
@@ -146,20 +153,62 @@ class Simulator:
         self._stop = threading.Event()
         self._threads: list[threading.Thread] = []
         self.on_step = None  # called after every physics step on the simulation thread (the DDS bridge)
+        # What the robot has been sent: per channel, how many commands and the simulation time of the last one. The
+        # harness reads it from the oracle and `status` ("no further command after a fall"); nothing else does.
+        self.commands = {k: {"count": 0, "last_sim_time": None} for k in ("sport", "arm_sdk", "hand_left", "hand_right",
+                                                                           "attach", "detach")}
+        self._push: tuple[np.ndarray, float] | None = None  # test hook: (force on the torso, until)
+        self._torso_dof_body = self.robot.torso
 
     # ------------------------------------------------------------------------------------------ inputs
+
+    def note_command(self, channel: str) -> None:
+        c = self.commands[channel]
+        c["count"] += 1
+        c["last_sim_time"] = self.sim_time
+
+    def push(self, force, duration: float) -> dict:
+        """Test hook (simulation thread): a force in N on the torso, world frame, for `duration` simulated seconds."""
+        self._push = (np.asarray(force, float), self.sim_time + float(duration))
+        return {"force": [float(x) for x in force], "until": self._push[1]}
+
+    def watch_gc(self) -> None:
+        """Time every garbage collection (a full one on a large heap can stall the 2 ms loop for hundreds of ms)."""
+        t = self.timing
+
+        def callback(phase, info):
+            if phase == "start":
+                t.gc_started = time.perf_counter()
+            elif t.gc_started:
+                gen = info["generation"]
+                t.gc_count[gen] += 1
+                t.gc_max_ms[gen] = max(t.gc_max_ms[gen], (time.perf_counter() - t.gc_started) * 1000)
+
+        gc.callbacks.append(callback)
+
+    def freeze_gc(self) -> None:
+        """After start-up: everything allocated so far (the SDK, onnxruntime, MuJoCo's Python objects, DDS types) is
+        moved out of the collector's reach, and a full collection is made unlikely during the run. A full collection
+        of a heap this size is a pause in a loop that has 2 ms per step; the objects the loop allocates afterwards are
+        short-lived and are freed by reference counting, so the young generations still run."""
+        gc.collect()
+        gc.freeze()
+        gc.set_threshold(700, 10, 1_000_000)  # generation 2 only after a million generation-1 collections
 
     def set_velocity(self, vx: float, vy: float, wz: float, duration: float) -> None:
         """Command a velocity for `duration` simulated seconds; it returns to zero after that."""
         clipped = tuple(float(np.clip(v, lo, hi)) for v, (lo, hi) in zip((vx, vy, wz), LIMITS))
         self.last_command = clipped
         self._velocity = (*clipped, self.sim_time + float(duration))
+        self.note_command("sport")
 
     def set_arm(self, command: ArmCommand | None) -> None:
         self._arm = command
+        self.note_command("arm_sdk")
 
     def set_hand(self, side: str, command: HandCommand) -> None:
         self._hand[side] = command
+        self.note_command(f"hand_{side}")
 
     def request(self, fn, *args, timeout: float = 5.0):
         """Run `fn(*args)` on the simulation thread between two steps and return its result (or raise its error)."""
@@ -198,6 +247,11 @@ class Simulator:
             else:
                 ctrl[first:first + 7] = c.kp * (c.q - hq) + c.kd * (c.dq - hdq) + c.tau
         d.ctrl[:] = np.clip(ctrl, self._lo, self._hi)
+        if self._push is not None:
+            force, until = self._push
+            d.xfrc_applied[self._torso_dof_body, :3] = force if self.sim_time < until else 0.0
+            if self.sim_time >= until:
+                self._push = None
         mujoco.mj_step(m, d)
         self.n += 1
         self.sim_time = float(d.time)
@@ -245,13 +299,29 @@ class Simulator:
             m.geom_contype[g] = m.geom_conaffinity[g] = 0
         d.eq_active[eq] = 1
         self.attached[obj] = side
+        self.note_command("attach")
         return {"object": obj, "hand": side, "relative_position": [round(float(x), 4) for x in rel_pos]}
+
+    def set_stance(self, model: str) -> dict:
+        """Switch the balance support (simulation thread). Only while the robot stands still: `supported` welds the
+        pelvis
+        where it is, `free` lets go and hands the legs to the policy from a clean history."""
+        if model not in STANCES:
+            raise ValueError(f"unknown stance {model!r}")
+        if model != self.stance.name:
+            if not self.stance.standing:
+                raise ValueError("the robot is not standing still")
+            if hasattr(self.stance, "_release"):
+                self.stance._release()
+            self.stance = make_stance(model, Body(self.model, self.data, self.robot, self.policy))
+        return {"model": self.stance.name, "phase": self.stance.phase}
 
     def detach(self, obj: str) -> dict:
         m, d = self.model, self.data
         if obj not in self.attached:
             raise ValueError(f"{obj} is not attached")
         side = self.attached.pop(obj)
+        self.note_command("detach")
         d.eq_active[self._eq(obj, side)] = 0
         for g, contype, conaffinity in self._saved_collision.pop(obj):
             m.geom_contype[g], m.geom_conaffinity[g] = contype, conaffinity
@@ -287,6 +357,10 @@ class Simulator:
             "markers": {name: {"id": mid, "size": size, "pos": np.round(d.geom_xpos[g], 5).tolist()}
                         for name, (g, mid, size) in self._markers.items()},
             "attached": dict(self.attached),
+            "hands": {side: np.round(d.qpos[r.hand_qadr[side]], 4).tolist() for side in ("left", "right")},
+            "wrists": {side: np.round(d.xpos[self.model.body(HAND_BODY[side]).id], 4).tolist()
+                       for side in ("left", "right")},
+            "commands": {k: dict(v) for k, v in self.commands.items()},
             "stance": {"model": self.stance.name, "phase": self.stance.phase, "standing": self.stance.standing},
             "velocity_command": list(self._command()),
             "command_until": self._velocity[3],
@@ -305,7 +379,7 @@ class Simulator:
     def _camera_loop(self) -> None:
         import cv2
 
-        width, height = scene.CAMERA_SIZE
+        width, height = self.site["camera"]["width"], self.site["camera"]["height"]
         try:  # rendering yields to physics when the CPU is short; the renderer's worker threads inherit this
             os.setpriority(os.PRIO_PROCESS, threading.get_native_id(), 5)
         except OSError:
@@ -375,6 +449,10 @@ class Simulator:
             "stalls": t.stalls,
             "slow_windows": t.slow_windows[-10:],
             "step_compute_ms": self._step_stats(),
+            "gc": {"collections": list(t.gc_count), "max_ms": [round(x, 2) for x in t.gc_max_ms],
+                   "slow_steps": t.slow_steps[-10:], "frozen": gc.get_freeze_count(), "enabled": gc.isenabled(),
+                   "threshold": list(gc.get_threshold())},
+            "commands": {k: dict(v) for k, v in self.commands.items()},
             "camera": {"frames": t.camera_frames, "dropped": t.camera_dropped, "render_ms": round(t.camera_ms, 1),
                        "hz": round(hz, 2)},
             "stance": {"model": self.stance.name, "phase": self.stance.phase},
@@ -414,6 +492,7 @@ class Simulator:
         steps_per_second = round(1 / dt)
         while not stop.is_set():
             loop_start = time.perf_counter()
+            gc_before = sum(t.gc_count)
             self._service()
             self.step()
             if self.camera and self.n % cam_every == 0:
@@ -427,7 +506,10 @@ class Simulator:
                 if ratio < 0.95:
                     t.slow_windows.append((round(self.sim_time, 2), round(ratio, 3)))
                 t.window_wall = now
-            t.step_ms.append((time.perf_counter() - loop_start) * 1000)
+            took = (time.perf_counter() - loop_start) * 1000
+            t.step_ms.append(took)
+            if took > 20 and len(t.slow_steps) < 50:
+                t.slow_steps.append((round(self.sim_time, 3), round(took, 1), sum(t.gc_count) - gc_before))
             if not realtime:
                 continue
             slack = anchor + (self.n - n0) * dt - time.perf_counter()
@@ -524,7 +606,7 @@ class Bridge:
             self.hand_pub[side].Write(state)
 
 
-def make_services(sim: Simulator):
+def make_services(sim: Simulator, test_hooks: bool = False):
     """The `sport` and `robolang_sim` RPC services (SDK `Server` subclasses); call Init() and Start() on both."""
     from unitree_sdk2py.g1.loco import g1_loco_api as api
     from unitree_sdk2py.rpc.internal import RPC_ERR_SERVER_API_PARAMETER
@@ -568,11 +650,26 @@ def make_services(sim: Simulator):
             self._RegistHandler(API_STATUS, lambda p: (0, json.dumps(sim.status())), False)
             self._RegistHandler(API_ATTACH, self.attach, False)
             self._RegistHandler(API_DETACH, self.detach, False)
+            self._RegistHandler(API_SET_STANCE, self.set_stance, False)
+            if test_hooks:  # only with --test-hooks: a push for the harness's fall test
+                self._RegistHandler(API_PUSH, self.push, False)
+
+        def set_stance(self, parameter):
+            try:
+                return 0, json.dumps(sim.request(sim.set_stance, json.loads(parameter)["model"]))
+            except (ValueError, KeyError):
+                return RPC_ERR_SERVER_API_PARAMETER, ""
+
+        def push(self, parameter):
+            p = json.loads(parameter)
+            return 0, json.dumps(sim.request(sim.push, p["force"], p["duration"]))
 
         def identity(self, parameter):
             return 0, json.dumps({"simulation": True, "domain": DOMAIN, "interface": INTERFACE,
                                   "sim_time": sim.sim_time, "stance_model": sim.stance.name,
-                                  "grasp_model": "weld_after_hand_close"})
+                                  "grasp_model": "weld_after_hand_close",
+                                  # where the head camera's frames are (on the robot the camera is read directly)
+                                  "head_camera_dir": str(sim.run_dir / "head") if sim.run_dir else None})
 
         def attach(self, parameter):
             p = json.loads(parameter)
@@ -599,14 +696,19 @@ def main(argv=None) -> int:
     parser.add_argument("--stance", default="free", choices=sorted(STANCES),
                         help="what the robot does when it stands still: free (the policy alone) or "
                              "supported (the torso welded to a mocap body; the approved fallback)")
+    parser.add_argument("--no-gc-freeze", action="store_true",
+                        help="measurement only: leave the garbage collector as it is (to compare step_compute_ms)")
+    parser.add_argument("--test-hooks", action="store_true",
+                        help="harness only: also answer robolang_sim's push (a force on the torso, for the fall test)")
     args = parser.parse_args(argv)
 
     from unitree_sdk2py.core.channel import ChannelFactoryInitialize
 
     sim = Simulator(args.site, stance=args.stance, run_dir=args.run_dir, oracle=args.oracle)
+    sim.watch_gc()
     ChannelFactoryInitialize(DOMAIN, INTERFACE)  # domain 1 and loopback are not options
     bridge = Bridge(sim)
-    services = make_services(sim)
+    services = make_services(sim, args.test_hooks)
     for service in services:
         service.Init()
         service.Start()
@@ -614,6 +716,8 @@ def main(argv=None) -> int:
     for sig in (signal.SIGINT, signal.SIGTERM):
         signal.signal(sig, lambda *_: stop.set())
     sim.start()
+    if not args.no_gc_freeze:
+        sim.freeze_gc()
     print(json.dumps({"ready": True, "pid": os.getpid(), "domain": DOMAIN, "interface": INTERFACE,
                       "stance_model": sim.stance.name, "run_dir": str(args.run_dir), "versions": assets.versions()}),
           flush=True)

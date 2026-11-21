@@ -10,5 +10,8 @@ INTERFACE = "lo"
 SIM_SERVICE = "robolang_sim"
 SIM_API_VERSION = "1.0.0.0"
 API_IDENTITY, API_STATUS, API_ATTACH, API_DETACH = 1001, 1002, 1003, 1004
+API_SET_STANCE = 1006  # the stand-in's balance support: free or supported (the approved fallback, 0046 U4)
+# Test hook, answered only by a stand-in started with --test-hooks (the executor never calls it): push the torso.
+API_PUSH = 1005
 # Error code the stand-in's `sport` service returns for a request it refuses (not a code the robot uses).
 ERR_REFUSED = 7400

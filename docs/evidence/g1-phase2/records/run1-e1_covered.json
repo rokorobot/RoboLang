@@ -1,0 +1,461 @@
+{
+  "run_record_schema": "robolang.g1.run",
+  "run_record_schema_version": "0.1",
+  "mode": "simulation",
+  "backend": {
+    "kind": "unitree-g1-mujoco",
+    "versions": {
+      "arch": "aarch64",
+      "python": "3.11.2",
+      "assets": {
+        "unitree_mujoco": "1eb6642e3f3fdfb7fb13a9794fd6a2dd93ea0e7d",
+        "unitree_rl_lab": "4960b84732b0c2ec593dccbfe963fda1bcd7b1e3",
+        "mujoco_menagerie": "370c43965323c0944b433b202aac5058b5f907a9",
+        "unitree_rl_gym": "276801e46c5d433564f24658bac64f254b7d2d4b",
+        "unitree_sdk2_python": "814556d15970dd2ecf1c9984e845ca02ab07e206",
+        "cyclonedds_c": "abb064e35b6fbc79554c255ff8b371333e87b029"
+      },
+      "packages": {
+        "mujoco": "4.0.1",
+        "onnxruntime": "1.32.0",
+        "numpy": "2.4.6",
+        "opencv-python-headless": "5.1.0.95",
+        "cyclonedds": "0.10.2",
+        "unitree_sdk2py": "1.0.1"
+      }
+    },
+    "grasp_model": "weld_after_hand_close",
+    "stance_model": "free"
+  },
+  "task": {
+    "name": "go",
+    "parameters": [
+      {
+        "name": "r",
+        "type": "robot"
+      },
+      {
+        "name": "a",
+        "type": "location"
+      }
+    ],
+    "safety": [],
+    "preconditions": [],
+    "goal": [
+      {
+        "kind": "robot_at",
+        "robot": "r",
+        "location": "a"
+      }
+    ],
+    "steps": [
+      {
+        "kind": "move",
+        "robot": "r",
+        "target": "a"
+      }
+    ]
+  },
+  "bindings": {
+    "a": "loc_a",
+    "r": "robot_1"
+  },
+  "site": {
+    "name": "pick_place",
+    "schema": "robolang-g1-site/2"
+  },
+  "verify": {
+    "min_confidence": "0.9",
+    "max_age_ms": 10000
+  },
+  "state": "FAILED",
+  "failure": {
+    "code": "S517",
+    "message": "station marker 20 was not seen within 70 s (scanned from the approach point; belief [1.81, 0.02, 0.23])",
+    "step": 1
+  },
+  "preconditions": [],
+  "steps": [
+    {
+      "index": 1,
+      "kind": "move",
+      "status": "failed",
+      "t_start_ms": 3571,
+      "details": {
+        "events": [
+          {
+            "t_ms": 13276,
+            "event": "scan",
+            "turn_rad": 0.216
+          },
+          {
+            "t_ms": 18680,
+            "event": "scan",
+            "turn_rad": 0.6
+          },
+          {
+            "t_ms": 27679,
+            "event": "scan",
+            "turn_rad": 0.6
+          },
+          {
+            "t_ms": 36275,
+            "event": "localized",
+            "marker": 22,
+            "from": [
+              1.7,
+              0.0,
+              1.524
+            ],
+            "to": [
+              1.036,
+              0.17,
+              1.696
+            ]
+          },
+          {
+            "t_ms": 40672,
+            "event": "localized",
+            "marker": 22,
+            "from": [
+              1.036,
+              0.17,
+              1.474
+            ],
+            "to": [
+              1.137,
+              0.15,
+              1.56
+            ]
+          },
+          {
+            "t_ms": 43480,
+            "event": "localized",
+            "marker": 22,
+            "from": [
+              1.137,
+              0.15,
+              1.449
+            ],
+            "to": [
+              1.137,
+              0.154,
+              1.532
+            ]
+          },
+          {
+            "t_ms": 44280,
+            "event": "localized",
+            "marker": 22,
+            "from": [
+              1.137,
+              0.154,
+              1.532
+            ],
+            "to": [
+              1.162,
+              0.138,
+              1.546
+            ]
+          },
+          {
+            "t_ms": 44280,
+            "event": "replan",
+            "from_approach_m": 0.8
+          },
+          {
+            "t_ms": 69476,
+            "event": "scan",
+            "turn_rad": 0.242
+          }
+        ]
+      },
+      "t_end_ms": 75484,
+      "wall_s": 71.91
+    }
+  ],
+  "goal": [
+    {
+      "index": 1,
+      "condition": {
+        "kind": "robot_at",
+        "robot": "r",
+        "location": "a"
+      },
+      "result": "not_evaluated"
+    }
+  ],
+  "goal_evaluated": false,
+  "goal_note": "goal verdicts from observations are phase 3 of this backend: the goal was not evaluated, and completed steps are not a success",
+  "observations": [
+    {
+      "t_ms": 4079,
+      "frames": 3,
+      "markers": {}
+    },
+    {
+      "t_ms": 7487,
+      "frames": 3,
+      "markers": {}
+    },
+    {
+      "t_ms": 12684,
+      "frames": 3,
+      "markers": {}
+    },
+    {
+      "t_ms": 13276,
+      "frames": 3,
+      "markers": {}
+    },
+    {
+      "t_ms": 17884,
+      "frames": 2,
+      "markers": {}
+    },
+    {
+      "t_ms": 18680,
+      "frames": 4,
+      "markers": {}
+    },
+    {
+      "t_ms": 26891,
+      "frames": 2,
+      "markers": {}
+    },
+    {
+      "t_ms": 27679,
+      "frames": 4,
+      "markers": {}
+    },
+    {
+      "t_ms": 36275,
+      "frames": 2,
+      "markers": {
+        "22": {
+          "id": 22,
+          "position": [
+            2.3767,
+            0.1871,
+            -0.5708
+          ],
+          "normal": [
+            -0.9921,
+            0.1251,
+            -0.0088
+          ],
+          "confidence": 1.0,
+          "stamp_ms": 36200,
+          "frames": 2,
+          "detections": 2,
+          "range_m": 2.55,
+          "age_ms": 75
+        }
+      }
+    },
+    {
+      "t_ms": 40672,
+      "frames": 2,
+      "markers": {
+        "22": {
+          "id": 22,
+          "position": [
+            2.3569,
+            0.6119,
+            -0.5694
+          ],
+          "normal": [
+            -0.9997,
+            -0.0106,
+            -0.0218
+          ],
+          "confidence": 1.0,
+          "stamp_ms": 40600,
+          "frames": 2,
+          "detections": 2,
+          "range_m": 2.595,
+          "age_ms": 72
+        }
+      }
+    },
+    {
+      "t_ms": 43480,
+      "frames": 2,
+      "markers": {
+        "22": {
+          "id": 22,
+          "position": [
+            2.3383,
+            0.6764,
+            -0.568
+          ],
+          "normal": [
+            -0.9989,
+            -0.0387,
+            -0.028
+          ],
+          "confidence": 1.0,
+          "stamp_ms": 43400,
+          "frames": 2,
+          "detections": 2,
+          "range_m": 2.594,
+          "age_ms": 80
+        }
+      }
+    },
+    {
+      "t_ms": 44280,
+      "frames": 4,
+      "markers": {
+        "22": {
+          "id": 22,
+          "position": [
+            2.3464,
+            0.6665,
+            -0.573
+          ],
+          "normal": [
+            -0.9997,
+            -0.0246,
+            0.0002
+          ],
+          "confidence": 1.0,
+          "stamp_ms": 44200,
+          "frames": 4,
+          "detections": 4,
+          "range_m": 2.601,
+          "age_ms": 80
+        }
+      }
+    },
+    {
+      "t_ms": 50084,
+      "frames": 3,
+      "markers": {}
+    },
+    {
+      "t_ms": 52476,
+      "frames": 3,
+      "markers": {}
+    },
+    {
+      "t_ms": 61892,
+      "frames": 2,
+      "markers": {}
+    },
+    {
+      "t_ms": 68876,
+      "frames": 2,
+      "markers": {}
+    },
+    {
+      "t_ms": 69476,
+      "frames": 3,
+      "markers": {}
+    },
+    {
+      "t_ms": 74676,
+      "frames": 2,
+      "markers": {}
+    },
+    {
+      "t_ms": 75484,
+      "frames": 4,
+      "markers": {}
+    }
+  ],
+  "stop": {
+    "reason": "step_failed",
+    "code": "S517",
+    "kind": "controlled_stand",
+    "safe_state": {
+      "velocity": "zero",
+      "arms": "hold",
+      "hands": "unchanged",
+      "balance": "kept"
+    },
+    "hold": {
+      "velocity": "0",
+      "arms": "walking controller's own",
+      "hands": "unchanged"
+    },
+    "confirmation": {
+      "confirmed": true,
+      "timeout_ms": 3000,
+      "window_ms": 500,
+      "tolerances": {
+        "gyro_rad_s": 0.045,
+        "joint_velocity_rad_s": 0.09,
+        "tilt_deg": 15.0
+      },
+      "t_stop_ms": 75488,
+      "max_gyro_rad_s": 0.0075,
+      "max_joint_velocity_rad_s": 0.004,
+      "max_tilt_deg": 0.95,
+      "samples": 126,
+      "window_start_ms": 75500,
+      "window_end_ms": 76000,
+      "after_ms": 512
+    }
+  },
+  "realtime": {
+    "realtime_valid": true,
+    "ratio": 1.0,
+    "sim_s": 72.43,
+    "wall_s": 72.43,
+    "slow_seconds": [],
+    "stalls": 0,
+    "worst_second_ratio_overall": 0.999,
+    "step_compute_ms": {
+      "budget": 2.0,
+      "mean": 0.496,
+      "p99": 1.295,
+      "max": 4.9,
+      "over_budget": 0.0004
+    },
+    "gc": {
+      "collections": [
+        7,
+        0,
+        1
+      ],
+      "max_ms": [
+        0.11,
+        0.0,
+        9.23
+      ],
+      "slow_steps": [
+        [
+          3.28,
+          82.5,
+          0
+        ]
+      ],
+      "frozen": 70623,
+      "enabled": true,
+      "threshold": [
+        700,
+        10,
+        1000000
+      ]
+    },
+    "camera": {
+      "frames": 379,
+      "dropped": 0,
+      "render_ms": 69.8,
+      "hz": 4.99
+    }
+  },
+  "core_outcome": null,
+  "start_pose": [
+    0.0,
+    0.0,
+    0.0
+  ],
+  "pose_belief_end": [
+    1.8075,
+    0.0233,
+    0.2278
+  ],
+  "run_id": "cec2d9c4045494cc"
+}

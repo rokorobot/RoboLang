@@ -15,7 +15,8 @@ from __future__ import annotations
 import json
 import time
 
-from . import API_ATTACH, API_DETACH, API_IDENTITY, API_STATUS, DOMAIN, INTERFACE, SIM_API_VERSION, SIM_SERVICE
+from . import API_ATTACH, API_DETACH, API_IDENTITY, API_SET_STANCE, API_STATUS, DOMAIN, INTERFACE, SIM_API_VERSION
+from . import SIM_SERVICE
 
 CODE = "S501"
 
@@ -50,7 +51,7 @@ def sim_client():
 
         def Init(self):
             self._SetApiVerson(SIM_API_VERSION)
-            for api in (API_IDENTITY, API_STATUS, API_ATTACH, API_DETACH):
+            for api in (API_IDENTITY, API_STATUS, API_ATTACH, API_DETACH, API_SET_STANCE):
                 self._RegistApi(api, 0)
 
         def _json(self, api, parameter=None):
@@ -71,6 +72,10 @@ def sim_client():
 
         def Detach(self, obj: str):
             return self._json(API_DETACH, {"object": obj})
+
+        def SetStance(self, model: str):
+            """Switch the stand-in's balance support ('free' or 'supported'); the robot must be standing still."""
+            return self._json(API_SET_STANCE, {"model": model})
 
     client = SimClient()
     client.SetTimeout(1.0)
