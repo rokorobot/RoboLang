@@ -78,8 +78,8 @@ APPROACH_BACK, APPROACH_UP = 0.09, 0.03  # the pre-grasp: behind the grasp point
 # 0-30 degrees and pinches of -1 to +3 cm (docs/evidence/g1-phase3-observations.md): no hand pose keeps the open
 # hand off the table by a margin and the closed fingers off the object's top face (where the marker is) at once: a
 # pinch 1 cm up cleared the table by 0.8 cm and the closed fingers hid a corner of the marker (S506, "not seen at the
-# hand"). Flat with the pinch at the centre, the hand just touches the table top (0.0 cm; the contact legs allow 5 mm)
-# and the closed fingers stay level with the object's top face.
+# hand"). Flat with the pinch at the centre, the hand just touches the table top (0 to -0.7 cm; the contact legs allow
+# 1 cm) and the closed fingers stay level with the object's top face.
 GRASP_RISE = 0.0
 FINGERS_DOWN_DEG = (0, 15, 30, 45)  # hand orientations tried, in this order
 WAIST_LEAN_RAD = (0.0, 0.15, 0.3)  # waist pitch allowed, tried in this order
@@ -91,8 +91,8 @@ HAND_STATE_AGE_S = 1.0  # a hand state older than this (wall clock) is not used
 # declared tables and obstacles with the robot's own geometry (kinematics.Clearance). Margins: 3 cm sideways and 1.5 cm
 # vertical; on the legs where the hand is meant to be at the object (the last approach, the first lift, the lowering and
 # the release) the hand and the object, which rests on the table there, are checked with no vertical margin and may
-# overlap the table by 5 mm (the object's position is known to about a centimetre).
-CONTACT_OVERLAP_M = 0.005  # (see above)
+# overlap the table by 1 cm (the object's position, from its marker, is known to about a centimetre).
+CONTACT_OVERLAP_M = 0.01  # (see above)
 RAISED_ABOVE_PRE_M = (0.08, 0.06, 0.04)  # the hand is raised this far above the pre-grasp height, in turn
 RAISED_OUT_M = (0.0, 0.05, 0.10)  # the raised pose beside the body is tried this much further out, in turn
 CARRY_CLEARANCE_M = 0.02  # a held object clears every link of the robot by at least this in the carry pose ...

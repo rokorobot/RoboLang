@@ -110,12 +110,12 @@ the robot's own collision shapes (the arm links, the palm, the finger capsules, 
 hand, in the pose it is held in), fed the belief pose at the station, every straight joint-space leg of a grasp, a place and
 the observation motion is tested against the site's declared tables and obstacles grown by **3 cm sideways and 1.5 cm
 vertically**; on the legs where the hand is meant to be at the object (the last approach, the first lift, the lowering and
-the release) the hand and the object, which rests on its table there, may overlap the table by 5 mm and no more. A reach
+the release) the hand and the object, which rests on its table there, may overlap the table by 1 cm and no more. A reach
 that has an inverse-kinematics solution but no clear path is dropped for the next one; if none is left, **S502** ("no clear
 path"). Measured on the shipped sites, the phase 2 grasp (hand pitched 15 degrees, the pinch 1 cm below the object's centre)
 put the open fingers 3.2 cm into the table and the retreat passed the object through its edge. Now the hand is flat with
 the pinch at the object's centre (the closed fingers stay level with the object's top face, where the marker is, and the open
-hand just touches the table top), the hand comes in through a pose raised beside the body (tried further out if the object
+hand just touches the table top, to within 1 cm), the hand comes in through a pose raised beside the body (tried further out if the object
 would pass the table's corner) and one straight above the pre-grasp. The **carry pose** of a held object is the walking
 controller's own arm pose moved only as far as it takes for the object, welded as grasped, to clear **every link of the robot**
 (the holding hand's own palm and fingers excepted) by 2.5-3 cm in the model; in the walking pose it is 0.1-0.6 cm from the

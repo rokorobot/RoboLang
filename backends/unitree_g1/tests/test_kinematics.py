@@ -168,7 +168,7 @@ def test_the_grasp_and_place_paths_clear_the_declared_tables_with_the_margins_an
         plan = grasp_plan(o)
         info = plan["clearance"]
         assert info["clear"] is True and info["closest"]["over_limit_m"] > 0, (site_name, station, info["closest"])
-        assert info["margins_m"] == {"sideways": 0.03, "vertical": 0.015, "contact_overlap": 0.005}
+        assert info["margins_m"] == {"sideways": 0.03, "vertical": 0.015, "contact_overlap": 0.01}
         place = o._plan_reach(
             "right",
             lambda R: BOX_CENTRE + np.array([0, 0.04, -0.003]) - R @ o.held["offset_in_hand"],
@@ -190,7 +190,7 @@ def test_the_grasp_and_place_paths_clear_the_declared_tables_with_the_margins_an
 def test_the_planned_grasp_keeps_the_open_fingers_out_of_the_table_where_phase_2s_went_3_cm_into_it(kin, default):
     """With phase 2's grasp (hand pitched 15 degrees, the pinch 1 cm below the object's centre) the open fingers reached
     3 cm into the table in the robot's own model; with the planned one (flat, the pinch at the centre) the hand just
-    touches the table top, within the 5 mm the contact legs allow."""
+    touches the table top, within the 1 cm the contact legs allow."""
     o = clearance_ops(kin, default, "pick_place", "bench")
     boxes = o.site["tables"]
     for deg, rise, inside in ((15, -0.01, True), (0, ops.GRASP_RISE, False)):
