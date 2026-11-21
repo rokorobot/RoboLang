@@ -17,7 +17,7 @@ def raw(name="pick_place"):
     return json.loads((SITES / f"{name}.json").read_text())
 
 
-@pytest.mark.parametrize("name", ["pick_place", "carry_hold"])
+@pytest.mark.parametrize("name", ["pick_place", "carry_hold", "part_precheck"])
 def test_shipped_sites_load_and_derive_each_station_pose(name):
     site = S.load_site(SITES / f"{name}.json")
     assert site["schema"] == S.SCHEMA_2
@@ -83,6 +83,12 @@ def test_site_errors_name_the_problem(edit, message):
             "w_carry_hold.rob",
             "carry_crate",
             {"r": "robot_1", "crate": "crate_1", "dock": "loc_dock", "dst": "loc_dst"},
+        ),
+        (  # the precondition's location is in view from the start pose, the goal's from the end station
+            "part_precheck",
+            "w_part_precheck.rob",
+            "move_if_present",
+            {"r": "robot_1", "item": "box_1", "src": "loc_a", "dst": "loc_b"},
         ),
     ],
 )
