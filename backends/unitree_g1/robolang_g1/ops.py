@@ -355,7 +355,7 @@ class G1Operations:
             if math.hypot(ax - self.pose[0], ay - self.pose[1]) > 0.4:
                 self.walk_to(ax, ay, gyaw, deadline_ms=deadline)
             self.turn_to(gyaw, tolerance=0.1)  # face the station: its marker is then in the camera's view
-            marker = self._find_marker(station, deadline, scan_end)
+            marker = self._find_marker(station, deadline, scan_end, (ax, ay))
             if marker is not None:
                 break
         if marker is None:
@@ -367,25 +367,22 @@ class G1Operations:
         result["events"] = self.events
         return result
 
-    def _find_marker(self, station: dict, deadline_ms: int, scan_end_ms: int):
+    def _find_marker(self, station: dict, deadline_ms: int, scan_end_ms: int, approach: tuple):
         """Look at the approach point for the station's marker, scanning by turning if it is not in view. Returns its
-        reading; or None when another station's marker put the belief more than 0.3 m from where it was (the robot was
-        not where it thought: approach again). S517 when the search budget is spent."""
+        reading; or None when the belief, corrected by another marker, puts the robot more than 0.35 m from the
+        approach point (it was not where it thought: walk there again, a table may be hiding the marker from here).
+        S517 when the search budget is spent."""
         mid = station["marker"]["id"]
         mx, my = station["marker"]["pos"][:2]
         first = True
         while True:
-            before = list(self.pose)
             readings = self.look(frames=3 if first else 4)
             reading = readings.get(mid)
             if reading is not None and reading.confidence >= MARKER_MIN_CONF and reading.range_m <= MARKER_MAX_RANGE_M:
                 return reading
-            if math.hypot(self.pose[0] - before[0], self.pose[1] - before[1]) > 0.3:
-                self.events.append({
-                    "t_ms": self.now_ms(),
-                    "event": "replan",
-                    "moved_m": round(float(math.hypot(self.pose[0] - before[0], self.pose[1] - before[1])), 3),
-                })
+            away = math.hypot(self.pose[0] - approach[0], self.pose[1] - approach[1])
+            if away > 0.35:
+                self.events.append({"t_ms": self.now_ms(), "event": "replan", "from_approach_m": round(float(away), 3)})
                 return None
             if self.now_ms() > scan_end_ms or self.now_ms() > deadline_ms:
                 raise BackendFailure(
