@@ -44,7 +44,7 @@ STATION_TOL_M, STATION_TOL_RAD = (
     0.047,
     0.09,
 )  # `move` promises 5 cm and 0.1 rad (0046 U5): this, after settling, leaves margin
-SERVO_TOL_M, SERVO_TOL_RAD = 0.044, 0.09
+SERVO_TOL_M, SERVO_TOL_RAD = 0.035, 0.09
 SERVO_SHUFFLE_RAD = (
     0.11  # a heading error below this is left to the corrections' own yaw rate: a shuffle moves the robot
 )

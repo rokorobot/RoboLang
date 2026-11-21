@@ -128,4 +128,7 @@ The codes and meanings of the [ROS 2 backend](ros2-backend-v0.1.md#failure-codes
 `.github/workflows/g1-sim.yml`: on demand, nightly, and on pull requests that change `backends/unitree_g1/` or the
 workflow itself (0046 U12 said on demand and nightly; the pull-request trigger is limited to the backend's own files so
 that a backend change is checked on x86_64 before it merges). Plain x86_64 runner, no GPU, no Docker; the assets and the
-CycloneDDS build are cached.
+CycloneDDS build are cached. The job runs the backend's tests, the phase 1 harness (P1-P6, about 2 minutes) and the phase 2
+checks (E1-E7, about 35 minutes of simulated real time), and uploads `harness.json`, `phase2.json` and every run's record.
+The simulation runs in real time, so a run's `realtime_valid` (every second within 5% of real time, no stall) is part of
+its record; an invalid run does not count towards acceptance (0046 U13).
