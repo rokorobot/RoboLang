@@ -39,7 +39,7 @@ class FakeOps:
         if "snapshot" in self.fail:
             raise self.fail["snapshot"]
         s = self.snaps.pop(0) if len(self.snaps) > 1 else self.snaps[0]
-        return s, ({"shown": {"object": sorted(show)[0]}} if show else {})
+        return s, ({"observation_motion": {"performed": True, "object": sorted(show)[0]}} if show else {})
 
     def guard(self, model=None):
         self.calls.append("guard")
@@ -208,7 +208,10 @@ def test_the_goal_snapshot_asks_to_see_a_held_object_and_for_readiness_only_when
     ops = FakeOps(snaps=[snap([marker], [closed], ready(stamp_ms=0), t=0)])
     rec = execute(task_of(holding), {"r": "robot_1", "o": "box_1", "a": "loc_a"}, SITE, ops)
     assert ("snapshot", ["box"], True) in moves(ops) and rec["snapshots"][0]["purpose"] == "goal"
-    assert rec["state"] == "SUCCEEDED" and rec["snapshots"][0]["shown"] == {"object": "box"}
+    assert rec["state"] == "SUCCEEDED" and rec["snapshots"][0]["observation_motion"] == 0
+    (motion,) = rec["observation_motion"]  # recorded apart from the plan's steps, with the atoms that asked for it
+    assert motion["phase"] == "goal" and motion["performed"] is True and motion["object"] == "box"
+    assert [w["kind"] for w in motion["why"]] == ["holding"] and len(rec["steps"]) == 2
     assert rec["core_outcome"] is None  # robot_ready has no Core form
     ops2 = FakeOps()
     execute(task_of(GO), BIND, SITE, ops2)
