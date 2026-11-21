@@ -1,8 +1,10 @@
 name: G1 simulation harness
 
-# Decision 0046, phase 1: the Unitree G1 stand-in in MuJoCo and the checks P1-P6 (backends/unitree_g1). On demand and
-# nightly, and on pull requests that change the backend or this workflow (so x86_64 is checked before a backend change
-# merges). 05:11 UTC is clear of the benchmark (Monday 06:00) and the ROS 2 harness (03:17).
+# Decision 0046, phases 1 and 2: the Unitree G1 stand-in in MuJoCo and the checks P1-P6, then the executor's checks E1-E7
+# (backends/unitree_g1). On demand and nightly, and on pull requests that change the backend or this workflow (so x86_64
+# is checked before a backend change merges). 05:11 UTC is clear of the benchmark (Monday 06:00) and the ROS 2 harness
+# (03:17). The phase 2 checks run in simulated real time (the stand-in is paced to the wall clock, 0046 U13): about
+# half an hour on four cores, so the job's limit is 100 minutes.
 on:
   pull_request:
     paths:
@@ -24,7 +26,7 @@ permissions:
 jobs:
   harness:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 100
     env:
       G1_ASSETS: ${{ github.workspace }}/.g1-assets
       MUJOCO_GL: egl
@@ -53,11 +55,24 @@ jobs:
         run: python -m pytest -q backends/unitree_g1/tests
       - name: Harness (P1-P6)
         run: python -m robolang_g1.harness --stance "${{ inputs.stance || 'free' }}" --out out/harness.json
+      - name: Executor checks (E1-E7)
+        run: python -m robolang_g1.phase2 --stance "${{ inputs.stance || 'free' }}" --out out/phase2.json
       - name: Summary
         if: always()
         run: |
           python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
           import json, pathlib
+          q = pathlib.Path("out/phase2.json")
+          if q.exists():
+              e = json.loads(q.read_text())
+              print(f"### Phase 2 (executor): go **{e.get('go')}**, stance `{e['stance_model']}`, arch `{e['arch']}`, "
+                    f"realtime_valid in every run: `{e.get('realtime_valid_all_runs')}`\n")
+              for name, c in e["checks"].items():
+                  print(f"- {name}: {'pass' if c['pass'] else '**FAIL**'}")
+              for r in e.get("runs", []):
+                  print(f"  - `{r['scenario']}`: realtime_valid `{r['realtime_valid']}`, worst second `{r['worst_second_ratio']}`, "
+                        f"step compute ms `{r['step_compute_ms']}`, gc max ms `{r['gc']}`")
+              print()
           p = pathlib.Path("out/harness.json")
           if p.exists():
               d = json.loads(p.read_text())
@@ -73,4 +88,11 @@ jobs:
         if: always()
         with:
           name: g1-harness
-          path: out/
+          # harness.json, phase2.json, and every phase 2 run's record, log and stand-in log (not the frames)
+          path: |
+            out/harness.json
+            out/phase2.json
+            out/phase2.run/**/*.json
+            out/phase2.run/**/*.log
+            out/phase2.run/**/*.rob
+          if-no-files-found: warn

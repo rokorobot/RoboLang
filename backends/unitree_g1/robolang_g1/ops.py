@@ -36,12 +36,14 @@ CONFIRM_TILT_RAD = math.radians(15)
 SETTLE_GYRO, SETTLE_LEG_VEL, SETTLE_WINDOW_MS, SETTLE_TIMEOUT_S = 0.03, 0.05, 600, 9.0
 # ---- localization and walking
 STATION_TOL_M, STATION_TOL_RAD = 0.047, 0.09  # `move` promises 5 cm and 0.1 rad (0046 U5): this, after settling, leaves margin
-SERVO_TOL_M, SERVO_TOL_RAD = 0.044, 0.085
+SERVO_TOL_M, SERVO_TOL_RAD = 0.044, 0.09
+SERVO_SHUFFLE_RAD = 0.11  # a heading error below this is left to the corrections' own yaw rate: a shuffle moves the robot
 MARKER_MAX_RANGE_M, MARKER_MIN_CONF = 2.9, 0.5  # a station marker corrects the belief only when seen this well
 MAX_UP_DISAGREEMENT_RAD = 0.03  # ... and only if the vertical it implies is the IMU's, to within this
 APPROACH_M = 0.5  # the walk ends this far before the station, facing it, and the marker is looked for there
+STAGING_M = 1.5  # ... after passing through a point this much further out on the station's axis, where the marker is in view
 WALK_SPEED = 0.5
-WALK_GAIN = 0.95  # metres of forward travel (coast included) per metre commanded (measured 0.74-1.08)
+WALK_GAIN, BACK_GAIN, SIDE_GAIN, YAW_GAIN = 0.95, 0.9, 0.64, 0.7  # travel (coast included) per unit commanded, measured
 SHUFFLE_S = 1.2  # one burst of the turn-in-place shuffle ...
 SHUFFLE_RAD = {1: 0.127, -1: 0.111}  # ... turns this much to the left (+) and to the right (-): measured
 LEG_MAX_M = 1.6  # the longest walk between two looks
@@ -220,20 +222,25 @@ class G1Operations:
 
     # ------------------------------------------------------------------------------------------ walking
 
-    def _dead_reckon(self, vx: float, vy: float, wz: float, seconds: float) -> None:
+    def _dead_reckon(self, vx: float, vy: float, wz: float, seconds: float, shuffle: bool = False) -> None:
+        """Advance the belief by what a command should do (measured gains: the policy ramps up, coasts, and sidesteps at
+        about 0.64 of what is asked). A shuffle turns by its measured step and goes nowhere."""
         x, y, yaw = self.pose
-        forward = WALK_GAIN * vx * seconds
-        left = 0.65 * vy * seconds
+        if shuffle:
+            self.pose = [x, y, site_mod.wrap(yaw + SHUFFLE_RAD[1 if wz > 0 else -1] * np.sign(wz) * seconds / SHUFFLE_S)]
+            return
+        forward = (WALK_GAIN if vx > 0 else BACK_GAIN) * vx * seconds
+        left = SIDE_GAIN * vy * seconds
         self.pose = [x + forward * math.cos(yaw) - left * math.sin(yaw), y + forward * math.sin(yaw) + left * math.cos(yaw),
-                     site_mod.wrap(yaw + (SHUFFLE_RAD[1 if wz > 0 else -1] * np.sign(wz) * seconds / SHUFFLE_S if wz else 0.0))]
+                     site_mod.wrap(yaw + YAW_GAIN * wz * seconds)]
 
-    def command(self, vx: float, vy: float, wz: float, seconds: float, wait: bool = True) -> None:
+    def command(self, vx: float, vy: float, wz: float, seconds: float, wait: bool = True, shuffle: bool = False) -> None:
         """One SetVelocity, the belief advanced by what it should do, and (unless `wait` is False) the wait for it."""
         self.check()
         code = self.robot.set_velocity(vx, vy, wz, seconds)
         if code != 0:
             raise BackendFailure("S503", f"SetVelocity({vx:.2f}, {vy:.2f}, {wz:.2f}, {seconds:.2f}) returned {code}")
-        self._dead_reckon(vx, vy, wz, seconds)
+        self._dead_reckon(vx, vy, wz, seconds, shuffle)
         if wait:
             self.sleep(seconds)
 
@@ -251,32 +258,42 @@ class G1Operations:
             sign = 1 if remaining > 0 else -1
             bursts = min(6, max(1, round(abs(remaining) / SHUFFLE_RAD[sign])))
             for k in range(bursts):
-                self.command(0.0, 0.3 * (1 if k % 2 == 0 else -1), 0.2 * sign, SHUFFLE_S)
+                self.command(0.0, 0.3 * (1 if k % 2 == 0 else -1), 0.2 * sign, SHUFFLE_S, shuffle=True)
             self.settle(4.0)
             self.look(frames=2)
 
     def _angle_to(self, x: float, y: float) -> float:
         return site_mod.wrap(math.atan2(y - self.pose[1], x - self.pose[0]) - self.pose[2])
 
-    def walk_to(self, x: float, y: float, stop_short: float = 0.25, deadline_ms: int | None = None) -> None:
-        """Face (x, y), then walk to within `stop_short` of it in legs, looking between them."""
+    def walk_to(self, x: float, y: float, yaw: float, stop_short: float = 0.25, deadline_ms: int | None = None) -> None:
+        """Walk to within `stop_short` of (x, y) in legs, looking between them, ending with the heading `yaw`.
+
+        The stand-in turns slowly and badly in place, and strafes well, so the robot does not turn to face where it goes:
+        each leg commands the direction to the target in the robot's frame (forward, diagonal, sideways or backward,
+        whichever it is) and a yaw rate that works toward the final heading as it goes."""
         while True:
             self.check()
             if deadline_ms is not None and self.now_ms() > deadline_ms:
                 raise BackendFailure("S504", "the walk did not reach the approach point in time")
-            dist = math.hypot(x - self.pose[0], y - self.pose[1])
+            dx, dy = x - self.pose[0], y - self.pose[1]
+            dist = math.hypot(dx, dy)
             if dist <= stop_short:
                 return
-            bearing = self._angle_to(x, y)
-            if abs(bearing) > 0.2:
-                self.turn_by(bearing)
-                continue  # look, then check the bearing again with the belief the look left
-            self.look(frames=2)
-            leg = min(dist - stop_short, LEG_MAX_M)
-            seconds = max(0.5, leg / (WALK_GAIN * WALK_SPEED))
-            self.command(WALK_SPEED, 0.0, 0.0, seconds)
+            heading = self.pose[2]
+            phi = site_mod.wrap(math.atan2(dy, dx) - heading)  # the direction to go, in the robot's frame
+            scale = min(WALK_SPEED, 0.3 / max(abs(math.sin(phi)), 1e-6))  # sideways speed is at most 0.3
+            vx, vy = scale * math.cos(phi), scale * math.sin(phi)
+            if vx < 0:
+                vx = max(vx, -0.5)
+            speed_made = math.hypot(WALK_GAIN * vx if vx > 0 else BACK_GAIN * vx, SIDE_GAIN * vy)
+            seconds = float(np.clip((dist - stop_short) / max(speed_made, 0.1), 0.5, 3.4))
+            err = site_mod.wrap(yaw - heading)
+            wz = float(np.clip(1.5 * err, -0.2, 0.2)) if abs(err) > 0.04 else 0.0
+            if wz and math.hypot(vx, vy) < 0.3:  # the policy needs a command of about 0.3 to move at all
+                vx = 0.3
+            self.command(vx, vy, wz, seconds)
             self.settle()
-            self.look()
+            self.look(frames=3)
 
     def move(self, station_name: str) -> dict:
         """Walk to the station, then servo on its marker to within 5 cm and 0.1 rad, then wait for the stance to settle."""
@@ -287,8 +304,12 @@ class G1Operations:
         deadline = t0 + int(MOVE_TIMEOUT_S * 1000)
         self.look(frames=3)
         ax, ay = gx - APPROACH_M * math.cos(gyaw), gy - APPROACH_M * math.sin(gyaw)
+        sx, sy = gx - (APPROACH_M + STAGING_M) * math.cos(gyaw), gy - (APPROACH_M + STAGING_M) * math.sin(gyaw)
+        # A station's marker stands behind its table: from the side the table hides it. Come in along the station's axis.
+        if math.hypot(ax - self.pose[0], ay - self.pose[1]) > 0.4 + STAGING_M:
+            self.walk_to(sx, sy, gyaw, stop_short=0.35, deadline_ms=deadline)
         if math.hypot(ax - self.pose[0], ay - self.pose[1]) > 0.4:
-            self.walk_to(ax, ay, deadline_ms=deadline)
+            self.walk_to(ax, ay, gyaw, deadline_ms=deadline)
         self.turn_to(gyaw, tolerance=0.1)  # face the station: its marker is then in the camera's view
         marker = self._find_marker(station, deadline)
         result = self._servo(station, marker, deadline)
@@ -343,18 +364,18 @@ class G1Operations:
                 raise BackendFailure("S504", f"did not converge on station {station['name']} in time (errors forward, left, "
                                              f"yaw, last {len(iterations[-14:])} looks: {iterations[-14:]})")
             # the axis that is furthest out, each error in units of its tolerance
-            scores = {"yaw": abs(eyaw) / 0.05, "forward": abs(ex) / SERVO_TOL_M, "lateral": abs(ey) / SERVO_TOL_M}
-            # (yaw is corrected first and tighter than asked: a heading a few degrees off, with a sideways error, takes
-            # the station marker out of the camera's view)
+            scores = {"yaw": abs(eyaw) / SERVO_SHUFFLE_RAD, "forward": abs(ex) / SERVO_TOL_M, "lateral": abs(ey) / SERVO_TOL_M}
+            # (a heading error smaller than a shuffle's is corrected by the yaw rate the other bursts carry)
             axis = max(scores, key=scores.get)
-            if axis == "yaw":
+            bias = 0.2 * float(np.sign(eyaw)) if abs(eyaw) > 0.04 else 0.0
+            if axis == "yaw" and scores["yaw"] >= 1.0:
                 self.turn_by(float(np.clip(0.9 * eyaw, -0.5, 0.5)))
-            elif axis == "forward":
-                vx, vy, seconds = _burst("forward", ex)
-                self.command(vx, vy, 0.0, seconds)
+            elif axis in ("yaw", "forward"):
+                vx, vy, seconds = _burst("forward", ex if abs(ex) > 0.02 else 0.1)
+                self.command(vx, vy, bias, seconds)
             else:
                 vx, vy, seconds = _burst("lateral", ey)
-                self.command(vx, vy, 0.0, seconds)
+                self.command(vx, vy, bias, seconds)
             self.settle()
             readings = self.look(frames=4, ids={mid})
             for _ in range(3):  # the marker slipped out of view: face where it should be, and look again

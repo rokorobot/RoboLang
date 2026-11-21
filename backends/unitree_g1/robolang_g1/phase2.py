@@ -77,7 +77,7 @@ REFUSALS = {
              {"r": "robot_1", "o": "box_1", "a": "loc_a", "scale": "scale_1"}),
     "S510": ("robolang 1.9;\ntask t(robot r, location a) {\n    goal { robot_at r a; }\n"
              "    plan { measure r time as now; move r to a; }\n}\n", "t", {"r": "robot_1", "a": "loc_a"}),
-    "S514": ("robolang 1.9;\ntask patrol(robot r, location a, location b) {\n    goal { robot_at r a; }\n"
+    "S514": ("robolang 2.0;\ntask patrol(robot r, location a, location b) {\n    goal { robot_at r a; }\n"
              "    plan { move r to b; move r to a; }\n}\nmission rounds(robot r, location a, location b) {\n"
              "    repeat at most 2 runs {\n        run patrol(r, a, b);\n    };\n    on failure { continue; }\n}\n",
              "rounds", {"r": "robot_1", "a": "loc_a", "b": "loc_b"}),

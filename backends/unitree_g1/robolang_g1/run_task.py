@@ -37,12 +37,16 @@ class Session:
         self.ready: dict | None = None
 
     def __enter__(self) -> "Session":
-        self.ready = self.standin.wait_ready()
-        self.sim, _ = guard.require_simulation(timeout=30.0)
-        self.tail = OracleTail(self.standin.oracle)
-        self.tail.start()
-        self.tail.wait(lambda s: s["sim_time"] > 0, 30, "the oracle")
-        self.started = self.sim.Status()[1]
+        try:
+            self.ready = self.standin.wait_ready()
+            self.sim, _ = guard.require_simulation(timeout=30.0)
+            self.tail = OracleTail(self.standin.oracle)
+            self.tail.start()
+            self.tail.wait(lambda s: s["sim_time"] > 0, 30, "the oracle")
+            self.started = self.sim.Status()[1]
+        except BaseException:  # never leave a stand-in running: a second one on the domain spoils every later run
+            self.stop()
+            raise
         return self
 
     def __exit__(self, *exc) -> None:
