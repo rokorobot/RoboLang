@@ -79,13 +79,13 @@ arm's tracking error ahead of it. A unit test
 the crate, that the walking pose is under 2 cm and the carry pose at least 2 cm, on a model that did the planning; the paths
 test is `test_the_grasp_and_place_paths_clear_the_declared_tables_with_the_margins_and_the_check_refuses_when_they_do_not`.
 
-**What is measured is less than what is planned, and this is a deviation from "at least 2 cm".** In the 15 grasps of the final
+**What is measured is less than what is planned, and this is a deviation from "at least 2 cm" (accepted by the owner, 2026-11-21: "accept 1.6 cm as measured").** In the 15 grasps of the final
 phase 2 and phase 3 (second) runs the record's `carry_pose.object_to_nearest_link_m` (computed from the measured joints once the
 arm has reached the carry pose, so it includes the arm's tracking error, 0.01-0.03 rad) is **1.61-2.19 cm**: box (11 grasps) 1.61, 1.62, 1.74,
 1.82, 1.84, 1.84, 1.85, 1.86, 1.94, 2.08, 2.12; crate (4) 1.94, 2.07, 2.09, 2.19 (the closest link is always `right_hip_pitch_link`);
 1.65 cm in the carry protocol's crate. The model says 2.1 cm for each; the measured arm sits 0 to 0.5 cm closer. **10 of the 15
-are under 2 cm as measured**, none under 1.6 cm, against 0.1-0.6 cm before the fix. Proposal: plan for 2.5 cm (measured 2.0 cm in the
-protocol run of that variant) and fix the shelf approach it broke, or accept 1.6 cm; the owner's call.
+are under 2 cm as measured**, none under 1.6 cm, against 0.1-0.6 cm before the fix. The owner chose to accept 1.6 cm as measured over planning for 2.5 cm
+(which measured 2.0 cm in the protocol run of that variant but broke the shelf approach with S504); the plan stays 2.1 cm.
 
 ## The arm paths of grasp and place, against the declared tables
 
@@ -263,7 +263,8 @@ The contract is in the spec. What was chosen, and why:
    approved by the owner 2026-11-21", scoped as above (after the last step; only for a held object a goal atom names; arm only; the
    site's arm-work stance; clearance against the declared tables and obstacles or no motion; never for a precondition; its own
    `observation_motion` record). `w_carry_hold` passes only through it, which the brief's O3 allows ("say if").
-2. **The carry pose clears 2.1 cm in the model and 1.6-2.2 cm as measured**, not "at least 2 cm" as measured (above).
+2. **The carry pose clears 2.1 cm in the model and 1.6-2.2 cm as measured**, not "at least 2 cm" as measured (above); accepted by
+   the owner on 2026-11-21.
 3. **The grasp geometry differs from phase 2**: a flat hand with the pinch at the object's centre (phase 2: 15°, 1 cm below), the
    hand comes in over the table through raised poses, and on the legs where the hand is meant to be at the object the hand and
    object may overlap the declared table by 1 cm (3 cm sideways and 1.5 cm vertical margins elsewhere). The object is released
@@ -288,7 +289,8 @@ The contract is in the spec. What was chosen, and why:
 
 ## Open issues
 
-* **Carry-pose clearance** (above): 1.6-2.2 cm measured. Decide: 2.5 cm plan plus a fix for the shelf servo, or accept.
+* **Carry-pose clearance** (above): 1.6-2.2 cm measured, accepted by the owner on 2026-11-21. A larger margin needs the shelf
+  servo to tolerate a larger arm move first.
 * **The observation motion is 15 s of arm motion with the pelvis welded**, at the end of every task whose goal asks `holding` or
   `object_at` for an object the robot carries. The weld stands in for the balance a real G1's controller gives; a real arm raise
   with 0.3 kg while standing is unmeasured. The motion is clear only of the tables and obstacles a site declares, not of
