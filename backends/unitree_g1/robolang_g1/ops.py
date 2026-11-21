@@ -961,11 +961,14 @@ class G1Operations:
                 g[i] = (clearance(q2) - base) / 1e-3
             return g
 
-        for target in CARRY_PLAN_M:
-            q, best = q0.copy(), None
+        rng = np.random.default_rng(5)
+
+        def climb(start: np.ndarray, target: float):
+            """One search from `start`: (distance from the walking pose, pose) of the closest feasible, or None."""
+            q, best = start.copy(), None
             for outer in range(120):
                 if best is None and outer >= 20:
-                    break  # not found by now: this clearance is out of reach
+                    break  # not found by now: out of reach from here
                 for _ in range(40):  # restore the clearance
                     if clearance(q) >= target:
                         break
@@ -980,6 +983,17 @@ class G1Operations:
                     elif dev >= best[0] - 1e-4:
                         break
                 q[joints] = q[joints] - 0.25 * (q[joints] - q0[joints])  # toward the walking controller's pose
+            return best
+
+        best = None
+        for target in CARRY_PLAN_M:
+            for attempt in range(6):  # the first from the walking pose, then from small random steps away from it
+                start = q0.copy()
+                if attempt:
+                    start[joints] = np.clip(q0[joints] + rng.uniform(-0.12, 0.12, len(joints)), lo, hi)
+                best = climb(start, target)
+                if best is not None:
+                    break
             if best is not None:
                 break
         self.clr.clear_held(side)
