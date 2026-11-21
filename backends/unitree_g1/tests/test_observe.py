@@ -295,8 +295,6 @@ def test_unsupported_conditions_and_the_objects_a_goal_asks_about():
     assert O.unsupported(cond("holding", "r", "box")) is None
     assert O.unsupported(ir.And((cond("holding", "r", "box"), ir.RegionClear("z")))) == "region_clear"
     assert O.unsupported(ir.Not(ir.SensorOk("s"))) == "sensor_ok"
-    assert O.held_objects([ir.And((cond("holding", "r", "box"), cond("robot_at", "r", "dst")))], NAMES) == {"box"}
-    assert O.held_objects([cond("robot_at", "r", "dst")], NAMES) == set()
     assert O.uses_ready([ir.Or((cond("robot_ready", "r"), cond("robot_at", "r", "src")))])
     assert not O.uses_ready([cond("robot_at", "r", "src")])
 

@@ -258,13 +258,12 @@ class G1Operations:
 
     # ------------------------------------------------------------------------------------------ snapshots (phase 3)
 
-    def snapshot(self, show: set | frozenset = frozenset(), ready: bool = False) -> tuple[Snapshot, dict]:
-        """One observation snapshot for verdicts, and a note for the record: about SNAPSHOT_FRAMES head-camera frames
-        fused per marker, the hands (state from `rt/dex3/*/state`, grasp point from the measured joints), the IMU's
-        vertical and, if `ready`, what `robot_ready` needs. A held object named in `show` is first brought into the
-        camera's view and the arm put back afterwards (the carry pose hangs it out of view)."""
-        if self.held is not None and self.held["object"] in show:
-            return self._snapshot_showing(ready)
+    def snapshot(self, ready: bool = False) -> tuple[Snapshot, dict]:
+        """One observation snapshot for verdicts, and a note for the record (empty here): about SNAPSHOT_FRAMES
+        head-camera frames fused per marker, the hands (state from `rt/dex3/*/state`, grasp point from the measured
+        joints), the IMU's vertical and, if `ready`, what `robot_ready` needs. The robot is observed as it stands, the
+        arms where the plan left them: nothing moves to make an observation possible (decision 0046 U8). A held
+        object's marker is out of the head camera's view in the carry pose, so atoms about it are `unknown` there."""
         return self._take(ready), {}
 
     def _take(self, ready: bool) -> Snapshot:
@@ -304,41 +303,6 @@ class G1Operations:
     def _tilt_of(sample) -> float:
         w, x, y, z = sample.quat
         return math.acos(max(-1.0, min(1.0, 1 - 2 * (x * x + y * y))))
-
-    def _snapshot_showing(self, ready: bool) -> tuple[Snapshot, dict]:
-        """Bring the held object into the camera's view, take the snapshot, and put the arm back in the carry pose.
-
-        The carry pose hangs the object at the side of the thigh, outside the camera's field of view (measured: 46
-        degrees below the axis against 29 of field), so the arm shows it where the grasp lifted it: the object's place
-        at the table, 10 cm up, where the camera sees the object and the arm has already been. The waypoints are the
-        grasp's own (`pre` and `lift`, joint targets planned then), so there is no new planning and no motion beyond
-        the grasp's own path. The arm works in the site's arm-work stance, as in `grasp` and `place`."""
-        held, mark = self.held, len(self.events)
-        side = held["hand"]
-        t0 = self.now_ms()
-        pre, lift = held["show_waypoints"]
-        self.events.append({"t_ms": t0, "event": "show_held"})
-        stance = self._arm_stance(self.site["robot"]["arm_stance"])
-        self._arm_begin()
-        self._arm_move(self._clear_pose(side), 1.6, label="clear of the hip")
-        self._arm_move(pre, 2.0, label="pre-show")
-        self._arm_move(lift, 1.6, label="show")
-        self.sleep(1.0)  # let the arm and the object settle before the frames are taken
-        snap = self._take(ready)
-        self._arm_move(pre, 1.6, label="retreat from show")
-        self._arm_move(self._clear_pose(side), 1.6, label="clear of the hip")
-        self._arm_move(self.q_carry, 1.6, label="carry")
-        self._arm_stance("free")
-        note = {
-            "shown": {
-                "object": held["object"],
-                "hand": side,
-                "arm_stance": stance,
-                "arm_work_ms": [t0, self.now_ms()],
-                "events": self.events[mark:],
-            }
-        }
-        return snap, note
 
     # ------------------------------------------------------------------------------------------ walking
 
@@ -828,7 +792,6 @@ class G1Operations:
             "hand": side,
             "offset_in_hand": offset_hand,
             "fingers_down_deg": plan["fingers_down_deg"],
-            "show_waypoints": (plan["pre"], plan["lift"]),  # to show the object to the camera later (_snapshot_showing)
         }
         details["object_in_hand_m"] = [round(float(v), 4) for v in offset_hand]
         self.events.append({

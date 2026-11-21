@@ -9,8 +9,7 @@ differs from the ROS 2 backend:
 
 * the stop is a biped's: zero velocity, the arms held where they are through `arm_sdk`, the hands unchanged, the robot
   kept standing, confirmed from `lowstate` (decision 0046 U9, hazard H25). A fall (S516) sends nothing at all;
-* the goal snapshot is taken with the arms back in the carry pose, except that a held object the goal speaks of is first
-  shown to the head camera (the carry pose hangs it out of view): `ops.snapshot(show=...)`.
+* the snapshots are taken with the robot as the plan left it: nothing moves to make an observation possible.
 """
 
 from __future__ import annotations
@@ -248,7 +247,7 @@ def execute(task: ir.Task, bindings: dict[str, str], site: dict, ops, stop: Stop
         names = refuse(task, bindings, site)
         record["start_pose"] = [round(v, 4) for v in ops.pose]
         if task.preconditions:  # one snapshot at the start pose: reading it commands nothing
-            snap = _snapshot(ops, record, "preconditions", frozenset(), observe.uses_ready(task.preconditions))
+            snap = _snapshot(ops, record, "preconditions", observe.uses_ready(task.preconditions))
             _verdicts(record["preconditions"], task.preconditions, names, site, snap, policy)
             results = [e["result"] for e in record["preconditions"]]
             if "false" in results:
@@ -279,8 +278,7 @@ def execute(task: ir.Task, bindings: dict[str, str], site: dict, ops, stop: Stop
                 entry["t_end_ms"] = ops.now_ms()
                 entry["wall_s"] = round(time.monotonic() - wall, 2)
             entry["status"] = "succeeded"
-        # one snapshot after the last step; a held object the goal speaks of is shown to the camera first
-        snap = _snapshot(ops, record, "goal", observe.held_objects(task.goal, names), observe.uses_ready(task.goal))
+        snap = _snapshot(ops, record, "goal", observe.uses_ready(task.goal))  # one snapshot, after the last step
         goal_snap = snap
         record["goal_evaluated"] = True
         _verdicts(record["goal"], task.goal, names, site, snap, policy)
@@ -317,9 +315,9 @@ def execute(task: ir.Task, bindings: dict[str, str], site: dict, ops, stop: Stop
     return record
 
 
-def _snapshot(ops, record: dict, purpose: str, show, ready: bool):
+def _snapshot(ops, record: dict, purpose: str, ready: bool):
     """One observation snapshot, kept in the record so every verdict can be audited."""
-    snap, note = ops.snapshot(show=show, ready=ready)
+    snap, note = ops.snapshot(ready=ready)
     record["snapshots"].append(observe.snapshot_record(snap, purpose, note))
     return snap
 
