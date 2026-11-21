@@ -661,7 +661,7 @@ def check_o4(ctx: Ctx) -> dict:
     blocked_site = ctx.site_file("pick_place", lambda d: d.update(obstacles=[post]))
     status, rec, log, samples, commands = run3(ctx, "o4_blocked", pp_site, blocked_site, src, "pick_no_place", BIND_PP)
     got = (
-        collect(ctx, "o4_blocked", rec, src, "pick_no_place", blocked_site, samples, expect_unknown=True)
+        collect(ctx, "o4_blocked", rec, src, "pick_no_place", BIND_PP, blocked_site, samples, expect_unknown=True)
         if rec
         else {"atoms": []}
     )
