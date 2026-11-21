@@ -66,7 +66,7 @@ ARM_TRACK_TOL_RAD = 0.12  # S503: a joint further than this from its target when
 HAND_TOL_RAD = 0.25  # S505
 HAND_CLOSE = {"right": [0.0, -0.6, -1.0, 1.0, 1.2, 1.0, 1.2], "left": [0.0, 0.6, 1.0, -1.0, -1.2, -1.0, -1.2]}
 SEGMENT_S = 1.6  # the shortest arm motion between two poses (min-jerk, and always at least 1 s)
-HELD_RADIUS_M = 0.06  # the object's marker is "at the hand" within this of the hand's grasp point
+HELD_RADIUS_M = 0.09  # the object's marker is "at the hand" within this of the grasp point (5-6 cm when held right)
 APPROACH_BACK, APPROACH_UP = 0.09, 0.03  # the pre-grasp: behind the grasp point along the fingers, and above it
 GRASP_RISE = (
     -0.01
@@ -130,7 +130,7 @@ class G1Operations:
         self.perc: Perception | None = None
         self.q_carry: np.ndarray | None = None
         self.fallen = False
-        self._last_score = 0.0
+        self._last_axis: str | None = None
         self.stance_now: str | None = None  # the stand-in's balance support, as last set
 
     # ------------------------------------------------------------------------------------------ set-up
@@ -366,6 +366,8 @@ class G1Operations:
                 break
         if marker is None:
             raise BackendFailure("S517", f"station marker {station['marker']['id']} was not seen after four approaches")
+        # Line up at the approach point first (the table is 0.5 m away); the last walk is then straight.
+        self._servo(station, marker, deadline, target=(ax, ay, gyaw), tol_m=0.08, tol_rad=0.07)
         result = self._servo(station, marker, deadline)
         self.station = station_name
         result["events"] = self.events
@@ -405,15 +407,28 @@ class G1Operations:
             if abs(aim) > 0.06:
                 self.turn_by(aim)
 
-    def _servo(self, station: dict, reading, deadline_ms: int) -> dict:
-        """Correct the last centimetres: look at the station marker, command a short burst along the furthest-out
-        out (yaw by the shuffle, forward or back, sideways), settle, look again. The policy moves in steps (0.06-0.15 m
+    def _servo(
+        self,
+        station: dict,
+        reading,
+        deadline_ms: int,
+        target: tuple | None = None,
+        tol_m: float = SERVO_TOL_M,
+        tol_rad: float = SERVO_TOL_RAD,
+    ) -> dict:
+        """Correct the last centimetres: look at the station marker, command a short burst along the furthest-out axis
+        (yaw by the shuffle, forward or back, sideways), settle, look again. The policy moves in steps (0.06-0.15 m
         forward, 0.05 m sideways, 0.12 rad of yaw), so a burst is chosen from the error and what a burst of that length
-        has been measured to do; a correction that did not take is repeated a little longer, once."""
-        gx, gy, gyaw = station["pose"]
+        has been measured to do. `target` (default: the station's pose) lets the same loop bring the robot to the
+        approach point first, with looser tolerances and no confirmation: the station's table is then 0.5 m away
+        and the sideways error is gone before the last forward walk. An axis that has not moved the robot for three
+        bursts (a leg against the table's corner, say) is left for the other axis for a while."""
+        gx, gy, gyaw = target or station["pose"]
         mid = station["marker"]["id"]
         end = min(deadline_ms, self.now_ms() + int(SERVO_TIMEOUT_S * 1000))
-        iterations = []
+        iterations: list = []
+        picks: list = []  # (axis, error on it) of the last bursts
+        blocked_until = 0
         while True:
             self.check()
             dx, dy = gx - self.pose[0], gy - self.pose[1]
@@ -421,7 +436,10 @@ class G1Operations:
             ey = -dx * math.sin(self.pose[2]) + dy * math.cos(self.pose[2])
             eyaw = site_mod.wrap(gyaw - self.pose[2])
             iterations.append([round(float(ex), 3), round(float(ey), 3), round(float(eyaw), 3)])
-            if math.hypot(ex, ey) <= SERVO_TOL_M and abs(eyaw) <= SERVO_TOL_RAD:
+            if math.hypot(ex, ey) <= tol_m and abs(eyaw) <= tol_rad:
+                if target is not None:
+                    self.settle()
+                    return {"iterations": iterations, "settled": True}
                 if self.settle() and self._confirm_pose(station):
                     return {
                         "iterations": iterations,
@@ -439,12 +457,21 @@ class G1Operations:
             # the axis that is furthest out, each error in units of its tolerance
             scores = {
                 "yaw": abs(eyaw) / SERVO_SHUFFLE_RAD,
-                "forward": abs(ex) / SERVO_TOL_M,
-                "lateral": abs(ey) / SERVO_TOL_M,
+                "forward": abs(ex) / tol_m,
+                "lateral": abs(ey) / tol_m,
             }
             # (a heading error smaller than a shuffle's is corrected by the yaw rate the other bursts carry)
+            if len(picks) >= 3 and len({a for a, _ in picks[-3:]}) == 1 and picks[-1][0] in ("forward", "lateral"):
+                if abs(picks[-1][1] - picks[-3][1]) < 0.01:  # three bursts, and the error has not moved
+                    blocked_until = len(iterations) + 3
+                    self.events.append({"t_ms": self.now_ms(), "event": "blocked", "axis": picks[-1][0]})
+                    picks.clear()
+            if len(iterations) < blocked_until:
+                scores = {k: v for k, v in scores.items() if k != (self._last_axis or "")} or scores
             axis = max(scores, key=scores.get)
+            self._last_axis = axis
             bias = 0.2 * float(np.sign(eyaw)) if abs(eyaw) > 0.04 else 0.0
+            picks.append((axis, ex if axis != "lateral" else ey))
             if axis == "yaw" and scores["yaw"] >= 1.0:
                 self.turn_by(float(np.clip(0.9 * eyaw, -0.5, 0.5)))
             elif axis in ("yaw", "forward"):
