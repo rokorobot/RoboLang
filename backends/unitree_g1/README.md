@@ -2,8 +2,9 @@
 
 The Unitree G1 humanoid in MuJoCo, behind Unitree's own SDK. **Simulation only.** Decision record
 [0046](../../spec/decisions/0046-humanoid-backend-unitree-g1.md): phase 1 is the stand-in and the harness (P1-P6);
-phase 2 is the **executor** (`move`, `grasp`, `place`, `wait for`, the biped's stop, run records; checks E1-E7). Goal
-verdicts from observations are phase 3. Nothing here can reach a real robot: the guard refuses DDS domain 0, any interface
+phase 2 is the **executor** (`move`, `grasp`, `place`, `wait for`, the biped's stop, run records; checks E1-E7), phase 3
+the **verdicts**: preconditions and the goal decided from observations (S101, S102, S301, S302, `SUCCEEDED`; checks
+O1-O7). Nothing here can reach a real robot: the guard refuses DDS domain 0, any interface
 but loopback, and anything that does not answer as the simulator.
 
 ## Run it
@@ -15,6 +16,7 @@ python -m pip install -e "backends/unitree_g1[test]"         # mujoco, numpy, op
 python -m pytest -q backends/unitree_g1/tests
 MUJOCO_GL=egl python -m robolang_g1.harness --out harness.json    # P1-P6; exit 0 = go; takes about 2 minutes
 MUJOCO_GL=egl python -m robolang_g1.phase2 --out phase2.json      # E1-E7; exit 0 = all pass; about half an hour
+MUJOCO_GL=egl python -m robolang_g1.phase3 --out phase3.json      # O1-O7; verdicts against the oracle; about half an hour
 ```
 
 Run a task (the stand-in starts for it; `python -m robolang_g1.cli` runs one against a stand-in that is already up):
@@ -22,7 +24,7 @@ Run a task (the stand-in starts for it; `python -m robolang_g1.cli` runs one aga
 ```sh
 MUJOCO_GL=egl python -m robolang_g1.run_task bench/reference/e_pick_place.rob --task pick_place \
     --site backends/unitree_g1/robolang_g1/sites/pick_place.json \
-    --bind r=robot_1 --bind box=box_1 --bind src=loc_a --bind dst=loc_b --out record.json   # exit 4: every step ran
+    --bind r=robot_1 --bind box=box_1 --bind src=loc_a --bind dst=loc_b --out record.json   # exit 0: SUCCEEDED
 ```
 
 **One stand-in at a time**: two on one DDS domain mix their `lowstate`, frames and commands.
@@ -46,9 +48,10 @@ if you do not activate it. It needs `git`, `cmake`, a C compiler and `python3-de
 | `robolang_g1/robot.py` | the SDK clients (`LocoClient`, `rt/arm_sdk`, `rt/dex3/*`, `rt/lowstate`) and the camera source, shared by the harness and the executor |
 | `robolang_g1/site.py` | the site file, `robolang-g1-site/2` (`/1` still loads) |
 | `robolang_g1/kinematics.py`, `perception.py` | the robot's own kinematic model, damped-least-squares IK; ArUco poses in the pelvis frame |
-| `robolang_g1/ops.py`, `executor.py`, `cli.py` | what is done to the robot; the run, the stop and the record; the command line |
-| `robolang_g1/phase2.py`, `run_task.py` | checks E1-E7 (they read the oracle; the executor never does); start a stand-in and run one task |
-| `robolang_g1/sites/` | `phase1.json` (the harness's, `/1`), `pick_place.json` and `carry_hold.json` (for `bench/reference/e_pick_place.rob` and `w_carry_hold.rob`) |
+| `robolang_g1/ops.py`, `executor.py`, `cli.py` | what is done to the robot (and the observation snapshots); the run, the stop, the verdicts and the record; the command line |
+| `robolang_g1/observe.py` | verdicts from observations: `object_at`, `holding`, `robot_at`, `robot_ready`, three-valued logic, `@verify`, the Core outcome (pure: no DDS, no ground truth) |
+| `robolang_g1/phase2.py`, `phase3.py`, `run_task.py` | checks E1-E7 and O1-O7 (they read the oracle; the executor never does); start a stand-in and run one task |
+| `robolang_g1/sites/` | `phase1.json` (the harness's, `/1`), `pick_place.json`, `carry_hold.json` and `part_precheck.json` (for `bench/reference/e_pick_place.rob`, `w_carry_hold.rob` and `w_part_precheck.rob`) |
 
 ## The stand-in
 

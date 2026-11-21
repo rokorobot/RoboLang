@@ -1,9 +1,11 @@
 # RoboLang Unitree G1 backend 0.1 (MuJoCo, simulation only)
 
-**Status:** phases 1 and 2 of decision [0046](decisions/0046-humanoid-backend-unitree-g1.md): the stand-in, the guard and
-the harness checks P1–P6 ([evidence](../docs/evidence/g1-phase1-harness.md)), and the executor (`move`, `grasp`,
-`place`, `wait for`, the stop, the records; checks E1–E7, [evidence](../docs/evidence/g1-phase2-executor.md)). Goal and
-precondition verdicts from observations are phase 3. Code: [`backends/unitree_g1/`](../backends/unitree_g1/).
+**Status:** phases 1–3 of decision [0046](decisions/0046-humanoid-backend-unitree-g1.md): the stand-in, the guard and
+the harness checks P1–P6 ([evidence](../docs/evidence/g1-phase1-harness.md)), the executor (`move`, `grasp`,
+`place`, `wait for`, the stop, the records; checks E1–E7, [evidence](../docs/evidence/g1-phase2-executor.md)), and goal
+and precondition verdicts from observations (checks O1–O7, [evidence](../docs/evidence/g1-phase3-observations.md);
+**`holding` of a carried object is waiting for an owner decision**, see "Observations and verdicts"). Code:
+[`backends/unitree_g1/`](../backends/unitree_g1/).
 
 ## Scope and safety boundary
 
@@ -67,9 +69,10 @@ detach and stance. A test fails if an executor module refers to the oracle, `Spo
 be sent.
 
 **Refused before any command** (as the ROS 2 backend, after the guard): S507 (a binding or entity the site does not
-have), S509 `measure`, S510 a clock reading, S515 `message_received`, S514 a mission (before the guard), and S508 for
-everything else: other steps, failure handlers, speed and region limits, `do`, and **every precondition** (their
-verdicts are phase 3). Goal atoms must be ones phase 3 can observe, or S508/S507.
+have, an object without a marker, an `object_at` location without a region), S509 `measure`, S510 a clock reading, S515
+`message_received`, S514 a mission (before the guard), and S508 for everything else: other steps, failure handlers, speed
+and region limits, `do`, a task without a goal, and any condition other than `object_at`, `robot_at`, `holding`,
+`robot_ready` and their `and`, `or`, `not` (in a precondition or the goal).
 
 **`move r to L`.** The executor keeps a **belief pose** of the pelvis in the map: dead reckoning from the velocities it
 commands, replaced whenever a station marker is seen (the marker's map pose composed with the inverse of its observed
@@ -105,14 +108,57 @@ simulation time: over 0.5 s the IMU rate is at most 0.06 rad/s, every joint's ve
 most 15 degrees; the record has the numbers. If the IMU's tilt reaches 40 degrees at any time the run ends with **S516**
 and **nothing more is sent**, the stop's own commands included.
 
-**Record.** Schema `robolang.g1.run` 0.1, mirroring the ROS 2 record: `backend: {kind: "unitree-g1-mujoco", versions,
+**Record.** Schema `robolang.g1.run` 0.2 (0.2 adds the verdicts, `snapshots` and `goal_evaluated`), mirroring the ROS 2 record: `backend: {kind: "unitree-g1-mujoco", versions,
 grasp_model: "weld_after_hand_close", stance_model}`, the task, bindings, `verify`, each step with `status`, `t_start_ms`,
 `t_end_ms`, `wall_s` and `details` (a failing step keeps its last events), `observations` (every marker reading, in the
 pelvis frame, with confidence, age and range), `stop`, and `realtime` (the real-time ratio over the run; `realtime_valid`
 false if any second fell more than 5% behind real time or any step stalled; `step_compute_ms`, GC and camera numbers).
-**Goal and precondition verdicts are phase 3**: the goal is `not_evaluated`, `goal_evaluated` is false, and the run's
-`state` is `STEPS_COMPLETED` or `FAILED`, **never `SUCCEEDED`**. CLI exit status: 4 every step ran (not a success), 1
-failed or refused, 2 usage or source error.
+Each precondition and goal condition has its `result` (`true`, `false`, `unknown`, or `not_evaluated` when the run never got
+there) and, for every atom in it, the numbers behind the verdict. `snapshots` has every observation snapshot with each
+marker reading's position, confidence and age. `state` is `SUCCEEDED` only when every goal condition is `true`, and
+`FAILED` with a code otherwise. CLI exit status, as the ROS 2 backend's: 0 `SUCCEEDED`, 3 for S302, 1 for every other
+failure or refusal, 2 usage or source error.
+
+## Observations and verdicts
+
+Mirrors the [ROS 2 backend's](ros2-backend-v0.1.md#observations-and-verdicts) (decision 0046 U8). The preconditions are
+decided from **one snapshot at the start pose, before any command that moves the robot**; the goal from **one snapshot
+after the last step**. A false precondition is S101, an unknown one S102; a false goal condition is S301, an unknown one S302,
+each with `step: null` and no stop (nothing is moving); all goal conditions true is `SUCCEEDED`. Verdicts come only from the
+robot's interfaces (head camera, `rt/dex3/*/state`, `rt/lowstate`, `GetFsmId`); never MuJoCo state, the oracle or
+`SportModeState`. `observe.py` is pure (no DDS), and a test checks that no executor or observation module refers to the
+oracle.
+
+**A snapshot** is about 10 head-camera frames taken after the request. In each frame every marker's pose in the pelvis
+frame comes from `solvePnP` and the robot's own kinematic model fed with the joints measured at the frame's time. Per
+marker the position is the median, and a frame **agrees** when its position is within **2 cm** of that median and, for a
+station marker (the only kind whose rotation is used), its rotation is within **0.05 rad** of the median rotation and the
+vertical it implies is within **0.03 rad** of the IMU's (the wrong one of the two poses a planar target allows has a
+tilted vertical). **Confidence** is the agreeing frames over the frames taken, so a frame without the marker counts
+against it. The **age** of a reading is the snapshot's simulation time minus the stamp of the newest agreeing frame. A reading is
+usable only if its confidence is at least `min_confidence` and its age at most `max_age` (`@verify`; defaults 0.9 and 10 s);
+otherwise its atoms are `unknown`.
+
+| Atom | `true` | `false` | otherwise |
+|---|---|---|---|
+| `object_at o l` | the marker of `o` is inside `l`'s region, in the frame of `l`'s station marker seen in the same snapshot, by at least **1.5 cm** | it is outside by at least 1.5 cm, or it is seen at a closed hand (a carried object is at no place) | `unknown`: either marker not usable, or within 1.5 cm of the region's boundary |
+| `holding r o` | a hand is closed (`rt/dex3/*/state` within 0.25 rad of the closing pose) and the marker of `o` is within **9 cm** of that hand's grasp point (from the measured joints) | both hands are open, or the marker is seen away from the closed hand | `unknown`: a hand neither open nor closed, no hand state, or the marker not usable |
+| `robot_at r l` | `l`'s station marker is seen at the station's expected offset within **5 cm and 0.1 rad** (the pelvis's plan pose from that one marker against the station's), by at least **5 mm and 0.01 rad** | it is outside by that margin, or another station's marker confirms the robot is at that station (inside its tolerance) and that station is more than twice the tolerance from `l`'s | `unknown`: no usable marker, or within the margin of the tolerance |
+| `robot_ready r` | fresh `lowstate` (messages arriving), no motor error word, IMU tilt under 15°, and `GetFsmId` is 500 (the SDK's `Start`) | a motor error, tilt over 15°, or another state id | `unknown`: stale `lowstate`, no answer from the walking service |
+
+`and`, `or` and `not` are three-valued as in the symbolic simulator. The margins are never in favour of `true`: a value
+inside a margin is `unknown`. Every `robot_at` verdict records the measured offset next to the tolerance.
+
+**`holding` of a carried object has an open question.** In the carry pose (the walking controller's arm pose, which the
+backend keeps while walking) the object hangs at the side of the thigh, **46° below the head camera's axis against a field
+of ±29°**, so its marker is never detected (measured; a waist lean does not bring it into view: the hand ends up behind
+the camera). Until the owner decides how to observe a held object, an atom about it after the last step is `unknown`
+(S302). See the evidence for the options and the measurements.
+
+**Core outcome.** `core_outcome` is built as the ROS 2 backend builds it: the Core `outcome` payload from the goal's
+`object_at`, `robot_at` and `holding` atoms, with a signed observation (key `rl:sim:g1-mujoco`, fixed, published, simulation
+only) as evidence for each criterion a `true` verdict meets: confidence rounded down to two places, `valid_for` equal to
+`max_age`. `robot_ready` has no Core form, so a goal that uses it (or `or`, `not`) has `core_outcome: null`.
 
 ## Failure codes
 
