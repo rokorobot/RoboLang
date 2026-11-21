@@ -64,7 +64,7 @@ SHUFFLE_RAD = {1: 0.127, -1: 0.111}  # ... turns this much to the left (+) and t
 LEG_MAX_M = 1.6  # the longest walk between two looks
 SCAN_STEP_RAD = 0.6  # a scan for a marker turns this much between looks
 SIDESTEPS, SIDESTEP_M = 3, 0.2  # ... after this many sidesteps of about this much toward the marker's side
-MOVE_TIMEOUT_S, SERVO_TIMEOUT_S, MARKER_TIMEOUT_S = 240.0, 90.0, 90.0  # simulation time: S504, S504, S517
+MOVE_TIMEOUT_S, SERVO_TIMEOUT_S, MARKER_TIMEOUT_S = 300.0, 150.0, 90.0  # simulation time: S504, S504, S517
 # ---- arms
 ARM_TRACK_TOL_RAD = 0.12  # S503: a joint further than this from its target when a motion has finished
 HAND_TOL_RAD = 0.25  # S505
@@ -93,7 +93,7 @@ HAND_STATE_AGE_S = 1.0  # a hand state older than this (wall clock) is not used
 # the release) the hand and the object, which rests on the table there, are checked with no vertical margin and may
 # overlap the table by 1 cm (the object's position, from its marker, is known to about a centimetre).
 CONTACT_OVERLAP_M = 0.01  # (see above)
-RAISED_ABOVE_PRE_M = (0.08, 0.06, 0.04)  # the hand is raised this far above the pre-grasp height, in turn
+RAISED_ABOVE_PRE_M = (0.12, 0.10, 0.08, 0.06, 0.04)  # the hand is raised this far above the pre-grasp height, in turn
 RAISED_OUT_M = (0.0, 0.05, 0.10)  # the raised pose beside the body is tried this much further out, in turn
 CARRY_CLEARANCE_M = 0.02  # a held object clears every link of the robot by at least this in the carry pose ...
 CARRY_PLAN_M = (0.021,)  # ... planned for this: the walking pose moved as little as clearing it by 2 cm takes
