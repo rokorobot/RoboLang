@@ -54,7 +54,7 @@ BIND_PC = {"r": "robot_1", "item": "box_1", "src": "loc_a", "dst": "loc_b"}  # w
 ROBOT_AT_M, ROBOT_AT_RAD = O.ROBOT_AT_M, O.ROBOT_AT_RAD
 AGREEMENT_MIN = 0.98  # O6
 NAMES = {"r": "g1", "o": "box", "a": "bench", "b": "shelf", "c": "pad"}  # the scripted scenes' parameters (O1)
-ELSEWHERE = (2.73, 0.17, 0.79)  # the box on the bench table, 7 cm outside the bench region (world frame)
+ELSEWHERE = (2.90, -0.10, 0.79)  # the box at the far edge of the bench table, 6 cm outside the bench region (world)
 IN_PLACE = (2.73, -0.10, 0.79)  # where the box starts, inside the bench region
 COMMAND_KEYS = ("sport", "arm_sdk", "hand_left", "hand_right", "attach", "detach")
 # What waits for the owner's decision on how `holding` is observed (a held object's marker is outside the head
@@ -114,8 +114,8 @@ class Ctx(Ctx2):
         self.robot_at: list[dict] = []  # every robot_at verdict with its measured offset (the margins)
 
     def part_precheck_scene(self, item_at=None, start=None) -> Path:
-        """The part_precheck site as a scene (its bench table is wider than the bench region: room for "elsewhere"),
-        with the item and the robot's start moved if asked. The executor is given the site itself."""
+        """The part_precheck site as a scene, with the item and the robot's start moved if asked. The executor is given
+        the site itself."""
         raw = json.loads((SITES / "part_precheck.json").read_text())
         if item_at:
             raw["objects"][0]["pos"] = list(item_at)

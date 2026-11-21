@@ -178,9 +178,15 @@ class Perception:
                     per_id.setdefault(mid, []).append((R, p, rng, stamp_ms))
         return {mid: _fuse(mid, obs, got) for mid, obs in per_id.items()}
 
-    def snapshot(self, ids=None, frames: int = 10, timeout: float = 15.0, check=None,
-                 spread_m: float = SNAPSHOT_SPREAD_M, spread_rad: float = SNAPSHOT_SPREAD_RAD
-                 ) -> tuple[dict[int, Reading], int]:
+    def snapshot(
+        self,
+        ids=None,
+        frames: int = 10,
+        timeout: float = 15.0,
+        check=None,
+        spread_m: float = SNAPSHOT_SPREAD_M,
+        spread_rad: float = SNAPSHOT_SPREAD_RAD,
+    ) -> tuple[dict[int, Reading], int]:
         """About `frames` new frames, fused per marker (`fuse_frames`): ({id: Reading}, frames taken). Only frames
         rendered after the call started are used. A marker seen in no frame is absent."""
         per_id: dict[int, list[Detection]] = {}
@@ -220,8 +226,13 @@ def _angle(Ra: np.ndarray, Rb: np.ndarray) -> float:
     return float(np.arccos(np.clip((np.trace(Ra.T @ Rb) - 1) / 2, -1.0, 1.0)))
 
 
-def fuse_frames(mid: int, dets: list[Detection], frames: int, spread_m: float = SNAPSHOT_SPREAD_M,
-                spread_rad: float = SNAPSHOT_SPREAD_RAD) -> Reading:
+def fuse_frames(
+    mid: int,
+    dets: list[Detection],
+    frames: int,
+    spread_m: float = SNAPSHOT_SPREAD_M,
+    spread_rad: float = SNAPSHOT_SPREAD_RAD,
+) -> Reading:
     """One reading from the per-frame detections of a snapshot. The position is the median over the frames. A frame
     **agrees** when its position is within `spread_m` of that median and, for a station marker (the only kind whose
     rotation is used), its rotation is within `spread_rad` of the median rotation (the detection closest in angle to
@@ -249,8 +260,19 @@ def fuse_frames(mid: int, dets: list[Detection], frames: int, spread_m: float = 
         stamp = max(dets[i].stamp_ms for i in agree)
     else:  # nothing agrees: a reading with confidence 0 (never usable), kept so the record shows why
         rotation, spread, angle, stamp = medoid, float(dist.max()), 0.0, max(d.stamp_ms for d in dets)
-    return Reading(mid, median, rotation, len(agree) / max(frames, 1), stamp, frames, len(dets),
-                   float(np.median([d.range_m for d in dets])), len(agree), float(spread), float(angle))
+    return Reading(
+        mid,
+        median,
+        rotation,
+        len(agree) / max(frames, 1),
+        stamp,
+        frames,
+        len(dets),
+        float(np.median([d.range_m for d in dets])),
+        len(agree),
+        float(spread),
+        float(angle),
+    )
 
 
 def _fuse(mid: int, obs: list, frames: int) -> Reading:
@@ -292,6 +314,26 @@ def pelvis_pose_in_map(station_marker: dict, reading: Reading) -> tuple[float, f
     return float(p[0]), float(p[1]), site_mod.yaw_of(R), R[2, :].copy()
 
 
+def line_of_sight_blocked(start, end, boxes: list[dict]) -> str | None:
+    """The name of the first declared box (a table: `pos`, `half_size`, in the map) that the straight line from `start`
+    to `end` passes through, else None (the slab method)."""
+    start, d = np.asarray(start, float), np.asarray(end, float) - np.asarray(start, float)
+    for box in boxes:
+        lo, hi = np.array(box["pos"], float) - box["half_size"], np.array(box["pos"], float) + box["half_size"]
+        t0, t1 = 0.0, 1.0
+        for k in range(3):
+            if abs(d[k]) < 1e-12:
+                if not lo[k] <= start[k] <= hi[k]:
+                    t0, t1 = 1.0, 0.0
+                    break
+                continue
+            a, b = sorted(((lo[k] - start[k]) / d[k], (hi[k] - start[k]) / d[k]))
+            t0, t1 = max(t0, a), min(t1, b)
+        if t0 < t1:
+            return box["name"]
+    return None
+
+
 def in_view(camera_R: np.ndarray, camera_p: np.ndarray, point, camera: dict, margin: float = 0.9) -> bool:
     """Whether a point (same frame as the camera pose, MuJoCo camera convention) is inside the field of view, within
     `margin` of its half-angles."""
@@ -327,7 +369,12 @@ def visibility_violations(site: dict, task, names: dict[str, str], kin: Kinemati
 
     def seen(pose, point) -> bool:
         R = site_mod.rot_z(pose[2])
-        return in_view(R @ Rc, np.array([pose[0], pose[1], STAND_HEIGHT]) + R @ pc, point, site["camera"])
+        eye = np.array([pose[0], pose[1], STAND_HEIGHT]) + R @ pc
+        # in the field of view, and not behind a declared table (the head camera looks over them)
+        return (
+            in_view(R @ Rc, eye, point, site["camera"])
+            and line_of_sight_blocked(eye, point, site["tables"]) is None
+        )
 
     def atoms(condition):
         if isinstance(condition, (ir.And, ir.Or)):

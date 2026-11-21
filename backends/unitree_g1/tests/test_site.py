@@ -119,3 +119,18 @@ def test_a_goal_location_out_of_view_from_the_final_station_is_reported():
     names = executor.refuse(t, {"r": "robot_1", "o": "box_1", "a": "loc_a", "b": "loc_b"}, site)
     bad = perception.visibility_violations(site, t, names, kinematics.Kinematics(site["camera"]))
     assert len(bad) == 1 and "object_at bench" in bad[0]  # the plan ends at the shelf; the goal is at the bench
+
+
+def test_a_declared_table_between_the_camera_and_a_marker_is_an_occlusion():
+    from robolang_g1.perception import line_of_sight_blocked
+
+    site = S.load_site(SITES / "pick_place.json")
+    boxes = site["tables"]
+    marker = [3.75, 0.45, 0.19]  # the bench station's marker, low behind the bench table
+    assert line_of_sight_blocked([2.41, 0.02, 1.208], marker, boxes) is None  # from the station: over the table
+    wide = [
+        dict(b, half_size=[b["half_size"][0], 0.30, b["half_size"][2]]) if b["name"] == "bench_table" else b
+        for b in boxes
+    ]
+    assert line_of_sight_blocked([2.21, 0.02, 1.208], marker, wide) == "bench_table"  # from 0.2 m short, a wider table
+    assert line_of_sight_blocked([2.21, 0.02, 1.208], marker, boxes) is None  # the shipped table is narrower
