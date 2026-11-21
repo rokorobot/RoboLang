@@ -83,6 +83,12 @@ HAND_REST_Y = {"right": -0.10, "left": 0.10}
 # ---- snapshots (phase 3)
 SNAPSHOT_FRAMES = 10  # head-camera frames per snapshot (2 s at the camera's 5 Hz)
 HAND_STATE_AGE_S = 1.0  # a hand state older than this (wall clock) is not used
+# Before the arm shows a held object, the whole path of the arm and the object is checked against the site's declared
+# tables and obstacles. The belief pose is corrected by the station marker (0.3-1.5 cm from the truth in the phase 2
+# runs) and the pelvis height is known to about 1.5 cm, so the declared boxes are grown by 3 cm sideways and 1.5 cm
+# up and down before the arm's spheres and the object's points are tested against them.
+CLEARANCE_XY_M, CLEARANCE_Z_M, CLEARANCE_SAMPLES = 0.03, 0.015, 12
+RAISE_M = 0.08  # the raised waypoint is this far above the view pose (the joint-space line down to it dips less)
 
 
 def _frame(theta: float) -> np.ndarray:
@@ -268,13 +274,85 @@ class G1Operations:
 
     # ------------------------------------------------------------------------------------------ snapshots (phase 3)
 
-    def snapshot(self, ready: bool = False) -> tuple[Snapshot, dict]:
-        """One observation snapshot for verdicts, and a note for the record (empty here): about SNAPSHOT_FRAMES
-        head-camera frames fused per marker, the hands (state from `rt/dex3/*/state`, grasp point from the measured
-        joints), the IMU's vertical and, if `ready`, what `robot_ready` needs. The robot is observed as it stands, the
-        arms where the plan left them: nothing moves to make an observation possible (decision 0046 U8). A held
-        object's marker is out of the head camera's view in the carry pose, so atoms about it are `unknown` there."""
-        return self._take(ready), {}
+    def snapshot(self, show: set | frozenset = frozenset(), ready: bool = False) -> tuple[Snapshot, dict]:
+        """One observation snapshot for verdicts, and a note for the record: about SNAPSHOT_FRAMES head-camera frames
+        fused per marker, the hands (state from `rt/dex3/*/state`, grasp point from the measured joints), the IMU's
+        vertical and, if `ready`, what `robot_ready` needs.
+
+        A held object named in `show` is first brought into the camera's view (the carry pose hangs it out of view) and
+        the arm put back afterwards: an **observation motion**, outside the plan's steps, arm only. It is made only if
+        the whole path of the arm and the object is shown clear of the site's declared tables and obstacles
+        (`_view_clearance`); if not, the arm does not move, the snapshot is taken as it is (so the atoms about the
+        object stay `unknown`) and the note says why. The note is `{"observation_motion": {...}}` or empty."""
+        if self.held is None or self.held["object"] not in show:
+            return self._take(ready), {}
+        clearance = self._view_clearance()
+        if not clearance["clear"]:
+            note = {"performed": False, "object": self.held["object"], "hand": self.held["hand"],
+                    "reason": "the path of the arm and the object is not shown clear of the declared tables and "
+                    "obstacles", "clearance": clearance}
+            return self._take(ready), {"observation_motion": note}
+        return self._snapshot_showing(ready, clearance)
+
+    def _view_path(self) -> list[tuple[str, np.ndarray]] | None:
+        """The waypoints of the observation motion: the carry pose, the pose with the hand clear of the hip, the same
+        hand position raised 8 cm above the view pose's height beside the body (so the hand comes in over a table in
+        front of the robot, not through its edge), and the view pose, where the grasp lifted the object. Only the
+        raised one is new: inverse kinematics for the hand at the clear pose's place and the view pose's height and
+        orientation. None if there is no solution."""
+        side, lift = self.held["hand"], self.held["lift_waypoint"]
+        clear = self._clear_pose(side)
+        R_lift, p_lift = self.kin.grasp_frame(side, lift)
+        _, p_clear = self.kin.grasp_frame(side, clear)
+        rng = np.random.default_rng(11)
+        seeds = [clear, lift, self._ready_pose(side)] + [self._jitter(clear, ARM_JOINTS[side], rng) for _ in range(5)]
+        up, _ = self._solve(side, np.array([p_clear[0], p_clear[1], p_lift[2] + RAISE_M]), R_lift, seeds, 0.0)
+        if up is None:
+            return None
+        return [("carry", self.robot.low_q.copy()), ("clear of the hip", clear), ("raised", up), ("show", lift)]
+
+    def _view_clearance(self) -> dict:
+        """Whether the arm and the held object stay clear of the site's declared tables and obstacles all the way
+        from the carry pose to the view pose (and back along the same path), from the robot's own kinematic model
+        fed with the planned joint targets and the belief pose at this station (the declared boxes grown by
+        CLEARANCE_XY_M and CLEARANCE_Z_M). The arm is covered by spheres (`Kinematics.arm_spheres`) and the object
+        by a 3 x 3 x 3 grid of points on and in its box, in its pose in the hand. `clear` is true only if nothing
+        sampled comes within the margins; if no path can be planned, or in doubt, it is false and the arm stays."""
+        held, side = self.held, self.held["hand"]
+        half = np.array(site_mod.obj(self.site, held["object"])["half_size"], float)
+        boxes = site_mod.declared_boxes(self.site)
+        x, y, yaw = self.pose
+        out = {
+            "clear": False,
+            "boxes": [b["name"] for b in boxes],
+            "pelvis_in_map": [round(float(v), 3) for v in (x, y, yaw)],
+            "margins_m": {"sideways": CLEARANCE_XY_M, "vertical": CLEARANCE_Z_M},
+            "closest": None,
+        }
+        path = self._view_path()
+        if path is None:
+            out["why"] = "no inverse-kinematics solution for the raised waypoint"
+            return out
+        out["waypoints"] = [name for name, _ in path]
+        R, base = site_mod.rot_z(yaw), np.array([x, y, STAND_HEIGHT])  # the pelvis in the map
+        grid = [np.array([a, b, c]) * half for a in (-1, 0, 1) for b in (-1, 0, 1) for c in (-1, 0, 1)]
+        worst = {"clearance_m": float("inf")}
+        for (n0, q0), (n1, q1) in zip(path, path[1:]):
+            for a in np.linspace(0.0, 1.0, CLEARANCE_SAMPLES):
+                q = q0 + a * (q1 - q0)  # the arm moves along this line in joint space (min-jerk in time)
+                items = [(R @ c + base, r, link) for c, r, link in self.kin.arm_spheres(side, q)]
+                hand_R, grasp = self.kin.grasp_frame(side, q)
+                centre, R_obj = grasp + hand_R @ held["offset_in_hand"], hand_R @ held["rotation_in_hand"]
+                items += [(R @ (centre + R_obj @ g) + base, 0.01, held["object"]) for g in grid]
+                for c, r, link in items:
+                    for box in boxes:
+                        gap = site_mod.box_clearance(c, r, box, CLEARANCE_XY_M, CLEARANCE_Z_M)
+                        if gap < worst["clearance_m"]:
+                            worst = {"clearance_m": round(float(gap), 4), "link": link, "box": box["name"],
+                                     "between": f"{n0} and {n1}", "at": round(float(a), 2)}
+        out["closest"] = worst if boxes else None
+        out["clear"] = bool(not boxes or worst["clearance_m"] > 0)
+        return out
 
     def _take(self, ready: bool) -> Snapshot:
         readings, frames = self.perc.snapshot(ids=set(self.perc.sizes), frames=SNAPSHOT_FRAMES, check=self.check)
@@ -313,6 +391,45 @@ class G1Operations:
     def _tilt_of(sample) -> float:
         w, x, y, z = sample.quat
         return math.acos(max(-1.0, min(1.0, 1 - 2 * (x * x + y * y))))
+
+    def _snapshot_showing(self, ready: bool, clearance: dict) -> tuple[Snapshot, dict]:
+        """Bring the held object into the camera's view, take the snapshot, and put the arm back in the carry pose.
+
+        The carry pose hangs the object at the side of the thigh, outside the camera's field of view (measured: 46
+        degrees below the axis against 29 of field), so the arm shows it where the grasp lifted it: the object's place
+        at the table, 10 cm up, where the camera sees the object. The path is `_view_path`: the grasp's own `clear`
+        and `lift` poses and one raised waypoint, shown clear of the declared tables and obstacles by
+        `_view_clearance` (passed in). The arm works in the site's arm-work stance, as in `grasp` and `place`. A stop
+        request stops it like any arm motion (`_arm_move` checks): the executor then holds the arms where they are
+        and leaves the hands."""
+        held, mark = self.held, len(self.events)
+        side = held["hand"]
+        t0 = self.now_ms()
+        (_, _), (_, clear), (_, raised), (_, lift) = self._view_path()
+        self.events.append({"t_ms": t0, "event": "show_held"})
+        stance = self._arm_stance(self.site["robot"]["arm_stance"])
+        self._arm_begin()
+        self._arm_move(clear, 1.6, label="clear of the hip")
+        self._arm_move(raised, 1.6, label="raised")
+        self._arm_move(lift, 1.6, label="show")
+        self.sleep(1.0)  # let the arm and the object settle before the frames are taken
+        snap = self._take(ready)
+        self._arm_move(raised, 1.6, label="back raised")
+        self._arm_move(clear, 1.6, label="back clear of the hip")
+        self._arm_move(self.q_carry, 1.6, label="carry")
+        self._arm_stance("free")
+        note = {
+            "performed": True,
+            "object": held["object"],
+            "hand": side,
+            "waypoints": ["clear of the hip", "raised", "show", "raised", "clear of the hip", "carry"],
+            "clearance": clearance,
+            "arm_stance": stance,
+            "t_start_ms": t0,
+            "t_end_ms": self.now_ms(),
+            "events": self.events[mark:],
+        }
+        return snap, {"observation_motion": note}
 
     # ------------------------------------------------------------------------------------------ walking
 
@@ -839,6 +956,8 @@ class G1Operations:
             "hand": side,
             "offset_in_hand": offset_hand,
             "fingers_down_deg": plan["fingers_down_deg"],
+            "rotation_in_hand": hand_R.T,  # the object lies flat (the world's axes) when it is grasped
+            "lift_waypoint": plan["lift"],  # where the object was lifted: the view pose (_snapshot_showing)
         }
         details["object_in_hand_m"] = [round(float(v), 4) for v in offset_hand]
         self.events.append({

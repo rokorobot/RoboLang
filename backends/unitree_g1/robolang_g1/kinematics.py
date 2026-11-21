@@ -71,6 +71,27 @@ class Kinematics:
         mujoco.mj_camlight(self.model, self.data)
         return self.data.cam_xmat[self.camera_id].reshape(3, 3).copy(), self.data.cam_xpos[self.camera_id].copy()
 
+    def arm_spheres(self, side: str, q29) -> list[tuple[np.ndarray, float, str]]:
+        """Spheres that cover the arm `side` in the pelvis frame, from the 29 body joints: (centre, radius, link). The
+        upper arm (shoulder to elbow), the forearm (elbow to wrist) and the hand (wrist to the pinch point and a little
+        past it, where the fingers curl) are sampled every 4 cm along their lengths; the radii are generous for the
+        links (5, 4.5 and 5.5 cm)."""
+        self.set_pose(q29)
+        m, d = self.model, self.data
+        p = {n: d.xpos[m.body(f"{side}_{n}_link").id].copy() for n in ("shoulder_pitch", "elbow", "wrist_yaw")}
+        tip = d.site_xpos[self.site[side]].copy()
+        wrist_to_tip = tip - p["wrist_yaw"]
+        ends = tip + wrist_to_tip / max(float(np.linalg.norm(wrist_to_tip)), 1e-6) * 0.03  # the finger tips
+        out = []
+        for a, b, radius, link in (
+            (p["shoulder_pitch"], p["elbow"], 0.05, "upper arm"),
+            (p["elbow"], p["wrist_yaw"], 0.045, "forearm"),
+            (p["wrist_yaw"], ends, 0.055, "hand"),
+        ):
+            n = max(2, int(np.ceil(np.linalg.norm(b - a) / 0.04)) + 1)
+            out += [(a + (b - a) * t, radius, link) for t in np.linspace(0.0, 1.0, n)]
+        return out
+
     def grasp_frame(self, side: str, q29) -> tuple[np.ndarray, np.ndarray]:
         """The hand's grasp frame in the pelvis frame as (R, p), from the 29 body joints (measured)."""
         self.set_pose(q29)

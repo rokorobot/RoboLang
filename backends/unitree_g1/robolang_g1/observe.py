@@ -170,6 +170,12 @@ def uses_ready(conditions) -> bool:
     return any(isinstance(a, ir.RobotReady) for c in conditions for a in atoms_of(c))
 
 
+def held_objects(conditions, names: dict[str, str]) -> set[str]:
+    """The site names of the objects the conditions say something about through `holding` or `object_at`: a held one
+    has to be shown to the camera before the snapshot, or its marker is out of view (the hand hangs at the side)."""
+    return {names[a.obj] for c in conditions for a in atoms_of(c) if isinstance(a, (ir.Holding, ir.ObjectAt))}
+
+
 # ---------------------------------------------------------------------------------------------- three-valued logic
 
 

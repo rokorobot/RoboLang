@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 
 import pytest
-from test_observe import object_reading, snap, station_reading
+from test_observe import hand, object_reading, snap, station_reading
 
 from robolang import ir
 from robolang_g1 import executor, site as S
@@ -34,12 +34,12 @@ class FakeOps:
         self.perc = None
         self.snaps = list(snaps) if snaps is not None else [snap([AT_BENCH])]
 
-    def snapshot(self, ready=False):
-        self.calls.append(("snapshot", ready))
+    def snapshot(self, show=frozenset(), ready=False):
+        self.calls.append(("snapshot", sorted(show), ready))
         if "snapshot" in self.fail:
             raise self.fail["snapshot"]
         s = self.snaps.pop(0) if len(self.snaps) > 1 else self.snaps[0]
-        return s, {}
+        return s, ({"observation_motion": {"performed": True, "object": sorted(show)[0]}} if show else {})
 
     def guard(self, model=None):
         self.calls.append("guard")
@@ -114,7 +114,7 @@ def test_a_run_whose_goal_is_true_from_the_observations_succeeds_and_says_how():
     assert rec["backend"]["stance_model"] == "free" and rec["realtime"]["realtime_valid"] is True
     assert rec["backend"]["arm_work_stance"] == SITE["robot"]["arm_stance"]  # the weld during arm work is on record
     assert rec["verify"] == {"min_confidence": "0.9", "max_age_ms": 10000}
-    assert moves(ops) == [("move", "bench"), ("wait", 2000), ("snapshot", False)]  # one, after the last step
+    assert moves(ops) == [("move", "bench"), ("wait", 2000), ("snapshot", [], False)]  # one, after the last step
     (snapshot,) = rec["snapshots"]
     assert snapshot["purpose"] == "goal" and snapshot["markers"]["20"]["confidence"] == 1.0
     assert "age_ms" in snapshot["markers"]["20"] and snapshot["t_ms"] == 5000
@@ -198,18 +198,44 @@ def test_an_unknown_precondition_is_s102_and_nothing_is_sent():
     assert [p["result"] for p in rec["preconditions"]] == ["unknown"] and [c[0] for c in moves(ops)] == ["snapshot"]
 
 
-def test_the_goal_snapshot_reads_readiness_only_when_the_goal_needs_it_and_moves_nothing():
-    both = "robolang 1.3;\ntask t(robot r, location a) {\n  goal { robot_at r a; robot_ready r; }\n" \
-           "  plan { move r to a; }\n}\n"
+def test_the_goal_snapshot_asks_to_see_a_held_object_and_for_readiness_only_when_the_goal_needs_them():
+    holding = "robolang 1.3;\ntask t(robot r, object o, location a) {\n  goal { holding r o; robot_ready r; }\n" \
+              "  plan { move r to a; grasp r o; }\n}\n"
+    marker = object_reading(AT_BENCH, (0.0, 0.0, 0.0), stamp=0)
+    closed = hand("right", "closed", tuple(marker.position + [0, 0, -0.05]))
+    from test_observe import ready
+
+    ops = FakeOps(snaps=[snap([marker], [closed], ready(stamp_ms=0), t=0)])
+    rec = execute(task_of(holding), {"r": "robot_1", "o": "box_1", "a": "loc_a"}, SITE, ops)
+    assert ("snapshot", ["box"], True) in moves(ops) and rec["snapshots"][0]["purpose"] == "goal"
+    assert rec["state"] == "SUCCEEDED" and rec["snapshots"][0]["observation_motion"] == 0
+    (motion,) = rec["observation_motion"]  # recorded apart from the plan's steps, with the atoms that asked for it
+    assert motion["phase"] == "goal" and motion["performed"] is True and motion["object"] == "box"
+    assert [w["kind"] for w in motion["why"]] == ["holding"] and len(rec["steps"]) == 2
+    assert rec["core_outcome"] is None  # robot_ready has no Core form
+    ops2 = FakeOps()
+    execute(task_of(GO), BIND, SITE, ops2)
+    assert ("snapshot", [], False) in moves(ops2)
+
+
+def test_the_goal_snapshot_reads_readiness_only_when_the_goal_needs_it():
+    both = (
+        "robolang 1.3;\ntask t(robot r, location a) {\n  goal { robot_at r a; robot_ready r; }\n"
+        "  plan { move r to a; }\n}\n"
+    )
     from test_observe import ready
 
     ops = FakeOps(snaps=[snap([AT_BENCH], [], ready(stamp_ms=0), t=0)])
     rec = execute(task_of(both), BIND, SITE, ops)
-    assert ("snapshot", True) in moves(ops) and rec["state"] == "SUCCEEDED"
-    assert rec["core_outcome"] is None  # robot_ready has no Core form
-    ops2 = FakeOps()
-    execute(task_of(GO), BIND, SITE, ops2)
-    assert ("snapshot", False) in moves(ops2) and [c[0] for c in moves(ops2)] == ["move", "wait", "snapshot"]
+    assert ("snapshot", [], True) in moves(ops) and rec["state"] == "SUCCEEDED"
+    assert rec["core_outcome"] is None and rec["observation_motion"] == []  # robot_ready has no Core form; no motion
+
+
+def test_a_failure_while_showing_the_held_object_stops_the_robot_and_is_not_a_verdict():
+    ops = FakeOps(fail={"snapshot": BackendFailure("S503", "arm joint 23 is off")})
+    rec = execute(task_of(GO), BIND, SITE, ops)
+    assert rec["failure"]["code"] == "S503" and rec["failure"]["step"] == 2 and rec["stop"]["reason"] == "step_failed"
+    assert ops.calls[-2:] == ["hold", "confirm"] and rec["goal_evaluated"] is False
 
 
 def test_a_task_without_a_goal_is_refused():

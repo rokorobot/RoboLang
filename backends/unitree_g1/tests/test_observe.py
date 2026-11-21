@@ -148,8 +148,10 @@ def test_holding_is_unknown_when_it_cannot_be_decided():
     closed = hand("right", "closed", (0.3, -0.1, 0.10))
     marker = reading(BOX_ID, (0.3, -0.1, 0.15))
     assert verdict(cond("holding", "r", "box"), snap([], [closed, hand("left")])) == "unknown"  # marker not seen
-    assert verdict(cond("holding", "r", "box"), snap([reading(BOX_ID, marker.position, conf=0.7)],
-                                                     [closed, hand("left")])) == "unknown"
+    assert (
+        verdict(cond("holding", "r", "box"), snap([reading(BOX_ID, marker.position, conf=0.7)], [closed, hand("left")]))
+        == "unknown"
+    )
     assert verdict(cond("holding", "r", "box"), snap([marker], [hand("right", "between"), hand("left")])) == "unknown"
     assert verdict(cond("holding", "r", "box"), snap([marker], [])) == "unknown"  # no hand state at all
 
@@ -287,14 +289,22 @@ def test_policy_defaults_and_verify_thresholds():
     s = snap([bench, box])
     assert verdict(cond("object_at", "box", "src"), s, POLICY) == "unknown"
     assert verdict(cond("object_at", "box", "src"), s, O.Policy.of(tuned)) == "true"  # 0.8 >= 0.7
-    assert verdict(cond("object_at", "box", "src"), snap([bench, object_reading(bench, IN_BENCH_REGION)]),
-                   O.Policy(Decimal("0.9"), 100)) == "unknown"  # a reading 200 ms old against max_age 100 ms
+    assert (
+        verdict(
+            cond("object_at", "box", "src"),
+            snap([bench, object_reading(bench, IN_BENCH_REGION)]),
+            O.Policy(Decimal("0.9"), 100),
+        )
+        == "unknown"
+    )  # a reading 200 ms old against max_age 100 ms
 
 
 def test_unsupported_conditions_and_the_objects_a_goal_asks_about():
     assert O.unsupported(cond("holding", "r", "box")) is None
     assert O.unsupported(ir.And((cond("holding", "r", "box"), ir.RegionClear("z")))) == "region_clear"
     assert O.unsupported(ir.Not(ir.SensorOk("s"))) == "sensor_ok"
+    assert O.held_objects([ir.And((cond("holding", "r", "box"), cond("robot_at", "r", "dst")))], NAMES) == {"box"}
+    assert O.held_objects([cond("robot_at", "r", "dst")], NAMES) == set()
     assert O.uses_ready([ir.Or((cond("robot_ready", "r"), cond("robot_at", "r", "src")))])
     assert not O.uses_ready([cond("robot_at", "r", "src")])
 
@@ -304,8 +314,14 @@ def test_unsupported_conditions_and_the_objects_a_goal_asks_about():
 
 def detections(positions, rotations=None, up=None, oriented=False, stamp0=1000):
     return [
-        Detection(np.array(p, float), np.eye(3) if rotations is None else rotations[i], 1.7, stamp0 + 200 * i,
-                  None if up is None else up[i], oriented)
+        Detection(
+            np.array(p, float),
+            np.eye(3) if rotations is None else rotations[i],
+            1.7,
+            stamp0 + 200 * i,
+            None if up is None else up[i],
+            oriented,
+        )
         for i, p in enumerate(positions)
     ]
 
@@ -389,10 +405,14 @@ def test_core_outcome_of_a_success_cites_signed_observations_and_is_accepted():
     core = O.core_outcome(ok_task, BIND, NAMES, SITE, s, POLICY, "SUCCEEDED", None, "abc")
     outcome = core_ok(core)
     assert outcome["status"] == "succeeded" and outcome["verification"]["criteria_results"] == [
-        {"criterion": 0, "met": True, "evidence": ["rl:obs:abc-0"]}]
+        {"criterion": 0, "met": True, "evidence": ["rl:obs:abc-0"]}
+    ]
     (evidence,) = core["evidence"]
     assert (evidence["subject"], evidence["property"], evidence["value"]) == (
-        "rl:thing:box_1", "located_in", "rl:place:loc_a")
+        "rl:thing:box_1",
+        "located_in",
+        "rl:place:loc_a",
+    )
     assert evidence["confidence"] == "1" and evidence["valid_for"] == {"value": "10000", "unit": "ms"}
     failed = O.core_outcome(task, BIND, NAMES, SITE, s, POLICY, "FAILED", "S301", "abc")
     assert core_ok(failed)["status"] == "failed"
@@ -411,11 +431,35 @@ def test_core_outcome_of_an_unknown_goal_has_no_evidence_and_is_unknown():
 
 def test_a_goal_without_a_core_form_has_no_core_outcome():
     task = task_of("robolang 1.3;\ntask t(robot r, location a) { goal { robot_ready r; } plan { move r to a; } }\n")
-    assert O.core_outcome(task, {"r": "robot_1", "a": "loc_a"}, {"r": "g1", "a": "bench"}, SITE, snap(), POLICY,
-                          "SUCCEEDED", None, "x") is None
+    assert (
+        O.core_outcome(
+            task,
+            {"r": "robot_1", "a": "loc_a"},
+            {"r": "g1", "a": "bench"},
+            SITE,
+            snap(),
+            POLICY,
+            "SUCCEEDED",
+            None,
+            "x",
+        )
+        is None
+    )
     ornot = task_of("robolang 1.3;\ntask t(robot r, location a) { goal { not robot_at r a; } plan { move r to a; } }\n")
-    assert O.core_outcome(ornot, {"r": "robot_1", "a": "loc_a"}, {"r": "g1", "a": "bench"}, SITE, snap(), POLICY,
-                          "FAILED", "S301", "x") is None
+    assert (
+        O.core_outcome(
+            ornot,
+            {"r": "robot_1", "a": "loc_a"},
+            {"r": "g1", "a": "bench"},
+            SITE,
+            snap(),
+            POLICY,
+            "FAILED",
+            "S301",
+            "x",
+        )
+        is None
+    )
 
 
 def test_confidence_text_rounds_down_so_it_never_overstates():

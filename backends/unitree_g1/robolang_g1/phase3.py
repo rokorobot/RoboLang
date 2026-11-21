@@ -10,14 +10,11 @@ passes.
 
 O1 atom verdicts: scripted scenes, each atom with the verdict expected and the oracle's truth. O2 preconditions:
 `w_part_precheck.rob` unchanged, item at the source / elsewhere in view (S101) / camera covered (S102), the last two
-with no command sent. O3 successes: reference tasks, unchanged, twice each. O4 goal failures: the camera covered
-before the goal snapshot (S302). O5 `@verify`. O6 agreement with the oracle over every atom of O1-O5, and no false
-success. O7 Core outcomes of every `SUCCEEDED` record.
-
-**Not yet here, because they wait for the owner's decision on how `holding` is observed** (a held object's marker is
-out of the head camera's view in the carry pose): the scenes in which `holding` is true or the object is carried
-(O1), `w_carry_hold` (O3), the goal without a `place` step (O4). The report says so and `go` stays false until they
-are added.
+with no command sent. O3 successes: three reference tasks, unchanged, twice each. O4 goal failures: no `place` step
+(S301), camera covered before the goal snapshot (S302), an obstacle in the way of the observation motion (S302, the
+arm does not move), a cancel during the observation motion (S511, a biped stop, the hand unchanged). O5 `@verify`.
+O6 agreement with the oracle over every atom of O1-O5, and no false success. O7 Core outcomes of every `SUCCEEDED`
+record.
 """
 
 from __future__ import annotations
@@ -30,6 +27,7 @@ import sys
 import time
 from pathlib import Path
 
+import numpy as np
 
 from robolang import ir
 from robolang.core import Context, check_meaning, verify_sim
@@ -41,7 +39,9 @@ from . import site as site_mod
 from .ops import HAND_CLOSE, G1Operations
 from .phase2 import (
     BENCH,
+    BIND_CH,
     BIND_PP,
+    GRAB,
     SITES,
     Ctx as Ctx2,
     _Tail,
@@ -51,20 +51,20 @@ from .phase2 import (
 from .run_task import Session
 
 BIND_PC = {"r": "robot_1", "item": "box_1", "src": "loc_a", "dst": "loc_b"}  # w_part_precheck.rob
+GRAB_CH = {"r": "robot_1", "o": "crate_1", "l": "loc_dock"}  # GRAB on the carry_hold site
 ROBOT_AT_M, ROBOT_AT_RAD = O.ROBOT_AT_M, O.ROBOT_AT_RAD
 AGREEMENT_MIN = 0.98  # O6
 NAMES = {"r": "g1", "o": "box", "a": "bench", "b": "shelf", "c": "pad"}  # the scripted scenes' parameters (O1)
 ELSEWHERE = (2.90, -0.10, 0.79)  # the box at the far edge of the bench table, 6 cm outside the bench region (world)
 IN_PLACE = (2.73, -0.10, 0.79)  # where the box starts, inside the bench region
 COMMAND_KEYS = ("sport", "arm_sdk", "hand_left", "hand_right", "attach", "detach")
-# What waits for the owner's decision on how `holding` is observed (a held object's marker is outside the head
-# camera's view in the carry pose; see docs/evidence/g1-phase3-observations.md). The report lists it; `go` stays false.
-PENDING_O1 = (
-    "scenes with a carried object: holding true, object_at false for a held object, holding unknown out of view"
-)
-PENDING_O3 = "w_carry_hold (holding r crate), 2 runs"
-PENDING_O4 = "goal without a place step (S301: the box is seen in the hand), and whatever the decision adds"
 
+PICK_NO_PLACE = """robolang 1.3;
+task pick_no_place(robot r, object box, location src, location dst) {
+    goal { object_at box dst; }
+    plan { move r to src; grasp r box; move r to dst; }
+}
+"""
 GO = """robolang 1.3;
 task go(robot r, location a) {
 %s    goal { robot_at r a; }
@@ -136,7 +136,8 @@ class Ctx(Ctx2):
         return p
 
 
-def run3(ctx: Ctx, name: str, scene, site_path, source: Path, task: str, bind: dict, *, before=None, watch=None, **kw):
+def run3(ctx: Ctx, name: str, scene, site_path, source: Path, task: str, bind: dict, *, before=None, watch=None,
+         **kw):
     """One scenario: a fresh stand-in on `scene`, the CLI on the executor's site. `before(session)` runs after the
     stand-in is up and before the CLI starts; `watch(session)` returns the callback `Session.run` polls while the CLI
     runs.
@@ -238,10 +239,10 @@ class Probe:
         self.policy = O.Policy.of(ir.compile_source(GO % "", "go.rob").ir.task("go"))
         self.tail = lambda: _Tail(list(session.tail.samples))
 
-    def ask(self, scene: str, label: str, cases: list, ready: bool = False) -> dict:
+    def ask(self, scene: str, label: str, cases: list, show=(), ready: bool = False) -> dict:
         """One snapshot, and for each case (name, condition, expected verdict) the verdict, the oracle's truth at the
         snapshot's time, and the numbers behind the verdict."""
-        snap, _ = self.ops.snapshot(ready=ready)
+        snap, note = self.ops.snapshot(show=frozenset(show), ready=ready)
         sample = self.tail().nearest(snap.t_ms / 1000)
         rows = []
         for name, condition, expected in cases:
@@ -298,6 +299,7 @@ class Probe:
             "label": label,
             "t_ms": snap.t_ms,
             "rows": rows,
+            "motion": note.get("observation_motion"),
             "markers": {
                 k: {"confidence": v.confidence, "age_ms": snap.t_ms - v.stamp_ms, "range_m": round(v.range_m, 2)}
                 for k, v in sorted(snap.markers.items())
@@ -374,6 +376,25 @@ def check_o1(ctx: Ctx) -> dict:
         p.ops.robot.hand_command("right", HAND_CLOSE["right"], seconds=2.0, check=p.ops.check)
         time.sleep(1.0)
         steps.append(p.ask("A", "right hand closed on nothing", [(*A_HOLD, "false"), (*A_O_AT_A, "true")]))
+        p.ops._hand_to("right", [0.0] * 7, "open")
+        p.ops.grasp("box")
+        steps.append(
+            p.ask(
+                "A",
+                "carrying the box, shown to the camera",
+                [(*A_HOLD, "true"), (*A_O_AT_A, "false"), (*A_R_AT_A, "true")],
+                show={"box"},
+            )
+        )
+        steps.append(
+            p.ask(
+                "A", "carrying the box, in the carry pose (out of view)", [(*A_HOLD, "unknown"), (*A_O_AT_A, "unknown")]
+            )
+        )
+        s.sim.CoverCamera(True)
+        steps.append(
+            p.ask("A", "carrying the box, camera covered", [(*A_HOLD, "unknown"), (*A_O_AT_A, "unknown")], show={"box"})
+        )
 
     def B(s, p):
         steps.append(
@@ -409,7 +430,7 @@ def check_o1(ctx: Ctx) -> dict:
         k: {v for r in rows if r["atom"].startswith(k) for v in [r["verdict"]]}
         for k in ("object_at", "holding", "robot_at", "robot_ready")
     }
-    covered = {k: seen[k] >= {"true", "false", "unknown"} for k in ("object_at", "robot_at")}
+    covered = {k: seen[k] >= {"true", "false", "unknown"} for k in ("object_at", "holding", "robot_at")}
     ready_true = any(r["atom"].startswith("robot_ready") and r["verdict"] == "true" for r in rows)
     return {
         "pass": bool(not wrong and not disagree and all(covered.values()) and ready_true),
@@ -419,7 +440,6 @@ def check_o1(ctx: Ctx) -> dict:
             "disagree_with_oracle_where_it_decides": disagree,
             "verdicts_seen": {k: sorted(v) for k, v in seen.items()},
             "robot_ready_true": ready_true,
-            "pending": PENDING_O1,
             "steps": steps,
         },
     }
@@ -521,7 +541,7 @@ def check_o3(ctx: Ctx) -> dict:
     runs = []
     cases = [
         ("e_pick_place", BENCH / "e_pick_place.rob", "pick_place", BIND_PP, SITES / "pick_place.json", "pick_place"),
-        # w_carry_hold waits for the owner's decision on how `holding` is observed (the module docstring)
+        ("w_carry_hold", BENCH / "w_carry_hold.rob", "carry_crate", BIND_CH, SITES / "carry_hold.json", "carry_hold"),
         (
             "w_part_precheck",
             BENCH / "w_part_precheck.rob",
@@ -556,17 +576,44 @@ def check_o3(ctx: Ctx) -> dict:
                     "goal": [
                         (r["atom"]["kind"], r["verdict"], r["truth"]) for r in got["atoms"] if r["phase"] == "goal"
                     ],
+                    "observation_motion": [
+                        (m["phase"], m["performed"]) for m in (rec or {}).get("observation_motion", [])
+                    ],
                     "steps_s": [
                         round((s["t_end_ms"] - s["t_start_ms"]) / 1000, 1) for s in (rec or {}).get("steps", [])
                     ],
                 }
             )
-    return {"pass": all(r["pass"] for r in runs) and len(runs) == 4, "details": {"runs": runs, "pending": PENDING_O3}}
+    return {"pass": all(r["pass"] for r in runs) and len(runs) == 6, "details": {"runs": runs}}
 
 
 def check_o4(ctx: Ctx) -> dict:
     out: dict = {}
     pp_site = SITES / "pick_place.json"
+    src = ctx.source("pick_no_place", PICK_NO_PLACE)
+    # (a) no place step: the box is in the hand at the shelf, seen there: false, S301
+    status, rec, log, samples, commands = run3(ctx, "o4_no_place", pp_site, pp_site, src, "pick_no_place", BIND_PP)
+    got = collect(ctx, "o4_no_place", rec, src, "pick_no_place", BIND_PP, pp_site, samples) if rec else {"atoms": []}
+    motion = (rec or {}).get("observation_motion") or [{}]
+    ok = bool(
+        rec
+        and rec["failure"]
+        and rec["failure"]["code"] == "S301"
+        and status == 1
+        and rec["state"] != "SUCCEEDED"
+        and got["atoms"]
+        and got["atoms"][-1]["truth"] is False
+        and motion[0].get("performed") is True
+    )
+    out["no_place_step"] = {
+        "pass": ok,
+        "exit": status,
+        "failure": rec and rec["failure"],
+        "atoms": got["atoms"],
+        "observation_motion": [
+            (m["phase"], m["performed"], m["why"]) for m in (rec or {}).get("observation_motion", [])
+        ],
+    }
 
     # (b) the camera is covered after the box was placed, before the goal snapshot: unknown, S302
     def cover_after_detach(s):
@@ -610,7 +657,115 @@ def check_o4(ctx: Ctx) -> dict:
         "failure": rec and rec["failure"],
         "atoms": got["atoms"],
     }
-    return {"pass": all(v["pass"] for v in out.values()), "details": {**out, "pending": PENDING_O4}}
+    # (c) the view pose is not shown clear: no arm motion, the atom stays unknown (S302)
+    post = {"name": "post", "pos": [2.73, 2.30, 0.93], "half_size": [0.05, 0.05, 0.10]}  # at the shelf's view pose
+    blocked_site = ctx.site_file("pick_place", lambda d: d.update(obstacles=[post]))
+    status, rec, log, samples, commands = run3(ctx, "o4_blocked", pp_site, blocked_site, src, "pick_no_place", BIND_PP)
+    got = (
+        collect(ctx, "o4_blocked", rec, src, "pick_no_place", blocked_site, samples, expect_unknown=True)
+        if rec
+        else {"atoms": []}
+    )
+    motion = ((rec or {}).get("observation_motion") or [{}])[0]
+    last_end = rec["steps"][-1]["t_end_ms"] / 1000 if rec and rec["steps"] else None
+    tail = _Tail(samples)
+    after = [x for x in samples if last_end is not None and x["sim_time"] >= last_end]
+    wrist_m = (
+        float(np.linalg.norm(np.array(after[-1]["wrists"]["right"]) - np.array(after[0]["wrists"]["right"])))
+        if len(after) > 1
+        else None
+    )
+    stance_after = {x["stance"]["model"] for x in after}
+    ok = bool(
+        rec
+        and rec["failure"]
+        and rec["failure"]["code"] == "S302"
+        and status == 3
+        and motion.get("performed") is False
+        and (motion.get("clearance") or {}).get("closest", {}).get("box") == "post"
+        and wrist_m is not None
+        and wrist_m <= 0.01
+        and stance_after == {"free"}
+        and tail.latest()["attached"] == {"box": "right"}
+    )
+    out["view_pose_blocked"] = {
+        "pass": ok,
+        "exit": status,
+        "failure": rec and rec["failure"],
+        "observation_motion": motion,
+        "wrist_moved_after_last_step_m": wrist_m,
+        "stance_after_last_step": sorted(stance_after),
+        "atoms": got["atoms"],
+    }
+
+    # (d) a cancel during the observation motion: a biped stop, the hand unchanged, never a success
+    def cancel_in_excursion(s, stop_file):
+        state = {"supported_edges": 0, "was": None, "at": None, "written": False}
+
+        def watch(proc):
+            now = s.tail.latest()
+            model = now["stance"]["model"]
+            if model == "supported" and state["was"] != "supported":
+                state["supported_edges"] += 1
+                if state["supported_edges"] == 2:  # the second arm-work stance is the observation motion's
+                    state["at"] = now["sim_time"]
+            state["was"] = model
+            if state["at"] is not None and not state["written"] and now["sim_time"] >= state["at"] + 3.0:
+                stop_file.write_text("cancel")
+                state["written"] = True
+
+        return watch, state
+
+    stop_file = ctx.dir / "o4_cancel.stop"
+    stop_file.write_text("")
+    grab = ctx.source("grab", GRAB)
+    ch_site = SITES / "carry_hold.json"
+    holder = {}
+
+    def make_watch(s):
+        w, state = cancel_in_excursion(s, stop_file)
+        holder["state"] = state
+        return w
+
+    status, rec, log, samples, commands = run3(
+        ctx, "o4_cancel_in_excursion", ch_site, ch_site, grab, "grab", GRAB_CH, watch=make_watch, stop_file=stop_file
+    )
+    last = samples[-1] if samples else {}
+    stop = (rec or {}).get("stop") or {}
+    conf = stop.get("confirmation") or {}
+    motion = (rec or {}).get("observation_motion") or [None]
+    held_after = last.get("attached", {})
+    hands_ok = (
+        last.get("hands", {}).get("right") is not None
+        and float(max(abs(np.array(last["hands"]["right"]) - np.array(HAND_CLOSE["right"])))) < 0.3
+    )
+    ok = bool(
+        rec
+        and rec["failure"]
+        and rec["failure"]["code"] == "S511"
+        and rec["state"] != "SUCCEEDED"
+        and status == 1
+        and stop.get("kind") == "controlled_stand"
+        and stop.get("safe_state", {}).get("hands") == "unchanged"
+        and conf.get("confirmed")
+        and held_after == {"crate": "right"}
+        and hands_ok
+        and holder["state"]["written"]
+    )
+    out["cancel_during_observation_motion"] = {
+        "pass": ok,
+        "exit": status,
+        "failure": rec and rec["failure"],
+        "stop": {k: stop.get(k) for k in ("reason", "code", "kind", "safe_state")},
+        "confirmation": conf,
+        "still_holding_at_end": held_after,
+        "right_hand_joint_error_from_closed_rad": None
+        if not hands_ok and not last
+        else float(max(abs(np.array(last["hands"]["right"]) - np.array(HAND_CLOSE["right"])))),
+        "cancel_written": holder["state"]["written"],
+        "observation_motion_recorded": motion,
+    }
+    return {"pass": all(v["pass"] for v in out.values()), "details": out}
 
 
 def check_o5(ctx: Ctx) -> dict:
@@ -782,9 +937,7 @@ def main(argv=None) -> int:
             record(name, lambda fn=fn: fn(ctx))
     record("O6", lambda: check_o6(ctx))
     record("O7", lambda: check_o7(ctx))
-    result["pending_on_owner_decision"] = {"O1": PENDING_O1, "O3": PENDING_O3, "O4": PENDING_O4}
-    result["go"] = False  # the checks above can pass, but the pending ones are not in them yet
-    result["checks_run_pass"] = all(c["pass"] for c in result["checks"].values())
+    result["go"] = all(c["pass"] for c in result["checks"].values()) and not only
     result["realtime_valid_all_runs"] = all(r["realtime_valid"] for r in ctx.runs)
     result["robot_at_margins"] = {
         "tolerance_m": ROBOT_AT_M,
@@ -798,12 +951,8 @@ def main(argv=None) -> int:
     }
     result["elapsed_s"] = round(time.perf_counter() - t0, 1)
     write()
-    print(
-        f"go: {result['go']} (the checks run pass: {result['checks_run_pass']}; pending on the owner's decision: "
-        f"{list(result['pending_on_owner_decision'])}); realtime_valid in every run: "
-        f"{result['realtime_valid_all_runs']}; wrote {out}"
-    )
-    return 0 if result["checks_run_pass"] else 1
+    print(f"go: {result['go']}  (realtime_valid in every run: {result['realtime_valid_all_runs']}); wrote {out}")
+    return 0 if result["go"] else 1
 
 
 if __name__ == "__main__":

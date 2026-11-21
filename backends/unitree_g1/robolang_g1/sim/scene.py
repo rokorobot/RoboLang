@@ -224,7 +224,7 @@ def build_spec(site) -> mujoco.MjSpec:
                      rgb1=[0.55, 0.65, 0.75], rgb2=[0.2, 0.25, 0.3], width=256, height=512)
     spec.worldbody.add_light(pos=[0, 0, 4], dir=[0, 0, -1], type=mujoco.mjtLightType.mjLIGHT_DIRECTIONAL,
                                 diffuse=[0.5, 0.5, 0.5], castshadow=0)
-    for table in site["tables"]:
+    for table in [*site["tables"], *site["obstacles"]]:
         spec.worldbody.add_geom(name=table["name"], type=mujoco.mjtGeom.mjGEOM_BOX, pos=table["pos"],
                                 size=table["half_size"], group=VISIBLE, contype=TABLE_BIT, conaffinity=1 | OBJECT_BIT,
                                 rgba=table.get("rgba", [0.55, 0.42, 0.3, 1]))

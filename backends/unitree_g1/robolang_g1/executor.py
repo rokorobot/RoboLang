@@ -9,7 +9,11 @@ differs from the ROS 2 backend:
 
 * the stop is a biped's: zero velocity, the arms held where they are through `arm_sdk`, the hands unchanged, the robot
   kept standing, confirmed from `lowstate` (decision 0046 U9, hazard H25). A fall (S516) sends nothing at all;
-* the snapshots are taken with the robot as the plan left it: nothing moves to make an observation possible.
+* the snapshots are taken with the robot as the plan left it, with **one exception** (0046 U8 exception, approved by the
+  owner 2026-11-21): after the last step, when a goal atom names an object the robot holds, the arm shows the object to
+  the head camera (the carry pose hangs it out of view) and goes back, if the path is shown clear of the site's declared
+  tables and obstacles; the record's `observation_motion` says when, why, along which waypoints and with what
+  clearance, and a motion that was refused (the atoms stay `unknown`) is recorded too.
 """
 
 from __future__ import annotations
@@ -231,6 +235,8 @@ def execute(task: ir.Task, bindings: dict[str, str], site: dict, ops, stop: Stop
         ],
         "goal_evaluated": False,
         "snapshots": [],  # every observation snapshot, with each marker reading's confidence and age
+        # arm motions made only to observe (0046 U8 avoids motion outside the plan): when, why, the path, the clearance
+        "observation_motion": [],
         "observations": [],  # the markers the executor looked at while it moved and reached (not verdicts)
         "stop": None,
         "realtime": None,
@@ -247,7 +253,8 @@ def execute(task: ir.Task, bindings: dict[str, str], site: dict, ops, stop: Stop
         names = refuse(task, bindings, site)
         record["start_pose"] = [round(v, 4) for v in ops.pose]
         if task.preconditions:  # one snapshot at the start pose: reading it commands nothing
-            snap = _snapshot(ops, record, "preconditions", observe.uses_ready(task.preconditions))
+            ready = observe.uses_ready(task.preconditions)
+            snap = _snapshot(ops, record, "preconditions", frozenset(), ready, (), names)  # never an arm motion
             _verdicts(record["preconditions"], task.preconditions, names, site, snap, policy)
             results = [e["result"] for e in record["preconditions"]]
             if "false" in results:
@@ -278,7 +285,9 @@ def execute(task: ir.Task, bindings: dict[str, str], site: dict, ops, stop: Stop
                 entry["t_end_ms"] = ops.now_ms()
                 entry["wall_s"] = round(time.monotonic() - wall, 2)
             entry["status"] = "succeeded"
-        snap = _snapshot(ops, record, "goal", observe.uses_ready(task.goal))  # one snapshot, after the last step
+        # one snapshot after the last step; a held object the goal speaks of is shown to the camera first
+        snap = _snapshot(ops, record, "goal", observe.held_objects(task.goal, names), observe.uses_ready(task.goal),
+                         task.goal, names)
         goal_snap = snap
         record["goal_evaluated"] = True
         _verdicts(record["goal"], task.goal, names, site, snap, policy)
@@ -315,10 +324,23 @@ def execute(task: ir.Task, bindings: dict[str, str], site: dict, ops, stop: Stop
     return record
 
 
-def _snapshot(ops, record: dict, purpose: str, ready: bool):
-    """One observation snapshot, kept in the record so every verdict can be audited."""
-    snap, note = ops.snapshot(ready=ready)
-    record["snapshots"].append(observe.snapshot_record(snap, purpose, note))
+def _snapshot(ops, record: dict, purpose: str, show, ready: bool, conditions, names):
+    """One observation snapshot, kept in the record so every verdict can be audited. If the robot moved its arm only to
+    be able to observe (or refused to, `performed: false`), that is recorded apart from the plan's steps, with the atoms
+    that asked for it."""
+    snap, note = ops.snapshot(show=show, ready=ready)
+    entry = observe.snapshot_record(snap, purpose)
+    motion = note.get("observation_motion")
+    if motion is not None:
+        why = [
+            ir.to_dict(a)
+            for c in conditions
+            for a in observe.atoms_of(c)
+            if isinstance(a, (ir.Holding, ir.ObjectAt)) and names[a.obj] == motion["object"]
+        ]
+        record["observation_motion"].append({"phase": purpose, "why": why, **motion})
+        entry["observation_motion"] = len(record["observation_motion"]) - 1
+    record["snapshots"].append(entry)
     return snap
 
 
