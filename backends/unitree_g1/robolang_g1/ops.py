@@ -95,11 +95,8 @@ HAND_STATE_AGE_S = 1.0  # a hand state older than this (wall clock) is not used
 # the release) the hand and the object, which rests on the table there, are checked with no vertical margin and may
 # overlap the table by 5 mm (the object's position is known to about a centimetre).
 CONTACT_OVERLAP_M = 0.005  # (see above)
-RAISED_ABOVE_PRE_M = (
-    0.08,
-    0.06,
-    0.04,
-)  # the hand is raised this far above the pre-grasp height (the first that solves)
+RAISED_ABOVE_PRE_M = (0.08, 0.06, 0.04)  # the hand is raised this far above the pre-grasp height, in turn
+RAISED_OUT_M = (0.0, 0.05, 0.10)  # the raised pose beside the body is tried this much further out, in turn
 CARRY_CLEARANCE_M = 0.02  # a held object clears every link of the robot by at least this in the carry pose ...
 CARRY_PLAN_M = (0.03, 0.0275, 0.025)  # ... planned for the first of these that exists (tracking error costs ~0.5 cm)
 # Before the arm shows a held object, the whole path of the arm and the object is checked against the site's declared
@@ -836,41 +833,43 @@ class G1Operations:
                 if q_grasp is None:
                     continue
                 clear_p = self.kin.grasp_frame(side, self._clear_pose(side))[1]
-                q_above = q_raised = None
-                for height in RAISED_ABOVE_PRE_M:  # as high as the arm can go, in steps: the path check judges the rest
+                outward = -1.0 if side == "right" else 1.0
+                pairs = []  # (above, raised): as high as the arm goes, and as far out beside the body as needed
+                for height in RAISED_ABOVE_PRE_M:
                     q_above, _ = self._solve(side, pre + np.array([0, 0, height]), R, [q_pre], waist)
                     if q_above is None:
                         continue
-                    raised = np.array([clear_p[0], clear_p[1], pre[2] + height])
-                    q_raised, _ = self._solve(side, raised, R, [self._clear_pose(side), q_above, q_pre], waist)
-                    if q_raised is not None:
-                        break
-                if q_above is None or q_raised is None:
-                    continue
-                plan = {
-                    "above": q_above,
-                    "raised": q_raised,
-                    "pre": q_pre,
-                    "grasp": q_grasp,
-                    "fingers_down_deg": deg,
-                    "waist_rad": float(q_grasp[WAIST_PITCH]),
-                    "position_error_m": round(info["position_error_m"], 4),
-                    "pinch": p,
-                }
-                ok = max(abs(q_grasp[joints] - q_pre[joints])) < 1.2
-                for name, offset in extra:
-                    q, _ = self._solve(side, p + np.array(offset), R, [q_grasp], waist)
-                    if q is None:
-                        ok = False
-                        break
-                    plan[name] = q
-                if ok and accept is not None:
-                    ok, verdict = accept(plan)
+                    for out in RAISED_OUT_M:
+                        raised = np.array([clear_p[0], clear_p[1] + outward * out, pre[2] + height])
+                        q_raised, _ = self._solve(side, raised, R, [self._clear_pose(side), q_above, q_pre], waist)
+                        if q_raised is not None:
+                            pairs.append((q_above, q_raised))
+                for q_above, q_raised in pairs:
+                    plan = {
+                        "above": q_above,
+                        "raised": q_raised,
+                        "pre": q_pre,
+                        "grasp": q_grasp,
+                        "fingers_down_deg": deg,
+                        "waist_rad": float(q_grasp[WAIST_PITCH]),
+                        "position_error_m": round(info["position_error_m"], 4),
+                        "pinch": p,
+                    }
+                    ok = max(abs(q_grasp[joints] - q_pre[joints])) < 1.2
+                    for name, offset in extra:
+                        q, _ = self._solve(side, p + np.array(offset), R, [q_grasp], waist)
+                        if q is None:
+                            ok = False
+                            break
+                        plan[name] = q
                     if not ok:
-                        rejected = verdict
                         continue
-                    plan["clearance"] = verdict
-                if ok:
+                    if accept is not None:
+                        ok, verdict = accept(plan)
+                        if not ok:
+                            rejected = verdict
+                            continue
+                        plan["clearance"] = verdict
                     return plan
         if rejected is not None:
             raise BackendFailure(
