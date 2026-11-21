@@ -3,9 +3,9 @@
 **Status:** phases 1–3 of decision [0046](decisions/0046-humanoid-backend-unitree-g1.md): the stand-in, the guard and
 the harness checks P1–P6 ([evidence](../docs/evidence/g1-phase1-harness.md)), the executor (`move`, `grasp`,
 `place`, `wait for`, the stop, the records; checks E1–E7, [evidence](../docs/evidence/g1-phase2-executor.md)), and goal
-and precondition verdicts from observations (checks O1–O7, [evidence](../docs/evidence/g1-phase3-observations.md);
-**`holding` of a carried object is waiting for an owner decision**, see "Observations and verdicts"). Code:
-[`backends/unitree_g1/`](../backends/unitree_g1/).
+and precondition verdicts from observations (checks O1–O7, [evidence](../docs/evidence/g1-phase3-observations.md)), with
+one exception to 0046 U8 for observing a carried object (approved by the owner 2026-11-21; see "Observations and
+verdicts"). Code: [`backends/unitree_g1/`](../backends/unitree_g1/).
 
 ## Scope and safety boundary
 
@@ -55,10 +55,14 @@ the plate); **objects** (a marker on a face, which hand); and **bindings** from 
 the site's robot, objects and locations. The scene generator builds MuJoCo from the same file. The executor does not use
 an object's position: it finds the object by its marker. A scene may differ from the site the executor is given (an
 object removed, a marker `covered`), which is how the scripted failure cases are made. The sites
-[`pick_place.json`](../backends/unitree_g1/robolang_g1/sites/pick_place.json) and
-[`carry_hold.json`](../backends/unitree_g1/robolang_g1/sites/carry_hold.json) are for `bench/reference/e_pick_place.rob`
-and `w_carry_hold.rob`; a test checks the scene rule of 0046 section 3 for both (goal locations in view of the camera from
-the station where the plan ends).
+[`pick_place.json`](../backends/unitree_g1/robolang_g1/sites/pick_place.json),
+[`carry_hold.json`](../backends/unitree_g1/robolang_g1/sites/carry_hold.json) and
+[`part_precheck.json`](../backends/unitree_g1/robolang_g1/sites/part_precheck.json) are for
+`bench/reference/e_pick_place.rob`, `w_carry_hold.rob` and `w_part_precheck.rob`; a test checks the scene rule of 0046
+section 3 for all three (goal locations in view of the camera from the station where the plan ends, precondition locations
+from the start pose, and no declared table between the camera and the marker: the line of sight is tested against the
+tables). A site may also declare `obstacles` (boxes in the map like the tables, built into the scene): the executor keeps
+the arm clear of every declared table and obstacle (below).
 
 ## Steps, observations and records
 
@@ -88,18 +92,39 @@ quiet), and look again (within 4.7 cm and 0.09 rad). **S504** if it does not con
 **`grasp r O`.** Re-observe the station marker (and re-servo if the robot moved); observe the object's marker (**S506**
 before anything moves if it is not seen); choose the hand (the site's, or the nearer side); inverse kinematics on the
 robot's own model fed with measured joints (damped least squares on MuJoCo's Jacobians, a joint-limit active set, the
-waist's pitch allowed to lean up to 0.3 rad) for a pre-grasp, the grasp and a lift, with the hand pitched 15 to 45
-degrees: **S502** if there is no solution, before any arm motion. The arm moves in min-jerk segments of at least 1.6 s with
-the `arm_sdk` weight ramped in, first out of the hip's way; a joint further than 0.12 rad from its target when a segment
-ends is **S503**. The Dex3 hand closes (**S505** if it is more than 0.25 rad from its goal); the object's marker must be
-seen within 6 cm of the hand's grasp point computed from the measured joints (**S506**); then the stand-in welds the
-object to the hand (`weld_after_hand_close`), and the arm lifts to the carry pose, which is the walking controller's own
-arm pose. **`place r O at L`** is the mirror: the region's centre through the station marker seen now, reach, lower, open,
-detach, retract, carry. **`wait for`** is simulation time (`lowstate.tick`).
+waist's pitch allowed to lean up to 0.3 rad) for a pre-grasp, the grasp, a lift, and two raised poses that bring the hand
+in over a table (below). The hand is pitched flat first (then 15 to 45 degrees) with the pinch point at the object's
+centre; a reach is taken only if its arm paths clear the declared tables and a carry pose exists (below): **S502** if
+none does, before any arm motion. The arm moves in min-jerk segments of at least 1.6 s with the `arm_sdk` weight ramped in,
+first out of the hip's way, then raised beside the body and in over the object; a joint further than 0.12 rad from its
+target when a segment ends is **S503**. The Dex3 hand closes (**S505** if it is more than 0.25 rad from its goal); the
+object's marker must be seen within 9 cm of the hand's grasp point computed from the measured joints (**S506**; 4-5 cm
+when held right); then the stand-in welds the object to the hand (`weld_after_hand_close`), and the arm lifts, retreats the
+same way and goes to the **carry pose**. **`place r O at L`** is the mirror: the region's centre through the station marker
+seen now, reach in over the table, lower, open, detach, back out, to the walking controller's own arm pose.
+**`wait for`** is simulation time (`lowstate.tick`).
+
+**Arm paths and the carry pose** (`kinematics.Clearance`, `ops.py`). The scene's hands touch neither objects nor tables, so
+the simulator never shows a path through a table; the executor therefore checks its own. With MuJoCo's distance queries on
+the robot's own collision shapes (the arm links, the palm, the finger capsules, and the held object as a box fixed to the
+hand, in the pose it is held in), fed the belief pose at the station, every straight joint-space leg of a grasp, a place and
+the observation motion is tested against the site's declared tables and obstacles grown by **3 cm sideways and 1.5 cm
+vertically**; on the legs where the hand is meant to be at the object (the last approach, the first lift, the lowering and
+the release) the hand and the object, which rests on its table there, may overlap the table by 5 mm and no more. A reach
+that has an inverse-kinematics solution but no clear path is dropped for the next one; if none is left, **S502** ("no clear
+path"). Measured on the shipped sites, the phase 2 grasp (hand pitched 15 degrees, the pinch 1 cm below the object's centre)
+put the open fingers 3.2 cm into the table and the retreat passed the object through its edge. Now the hand is flat with
+the pinch at the object's centre (the closed fingers stay level with the object's top face, where the marker is, and the open
+hand just touches the table top), the hand comes in through a pose raised beside the body (tried further out if the object
+would pass the table's corner) and one straight above the pre-grasp. The **carry pose** of a held object is the walking
+controller's own arm pose moved only as far as it takes for the object, welded as grasped, to clear **every link of the robot**
+(the holding hand's own palm and fingers excepted) by 2.5-3 cm in the model; in the walking pose it is 0.1-0.6 cm from the
+right hip link. It is planned before the arm moves (S502 if there is none) and again from the object as it is actually held.
 
 **Arm work stance.** The free stance moved the robot by centimetres to decimetres when an arm reached (measured in the
 evidence), so a site may set `robot.arm_stance: "supported"`: the stand-in welds the pelvis for the arm step and frees it
-afterwards. The record says so for every step. In the scene, hands touch neither objects nor tables (grasping is a weld).
+afterwards. The record says so for every step. In the scene, hands touch neither objects nor tables (grasping is a weld);
+the clearance check above stands in for the collisions the scene does not have.
 
 **Stop and S516.** On a failed step, cancel, revoke or deadline: `SetVelocity(0)`, the arms held where they are through
 `arm_sdk` (the target becomes the measured joints), the hands unchanged (a held object stays held), the robot kept
@@ -149,11 +174,19 @@ otherwise its atoms are `unknown`.
 `and`, `or` and `not` are three-valued as in the symbolic simulator. The margins are never in favour of `true`: a value
 inside a margin is `unknown`. Every `robot_at` verdict records the measured offset next to the tolerance.
 
-**`holding` of a carried object has an open question.** In the carry pose (the walking controller's arm pose, which the
-backend keeps while walking) the object hangs at the side of the thigh, **46° below the head camera's axis against a field
-of ±29°**, so its marker is never detected (measured; a waist lean does not bring it into view: the hand ends up behind
-the camera). Until the owner decides how to observe a held object, an atom about it after the last step is `unknown`
-(S302). See the evidence for the options and the measurements.
+**Observing a carried object: an observation motion (0046 U8 exception, approved by the owner 2026-11-21).** In the carry
+pose the object hangs at the side of the thigh, **46° below the head camera's axis against a field of ±29°**, so its marker
+is never detected (measured: 0 of 28 frames walking, 0 of 10 at rest; a waist lean does not bring it into view, and an arm
+pose that does, 12-19° off the axis, either stops the walking policy or makes it curve and sway). So **after the last
+step, and only if a goal atom names an object the robot holds**, the arm shows it to the camera: clear of the hip, raised
+beside the body, and to the pose where the grasp lifted the object, in the site's arm-work stance, then back to the carry
+pose. Only the arm moves, never the waist or the legs, and never for a precondition. Before it moves the whole path is
+checked as above (3 cm sideways, 1.5 cm vertically); **if it is not shown clear the arm does not move**, the snapshot is
+taken as the plan left the robot and the atoms about the object are `unknown` (S302). A cancel, revoke or deadline during it
+stops it like any arm motion (the biped stop: arms held where they are, hands unchanged). The record's
+`observation_motion` lists each one apart from the plan's steps: the phase, the atoms that asked for it, whether it was
+`performed`, the waypoints, the clearance numbers (the closest link and box), the stance, and the events; the snapshot says
+which motion it was taken in.
 
 **Core outcome.** `core_outcome` is built as the ROS 2 backend builds it: the Core `outcome` payload from the goal's
 `object_at`, `robot_at` and `holding` atoms, with a signed observation (key `rl:sim:g1-mujoco`, fixed, published, simulation
@@ -162,10 +195,11 @@ only) as evidence for each criterion a `true` verdict meets: confidence rounded 
 
 ## Failure codes
 
-The codes and meanings of the [ROS 2 backend](ros2-backend-v0.1.md#failure-codes) (S501–S515), plus:
+The codes and meanings of the [ROS 2 backend](ros2-backend-v0.1.md#failure-codes) (S501–S515), with S502 extended, plus:
 
 | Code | Meaning |
 |---|---|
+| S502 | (the ROS 2 meaning, and:) no clear path for the arm: every reach with an inverse-kinematics solution comes within the margins of a declared table or obstacle, or leaves no carry pose that clears the held object by 2 cm. Before any arm motion |
 | S516 | The robot fell or lost balance (IMU tilt beyond the limit, or the walking service left its standing and walking states). The run stops; no further command |
 | S517 | Localization lost: a station marker that `move` or an observation needs was not seen within its timeout |
 
@@ -174,7 +208,8 @@ The codes and meanings of the [ROS 2 backend](ros2-backend-v0.1.md#failure-codes
 `.github/workflows/g1-sim.yml`: on demand, nightly, and on pull requests that change `backends/unitree_g1/` or the
 workflow itself (0046 U12 said on demand and nightly; the pull-request trigger is limited to the backend's own files so
 that a backend change is checked on x86_64 before it merges). Plain x86_64 runner, no GPU, no Docker; the assets and the
-CycloneDDS build are cached. The job runs the backend's tests, the phase 1 harness (P1-P6, about 2 minutes) and the phase 2
-checks (E1-E7, about 35 minutes of simulated real time), and uploads `harness.json`, `phase2.json` and every run's record.
+CycloneDDS build are cached. The job runs the backend's tests, the phase 1 harness (P1-P6, about 2 minutes), the phase 2
+checks (E1-E7, about 35 minutes of simulated real time) and the phase 3 checks (O1-O7, about 40 minutes), and uploads
+`harness.json`, `phase2.json`, `phase3.json` and every run's record.
 The simulation runs in real time, so a run's `realtime_valid` (every second within 5% of real time, no stall) is part of
 its record; an invalid run does not count towards acceptance (0046 U13).

@@ -23,14 +23,13 @@ import numpy as np
 from . import assets, guard
 from . import site as site_mod
 from .executor import STOP_CODES, STOP_MESSAGES, BackendFailure, Stop
-from .kinematics import ARM_JOINTS, STAND_HEIGHT, WAIST_PITCH, Clearance, Kinematics
+from .kinematics import ARM_JOINTS, WAIST_PITCH, Clearance, Kinematics
 from .observe import HAND_CLOSED, HELD_RADIUS_M, READY_LOWSTATE_AGE_S, Hand, Ready, Snapshot
 from .observe import hand_state
 from .perception import (
     MAX_UP_DISAGREEMENT_RAD,
     Perception,
     imu_up,
-    line_of_sight_blocked,
     object_centre,
     pelvis_pose_in_map,
 )
@@ -57,8 +56,6 @@ MARKER_MAX_RANGE_M, MARKER_MIN_CONF = 2.9, 0.5  # a station marker corrects the 
 APPROACH_M = 0.5  # the walk ends this far before the station, facing it, and the marker is looked for there
 # ... after passing through a point this much further out on the station's axis, where the marker is in view
 STAGING_M = 1.5
-# the belief may be this far off sideways at the approach point (measured: 0.2-0.4 m on the way to the shelf)
-APPROACH_SLACK_M = 0.4
 WALK_SPEED = 0.5
 WALK_GAIN, BACK_GAIN, SIDE_GAIN, YAW_GAIN = 0.95, 0.9, 0.64, 0.7  # travel (coast included) per unit commanded, measured
 SHUFFLE_S = 1.2  # one burst of the turn-in-place shuffle ...
@@ -66,7 +63,8 @@ SHUFFLE_BACK_M = 0.035  # ... and drifts this far backward (measured: 0.03-0.04 
 SHUFFLE_RAD = {1: 0.127, -1: 0.111}  # ... turns this much to the left (+) and to the right (-): measured
 LEG_MAX_M = 1.6  # the longest walk between two looks
 SCAN_STEP_RAD = 0.6  # a scan for a marker turns this much between looks
-MOVE_TIMEOUT_S, SERVO_TIMEOUT_S, MARKER_TIMEOUT_S = 240.0, 90.0, 70.0  # simulation time: S504, S504, S517
+SIDESTEPS, SIDESTEP_M = 3, 0.2  # ... after this many sidesteps of about this much toward the marker's side
+MOVE_TIMEOUT_S, SERVO_TIMEOUT_S, MARKER_TIMEOUT_S = 240.0, 90.0, 90.0  # simulation time: S504, S504, S517
 # ---- arms
 ARM_TRACK_TOL_RAD = 0.12  # S503: a joint further than this from its target when a motion has finished
 HAND_TOL_RAD = 0.25  # S505
@@ -530,13 +528,8 @@ class G1Operations:
         t0 = self.now_ms()
         deadline = t0 + int(MOVE_TIMEOUT_S * 1000)
         self.look(frames=3)
-        lateral = self.approach_lateral(station)  # the approach is shifted sideways if a table hides the marker nearby
-        left = (-math.sin(gyaw) * lateral, math.cos(gyaw) * lateral)
-        ax, ay = gx - APPROACH_M * math.cos(gyaw) + left[0], gy - APPROACH_M * math.sin(gyaw) + left[1]
-        sx = gx - (APPROACH_M + STAGING_M) * math.cos(gyaw) + left[0]
-        sy = gy - (APPROACH_M + STAGING_M) * math.sin(gyaw) + left[1]
-        if lateral:
-            self.events.append({"t_ms": self.now_ms(), "event": "approach_shift", "lateral_m": round(lateral, 2)})
+        ax, ay = gx - APPROACH_M * math.cos(gyaw), gy - APPROACH_M * math.sin(gyaw)
+        sx, sy = gx - (APPROACH_M + STAGING_M) * math.cos(gyaw), gy - (APPROACH_M + STAGING_M) * math.sin(gyaw)
         scan_end = self.now_ms() + int(MARKER_TIMEOUT_S * 1000)  # one budget for all the searching, replans included
         marker = None
         for _ in range(4):
@@ -558,37 +551,6 @@ class G1Operations:
         result["events"] = self.events
         return result
 
-    def approach_lateral(self, station: dict) -> float:
-        """How far to the left of the station's axis (m, negative: right) the approach point should be, so that the
-        station's marker is in the clear from it **and from where a belief that is wrong sideways by up to
-        APPROACH_SLACK_M would put the robot**: the marker is low and stands behind its table, and from a little to the
-        side the table hides it (measured: the move to the shelf failed with S517 when the robot stood 0.3 m to the
-        right of the axis). Uses the site's declared tables and the camera's height. 0 when no table is in the way."""
-        tables = self.site["tables"]
-        if not tables:
-            return 0.0
-        gx, gy, gyaw = station["pose"]
-        marker = np.array(station["marker"]["pos"], float)
-        _, pc = self.kin.camera_pose(np.zeros(29))
-        R = site_mod.rot_z(gyaw)
-        ax, ay = gx - APPROACH_M * math.cos(gyaw), gy - APPROACH_M * math.sin(gyaw)
-
-        def clear(s: float) -> bool:
-            eye = np.array([ax, ay, STAND_HEIGHT]) + R @ np.array([pc[0], pc[1] + s, pc[2]])  # s: to the left
-            return line_of_sight_blocked(eye, marker, tables) is None
-
-        def room(s: float) -> float:  # how far the belief may be wrong sideways, either way, and still see the marker
-            ok = 0.0
-            for e in np.arange(0.05, 0.61, 0.05):
-                if not (clear(s + e) and clear(s - e)):
-                    break
-                ok = float(e)
-            return ok
-
-        candidates = [0.0, 0.3, -0.3, 0.6, -0.6]
-        best = max(candidates, key=lambda s: (min(room(s), APPROACH_SLACK_M), -abs(s)))
-        return best if room(best) > room(0.0) else 0.0
-
     def _find_marker(self, station: dict, deadline_ms: int, scan_end_ms: int, approach: tuple):
         """Look at the approach point for the station's marker, scanning by turning if it is not in view. Returns its
         reading; or None when the belief, corrected by another marker, puts the robot more than 0.35 m from the
@@ -596,6 +558,12 @@ class G1Operations:
         S517 when the search budget is spent."""
         mid = station["marker"]["id"]
         mx, my = station["marker"]["pos"][:2]
+        gx, gy, gyaw = station["pose"]
+        # which side of the station's axis the marker stands on: a table that hides it from the axis's other side is
+        # cleared by stepping that way (measured: the robot 0.2-0.4 m to the right of the shelf's axis did not see the
+        # marker, and turning to look for it only lost the heading)
+        toward = 1.0 if -(mx - gx) * math.sin(gyaw) + (my - gy) * math.cos(gyaw) > 0 else -1.0
+        sidesteps = 0
         first = True
         while True:
             readings = self.look(frames=3 if first else 4)
@@ -612,8 +580,16 @@ class G1Operations:
                     f"station marker {mid} was not seen within {MARKER_TIMEOUT_S:.0f} s "
                     f"(scanned from the approach point; belief {[round(float(v), 2) for v in self.pose]})",
                 )
-            # not seen: face where the belief says it is, then sweep round in steps (a station marker seen on the way
-            # corrects the belief, and the next step aims again)
+            if sidesteps < SIDESTEPS:  # not seen: first step toward the marker's side, looking after each step
+                sidesteps += 1
+                vx, vy, seconds = _burst("lateral", toward * SIDESTEP_M)
+                self.events.append({"t_ms": self.now_ms(), "event": "sidestep", "toward": toward, "n": sidesteps})
+                self.command(vx, vy, 0.0, seconds)
+                self.settle()
+                first = False
+                continue
+            # still not seen: face where the belief says it is, then sweep round in steps (a station marker seen on the
+            # way corrects the belief, and the next step aims again)
             aim = self._angle_to(mx, my) if first else SCAN_STEP_RAD
             first = False
             self.events.append({"t_ms": self.now_ms(), "event": "scan", "turn_rad": round(float(aim), 3)})

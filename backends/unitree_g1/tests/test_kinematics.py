@@ -264,17 +264,6 @@ def approach_ops(kin, site_name):
     return o
 
 
-def test_the_approach_point_is_shifted_to_where_a_table_cannot_hide_the_station_marker(kin):
-    o = approach_ops(kin, "pick_place")
-    # the markers of the bench and the shelf are low and stand behind their tables: from 0.3 m to the right of the
-    # axis the table hides them, so the approach is moved to the left, where a belief that is 0.4 m off still sees them
-    assert o.approach_lateral(o.stations["shelf"]) == pytest.approx(0.3)
-    assert o.approach_lateral(o.stations["bench"]) == pytest.approx(0.3)
-    assert o.approach_lateral(o.stations["pad"]) == 0.0  # no table in the way: the axis it is
-    o.site["tables"] = []
-    assert o.approach_lateral(o.stations["shelf"]) == 0.0  # nothing declared: nothing to avoid
-
-
 def test_a_shuffle_turn_moves_the_belief_back_as_the_robot_does(kin):
     o = approach_ops(kin, "pick_place")
     o.pose = [1.0, 2.0, math.pi / 2]  # facing +y
