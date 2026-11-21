@@ -1,0 +1,1299 @@
+{
+  "run_record_schema": "robolang.g1.run",
+  "run_record_schema_version": "0.1",
+  "mode": "simulation",
+  "backend": {
+    "kind": "unitree-g1-mujoco",
+    "versions": {
+      "arch": "aarch64",
+      "python": "3.11.2",
+      "assets": {
+        "unitree_mujoco": "1eb6642e3f3fdfb7fb13a9794fd6a2dd93ea0e7d",
+        "unitree_rl_lab": "4960b84732b0c2ec593dccbfe963fda1bcd7b1e3",
+        "mujoco_menagerie": "370c43965323c0944b433b202aac5058b5f907a9",
+        "unitree_rl_gym": "276801e46c5d433564f24658bac64f254b7d2d4b",
+        "unitree_sdk2_python": "814556d15970dd2ecf1c9984e845ca02ab07e206",
+        "cyclonedds_c": "abb064e35b6fbc79554c255ff8b371333e87b029"
+      },
+      "packages": {
+        "mujoco": "4.0.1",
+        "onnxruntime": "1.32.0",
+        "numpy": "2.4.6",
+        "opencv-python-headless": "5.1.0.95",
+        "cyclonedds": "0.10.2",
+        "unitree_sdk2py": "1.0.1"
+      }
+    },
+    "grasp_model": "weld_after_hand_close",
+    "stance_model": "free"
+  },
+  "task": {
+    "name": "carry_crate",
+    "parameters": [
+      {
+        "name": "r",
+        "type": "robot"
+      },
+      {
+        "name": "crate",
+        "type": "object"
+      },
+      {
+        "name": "dock",
+        "type": "location"
+      },
+      {
+        "name": "dst",
+        "type": "location"
+      }
+    ],
+    "safety": [],
+    "preconditions": [],
+    "goal": [
+      {
+        "kind": "holding",
+        "robot": "r",
+        "object": "crate"
+      },
+      {
+        "kind": "robot_at",
+        "robot": "r",
+        "location": "dst"
+      }
+    ],
+    "steps": [
+      {
+        "kind": "move",
+        "robot": "r",
+        "target": "dock"
+      },
+      {
+        "kind": "grasp",
+        "robot": "r",
+        "object": "crate"
+      },
+      {
+        "kind": "move",
+        "robot": "r",
+        "target": "dst"
+      }
+    ]
+  },
+  "bindings": {
+    "crate": "crate_1",
+    "dock": "loc_dock",
+    "dst": "loc_dst",
+    "r": "robot_1"
+  },
+  "site": {
+    "name": "carry_hold",
+    "schema": "robolang-g1-site/2"
+  },
+  "verify": {
+    "min_confidence": "0.9",
+    "max_age_ms": 10000
+  },
+  "state": "STEPS_COMPLETED",
+  "failure": null,
+  "preconditions": [],
+  "steps": [
+    {
+      "index": 1,
+      "kind": "move",
+      "status": "succeeded",
+      "t_start_ms": 3619,
+      "details": {
+        "iterations": [
+          [
+            0.529,
+            -0.004,
+            -0.017
+          ],
+          [
+            -0.11,
+            0.013,
+            -0.004
+          ],
+          [
+            -0.003,
+            0.001,
+            0.011
+          ]
+        ],
+        "error_m": 0.0033,
+        "error_rad": 0.0106,
+        "settled": true,
+        "events": [
+          {
+            "t_ms": 12692,
+            "event": "localized",
+            "marker": 20,
+            "from": [
+              1.7,
+              0.0,
+              0.0
+            ],
+            "to": [
+              1.619,
+              0.017,
+              0.053
+            ]
+          },
+          {
+            "t_ms": 15680,
+            "event": "localized",
+            "marker": 20,
+            "from": [
+              1.856,
+              0.013,
+              0.025
+            ],
+            "to": [
+              1.827,
+              -0.022,
+              -0.02
+            ]
+          },
+          {
+            "t_ms": 16284,
+            "event": "localized",
+            "marker": 20,
+            "from": [
+              1.827,
+              -0.022,
+              -0.02
+            ],
+            "to": [
+              1.831,
+              -0.01,
+              -0.028
+            ]
+          },
+          {
+            "t_ms": 19068,
+            "event": "localized",
+            "marker": 20,
+            "from": [
+              1.945,
+              -0.013,
+              -0.028
+            ],
+            "to": [
+              1.921,
+              -0.005,
+              0.017
+            ]
+          },
+          {
+            "t_ms": 23879,
+            "event": "localized",
+            "marker": 20,
+            "from": [
+              2.591,
+              0.007,
+              0.017
+            ],
+            "to": [
+              2.56,
+              -0.013,
+              0.004
+            ]
+          },
+          {
+            "t_ms": 26671,
+            "event": "localized",
+            "marker": 20,
+            "from": [
+              2.452,
+              -0.013,
+              0.004
+            ],
+            "to": [
+              2.453,
+              -0.001,
+              -0.011
+            ]
+          },
+          {
+            "t_ms": 28075,
+            "event": "localized",
+            "marker": 20,
+            "from": [
+              2.453,
+              -0.001,
+              -0.011
+            ],
+            "to": [
+              2.455,
+              -0.004,
+              -0.001
+            ]
+          }
+        ]
+      },
+      "t_end_ms": 28075,
+      "wall_s": 24.45
+    },
+    {
+      "index": 2,
+      "kind": "grasp",
+      "status": "succeeded",
+      "t_start_ms": 28075,
+      "details": {
+        "object": "crate",
+        "station_check": {
+          "error_m": 0.0082,
+          "error_rad": 0.0074,
+          "reservoed": false
+        },
+        "hand": "right",
+        "object_in_pelvis": [
+          0.2765,
+          -0.1021,
+          0.0011
+        ],
+        "marker_confidence": 1.0,
+        "marker_range_m": 0.5,
+        "reach": {
+          "fingers_down_deg": 15,
+          "waist_rad": 0.0,
+          "position_error_m": 0.0036
+        },
+        "arm_work_ms": [
+          31523,
+          49364
+        ],
+        "arm_work_stance": "supported",
+        "marker_at_hand_m": 0.0576,
+        "object_in_hand_m": [
+          0.0023,
+          -0.0019,
+          0.0187
+        ],
+        "events": [
+          {
+            "t_ms": 29483,
+            "event": "localized",
+            "marker": 20,
+            "from": [
+              2.455,
+              -0.004,
+              -0.001
+            ],
+            "to": [
+              2.455,
+              -0.007,
+              0.007
+            ]
+          },
+          {
+            "t_ms": 31479,
+            "event": "localized",
+            "marker": 20,
+            "from": [
+              2.455,
+              -0.007,
+              0.007
+            ],
+            "to": [
+              2.45,
+              -0.004,
+              0.012
+            ]
+          },
+          {
+            "t_ms": 31523,
+            "event": "arm_work"
+          },
+          {
+            "t_ms": 32031,
+            "event": "stance",
+            "model": "supported"
+          },
+          {
+            "t_ms": 33659,
+            "event": "arm",
+            "label": "clear of the hip",
+            "seconds": 1.6,
+            "tracking_rad": 0.0245,
+            "took_ms": 1628
+          },
+          {
+            "t_ms": 35683,
+            "event": "arm",
+            "label": "pre-grasp",
+            "seconds": 2.0,
+            "tracking_rad": 0.0191,
+            "took_ms": 2024
+          },
+          {
+            "t_ms": 37303,
+            "event": "arm",
+            "label": "grasp",
+            "seconds": 1.6,
+            "tracking_rad": 0.021,
+            "took_ms": 1620
+          },
+          {
+            "t_ms": 39828,
+            "event": "hand",
+            "label": "closed",
+            "error_rad": 0.0121
+          },
+          {
+            "t_ms": 40900,
+            "event": "attached",
+            "relative_position": [
+              0.0981,
+              0.0392,
+              0.0214
+            ]
+          },
+          {
+            "t_ms": 42512,
+            "event": "arm",
+            "label": "lift",
+            "seconds": 1.6,
+            "tracking_rad": 0.024,
+            "took_ms": 1612
+          },
+          {
+            "t_ms": 44124,
+            "event": "arm",
+            "label": "retreat",
+            "seconds": 1.6,
+            "tracking_rad": 0.0281,
+            "took_ms": 1612
+          },
+          {
+            "t_ms": 45752,
+            "event": "arm",
+            "label": "clear of the hip",
+            "seconds": 1.6,
+            "tracking_rad": 0.0269,
+            "took_ms": 1628
+          },
+          {
+            "t_ms": 47372,
+            "event": "arm",
+            "label": "carry",
+            "seconds": 1.6,
+            "tracking_rad": 0.0102,
+            "took_ms": 1620
+          },
+          {
+            "t_ms": 49364,
+            "event": "stance",
+            "model": "free"
+          }
+        ]
+      },
+      "t_end_ms": 49364,
+      "wall_s": 21.29
+    },
+    {
+      "index": 3,
+      "kind": "move",
+      "status": "succeeded",
+      "t_start_ms": 49364,
+      "details": {
+        "iterations": [
+          [
+            0.491,
+            -0.026,
+            -0.008
+          ],
+          [
+            -0.088,
+            -0.023,
+            0.035
+          ],
+          [
+            0.018,
+            -0.049,
+            0.021
+          ],
+          [
+            -0.015,
+            -0.008,
+            0.027
+          ]
+        ],
+        "error_m": 0.0164,
+        "error_rad": 0.0265,
+        "settled": true,
+        "events": [
+          {
+            "t_ms": 49872,
+            "event": "localized",
+            "marker": 20,
+            "from": [
+              2.45,
+              -0.004,
+              0.012
+            ],
+            "to": [
+              2.435,
+              -0.005,
+              0.042
+            ]
+          },
+          {
+            "t_ms": 56292,
+            "event": "localized",
+            "marker": 20,
+            "from": [
+              1.151,
+              0.56,
+              0.518
+            ],
+            "to": [
+              1.107,
+              0.29,
+              0.63
+            ]
+          },
+          {
+            "t_ms": 72076,
+            "event": "localized",
+            "marker": 21,
+            "from": [
+              1.078,
+              0.772,
+              1.553
+            ],
+            "to": [
+              0.711,
+              0.715,
+              1.468
+            ]
+          },
+          {
+            "t_ms": 75468,
+            "event": "localized",
+            "marker": 21,
+            "from": [
+              0.711,
+              0.715,
+              1.595
+            ],
+            "to": [
+              0.634,
+              0.706,
+              1.574
+            ]
+          },
+          {
+            "t_ms": 76088,
+            "event": "localized",
+            "marker": 21,
+            "from": [
+              0.634,
+              0.706,
+              1.574
+            ],
+            "to": [
+              0.633,
+              0.705,
+              1.579
+            ]
+          },
+          {
+            "t_ms": 79679,
+            "event": "localized",
+            "marker": 21,
+            "from": [
+              0.868,
+              0.823,
+              1.579
+            ],
+            "to": [
+              0.794,
+              0.792,
+              1.556
+            ]
+          },
+          {
+            "t_ms": 82875,
+            "event": "localized",
+            "marker": 21,
+            "from": [
+              0.926,
+              0.854,
+              1.556
+            ],
+            "to": [
+              0.86,
+              0.835,
+              1.579
+            ]
+          },
+          {
+            "t_ms": 87067,
+            "event": "localized",
+            "marker": 21,
+            "from": [
+              1.089,
+              0.951,
+              1.579
+            ],
+            "to": [
+              0.978,
+              0.909,
+              1.579
+            ]
+          },
+          {
+            "t_ms": 92091,
+            "event": "localized",
+            "marker": 21,
+            "from": [
+              0.973,
+              1.531,
+              1.579
+            ],
+            "to": [
+              0.98,
+              1.489,
+              1.535
+            ]
+          },
+          {
+            "t_ms": 95479,
+            "event": "localized",
+            "marker": 21,
+            "from": [
+              0.977,
+              1.381,
+              1.535
+            ],
+            "to": [
+              0.951,
+              1.383,
+              1.55
+            ]
+          },
+          {
+            "t_ms": 98283,
+            "event": "localized",
+            "marker": 21,
+            "from": [
+              1.048,
+              1.429,
+              1.55
+            ],
+            "to": [
+              0.993,
+              1.415,
+              1.544
+            ]
+          },
+          {
+            "t_ms": 99675,
+            "event": "localized",
+            "marker": 21,
+            "from": [
+              0.993,
+              1.415,
+              1.544
+            ],
+            "to": [
+              0.993,
+              1.414,
+              1.545
+            ]
+          }
+        ]
+      },
+      "t_end_ms": 99675,
+      "wall_s": 50.31
+    }
+  ],
+  "goal": [
+    {
+      "index": 1,
+      "condition": {
+        "kind": "holding",
+        "robot": "r",
+        "object": "crate"
+      },
+      "result": "not_evaluated"
+    },
+    {
+      "index": 2,
+      "condition": {
+        "kind": "robot_at",
+        "robot": "r",
+        "location": "dst"
+      },
+      "result": "not_evaluated"
+    }
+  ],
+  "goal_evaluated": false,
+  "goal_note": "goal verdicts from observations are phase 3 of this backend: the goal was not evaluated, and completed steps are not a success",
+  "observations": [
+    {
+      "t_ms": 4271,
+      "frames": 3,
+      "markers": {}
+    },
+    {
+      "t_ms": 7479,
+      "frames": 3,
+      "markers": {}
+    },
+    {
+      "t_ms": 12692,
+      "frames": 3,
+      "markers": {
+        "20": {
+          "id": 20,
+          "position": [
+            2.1624,
+            0.317,
+            -0.5684
+          ],
+          "normal": [
+            -0.9984,
+            0.0525,
+            -0.0207
+          ],
+          "confidence": 1.0,
+          "stamp_ms": 12600,
+          "frames": 3,
+          "detections": 3,
+          "range_m": 2.369,
+          "age_ms": 92
+        }
+      }
+    },
+    {
+      "t_ms": 15680,
+      "frames": 3,
+      "markers": {
+        "20": {
+          "id": 20,
+          "position": [
+            1.9188,
+            0.5026,
+            -0.5832
+          ],
+          "normal": [
+            -0.9998,
+            -0.0204,
+            -0.0091
+          ],
+          "confidence": 1.0,
+          "stamp_ms": 15600,
+          "frames": 3,
+          "detections": 3,
+          "range_m": 2.201,
+          "age_ms": 80
+        }
+      }
+    },
+    {
+      "t_ms": 16284,
+      "frames": 3,
+      "markers": {
+        "8": {
+          "id": 8,
+          "position": [
+            0.9118,
+            -0.0691,
+            0.0504
+          ],
+          "normal": [
+            0.0419,
+            -0.0204,
+            0.9989
+          ],
+          "confidence": 0.667,
+          "stamp_ms": 16200,
+          "frames": 3,
+          "detections": 2,
+          "range_m": 0.962,
+          "age_ms": 84
+        },
+        "20": {
+          "id": 20,
+          "position": [
+            1.9152,
+            0.5062,
+            -0.5787
+          ],
+          "normal": [
+            -0.9995,
+            -0.0282,
+            -0.0162
+          ],
+          "confidence": 1.0,
+          "stamp_ms": 16200,
+          "frames": 3,
+          "detections": 3,
+          "range_m": 2.195,
+          "age_ms": 84
+        }
+      }
+    },
+    {
+      "t_ms": 19068,
+      "frames": 4,
+      "markers": {
+        "20": {
+          "id": 20,
+          "position": [
+            1.8503,
+            0.4234,
+            -0.5689
+          ],
+          "normal": [
+            -0.9996,
+            0.0171,
+            -0.0236
+          ],
+          "confidence": 1.0,
+          "stamp_ms": 19000,
+          "frames": 4,
+          "detections": 4,
+          "range_m": 2.114,
+          "age_ms": 68
+        }
+      }
+    },
+    {
+      "t_ms": 23879,
+      "frames": 4,
+      "markers": {
+        "20": {
+          "id": 20,
+          "position": [
+            1.2017,
+            0.4568,
+            -0.5854
+          ],
+          "normal": [
+            -0.9999,
+            0.0038,
+            -0.0164
+          ],
+          "confidence": 1.0,
+          "stamp_ms": 23800,
+          "frames": 4,
+          "detections": 4,
+          "range_m": 1.621,
+          "age_ms": 79
+        }
+      }
+    },
+    {
+      "t_ms": 26671,
+      "frames": 4,
+      "markers": {
+        "20": {
+          "id": 20,
+          "position": [
+            1.3056,
+            0.4615,
+            -0.5806
+          ],
+          "normal": [
+            -0.9997,
+            -0.0107,
+            -0.023
+          ],
+          "confidence": 1.0,
+          "stamp_ms": 26600,
+          "frames": 4,
+          "detections": 4,
+          "range_m": 1.695,
+          "age_ms": 71
+        }
+      }
+    },
+    {
+      "t_ms": 28075,
+      "frames": 5,
+      "markers": {
+        "20": {
+          "id": 20,
+          "position": [
+            1.3062,
+            0.4532,
+            -0.5834
+          ],
+          "normal": [
+            -0.9998,
+            -0.0009,
+            -0.0195
+          ],
+          "confidence": 1.0,
+          "stamp_ms": 28000,
+          "frames": 5,
+          "detections": 5,
+          "range_m": 1.695,
+          "age_ms": 75
+        }
+      }
+    },
+    {
+      "t_ms": 29483,
+      "frames": 5,
+      "markers": {
+        "20": {
+          "id": 20,
+          "position": [
+            1.3086,
+            0.4443,
+            -0.5849
+          ],
+          "normal": [
+            -0.9998,
+            0.0073,
+            -0.0169
+          ],
+          "confidence": 1.0,
+          "stamp_ms": 29400,
+          "frames": 5,
+          "detections": 5,
+          "range_m": 1.696,
+          "age_ms": 83
+        }
+      }
+    },
+    {
+      "t_ms": 31479,
+      "frames": 10,
+      "markers": {
+        "8": {
+          "id": 8,
+          "position": [
+            0.2753,
+            -0.1022,
+            0.0411
+          ],
+          "normal": [
+            -0.0303,
+            -0.0018,
+            0.9995
+          ],
+          "confidence": 1.0,
+          "stamp_ms": 31400,
+          "frames": 10,
+          "detections": 10,
+          "range_m": 0.5,
+          "age_ms": 79
+        },
+        "20": {
+          "id": 20,
+          "position": [
+            1.3143,
+            0.4349,
+            -0.5878
+          ],
+          "normal": [
+            -0.9998,
+            0.0119,
+            -0.0149
+          ],
+          "confidence": 1.0,
+          "stamp_ms": 31400,
+          "frames": 10,
+          "detections": 10,
+          "range_m": 1.7,
+          "age_ms": 79
+        }
+      }
+    },
+    {
+      "t_ms": 40900,
+      "frames": 5,
+      "markers": {
+        "8": {
+          "id": 8,
+          "position": [
+            0.2761,
+            -0.1048,
+            0.0394
+          ],
+          "normal": [
+            -0.0069,
+            0.0012,
+            1.0
+          ],
+          "confidence": 1.0,
+          "stamp_ms": 40800,
+          "frames": 5,
+          "detections": 5,
+          "range_m": 0.502,
+          "age_ms": 100
+        }
+      }
+    },
+    {
+      "t_ms": 49872,
+      "frames": 3,
+      "markers": {
+        "20": {
+          "id": 20,
+          "position": [
+            1.3407,
+            0.3991,
+            -0.589
+          ],
+          "normal": [
+            -0.999,
+            0.0419,
+            -0.0125
+          ],
+          "confidence": 1.0,
+          "stamp_ms": 49800,
+          "frames": 3,
+          "detections": 3,
+          "range_m": 1.713,
+          "age_ms": 72
+        }
+      }
+    },
+    {
+      "t_ms": 56292,
+      "frames": 3,
+      "markers": {
+        "20": {
+          "id": 20,
+          "position": [
+            2.2469,
+            -1.4295,
+            -0.5713
+          ],
+          "normal": [
+            -0.8078,
+            0.5889,
+            -0.025
+          ],
+          "confidence": 1.0,
+          "stamp_ms": 56200,
+          "frames": 3,
+          "detections": 3,
+          "range_m": 2.828,
+          "age_ms": 92
+        }
+      }
+    },
+    {
+      "t_ms": 60688,
+      "frames": 3,
+      "markers": {}
+    },
+    {
+      "t_ms": 63476,
+      "frames": 3,
+      "markers": {}
+    },
+    {
+      "t_ms": 72076,
+      "frames": 2,
+      "markers": {
+        "21": {
+          "id": 21,
+          "position": [
+            1.9623,
+            0.3621,
+            -0.5919
+          ],
+          "normal": [
+            -0.9947,
+            -0.1024,
+            -0.0063
+          ],
+          "confidence": 1.0,
+          "stamp_ms": 72000,
+          "frames": 2,
+          "detections": 2,
+          "range_m": 2.214,
+          "age_ms": 76
+        }
+      }
+    },
+    {
+      "t_ms": 75468,
+      "frames": 2,
+      "markers": {
+        "21": {
+          "id": 21,
+          "position": [
+            2.0058,
+            0.076,
+            -0.5744
+          ],
+          "normal": [
+            -0.9998,
+            0.0036,
+            -0.0198
+          ],
+          "confidence": 1.0,
+          "stamp_ms": 75400,
+          "frames": 2,
+          "detections": 2,
+          "range_m": 2.217,
+          "age_ms": 68
+        }
+      }
+    },
+    {
+      "t_ms": 76088,
+      "frames": 3,
+      "markers": {
+        "21": {
+          "id": 21,
+          "position": [
+            2.0081,
+            0.0665,
+            -0.5758
+          ],
+          "normal": [
+            -0.9998,
+            0.0081,
+            -0.0205
+          ],
+          "confidence": 1.0,
+          "stamp_ms": 76000,
+          "frames": 3,
+          "detections": 3,
+          "range_m": 2.22,
+          "age_ms": 88
+        }
+      }
+    },
+    {
+      "t_ms": 79679,
+      "frames": 4,
+      "markers": {
+        "21": {
+          "id": 21,
+          "position": [
+            1.9147,
+            0.275,
+            -0.5862
+          ],
+          "normal": [
+            -0.9997,
+            -0.0151,
+            -0.0172
+          ],
+          "confidence": 1.0,
+          "stamp_ms": 79600,
+          "frames": 4,
+          "detections": 4,
+          "range_m": 2.158,
+          "age_ms": 79
+        }
+      }
+    },
+    {
+      "t_ms": 82875,
+      "frames": 4,
+      "markers": {
+        "21": {
+          "id": 21,
+          "position": [
+            1.8722,
+            0.2946,
+            -0.5879
+          ],
+          "normal": [
+            -0.9999,
+            0.0082,
+            -0.0076
+          ],
+          "confidence": 1.0,
+          "stamp_ms": 82800,
+          "frames": 4,
+          "detections": 4,
+          "range_m": 2.125,
+          "age_ms": 75
+        }
+      }
+    },
+    {
+      "t_ms": 87067,
+      "frames": 4,
+      "markers": {
+        "21": {
+          "id": 21,
+          "position": [
+            1.8008,
+            0.4134,
+            -0.5922
+          ],
+          "normal": [
+            -0.9999,
+            0.0082,
+            -0.0105
+          ],
+          "confidence": 1.0,
+          "stamp_ms": 87000,
+          "frames": 4,
+          "detections": 4,
+          "range_m": 2.086,
+          "age_ms": 67
+        }
+      }
+    },
+    {
+      "t_ms": 92091,
+      "frames": 4,
+      "markers": {
+        "21": {
+          "id": 21,
+          "position": [
+            1.204,
+            0.4673,
+            -0.5875
+          ],
+          "normal": [
+            -0.9993,
+            -0.0355,
+            -0.0151
+          ],
+          "confidence": 1.0,
+          "stamp_ms": 92000,
+          "frames": 4,
+          "detections": 4,
+          "range_m": 1.63,
+          "age_ms": 91
+        }
+      }
+    },
+    {
+      "t_ms": 95479,
+      "frames": 4,
+      "markers": {
+        "21": {
+          "id": 21,
+          "position": [
+            1.3149,
+            0.4261,
+            -0.5887
+          ],
+          "normal": [
+            -0.9997,
+            -0.0213,
+            -0.0118
+          ],
+          "confidence": 1.0,
+          "stamp_ms": 95400,
+          "frames": 4,
+          "detections": 4,
+          "range_m": 1.7,
+          "age_ms": 79
+        }
+      }
+    },
+    {
+      "t_ms": 98283,
+      "frames": 4,
+      "markers": {
+        "21": {
+          "id": 21,
+          "position": [
+            1.2857,
+            0.4697,
+            -0.5821
+          ],
+          "normal": [
+            -0.9994,
+            -0.0268,
+            -0.0212
+          ],
+          "confidence": 1.0,
+          "stamp_ms": 98200,
+          "frames": 4,
+          "detections": 4,
+          "range_m": 1.685,
+          "age_ms": 83
+        }
+      }
+    },
+    {
+      "t_ms": 99675,
+      "frames": 5,
+      "markers": {
+        "21": {
+          "id": 21,
+          "position": [
+            1.286,
+            0.4711,
+            -0.5835
+          ],
+          "normal": [
+            -0.9995,
+            -0.0263,
+            -0.0202
+          ],
+          "confidence": 1.0,
+          "stamp_ms": 99600,
+          "frames": 5,
+          "detections": 5,
+          "range_m": 1.687,
+          "age_ms": 75
+        }
+      }
+    }
+  ],
+  "stop": null,
+  "realtime": {
+    "realtime_valid": true,
+    "ratio": 1.0,
+    "sim_s": 96.06,
+    "wall_s": 96.06,
+    "slow_seconds": [],
+    "stalls": 0,
+    "worst_second_ratio_overall": 0.9996,
+    "step_compute_ms": {
+      "budget": 2.0,
+      "mean": 0.461,
+      "p99": 1.258,
+      "max": 2.3,
+      "over_budget": 0.0001
+    },
+    "gc": {
+      "collections": [
+        7,
+        0,
+        1
+      ],
+      "max_ms": [
+        0.12,
+        0.0,
+        11.69
+      ],
+      "slow_steps": [],
+      "frozen": 70605,
+      "enabled": true,
+      "threshold": [
+        700,
+        10,
+        1000000
+      ]
+    },
+    "camera": {
+      "frames": 498,
+      "dropped": 0,
+      "render_ms": 61.5,
+      "hz": 5.01
+    }
+  },
+  "core_outcome": null,
+  "start_pose": [
+    0.0,
+    0.0,
+    0.0
+  ],
+  "pose_belief_end": [
+    0.9925,
+    1.4141,
+    1.5447
+  ],
+  "run_id": "4abd0a96b999dac4"
+}
