@@ -380,7 +380,7 @@ def check_e2(ctx: Ctx) -> dict:
 
     def far(d):
         d["tables"][0].update(pos=[3.03, -0.065, 0.375], half_size=[0.35, 0.185, 0.375])
-        d["objects"][0]["pos"] = [3.15, -0.10, 0.79]  # 0.70 m ahead of the pelvis: seen, and beyond the arm
+        d["objects"][0]["pos"] = [3.03, -0.10, 0.79]  # 0.58 m ahead of the pelvis: seen, and beyond the arm
 
     status, rec2, log, s, samples2, commands2 = run_scenario(
         ctx, "e2_far", ctx.variant("pick_place", far), "pick_place", src, "grab", bind

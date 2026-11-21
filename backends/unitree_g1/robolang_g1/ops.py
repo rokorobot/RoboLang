@@ -352,30 +352,46 @@ class G1Operations:
         self.look(frames=3)
         ax, ay = gx - APPROACH_M * math.cos(gyaw), gy - APPROACH_M * math.sin(gyaw)
         sx, sy = gx - (APPROACH_M + STAGING_M) * math.cos(gyaw), gy - (APPROACH_M + STAGING_M) * math.sin(gyaw)
-        # A station's marker stands behind its table: from the side the table hides it. Come in along the axis.
-        if math.hypot(ax - self.pose[0], ay - self.pose[1]) > 0.4 + STAGING_M:
-            self.walk_to(sx, sy, gyaw, stop_short=0.35, deadline_ms=deadline)
-        if math.hypot(ax - self.pose[0], ay - self.pose[1]) > 0.4:
-            self.walk_to(ax, ay, gyaw, deadline_ms=deadline)
-        self.turn_to(gyaw, tolerance=0.1)  # face the station: its marker is then in the camera's view
-        marker = self._find_marker(station, deadline)
+        scan_end = self.now_ms() + int(MARKER_TIMEOUT_S * 1000)  # one budget for all the searching, replans included
+        marker = None
+        for _ in range(4):
+            # A station's marker stands behind its table: from the side the table hides it. Come in along the axis.
+            if math.hypot(ax - self.pose[0], ay - self.pose[1]) > 0.4 + STAGING_M:
+                self.walk_to(sx, sy, gyaw, stop_short=0.35, deadline_ms=deadline)
+            if math.hypot(ax - self.pose[0], ay - self.pose[1]) > 0.4:
+                self.walk_to(ax, ay, gyaw, deadline_ms=deadline)
+            self.turn_to(gyaw, tolerance=0.1)  # face the station: its marker is then in the camera's view
+            marker = self._find_marker(station, deadline, scan_end)
+            if marker is not None:
+                break
+        if marker is None:
+            raise BackendFailure("S517", f"station marker {station['marker']['id']} was not seen after four approaches")
         result = self._servo(station, marker, deadline)
         self.station = station_name
         result["events"] = self.events
         return result
 
-    def _find_marker(self, station: dict, deadline_ms: int):
-        """Look at the approach point for the station's marker, scanning by turning if it is not in view (S517)."""
+    def _find_marker(self, station: dict, deadline_ms: int, scan_end_ms: int):
+        """Look at the approach point for the station's marker, scanning by turning if it is not in view. Returns its
+        reading; or None when another station's marker put the belief more than 0.3 m from where it was (the robot was
+        not where it thought: approach again). S517 when the search budget is spent."""
         mid = station["marker"]["id"]
-        scan_end = self.now_ms() + int(MARKER_TIMEOUT_S * 1000)
         mx, my = station["marker"]["pos"][:2]
         first = True
         while True:
+            before = list(self.pose)
             readings = self.look(frames=3 if first else 4)
             reading = readings.get(mid)
             if reading is not None and reading.confidence >= MARKER_MIN_CONF and reading.range_m <= MARKER_MAX_RANGE_M:
                 return reading
-            if self.now_ms() > scan_end or self.now_ms() > deadline_ms:
+            if math.hypot(self.pose[0] - before[0], self.pose[1] - before[1]) > 0.3:
+                self.events.append({
+                    "t_ms": self.now_ms(),
+                    "event": "replan",
+                    "moved_m": round(float(math.hypot(self.pose[0] - before[0], self.pose[1] - before[1])), 3),
+                })
+                return None
+            if self.now_ms() > scan_end_ms or self.now_ms() > deadline_ms:
                 raise BackendFailure(
                     "S517",
                     f"station marker {mid} was not seen within {MARKER_TIMEOUT_S:.0f} s "
@@ -799,6 +815,12 @@ class G1Operations:
             "t_stop_ms": t0,
         }
         while self.now_ms() - t0 <= CONFIRM_TIMEOUT_S * 1000:
+            if (
+                self.tilt_rad() > TILT_LIMIT_RAD
+            ):  # it fell while the stop was being confirmed: nothing more is sent (S516)
+                self.fallen = True
+                self.robot.silence()
+                raise BackendFailure("S516", "the robot fell while the stop was being confirmed")
             now = self.now_ms()
             s = self.robot.samples_since(now - CONFIRM_WINDOW_MS)
             if (
