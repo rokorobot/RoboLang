@@ -23,10 +23,17 @@ import numpy as np
 from . import assets, guard
 from . import site as site_mod
 from .executor import STOP_CODES, STOP_MESSAGES, BackendFailure, Stop
-from .kinematics import ARM_JOINTS, WAIST_PITCH, Kinematics
+from .kinematics import ARM_JOINTS, STAND_HEIGHT, WAIST_PITCH, Kinematics
 from .observe import HAND_CLOSED, HELD_RADIUS_M, READY_LOWSTATE_AGE_S, Hand, Ready, Snapshot
 from .observe import hand_state
-from .perception import MAX_UP_DISAGREEMENT_RAD, Perception, imu_up, object_centre, pelvis_pose_in_map
+from .perception import (
+    MAX_UP_DISAGREEMENT_RAD,
+    Perception,
+    imu_up,
+    line_of_sight_blocked,
+    object_centre,
+    pelvis_pose_in_map,
+)
 from .robot import Robot, arm_gains
 
 # ---- safety and stop
@@ -50,9 +57,12 @@ MARKER_MAX_RANGE_M, MARKER_MIN_CONF = 2.9, 0.5  # a station marker corrects the 
 APPROACH_M = 0.5  # the walk ends this far before the station, facing it, and the marker is looked for there
 # ... after passing through a point this much further out on the station's axis, where the marker is in view
 STAGING_M = 1.5
+# the belief may be this far off sideways at the approach point (measured: 0.2-0.4 m on the way to the shelf)
+APPROACH_SLACK_M = 0.4
 WALK_SPEED = 0.5
 WALK_GAIN, BACK_GAIN, SIDE_GAIN, YAW_GAIN = 0.95, 0.9, 0.64, 0.7  # travel (coast included) per unit commanded, measured
 SHUFFLE_S = 1.2  # one burst of the turn-in-place shuffle ...
+SHUFFLE_BACK_M = 0.035  # ... and drifts this far backward (measured: 0.03-0.04 m a burst), which the belief must carry
 SHUFFLE_RAD = {1: 0.127, -1: 0.111}  # ... turns this much to the left (+) and to the right (-): measured
 LEG_MAX_M = 1.6  # the longest walk between two looks
 SCAN_STEP_RAD = 0.6  # a scan for a marker turns this much between looks
@@ -311,9 +321,10 @@ class G1Operations:
         about 0.64 of what is asked). A shuffle turns by its measured step and goes nowhere."""
         x, y, yaw = self.pose
         if shuffle:
+            back = SHUFFLE_BACK_M * seconds / SHUFFLE_S
             self.pose = [
-                x,
-                y,
+                x - back * math.cos(yaw),
+                y - back * math.sin(yaw),
                 site_mod.wrap(yaw + SHUFFLE_RAD[1 if wz > 0 else -1] * np.sign(wz) * seconds / SHUFFLE_S),
             ]
             return
@@ -397,8 +408,13 @@ class G1Operations:
         t0 = self.now_ms()
         deadline = t0 + int(MOVE_TIMEOUT_S * 1000)
         self.look(frames=3)
-        ax, ay = gx - APPROACH_M * math.cos(gyaw), gy - APPROACH_M * math.sin(gyaw)
-        sx, sy = gx - (APPROACH_M + STAGING_M) * math.cos(gyaw), gy - (APPROACH_M + STAGING_M) * math.sin(gyaw)
+        lateral = self.approach_lateral(station)  # the approach is shifted sideways if a table hides the marker nearby
+        left = (-math.sin(gyaw) * lateral, math.cos(gyaw) * lateral)
+        ax, ay = gx - APPROACH_M * math.cos(gyaw) + left[0], gy - APPROACH_M * math.sin(gyaw) + left[1]
+        sx = gx - (APPROACH_M + STAGING_M) * math.cos(gyaw) + left[0]
+        sy = gy - (APPROACH_M + STAGING_M) * math.sin(gyaw) + left[1]
+        if lateral:
+            self.events.append({"t_ms": self.now_ms(), "event": "approach_shift", "lateral_m": round(lateral, 2)})
         scan_end = self.now_ms() + int(MARKER_TIMEOUT_S * 1000)  # one budget for all the searching, replans included
         marker = None
         for _ in range(4):
@@ -419,6 +435,37 @@ class G1Operations:
         self.station = station_name
         result["events"] = self.events
         return result
+
+    def approach_lateral(self, station: dict) -> float:
+        """How far to the left of the station's axis (m, negative: right) the approach point should be, so that the
+        station's marker is in the clear from it **and from where a belief that is wrong sideways by up to
+        APPROACH_SLACK_M would put the robot**: the marker is low and stands behind its table, and from a little to the
+        side the table hides it (measured: the move to the shelf failed with S517 when the robot stood 0.3 m to the
+        right of the axis). Uses the site's declared tables and the camera's height. 0 when no table is in the way."""
+        tables = self.site["tables"]
+        if not tables:
+            return 0.0
+        gx, gy, gyaw = station["pose"]
+        marker = np.array(station["marker"]["pos"], float)
+        _, pc = self.kin.camera_pose(np.zeros(29))
+        R = site_mod.rot_z(gyaw)
+        ax, ay = gx - APPROACH_M * math.cos(gyaw), gy - APPROACH_M * math.sin(gyaw)
+
+        def clear(s: float) -> bool:
+            eye = np.array([ax, ay, STAND_HEIGHT]) + R @ np.array([pc[0], pc[1] + s, pc[2]])  # s: to the left
+            return line_of_sight_blocked(eye, marker, tables) is None
+
+        def room(s: float) -> float:  # how far the belief may be wrong sideways, either way, and still see the marker
+            ok = 0.0
+            for e in np.arange(0.05, 0.61, 0.05):
+                if not (clear(s + e) and clear(s - e)):
+                    break
+                ok = float(e)
+            return ok
+
+        candidates = [0.0, 0.3, -0.3, 0.6, -0.6]
+        best = max(candidates, key=lambda s: (min(room(s), APPROACH_SLACK_M), -abs(s)))
+        return best if room(best) > room(0.0) else 0.0
 
     def _find_marker(self, station: dict, deadline_ms: int, scan_end_ms: int, approach: tuple):
         """Look at the approach point for the station's marker, scanning by turning if it is not in view. Returns its

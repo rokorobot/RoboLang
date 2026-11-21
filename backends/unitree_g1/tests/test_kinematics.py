@@ -89,3 +89,37 @@ def test_a_reach_plan_gives_a_pregrasp_a_grasp_and_a_lift_in_the_same_hand_orien
     assert np.linalg.norm(p - plan["pinch"]) < 0.012
     assert kin.grasp_frame("right", plan["lift"])[1][2] == pytest.approx(p[2] + 0.1, abs=0.015)
     assert kin.grasp_frame("right", plan["pre"])[1][0] < p[0]  # the pre-grasp is behind the grasp
+
+
+# ----------------------------------------------------------------------------------------- the approach point's shift
+
+
+def approach_ops(kin, site_name):
+    from pathlib import Path
+
+    from robolang_g1 import site as S
+
+    o = ops.G1Operations.__new__(ops.G1Operations)
+    o.kin = kin
+    o.site = S.load_site(Path(__file__).resolve().parents[1] / "robolang_g1" / "sites" / f"{site_name}.json")
+    o.stations = {s["name"]: s for s in o.site["stations"]}
+    return o
+
+
+def test_the_approach_point_is_shifted_to_where_a_table_cannot_hide_the_station_marker(kin):
+    o = approach_ops(kin, "pick_place")
+    # the markers of the bench and the shelf are low and stand behind their tables: from 0.3 m to the right of the
+    # axis the table hides them, so the approach is moved to the left, where a belief that is 0.4 m off still sees them
+    assert o.approach_lateral(o.stations["shelf"]) == pytest.approx(0.3)
+    assert o.approach_lateral(o.stations["bench"]) == pytest.approx(0.3)
+    assert o.approach_lateral(o.stations["pad"]) == 0.0  # no table in the way: the axis it is
+    o.site["tables"] = []
+    assert o.approach_lateral(o.stations["shelf"]) == 0.0  # nothing declared: nothing to avoid
+
+
+def test_a_shuffle_turn_moves_the_belief_back_as_the_robot_does(kin):
+    o = approach_ops(kin, "pick_place")
+    o.pose = [1.0, 2.0, math.pi / 2]  # facing +y
+    o._dead_reckon(0.0, 0.3, 0.2, ops.SHUFFLE_S, shuffle=True)
+    assert o.pose[0] == pytest.approx(1.0, abs=1e-9) and o.pose[1] == pytest.approx(2.0 - ops.SHUFFLE_BACK_M)
+    assert o.pose[2] > math.pi / 2  # and it turned

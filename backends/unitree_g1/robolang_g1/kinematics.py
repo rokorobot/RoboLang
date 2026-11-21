@@ -20,6 +20,7 @@ import numpy as np
 
 from .sim import scene
 
+STAND_HEIGHT = scene.STAND_HEIGHT  # the pelvis's height above the floor when the robot stands (its own standing pose)
 PINCH = {"right": np.array([0.10, 0.04, 0.0]), "left": np.array([0.10, -0.04, 0.0])}  # wrist-link frame, m
 # The grasp frame that points the fingers down with the thumb toward the body's midline and the finger pair
 # (fore and aft) along the pelvis x axis. Columns: the hand's x (fingers), y (thumb side, for the right hand), z.
