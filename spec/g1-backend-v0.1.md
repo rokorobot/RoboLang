@@ -38,7 +38,8 @@ real-time ratio. A run in which any second falls more than 5% behind real time d
 `stance_model` is `free` by default: the policy alone, which comes to rest after a walk (about 0.13 m and 2 s of coast
 at 0.5 m/s, then about 1 cm of torso sway). `free` takes a recovery step of 0.2–0.35 m about every 45 s while standing,
 so arm work longer than about 40 s uses `supported`: the torso welded to a mocap body (the fallback the owner approved,
-0046 open point 1). Every record states the stance model.
+0046 open point 1). Every record states the stance model. The free stance also **drifts in heading by about 0.01 rad a second** after a move
+(measured), so the observation motion welds at once after the move's last look.
 
 The stand-in never collapses the robot: `SetFsmId` accepts only 500 (standing or walking) and refuses every other id
 with code 7400, `Damp` included. The backend's stop is zero velocity, the arms held through `arm_sdk`, the
@@ -101,7 +102,8 @@ target when a segment ends is **S503**. The Dex3 hand closes (**S505** if it is 
 object's marker must be seen within 9 cm of the hand's grasp point computed from the measured joints (**S506**; 4-5 cm
 when held right); then the stand-in welds the object to the hand (`weld_after_hand_close`), and the arm lifts, retreats the
 same way and goes to the **carry pose**. **`place r O at L`** is the mirror: the region's centre through the station marker
-seen now, reach in over the table, lower, open, detach, back out, to the walking controller's own arm pose.
+seen now, reach in over the table, lower (the object is released 1.2 cm above the surface and drops, so that the open
+hand clears the table), open, detach, back out, to the walking controller's own arm pose.
 **`wait for`** is simulation time (`lowstate.tick`).
 
 **Arm paths and the carry pose** (`kinematics.Clearance`, `ops.py`). The scene's hands touch neither objects nor tables, so

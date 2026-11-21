@@ -309,8 +309,12 @@ class G1Operations:
         object stay `unknown`) and the note says why. The note is `{"observation_motion": {...}}` or empty."""
         if self.held is None or self.held["object"] not in show:
             return self._take(ready), {}
+        # weld first, then plan: the free stance drifts in heading by about 0.01 rad a second, and the planning takes
+        # seconds under load (measured: the heading read 0.02 rad further out at the snapshot than at the last look)
+        stance = self._arm_stance(self.site["robot"]["arm_stance"], settle=False)
         clearance = self._view_clearance()
         if not clearance["clear"]:
+            self._arm_stance("free", settle=False)
             note = {
                 "performed": False,
                 "object": self.held["object"],
@@ -319,7 +323,7 @@ class G1Operations:
                 "clearance": clearance,
             }
             return self._take(ready), {"observation_motion": note}
-        return self._snapshot_showing(ready, clearance)
+        return self._snapshot_showing(ready, clearance, stance)
 
     def _view_path(self) -> list[tuple[str, np.ndarray]] | None:
         """The waypoints of the observation motion: the carry pose, the pose with the hand clear of the hip, the same
@@ -396,7 +400,7 @@ class G1Operations:
         w, x, y, z = sample.quat
         return math.acos(max(-1.0, min(1.0, 1 - 2 * (x * x + y * y))))
 
-    def _snapshot_showing(self, ready: bool, clearance: dict) -> tuple[Snapshot, dict]:
+    def _snapshot_showing(self, ready: bool, clearance: dict, stance: str) -> tuple[Snapshot, dict]:
         """Bring the held object into the camera's view, take the snapshot, and put the arm back in the carry pose.
 
         The carry pose hangs the object at the side of the thigh, outside the camera's field of view (measured: 46
@@ -411,7 +415,6 @@ class G1Operations:
         t0 = self.now_ms()
         (_, _), (_, clear), (_, raised), (_, lift) = self._view_path()
         self.events.append({"t_ms": t0, "event": "show_held"})
-        stance = self._arm_stance(self.site["robot"]["arm_stance"], settle=False)
         self._arm_begin()
         self._arm_move(clear, 1.6, label="clear of the hip")
         self._arm_move(raised, 1.6, label="raised")
@@ -997,6 +1000,12 @@ class G1Operations:
                     break
             if best is not None:
                 break
+        for attempt in range(8):  # nothing near the walking pose: look further away (the clearance rule comes first)
+            if best is not None:
+                break
+            start = q0.copy()
+            start[joints] = np.clip(q0[joints] + rng.uniform(-0.35, 0.35, len(joints)), lo, hi)
+            best = climb(start, CARRY_PLAN_M[-1])
         self.clr.clear_held(side)
         return None if best is None else best[1]
 
