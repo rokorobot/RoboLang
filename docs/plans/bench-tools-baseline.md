@@ -2,6 +2,8 @@
 
 **Status:** **DRAFT, 2026-11-20.** Not approved. No model was run and no money was spent. No language, spec, validator or
 simulator change. Bounds in section 6 are proposals, to be approved before the run (rule 6, [STRATEGY.md](../STRATEGY.md)).
+**B1 is built, not run** (`bench/tools_arm.py`, `bench/prompt_tools.md`, `tests/test_bench_tools.py`, README "Arm T"); B2 (the pilot)
+has not started.
 
 ## 1. Why
 
