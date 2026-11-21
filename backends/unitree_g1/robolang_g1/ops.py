@@ -36,24 +36,18 @@ CONFIRM_JOINT_VEL = 0.09  # rad/s: ... and no joint moves faster than this (the 
 CONFIRM_TILT_RAD = math.radians(15)
 SETTLE_GYRO, SETTLE_LEG_VEL, SETTLE_WINDOW_MS, SETTLE_TIMEOUT_S = 0.03, 0.05, 600, 9.0
 # ---- localization and walking
-REPOSITION_M, REPOSITION_RAD = (
-    0.08,
-    0.15,
-)  # before arm work the robot is put back only if it has moved further than this
-STATION_TOL_M, STATION_TOL_RAD = (
-    0.047,
-    0.09,
-)  # `move` promises 5 cm and 0.1 rad (0046 U5): this, after settling, leaves margin
+# before arm work the robot is put back on station only if it has moved further than this
+REPOSITION_M, REPOSITION_RAD = 0.08, 0.15
+# `move` promises 5 cm and 0.1 rad (0046 U5): after settling it must still be within this, which leaves margin
+STATION_TOL_M, STATION_TOL_RAD = 0.042, 0.09
 SERVO_TOL_M, SERVO_TOL_RAD = 0.035, 0.09
-SERVO_SHUFFLE_RAD = (
-    0.11  # a heading error below this is left to the corrections' own yaw rate: a shuffle moves the robot
-)
+# a heading error below this is left to the corrections' own yaw rate: a shuffle moves the robot
+SERVO_SHUFFLE_RAD = 0.11
 MARKER_MAX_RANGE_M, MARKER_MIN_CONF = 2.9, 0.5  # a station marker corrects the belief only when seen this well
 MAX_UP_DISAGREEMENT_RAD = 0.03  # ... and only if the vertical it implies is the IMU's, to within this
 APPROACH_M = 0.5  # the walk ends this far before the station, facing it, and the marker is looked for there
-STAGING_M = (
-    1.5  # ... after passing through a point this much further out on the station's axis, where the marker is in view
-)
+# ... after passing through a point this much further out on the station's axis, where the marker is in view
+STAGING_M = 1.5
 WALK_SPEED = 0.5
 WALK_GAIN, BACK_GAIN, SIDE_GAIN, YAW_GAIN = 0.95, 0.9, 0.64, 0.7  # travel (coast included) per unit commanded, measured
 SHUFFLE_S = 1.2  # one burst of the turn-in-place shuffle ...
