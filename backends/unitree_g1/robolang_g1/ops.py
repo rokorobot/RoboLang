@@ -68,7 +68,7 @@ APPROACH_M = 0.5  # the walk ends this far before the station, facing it, and th
 # ... after passing through a point this much further out on the station's axis, where the marker is in view
 STAGING_M = 1.5
 WALK_SPEED = 0.5
-WALK_GAIN, BACK_GAIN, SIDE_GAIN, YAW_GAIN = 0.95, 0.9, 0.64, 0.7  # travel (coast included) per unit commanded, measured
+WALK_GAIN, BACK_GAIN, SIDE_GAIN = 0.95, 0.9, 0.64  # travel (coast included) per unit commanded, measured
 SHUFFLE_S = 1.2  # one burst of the turn-in-place shuffle ...
 SHUFFLE_BACK_M = 0.035  # ... and drifts this far backward (measured: 0.03-0.04 m a burst), which the belief must carry
 SHUFFLE_RAD = {1: 0.127, -1: 0.111}  # ... turns this much to the left (+) and to the right (-): measured (the plan's
@@ -254,11 +254,6 @@ class G1Operations:
         last = getattr(self.robot, "last", None)
         if self.tracker is not None and last is not None:
             self.tracker.hold(welded, yaw_of(last.quat), last.tick)
-
-    def _heading_at(self, tick_ms: int) -> float | None:
-        """The belief heading at the lowstate sample nearest to simulation time `tick_ms`, or None if there is none."""
-        sample = self.robot.sample_at(tick_ms) if self.robot is not None and self.tracker is not None else None
-        return None if sample is None else self.tracker.heading(yaw_of(sample.quat), sample.tick)
 
     def _fix_pose(self, new, stamp_ms: int) -> float:
         """A station marker gave the pose `new` at simulation time `stamp_ms`: the position and the heading are right as

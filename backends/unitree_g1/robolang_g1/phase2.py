@@ -956,10 +956,12 @@ def main(argv=None) -> int:
     ap.add_argument("--creep", type=float, default=0.0, help="move-stress: a steady torque (N m) about the vertical")
     ap.add_argument("--imu-bias", type=float, help="the stand-in IMU's gyro z bias in rad/s (default: drawn per start, "
                     "sim/imu.py): a worst case for move-stress")
+    ap.add_argument("--standin-arg", action="append", default=[], metavar="ARG",
+                    help="development: an extra argument for every stand-in (e.g. --standin-arg=--ideal-imu)")
     args = ap.parse_args(argv)
     out = Path(args.out)
     ctx = Ctx(Path(args.run_dir) if args.run_dir else out.with_suffix(".run"), args.stance,
-              ["--imu-bias", str(args.imu_bias)] if args.imu_bias is not None else None)
+              (["--imu-bias", str(args.imu_bias)] if args.imu_bias is not None else []) + args.standin_arg)
     ctx.dir.mkdir(parents=True, exist_ok=True)
     only = set(filter(None, args.only.split(",")))
     result: dict = {
