@@ -55,6 +55,9 @@ STATION_TOL_M, STATION_TOL_RAD = 0.042, 0.09
 SERVO_TOL_M, SERVO_TOL_RAD = 0.035, 0.05
 # rad/s: a standing robot's heading drifts left at about this (measured 0.006 empty, 0.008 loaded; then observed)
 CREEP_PRIOR = 0.007
+# The creep as the IMU sees it: the yaw's slope over the last CREEP_WINDOW_MS, if that window began at least
+# CREEP_QUIET_MS after the last velocity command ended (the stance's own transient is over)
+CREEP_WINDOW_MS, CREEP_QUIET_MS = 1000, 2000
 COARSE_M, COARSE_RAD = 0.25, 0.3  # an error beyond this is for the coarse bursts (below), not the measured corrections
 # A step is 5-17 cm and a burst that moves less takes no step at all, so an error just outside the servo's tolerance may
 # have no correction that improves it (measured: a loaded robot 4 cm to the left of the shelf's station for 150 s).
@@ -187,6 +190,7 @@ class G1Operations:
         self.q_carry: np.ndarray | None = None
         self.fallen = False
         self.creep = CREEP_PRIOR  # rad/s: the heading's creep to the left while standing (observed in `_servo`)
+        self.creep_reads = 0  # how many times the IMU has told it (`_note_creep_imu`)
         self.fix: tuple[int, float] | None = None  # (simulation time, heading) of the last station-marker fix
         self.last_look: tuple[int, bool] = (0, False)  # (simulation time, whether it was a fix) of the last look
         self.moved_ms = 0  # the simulation time at which the last velocity command was to end
@@ -645,7 +649,11 @@ class G1Operations:
         result = self._servo(station, marker, deadline)
         self.station = station_name
         result["events"] = self.events
-        result["heading"] = self.tracker.summary()  # what the IMU's heading got wrong between fixes, as the fixes saw
+        result["heading"] = {  # what the IMU's heading got wrong between fixes; the creep the servo aimed against
+            **self.tracker.summary(),
+            "creep_rad_s": round(self.creep, 4),
+            "creep_imu_reads": self.creep_reads,
+        }
         return result
 
     def _find_marker(self, station: dict, deadline_ms: int, scan_end_ms: int, approach: tuple):
@@ -722,6 +730,7 @@ class G1Operations:
         best, best_look = float("inf"), 0  # the smallest error (in tolerances) so far, and at which look
         while True:
             self.check()
+            self._note_creep_imu()
             dx, dy = gx - self.pose[0], gy - self.pose[1]
             ex = dx * math.cos(self.pose[2]) + dy * math.sin(self.pose[2])
             ey = -dx * math.sin(self.pose[2]) + dy * math.cos(self.pose[2])
@@ -849,6 +858,28 @@ class G1Operations:
         if abs(row[2]) <= 0.06 and waited >= 1.5:  # the creep, from what the heading did beyond what the table says
             rate = (site_mod.wrap(self.pose[2] - yaw0) - row[2]) / waited
             self.creep = float(np.clip(0.7 * self.creep + 0.3 * rate, -0.03, 0.05))
+
+    def _note_creep_imu(self) -> None:
+        """The heading's creep, read from the IMU: how fast its yaw turns over a quiet second, the gyro's bias (learned
+        from the fixes, heading.py) taken out. A standing robot that no command has moved for two seconds turns at the
+        creep and at nothing else, and the IMU has it at once; the markers show it only between two looks with nothing
+        commanded in between, which a servo that keeps correcting does not have (so it aimed against 0.007 rad/s
+        while the stance, under a torque, was turning 0.025: docs/evidence/g1-phase4-prereqs.md). Blended into `creep`
+        as the other estimates are, and left alone when the window is not quiet or has too few samples."""
+        if self.tracker is None or self.tracker.held or self.robot is None:
+            return
+        now = self.now_ms()
+        start = now - CREEP_WINDOW_MS
+        if start < self.moved_ms + CREEP_QUIET_MS:
+            return
+        samples = self.robot.samples_since(start)
+        if len(samples) < 0.8 * CREEP_WINDOW_MS / 4:
+            return
+        t = np.array([x.tick for x in samples]) / 1000.0
+        yaw = np.unwrap([yaw_of(x.quat) for x in samples])
+        rate = float(np.polyfit(t - t[0], yaw, 1)[0]) - self.tracker.bias
+        self.creep = float(np.clip(0.7 * self.creep + 0.3 * np.clip(rate, -0.02, 0.05), -0.03, 0.05))
+        self.creep_reads += 1
 
     def _note_creep(self, before) -> None:
         """The heading's creep, as the robot saw it: how far the marker's heading moved between two looks with nothing

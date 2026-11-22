@@ -107,6 +107,10 @@ class FakeRobot:
         self.last = SimpleNamespace(tick=tick_ms, quat=quat_about_z(yaw))
         self.samples.append(self.last)
 
+    @property
+    def now_ms(self):
+        return self.last.tick
+
     def samples_since(self, tick_ms):
         return [s for s in self.samples if s.tick >= tick_ms]
 
@@ -117,6 +121,7 @@ class FakeRobot:
 def make_ops():
     o = ops.G1Operations.__new__(ops.G1Operations)
     o.robot, o._xy, o._heading0 = FakeRobot(), [1.0, 2.0], 0.5
+    o.creep, o.creep_reads, o.moved_ms = ops.CREEP_PRIOR, 0, 0
     o.robot.add(0, 2.0)  # the IMU's own frame: 2.0 rad when the map heading is 0.5
     o.tracker = heading.HeadingTracker(0.5, 2.0, 0)
     return o
@@ -160,6 +165,24 @@ def test_the_belief_does_not_follow_the_imu_while_the_pelvis_is_welded_for_arm_w
     o._hold_heading(False)
     o.robot.add(21_000, 2.16)
     assert o.pose[2] == pytest.approx(0.5 + 0.10)
+
+
+def test_the_creep_is_read_from_the_imus_yaw_over_a_quiet_second_with_the_bias_taken_out():
+    o = make_ops()
+    o.creep, o.moved_ms = ops.CREEP_PRIOR, 0
+    for k in range(0, 8001, 4):  # 8 s standing, the yaw turning 0.025 rad/s (the IMU also reads a bias of 0.002)
+        o.robot.add(k, 2.0 + 0.027 * k / 1000)
+    o.tracker.bias = 0.002
+    o._note_creep_imu()
+    assert o.creep == pytest.approx(0.7 * ops.CREEP_PRIOR + 0.3 * 0.025, abs=1e-4) and o.creep_reads == 1
+    o.moved_ms = 7000  # a command ended a second ago: the stance is not quiet, nothing is read
+    before = o.creep
+    o._note_creep_imu()
+    assert o.creep == before and o.creep_reads == 1
+    o.moved_ms = 0
+    o._hold_heading(True)  # welded: it does not creep
+    o._note_creep_imu()
+    assert o.creep == before and o.creep_reads == 1
 
 
 def test_setting_the_pose_takes_it_as_true_and_learns_nothing():
