@@ -5,7 +5,9 @@ the harness checks P1–P6 ([evidence](../docs/evidence/g1-phase1-harness.md)), 
 `place`, `wait for`, the stop, the records; checks E1–E7, [evidence](../docs/evidence/g1-phase2-executor.md)), and goal
 and precondition verdicts from observations (checks O1–O7, [evidence](../docs/evidence/g1-phase3-observations.md)), with
 one exception to 0046 U8 for observing a carried object (approved by the owner 2026-11-21; see "Observations and
-verdicts"). Code: [`backends/unitree_g1/`](../backends/unitree_g1/).
+verdicts"). Two prerequisites of the phase 4 acceptance run followed ([evidence](../docs/evidence/g1-phase4-prereqs.md)):
+`move`'s heading between marker fixes comes from the IMU ("The IMU"), and the stand-in keeps pace with real time on a
+loaded 4-CPU host ("Time"). Code: [`backends/unitree_g1/`](../backends/unitree_g1/).
 
 ## Scope and safety boundary
 
@@ -31,7 +33,19 @@ Physics steps every 2 ms against the wall clock, the joint PD law is evaluated e
 every 10th step (50 Hz). A 5 ms step is not allowed: MuJoCo integrates the PD torque explicitly, which is stable only
 for dt·kd/I < 2, and the arms reach 4.5 at 5 ms (1.8 at 2 ms). Simulation time is in `LowState_.tick` (ms), in the
 identity API and in every camera frame. The SDK's timeouts are wall-clock, as on the robot. The stand-in reports its
-real-time ratio. A run in which any second falls more than 5% behind real time does not count towards acceptance.
+real-time ratio. A run in which any second falls more than 5% behind real time, or in which a step stalls for more than
+0.25 s, does not count towards acceptance; **that bar is unchanged**.
+
+**Keeping pace on a loaded host.** The loop is 0.3-0.5 ms of compute in a 2 ms step, so a second is lost only when the
+loop thread is kept off a CPU: measured, a second at 0.80 of real time had the loop waiting 0.4-0.6 s in the run queue
+while the executor started up and the camera rendered. Four things follow, none of which touches the 2 ms step or the PD
+law: (1) `rt/lowstate` and the hand states are serialized once and their changing fields patched in a byte buffer
+(`sim/fastdds.py`; 14 us a publish instead of 247 us, **the same bytes on the wire**, a test compares them); (2) the
+camera thread and the renderer's workers run at nice 19, and the executor process and the checks' oracle reader at nice
+10 (`harness.YIELD_NICE`; lowering a priority needs no privilege), so the loop thread, which keeps nice 0, wins every
+contention among the backend's own processes; (3) the stand-in's `status` says why a slow second was slow: each entry of
+`slow_windows` is `(sim time, ratio, loop thread CPU s, loop thread run-queue wait s)`; (4) the executor, when started by
+hand rather than by `run_task` or the checks, is not niced: start it with `nice -n 10`.
 
 ## Stance and stop
 

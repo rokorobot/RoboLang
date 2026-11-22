@@ -17,6 +17,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import shutil
 import signal
 import subprocess
 import sys
@@ -38,6 +39,17 @@ SETTLED_M, SETTLED_S, SETTLE_TIMEOUT_S = 0.01, 1.0, 30.0  # at rest: at most 1 c
 ARM_TOLERANCE = 0.05  # P4, rad
 MARKER_ERROR_MAX, CAMERA_RANGE = 0.02, (0.5, 1.0)  # P5, m
 REALTIME_MIN = 0.95  # P6
+# The stand-in is paced to real time (U13) and is the one process on the machine that must not be kept waiting; the
+# executor and the checks' own readers are not time-critical (the simulation does not wait for them either way). They
+# run at a lower priority, so that starting the executor (a second of imports on a core) or a planning burst does not
+# queue the physics loop behind it: measured in docs/evidence/g1-phase4-prereqs.md. Lowering one's priority needs no
+# privilege, which is why it is done here and not by raising the stand-in's.
+YIELD_NICE = 10
+
+
+def yielding(cmd: list[str]) -> list[str]:
+    """`cmd` run at a lower priority (through `nice`, so that it applies from the first instruction: the imports)."""
+    return ["nice", "-n", str(YIELD_NICE), *cmd] if shutil.which("nice") else cmd
 
 
 # ------------------------------------------------------------------------------------------------ fixtures
@@ -126,6 +138,10 @@ class OracleTail(threading.Thread):
         self.path, self.samples, self._stop_event = path, [], threading.Event()
 
     def run(self):
+        try:  # this thread only (the checks' main thread keeps its priority): reading the oracle is not time-critical
+            os.setpriority(os.PRIO_PROCESS, threading.get_native_id(), YIELD_NICE)
+        except OSError:
+            pass
         last = None
         while not self._stop_event.is_set():
             try:

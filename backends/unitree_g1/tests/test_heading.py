@@ -82,6 +82,17 @@ def test_the_bias_is_clipped_and_the_summary_reports_the_fixes():
     assert s["source"] == "imu_yaw" and s["fixes"] == 29 and s["bias_rad_s"] == pytest.approx(t.bias, abs=1e-5)
 
 
+def test_while_the_pelvis_is_welded_the_heading_holds_and_the_imus_drift_is_all_bias():
+    t = heading.HeadingTracker(0.5, 2.0, 0)
+    t.fix(0.5, 2.0, 1000)
+    t.hold(True, 2.0, 1000)
+    assert t.heading(2.0 + 0.09, 31_000) == pytest.approx(0.5)  # the IMU drifted 0.09 rad in 30 s: not the robot
+    t.fix(0.5, 2.0 + 0.09, 31_000)  # the marker agrees: it did not turn
+    assert t.bias == pytest.approx(0.003, rel=0.1)
+    t.hold(False, 2.09, 31_000)  # released: the IMU carries on from the held heading (less the bias just learned)
+    assert t.heading(2.09 + 0.2, 31_000 + 10_000) == pytest.approx(0.5 + 0.2 - t.bias * 10, abs=1e-9)
+
+
 # ---------------------------------------------------------------------------------------------- the operations
 
 
@@ -139,6 +150,16 @@ def test_a_station_marker_fix_sets_the_position_and_the_heading_and_the_imu_carr
     assert o.pose == pytest.approx([3.0, 4.0, 0.9])
     o.robot.add(6000, 2.35)
     assert o.pose[2] == pytest.approx(0.95)
+
+
+def test_the_belief_does_not_follow_the_imu_while_the_pelvis_is_welded_for_arm_work():
+    o = make_ops()
+    o._hold_heading(True)
+    o.robot.add(20_000, 2.06)  # the IMU's yaw drifted 0.06 rad while the robot stood welded
+    assert o.pose[2] == pytest.approx(0.5)
+    o._hold_heading(False)
+    o.robot.add(21_000, 2.16)
+    assert o.pose[2] == pytest.approx(0.5 + 0.10)
 
 
 def test_setting_the_pose_takes_it_as_true_and_learns_nothing():

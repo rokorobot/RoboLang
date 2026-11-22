@@ -62,6 +62,7 @@ from .. import INTERFACE
 from .. import SIM_API_VERSION
 from .. import SIM_SERVICE, assets
 from . import scene
+from .fastdds import PatchedSample
 from .imu import Imu
 from .policy import STEP_DT, WholeBodyPolicy
 from .scene import HAND_ACT, HAND_BODY, N_BODY
@@ -69,6 +70,12 @@ from .stance import STANCES, Body, make_stance
 
 CAMERA_HZ = 5.0
 ORACLE_HZ = 50.0
+# The camera thread (rendering, PNG encoding) and the renderer's worker threads it starts are the stand-in's largest
+# consumer of CPU (about 0.7 of a core at 5 Hz), and none of it is time-critical. They yield to the physics loop: at the
+# lowest priority, so that a wake-up of the loop (500 a second) is never queued behind a render. Measured with the
+# executor starting up on two CPUs: the loop waited 0.4-0.6 s in the run queue in one second at nice 5 (docs/evidence/
+# g1-phase4-prereqs.md).
+CAMERA_NICE = 19
 POLICY_EVERY = round(STEP_DT / scene.TIMESTEP)  # physics steps per policy step (50 Hz)
 LOWSTATE_EVERY = round(1 / (250 * scene.TIMESTEP))  # lowstate at 250 Hz
 HAND_EVERY = round(1 / (100 * scene.TIMESTEP))  # hand states at 100 Hz
@@ -110,12 +117,26 @@ class Timing:
     camera_dropped: int = 0
     camera_ms: float = 0.0
     camera_stamps: list = field(default_factory=list)
-    slow_windows: list = field(default_factory=list)  # (sim time, ratio) of seconds below 0.95
+    # (sim time, ratio, loop thread CPU s, loop thread run-queue wait s) of the seconds below 0.95: a second that was
+    # slow because the loop waited for a CPU shows a wait of tenths of a second (Linux; both None elsewhere)
+    slow_windows: list = field(default_factory=list)
+    sched_prev: tuple | None = None  # the loop thread's (CPU s, run-queue wait s) at the last window boundary
     step_ms: collections.deque = field(default_factory=lambda: collections.deque(maxlen=20000))  # compute per step
     gc_count: list = field(default_factory=lambda: [0, 0, 0])  # collections by generation since start-up
     gc_max_ms: list = field(default_factory=lambda: [0.0, 0.0, 0.0])  # longest collection by generation
     gc_started: float = 0.0
     slow_steps: list = field(default_factory=list)  # (sim time, ms, collections during it) of passes > 20 ms
+
+
+def thread_sched() -> tuple[float, float] | None:
+    """This thread's (CPU seconds, seconds waiting in the run queue for a CPU) since it started, from the kernel's
+    per-thread scheduler statistics; None where there are none."""
+    try:
+        with open("/proc/thread-self/schedstat") as f:
+            fields = f.read().split()
+        return int(fields[0]) / 1e9, int(fields[1]) / 1e9
+    except (OSError, ValueError, IndexError):
+        return None
 
 
 class Simulator:
@@ -408,7 +429,7 @@ class Simulator:
 
         width, height = self.site["camera"]["width"], self.site["camera"]["height"]
         try:  # rendering yields to physics when the CPU is short; the renderer's worker threads inherit this
-            os.setpriority(os.PRIO_PROCESS, threading.get_native_id(), 5)
+            os.setpriority(os.PRIO_PROCESS, threading.get_native_id(), CAMERA_NICE)
         except OSError:
             pass
         renderer = mujoco.Renderer(self.model, height=height, width=width)  # the GL context belongs to this thread
@@ -533,8 +554,12 @@ class Simulator:
                 now = time.perf_counter()
                 ratio = 1.0 / max(now - t.window_wall, 1e-9)
                 t.window_ratio_min = min(t.window_ratio_min, ratio)
+                sched = thread_sched()
                 if ratio < 0.95:
-                    t.slow_windows.append((round(self.sim_time, 2), round(ratio, 3)))
+                    used = (None, None) if sched is None or t.sched_prev is None else (
+                        round(sched[0] - t.sched_prev[0], 3), round(sched[1] - t.sched_prev[1], 3))
+                    t.slow_windows.append((round(self.sim_time, 2), round(ratio, 3), *used))
+                t.sched_prev = sched
                 t.window_wall = now
             took = (time.perf_counter() - loop_start) * 1000
             t.step_ms.append(took)
@@ -569,7 +594,39 @@ class Bridge:
         self.sim = sim
         self.low = unitree_hg_msg_dds__LowState_()
         self.low.mode_machine = 5  # the 29-DoF G1
+        for i in range(N_BODY):
+            self.low.motor_state[i].mode = 1
         self.hand_state = {s: unitree_hg_msg_dds__HandState_() for s in ("left", "right")}
+        for state in self.hand_state.values():
+            for motor in state.motor_state[:7]:
+                motor.mode = 1
+        # The messages are serialized once and their changing fields patched in place (fastdds.py): the SDK's Python CDR
+        # serializer cost 250 us per lowstate, more than half of a physics step. The bytes on the wire are the same.
+        ms, imu = self.low.motor_state, self.low.imu_state
+        self._low_fast = PatchedSample(
+            self.low,
+            {
+                "q": [lambda v, i=i: setattr(ms[i], "q", v) for i in range(N_BODY)],
+                "dq": [lambda v, i=i: setattr(ms[i], "dq", v) for i in range(N_BODY)],
+                "tau": [lambda v, i=i: setattr(ms[i], "tau_est", v) for i in range(N_BODY)],
+                "quat": [lambda v, i=i: imu.quaternion.__setitem__(i, v) for i in range(4)],
+                "gyro": [lambda v, i=i: imu.gyroscope.__setitem__(i, v) for i in range(3)],
+                "acc": [lambda v, i=i: imu.accelerometer.__setitem__(i, v) for i in range(3)],
+                "rpy": [lambda v, i=i: imu.rpy.__setitem__(i, v) for i in range(3)],
+            },
+            {"tick": [lambda v: setattr(self.low, "tick", v)]},
+        )
+        self._hand_fast = {}
+        for side, state in self.hand_state.items():
+            hm = state.motor_state
+            self._hand_fast[side] = PatchedSample(
+                state,
+                {
+                    "q": [lambda v, i=i, hm=hm: setattr(hm[i], "q", v) for i in range(7)],
+                    "dq": [lambda v, i=i, hm=hm: setattr(hm[i], "dq", v) for i in range(7)],
+                    "tau": [lambda v, i=i, hm=hm: setattr(hm[i], "tau_est", v) for i in range(7)],
+                },
+            )
         self.low_pub = ChannelPublisher("rt/lowstate", LowState_)
         self.low_pub.Init()
         self.hand_pub = {}
@@ -606,35 +663,30 @@ class Bridge:
 
     def _publish_low(self, sim: Simulator) -> None:
         d, r = sim.data, sim.robot
-        low = self.low
-        q, dq = d.qpos[r.qadr], d.qvel[r.dadr]
-        tau = d.actuator_force[:N_BODY]
-        for i in range(N_BODY):
-            ms = low.motor_state[i]
-            ms.mode, ms.q, ms.dq, ms.tau_est = 1, float(q[i]), float(dq[i]), float(tau[i])
-        imu = low.imu_state
+        fast = self._low_fast
+        fast.set("q", d.qpos[r.qadr])
+        fast.set("dq", d.qvel[r.dadr])
+        fast.set("tau", d.actuator_force[:N_BODY])
         quat, gyro, acc = sim.imu.read(sim.sim_time, d.sensordata[r.imu_quat:r.imu_quat + 4],
                                        d.sensordata[r.imu_gyro:r.imu_gyro + 3], d.sensordata[r.imu_acc:r.imu_acc + 3])
-        imu.quaternion[:] = quat
-        imu.gyroscope[:] = gyro
-        imu.accelerometer[:] = acc
+        fast.set("quat", quat)
+        fast.set("gyro", gyro)
+        fast.set("acc", acc)
         w, x, y, z = quat
-        imu.rpy[:] = [np.arctan2(2 * (w * x + y * z), 1 - 2 * (x * x + y * y)),
-                      np.arcsin(np.clip(2 * (w * y - z * x), -1, 1)),
-                      np.arctan2(2 * (w * z + x * y), 1 - 2 * (y * y + z * z))]
-        low.tick = int(sim.sim_time * 1000) & 0xFFFFFFFF  # simulation time, ms
-        self.low_pub.Write(low)
+        fast.set("rpy", [np.arctan2(2 * (w * x + y * z), 1 - 2 * (x * x + y * y)),
+                         np.arcsin(np.clip(2 * (w * y - z * x), -1, 1)),
+                         np.arctan2(2 * (w * z + x * y), 1 - 2 * (y * y + z * z))])
+        fast.set_int("tick", int(sim.sim_time * 1000) & 0xFFFFFFFF)  # simulation time, ms
+        self.low_pub.Write(self.low)
 
     def _publish_hands(self, sim: Simulator) -> None:
         d, r = sim.data, sim.robot
         for side in ("left", "right"):
-            hq, hdq = d.qpos[r.hand_qadr[side]], d.qvel[r.hand_dadr[side]]
-            htau = d.actuator_force[HAND_ACT[side]:HAND_ACT[side] + 7]
-            state = self.hand_state[side]
-            for i in range(7):
-                ms = state.motor_state[i]
-                ms.mode, ms.q, ms.dq, ms.tau_est = 1, float(hq[i]), float(hdq[i]), float(htau[i])
-            self.hand_pub[side].Write(state)
+            fast = self._hand_fast[side]
+            fast.set("q", d.qpos[r.hand_qadr[side]])
+            fast.set("dq", d.qvel[r.hand_dadr[side]])
+            fast.set("tau", d.actuator_force[HAND_ACT[side]:HAND_ACT[side] + 7])
+            self.hand_pub[side].Write(self.hand_state[side])
 
 
 def make_services(sim: Simulator, test_hooks: bool = False):

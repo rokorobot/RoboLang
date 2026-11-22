@@ -21,7 +21,7 @@ import time
 from pathlib import Path
 
 from . import guard
-from .harness import OracleTail, StandIn
+from .harness import OracleTail, StandIn, yielding
 
 
 class Session:
@@ -99,6 +99,7 @@ class Session:
             cmd += ["--stop-file", str(stop_file)]
         if deadline_s is not None:
             cmd += ["--deadline-s", str(deadline_s)]
+        cmd = yielding(cmd)  # the executor yields the CPU to the stand-in (harness.YIELD_NICE)
         log = Path(out).with_suffix(".log")
         with log.open("w") as fh:
             proc = subprocess.Popen(cmd, stdout=fh, stderr=subprocess.STDOUT, env=dict(os.environ))

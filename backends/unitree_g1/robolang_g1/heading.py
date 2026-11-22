@@ -19,6 +19,11 @@ time between two fixes), with a prior at zero (a pair shorter than `MIN_PAIR_S` 
 exponential forgetting (`FORGET_S`), so a bias that wanders is followed. It is clipped to `BIAS_CLIP`: a rate that large
 is not a gyro bias, it is a bad fix. With no fix yet the bias is 0 and the heading is the IMU's change since the start.
 
+**Held.** While the pelvis is welded (the supported stance the executor asks for during arm work, 0046 U4) it cannot
+turn, so the belief heading stays where it is and the IMU's drift in the meantime is no news (an arm step of 25 s with a
+bias of 0.002 rad/s would otherwise turn the belief by 0.05 rad with the robot standing still). A pair of fixes across a
+held interval is the best the tracker gets: the marker says the robot did not turn, so all the IMU turned is bias.
+
 Pure (no DDS, no ground truth): the executor's `ops.py` feeds it.
 """
 
@@ -50,6 +55,7 @@ class HeadingTracker:
         self.marker = None  # the same, at the last fix by a station marker (the only one that teaches the bias)
         self.bias = 0.0  # rad/s, in the IMU's yaw
         self.fixes = 0
+        self.held = False
         self.jumps: list[tuple[int, float, float]] = []  # (sim ms, rad the fix moved the belief, s since the last fix)
         self._sum_dt_r = 0.0
         self._sum_dt2 = 0.0
@@ -57,7 +63,15 @@ class HeadingTracker:
     def heading(self, imu_yaw: float, t_ms: int) -> float:
         """The belief heading at simulation time `t_ms`, when the IMU's yaw is `imu_yaw`."""
         h0, i0, t0 = self.anchor
+        if self.held:
+            return h0
         return wrap(h0 + wrap(imu_yaw - i0) - self.bias * (t_ms - t0) / 1000.0)
+
+    def hold(self, held: bool, imu_yaw: float, t_ms: int) -> None:
+        """The pelvis is welded (`held`) or free again: while held the heading is the one it had, IMU or no."""
+        if held != self.held:
+            self.anchor = (self.heading(imu_yaw, t_ms), float(imu_yaw), int(t_ms))
+            self.held = held
 
     def reset(self, heading: float, imu_yaw: float, t_ms: int) -> None:
         """Take `heading` as true from now on, without learning anything from it (the start pose, or a set pose)."""

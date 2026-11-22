@@ -208,6 +208,7 @@ class G1Operations:
         self.robot = Robot()
         self.robot.wait_state()
         self.tracker = HeadingTracker(self._heading0, yaw_of(self.robot.last.quat), self.robot.last.tick)
+        self._hold_heading(self.identity.get("stance_model") == "supported")  # (a stand-in started welded)
         self.kin = Kinematics(self.site["camera"])
         self.clr = Clearance(self.site["camera"], n_boxes=len(site_mod.declared_boxes(self.site)))
         self.perc = Perception(self.robot, self.kin, self.site, head)
@@ -246,6 +247,13 @@ class G1Operations:
         if self.tracker is None or last is None:
             return self._heading0
         return self.tracker.heading(yaw_of(last.quat), last.tick)
+
+    def _hold_heading(self, welded: bool) -> None:
+        """The pelvis is welded for arm work (`supported`), or free: a welded pelvis cannot turn, so the belief heading
+        holds while it is and the IMU's drift is not followed (heading.py)."""
+        last = getattr(self.robot, "last", None)
+        if self.tracker is not None and last is not None:
+            self.tracker.hold(welded, yaw_of(last.quat), last.tick)
 
     def _heading_at(self, tick_ms: int) -> float | None:
         """The belief heading at the lowstate sample nearest to simulation time `tick_ms`, or None if there is none."""
@@ -1287,6 +1295,7 @@ class G1Operations:
                 break
             time.sleep(0.1)
         self.stance_now = model
+        self._hold_heading(model == "supported")
         self.events.append({"t_ms": self.now_ms(), "event": "stance", "model": model})
         return model
 
