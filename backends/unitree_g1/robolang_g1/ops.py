@@ -51,10 +51,16 @@ REPOSITION_M, REPOSITION_RAD = 0.08, 0.15
 STATION_TOL_M, STATION_TOL_RAD = 0.042, 0.09
 # The servo stops inside these, tighter than the confirm limits above: the heading creeps while the robot waits to be
 # confirmed (CREEP_PRIOR), and a servo that stops at the confirm limit is often confirmed outside it.
-SERVO_TOL_M, SERVO_TOL_RAD = 0.035, 0.065
+SERVO_TOL_M, SERVO_TOL_RAD = 0.035, 0.05
 # rad/s: a standing robot's heading drifts left at about this (measured 0.006 empty, 0.008 loaded; then observed)
 CREEP_PRIOR = 0.007
 COARSE_M, COARSE_RAD = 0.25, 0.3  # an error beyond this is for the coarse bursts (below), not the measured corrections
+# A step is 5-17 cm and a burst that moves less takes no step at all, so an error just outside the servo's tolerance may
+# have no correction that improves it (measured: a loaded robot 4 cm to the left of the shelf's station for 150 s).
+# After this many looks without a better one the servo goes on to the confirming look, which holds the robot to the
+# confirm limits above and to nothing less: the station tolerance (5 cm, 0.1 rad) is not touched.
+STAGNANT_LOOKS = 4
+RELAXED_RAD = 0.07  # the servo's heading tolerance then: the confirm limit less what the creep may add
 MARKER_MAX_RANGE_M, MARKER_MIN_CONF = 2.9, 0.5  # a station marker corrects the belief only when seen this well
 # ... and only if the vertical it implies is the IMU's, to within MAX_UP_DISAGREEMENT_RAD (perception.py)
 APPROACH_M = 0.5  # the walk ends this far before the station, facing it, and the marker is looked for there
@@ -174,6 +180,7 @@ class G1Operations:
         self.fix: tuple[int, float] | None = None  # (simulation time, heading) of the last station-marker fix
         self.last_look: tuple[int, bool] = (0, False)  # (simulation time, whether it was a fix) of the last look
         self.moved_ms = 0  # the simulation time at which the last velocity command was to end
+        self.seen: dict = {}  # what the robot has watched each correction do (response.py: `expected`)
         self.stance_now: str | None = None  # the stand-in's balance support, as last set
 
     # ------------------------------------------------------------------------------------------ set-up
@@ -575,7 +582,9 @@ class G1Operations:
     def _find_marker(self, station: dict, deadline_ms: int, scan_end_ms: int, approach: tuple):
         """Look at the approach point for the station's marker, scanning by turning if it is not in view. Returns its
         reading; or None when the belief, corrected by another marker, puts the robot more than 0.35 m from the
-        approach point (it was not where it thought: walk there again, a table may be hiding the marker from here).
+        approach point (it was not where it thought: walk there again, a table may be hiding the marker from here). A
+        belief that has moved only by the dead reckoning of the robot's own sidesteps is not corrected: it is not a
+        reason to give up (a loaded robot's sidestep often takes no step, and four such "replans" were S517 in 47 s).
         S517 when the search budget is spent."""
         mid = station["marker"]["id"]
         mx, my = station["marker"]["pos"][:2]
@@ -592,7 +601,7 @@ class G1Operations:
             if reading is not None and reading.confidence >= MARKER_MIN_CONF and reading.range_m <= MARKER_MAX_RANGE_M:
                 return reading
             away = math.hypot(self.pose[0] - approach[0], self.pose[1] - approach[1])
-            if away > 0.35:
+            if away > 0.35 and self.last_look[1]:  # (a belief that only the robot's own steps moved is not a reason)
                 self.events.append({"t_ms": self.now_ms(), "event": "replan", "from_approach_m": round(float(away), 3)})
                 return None
             if self.now_ms() > scan_end_ms or self.now_ms() > deadline_ms:
@@ -641,7 +650,7 @@ class G1Operations:
         picks: list = []  # (correction, the error it was chosen for) of the last bursts
         banned: dict = {}  # correction -> iteration until which it is left alone
         unseen = 0  # corrections in a row after which the station's marker was not seen
-        creep = self.creep if target is None else 0.0
+        best, best_look = float("inf"), 0  # the smallest error (in tolerances) so far, and at which look
         while True:
             self.check()
             dx, dy = gx - self.pose[0], gy - self.pose[1]
@@ -649,10 +658,15 @@ class G1Operations:
             ey = -dx * math.sin(self.pose[2]) + dy * math.cos(self.pose[2])
             eyaw = site_mod.wrap(gyaw - self.pose[2])
             iterations.append([round(float(ex), 3), round(float(ey), 3), round(float(eyaw), 3)])
-            creep = self.creep if target is None else 0.0
+            creep = self.creep if target is None else 0.0  # (the approach point is not confirmed: no aim)
             # the heading the stance will have when it is confirmed: it creeps to the left while the robot waits
             eyaw_confirmed = eyaw - creep * CONFIRM_DWELL_S
-            if math.hypot(ex, ey) <= tol_m and abs(eyaw_confirmed) <= tol_rad:
+            score = math.hypot(ex, ey) / tol_m + abs(eyaw_confirmed) / tol_rad
+            if score < best - 0.1:
+                best, best_look = score, len(iterations)
+            stagnant = target is None and len(iterations) - best_look >= STAGNANT_LOOKS
+            band_m, band_rad = (STATION_TOL_M, RELAXED_RAD) if stagnant else (tol_m, tol_rad)
+            if math.hypot(ex, ey) <= band_m and abs(eyaw_confirmed) <= band_rad:
                 if target is not None:
                     self.settle()
                     return {"iterations": iterations, "settled": True}
@@ -677,15 +691,16 @@ class G1Operations:
                 first, last = picks[-3][1], picks[-1][1]
                 if max(abs(first[0] - last[0]), abs(first[1] - last[1])) < 0.01 and abs(first[2] - last[2]) < 0.02:
                     banned[picks[-1][0]] = len(iterations) + 3  # three alike, and the error has not moved
-                    self.events.append({"t_ms": self.now_ms(), "event": "blocked", "burst": picks[-1][0][0]})
+                    named = picks[-1][0][0] if picks[-1][0] else "wait"
+                    self.events.append({"t_ms": self.now_ms(), "event": "blocked", "burst": named})
                     picks.clear()
             error = (ex, ey, eyaw)
-            seen_before, yaw_before, correction = self.last_look, self.pose[2], None
+            seen_before, correction = self.last_look, None
             if math.hypot(ex, ey) > COARSE_M or abs(eyaw) > COARSE_RAD:
                 self._coarse(error)
             else:
                 skip = {k for k, until in banned.items() if until > len(iterations)}
-                correction, cost = plan_correction(error, tol_m, tol_rad, creep, skip, self.held is not None)
+                correction, cost = plan_correction(error, tol_m, tol_rad, creep, skip, self.held is not None, self.seen)
                 picks.append((correction, error))
                 pose_before = list(self.pose)
                 for vx, vy, wz, seconds in correction:
@@ -693,9 +708,8 @@ class G1Operations:
                 self._expect(pose_before, correction)  # if the marker is not seen next, the belief is what was measured
             self.settle()
             readings = self.look(frames=4, ids={mid})
-            if correction is not None and target is None and seen_before[1] and self.last_look[1]:
-                turned = site_mod.wrap(self.pose[2] - yaw_before)
-                self._learn_creep(correction, self.last_look[0] - seen_before[0], turned)
+            if correction is not None and seen_before[1] and self.last_look[1]:
+                self._learn(correction, pose_before, self.last_look[0] - seen_before[0])
             # the marker is not seen: a table hides it from a robot that has drifted off the station's axis, and facing
             # where it should be only costs the heading. Look again, then go on from the belief (the corrections
             # return the robot toward the axis); only a marker not seen for several corrections is turned to face.
@@ -721,7 +735,7 @@ class G1Operations:
     def _expect(self, pose_before: list, correction) -> None:
         """The belief after a correction, from what the table says it does (the commands' own dead reckoning uses gains
         that are right on average for a walk, and far off for a step to the side with a turn)."""
-        forward, left, heading = expected(correction, self.held is not None)
+        forward, left, heading = expected(correction, self.held is not None, self.seen)
         x, y, yaw = pose_before
         self.pose = [
             x + forward * math.cos(yaw) - left * math.sin(yaw),
@@ -745,13 +759,27 @@ class G1Operations:
             vx, vy, seconds = _burst("lateral", ey)
             self.command(vx, vy, bias, seconds)
 
-    def _learn_creep(self, correction, elapsed_ms: int, turned: float) -> None:
-        """The creep, from a correction that turned the robot little: what the heading did between two fixes beyond
-        what the table says the correction does, per second not spent commanding."""
-        heading = expected(correction, self.held is not None)[2]
-        seconds = elapsed_ms / 1000 - sum(burst[3] for burst in correction)
-        if abs(heading) <= 0.06 and seconds >= 1.5:
-            rate = (turned - heading) / seconds
+    def _learn(self, correction, pose_before: list, elapsed_ms: int) -> None:
+        """Fold in what a correction did, from the belief before it and the belief after it (both were seen at the
+        marker): to what the table says it does, and to the creep. Observations far from the table's are left out
+        (a reading that jumped is not the robot's step)."""
+        x0, y0, yaw0 = pose_before
+        dx, dy = self.pose[0] - x0, self.pose[1] - y0
+        waited = elapsed_ms / 1000 - sum(burst[3] for burst in correction)
+        saw = (
+            dx * math.cos(yaw0) + dy * math.sin(yaw0),
+            -dx * math.sin(yaw0) + dy * math.cos(yaw0),
+            site_mod.wrap(self.pose[2] - yaw0) - self.creep * waited,
+        )
+        carrying = self.held is not None
+        row = expected(correction, carrying)
+        if all(abs(saw[i] - row[i]) <= limit for i, limit in enumerate((0.15, 0.15, 0.2))):
+            record = self.seen.setdefault((carrying, correction), [0, 0.0, 0.0, 0.0])
+            record[0] += 1
+            for i in range(3):
+                record[1 + i] += saw[i]
+        if abs(row[2]) <= 0.06 and waited >= 1.5:  # the creep, from what the heading did beyond what the table says
+            rate = (site_mod.wrap(self.pose[2] - yaw0) - row[2]) / waited
             self.creep = float(np.clip(0.7 * self.creep + 0.3 * rate, -0.03, 0.05))
 
     def _note_creep(self, before) -> None:
