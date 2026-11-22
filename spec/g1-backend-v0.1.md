@@ -47,6 +47,37 @@ contention among the backend's own processes; (3) the stand-in's `status` says w
 `slow_windows` is `(sim time, ratio, loop thread CPU s, loop thread run-queue wait s)`; (4) the executor, when started by
 hand rather than by `run_task` or the checks, is not niced: start it with `nice -n 10`.
 
+## The IMU
+
+`rt/lowstate` carries the pelvis IMU: quaternion, gyroscope, accelerometer. MuJoCo's own sensors are exact, and a heading
+taken from a perfect IMU would flatter the executor, so the stand-in spoils them as a MEMS IMU with an on-board attitude
+filter is spoiled ([`sim/imu.py`](../backends/unitree_g1/robolang_g1/sim/imu.py)):
+
+| | model | value |
+|---|---|---|
+| gyro bias | per axis, normal, drawn at start-up (what is left after turn-on calibration) | 1 sigma 0.002 rad/s (0.11 deg/s) |
+| gyro bias walk | random walk in the run | 2e-5 rad/s per root second |
+| gyro noise | white, per sample at 250 Hz | 0.002 rad/s rms (1.8e-4 rad/s per root hertz) |
+| quaternion yaw | the integral of the gyro's error about the vertical (no magnetometer: nothing pulls it back) | drifts at the bias: 0.12 rad a minute at 1 sigma |
+| quaternion roll, pitch | held by gravity: exact | |
+| accelerometer | white noise | 0.02 m/s^2 rms |
+
+`--imu-seed N` repeats a draw, `--imu-bias B` sets the gyro's z bias (rad/s; the stress check's worst case),
+`--ideal-imu` is the exact sensor (measurement only). The oracle has the true bias and yaw error; the executor cannot see them.
+
+**What the executor does with it** ([`heading.py`](../backends/unitree_g1/robolang_g1/heading.py), pure; the no-oracle
+test covers it). The belief heading is `the last marker fix's heading + the change in the IMU's yaw since that fix - bias x
+time`. The yaw is taken from the quaternion; nothing else (not the oracle, MuJoCo state or `SportModeState`) is read. A
+marker fix resets the belief, as before. **Bias:** the IMU's yaw drifts, so the tracker learns the gyro bias from the
+fixes themselves: over the time between two marker fixes the marker says how far the robot turned and the IMU says how far
+it thinks it did, and the difference per second is the bias (least squares over all pairs at least 4 s long, with a prior
+at zero, forgetting with a 300 s time constant, clipped at 0.01 rad/s; a rate above 0.02 rad/s between two fixes is taken
+for a bad fix and teaches nothing). While the pelvis is welded for arm work (the supported stance) the belief heading
+holds, since a welded pelvis cannot turn, and a pair of fixes across that interval is a pure bias measurement. The
+position between fixes is still dead-reckoned from the commands (measured gains), along the IMU's heading. Each `move`
+record has `heading: {source: "imu_yaw", fixes, bias_rad_s, jump_rad_max, jump_rad_mean}`, and each `localized` event
+`heading_jump_rad`: how far the fix moved the heading, which is the IMU's error since the last fix, as the markers saw it.
+
 ## Stance and stop
 
 `stance_model` is `free` by default: the policy alone, which comes to rest after a walk (about 0.13 m and 2 s of coast
@@ -97,10 +128,11 @@ have, an object without a marker, an `object_at` location without a region), S50
 and region limits, `do`, a task without a goal, and any condition other than `object_at`, `robot_at`, `holding`,
 `robot_ready` and their `and`, `or`, `not` (in a precondition or the goal).
 
-**`move r to L`.** The executor keeps a **belief pose** of the pelvis in the map: dead reckoning from the velocities it
-commands, replaced whenever a station marker is seen (the marker's map pose composed with the inverse of its observed
-pose; a solution whose vertical disagrees with the IMU's is the wrong one of the two a planar marker allows, and is
-ignored). The walking stand-in turns in place only by a *shuffle* (alternating sideways commands, each with a yaw rate),
+**`move r to L`.** The executor keeps a **belief pose** of the pelvis in the map, replaced whenever a station marker is
+seen (the marker's map pose composed with the inverse of its observed pose; a solution whose vertical disagrees with the
+IMU's is the wrong one of the two a planar marker allows, and is ignored). Between fixes the **position** is dead
+reckoning from the velocities it commands, taken along the heading the robot had while the command ran, and the
+**heading** is the IMU's ("The IMU", below), not the commanded yaw rates'. The walking stand-in turns in place only by a *shuffle* (alternating sideways commands, each with a yaw rate),
 takes a step only when a command lasts about 0.3 s, and ignores commands smaller than about 0.3, so a move is: turn to face
 the approach point (0.5 m before the station, facing it), walk in legs with a look between them, turn to the station's
 heading, find the station marker (a scan by turning in place if it is not in view; **S517** if not seen within 70 s), then

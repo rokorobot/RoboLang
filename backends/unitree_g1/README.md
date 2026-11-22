@@ -4,7 +4,9 @@ The Unitree G1 humanoid in MuJoCo, behind Unitree's own SDK. **Simulation only.*
 [0046](../../spec/decisions/0046-humanoid-backend-unitree-g1.md): phase 1 is the stand-in and the harness (P1-P6);
 phase 2 is the **executor** (`move`, `grasp`, `place`, `wait for`, the biped's stop, run records; checks E1-E7), phase 3
 the **verdicts**: preconditions and the goal decided from observations (S101, S102, S301, S302, `SUCCEEDED`; checks
-O1-O7). Nothing here can reach a real robot: the guard refuses DDS domain 0, any interface
+O1-O7). Two prerequisites of the phase 4 acceptance run: `move`'s heading between marker fixes comes from the IMU, and
+the stand-in keeps pace with real time on a loaded 4-CPU host
+([evidence](../../docs/evidence/g1-phase4-prereqs.md)). Nothing here can reach a real robot: the guard refuses DDS domain 0, any interface
 but loopback, and anything that does not answer as the simulator.
 
 ## Run it
@@ -28,7 +30,9 @@ MUJOCO_GL=egl python -m robolang_g1.run_task bench/reference/e_pick_place.rob --
     --bind r=robot_1 --bind box=box_1 --bind src=loc_a --bind dst=loc_b --out record.json   # exit 0: SUCCEEDED
 ```
 
-**One stand-in at a time**: two on one DDS domain mix their `lowstate`, frames and commands.
+**One stand-in at a time**: two on one DDS domain mix their `lowstate`, frames and commands. The stand-in is paced to real
+time, so **start the executor at a lower priority** (`nice -n 10`; `run_task` and the checks do) and keep the host's other
+work off the stand-in's CPUs: a run is `realtime_valid` only if every second is within 5% of real time.
 
 Assets go to `${G1_ASSETS:-$HOME/.cache/robolang-g1}` (about 200 MB with the CycloneDDS build), each with its licence.
 The fetch script is idempotent and prints a versions JSON. Use a virtual environment; set `PYTHON` to its interpreter
@@ -42,6 +46,8 @@ if you do not activate it. It needs `git`, `cmake`, a C compiler and `python3-de
 | `scripts/fetch_assets.sh` | pinned fetch of unitree_mujoco, unitree_rl_lab, mujoco_menagerie, unitree_rl_gym, unitree_sdk2_python; CycloneDDS build |
 | `robolang_g1/sim/standin.py` | the stand-in process: MuJoCo paced to real time, `rt/lowstate`, `rt/arm_sdk`, `rt/dex3/*`, RPC `sport` and `robolang_sim`, head camera, oracle |
 | `robolang_g1/sim/policy.py` | the whole-body walking policy (ONNX, 50 Hz) |
+| `robolang_g1/sim/imu.py` | the IMU `rt/lowstate` carries: MuJoCo's exact sensor plus a gyro bias (turn-on and random walk), noise and a drifting yaw; `--imu-seed`, `--imu-bias` |
+| `robolang_g1/sim/fastdds.py` | `rt/lowstate` and the hand states published from pre-serialized byte buffers (the same bytes as the SDK writes, 17 times cheaper) |
 | `robolang_g1/sim/scene.py` | the scene from a **site file** (floor, tables, objects with ArUco markers, stations) and the head camera |
 | `robolang_g1/sim/stance.py` | what the robot does when it stands still: `free` (default) or `supported` |
 | `robolang_g1/guard.py` | the simulation guard (S501) |
@@ -50,6 +56,7 @@ if you do not activate it. It needs `git`, `cmake`, a C compiler and `python3-de
 | `robolang_g1/site.py` | the site file, `robolang-g1-site/2` (`/1` still loads) |
 | `robolang_g1/kinematics.py`, `perception.py` | the robot's own kinematic model, damped-least-squares IK; ArUco poses in the pelvis frame |
 | `robolang_g1/ops.py`, `executor.py`, `cli.py` | what is done to the robot (and the observation snapshots); the run, the stop, the verdicts and the record; the command line |
+| `robolang_g1/heading.py` | the belief heading between station-marker fixes: the last fix's plus the IMU's change in yaw, with the gyro bias learned from pairs of fixes (pure: no DDS, no ground truth) |
 | `robolang_g1/response.py` | what each burst of velocity command does to a standing robot (measured, empty and loaded) and `plan_correction`, which `move`'s last centimetres use (pure: no DDS, no ground truth) |
 | `robolang_g1/observe.py` | verdicts from observations: `object_at`, `holding`, `robot_at`, `robot_ready`, three-valued logic, `@verify`, the Core outcome (pure: no DDS, no ground truth) |
 | `robolang_g1/phase2.py`, `phase3.py`, `run_task.py` | checks E1-E7 and O1-O7 (they read the oracle; the executor never does); start a stand-in and run one task |
@@ -60,15 +67,17 @@ if you do not activate it. It needs `git`, `cmake`, a C compiler and `python3-de
 `python -m robolang_g1.sim.standin --site SITE --run-dir DIR [--oracle PATH] [--stance free|supported]`, on DDS domain
 1, interface `lo`, both fixed. The module docstring is the interface description; the short version:
 
-* `rt/lowstate` at 250 Hz. **Simulation time** is in `tick` (ms), in the identity API (`sim_time`) and in the camera
-  frame's JSON. `LocoClient` works: `SetVelocity` (with `duration`), `GetFsmId`, `SetFsmId`. **`Damp`, and every other
+* `rt/lowstate` at 250 Hz. **Its IMU is not ideal**: the gyro has a bias (drawn at start-up, about 0.11 deg/s one sigma)
+  that wanders, and noise, and the quaternion's yaw drifts with them, as a MEMS IMU's does with no magnetometer
+  (`sim/imu.py`; roll and pitch stay right). **Simulation time** is in `tick` (ms), in the identity API (`sim_time`) and
+  in the camera frame's JSON. `LocoClient` works: `SetVelocity` (with `duration`), `GetFsmId`, `SetFsmId`. **`Damp`, and every other
   state change except Start (500), is refused with code 7400**: the stand-in never collapses the robot.
 * `rt/arm_sdk` blends joints 12-28 over the walking controller by the weight in `motor_cmd[29].q`; the Dex3 hands take
   `rt/dex3/{left,right}/cmd` and publish `.../state`. `robolang_sim` also attaches an object to a hand (a MuJoCo weld,
   U7), switches the stance (`SetStance`), and counts the commands it receives (`status`). Started with `--test-hooks` it
   also answers a push on the torso, for the fall test; the executor never calls it.
-* The head camera (640x480, 5 Hz) is rendered on its own thread from a copy of the state. Frames: `DIR/head/latest.png`
-  and `latest.json`. Read the JSON, then the PNG, then the JSON again; keep the frame if both name the same `frame`.
+* The head camera (640x480, 5 Hz) is rendered on its own thread (nice 19: it yields to the physics loop) from a copy of
+  the state. Frames: `DIR/head/latest.png` and `latest.json`. Read the JSON, then the PNG, then the JSON again; keep the frame if both name the same `frame`.
 * `--oracle PATH` writes ground truth (poses, marker positions, a fallen flag) for the harness. Nothing else reads
   MuJoCo state; the backend never will.
 

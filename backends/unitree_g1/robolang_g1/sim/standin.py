@@ -6,6 +6,8 @@ What it serves, on DDS domain 1 and the loopback interface only (both fixed):
 
 * `rt/lowstate` (unitree_hg `LowState_`) at 250 Hz: joint q, dq and torque for the 29 body motors,
   the pelvis IMU, and `tick` = SIMULATION time in milliseconds (the robot's `tick` is its own millisecond counter).
+  The IMU is not MuJoCo's exact sensor: a gyro bias, noise and a drifting yaw (`imu.py`). The message is serialized
+  once and its changing fields patched in a buffer (`fastdds.py`): the SDK's own bytes, for a twentieth of the CPU.
 * `rt/arm_sdk` (`LowCmd_`) in: the weight is `motor_cmd[29].q`; joints 12-28 (waist and arms) are blended over the
   stance's targets as on the robot: torque = (1-w) x its own PD + w x (kp (q* - q) + kd (dq* - dq) + tau). The last
   command stays in force if the publisher stops (the arms hold where they are).
@@ -36,7 +38,9 @@ integrates a torque explicitly, which is stable only for dt x kd / I < 2, and wi
 arm joints of inertia I down to 0.011 kg m^2 that is 4.5 at dt 0.005 (1.8 at 0.002). At 0.005 the arm torques chatter
 between their limits (64% of steps saturated at rest) and nothing downstream is reproducible; see
 docs/evidence/g1-phase1-harness.md. The loop measures its own lag (`status`): the overall ratio and the worst
-one-second ratio.
+one-second ratio, and for a second below 0.95 whether the loop thread was computing or waiting for a CPU. The camera
+thread runs at nice 19 and the executor at nice 10 (harness.YIELD_NICE), so that the loop, at nice 0, is never queued
+behind them (docs/evidence/g1-phase4-prereqs.md).
 """
 from __future__ import annotations
 
