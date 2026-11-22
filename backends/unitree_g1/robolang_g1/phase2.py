@@ -893,6 +893,11 @@ def check_move_stress(ctx: Ctx, arrivals: int = 20, carry: bool = False, creep: 
                 "sim_s": round((t1 - t0) / 1000, 1), "wall_s": round(time.monotonic() - wall0, 1),
                 "servo_looks": len((details or {}).get("iterations", [])),
                 "events": _event_counts(ops.events),
+                # what the heading tracker has learned so far (the executor's own numbers) beside the IMU's true bias
+                # and yaw error (the oracle's: the executor cannot see them)
+                "heading": {**ops.tracker.summary(), "creep_rad_s": round(ops.creep, 4),
+                            "creep_imu_reads": ops.creep_reads},
+                "imu_truth": {k: v for k, v in _sample_at(samples, t1 / 1000).get("imu", {}).items() if k != "seed"},
                 "trace": [first, len(trace)],
             })
             m = moves[-1]
