@@ -57,6 +57,8 @@ on:
       - "spec/robolang-v*.md"
       - "docs/language-reference.md"
       - "bench/**"
+      - "!bench/**/*.md"        # docs do not change scores
+      - "bench/prompt*.md"      # but the prompts do
       - ".github/workflows/benchmark.yml"
   schedule:
     - cron: "0 6 * * 1"
