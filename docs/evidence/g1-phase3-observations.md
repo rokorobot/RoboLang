@@ -10,7 +10,7 @@ passes, the harness (P1-P6) passes, `pytest` 161 passed, `ruff` clean.** `w_carr
 `SUCCEEDED` from observations alone (6 of 6 in each run), the goal failures end S301 and S302, the preconditions S101 and S102
 before the first command, and O6's agreement with the oracle is 34 of 34 with no false success in either run. What is not clean:
 the carry pose's measured clearance is 1.6-2.2 cm, not 2 cm and more (planned 2.1 cm in the model; "Deviations"), one stand-in run in
-each of phase 2 and phase 3 run 1 was not real-time valid (host load, not counted), and moves vary from 24 to 200 s.
+each of phase 2 and phase 3 run 1 was not real-time valid (host load, not counted), and moves vary from 24 to 200 s. (A later change, "Shelf move convergence" below, makes `move` converge 20 of 20 at both stations, with and without the box, and ends the 150-200 s moves.)
 
 
 ## What the owner decided on 2026-11-21, and what was built
@@ -315,7 +315,7 @@ Phase 2's E1 tour and the phase 3 runs below are the other evidence; the full-su
 
 **What changed** (all in [`ops.py`](../../backends/unitree_g1/robolang_g1/ops.py) and the new [`response.py`](../../backends/unitree_g1/robolang_g1/response.py)):
 
-* `move`'s last centimetres are a servo on a **measured response table** (35 corrections empty, 34 loaded: bursts and pairs of bursts,
+* `move`'s last centimetres are a servo on a **measured response table** (34 corrections empty, 33 loaded: bursts and pairs of bursts,
   what each did to the pose in forward, left and heading, from the lab trials and the servo's own corrections;
   [`build_response_table.py`](g1-phase3/build_response_table.py) rebuilds `response.py`). A correction that does not do the same twice
   (spread above 2.5 cm forward, 3 cm sideways or 0.04 rad) is not in it. `plan_correction` picks the first of two corrections that leave
@@ -339,6 +339,35 @@ Phase 2's E1 tour and the phase 3 runs below are the other evidence; the full-su
 of the shelf with a correction that moved a loaded robot 0.00 m (S504), `replan` abandoning the marker search after two blind sidesteps
 (S517 at 47 s, oracle 61 cm), and `IndexError` naming a repeated wait. A first version with every correction in the table and a servo band
 of 0.065 rad passed 20 of 20 empty but dithered 8-10 looks on small errors.
+
+**A harsher stress: more heading creep.** The CI's creep is not measured here, and its failures looked like a larger one (the CI's belief heading jumped
+0.06-0.1 rad at each marker fix). The stand-in's test hook can put a steady torque about the vertical on the torso (`--creep N` of the stress check). Heading
+rate of the standing robot over 20 s against the torque ([`exp_creep_torque.py`](g1-phase3/exp_creep_torque.py), empty hands; the stance's own
+is 0.0066): 0.5 N m 0.0131 rad/s, 1.0 N m 0.0207, 1.5 N m 0.0309, 2.0 N m 0.0398 (linear above the stance's own, 0.017 rad/s per N m); 3 N m
+and more are not creep any more (the robot takes recovery steps of 0.6 m in 20 s and turns erratically), and 1 N m already makes it step
+0.3 m in 20 s. The stress below uses **0.5 N m, about twice the stance's creep**, with the box in the hand, 8 arrivals (a failed move is recorded and the next one starts from
+wherever the robot is, so the failures are not independent):
+
+| 0.5 N m, box in hand | shelf arrivals | bench arrivals | failures |
+|---|---|---|---|
+| before | **0/8** (5 S517, 3 S504) | **1/8** (7 S504) | 15 of 17 moves failed (S504 at 200-310 s, S517 with the robot 1.3-1.8 m off) |
+| after | **6/8** (2 S517) | **8/8** | 2 of 17 moves failed |
+
+The two S517 after are not in the servo: with the torque the *walk* turns the robot 0.045 rad/s (three times the standing creep), `walk_to`
+dead-reckons its heading from the commands (0.7 x the yaw rate) and sees no marker for the legs in between, the belief is 0.4 rad off, and
+the robot is lost before the approach point (oracle: heading -0.36 at 23 s, -0.67 at 36 s, belief +0.02). So the emulation is harsher on the
+walk than the stance's own creep is (no walking number exists for the CI), and it shows the next weakness: **proposal**, not done here: take the
+belief's heading between marker fixes from the IMU's yaw (lowstate, the robot's own: the change since the last fix) instead of the dead
+reckoning, which would also correct the belief through every blind sidestep and leg; it changes `move`'s approach for every station and
+needs the stress, phase 2 and phase 3 again.
+
+**Verification** (after the change): `python -m pytest -q backends/unitree_g1/tests` 171 passed, 7 skipped (new: `test_response.py`, 17 tests of
+the tables, the plan on a noisy plant, the learning); `MUJOCO_GL=egl python -m robolang_g1.phase2 --out /tmp/p2.json` exit 0, E1-E7 pass
+(21 min, real-time valid in every run; the E1 tours stopped at 0.2-3.7 cm and 0.020-0.053 rad); `MUJOCO_GL=egl python -m robolang_g1.phase3
+--out /tmp/p3.json` exit 0, O1-O7 pass (30 min; `o3_e_pick_place_1` and `_2`, the runs that failed in the CI, ended `SUCCEEDED`, their
+shelf moves 90 and 79 s; one run, `o3_w_carry_hold_1`, had 2 stalls and is not real-time valid: host load, it succeeded);
+`python -m ruff check .` clean. The stress runs above are real-time valid except the loaded run after (2 stalls, worst second at 0.16 of
+real time, a host slowdown): its arrival counts and errors do not depend on it, its times are if anything pessimistic.
 
 ## Deviations
 
@@ -369,6 +398,13 @@ of 0.065 rad passed 20 of 20 empty but dithered 8-10 looks on small errors.
 11. **Real-time invalid runs happened** (host load average 17-131 while the checks ran; the stand-in is paced to real time on a
     shared machine): one in phase 2's final run (`e1_tour_1`) and one in phase 3 run 1 (`o4_no_place`), listed above and not
     counted; earlier runs lost more of them.
+12. **The shelf-move fix adds a stress check and a test hook**: `phase2 --only move-stress` (also `--carry`: the box in hand, the CI's
+    case, which the brief's protocol does not have; the brief's protocol is the empty-hand run) and, on `--test-hooks` stand-ins only,
+    a `torque` argument of the push (`API_PUSH`): a steady torque about the vertical on the torso, to dial in a larger heading creep
+    (see "A harsher stress" in "Shelf move convergence"). The executor does not know of either; only the check reads the oracle.
+13. **The response tables were measured here, on aarch64.** The CI's x86_64 may differ; the servo re-learns what it sees (the creep, and
+    what each correction does), and the stop at the confirm limits and `robot_at` do not depend on the tables. Whether x86_64 now
+    converges is for the next CI run; this branch has not been run there.
 
 ## Open issues
 

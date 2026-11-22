@@ -1,0 +1,521 @@
+{
+  "checks": {
+    "move-stress": {
+      "pass": false,
+      "details": {
+        "protocol": "bench, then 8 x (shelf, bench): one stand-in, free stance, the oracle judges each, the box held throughout",
+        "grasp": {
+          "pass": true,
+          "carry_pose": {
+            "object_to_nearest_link_m": 0.0185,
+            "link": "right_hip_pitch_link",
+            "arm_deviation_rad": 0.06
+          }
+        },
+        "creep_torque_nm": 0.5,
+        "tolerance": {
+          "m": 0.05,
+          "rad": 0.1
+        },
+        "shelf": {
+          "arrivals": 8,
+          "pass": 0,
+          "sim_s": {
+            "min": 72.4,
+            "median": 79.2,
+            "max": 263.0,
+            "mean": 130.0
+          },
+          "worst_error_m": 1.8328,
+          "worst_error_rad": 1.3749
+        },
+        "bench": {
+          "arrivals": 8,
+          "pass": 1,
+          "sim_s": {
+            "min": 67.6,
+            "median": 223.4,
+            "max": 312.6,
+            "mean": 213.7
+          },
+          "worst_error_m": 0.5199,
+          "worst_error_rad": 0.4555
+        },
+        "moves": [
+          {
+            "n": 0,
+            "station": "bench",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0211,
+            "oracle_error_rad": 0.075,
+            "sim_s": 80.9,
+            "wall_s": 80.9,
+            "servo_looks": 10,
+            "events": {
+              "localized": 25
+            },
+            "trace": [
+              0,
+              48
+            ]
+          },
+          {
+            "n": 1,
+            "station": "shelf",
+            "pass": false,
+            "failure": {
+              "code": "S517",
+              "message": "station marker 21 was not seen after four approaches"
+            },
+            "oracle_error_m": 1.8328,
+            "oracle_error_rad": 1.3103,
+            "sim_s": 76.5,
+            "wall_s": 76.5,
+            "servo_looks": 0,
+            "events": {
+              "localized": 2,
+              "sidestep": 5,
+              "replan": 4
+            },
+            "trace": [
+              51,
+              92
+            ]
+          },
+          {
+            "n": 2,
+            "station": "bench",
+            "pass": false,
+            "failure": {
+              "code": "S504",
+              "message": "did not converge on station bench in time (errors forward, left, yaw, last 14 looks: [[-0.013, -0.052, -0.094], [-0.126, -0.051, -0.092], [0.029, -0.072, -0.146], [0.034, -0.092, -0.081], [-0.023, -0.054, -0.098], [0.089, -0.127, -0.211], [0.109, 0.001, -0.09], [-0.003, 0.019, -0.079], [-0.109, 0.024, -0.076], [0.008, -0.028, -0.155], [0.013, -0.014, -0.084], [-0.098, -0.02, -0.056], [0.012, -0.047, -0.139], [0.017, -0.035, -0.095]])"
+            },
+            "oracle_error_m": 0.5154,
+            "oracle_error_rad": 0.0976,
+            "sim_s": 223.4,
+            "wall_s": 223.4,
+            "servo_looks": 0,
+            "events": {
+              "localized": 58
+            },
+            "trace": [
+              92,
+              225
+            ]
+          },
+          {
+            "n": 3,
+            "station": "shelf",
+            "pass": false,
+            "failure": {
+              "code": "S517",
+              "message": "station marker 21 was not seen after four approaches"
+            },
+            "oracle_error_m": 1.3632,
+            "oracle_error_rad": 1.3326,
+            "sim_s": 72.4,
+            "wall_s": 72.4,
+            "servo_looks": 0,
+            "events": {
+              "localized": 2,
+              "sidestep": 5,
+              "replan": 4
+            },
+            "trace": [
+              225,
+              264
+            ]
+          },
+          {
+            "n": 4,
+            "station": "bench",
+            "pass": false,
+            "failure": {
+              "code": "S504",
+              "message": "did not converge on station bench in time (errors forward, left, yaw, last 14 looks: [[0.026, 0.011, -0.174], [0.025, 0.014, -0.093], [-0.085, 0.012, -0.07], [0.029, -0.008, -0.16], [0.032, -0.012, -0.098], [-0.078, -0.001, -0.082], [0.022, -0.058, -0.196], [0.103, -0.041, 0.026], [-0.109, 0.062, -0.194], [0.031, 0.046, -0.226], [0.171, 0.026, -0.258], [0.31, 0.001, -0.29], [-0.151, 0.463, -0.89], [-0.371, 0.037, -0.448]])"
+            },
+            "oracle_error_m": 0.1915,
+            "oracle_error_rad": 0.4555,
+            "sim_s": 215.4,
+            "wall_s": 215.4,
+            "servo_looks": 0,
+            "events": {
+              "localized": 40,
+              "rejected": 2,
+              "reacquire": 9
+            },
+            "trace": [
+              264,
+              397
+            ]
+          },
+          {
+            "n": 5,
+            "station": "shelf",
+            "pass": false,
+            "failure": {
+              "code": "S504",
+              "message": "did not converge on station shelf in time (errors forward, left, yaw, last 14 looks: [[-0.029, 0.096, -0.089], [-0.032, 0.098, -0.089], [-0.034, 0.094, -0.079], [-0.019, 0.098, -0.153], [-0.02, 0.093, -0.149], [-0.032, 0.091, -0.086], [-0.103, 0.039, -0.048], [0.005, 0.017, -0.113], [0.012, 0.025, -0.079], [0.013, 0.022, -0.098], [-0.094, 0.024, -0.084], [0.019, -0.008, -0.166], [0.026, -0.005, -0.084], [0.027, 0.003, -0.111]])"
+            },
+            "oracle_error_m": 0.02,
+            "oracle_error_rad": 0.1167,
+            "sim_s": 263.0,
+            "wall_s": 263.0,
+            "servo_looks": 0,
+            "events": {
+              "localized": 82,
+              "blocked": 1
+            },
+            "trace": [
+              397,
+              564
+            ]
+          },
+          {
+            "n": 6,
+            "station": "bench",
+            "pass": false,
+            "failure": {
+              "code": "S504",
+              "message": "did not converge on station bench in time (errors forward, left, yaw, last 14 looks: [[-0.166, 0.008, -0.107], [-0.001, -0.007, -0.147], [-0.006, -0.024, -0.096], [-0.114, -0.025, -0.082], [-0.008, -0.041, -0.172], [0.007, -0.055, -0.08], [-0.102, -0.039, -0.063], [0.013, -0.08, -0.142], [0.014, -0.079, -0.081], [-0.006, -0.046, -0.12], [-0.005, -0.061, -0.088], [-0.113, -0.062, -0.091], [0.002, -0.085, -0.179], [0.014, -0.079, -0.096]])"
+            },
+            "oracle_error_m": 0.5199,
+            "oracle_error_rad": 0.1,
+            "sim_s": 202.2,
+            "wall_s": 202.2,
+            "servo_looks": 0,
+            "events": {
+              "localized": 64
+            },
+            "trace": [
+              564,
+              691
+            ]
+          },
+          {
+            "n": 7,
+            "station": "shelf",
+            "pass": false,
+            "failure": {
+              "code": "S517",
+              "message": "station marker 21 was not seen after four approaches"
+            },
+            "oracle_error_m": 1.3768,
+            "oracle_error_rad": 1.3183,
+            "sim_s": 73.0,
+            "wall_s": 73.0,
+            "servo_looks": 0,
+            "events": {
+              "localized": 2,
+              "sidestep": 5,
+              "replan": 4
+            },
+            "trace": [
+              691,
+              730
+            ]
+          },
+          {
+            "n": 8,
+            "station": "bench",
+            "pass": false,
+            "failure": {
+              "code": "S504",
+              "message": "did not converge on station bench in time (errors forward, left, yaw, last 14 looks: [[0.005, 0.101, -0.096], [0.005, 0.099, -0.098], [-0.104, 0.105, -0.065], [-0.099, 0.105, -0.073], [0.026, 0.076, -0.128], [0.029, 0.077, -0.125], [0.028, 0.08, -0.129], [0.033, 0.078, -0.129], [0.031, 0.084, -0.084], [0.032, 0.078, -0.081], [-0.083, 0.084, -0.066], [-0.083, 0.082, -0.052], [0.012, 0.038, -0.179], [0.014, 0.041, -0.089]])"
+            },
+            "oracle_error_m": 0.0384,
+            "oracle_error_rad": 0.0967,
+            "sim_s": 312.6,
+            "wall_s": 312.6,
+            "servo_looks": 0,
+            "events": {
+              "localized": 91,
+              "blocked": 2
+            },
+            "trace": [
+              730,
+              926
+            ]
+          },
+          {
+            "n": 9,
+            "station": "shelf",
+            "pass": false,
+            "failure": {
+              "code": "S504",
+              "message": "did not converge on station shelf in time (errors forward, left, yaw, last 14 looks: [[-0.194, -0.039, -0.092], [0.053, -0.053, -0.123], [0.06, -0.061, -0.089], [-0.046, -0.058, -0.075], [-0.083, -0.014, -0.072], [0.009, -0.074, -0.153], [0.02, -0.089, -0.078], [-0.003, -0.043, -0.118], [-0.009, -0.078, -0.082], [-0.099, -0.023, -0.088], [0.029, -0.034, -0.194], [0.105, -0.015, 0.028], [-0.142, 0.09, -0.241], [-0.15, -0.072, -0.329]])"
+            },
+            "oracle_error_m": 0.3916,
+            "oracle_error_rad": 0.3346,
+            "sim_s": 198.6,
+            "wall_s": 198.6,
+            "servo_looks": 0,
+            "events": {
+              "localized": 52,
+              "sidestep": 1,
+              "rejected": 2,
+              "reacquire": 1
+            },
+            "trace": [
+              926,
+              1049
+            ]
+          },
+          {
+            "n": 10,
+            "station": "bench",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0183,
+            "oracle_error_rad": 0.0355,
+            "sim_s": 67.6,
+            "wall_s": 67.6,
+            "servo_looks": 3,
+            "events": {
+              "localized": 14
+            },
+            "trace": [
+              1049,
+              1084
+            ]
+          },
+          {
+            "n": 11,
+            "station": "shelf",
+            "pass": false,
+            "failure": {
+              "code": "S504",
+              "message": "did not converge on station shelf in time (errors forward, left, yaw, last 14 looks: [[-0.206, -0.033, -0.034], [0.032, -0.069, -0.145], [0.04, -0.063, -0.082], [0.034, -0.069, -0.111], [0.038, -0.066, -0.087], [0.035, -0.067, -0.113], [0.044, -0.055, -0.087], [-0.074, -0.044, -0.051], [0.014, -0.103, -0.144], [0.027, -0.1, -0.094], [-0.044, -0.08, -0.103], [-0.114, 0.01, -0.086], [0.003, -0.016, -0.172], [0.003, -0.014, -0.077]])"
+            },
+            "oracle_error_m": 0.4974,
+            "oracle_error_rad": 0.0857,
+            "sim_s": 202.0,
+            "wall_s": 202.0,
+            "servo_looks": 0,
+            "events": {
+              "localized": 61,
+              "reacquire": 3
+            },
+            "trace": [
+              1084,
+              1216
+            ]
+          },
+          {
+            "n": 12,
+            "station": "bench",
+            "pass": false,
+            "failure": {
+              "code": "S504",
+              "message": "did not converge on station bench in time (errors forward, left, yaw, last 14 looks: [[-0.088, -0.002, -0.05], [0.018, -0.05, -0.104], [-0.098, -0.036, -0.105], [0.028, -0.062, -0.176], [0.038, -0.059, -0.09], [-0.073, -0.05, -0.07], [0.015, -0.097, -0.177], [0.028, -0.103, -0.088], [0.013, -0.082, -0.101], [-0.072, -0.005, -0.099], [-0.075, 0.003, -0.174], [-0.066, 0.002, -0.086], [-0.04, -0.011, -0.167], [-0.04, -0.01, -0.092]])"
+            },
+            "oracle_error_m": 0.4546,
+            "oracle_error_rad": 0.0936,
+            "sim_s": 214.8,
+            "wall_s": 214.8,
+            "servo_looks": 0,
+            "events": {
+              "localized": 65
+            },
+            "trace": [
+              1216,
+              1351
+            ]
+          },
+          {
+            "n": 13,
+            "station": "shelf",
+            "pass": false,
+            "failure": {
+              "code": "S517",
+              "message": "station marker 21 was not seen after four approaches"
+            },
+            "oracle_error_m": 1.3075,
+            "oracle_error_rad": 1.3306,
+            "sim_s": 75.0,
+            "wall_s": 75.0,
+            "servo_looks": 0,
+            "events": {
+              "localized": 2,
+              "sidestep": 5,
+              "replan": 4
+            },
+            "trace": [
+              1351,
+              1392
+            ]
+          },
+          {
+            "n": 14,
+            "station": "bench",
+            "pass": false,
+            "failure": {
+              "code": "S504",
+              "message": "did not converge on station bench in time (errors forward, left, yaw, last 14 looks: [[0.019, -0.03, -0.159], [0.027, -0.017, -0.084], [0.029, -0.021, -0.103], [-0.082, -0.011, -0.083], [0.013, -0.055, -0.181], [0.019, -0.06, -0.081], [0.021, -0.065, -0.105], [0.026, -0.057, -0.138], [0.018, -0.059, -0.164], [0.018, -0.053, -0.093], [0.021, -0.063, -0.11], [0.02, -0.057, -0.071], [0.021, -0.061, -0.094], [0.019, -0.053, -0.126]])"
+            },
+            "oracle_error_m": 0.0596,
+            "oracle_error_rad": 0.1293,
+            "sim_s": 225.8,
+            "wall_s": 225.8,
+            "servo_looks": 0,
+            "events": {
+              "localized": 65,
+              "blocked": 1
+            },
+            "trace": [
+              1392,
+              1535
+            ]
+          },
+          {
+            "n": 15,
+            "station": "shelf",
+            "pass": false,
+            "failure": {
+              "code": "S517",
+              "message": "station marker 21 was not seen after four approaches"
+            },
+            "oracle_error_m": 1.6924,
+            "oracle_error_rad": 1.3749,
+            "sim_s": 79.2,
+            "wall_s": 79.2,
+            "servo_looks": 0,
+            "events": {
+              "localized": 2,
+              "sidestep": 5,
+              "replan": 4
+            },
+            "trace": [
+              1535,
+              1576
+            ]
+          },
+          {
+            "n": 16,
+            "station": "bench",
+            "pass": false,
+            "failure": {
+              "code": "S504",
+              "message": "did not converge on station bench in time (errors forward, left, yaw, last 14 looks: [[-0.109, -0.034, -0.041], [0.004, -0.044, -0.094], [-0.119, -0.056, -0.084], [-0.009, -0.087, -0.17], [0.003, -0.077, -0.084], [-0.015, -0.08, -0.103], [-0.082, -0.029, -0.124], [-0.076, -0.031, -0.087], [-0.067, -0.033, -0.165], [-0.07, -0.046, -0.078], [-0.071, -0.025, -0.165], [-0.071, -0.036, -0.088], [-0.022, -0.031, -0.15], [-0.02, -0.054, -0.078]])"
+            },
+            "oracle_error_m": 0.4778,
+            "oracle_error_rad": 0.0905,
+            "sim_s": 247.8,
+            "wall_s": 247.8,
+            "servo_looks": 0,
+            "events": {
+              "localized": 68
+            },
+            "trace": [
+              1576,
+              1729
+            ]
+          }
+        ],
+        "realtime_ratio": null
+      },
+      "elapsed_s": 2866.6
+    }
+  },
+  "stance_model": "free",
+  "versions": {
+    "arch": "aarch64",
+    "python": "3.11.2",
+    "assets": {
+      "unitree_mujoco": "1eb6642e3f3fdfb7fb13a9794fd6a2dd93ea0e7d",
+      "unitree_rl_lab": "4960b84732b0c2ec593dccbfe963fda1bcd7b1e3",
+      "mujoco_menagerie": "370c43965323c0944b433b202aac5058b5f907a9",
+      "unitree_rl_gym": "276801e46c5d433564f24658bac64f254b7d2d4b",
+      "unitree_sdk2_python": "814556d15970dd2ecf1c9984e845ca02ab07e206",
+      "cyclonedds_c": "abb064e35b6fbc79554c255ff8b371333e87b029"
+    },
+    "packages": {
+      "mujoco": "4.0.1",
+      "onnxruntime": "1.32.0",
+      "numpy": "2.4.6",
+      "opencv-python-headless": "5.1.0.95",
+      "cyclonedds": "0.10.2",
+      "unitree_sdk2py": "1.0.1"
+    }
+  },
+  "arch": "aarch64",
+  "go": false,
+  "realtime_valid_all_runs": true,
+  "elapsed_s": 2866.6,
+  "runs": [
+    {
+      "scenario": "move_stress_carry_creep0.5",
+      "realtime_ratio": 0.9999,
+      "worst_second_ratio": 0.9962,
+      "stalls": 0,
+      "realtime_valid": true,
+      "step_compute_ms": {
+        "budget": 2.0,
+        "mean": 0.543,
+        "p99": 1.453,
+        "max": 18.4,
+        "over_budget": 0.0019
+      },
+      "gc": [
+        0.12,
+        0.0,
+        20.65
+      ],
+      "slow_steps": [
+        [
+          3.46,
+          34.0,
+          0
+        ],
+        [
+          601.458,
+          36.0,
+          0
+        ],
+        [
+          878.87,
+          24.2,
+          0
+        ],
+        [
+          1194.872,
+          22.6,
+          0
+        ],
+        [
+          1291.672,
+          22.2,
+          0
+        ],
+        [
+          1561.872,
+          22.5,
+          0
+        ],
+        [
+          1793.07,
+          24.4,
+          0
+        ],
+        [
+          2283.46,
+          26.5,
+          0
+        ],
+        [
+          2516.08,
+          23.4,
+          0
+        ],
+        [
+          2691.47,
+          24.5,
+          0
+        ]
+      ],
+      "failure": null,
+      "record": "move_stress_carry_creep0.5/record.json"
+    }
+  ]
+}
