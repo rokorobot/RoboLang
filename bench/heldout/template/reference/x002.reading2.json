@@ -1,0 +1,1 @@
+{ "task": "deliver", "bindings": { "r": "rover", "o": "toolbox_blue", "src": "shelf", "dst": "workbench" } }

@@ -15,6 +15,7 @@ first run.
 |---|---|---|
 | `README.md` | yes | these rules |
 | `BRIEF.md` | yes | the brief for the people who write the requests |
+| `template/` | yes | the starting copy of the private repository: its README (every file format), worked examples, `PREREGISTRATION.md` |
 | `manifest.sha256` | yes, once frozen | SHA-256 of the frozen private files: proves what was frozen, and when, without showing it |
 | `PREREGISTRATION.md` | yes, once frozen | the targets, the models, the prompt and the date, fixed before the first run |
 | `private/` | **never** (gitignored) | a safety net only. Keep the real copy **outside the repo** |
@@ -25,7 +26,7 @@ with one backup. Never add it to an AI coding session, a cloud agent workspace o
 artifacts are visible, and agents can read everything in their workspace. Give access only to the owner and the
 person who checks the labels. Turn off AI features (code review, assistants) on that repository.
 
-Layout of the private repository:
+Start it from [`template/`](template/README.md): `cp -r bench/heldout/template RoboLang-heldout`. Layout:
 
 ```
 RoboLang-heldout/

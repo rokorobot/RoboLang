@@ -1,0 +1,19 @@
+{
+  "world_schema": "robolang.sim.world",
+  "world_schema_version": "1.1",
+  "locations": ["door", "workbench", "shelf", "charger"],
+  "robots": {
+    "rover": { "ready": true, "location": "charger", "gripper": true, "max_speed": [{ "value": "1", "unit": "m/s" }] },
+    "sweeper": { "ready": true, "location": "door", "gripper": false, "max_speed": [{ "value": "0.5", "unit": "m/s" }] }
+  },
+  "objects": {
+    "toolbox_red": { "present": true, "location": "shelf", "class": "toolbox" },
+    "toolbox_blue": { "present": true, "location": "shelf", "class": "toolbox" },
+    "drill": { "present": true, "location": "workbench", "class": "tool" }
+  },
+  "sensors": {
+    "rover_cam": { "robot": "rover", "available": false }
+  },
+  "events": [],
+  "tasks": {}
+}

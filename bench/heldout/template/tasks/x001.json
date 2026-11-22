@@ -1,0 +1,12 @@
+{
+  "id": "x001",
+  "source": "human",
+  "writer": "w0",
+  "prompt": "can rover grab the drill and leave it by the door, im picking it up later",
+  "world": "worlds/garage.json",
+  "group": "feasible",
+  "expect": { "decision": "program", "category": "none" },
+  "expected_goal": [["rl:thing:drill", "located_in", "rl:place:door"]],
+  "required_entities": ["rover"],
+  "tags": ["pick_place"]
+}
