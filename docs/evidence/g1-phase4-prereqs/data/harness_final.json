@@ -1,0 +1,470 @@
+{
+  "checks": {
+    "P1": {
+      "pass": true,
+      "details": {
+        "domain_0": {
+          "refused": true,
+          "code": "S501",
+          "reason": "DDS domain 0 is the real robot's domain; the simulation backend never uses it",
+          "dds_participant_created": false
+        },
+        "interface_eth0": {
+          "refused": true,
+          "code": "S501",
+          "reason": "network interface 'eth0' is not the loopback interface 'lo'",
+          "dds_participant_created": false
+        },
+        "identity_missing": {
+          "refused": true,
+          "code": "S501",
+          "reason": "no answer from the simulation identity API (robolang_sim) within 3.0 s: this is not the simulator",
+          "requests_received_by_the_robot": 0
+        },
+        "stand_in_accepted": {
+          "simulation": true,
+          "domain": 1,
+          "interface": "lo",
+          "sim_time": 0.8040000000000006,
+          "stance_model": "free",
+          "grasp_model": "weld_after_hand_close",
+          "head_camera_dir": "/code/results/final/harness.run/head"
+        },
+        "damp_refused": {
+          "code": 7400,
+          "still_standing": true,
+          "fsm_id_after": [
+            0,
+            500
+          ]
+        }
+      }
+    },
+    "P2": {
+      "pass": true,
+      "details": {
+        "runs": [
+          {
+            "set_velocity_code": 0,
+            "forward_m": 1.753,
+            "sideways_m": -0.079,
+            "heading_change_deg": -2.5,
+            "fallen": false,
+            "walked_s": 4.0,
+            "pass": true
+          },
+          {
+            "set_velocity_code": 0,
+            "forward_m": 1.738,
+            "sideways_m": -0.047,
+            "heading_change_deg": -2.1,
+            "fallen": false,
+            "walked_s": 4.0,
+            "pass": true
+          },
+          {
+            "set_velocity_code": 0,
+            "forward_m": 1.723,
+            "sideways_m": 0.018,
+            "heading_change_deg": -0.6,
+            "fallen": false,
+            "walked_s": 3.98,
+            "pass": true
+          }
+        ],
+        "command": "SetVelocity(0.5, 0, 0, 4.0)",
+        "frame": "robot heading at the start of each walk"
+      }
+    },
+    "P3": {
+      "pass": true,
+      "details": {
+        "runs": [
+          {
+            "stance_model": "free",
+            "settled": true,
+            "pass": true,
+            "coast_s": 2.07,
+            "coast_m": 0.144,
+            "torso_sway_cm_xyz": [
+              1.13,
+              0.06,
+              0.1
+            ],
+            "window_samples": 501,
+            "window_start_after_stop_s": 2.07
+          },
+          {
+            "stance_model": "free",
+            "settled": true,
+            "pass": true,
+            "coast_s": 2.45,
+            "coast_m": 0.113,
+            "torso_sway_cm_xyz": [
+              0.94,
+              0.12,
+              0.12
+            ],
+            "window_samples": 500,
+            "window_start_after_stop_s": 2.45
+          },
+          {
+            "stance_model": "free",
+            "settled": true,
+            "pass": true,
+            "coast_s": 2.35,
+            "coast_m": 0.125,
+            "torso_sway_cm_xyz": [
+              1.06,
+              0.12,
+              0.11
+            ],
+            "window_samples": 500,
+            "window_start_after_stop_s": 2.35
+          }
+        ],
+        "stance_model": "free",
+        "settled": "pelvis path <= 1 cm in 1 s, within 30 s of the stop; the sway window starts then"
+      }
+    },
+    "P4": {
+      "pass": true,
+      "details": {
+        "tracking_max_error_rad": 0.03,
+        "tracking_worst_joint": 22,
+        "tracking_tolerance_rad": 0.05,
+        "hand_tracking_max_error_rad": 0.0115,
+        "attach": {
+          "code": 0,
+          "object": "payload",
+          "hand": "right",
+          "relative_position": [
+            0.0901,
+            0.0,
+            -0.0
+          ]
+        },
+        "carry_walk": {
+          "walked_m": 2.15,
+          "payload_kg": 0.3,
+          "fallen": false,
+          "payload_attached": true,
+          "stood_again": true,
+          "arm_error_after_rad": 0.008
+        }
+      }
+    },
+    "P5": {
+      "pass": true,
+      "details": {
+        "approach": [
+          {
+            "range_m": 2.91,
+            "ahead_m": 1.55,
+            "left_m": -1.48,
+            "turn_deg": -25.4
+          },
+          {
+            "range_m": 1.28,
+            "ahead_m": 0.45,
+            "left_m": -0.13,
+            "turn_deg": 1.4
+          },
+          {
+            "range_m": 0.93,
+            "ahead_m": 0.07,
+            "left_m": -0.01,
+            "turn_deg": 2.7
+          }
+        ],
+        "frames": [
+          {
+            "frame": 398,
+            "sim_time": 79.6,
+            "ids": [
+              7
+            ],
+            "error_m": 0.0052,
+            "range_m": 0.928
+          },
+          {
+            "frame": 399,
+            "sim_time": 79.8,
+            "ids": [
+              7
+            ],
+            "error_m": 0.0052,
+            "range_m": 0.926
+          },
+          {
+            "frame": 400,
+            "sim_time": 80.0,
+            "ids": [
+              7
+            ],
+            "error_m": 0.007,
+            "range_m": 0.925
+          },
+          {
+            "frame": 401,
+            "sim_time": 80.2,
+            "ids": [
+              7
+            ],
+            "error_m": 0.0079,
+            "range_m": 0.925
+          },
+          {
+            "frame": 402,
+            "sim_time": 80.4,
+            "ids": [
+              7
+            ],
+            "error_m": 0.0077,
+            "range_m": 0.926
+          },
+          {
+            "frame": 403,
+            "sim_time": 80.6,
+            "ids": [
+              7
+            ],
+            "error_m": 0.0075,
+            "range_m": 0.927
+          }
+        ],
+        "range_m": 0.927,
+        "detected_frames": 6,
+        "median_error_m": 0.0073,
+        "max_error_m": 0.0079
+      }
+    },
+    "P6": {
+      "pass": true,
+      "details": {
+        "harness_ratio": 1.0,
+        "harness_wall_s": 76.6,
+        "lowstate_hz": 250.0,
+        "lowstate_tick_s_minus_sim_time_s": 0.01,
+        "stand_in": {
+          "sim_time": 80.72999999999325,
+          "wall_elapsed": 80.729,
+          "realtime_ratio": 1.0,
+          "worst_second_ratio": 0.9966,
+          "stalls": 0,
+          "slow_windows": [],
+          "step_compute_ms": {
+            "budget": 2.0,
+            "mean": 0.406,
+            "p99": 1.112,
+            "max": 4.6,
+            "over_budget": 0.0018
+          },
+          "gc": {
+            "collections": [
+              7,
+              1,
+              1
+            ],
+            "max_ms": [
+              0.1,
+              0.81,
+              13.43
+            ],
+            "slow_steps": [],
+            "frozen": 71281,
+            "enabled": true,
+            "threshold": [
+              700,
+              10,
+              1000000
+            ]
+          },
+          "commands": {
+            "sport": {
+              "count": 18,
+              "last_sim_time": 76.54400000000301
+            },
+            "arm_sdk": {
+              "count": 786,
+              "last_sim_time": 69.22000000002008
+            },
+            "hand_left": {
+              "count": 0,
+              "last_sim_time": null
+            },
+            "hand_right": {
+              "count": 149,
+              "last_sim_time": 59.58200000002685
+            },
+            "attach": {
+              "count": 1,
+              "last_sim_time": 61.130000000028744
+            },
+            "detach": {
+              "count": 1,
+              "last_sim_time": 68.20800000002244
+            }
+          },
+          "camera": {
+            "frames": 403,
+            "dropped": 0,
+            "render_ms": 105.9,
+            "hz": 5.0
+          },
+          "stance": {
+            "model": "free",
+            "phase": "standing"
+          },
+          "velocity_command": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "fell": false
+        },
+        "realtime_valid": true
+      }
+    }
+  },
+  "stance_model": "free",
+  "versions": {
+    "arch": "aarch64",
+    "python": "3.11.2",
+    "assets": {
+      "unitree_mujoco": "1eb6642e3f3fdfb7fb13a9794fd6a2dd93ea0e7d",
+      "unitree_rl_lab": "4960b84732b0c2ec593dccbfe963fda1bcd7b1e3",
+      "mujoco_menagerie": "370c43965323c0944b433b202aac5058b5f907a9",
+      "unitree_rl_gym": "276801e46c5d433564f24658bac64f254b7d2d4b",
+      "unitree_sdk2_python": "814556d15970dd2ecf1c9984e845ca02ab07e206",
+      "cyclonedds_c": "abb064e35b6fbc79554c255ff8b371333e87b029"
+    },
+    "packages": {
+      "mujoco": "4.0.1",
+      "onnxruntime": "1.32.0",
+      "numpy": "2.4.6",
+      "opencv-python-headless": "5.1.0.95",
+      "cyclonedds": "0.10.2",
+      "unitree_sdk2py": "1.0.1"
+    }
+  },
+  "arch": "aarch64",
+  "stand_in_ready": {
+    "ready": true,
+    "pid": 32874,
+    "domain": 1,
+    "interface": "lo",
+    "stance_model": "free",
+    "run_dir": "/code/results/final/harness.run",
+    "imu": {
+      "seed": 1184096808,
+      "gyro_bias": [
+        -0.001458,
+        0.001954,
+        -0.002301
+      ],
+      "yaw_error_rad": 0.0,
+      "ideal": false
+    },
+    "versions": {
+      "arch": "aarch64",
+      "python": "3.11.2",
+      "assets": {
+        "unitree_mujoco": "1eb6642e3f3fdfb7fb13a9794fd6a2dd93ea0e7d",
+        "unitree_rl_lab": "4960b84732b0c2ec593dccbfe963fda1bcd7b1e3",
+        "mujoco_menagerie": "370c43965323c0944b433b202aac5058b5f907a9",
+        "unitree_rl_gym": "276801e46c5d433564f24658bac64f254b7d2d4b",
+        "unitree_sdk2_python": "814556d15970dd2ecf1c9984e845ca02ab07e206",
+        "cyclonedds_c": "abb064e35b6fbc79554c255ff8b371333e87b029"
+      },
+      "packages": {
+        "mujoco": "4.0.1",
+        "onnxruntime": "1.32.0",
+        "numpy": "2.4.6",
+        "opencv-python-headless": "5.1.0.95",
+        "cyclonedds": "0.10.2",
+        "unitree_sdk2py": "1.0.1"
+      }
+    }
+  },
+  "stand_in_final": {
+    "stopped": true,
+    "sim_time": 80.73999999999323,
+    "wall_elapsed": 80.918,
+    "realtime_ratio": 0.9978,
+    "worst_second_ratio": 0.9966,
+    "stalls": 0,
+    "slow_windows": [],
+    "step_compute_ms": {
+      "budget": 2.0,
+      "mean": 0.406,
+      "p99": 1.112,
+      "max": 4.6,
+      "over_budget": 0.0018
+    },
+    "gc": {
+      "collections": [
+        7,
+        1,
+        1
+      ],
+      "max_ms": [
+        0.1,
+        0.81,
+        13.43
+      ],
+      "slow_steps": [],
+      "frozen": 71273,
+      "enabled": true,
+      "threshold": [
+        700,
+        10,
+        1000000
+      ]
+    },
+    "commands": {
+      "sport": {
+        "count": 18,
+        "last_sim_time": 76.54400000000301
+      },
+      "arm_sdk": {
+        "count": 786,
+        "last_sim_time": 69.22000000002008
+      },
+      "hand_left": {
+        "count": 0,
+        "last_sim_time": null
+      },
+      "hand_right": {
+        "count": 149,
+        "last_sim_time": 59.58200000002685
+      },
+      "attach": {
+        "count": 1,
+        "last_sim_time": 61.130000000028744
+      },
+      "detach": {
+        "count": 1,
+        "last_sim_time": 68.20800000002244
+      }
+    },
+    "camera": {
+      "frames": 403,
+      "dropped": 0,
+      "render_ms": 105.9,
+      "hz": 5.0
+    },
+    "stance": {
+      "model": "free",
+      "phase": "standing"
+    },
+    "velocity_command": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "fell": false
+  },
+  "go": true,
+  "elapsed_s": 90.9
+}

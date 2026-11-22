@@ -172,6 +172,29 @@ def servo_band(approach: bool, stagnant: bool, tol_m: float, tol_rad: float) -> 
     return (APPROACH_RELAXED_M, APPROACH_RELAXED_RAD) if approach else (STATION_TOL_M, RELAXED_RAD)
 
 
+# A leg straight to the side is a command the walking policy answers at random. Measured on the loaded robot (box in the
+# right hand, 3.4 s commands, docs/evidence/g1-phase4-prereqs/exp_lateral_gait.py): (0, 0.3) to the left moved it 0.52
+# and 0.59 m; (0.1, 0.3) to the left 0.005 and 0.005 m (to the right 0.51 and 0.58); (0.16, 0.3) 0.13 and 0.76 m;
+# (0, 0.3, -0.2) 0.003 and 0.34 m; and from (0.2, 0.3) up it always moved (0.69-0.84 m left, 0.78 right). A leg of the
+# walk that is mostly sideways is therefore walked as two diagonals, back and forward at that speed: it keeps the robot
+# on its line and keeps the command out of the policy's dead zone. (With the heading dead-reckoned from the commands
+# the heading error was seldom under 0.04 rad at the start of such a leg, so the leg carried a yaw rate; with the IMU's
+# heading it often does not, and a run of `e_pick_place`'s kind stood still for 20 s: S517.)
+LATERAL_VY, LATERAL_VX = 0.25, 0.2  # a leg with |vy| at least the first and |vx| under the second is "mostly sideways"
+LATERAL_MIN_S = 1.6  # shorter than this it is one diagonal (a policy needs about a second to settle into a gait)
+
+
+def walk_legs(vx: float, vy: float, wz: float, seconds: float) -> list[tuple[float, float, float, float]]:
+    """The commands of one leg of the walk: the leg itself, or, if it is mostly sideways (see above), two diagonals that
+    cancel in the forward direction, the second the way the leg's own forward component pointed."""
+    if abs(vy) < LATERAL_VY or abs(vx) >= LATERAL_VX:
+        return [(vx, vy, wz, seconds)]
+    way = 1.0 if vx >= 0 else -1.0
+    if seconds < LATERAL_MIN_S:
+        return [(way * LATERAL_VX, vy, wz, seconds)]
+    return [(-way * LATERAL_VX, vy, wz, seconds / 2), (way * LATERAL_VX, vy, wz, seconds / 2)]
+
+
 def _minjerk(a: float) -> float:
     return a**3 * (10 - 15 * a + 6 * a * a)
 
@@ -630,7 +653,8 @@ class G1Operations:
             wz = float(np.clip(1.5 * err, -0.2, 0.2)) if abs(err) > 0.04 else 0.0
             if wz and math.hypot(vx, vy) < 0.3:  # the policy needs a command of about 0.3 to move at all
                 vx = 0.3
-            self.command(vx, vy, wz, seconds)
+            for leg in walk_legs(vx, vy, wz, seconds):
+                self.command(*leg)
             self.settle()
             self.look(frames=3)
 

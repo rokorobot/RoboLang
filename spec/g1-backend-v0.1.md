@@ -47,6 +47,11 @@ contention among the backend's own processes; (3) the stand-in's `status` says w
 `slow_windows` is `(sim time, ratio, loop thread CPU s, loop thread run-queue wait s)`; (4) the executor, when started by
 hand rather than by `run_task` or the checks, is not niced: start it with `nice -n 10`.
 
+**The head camera is a separate matter.** Software rendering is the stand-in's largest use of CPU (a 640x480 frame is 114 ms
+on four CPUs, 207-287 ms on two), and a host short of it keeps the loop in time and lets the camera fall from 5 Hz to
+2.5-3 Hz. `realtime_valid` does not look at the camera; the run records and the CI summary carry its rate (`camera`:
+`frames`, `dropped`, `render_ms`, `hz`), and the harness's P6 fails below 4.5 Hz.
+
 ## The IMU
 
 `rt/lowstate` carries the pelvis IMU: quaternion, gyroscope, accelerometer. MuJoCo's own sensors are exact, and a heading

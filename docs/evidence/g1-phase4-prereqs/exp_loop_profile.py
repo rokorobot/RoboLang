@@ -31,6 +31,14 @@ def install_profile(out_path: str) -> None:
     if os.environ.get("G1_NO_CAMERA"):  # no camera thread at all: the GIL and CPU the render and encode cost, taken out
         real_init = standin.Simulator.__init__
         standin.Simulator.__init__ = lambda self, *a, **kw: real_init(self, *a, **{**kw, "camera": False})
+    camera_tid: dict = {}
+    real_camera_loop = standin.Simulator._camera_loop
+
+    def camera_loop(self):  # note which thread renders, to tell its CPU from the loop's and the DDS threads'
+        camera_tid["tid"] = threading.get_native_id()
+        return real_camera_loop(self)
+
+    standin.Simulator._camera_loop = camera_loop
     real_setpriority = os.setpriority
     os.setpriority = lambda which, who, prio: real_setpriority(which, who, int(os.environ.get("G1_CAMERA_NICE", prio)))
     rec = {"t0": [], "total": [], "cpu": [], "over": [], **{k: [] for k in SECTIONS}}
@@ -170,6 +178,8 @@ def install_profile(out_path: str) -> None:
                                       "runq_delay_ms": round(me.get("delay_s", 0) * 1000, 1),
                                       "involuntary_switches": me.get("inv"), "voluntary_switches": me.get("vol")}})
                 window_first, prev_threads, prev_cpu, prev_procs = n, threads, cpu, procs
+        totals = {k: v["cpu_s"] for k, v in threads_cpu().items()}  # CPU seconds by thread over the whole run
+        cam_tid = camera_tid.get("tid")
         # summaries
         tot = np.array(rec["total"])
         kind = np.array(range(len(tot)))
@@ -200,6 +210,8 @@ def install_profile(out_path: str) -> None:
             s["cpu_mean_ms"] = round(float(np.mean(rec["cpu"][seg])), 3)
             s["section_sum_ms"] = {k: round(float(np.sum(rec[k][seg])), 1) for k in SECTIONS}
         Path(out_path).write_text(json.dumps({"summary": summary, "seconds": len(secs),
+                                              "thread_cpu_s": totals, "sim_tid": sim_tid, "camera_tid": cam_tid,
+                                              "wall_s": round(time.perf_counter() - t.wall0, 1),
                                               "slow_seconds": slow, "stalls": t.stalls, "per_second": [{k: v for k, v in x.items() if k not in
                                                                           ("threads", "cpu_busy", "top_processes")} for x in secs],
                                               "worst_ratio": t.window_ratio_min,
@@ -259,8 +271,13 @@ def main() -> int:
                "--out", str(run_dir / "record.json"), "--bind", "r=robot_1", "--bind", "box=box_1", "--bind", "src=loc_a",
                "--bind", "dst=loc_b"]
         with (run_dir / "cli.log").open("w") as fh:
-            status = subprocess.call(cmd, stdout=fh, stderr=subprocess.STDOUT, env=os.environ,
-                                     preexec_fn=(lambda: os.nice(args.exec_nice)) if args.exec_nice else None)
+            cli = subprocess.Popen(cmd, stdout=fh, stderr=subprocess.STDOUT, env=os.environ,
+                                   preexec_fn=(lambda: os.nice(args.exec_nice)) if args.exec_nice else None)
+            _, wait_status, usage = os.wait4(cli.pid, 0)
+            status = os.waitstatus_to_exitcode(wait_status)
+            cli.returncode = status
+            (run_dir / "executor_cpu.json").write_text(json.dumps(
+                {"executor_cpu_s": round(usage.ru_utime + usage.ru_stime, 2)}))
     else:
         time.sleep(args.seconds)
     final = sim.Status()[1]
@@ -268,6 +285,8 @@ def main() -> int:
         tail.stop()
     proc.send_signal(15)
     proc.communicate(timeout=30)
+    ts = os.times()  # this process: the checks' side (its main thread and the oracle reader)
+    (run_dir / "checks_cpu.json").write_text(json.dumps({"checks_process_cpu_s": round(ts.user + ts.system, 2)}))
     print(json.dumps({"exit": status, "status": {k: final.get(k) for k in ("realtime_ratio", "worst_second_ratio", "stalls",
                                                                           "step_compute_ms", "slow_windows")}}))
     return status

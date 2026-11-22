@@ -174,3 +174,21 @@ def test_the_servo_stops_inside_its_own_tolerances_and_goes_on_from_wider_ones_w
     # ... and the approach point, which no confirmation follows, from a wider band the final servo can still walk out of
     band_m, band_rad = ops.servo_band(True, True, 0.08, 0.07)
     assert band_m < ops.COARSE_M and band_rad < ops.COARSE_RAD and band_m > 0.08 and band_rad > 0.07
+
+
+def test_a_leg_straight_to_the_side_is_walked_as_two_diagonals_the_policy_answers():
+    from robolang_g1 import ops
+
+    # the commands walk_to sends toward a target to the side: (about 0, 0.3, 0), which the loaded robot answers or not
+    legs = ops.walk_legs(0.01, 0.3, 0.0, 3.4)
+    assert len(legs) == 2 and sum(leg[3] for leg in legs) == 3.4
+    assert all(abs(leg[0]) == ops.LATERAL_VX and leg[1] == 0.3 for leg in legs)
+    assert abs(legs[0][0] * legs[0][3] + legs[1][0] * legs[1][3]) < 1e-9  # no net forward command
+    assert legs[1][0] > 0 > legs[0][0]  # the leg's own forward component pointed forward: it ends that way
+    assert ops.walk_legs(-0.05, -0.3, 0.1, 3.4)[1][0] < 0  # and backward the other way, the yaw rate kept
+    assert all(leg[2] == 0.1 for leg in ops.walk_legs(-0.05, -0.3, 0.1, 3.4))
+    # a short leg is one diagonal; a leg with a forward or backward part of its own, or mostly forward, is left alone
+    assert ops.walk_legs(0.0, 0.3, 0.0, 1.0) == [(0.2, 0.3, 0.0, 1.0)]
+    assert ops.walk_legs(0.25, 0.3, 0.0, 3.4) == [(0.25, 0.3, 0.0, 3.4)]
+    assert ops.walk_legs(-0.41, 0.28, 0.0, 3.4) == [(-0.41, 0.28, 0.0, 3.4)]
+    assert ops.walk_legs(0.5, 0.0, 0.0, 3.4) == [(0.5, 0.0, 0.0, 3.4)]
