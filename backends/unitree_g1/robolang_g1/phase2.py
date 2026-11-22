@@ -198,6 +198,9 @@ def realtime_of(session: Session) -> dict:
         "step_compute_ms": f.get("step_compute_ms"),
         "gc": (f.get("gc") or {}).get("max_ms"),
         "slow_steps": (f.get("gc") or {}).get("slow_steps"),
+        # (sim time, ratio, loop thread CPU s, loop thread run-queue wait s) of every second below 0.95: a loop that
+        # waited for a CPU, against one that was computing (docs/evidence/g1-phase4-prereqs.md)
+        "slow_windows": f.get("slow_windows"),
     }
 
 

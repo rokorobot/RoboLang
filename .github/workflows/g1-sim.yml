@@ -74,6 +74,8 @@ jobs:
               for r in e.get("runs", []):
                   print(f"  - `{r['scenario']}`: realtime_valid `{r['realtime_valid']}`, worst second `{r['worst_second_ratio']}`, "
                         f"step compute ms `{r['step_compute_ms']}`, gc max ms `{r['gc']}`")
+                  if r.get("slow_windows"):  # (sim time, ratio, loop thread CPU s, loop thread run-queue wait s)
+                      print(f"    slow seconds (sim time, ratio, loop CPU s, loop run-queue wait s): `{r['slow_windows']}`")
               print()
           q = pathlib.Path("out/phase3.json")
           if q.exists():
@@ -87,7 +89,10 @@ jobs:
                     f"{m.get('largest_offset_rad_when_true')} rad (tolerance {m.get('tolerance_m')} m / "
                     f"{m.get('tolerance_rad')} rad)\n")
               for r in e.get("runs", []):
-                  print(f"  - `{r['scenario']}`: realtime_valid `{r['realtime_valid']}`, worst second `{r['worst_second_ratio']}`")
+                  print(f"  - `{r['scenario']}`: realtime_valid `{r['realtime_valid']}`, worst second `{r['worst_second_ratio']}`, "
+                        f"step compute ms `{r['step_compute_ms']}`")
+                  if r.get("slow_windows"):  # (sim time, ratio, loop thread CPU s, loop thread run-queue wait s)
+                      print(f"    slow seconds (sim time, ratio, loop CPU s, loop run-queue wait s): `{r['slow_windows']}`")
               print()
           p = pathlib.Path("out/harness.json")
           if p.exists():
