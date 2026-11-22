@@ -161,3 +161,16 @@ def test_a_correction_that_does_not_do_what_the_table_says_is_believed_less_each
     ops.pose = [2.5, 0.5, 0.0]
     ops._learn(burst, [2.0, 0.5, 0.0], 3000)
     assert ops.seen[(True, burst)][0] == 4
+
+
+def test_the_servo_stops_inside_its_own_tolerances_and_goes_on_from_wider_ones_when_it_stagnates():
+    from robolang_g1 import ops
+
+    assert ops.servo_band(False, False, 0.035, 0.05) == (0.035, 0.05)
+    assert ops.servo_band(True, False, 0.08, 0.07) == (0.08, 0.07)
+    # stagnated, the final servo goes on to the confirming look from the confirm limit less what the creep may add ...
+    assert ops.servo_band(False, True, 0.035, 0.05) == (ops.STATION_TOL_M, ops.RELAXED_RAD)
+    assert ops.RELAXED_RAD < ops.STATION_TOL_RAD and ops.STATION_TOL_M <= 0.05  # (the station tolerance, 5 cm 0.1 rad)
+    # ... and the approach point, which no confirmation follows, from a wider band the final servo can still walk out of
+    band_m, band_rad = ops.servo_band(True, True, 0.08, 0.07)
+    assert band_m < ops.COARSE_M and band_rad < ops.COARSE_RAD and band_m > 0.08 and band_rad > 0.07

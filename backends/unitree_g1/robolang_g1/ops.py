@@ -65,6 +65,11 @@ COARSE_M, COARSE_RAD = 0.25, 0.3  # an error beyond this is for the coarse burst
 # confirm limits above and to nothing less: the station tolerance (5 cm, 0.1 rad) is not touched.
 STAGNANT_LOOKS = 4
 RELAXED_RAD = 0.07  # the servo's heading tolerance then: the confirm limit less what the creep may add
+# The approach point (0.5 m before the station, not confirmed) is only to line the robot up for the last walk, and the
+# final servo takes any error it is left with that is under COARSE_M and COARSE_RAD. When the servo to it stagnates
+# (under a creep of 0.025 rad/s the heading is inside 0.07 rad for a moment in each 5 s look, and one failed move spent
+# its 150 s at the approach point 0.1 m and 0.1 rad off) it goes on from this much error:
+APPROACH_RELAXED_M, APPROACH_RELAXED_RAD = 0.12, 0.15
 MARKER_MAX_RANGE_M, MARKER_MIN_CONF = 2.9, 0.5  # a station marker corrects the belief only when seen this well
 # ... and only if the vertical it implies is the IMU's, to within MAX_UP_DISAGREEMENT_RAD (perception.py)
 APPROACH_M = 0.5  # the walk ends this far before the station, facing it, and the marker is looked for there
@@ -155,6 +160,16 @@ def _burst(axis: str, error: float) -> tuple[float, float, float]:
         seconds = min(table, key=lambda entry: abs(entry[1] - want))[0]
     sign = 1.0 if error > 0 else -1.0
     return (0.4 * sign, 0.0, seconds) if axis == "forward" else (0.1, 0.3 * sign, seconds)
+
+
+def servo_band(approach: bool, stagnant: bool, tol_m: float, tol_rad: float) -> tuple[float, float]:
+    """The position (m) and heading (rad) the servo stops inside. Normally its own tolerances (`tol_m`, `tol_rad`);
+    after STAGNANT_LOOKS looks without a better error, the confirm limit less what the creep may add for the final
+    servo (it then goes on to the confirming look, which still decides), and APPROACH_RELAXED_* for the approach point
+    (no confirmation follows it)."""
+    if not stagnant:
+        return tol_m, tol_rad
+    return (APPROACH_RELAXED_M, APPROACH_RELAXED_RAD) if approach else (STATION_TOL_M, RELAXED_RAD)
 
 
 def _minjerk(a: float) -> float:
@@ -736,14 +751,16 @@ class G1Operations:
             ey = -dx * math.sin(self.pose[2]) + dy * math.cos(self.pose[2])
             eyaw = site_mod.wrap(gyaw - self.pose[2])
             iterations.append([round(float(ex), 3), round(float(ey), 3), round(float(eyaw), 3)])
-            creep = self.creep if target is None else 0.0  # (the approach point is not confirmed: no aim)
+            # (the approach point is aimed against the creep too: the final servo starts after a settle and a look, 3-4
+            # s in which the heading creeps 0.08 rad at 0.025 rad/s)
+            creep = self.creep
             # the heading the stance will have when it is confirmed: it creeps to the left while the robot waits
             eyaw_confirmed = eyaw - creep * CONFIRM_DWELL_S
             score = math.hypot(ex, ey) / tol_m + abs(eyaw_confirmed) / tol_rad
             if score < best - 0.1:
                 best, best_look = score, len(iterations)
-            stagnant = target is None and len(iterations) - best_look >= STAGNANT_LOOKS
-            band_m, band_rad = (STATION_TOL_M, RELAXED_RAD) if stagnant else (tol_m, tol_rad)
+            stagnant = len(iterations) - best_look >= STAGNANT_LOOKS
+            band_m, band_rad = servo_band(target is not None, stagnant, tol_m, tol_rad)
             if math.hypot(ex, ey) <= band_m and abs(eyaw_confirmed) <= band_rad:
                 if target is not None:
                     self.settle()
