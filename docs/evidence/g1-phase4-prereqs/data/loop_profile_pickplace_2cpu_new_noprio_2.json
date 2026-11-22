@@ -1,0 +1,3152 @@
+{
+ "summary": {
+  "passes": 100617,
+  "total_ms": {
+   "all": {
+    "mean": 0.556,
+    "p50": 0.385,
+    "p99": 3.878,
+    "p999": 4.993,
+    "max": 33.85,
+    "over_2ms": 0.0263
+   },
+   "policy (n%10==0)": {
+    "mean": 1.255,
+    "p50": 0.91,
+    "p99": 4.577,
+    "p999": 6.999,
+    "max": 33.85,
+    "over_2ms": 0.0972
+   },
+   "oracle (n%10==0, 50 Hz)": {
+    "mean": 1.255,
+    "p50": 0.91,
+    "p99": 4.577,
+    "p999": 6.999,
+    "max": 33.85,
+    "over_2ms": 0.0972
+   },
+   "lowstate (n%2==0)": {
+    "mean": 0.727,
+    "p50": 0.463,
+    "p99": 3.9,
+    "p999": 5.365,
+    "max": 33.85,
+    "over_2ms": 0.044
+   },
+   "camera (n%100==0)": {
+    "mean": 1.688,
+    "p50": 1.115,
+    "p99": 5.067,
+    "p999": 5.334,
+    "max": 5.4,
+    "over_2ms": 0.2296
+   },
+   "plain (n%2==1)": {
+    "mean": 0.385,
+    "p50": 0.297,
+    "p99": 1.864,
+    "p999": 3.978,
+    "max": 12.64,
+    "over_2ms": 0.0087
+   }
+  },
+  "cpu_ms": {
+   "mean": 0.421,
+   "p50": 0.37,
+   "p99": 1.108,
+   "p999": 1.439,
+   "max": 2.29,
+   "over_2ms": 0.0
+  },
+  "sleep_overshoot_ms": {
+   "mean": 0.182,
+   "p50": 0.06,
+   "p99": 2.919,
+   "p999": 3.928,
+   "max": 16.61,
+   "over_2ms": 0.0204
+  },
+  "section_ms": {
+   "service": {
+    "mean": 0.005,
+    "p50": 0.005,
+    "p99": 0.013,
+    "p999": 0.023,
+    "max": 0.44,
+    "over_2ms": 0.0
+   },
+   "targets": {
+    "mean": 0.01,
+    "p50": 0.0,
+    "p99": 0.296,
+    "p999": 0.519,
+    "max": 6.36,
+    "over_2ms": 0.0
+   },
+   "mj_step": {
+    "mean": 0.185,
+    "p50": 0.172,
+    "p99": 0.346,
+    "p999": 1.705,
+    "max": 12.0,
+    "over_2ms": 0.0009
+   },
+   "publish": {
+    "mean": 0.202,
+    "p50": 0.116,
+    "p99": 2.963,
+    "p999": 3.798,
+    "max": 16.33,
+    "over_2ms": 0.0173
+   },
+   "camera": {
+    "mean": 0.001,
+    "p50": 0.0,
+    "p99": 0.0,
+    "p999": 0.117,
+    "max": 0.89,
+    "over_2ms": 0.0
+   },
+   "oracle": {
+    "mean": 0.013,
+    "p50": 0.0,
+    "p99": 0.152,
+    "p999": 0.425,
+    "max": 3.96,
+    "over_2ms": 0.0001
+   }
+  },
+  "wall_minus_cpu_ms": {
+   "mean": 0.135,
+   "p50": 0.002,
+   "p99": 3.266,
+   "p999": 4.153,
+   "max": 33.21,
+   "over_2ms": 0.0213
+  }
+ },
+ "seconds": 201,
+ "slow_seconds": [],
+ "stalls": 0,
+ "per_second": [
+  {
+   "sim_time": 1.0,
+   "ratio": 1.0012,
+   "first": 0,
+   "last": 500,
+   "loop": {
+    "passes_wall_ms": 221.2,
+    "passes_cpu_ms": 190.5,
+    "overshoot_ms": 101.7,
+    "runq_delay_ms": 102.0,
+    "involuntary_switches": 200,
+    "voluntary_switches": 470
+   }
+  },
+  {
+   "sim_time": 2.0,
+   "ratio": 0.9999,
+   "first": 500,
+   "last": 1000,
+   "loop": {
+    "passes_wall_ms": 185.8,
+    "passes_cpu_ms": 179.7,
+    "overshoot_ms": 108.4,
+    "runq_delay_ms": 85.0,
+    "involuntary_switches": 7,
+    "voluntary_switches": 482
+   }
+  },
+  {
+   "sim_time": 3.0,
+   "ratio": 1.0,
+   "first": 1000,
+   "last": 1500,
+   "loop": {
+    "passes_wall_ms": 183.0,
+    "passes_cpu_ms": 176.3,
+    "overshoot_ms": 73.8,
+    "runq_delay_ms": 52.0,
+    "involuntary_switches": 15,
+    "voluntary_switches": 489
+   }
+  },
+  {
+   "sim_time": 4.0,
+   "ratio": 0.9876,
+   "first": 1500,
+   "last": 2000,
+   "loop": {
+    "passes_wall_ms": 506.2,
+    "passes_cpu_ms": 194.2,
+    "overshoot_ms": 126.3,
+    "runq_delay_ms": 420.0,
+    "involuntary_switches": 123,
+    "voluntary_switches": 291
+   }
+  },
+  {
+   "sim_time": 5.0,
+   "ratio": 1.0116,
+   "first": 2000,
+   "last": 2500,
+   "loop": {
+    "passes_wall_ms": 296.8,
+    "passes_cpu_ms": 212.3,
+    "overshoot_ms": 146.5,
+    "runq_delay_ms": 214.0,
+    "involuntary_switches": 104,
+    "voluntary_switches": 416
+   }
+  },
+  {
+   "sim_time": 6.0,
+   "ratio": 1.0009,
+   "first": 2500,
+   "last": 3000,
+   "loop": {
+    "passes_wall_ms": 311.4,
+    "passes_cpu_ms": 223.9,
+    "overshoot_ms": 89.6,
+    "runq_delay_ms": 151.0,
+    "involuntary_switches": 121,
+    "voluntary_switches": 451
+   }
+  },
+  {
+   "sim_time": 7.0,
+   "ratio": 0.999,
+   "first": 3000,
+   "last": 3500,
+   "loop": {
+    "passes_wall_ms": 345.4,
+    "passes_cpu_ms": 232.3,
+    "overshoot_ms": 98.3,
+    "runq_delay_ms": 186.0,
+    "involuntary_switches": 124,
+    "voluntary_switches": 441
+   }
+  },
+  {
+   "sim_time": 8.0,
+   "ratio": 1.0011,
+   "first": 3500,
+   "last": 4000,
+   "loop": {
+    "passes_wall_ms": 301.4,
+    "passes_cpu_ms": 215.0,
+    "overshoot_ms": 108.6,
+    "runq_delay_ms": 168.0,
+    "involuntary_switches": 120,
+    "voluntary_switches": 445
+   }
+  },
+  {
+   "sim_time": 9.0,
+   "ratio": 0.997,
+   "first": 4000,
+   "last": 4500,
+   "loop": {
+    "passes_wall_ms": 329.7,
+    "passes_cpu_ms": 217.0,
+    "overshoot_ms": 91.5,
+    "runq_delay_ms": 182.0,
+    "involuntary_switches": 169,
+    "voluntary_switches": 444
+   }
+  },
+  {
+   "sim_time": 10.0,
+   "ratio": 1.0031,
+   "first": 4500,
+   "last": 5000,
+   "loop": {
+    "passes_wall_ms": 334.2,
+    "passes_cpu_ms": 229.5,
+    "overshoot_ms": 98.2,
+    "runq_delay_ms": 175.0,
+    "involuntary_switches": 142,
+    "voluntary_switches": 460
+   }
+  },
+  {
+   "sim_time": 11.0,
+   "ratio": 0.9969,
+   "first": 5000,
+   "last": 5500,
+   "loop": {
+    "passes_wall_ms": 340.6,
+    "passes_cpu_ms": 221.6,
+    "overshoot_ms": 81.4,
+    "runq_delay_ms": 174.0,
+    "involuntary_switches": 160,
+    "voluntary_switches": 442
+   }
+  },
+  {
+   "sim_time": 12.0,
+   "ratio": 1.0031,
+   "first": 5500,
+   "last": 6000,
+   "loop": {
+    "passes_wall_ms": 327.6,
+    "passes_cpu_ms": 221.7,
+    "overshoot_ms": 75.4,
+    "runq_delay_ms": 154.0,
+    "involuntary_switches": 148,
+    "voluntary_switches": 451
+   }
+  },
+  {
+   "sim_time": 13.0,
+   "ratio": 0.9996,
+   "first": 6000,
+   "last": 6500,
+   "loop": {
+    "passes_wall_ms": 294.4,
+    "passes_cpu_ms": 208.3,
+    "overshoot_ms": 101.2,
+    "runq_delay_ms": 160.0,
+    "involuntary_switches": 172,
+    "voluntary_switches": 457
+   }
+  },
+  {
+   "sim_time": 14.0,
+   "ratio": 0.9999,
+   "first": 6500,
+   "last": 7000,
+   "loop": {
+    "passes_wall_ms": 288.2,
+    "passes_cpu_ms": 211.7,
+    "overshoot_ms": 83.7,
+    "runq_delay_ms": 131.0,
+    "involuntary_switches": 111,
+    "voluntary_switches": 461
+   }
+  },
+  {
+   "sim_time": 15.0,
+   "ratio": 1.0005,
+   "first": 7000,
+   "last": 7500,
+   "loop": {
+    "passes_wall_ms": 316.2,
+    "passes_cpu_ms": 215.9,
+    "overshoot_ms": 78.3,
+    "runq_delay_ms": 151.0,
+    "involuntary_switches": 126,
+    "voluntary_switches": 453
+   }
+  },
+  {
+   "sim_time": 16.0,
+   "ratio": 0.9999,
+   "first": 7500,
+   "last": 8000,
+   "loop": {
+    "passes_wall_ms": 281.8,
+    "passes_cpu_ms": 215.8,
+    "overshoot_ms": 102.6,
+    "runq_delay_ms": 142.0,
+    "involuntary_switches": 111,
+    "voluntary_switches": 461
+   }
+  },
+  {
+   "sim_time": 17.0,
+   "ratio": 1.0001,
+   "first": 8000,
+   "last": 8500,
+   "loop": {
+    "passes_wall_ms": 318.3,
+    "passes_cpu_ms": 224.6,
+    "overshoot_ms": 106.7,
+    "runq_delay_ms": 167.0,
+    "involuntary_switches": 125,
+    "voluntary_switches": 442
+   }
+  },
+  {
+   "sim_time": 18.0,
+   "ratio": 0.9994,
+   "first": 8500,
+   "last": 9000,
+   "loop": {
+    "passes_wall_ms": 319.5,
+    "passes_cpu_ms": 248.3,
+    "overshoot_ms": 92.3,
+    "runq_delay_ms": 134.0,
+    "involuntary_switches": 83,
+    "voluntary_switches": 457
+   }
+  },
+  {
+   "sim_time": 19.0,
+   "ratio": 1.0003,
+   "first": 9000,
+   "last": 9500,
+   "loop": {
+    "passes_wall_ms": 340.6,
+    "passes_cpu_ms": 277.8,
+    "overshoot_ms": 130.5,
+    "runq_delay_ms": 162.0,
+    "involuntary_switches": 105,
+    "voluntary_switches": 455
+   }
+  },
+  {
+   "sim_time": 20.0,
+   "ratio": 1.0004,
+   "first": 9500,
+   "last": 10000,
+   "loop": {
+    "passes_wall_ms": 295.4,
+    "passes_cpu_ms": 228.2,
+    "overshoot_ms": 89.4,
+    "runq_delay_ms": 127.0,
+    "involuntary_switches": 92,
+    "voluntary_switches": 467
+   }
+  },
+  {
+   "sim_time": 21.0,
+   "ratio": 1.0,
+   "first": 10000,
+   "last": 10500,
+   "loop": {
+    "passes_wall_ms": 263.1,
+    "passes_cpu_ms": 220.1,
+    "overshoot_ms": 75.3,
+    "runq_delay_ms": 90.0,
+    "involuntary_switches": 73,
+    "voluntary_switches": 475
+   }
+  },
+  {
+   "sim_time": 22.0,
+   "ratio": 1.0,
+   "first": 10500,
+   "last": 11000,
+   "loop": {
+    "passes_wall_ms": 320.7,
+    "passes_cpu_ms": 252.4,
+    "overshoot_ms": 96.9,
+    "runq_delay_ms": 137.0,
+    "involuntary_switches": 87,
+    "voluntary_switches": 451
+   }
+  },
+  {
+   "sim_time": 23.0,
+   "ratio": 0.9996,
+   "first": 11000,
+   "last": 11500,
+   "loop": {
+    "passes_wall_ms": 330.8,
+    "passes_cpu_ms": 277.6,
+    "overshoot_ms": 92.3,
+    "runq_delay_ms": 116.0,
+    "involuntary_switches": 77,
+    "voluntary_switches": 467
+   }
+  },
+  {
+   "sim_time": 24.0,
+   "ratio": 0.999,
+   "first": 11500,
+   "last": 12000,
+   "loop": {
+    "passes_wall_ms": 387.3,
+    "passes_cpu_ms": 293.9,
+    "overshoot_ms": 77.6,
+    "runq_delay_ms": 143.0,
+    "involuntary_switches": 116,
+    "voluntary_switches": 439
+   }
+  },
+  {
+   "sim_time": 25.0,
+   "ratio": 1.001,
+   "first": 12000,
+   "last": 12500,
+   "loop": {
+    "passes_wall_ms": 329.2,
+    "passes_cpu_ms": 277.0,
+    "overshoot_ms": 71.1,
+    "runq_delay_ms": 98.0,
+    "involuntary_switches": 67,
+    "voluntary_switches": 457
+   }
+  },
+  {
+   "sim_time": 26.0,
+   "ratio": 0.9983,
+   "first": 12500,
+   "last": 13000,
+   "loop": {
+    "passes_wall_ms": 338.0,
+    "passes_cpu_ms": 279.5,
+    "overshoot_ms": 87.2,
+    "runq_delay_ms": 120.0,
+    "involuntary_switches": 79,
+    "voluntary_switches": 448
+   }
+  },
+  {
+   "sim_time": 27.0,
+   "ratio": 1.0013,
+   "first": 13000,
+   "last": 13500,
+   "loop": {
+    "passes_wall_ms": 286.7,
+    "passes_cpu_ms": 216.8,
+    "overshoot_ms": 80.1,
+    "runq_delay_ms": 120.0,
+    "involuntary_switches": 104,
+    "voluntary_switches": 462
+   }
+  },
+  {
+   "sim_time": 28.0,
+   "ratio": 1.0008,
+   "first": 13500,
+   "last": 14000,
+   "loop": {
+    "passes_wall_ms": 328.5,
+    "passes_cpu_ms": 230.3,
+    "overshoot_ms": 92.8,
+    "runq_delay_ms": 163.0,
+    "involuntary_switches": 131,
+    "voluntary_switches": 448
+   }
+  },
+  {
+   "sim_time": 29.0,
+   "ratio": 0.9999,
+   "first": 14000,
+   "last": 14500,
+   "loop": {
+    "passes_wall_ms": 284.2,
+    "passes_cpu_ms": 221.7,
+    "overshoot_ms": 84.8,
+    "runq_delay_ms": 118.0,
+    "involuntary_switches": 91,
+    "voluntary_switches": 462
+   }
+  },
+  {
+   "sim_time": 30.0,
+   "ratio": 0.9969,
+   "first": 14500,
+   "last": 15000,
+   "loop": {
+    "passes_wall_ms": 312.6,
+    "passes_cpu_ms": 245.4,
+    "overshoot_ms": 91.7,
+    "runq_delay_ms": 129.0,
+    "involuntary_switches": 106,
+    "voluntary_switches": 461
+   }
+  },
+  {
+   "sim_time": 31.0,
+   "ratio": 1.0021,
+   "first": 15000,
+   "last": 15500,
+   "loop": {
+    "passes_wall_ms": 322.8,
+    "passes_cpu_ms": 264.3,
+    "overshoot_ms": 101.4,
+    "runq_delay_ms": 125.0,
+    "involuntary_switches": 72,
+    "voluntary_switches": 459
+   }
+  },
+  {
+   "sim_time": 32.0,
+   "ratio": 0.9986,
+   "first": 15500,
+   "last": 16000,
+   "loop": {
+    "passes_wall_ms": 365.0,
+    "passes_cpu_ms": 273.5,
+    "overshoot_ms": 87.9,
+    "runq_delay_ms": 151.0,
+    "involuntary_switches": 119,
+    "voluntary_switches": 448
+   }
+  },
+  {
+   "sim_time": 33.0,
+   "ratio": 1.0021,
+   "first": 16000,
+   "last": 16500,
+   "loop": {
+    "passes_wall_ms": 294.8,
+    "passes_cpu_ms": 272.2,
+    "overshoot_ms": 72.9,
+    "runq_delay_ms": 64.0,
+    "involuntary_switches": 54,
+    "voluntary_switches": 483
+   }
+  },
+  {
+   "sim_time": 34.0,
+   "ratio": 0.9997,
+   "first": 16500,
+   "last": 17000,
+   "loop": {
+    "passes_wall_ms": 369.3,
+    "passes_cpu_ms": 276.4,
+    "overshoot_ms": 95.8,
+    "runq_delay_ms": 158.0,
+    "involuntary_switches": 103,
+    "voluntary_switches": 453
+   }
+  },
+  {
+   "sim_time": 35.0,
+   "ratio": 0.9993,
+   "first": 17000,
+   "last": 17500,
+   "loop": {
+    "passes_wall_ms": 306.7,
+    "passes_cpu_ms": 255.8,
+    "overshoot_ms": 86.4,
+    "runq_delay_ms": 107.0,
+    "involuntary_switches": 76,
+    "voluntary_switches": 469
+   }
+  },
+  {
+   "sim_time": 36.0,
+   "ratio": 1.001,
+   "first": 17500,
+   "last": 18000,
+   "loop": {
+    "passes_wall_ms": 344.0,
+    "passes_cpu_ms": 260.4,
+    "overshoot_ms": 99.7,
+    "runq_delay_ms": 155.0,
+    "involuntary_switches": 119,
+    "voluntary_switches": 445
+   }
+  },
+  {
+   "sim_time": 37.0,
+   "ratio": 0.9999,
+   "first": 18000,
+   "last": 18500,
+   "loop": {
+    "passes_wall_ms": 295.2,
+    "passes_cpu_ms": 259.0,
+    "overshoot_ms": 78.1,
+    "runq_delay_ms": 85.0,
+    "involuntary_switches": 64,
+    "voluntary_switches": 472
+   }
+  },
+  {
+   "sim_time": 38.0,
+   "ratio": 0.9995,
+   "first": 18500,
+   "last": 19000,
+   "loop": {
+    "passes_wall_ms": 321.3,
+    "passes_cpu_ms": 266.8,
+    "overshoot_ms": 83.5,
+    "runq_delay_ms": 109.0,
+    "involuntary_switches": 97,
+    "voluntary_switches": 461
+   }
+  },
+  {
+   "sim_time": 39.0,
+   "ratio": 0.9977,
+   "first": 19000,
+   "last": 19500,
+   "loop": {
+    "passes_wall_ms": 311.8,
+    "passes_cpu_ms": 241.9,
+    "overshoot_ms": 58.1,
+    "runq_delay_ms": 99.0,
+    "involuntary_switches": 90,
+    "voluntary_switches": 465
+   }
+  },
+  {
+   "sim_time": 40.0,
+   "ratio": 1.0031,
+   "first": 19500,
+   "last": 20000,
+   "loop": {
+    "passes_wall_ms": 253.4,
+    "passes_cpu_ms": 203.1,
+    "overshoot_ms": 98.7,
+    "runq_delay_ms": 121.0,
+    "involuntary_switches": 66,
+    "voluntary_switches": 454
+   }
+  },
+  {
+   "sim_time": 41.0,
+   "ratio": 0.9996,
+   "first": 20000,
+   "last": 20500,
+   "loop": {
+    "passes_wall_ms": 274.8,
+    "passes_cpu_ms": 201.2,
+    "overshoot_ms": 89.7,
+    "runq_delay_ms": 135.0,
+    "involuntary_switches": 75,
+    "voluntary_switches": 454
+   }
+  },
+  {
+   "sim_time": 42.0,
+   "ratio": 0.9973,
+   "first": 20500,
+   "last": 21000,
+   "loop": {
+    "passes_wall_ms": 272.1,
+    "passes_cpu_ms": 207.1,
+    "overshoot_ms": 77.1,
+    "runq_delay_ms": 116.0,
+    "involuntary_switches": 89,
+    "voluntary_switches": 459
+   }
+  },
+  {
+   "sim_time": 43.0,
+   "ratio": 1.0,
+   "first": 21000,
+   "last": 21500,
+   "loop": {
+    "passes_wall_ms": 292.2,
+    "passes_cpu_ms": 205.4,
+    "overshoot_ms": 75.0,
+    "runq_delay_ms": 133.0,
+    "involuntary_switches": 116,
+    "voluntary_switches": 465
+   }
+  },
+  {
+   "sim_time": 44.0,
+   "ratio": 1.0031,
+   "first": 21500,
+   "last": 22000,
+   "loop": {
+    "passes_wall_ms": 254.9,
+    "passes_cpu_ms": 198.9,
+    "overshoot_ms": 93.9,
+    "runq_delay_ms": 122.0,
+    "involuntary_switches": 81,
+    "voluntary_switches": 459
+   }
+  },
+  {
+   "sim_time": 45.0,
+   "ratio": 1.0001,
+   "first": 22000,
+   "last": 22500,
+   "loop": {
+    "passes_wall_ms": 257.4,
+    "passes_cpu_ms": 192.8,
+    "overshoot_ms": 80.0,
+    "runq_delay_ms": 117.0,
+    "involuntary_switches": 94,
+    "voluntary_switches": 463
+   }
+  },
+  {
+   "sim_time": 46.0,
+   "ratio": 0.9999,
+   "first": 22500,
+   "last": 23000,
+   "loop": {
+    "passes_wall_ms": 276.0,
+    "passes_cpu_ms": 203.7,
+    "overshoot_ms": 74.5,
+    "runq_delay_ms": 119.0,
+    "involuntary_switches": 104,
+    "voluntary_switches": 466
+   }
+  },
+  {
+   "sim_time": 47.0,
+   "ratio": 0.9998,
+   "first": 23000,
+   "last": 23500,
+   "loop": {
+    "passes_wall_ms": 263.3,
+    "passes_cpu_ms": 201.4,
+    "overshoot_ms": 87.3,
+    "runq_delay_ms": 124.0,
+    "involuntary_switches": 86,
+    "voluntary_switches": 463
+   }
+  },
+  {
+   "sim_time": 48.0,
+   "ratio": 0.9999,
+   "first": 23500,
+   "last": 24000,
+   "loop": {
+    "passes_wall_ms": 302.1,
+    "passes_cpu_ms": 204.2,
+    "overshoot_ms": 103.6,
+    "runq_delay_ms": 176.0,
+    "involuntary_switches": 142,
+    "voluntary_switches": 444
+   }
+  },
+  {
+   "sim_time": 49.0,
+   "ratio": 0.9994,
+   "first": 24000,
+   "last": 24500,
+   "loop": {
+    "passes_wall_ms": 227.3,
+    "passes_cpu_ms": 200.8,
+    "overshoot_ms": 101.1,
+    "runq_delay_ms": 98.0,
+    "involuntary_switches": 47,
+    "voluntary_switches": 476
+   }
+  },
+  {
+   "sim_time": 50.0,
+   "ratio": 0.9999,
+   "first": 24500,
+   "last": 25000,
+   "loop": {
+    "passes_wall_ms": 288.1,
+    "passes_cpu_ms": 213.8,
+    "overshoot_ms": 113.2,
+    "runq_delay_ms": 159.0,
+    "involuntary_switches": 103,
+    "voluntary_switches": 455
+   }
+  },
+  {
+   "sim_time": 51.0,
+   "ratio": 1.001,
+   "first": 25000,
+   "last": 25500,
+   "loop": {
+    "passes_wall_ms": 249.1,
+    "passes_cpu_ms": 205.1,
+    "overshoot_ms": 77.4,
+    "runq_delay_ms": 92.0,
+    "involuntary_switches": 72,
+    "voluntary_switches": 477
+   }
+  },
+  {
+   "sim_time": 52.0,
+   "ratio": 0.9993,
+   "first": 25500,
+   "last": 26000,
+   "loop": {
+    "passes_wall_ms": 272.6,
+    "passes_cpu_ms": 228.9,
+    "overshoot_ms": 71.2,
+    "runq_delay_ms": 88.0,
+    "involuntary_switches": 62,
+    "voluntary_switches": 472
+   }
+  },
+  {
+   "sim_time": 53.0,
+   "ratio": 0.9998,
+   "first": 26000,
+   "last": 26500,
+   "loop": {
+    "passes_wall_ms": 355.7,
+    "passes_cpu_ms": 283.6,
+    "overshoot_ms": 123.2,
+    "runq_delay_ms": 170.0,
+    "involuntary_switches": 92,
+    "voluntary_switches": 430
+   }
+  },
+  {
+   "sim_time": 54.0,
+   "ratio": 1.0008,
+   "first": 26500,
+   "last": 27000,
+   "loop": {
+    "passes_wall_ms": 328.8,
+    "passes_cpu_ms": 266.1,
+    "overshoot_ms": 95.2,
+    "runq_delay_ms": 132.0,
+    "involuntary_switches": 72,
+    "voluntary_switches": 444
+   }
+  },
+  {
+   "sim_time": 55.0,
+   "ratio": 0.9958,
+   "first": 27000,
+   "last": 27500,
+   "loop": {
+    "passes_wall_ms": 337.6,
+    "passes_cpu_ms": 262.3,
+    "overshoot_ms": 110.4,
+    "runq_delay_ms": 141.0,
+    "involuntary_switches": 78,
+    "voluntary_switches": 444
+   }
+  },
+  {
+   "sim_time": 56.0,
+   "ratio": 1.0042,
+   "first": 27500,
+   "last": 28000,
+   "loop": {
+    "passes_wall_ms": 327.4,
+    "passes_cpu_ms": 270.7,
+    "overshoot_ms": 101.6,
+    "runq_delay_ms": 130.0,
+    "involuntary_switches": 76,
+    "voluntary_switches": 444
+   }
+  },
+  {
+   "sim_time": 57.0,
+   "ratio": 0.9994,
+   "first": 28000,
+   "last": 28500,
+   "loop": {
+    "passes_wall_ms": 318.8,
+    "passes_cpu_ms": 252.3,
+    "overshoot_ms": 65.8,
+    "runq_delay_ms": 105.0,
+    "involuntary_switches": 81,
+    "voluntary_switches": 464
+   }
+  },
+  {
+   "sim_time": 58.0,
+   "ratio": 1.0004,
+   "first": 28500,
+   "last": 29000,
+   "loop": {
+    "passes_wall_ms": 327.8,
+    "passes_cpu_ms": 263.0,
+    "overshoot_ms": 115.6,
+    "runq_delay_ms": 153.0,
+    "involuntary_switches": 78,
+    "voluntary_switches": 432
+   }
+  },
+  {
+   "sim_time": 59.0,
+   "ratio": 0.9997,
+   "first": 29000,
+   "last": 29500,
+   "loop": {
+    "passes_wall_ms": 294.5,
+    "passes_cpu_ms": 261.2,
+    "overshoot_ms": 164.3,
+    "runq_delay_ms": 170.0,
+    "involuntary_switches": 76,
+    "voluntary_switches": 438
+   }
+  },
+  {
+   "sim_time": 60.0,
+   "ratio": 0.9998,
+   "first": 29500,
+   "last": 30000,
+   "loop": {
+    "passes_wall_ms": 314.8,
+    "passes_cpu_ms": 248.3,
+    "overshoot_ms": 146.8,
+    "runq_delay_ms": 186.0,
+    "involuntary_switches": 109,
+    "voluntary_switches": 449
+   }
+  },
+  {
+   "sim_time": 61.0,
+   "ratio": 1.0001,
+   "first": 30000,
+   "last": 30500,
+   "loop": {
+    "passes_wall_ms": 252.2,
+    "passes_cpu_ms": 192.2,
+    "overshoot_ms": 94.7,
+    "runq_delay_ms": 125.0,
+    "involuntary_switches": 89,
+    "voluntary_switches": 487
+   }
+  },
+  {
+   "sim_time": 62.0,
+   "ratio": 0.9976,
+   "first": 30500,
+   "last": 31000,
+   "loop": {
+    "passes_wall_ms": 257.2,
+    "passes_cpu_ms": 189.3,
+    "overshoot_ms": 91.8,
+    "runq_delay_ms": 126.0,
+    "involuntary_switches": 95,
+    "voluntary_switches": 469
+   }
+  },
+  {
+   "sim_time": 63.0,
+   "ratio": 1.0025,
+   "first": 31000,
+   "last": 31500,
+   "loop": {
+    "passes_wall_ms": 234.8,
+    "passes_cpu_ms": 178.9,
+    "overshoot_ms": 78.6,
+    "runq_delay_ms": 105.0,
+    "involuntary_switches": 94,
+    "voluntary_switches": 484
+   }
+  },
+  {
+   "sim_time": 64.0,
+   "ratio": 0.9977,
+   "first": 31500,
+   "last": 32000,
+   "loop": {
+    "passes_wall_ms": 236.2,
+    "passes_cpu_ms": 187.7,
+    "overshoot_ms": 111.9,
+    "runq_delay_ms": 131.0,
+    "involuntary_switches": 70,
+    "voluntary_switches": 472
+   }
+  },
+  {
+   "sim_time": 65.0,
+   "ratio": 1.0024,
+   "first": 32000,
+   "last": 32500,
+   "loop": {
+    "passes_wall_ms": 235.4,
+    "passes_cpu_ms": 190.9,
+    "overshoot_ms": 99.8,
+    "runq_delay_ms": 110.0,
+    "involuntary_switches": 99,
+    "voluntary_switches": 476
+   }
+  },
+  {
+   "sim_time": 66.0,
+   "ratio": 1.0004,
+   "first": 32500,
+   "last": 33000,
+   "loop": {
+    "passes_wall_ms": 332.1,
+    "passes_cpu_ms": 271.8,
+    "overshoot_ms": 78.6,
+    "runq_delay_ms": 108.0,
+    "involuntary_switches": 89,
+    "voluntary_switches": 487
+   }
+  },
+  {
+   "sim_time": 67.0,
+   "ratio": 0.9975,
+   "first": 33000,
+   "last": 33500,
+   "loop": {
+    "passes_wall_ms": 364.0,
+    "passes_cpu_ms": 272.2,
+    "overshoot_ms": 99.0,
+    "runq_delay_ms": 161.0,
+    "involuntary_switches": 138,
+    "voluntary_switches": 462
+   }
+  },
+  {
+   "sim_time": 68.0,
+   "ratio": 0.9994,
+   "first": 33500,
+   "last": 34000,
+   "loop": {
+    "passes_wall_ms": 322.3,
+    "passes_cpu_ms": 246.8,
+    "overshoot_ms": 77.1,
+    "runq_delay_ms": 118.0,
+    "involuntary_switches": 119,
+    "voluntary_switches": 489
+   }
+  },
+  {
+   "sim_time": 69.0,
+   "ratio": 1.0027,
+   "first": 34000,
+   "last": 34500,
+   "loop": {
+    "passes_wall_ms": 333.6,
+    "passes_cpu_ms": 248.4,
+    "overshoot_ms": 100.7,
+    "runq_delay_ms": 153.0,
+    "involuntary_switches": 121,
+    "voluntary_switches": 470
+   }
+  },
+  {
+   "sim_time": 70.0,
+   "ratio": 0.9989,
+   "first": 34500,
+   "last": 35000,
+   "loop": {
+    "passes_wall_ms": 368.9,
+    "passes_cpu_ms": 279.5,
+    "overshoot_ms": 97.4,
+    "runq_delay_ms": 155.0,
+    "involuntary_switches": 127,
+    "voluntary_switches": 475
+   }
+  },
+  {
+   "sim_time": 71.0,
+   "ratio": 1.0007,
+   "first": 35000,
+   "last": 35500,
+   "loop": {
+    "passes_wall_ms": 342.2,
+    "passes_cpu_ms": 266.3,
+    "overshoot_ms": 133.4,
+    "runq_delay_ms": 180.0,
+    "involuntary_switches": 94,
+    "voluntary_switches": 442
+   }
+  },
+  {
+   "sim_time": 72.0,
+   "ratio": 1.0002,
+   "first": 35500,
+   "last": 36000,
+   "loop": {
+    "passes_wall_ms": 358.9,
+    "passes_cpu_ms": 281.5,
+    "overshoot_ms": 138.9,
+    "runq_delay_ms": 180.0,
+    "involuntary_switches": 95,
+    "voluntary_switches": 465
+   }
+  },
+  {
+   "sim_time": 73.0,
+   "ratio": 1.0005,
+   "first": 36000,
+   "last": 36500,
+   "loop": {
+    "passes_wall_ms": 284.4,
+    "passes_cpu_ms": 213.3,
+    "overshoot_ms": 95.2,
+    "runq_delay_ms": 130.0,
+    "involuntary_switches": 105,
+    "voluntary_switches": 487
+   }
+  },
+  {
+   "sim_time": 74.0,
+   "ratio": 0.9997,
+   "first": 36500,
+   "last": 37000,
+   "loop": {
+    "passes_wall_ms": 257.1,
+    "passes_cpu_ms": 194.2,
+    "overshoot_ms": 69.8,
+    "runq_delay_ms": 96.0,
+    "involuntary_switches": 77,
+    "voluntary_switches": 496
+   }
+  },
+  {
+   "sim_time": 75.0,
+   "ratio": 0.9995,
+   "first": 37000,
+   "last": 37500,
+   "loop": {
+    "passes_wall_ms": 274.8,
+    "passes_cpu_ms": 198.4,
+    "overshoot_ms": 88.2,
+    "runq_delay_ms": 136.0,
+    "involuntary_switches": 105,
+    "voluntary_switches": 473
+   }
+  },
+  {
+   "sim_time": 76.0,
+   "ratio": 0.9998,
+   "first": 37500,
+   "last": 38000,
+   "loop": {
+    "passes_wall_ms": 251.3,
+    "passes_cpu_ms": 190.0,
+    "overshoot_ms": 72.0,
+    "runq_delay_ms": 96.0,
+    "involuntary_switches": 76,
+    "voluntary_switches": 489
+   }
+  },
+  {
+   "sim_time": 77.0,
+   "ratio": 1.0011,
+   "first": 38000,
+   "last": 38500,
+   "loop": {
+    "passes_wall_ms": 261.7,
+    "passes_cpu_ms": 191.4,
+    "overshoot_ms": 132.2,
+    "runq_delay_ms": 171.0,
+    "involuntary_switches": 90,
+    "voluntary_switches": 463
+   }
+  },
+  {
+   "sim_time": 78.0,
+   "ratio": 0.997,
+   "first": 38500,
+   "last": 39000,
+   "loop": {
+    "passes_wall_ms": 269.2,
+    "passes_cpu_ms": 183.0,
+    "overshoot_ms": 147.0,
+    "runq_delay_ms": 201.0,
+    "involuntary_switches": 96,
+    "voluntary_switches": 450
+   }
+  },
+  {
+   "sim_time": 79.0,
+   "ratio": 1.0019,
+   "first": 39000,
+   "last": 39500,
+   "loop": {
+    "passes_wall_ms": 279.8,
+    "passes_cpu_ms": 186.3,
+    "overshoot_ms": 77.1,
+    "runq_delay_ms": 135.0,
+    "involuntary_switches": 123,
+    "voluntary_switches": 467
+   }
+  },
+  {
+   "sim_time": 80.0,
+   "ratio": 1.0013,
+   "first": 39500,
+   "last": 40000,
+   "loop": {
+    "passes_wall_ms": 258.6,
+    "passes_cpu_ms": 185.7,
+    "overshoot_ms": 85.0,
+    "runq_delay_ms": 125.0,
+    "involuntary_switches": 109,
+    "voluntary_switches": 483
+   }
+  },
+  {
+   "sim_time": 81.0,
+   "ratio": 0.9967,
+   "first": 40000,
+   "last": 40500,
+   "loop": {
+    "passes_wall_ms": 286.0,
+    "passes_cpu_ms": 186.2,
+    "overshoot_ms": 105.8,
+    "runq_delay_ms": 173.0,
+    "involuntary_switches": 153,
+    "voluntary_switches": 466
+   }
+  },
+  {
+   "sim_time": 82.0,
+   "ratio": 1.0031,
+   "first": 40500,
+   "last": 41000,
+   "loop": {
+    "passes_wall_ms": 280.5,
+    "passes_cpu_ms": 189.0,
+    "overshoot_ms": 99.3,
+    "runq_delay_ms": 162.0,
+    "involuntary_switches": 135,
+    "voluntary_switches": 467
+   }
+  },
+  {
+   "sim_time": 83.0,
+   "ratio": 1.0001,
+   "first": 41000,
+   "last": 41500,
+   "loop": {
+    "passes_wall_ms": 296.6,
+    "passes_cpu_ms": 183.2,
+    "overshoot_ms": 120.4,
+    "runq_delay_ms": 186.0,
+    "involuntary_switches": 188,
+    "voluntary_switches": 447
+   }
+  },
+  {
+   "sim_time": 84.0,
+   "ratio": 1.0002,
+   "first": 41500,
+   "last": 42000,
+   "loop": {
+    "passes_wall_ms": 281.4,
+    "passes_cpu_ms": 186.9,
+    "overshoot_ms": 158.4,
+    "runq_delay_ms": 173.0,
+    "involuntary_switches": 178,
+    "voluntary_switches": 455
+   }
+  },
+  {
+   "sim_time": 85.0,
+   "ratio": 0.9999,
+   "first": 42000,
+   "last": 42500,
+   "loop": {
+    "passes_wall_ms": 267.4,
+    "passes_cpu_ms": 197.5,
+    "overshoot_ms": 106.0,
+    "runq_delay_ms": 138.0,
+    "involuntary_switches": 89,
+    "voluntary_switches": 469
+   }
+  },
+  {
+   "sim_time": 86.0,
+   "ratio": 1.0,
+   "first": 42500,
+   "last": 43000,
+   "loop": {
+    "passes_wall_ms": 238.8,
+    "passes_cpu_ms": 199.5,
+    "overshoot_ms": 110.6,
+    "runq_delay_ms": 119.0,
+    "involuntary_switches": 64,
+    "voluntary_switches": 484
+   }
+  },
+  {
+   "sim_time": 87.0,
+   "ratio": 0.9999,
+   "first": 43000,
+   "last": 43500,
+   "loop": {
+    "passes_wall_ms": 323.0,
+    "passes_cpu_ms": 196.9,
+    "overshoot_ms": 93.3,
+    "runq_delay_ms": 189.0,
+    "involuntary_switches": 154,
+    "voluntary_switches": 453
+   }
+  },
+  {
+   "sim_time": 88.0,
+   "ratio": 0.9981,
+   "first": 43500,
+   "last": 44000,
+   "loop": {
+    "passes_wall_ms": 285.7,
+    "passes_cpu_ms": 204.1,
+    "overshoot_ms": 93.7,
+    "runq_delay_ms": 146.0,
+    "involuntary_switches": 102,
+    "voluntary_switches": 468
+   }
+  },
+  {
+   "sim_time": 89.0,
+   "ratio": 1.002,
+   "first": 44000,
+   "last": 44500,
+   "loop": {
+    "passes_wall_ms": 298.7,
+    "passes_cpu_ms": 212.1,
+    "overshoot_ms": 97.3,
+    "runq_delay_ms": 155.0,
+    "involuntary_switches": 138,
+    "voluntary_switches": 475
+   }
+  },
+  {
+   "sim_time": 90.0,
+   "ratio": 0.9985,
+   "first": 44500,
+   "last": 45000,
+   "loop": {
+    "passes_wall_ms": 322.5,
+    "passes_cpu_ms": 222.3,
+    "overshoot_ms": 92.4,
+    "runq_delay_ms": 160.0,
+    "involuntary_switches": 127,
+    "voluntary_switches": 459
+   }
+  },
+  {
+   "sim_time": 91.0,
+   "ratio": 1.0012,
+   "first": 45000,
+   "last": 45500,
+   "loop": {
+    "passes_wall_ms": 268.1,
+    "passes_cpu_ms": 225.5,
+    "overshoot_ms": 77.5,
+    "runq_delay_ms": 93.0,
+    "involuntary_switches": 74,
+    "voluntary_switches": 486
+   }
+  },
+  {
+   "sim_time": 92.0,
+   "ratio": 1.0002,
+   "first": 45500,
+   "last": 46000,
+   "loop": {
+    "passes_wall_ms": 281.7,
+    "passes_cpu_ms": 224.2,
+    "overshoot_ms": 103.2,
+    "runq_delay_ms": 130.0,
+    "involuntary_switches": 95,
+    "voluntary_switches": 483
+   }
+  },
+  {
+   "sim_time": 93.0,
+   "ratio": 0.9971,
+   "first": 46000,
+   "last": 46500,
+   "loop": {
+    "passes_wall_ms": 280.9,
+    "passes_cpu_ms": 229.4,
+    "overshoot_ms": 86.3,
+    "runq_delay_ms": 106.0,
+    "involuntary_switches": 68,
+    "voluntary_switches": 482
+   }
+  },
+  {
+   "sim_time": 94.0,
+   "ratio": 1.0023,
+   "first": 46500,
+   "last": 47000,
+   "loop": {
+    "passes_wall_ms": 301.4,
+    "passes_cpu_ms": 225.3,
+    "overshoot_ms": 89.5,
+    "runq_delay_ms": 137.0,
+    "involuntary_switches": 102,
+    "voluntary_switches": 469
+   }
+  },
+  {
+   "sim_time": 95.0,
+   "ratio": 0.9975,
+   "first": 47000,
+   "last": 47500,
+   "loop": {
+    "passes_wall_ms": 309.7,
+    "passes_cpu_ms": 237.7,
+    "overshoot_ms": 78.1,
+    "runq_delay_ms": 121.0,
+    "involuntary_switches": 96,
+    "voluntary_switches": 475
+   }
+  },
+  {
+   "sim_time": 96.0,
+   "ratio": 1.0025,
+   "first": 47500,
+   "last": 48000,
+   "loop": {
+    "passes_wall_ms": 293.6,
+    "passes_cpu_ms": 237.0,
+    "overshoot_ms": 83.3,
+    "runq_delay_ms": 110.0,
+    "involuntary_switches": 90,
+    "voluntary_switches": 480
+   }
+  },
+  {
+   "sim_time": 97.0,
+   "ratio": 1.0003,
+   "first": 48000,
+   "last": 48500,
+   "loop": {
+    "passes_wall_ms": 287.2,
+    "passes_cpu_ms": 232.2,
+    "overshoot_ms": 67.7,
+    "runq_delay_ms": 89.0,
+    "involuntary_switches": 72,
+    "voluntary_switches": 486
+   }
+  },
+  {
+   "sim_time": 98.0,
+   "ratio": 0.9995,
+   "first": 48500,
+   "last": 49000,
+   "loop": {
+    "passes_wall_ms": 288.8,
+    "passes_cpu_ms": 233.6,
+    "overshoot_ms": 104.1,
+    "runq_delay_ms": 129.0,
+    "involuntary_switches": 100,
+    "voluntary_switches": 469
+   }
+  },
+  {
+   "sim_time": 99.0,
+   "ratio": 1.0007,
+   "first": 49000,
+   "last": 49500,
+   "loop": {
+    "passes_wall_ms": 271.5,
+    "passes_cpu_ms": 221.6,
+    "overshoot_ms": 95.4,
+    "runq_delay_ms": 118.0,
+    "involuntary_switches": 65,
+    "voluntary_switches": 474
+   }
+  },
+  {
+   "sim_time": 100.0,
+   "ratio": 0.9997,
+   "first": 49500,
+   "last": 50000,
+   "loop": {
+    "passes_wall_ms": 316.6,
+    "passes_cpu_ms": 229.1,
+    "overshoot_ms": 97.4,
+    "runq_delay_ms": 156.0,
+    "involuntary_switches": 108,
+    "voluntary_switches": 455
+   }
+  },
+  {
+   "sim_time": 101.0,
+   "ratio": 0.9987,
+   "first": 50000,
+   "last": 50500,
+   "loop": {
+    "passes_wall_ms": 294.2,
+    "passes_cpu_ms": 248.4,
+    "overshoot_ms": 92.0,
+    "runq_delay_ms": 107.0,
+    "involuntary_switches": 92,
+    "voluntary_switches": 492
+   }
+  },
+  {
+   "sim_time": 102.0,
+   "ratio": 0.9981,
+   "first": 50500,
+   "last": 51000,
+   "loop": {
+    "passes_wall_ms": 334.8,
+    "passes_cpu_ms": 252.1,
+    "overshoot_ms": 87.1,
+    "runq_delay_ms": 138.0,
+    "involuntary_switches": 122,
+    "voluntary_switches": 463
+   }
+  },
+  {
+   "sim_time": 103.0,
+   "ratio": 1.0031,
+   "first": 51000,
+   "last": 51500,
+   "loop": {
+    "passes_wall_ms": 299.0,
+    "passes_cpu_ms": 248.1,
+    "overshoot_ms": 86.6,
+    "runq_delay_ms": 107.0,
+    "involuntary_switches": 87,
+    "voluntary_switches": 489
+   }
+  },
+  {
+   "sim_time": 104.0,
+   "ratio": 0.9998,
+   "first": 51500,
+   "last": 52000,
+   "loop": {
+    "passes_wall_ms": 312.9,
+    "passes_cpu_ms": 241.6,
+    "overshoot_ms": 89.0,
+    "runq_delay_ms": 130.0,
+    "involuntary_switches": 97,
+    "voluntary_switches": 466
+   }
+  },
+  {
+   "sim_time": 105.0,
+   "ratio": 0.9996,
+   "first": 52000,
+   "last": 52500,
+   "loop": {
+    "passes_wall_ms": 258.9,
+    "passes_cpu_ms": 225.4,
+    "overshoot_ms": 71.1,
+    "runq_delay_ms": 75.0,
+    "involuntary_switches": 47,
+    "voluntary_switches": 491
+   }
+  },
+  {
+   "sim_time": 106.0,
+   "ratio": 1.0012,
+   "first": 52500,
+   "last": 53000,
+   "loop": {
+    "passes_wall_ms": 321.4,
+    "passes_cpu_ms": 229.6,
+    "overshoot_ms": 101.2,
+    "runq_delay_ms": 159.0,
+    "involuntary_switches": 124,
+    "voluntary_switches": 461
+   }
+  },
+  {
+   "sim_time": 107.0,
+   "ratio": 0.9958,
+   "first": 53000,
+   "last": 53500,
+   "loop": {
+    "passes_wall_ms": 268.3,
+    "passes_cpu_ms": 232.2,
+    "overshoot_ms": 91.8,
+    "runq_delay_ms": 99.0,
+    "involuntary_switches": 59,
+    "voluntary_switches": 483
+   }
+  },
+  {
+   "sim_time": 108.0,
+   "ratio": 1.0042,
+   "first": 53500,
+   "last": 54000,
+   "loop": {
+    "passes_wall_ms": 258.5,
+    "passes_cpu_ms": 208.0,
+    "overshoot_ms": 80.7,
+    "runq_delay_ms": 99.0,
+    "involuntary_switches": 100,
+    "voluntary_switches": 484
+   }
+  },
+  {
+   "sim_time": 109.0,
+   "ratio": 1.0,
+   "first": 54000,
+   "last": 54500,
+   "loop": {
+    "passes_wall_ms": 247.7,
+    "passes_cpu_ms": 197.5,
+    "overshoot_ms": 81.5,
+    "runq_delay_ms": 101.0,
+    "involuntary_switches": 87,
+    "voluntary_switches": 483
+   }
+  },
+  {
+   "sim_time": 110.0,
+   "ratio": 1.0,
+   "first": 54500,
+   "last": 55000,
+   "loop": {
+    "passes_wall_ms": 298.5,
+    "passes_cpu_ms": 227.5,
+    "overshoot_ms": 73.9,
+    "runq_delay_ms": 114.0,
+    "involuntary_switches": 86,
+    "voluntary_switches": 477
+   }
+  },
+  {
+   "sim_time": 111.0,
+   "ratio": 0.9998,
+   "first": 55000,
+   "last": 55500,
+   "loop": {
+    "passes_wall_ms": 285.2,
+    "passes_cpu_ms": 229.0,
+    "overshoot_ms": 92.8,
+    "runq_delay_ms": 119.0,
+    "involuntary_switches": 79,
+    "voluntary_switches": 474
+   }
+  },
+  {
+   "sim_time": 112.0,
+   "ratio": 1.0003,
+   "first": 55500,
+   "last": 56000,
+   "loop": {
+    "passes_wall_ms": 254.2,
+    "passes_cpu_ms": 209.8,
+    "overshoot_ms": 86.7,
+    "runq_delay_ms": 102.0,
+    "involuntary_switches": 82,
+    "voluntary_switches": 483
+   }
+  },
+  {
+   "sim_time": 113.0,
+   "ratio": 0.9968,
+   "first": 56000,
+   "last": 56500,
+   "loop": {
+    "passes_wall_ms": 244.0,
+    "passes_cpu_ms": 187.2,
+    "overshoot_ms": 78.5,
+    "runq_delay_ms": 107.0,
+    "involuntary_switches": 85,
+    "voluntary_switches": 491
+   }
+  },
+  {
+   "sim_time": 114.0,
+   "ratio": 1.0032,
+   "first": 56500,
+   "last": 57000,
+   "loop": {
+    "passes_wall_ms": 272.4,
+    "passes_cpu_ms": 202.8,
+    "overshoot_ms": 100.0,
+    "runq_delay_ms": 141.0,
+    "involuntary_switches": 107,
+    "voluntary_switches": 480
+   }
+  },
+  {
+   "sim_time": 115.0,
+   "ratio": 0.9996,
+   "first": 57000,
+   "last": 57500,
+   "loop": {
+    "passes_wall_ms": 234.1,
+    "passes_cpu_ms": 191.4,
+    "overshoot_ms": 92.4,
+    "runq_delay_ms": 106.0,
+    "involuntary_switches": 90,
+    "voluntary_switches": 484
+   }
+  },
+  {
+   "sim_time": 116.0,
+   "ratio": 1.0006,
+   "first": 57500,
+   "last": 58000,
+   "loop": {
+    "passes_wall_ms": 250.9,
+    "passes_cpu_ms": 198.3,
+    "overshoot_ms": 72.6,
+    "runq_delay_ms": 95.0,
+    "involuntary_switches": 76,
+    "voluntary_switches": 490
+   }
+  },
+  {
+   "sim_time": 117.0,
+   "ratio": 0.9997,
+   "first": 58000,
+   "last": 58500,
+   "loop": {
+    "passes_wall_ms": 281.4,
+    "passes_cpu_ms": 212.2,
+    "overshoot_ms": 90.9,
+    "runq_delay_ms": 127.0,
+    "involuntary_switches": 132,
+    "voluntary_switches": 502
+   }
+  },
+  {
+   "sim_time": 118.0,
+   "ratio": 1.0002,
+   "first": 58500,
+   "last": 59000,
+   "loop": {
+    "passes_wall_ms": 300.6,
+    "passes_cpu_ms": 216.7,
+    "overshoot_ms": 82.2,
+    "runq_delay_ms": 136.0,
+    "involuntary_switches": 139,
+    "voluntary_switches": 479
+   }
+  },
+  {
+   "sim_time": 119.0,
+   "ratio": 0.9993,
+   "first": 59000,
+   "last": 59500,
+   "loop": {
+    "passes_wall_ms": 255.8,
+    "passes_cpu_ms": 196.8,
+    "overshoot_ms": 79.3,
+    "runq_delay_ms": 107.0,
+    "involuntary_switches": 94,
+    "voluntary_switches": 472
+   }
+  },
+  {
+   "sim_time": 120.0,
+   "ratio": 1.0005,
+   "first": 59500,
+   "last": 60000,
+   "loop": {
+    "passes_wall_ms": 250.6,
+    "passes_cpu_ms": 202.6,
+    "overshoot_ms": 72.5,
+    "runq_delay_ms": 89.0,
+    "involuntary_switches": 65,
+    "voluntary_switches": 492
+   }
+  },
+  {
+   "sim_time": 121.0,
+   "ratio": 1.0001,
+   "first": 60000,
+   "last": 60500,
+   "loop": {
+    "passes_wall_ms": 277.6,
+    "passes_cpu_ms": 200.9,
+    "overshoot_ms": 100.4,
+    "runq_delay_ms": 148.0,
+    "involuntary_switches": 90,
+    "voluntary_switches": 469
+   }
+  },
+  {
+   "sim_time": 122.0,
+   "ratio": 0.9956,
+   "first": 60500,
+   "last": 61000,
+   "loop": {
+    "passes_wall_ms": 305.9,
+    "passes_cpu_ms": 212.8,
+    "overshoot_ms": 103.1,
+    "runq_delay_ms": 167.0,
+    "involuntary_switches": 148,
+    "voluntary_switches": 458
+   }
+  },
+  {
+   "sim_time": 123.0,
+   "ratio": 1.0046,
+   "first": 61000,
+   "last": 61500,
+   "loop": {
+    "passes_wall_ms": 232.6,
+    "passes_cpu_ms": 188.2,
+    "overshoot_ms": 89.0,
+    "runq_delay_ms": 103.0,
+    "involuntary_switches": 82,
+    "voluntary_switches": 494
+   }
+  },
+  {
+   "sim_time": 124.0,
+   "ratio": 1.0,
+   "first": 61500,
+   "last": 62000,
+   "loop": {
+    "passes_wall_ms": 228.9,
+    "passes_cpu_ms": 186.1,
+    "overshoot_ms": 67.5,
+    "runq_delay_ms": 80.0,
+    "involuntary_switches": 57,
+    "voluntary_switches": 488
+   }
+  },
+  {
+   "sim_time": 125.0,
+   "ratio": 1.0,
+   "first": 62000,
+   "last": 62500,
+   "loop": {
+    "passes_wall_ms": 244.1,
+    "passes_cpu_ms": 190.0,
+    "overshoot_ms": 108.8,
+    "runq_delay_ms": 132.0,
+    "involuntary_switches": 93,
+    "voluntary_switches": 463
+   }
+  },
+  {
+   "sim_time": 126.0,
+   "ratio": 0.9999,
+   "first": 62500,
+   "last": 63000,
+   "loop": {
+    "passes_wall_ms": 231.6,
+    "passes_cpu_ms": 184.3,
+    "overshoot_ms": 68.5,
+    "runq_delay_ms": 86.0,
+    "involuntary_switches": 53,
+    "voluntary_switches": 487
+   }
+  },
+  {
+   "sim_time": 127.0,
+   "ratio": 0.9969,
+   "first": 63000,
+   "last": 63500,
+   "loop": {
+    "passes_wall_ms": 275.0,
+    "passes_cpu_ms": 200.3,
+    "overshoot_ms": 89.1,
+    "runq_delay_ms": 138.0,
+    "involuntary_switches": 127,
+    "voluntary_switches": 472
+   }
+  },
+  {
+   "sim_time": 128.0,
+   "ratio": 1.0,
+   "first": 63500,
+   "last": 64000,
+   "loop": {
+    "passes_wall_ms": 240.0,
+    "passes_cpu_ms": 194.3,
+    "overshoot_ms": 75.0,
+    "runq_delay_ms": 92.0,
+    "involuntary_switches": 68,
+    "voluntary_switches": 486
+   }
+  },
+  {
+   "sim_time": 129.0,
+   "ratio": 1.002,
+   "first": 64000,
+   "last": 64500,
+   "loop": {
+    "passes_wall_ms": 269.4,
+    "passes_cpu_ms": 196.0,
+    "overshoot_ms": 107.4,
+    "runq_delay_ms": 148.0,
+    "involuntary_switches": 105,
+    "voluntary_switches": 465
+   }
+  },
+  {
+   "sim_time": 130.0,
+   "ratio": 1.0011,
+   "first": 64500,
+   "last": 65000,
+   "loop": {
+    "passes_wall_ms": 254.4,
+    "passes_cpu_ms": 192.3,
+    "overshoot_ms": 95.1,
+    "runq_delay_ms": 128.0,
+    "involuntary_switches": 97,
+    "voluntary_switches": 474
+   }
+  },
+  {
+   "sim_time": 131.0,
+   "ratio": 0.9966,
+   "first": 65000,
+   "last": 65500,
+   "loop": {
+    "passes_wall_ms": 284.1,
+    "passes_cpu_ms": 204.8,
+    "overshoot_ms": 102.7,
+    "runq_delay_ms": 147.0,
+    "involuntary_switches": 104,
+    "voluntary_switches": 477
+   }
+  },
+  {
+   "sim_time": 132.0,
+   "ratio": 1.0032,
+   "first": 65500,
+   "last": 66000,
+   "loop": {
+    "passes_wall_ms": 274.0,
+    "passes_cpu_ms": 204.3,
+    "overshoot_ms": 74.1,
+    "runq_delay_ms": 117.0,
+    "involuntary_switches": 110,
+    "voluntary_switches": 474
+   }
+  },
+  {
+   "sim_time": 133.0,
+   "ratio": 1.0003,
+   "first": 66000,
+   "last": 66500,
+   "loop": {
+    "passes_wall_ms": 270.2,
+    "passes_cpu_ms": 193.3,
+    "overshoot_ms": 92.3,
+    "runq_delay_ms": 132.0,
+    "involuntary_switches": 113,
+    "voluntary_switches": 496
+   }
+  },
+  {
+   "sim_time": 134.0,
+   "ratio": 0.9999,
+   "first": 66500,
+   "last": 67000,
+   "loop": {
+    "passes_wall_ms": 238.2,
+    "passes_cpu_ms": 196.1,
+    "overshoot_ms": 104.9,
+    "runq_delay_ms": 114.0,
+    "involuntary_switches": 77,
+    "voluntary_switches": 484
+   }
+  },
+  {
+   "sim_time": 135.0,
+   "ratio": 1.0,
+   "first": 67000,
+   "last": 67500,
+   "loop": {
+    "passes_wall_ms": 275.4,
+    "passes_cpu_ms": 208.0,
+    "overshoot_ms": 105.8,
+    "runq_delay_ms": 137.0,
+    "involuntary_switches": 100,
+    "voluntary_switches": 483
+   }
+  },
+  {
+   "sim_time": 136.0,
+   "ratio": 0.9994,
+   "first": 67500,
+   "last": 68000,
+   "loop": {
+    "passes_wall_ms": 281.1,
+    "passes_cpu_ms": 206.2,
+    "overshoot_ms": 93.8,
+    "runq_delay_ms": 134.0,
+    "involuntary_switches": 115,
+    "voluntary_switches": 483
+   }
+  },
+  {
+   "sim_time": 137.0,
+   "ratio": 0.999,
+   "first": 68000,
+   "last": 68500,
+   "loop": {
+    "passes_wall_ms": 291.6,
+    "passes_cpu_ms": 212.6,
+    "overshoot_ms": 80.7,
+    "runq_delay_ms": 124.0,
+    "involuntary_switches": 112,
+    "voluntary_switches": 495
+   }
+  },
+  {
+   "sim_time": 138.0,
+   "ratio": 1.0017,
+   "first": 68500,
+   "last": 69000,
+   "loop": {
+    "passes_wall_ms": 262.6,
+    "passes_cpu_ms": 201.8,
+    "overshoot_ms": 77.2,
+    "runq_delay_ms": 92.0,
+    "involuntary_switches": 56,
+    "voluntary_switches": 495
+   }
+  },
+  {
+   "sim_time": 139.0,
+   "ratio": 0.9996,
+   "first": 69000,
+   "last": 69500,
+   "loop": {
+    "passes_wall_ms": 232.0,
+    "passes_cpu_ms": 178.9,
+    "overshoot_ms": 76.4,
+    "runq_delay_ms": 86.0,
+    "involuntary_switches": 65,
+    "voluntary_switches": 494
+   }
+  },
+  {
+   "sim_time": 140.0,
+   "ratio": 0.9974,
+   "first": 69500,
+   "last": 70000,
+   "loop": {
+    "passes_wall_ms": 254.0,
+    "passes_cpu_ms": 189.6,
+    "overshoot_ms": 84.6,
+    "runq_delay_ms": 107.0,
+    "involuntary_switches": 71,
+    "voluntary_switches": 507
+   }
+  },
+  {
+   "sim_time": 141.0,
+   "ratio": 0.9998,
+   "first": 70000,
+   "last": 70500,
+   "loop": {
+    "passes_wall_ms": 234.1,
+    "passes_cpu_ms": 196.9,
+    "overshoot_ms": 90.5,
+    "runq_delay_ms": 94.0,
+    "involuntary_switches": 67,
+    "voluntary_switches": 499
+   }
+  },
+  {
+   "sim_time": 142.0,
+   "ratio": 1.0016,
+   "first": 70500,
+   "last": 71000,
+   "loop": {
+    "passes_wall_ms": 315.0,
+    "passes_cpu_ms": 205.7,
+    "overshoot_ms": 90.5,
+    "runq_delay_ms": 168.0,
+    "involuntary_switches": 180,
+    "voluntary_switches": 476
+   }
+  },
+  {
+   "sim_time": 143.0,
+   "ratio": 1.0006,
+   "first": 71000,
+   "last": 71500,
+   "loop": {
+    "passes_wall_ms": 291.7,
+    "passes_cpu_ms": 200.4,
+    "overshoot_ms": 85.5,
+    "runq_delay_ms": 138.0,
+    "involuntary_switches": 111,
+    "voluntary_switches": 481
+   }
+  },
+  {
+   "sim_time": 144.0,
+   "ratio": 1.0008,
+   "first": 71500,
+   "last": 72000,
+   "loop": {
+    "passes_wall_ms": 251.1,
+    "passes_cpu_ms": 197.1,
+    "overshoot_ms": 84.0,
+    "runq_delay_ms": 102.0,
+    "involuntary_switches": 95,
+    "voluntary_switches": 494
+   }
+  },
+  {
+   "sim_time": 145.0,
+   "ratio": 0.9996,
+   "first": 72000,
+   "last": 72500,
+   "loop": {
+    "passes_wall_ms": 290.4,
+    "passes_cpu_ms": 206.4,
+    "overshoot_ms": 119.6,
+    "runq_delay_ms": 166.0,
+    "involuntary_switches": 109,
+    "voluntary_switches": 471
+   }
+  },
+  {
+   "sim_time": 146.0,
+   "ratio": 1.0004,
+   "first": 72500,
+   "last": 73000,
+   "loop": {
+    "passes_wall_ms": 268.3,
+    "passes_cpu_ms": 194.8,
+    "overshoot_ms": 81.6,
+    "runq_delay_ms": 112.0,
+    "involuntary_switches": 76,
+    "voluntary_switches": 506
+   }
+  },
+  {
+   "sim_time": 147.0,
+   "ratio": 1.0001,
+   "first": 73000,
+   "last": 73500,
+   "loop": {
+    "passes_wall_ms": 266.9,
+    "passes_cpu_ms": 198.8,
+    "overshoot_ms": 66.8,
+    "runq_delay_ms": 102.0,
+    "involuntary_switches": 98,
+    "voluntary_switches": 491
+   }
+  },
+  {
+   "sim_time": 148.0,
+   "ratio": 0.9968,
+   "first": 73500,
+   "last": 74000,
+   "loop": {
+    "passes_wall_ms": 244.1,
+    "passes_cpu_ms": 189.7,
+    "overshoot_ms": 100.6,
+    "runq_delay_ms": 128.0,
+    "involuntary_switches": 103,
+    "voluntary_switches": 477
+   }
+  },
+  {
+   "sim_time": 149.0,
+   "ratio": 1.0028,
+   "first": 74000,
+   "last": 74500,
+   "loop": {
+    "passes_wall_ms": 241.2,
+    "passes_cpu_ms": 182.7,
+    "overshoot_ms": 104.3,
+    "runq_delay_ms": 135.0,
+    "involuntary_switches": 118,
+    "voluntary_switches": 467
+   }
+  },
+  {
+   "sim_time": 150.0,
+   "ratio": 0.9983,
+   "first": 74500,
+   "last": 75000,
+   "loop": {
+    "passes_wall_ms": 239.0,
+    "passes_cpu_ms": 187.6,
+    "overshoot_ms": 76.9,
+    "runq_delay_ms": 96.0,
+    "involuntary_switches": 91,
+    "voluntary_switches": 490
+   }
+  },
+  {
+   "sim_time": 151.0,
+   "ratio": 1.0018,
+   "first": 75000,
+   "last": 75500,
+   "loop": {
+    "passes_wall_ms": 265.2,
+    "passes_cpu_ms": 199.3,
+    "overshoot_ms": 77.7,
+    "runq_delay_ms": 114.0,
+    "involuntary_switches": 114,
+    "voluntary_switches": 487
+   }
+  },
+  {
+   "sim_time": 152.0,
+   "ratio": 1.0003,
+   "first": 75500,
+   "last": 76000,
+   "loop": {
+    "passes_wall_ms": 260.1,
+    "passes_cpu_ms": 188.7,
+    "overshoot_ms": 80.9,
+    "runq_delay_ms": 126.0,
+    "involuntary_switches": 133,
+    "voluntary_switches": 484
+   }
+  },
+  {
+   "sim_time": 153.0,
+   "ratio": 0.9977,
+   "first": 76000,
+   "last": 76500,
+   "loop": {
+    "passes_wall_ms": 274.0,
+    "passes_cpu_ms": 187.2,
+    "overshoot_ms": 128.1,
+    "runq_delay_ms": 185.0,
+    "involuntary_switches": 158,
+    "voluntary_switches": 474
+   }
+  },
+  {
+   "sim_time": 154.0,
+   "ratio": 0.9994,
+   "first": 76500,
+   "last": 77000,
+   "loop": {
+    "passes_wall_ms": 254.0,
+    "passes_cpu_ms": 186.4,
+    "overshoot_ms": 89.1,
+    "runq_delay_ms": 129.0,
+    "involuntary_switches": 100,
+    "voluntary_switches": 469
+   }
+  },
+  {
+   "sim_time": 155.0,
+   "ratio": 1.0022,
+   "first": 77000,
+   "last": 77500,
+   "loop": {
+    "passes_wall_ms": 261.2,
+    "passes_cpu_ms": 191.1,
+    "overshoot_ms": 69.7,
+    "runq_delay_ms": 106.0,
+    "involuntary_switches": 115,
+    "voluntary_switches": 490
+   }
+  },
+  {
+   "sim_time": 156.0,
+   "ratio": 0.9977,
+   "first": 77500,
+   "last": 78000,
+   "loop": {
+    "passes_wall_ms": 262.1,
+    "passes_cpu_ms": 195.8,
+    "overshoot_ms": 71.2,
+    "runq_delay_ms": 108.0,
+    "involuntary_switches": 102,
+    "voluntary_switches": 478
+   }
+  },
+  {
+   "sim_time": 157.0,
+   "ratio": 1.0008,
+   "first": 78000,
+   "last": 78500,
+   "loop": {
+    "passes_wall_ms": 243.2,
+    "passes_cpu_ms": 189.7,
+    "overshoot_ms": 82.9,
+    "runq_delay_ms": 107.0,
+    "involuntary_switches": 82,
+    "voluntary_switches": 482
+   }
+  },
+  {
+   "sim_time": 158.0,
+   "ratio": 1.0023,
+   "first": 78500,
+   "last": 79000,
+   "loop": {
+    "passes_wall_ms": 256.3,
+    "passes_cpu_ms": 197.8,
+    "overshoot_ms": 81.4,
+    "runq_delay_ms": 109.0,
+    "involuntary_switches": 91,
+    "voluntary_switches": 487
+   }
+  },
+  {
+   "sim_time": 159.0,
+   "ratio": 0.9991,
+   "first": 79000,
+   "last": 79500,
+   "loop": {
+    "passes_wall_ms": 257.8,
+    "passes_cpu_ms": 194.6,
+    "overshoot_ms": 112.2,
+    "runq_delay_ms": 145.0,
+    "involuntary_switches": 126,
+    "voluntary_switches": 479
+   }
+  },
+  {
+   "sim_time": 160.0,
+   "ratio": 1.0006,
+   "first": 79500,
+   "last": 80000,
+   "loop": {
+    "passes_wall_ms": 275.5,
+    "passes_cpu_ms": 207.9,
+    "overshoot_ms": 83.8,
+    "runq_delay_ms": 121.0,
+    "involuntary_switches": 78,
+    "voluntary_switches": 482
+   }
+  },
+  {
+   "sim_time": 161.0,
+   "ratio": 1.0002,
+   "first": 80000,
+   "last": 80500,
+   "loop": {
+    "passes_wall_ms": 273.0,
+    "passes_cpu_ms": 207.5,
+    "overshoot_ms": 77.7,
+    "runq_delay_ms": 111.0,
+    "involuntary_switches": 91,
+    "voluntary_switches": 486
+   }
+  },
+  {
+   "sim_time": 162.0,
+   "ratio": 0.9968,
+   "first": 80500,
+   "last": 81000,
+   "loop": {
+    "passes_wall_ms": 269.1,
+    "passes_cpu_ms": 202.5,
+    "overshoot_ms": 80.4,
+    "runq_delay_ms": 116.0,
+    "involuntary_switches": 85,
+    "voluntary_switches": 486
+   }
+  },
+  {
+   "sim_time": 163.0,
+   "ratio": 1.0009,
+   "first": 81000,
+   "last": 81500,
+   "loop": {
+    "passes_wall_ms": 276.4,
+    "passes_cpu_ms": 204.2,
+    "overshoot_ms": 99.2,
+    "runq_delay_ms": 139.0,
+    "involuntary_switches": 100,
+    "voluntary_switches": 468
+   }
+  },
+  {
+   "sim_time": 164.0,
+   "ratio": 1.0023,
+   "first": 81500,
+   "last": 82000,
+   "loop": {
+    "passes_wall_ms": 225.7,
+    "passes_cpu_ms": 193.5,
+    "overshoot_ms": 76.2,
+    "runq_delay_ms": 79.0,
+    "involuntary_switches": 60,
+    "voluntary_switches": 491
+   }
+  },
+  {
+   "sim_time": 165.0,
+   "ratio": 1.0,
+   "first": 82000,
+   "last": 82500,
+   "loop": {
+    "passes_wall_ms": 228.6,
+    "passes_cpu_ms": 192.7,
+    "overshoot_ms": 65.4,
+    "runq_delay_ms": 71.0,
+    "involuntary_switches": 62,
+    "voluntary_switches": 502
+   }
+  },
+  {
+   "sim_time": 166.0,
+   "ratio": 0.9998,
+   "first": 82500,
+   "last": 83000,
+   "loop": {
+    "passes_wall_ms": 250.3,
+    "passes_cpu_ms": 193.5,
+    "overshoot_ms": 86.1,
+    "runq_delay_ms": 112.0,
+    "involuntary_switches": 110,
+    "voluntary_switches": 493
+   }
+  },
+  {
+   "sim_time": 167.0,
+   "ratio": 0.9969,
+   "first": 83000,
+   "last": 83500,
+   "loop": {
+    "passes_wall_ms": 246.9,
+    "passes_cpu_ms": 192.0,
+    "overshoot_ms": 101.9,
+    "runq_delay_ms": 127.0,
+    "involuntary_switches": 91,
+    "voluntary_switches": 482
+   }
+  },
+  {
+   "sim_time": 168.0,
+   "ratio": 1.0033,
+   "first": 83500,
+   "last": 84000,
+   "loop": {
+    "passes_wall_ms": 258.4,
+    "passes_cpu_ms": 198.6,
+    "overshoot_ms": 86.9,
+    "runq_delay_ms": 117.0,
+    "involuntary_switches": 87,
+    "voluntary_switches": 479
+   }
+  },
+  {
+   "sim_time": 169.0,
+   "ratio": 0.9968,
+   "first": 84000,
+   "last": 84500,
+   "loop": {
+    "passes_wall_ms": 226.8,
+    "passes_cpu_ms": 184.0,
+    "overshoot_ms": 73.0,
+    "runq_delay_ms": 86.0,
+    "involuntary_switches": 75,
+    "voluntary_switches": 500
+   }
+  },
+  {
+   "sim_time": 170.0,
+   "ratio": 1.0032,
+   "first": 84500,
+   "last": 85000,
+   "loop": {
+    "passes_wall_ms": 256.2,
+    "passes_cpu_ms": 197.5,
+    "overshoot_ms": 87.5,
+    "runq_delay_ms": 116.0,
+    "involuntary_switches": 115,
+    "voluntary_switches": 483
+   }
+  },
+  {
+   "sim_time": 171.0,
+   "ratio": 1.0,
+   "first": 85000,
+   "last": 85500,
+   "loop": {
+    "passes_wall_ms": 287.5,
+    "passes_cpu_ms": 198.4,
+    "overshoot_ms": 75.5,
+    "runq_delay_ms": 131.0,
+    "involuntary_switches": 104,
+    "voluntary_switches": 472
+   }
+  },
+  {
+   "sim_time": 172.0,
+   "ratio": 0.9968,
+   "first": 85500,
+   "last": 86000,
+   "loop": {
+    "passes_wall_ms": 231.5,
+    "passes_cpu_ms": 192.5,
+    "overshoot_ms": 75.8,
+    "runq_delay_ms": 85.0,
+    "involuntary_switches": 59,
+    "voluntary_switches": 489
+   }
+  },
+  {
+   "sim_time": 173.0,
+   "ratio": 1.0032,
+   "first": 86000,
+   "last": 86500,
+   "loop": {
+    "passes_wall_ms": 242.7,
+    "passes_cpu_ms": 185.4,
+    "overshoot_ms": 81.1,
+    "runq_delay_ms": 110.0,
+    "involuntary_switches": 86,
+    "voluntary_switches": 477
+   }
+  },
+  {
+   "sim_time": 174.0,
+   "ratio": 1.0,
+   "first": 86500,
+   "last": 87000,
+   "loop": {
+    "passes_wall_ms": 218.9,
+    "passes_cpu_ms": 165.9,
+    "overshoot_ms": 82.7,
+    "runq_delay_ms": 84.0,
+    "involuntary_switches": 81,
+    "voluntary_switches": 484
+   }
+  },
+  {
+   "sim_time": 175.0,
+   "ratio": 0.9999,
+   "first": 87000,
+   "last": 87500,
+   "loop": {
+    "passes_wall_ms": 226.6,
+    "passes_cpu_ms": 163.3,
+    "overshoot_ms": 114.0,
+    "runq_delay_ms": 149.0,
+    "involuntary_switches": 112,
+    "voluntary_switches": 487
+   }
+  },
+  {
+   "sim_time": 176.0,
+   "ratio": 1.0001,
+   "first": 87500,
+   "last": 88000,
+   "loop": {
+    "passes_wall_ms": 212.9,
+    "passes_cpu_ms": 160.1,
+    "overshoot_ms": 98.4,
+    "runq_delay_ms": 122.0,
+    "involuntary_switches": 80,
+    "voluntary_switches": 477
+   }
+  },
+  {
+   "sim_time": 177.0,
+   "ratio": 1.0,
+   "first": 88000,
+   "last": 88500,
+   "loop": {
+    "passes_wall_ms": 206.5,
+    "passes_cpu_ms": 157.9,
+    "overshoot_ms": 100.8,
+    "runq_delay_ms": 122.0,
+    "involuntary_switches": 55,
+    "voluntary_switches": 468
+   }
+  },
+  {
+   "sim_time": 178.0,
+   "ratio": 1.0,
+   "first": 88500,
+   "last": 89000,
+   "loop": {
+    "passes_wall_ms": 238.7,
+    "passes_cpu_ms": 165.1,
+    "overshoot_ms": 77.6,
+    "runq_delay_ms": 120.0,
+    "involuntary_switches": 111,
+    "voluntary_switches": 472
+   }
+  },
+  {
+   "sim_time": 179.0,
+   "ratio": 0.9994,
+   "first": 89000,
+   "last": 89500,
+   "loop": {
+    "passes_wall_ms": 240.7,
+    "passes_cpu_ms": 167.4,
+    "overshoot_ms": 86.7,
+    "runq_delay_ms": 131.0,
+    "involuntary_switches": 129,
+    "voluntary_switches": 476
+   }
+  },
+  {
+   "sim_time": 180.0,
+   "ratio": 1.0004,
+   "first": 89500,
+   "last": 90000,
+   "loop": {
+    "passes_wall_ms": 221.3,
+    "passes_cpu_ms": 168.8,
+    "overshoot_ms": 73.2,
+    "runq_delay_ms": 96.0,
+    "involuntary_switches": 91,
+    "voluntary_switches": 487
+   }
+  },
+  {
+   "sim_time": 181.0,
+   "ratio": 1.0002,
+   "first": 90000,
+   "last": 90500,
+   "loop": {
+    "passes_wall_ms": 228.3,
+    "passes_cpu_ms": 169.7,
+    "overshoot_ms": 73.1,
+    "runq_delay_ms": 102.0,
+    "involuntary_switches": 108,
+    "voluntary_switches": 486
+   }
+  },
+  {
+   "sim_time": 182.0,
+   "ratio": 0.9967,
+   "first": 90500,
+   "last": 91000,
+   "loop": {
+    "passes_wall_ms": 215.7,
+    "passes_cpu_ms": 163.3,
+    "overshoot_ms": 75.9,
+    "runq_delay_ms": 98.0,
+    "involuntary_switches": 106,
+    "voluntary_switches": 489
+   }
+  },
+  {
+   "sim_time": 183.0,
+   "ratio": 1.0007,
+   "first": 91000,
+   "last": 91500,
+   "loop": {
+    "passes_wall_ms": 276.7,
+    "passes_cpu_ms": 188.5,
+    "overshoot_ms": 72.9,
+    "runq_delay_ms": 132.0,
+    "involuntary_switches": 109,
+    "voluntary_switches": 467
+   }
+  },
+  {
+   "sim_time": 184.0,
+   "ratio": 1.0025,
+   "first": 91500,
+   "last": 92000,
+   "loop": {
+    "passes_wall_ms": 252.9,
+    "passes_cpu_ms": 193.0,
+    "overshoot_ms": 66.5,
+    "runq_delay_ms": 97.0,
+    "involuntary_switches": 101,
+    "voluntary_switches": 485
+   }
+  },
+  {
+   "sim_time": 185.0,
+   "ratio": 1.0,
+   "first": 92000,
+   "last": 92500,
+   "loop": {
+    "passes_wall_ms": 242.8,
+    "passes_cpu_ms": 177.6,
+    "overshoot_ms": 85.6,
+    "runq_delay_ms": 124.0,
+    "involuntary_switches": 109,
+    "voluntary_switches": 478
+   }
+  },
+  {
+   "sim_time": 186.0,
+   "ratio": 0.9968,
+   "first": 92500,
+   "last": 93000,
+   "loop": {
+    "passes_wall_ms": 223.9,
+    "passes_cpu_ms": 171.4,
+    "overshoot_ms": 66.1,
+    "runq_delay_ms": 87.0,
+    "involuntary_switches": 104,
+    "voluntary_switches": 498
+   }
+  },
+  {
+   "sim_time": 187.0,
+   "ratio": 1.0033,
+   "first": 93000,
+   "last": 93500,
+   "loop": {
+    "passes_wall_ms": 246.2,
+    "passes_cpu_ms": 178.1,
+    "overshoot_ms": 74.1,
+    "runq_delay_ms": 112.0,
+    "involuntary_switches": 95,
+    "voluntary_switches": 491
+   }
+  },
+  {
+   "sim_time": 188.0,
+   "ratio": 0.9999,
+   "first": 93500,
+   "last": 94000,
+   "loop": {
+    "passes_wall_ms": 240.7,
+    "passes_cpu_ms": 187.2,
+    "overshoot_ms": 58.7,
+    "runq_delay_ms": 81.0,
+    "involuntary_switches": 85,
+    "voluntary_switches": 493
+   }
+  },
+  {
+   "sim_time": 189.0,
+   "ratio": 0.9992,
+   "first": 94000,
+   "last": 94500,
+   "loop": {
+    "passes_wall_ms": 259.1,
+    "passes_cpu_ms": 180.9,
+    "overshoot_ms": 95.8,
+    "runq_delay_ms": 143.0,
+    "involuntary_switches": 135,
+    "voluntary_switches": 484
+   }
+  },
+  {
+   "sim_time": 190.0,
+   "ratio": 1.0009,
+   "first": 94500,
+   "last": 95000,
+   "loop": {
+    "passes_wall_ms": 229.9,
+    "passes_cpu_ms": 181.3,
+    "overshoot_ms": 79.1,
+    "runq_delay_ms": 96.0,
+    "involuntary_switches": 98,
+    "voluntary_switches": 486
+   }
+  },
+  {
+   "sim_time": 191.0,
+   "ratio": 1.0,
+   "first": 95000,
+   "last": 95500,
+   "loop": {
+    "passes_wall_ms": 254.1,
+    "passes_cpu_ms": 171.3,
+    "overshoot_ms": 65.6,
+    "runq_delay_ms": 117.0,
+    "involuntary_switches": 113,
+    "voluntary_switches": 474
+   }
+  },
+  {
+   "sim_time": 192.0,
+   "ratio": 0.9999,
+   "first": 95500,
+   "last": 96000,
+   "loop": {
+    "passes_wall_ms": 239.8,
+    "passes_cpu_ms": 187.3,
+    "overshoot_ms": 77.7,
+    "runq_delay_ms": 100.0,
+    "involuntary_switches": 92,
+    "voluntary_switches": 493
+   }
+  },
+  {
+   "sim_time": 193.0,
+   "ratio": 0.9997,
+   "first": 96000,
+   "last": 96500,
+   "loop": {
+    "passes_wall_ms": 233.7,
+    "passes_cpu_ms": 183.3,
+    "overshoot_ms": 78.3,
+    "runq_delay_ms": 101.0,
+    "involuntary_switches": 80,
+    "voluntary_switches": 490
+   }
+  },
+  {
+   "sim_time": 194.0,
+   "ratio": 0.9997,
+   "first": 96500,
+   "last": 97000,
+   "loop": {
+    "passes_wall_ms": 220.6,
+    "passes_cpu_ms": 174.5,
+    "overshoot_ms": 63.0,
+    "runq_delay_ms": 76.0,
+    "involuntary_switches": 82,
+    "voluntary_switches": 506
+   }
+  },
+  {
+   "sim_time": 195.0,
+   "ratio": 1.0007,
+   "first": 97000,
+   "last": 97500,
+   "loop": {
+    "passes_wall_ms": 274.9,
+    "passes_cpu_ms": 176.6,
+    "overshoot_ms": 94.4,
+    "runq_delay_ms": 162.0,
+    "involuntary_switches": 166,
+    "voluntary_switches": 468
+   }
+  },
+  {
+   "sim_time": 196.0,
+   "ratio": 0.9994,
+   "first": 97500,
+   "last": 98000,
+   "loop": {
+    "passes_wall_ms": 244.1,
+    "passes_cpu_ms": 180.2,
+    "overshoot_ms": 79.2,
+    "runq_delay_ms": 103.0,
+    "involuntary_switches": 85,
+    "voluntary_switches": 481
+   }
+  },
+  {
+   "sim_time": 197.0,
+   "ratio": 1.0,
+   "first": 98000,
+   "last": 98500,
+   "loop": {
+    "passes_wall_ms": 253.8,
+    "passes_cpu_ms": 192.9,
+    "overshoot_ms": 125.8,
+    "runq_delay_ms": 102.0,
+    "involuntary_switches": 74,
+    "voluntary_switches": 464
+   }
+  },
+  {
+   "sim_time": 198.0,
+   "ratio": 1.0004,
+   "first": 98500,
+   "last": 99000,
+   "loop": {
+    "passes_wall_ms": 229.6,
+    "passes_cpu_ms": 183.2,
+    "overshoot_ms": 87.8,
+    "runq_delay_ms": 77.0,
+    "involuntary_switches": 56,
+    "voluntary_switches": 474
+   }
+  },
+  {
+   "sim_time": 199.0,
+   "ratio": 0.9994,
+   "first": 99000,
+   "last": 99500,
+   "loop": {
+    "passes_wall_ms": 250.4,
+    "passes_cpu_ms": 194.0,
+    "overshoot_ms": 113.5,
+    "runq_delay_ms": 142.0,
+    "involuntary_switches": 98,
+    "voluntary_switches": 453
+   }
+  },
+  {
+   "sim_time": 200.0,
+   "ratio": 0.9995,
+   "first": 99500,
+   "last": 100000,
+   "loop": {
+    "passes_wall_ms": 276.2,
+    "passes_cpu_ms": 187.2,
+    "overshoot_ms": 81.6,
+    "runq_delay_ms": 143.0,
+    "involuntary_switches": 115,
+    "voluntary_switches": 461
+   }
+  },
+  {
+   "sim_time": 201.0,
+   "ratio": 1.0014,
+   "first": 100000,
+   "last": 100500,
+   "loop": {
+    "passes_wall_ms": 251.2,
+    "passes_cpu_ms": 187.6,
+    "overshoot_ms": 69.6,
+    "runq_delay_ms": 105.0,
+    "involuntary_switches": 90,
+    "voluntary_switches": 464
+   }
+  }
+ ],
+ "worst_ratio": 0.9876462218720997,
+ "all_ratios": [
+  1.0012,
+  0.9999,
+  1.0,
+  0.9876,
+  1.0116,
+  1.0009,
+  0.999,
+  1.0011,
+  0.997,
+  1.0031,
+  0.9969,
+  1.0031,
+  0.9996,
+  0.9999,
+  1.0005,
+  0.9999,
+  1.0001,
+  0.9994,
+  1.0003,
+  1.0004,
+  1.0,
+  1.0,
+  0.9996,
+  0.999,
+  1.001,
+  0.9983,
+  1.0013,
+  1.0008,
+  0.9999,
+  0.9969,
+  1.0021,
+  0.9986,
+  1.0021,
+  0.9997,
+  0.9993,
+  1.001,
+  0.9999,
+  0.9995,
+  0.9977,
+  1.0031,
+  0.9996,
+  0.9973,
+  1.0,
+  1.0031,
+  1.0001,
+  0.9999,
+  0.9998,
+  0.9999,
+  0.9994,
+  0.9999,
+  1.001,
+  0.9993,
+  0.9998,
+  1.0008,
+  0.9958,
+  1.0042,
+  0.9994,
+  1.0004,
+  0.9997,
+  0.9998,
+  1.0001,
+  0.9976,
+  1.0025,
+  0.9977,
+  1.0024,
+  1.0004,
+  0.9975,
+  0.9994,
+  1.0027,
+  0.9989,
+  1.0007,
+  1.0002,
+  1.0005,
+  0.9997,
+  0.9995,
+  0.9998,
+  1.0011,
+  0.997,
+  1.0019,
+  1.0013,
+  0.9967,
+  1.0031,
+  1.0001,
+  1.0002,
+  0.9999,
+  1.0,
+  0.9999,
+  0.9981,
+  1.002,
+  0.9985,
+  1.0012,
+  1.0002,
+  0.9971,
+  1.0023,
+  0.9975,
+  1.0025,
+  1.0003,
+  0.9995,
+  1.0007,
+  0.9997,
+  0.9987,
+  0.9981,
+  1.0031,
+  0.9998,
+  0.9996,
+  1.0012,
+  0.9958,
+  1.0042,
+  1.0,
+  1.0,
+  0.9998,
+  1.0003,
+  0.9968,
+  1.0032,
+  0.9996,
+  1.0006,
+  0.9997,
+  1.0002,
+  0.9993,
+  1.0005,
+  1.0001,
+  0.9956,
+  1.0046,
+  1.0,
+  1.0,
+  0.9999,
+  0.9969,
+  1.0,
+  1.002,
+  1.0011,
+  0.9966,
+  1.0032,
+  1.0003,
+  0.9999,
+  1.0,
+  0.9994,
+  0.999,
+  1.0017,
+  0.9996,
+  0.9974,
+  0.9998,
+  1.0016,
+  1.0006,
+  1.0008,
+  0.9996,
+  1.0004,
+  1.0001,
+  0.9968,
+  1.0028,
+  0.9983,
+  1.0018,
+  1.0003,
+  0.9977,
+  0.9994,
+  1.0022,
+  0.9977,
+  1.0008,
+  1.0023,
+  0.9991,
+  1.0006,
+  1.0002,
+  0.9968,
+  1.0009,
+  1.0023,
+  1.0,
+  0.9998,
+  0.9969,
+  1.0033,
+  0.9968,
+  1.0032,
+  1.0,
+  0.9968,
+  1.0032,
+  1.0,
+  0.9999,
+  1.0001,
+  1.0,
+  1.0,
+  0.9994,
+  1.0004,
+  1.0002,
+  0.9967,
+  1.0007,
+  1.0025,
+  1.0,
+  0.9968,
+  1.0033,
+  0.9999,
+  0.9992,
+  1.0009,
+  1.0,
+  0.9999,
+  0.9997,
+  0.9997,
+  1.0007,
+  0.9994,
+  1.0,
+  1.0004,
+  0.9994,
+  0.9995,
+  1.0014
+ ]
+}

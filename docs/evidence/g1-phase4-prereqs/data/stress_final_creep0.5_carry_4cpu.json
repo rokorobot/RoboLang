@@ -1,0 +1,1704 @@
+{
+  "checks": {
+    "move-stress": {
+      "pass": false,
+      "details": {
+        "protocol": "bench, then 20 x (shelf, bench): one stand-in, free stance, the oracle judges each, the box held throughout",
+        "grasp": {
+          "pass": true,
+          "carry_pose": {
+            "object_to_nearest_link_m": 0.0165,
+            "link": "right_hip_pitch_link",
+            "arm_deviation_rad": 0.045
+          }
+        },
+        "creep_torque_nm": 0.5,
+        "tolerance": {
+          "m": 0.05,
+          "rad": 0.1
+        },
+        "shelf": {
+          "arrivals": 20,
+          "pass": 19,
+          "sim_s": {
+            "min": 83.0,
+            "median": 111.0,
+            "max": 227.8,
+            "mean": 122.5
+          },
+          "worst_error_m": 0.0436,
+          "worst_error_rad": 0.0514
+        },
+        "bench": {
+          "arrivals": 20,
+          "pass": 19,
+          "sim_s": {
+            "min": 59.4,
+            "median": 88.0,
+            "max": 189.0,
+            "mean": 99.7
+          },
+          "worst_error_m": 0.0504,
+          "worst_error_rad": 0.0409
+        },
+        "moves": [
+          {
+            "n": 0,
+            "station": "bench",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0231,
+            "oracle_error_rad": 0.0082,
+            "sim_s": 55.2,
+            "wall_s": 55.2,
+            "servo_looks": 10,
+            "events": {
+              "localized": 15,
+              "creep": 1
+            },
+            "heading": {
+              "source": "imu_yaw",
+              "fixes": 15,
+              "bias_rad_s": 0.0035,
+              "jump_rad_max": 0.0319,
+              "jump_rad_mean": 0.0089,
+              "creep_rad_s": 0.0144,
+              "creep_imu_reads": 5
+            },
+            "imu_truth": {
+              "gyro_bias": [
+                -0.002103,
+                -0.003948,
+                0.00347
+              ],
+              "yaw_error_rad": 0.21903,
+              "ideal": false
+            },
+            "trace": [
+              0,
+              33
+            ]
+          },
+          {
+            "n": 1,
+            "station": "shelf",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0085,
+            "oracle_error_rad": 0.034,
+            "sim_s": 114.0,
+            "wall_s": 114.0,
+            "servo_looks": 11,
+            "events": {
+              "localized": 16,
+              "sidestep": 1,
+              "rejected": 2,
+              "unseen": 6,
+              "creep": 1
+            },
+            "heading": {
+              "source": "imu_yaw",
+              "fixes": 33,
+              "bias_rad_s": 0.00363,
+              "jump_rad_max": 0.0319,
+              "jump_rad_mean": 0.0062,
+              "creep_rad_s": 0.0157,
+              "creep_imu_reads": 23
+            },
+            "imu_truth": {
+              "gyro_bias": [
+                -0.002142,
+                -0.004103,
+                0.003332
+              ],
+              "yaw_error_rad": 0.72573,
+              "ideal": false
+            },
+            "trace": [
+              36,
+              98
+            ]
+          },
+          {
+            "n": 2,
+            "station": "bench",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0211,
+            "oracle_error_rad": 0.03,
+            "sim_s": 75.0,
+            "wall_s": 75.0,
+            "servo_looks": 9,
+            "events": {
+              "localized": 15,
+              "creep": 1
+            },
+            "heading": {
+              "source": "imu_yaw",
+              "fixes": 48,
+              "bias_rad_s": 0.00358,
+              "jump_rad_max": 0.0319,
+              "jump_rad_mean": 0.0049,
+              "creep_rad_s": 0.0172,
+              "creep_imu_reads": 33
+            },
+            "imu_truth": {
+              "gyro_bias": [
+                -0.001932,
+                -0.003713,
+                0.003605
+              ],
+              "yaw_error_rad": 0.98166,
+              "ideal": false
+            },
+            "trace": [
+              98,
+              136
+            ]
+          },
+          {
+            "n": 3,
+            "station": "shelf",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0173,
+            "oracle_error_rad": 0.0223,
+            "sim_s": 92.8,
+            "wall_s": 92.8,
+            "servo_looks": 4,
+            "events": {
+              "localized": 15,
+              "sidestep": 2,
+              "creep": 1
+            },
+            "heading": {
+              "source": "imu_yaw",
+              "fixes": 63,
+              "bias_rad_s": 0.00351,
+              "jump_rad_max": 0.0319,
+              "jump_rad_mean": 0.0043,
+              "creep_rad_s": 0.016,
+              "creep_imu_reads": 42
+            },
+            "imu_truth": {
+              "gyro_bias": [
+                -0.001932,
+                -0.003676,
+                0.003417
+              ],
+              "yaw_error_rad": 1.30261,
+              "ideal": false
+            },
+            "trace": [
+              136,
+              181
+            ]
+          },
+          {
+            "n": 4,
+            "station": "bench",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.012,
+            "oracle_error_rad": 0.0024,
+            "sim_s": 106.2,
+            "wall_s": 106.2,
+            "servo_looks": 17,
+            "events": {
+              "localized": 22,
+              "creep": 1
+            },
+            "heading": {
+              "source": "imu_yaw",
+              "fixes": 85,
+              "bias_rad_s": 0.0034,
+              "jump_rad_max": 0.0319,
+              "jump_rad_mean": 0.004,
+              "creep_rad_s": 0.0177,
+              "creep_imu_reads": 54
+            },
+            "imu_truth": {
+              "gyro_bias": [
+                -0.001936,
+                -0.00348,
+                0.003274
+              ],
+              "yaw_error_rad": 1.65661,
+              "ideal": false
+            },
+            "trace": [
+              181,
+              237
+            ]
+          },
+          {
+            "n": 5,
+            "station": "shelf",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0303,
+            "oracle_error_rad": 0.0339,
+            "sim_s": 151.8,
+            "wall_s": 151.8,
+            "servo_looks": 19,
+            "events": {
+              "localized": 30,
+              "sidestep": 1,
+              "rejected": 1,
+              "creep": 1
+            },
+            "heading": {
+              "source": "imu_yaw",
+              "fixes": 115,
+              "bias_rad_s": 0.0033,
+              "jump_rad_max": 0.0319,
+              "jump_rad_mean": 0.0037,
+              "creep_rad_s": 0.0171,
+              "creep_imu_reads": 73
+            },
+            "imu_truth": {
+              "gyro_bias": [
+                -0.002135,
+                -0.003526,
+                0.003056
+              ],
+              "yaw_error_rad": 2.14466,
+              "ideal": false
+            },
+            "trace": [
+              237,
+              320
+            ]
+          },
+          {
+            "n": 6,
+            "station": "bench",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.022,
+            "oracle_error_rad": 0.0364,
+            "sim_s": 124.2,
+            "wall_s": 124.2,
+            "servo_looks": 18,
+            "events": {
+              "localized": 28,
+              "creep": 1
+            },
+            "heading": {
+              "source": "imu_yaw",
+              "fixes": 143,
+              "bias_rad_s": 0.0032,
+              "jump_rad_max": 0.0319,
+              "jump_rad_mean": 0.0036,
+              "creep_rad_s": 0.0153,
+              "creep_imu_reads": 90
+            },
+            "imu_truth": {
+              "gyro_bias": [
+                -0.001966,
+                -0.00361,
+                0.002633
+              ],
+              "yaw_error_rad": 2.50559,
+              "ideal": false
+            },
+            "trace": [
+              320,
+              388
+            ]
+          },
+          {
+            "n": 7,
+            "station": "shelf",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0232,
+            "oracle_error_rad": 0.0271,
+            "sim_s": 83.0,
+            "wall_s": 83.0,
+            "servo_looks": 2,
+            "events": {
+              "localized": 12,
+              "sidestep": 2,
+              "creep": 1
+            },
+            "heading": {
+              "source": "imu_yaw",
+              "fixes": 155,
+              "bias_rad_s": 0.0029,
+              "jump_rad_max": 0.0319,
+              "jump_rad_mean": 0.0038,
+              "creep_rad_s": 0.0088,
+              "creep_imu_reads": 96
+            },
+            "imu_truth": {
+              "gyro_bias": [
+                -0.001965,
+                -0.003556,
+                0.002633
+              ],
+              "yaw_error_rad": 2.721,
+              "ideal": false
+            },
+            "trace": [
+              388,
+              430
+            ]
+          },
+          {
+            "n": 8,
+            "station": "bench",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0127,
+            "oracle_error_rad": 0.0035,
+            "sim_s": 59.4,
+            "wall_s": 59.4,
+            "servo_looks": 5,
+            "events": {
+              "localized": 9,
+              "creep": 1
+            },
+            "heading": {
+              "source": "imu_yaw",
+              "fixes": 164,
+              "bias_rad_s": 0.00281,
+              "jump_rad_max": 0.0319,
+              "jump_rad_mean": 0.0038,
+              "creep_rad_s": 0.0186,
+              "creep_imu_reads": 102
+            },
+            "imu_truth": {
+              "gyro_bias": [
+                -0.001723,
+                -0.003322,
+                0.003019
+              ],
+              "yaw_error_rad": 2.88899,
+              "ideal": false
+            },
+            "trace": [
+              430,
+              457
+            ]
+          },
+          {
+            "n": 9,
+            "station": "shelf",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0189,
+            "oracle_error_rad": 0.0514,
+            "sim_s": 109.6,
+            "wall_s": 109.6,
+            "servo_looks": 11,
+            "events": {
+              "localized": 21,
+              "sidestep": 1,
+              "rejected": 1,
+              "blocked": 1,
+              "creep": 1
+            },
+            "heading": {
+              "source": "imu_yaw",
+              "fixes": 185,
+              "bias_rad_s": 0.00289,
+              "jump_rad_max": 0.0319,
+              "jump_rad_mean": 0.0039,
+              "creep_rad_s": 0.0162,
+              "creep_imu_reads": 112
+            },
+            "imu_truth": {
+              "gyro_bias": [
+                -0.001617,
+                -0.003429,
+                0.00277
+              ],
+              "yaw_error_rad": 3.20103,
+              "ideal": false
+            },
+            "trace": [
+              457,
+              515
+            ]
+          },
+          {
+            "n": 10,
+            "station": "bench",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0248,
+            "oracle_error_rad": 0.0371,
+            "sim_s": 107.2,
+            "wall_s": 107.2,
+            "servo_looks": 14,
+            "events": {
+              "localized": 24,
+              "rejected": 1,
+              "creep": 1
+            },
+            "heading": {
+              "source": "imu_yaw",
+              "fixes": 209,
+              "bias_rad_s": 0.00283,
+              "jump_rad_max": 0.0262,
+              "jump_rad_mean": 0.0034,
+              "creep_rad_s": 0.0167,
+              "creep_imu_reads": 118
+            },
+            "imu_truth": {
+              "gyro_bias": [
+                -0.001451,
+                -0.002996,
+                0.002932
+              ],
+              "yaw_error_rad": 3.50063,
+              "ideal": false
+            },
+            "trace": [
+              515,
+              574
+            ]
+          },
+          {
+            "n": 11,
+            "station": "shelf",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.015,
+            "oracle_error_rad": 0.0244,
+            "sim_s": 204.8,
+            "wall_s": 204.8,
+            "servo_looks": 5,
+            "events": {
+              "localized": 12,
+              "sidestep": 2,
+              "rejected": 1,
+              "unseen": 14,
+              "reacquire": 6,
+              "creep": 1
+            },
+            "heading": {
+              "source": "imu_yaw",
+              "fixes": 221,
+              "bias_rad_s": 0.00295,
+              "jump_rad_max": 0.0262,
+              "jump_rad_mean": 0.0033,
+              "creep_rad_s": 0.0158,
+              "creep_imu_reads": 132
+            },
+            "imu_truth": {
+              "gyro_bias": [
+                -0.002122,
+                -0.002734,
+                0.003025
+              ],
+              "yaw_error_rad": 4.10588,
+              "ideal": false
+            },
+            "trace": [
+              574,
+              698
+            ]
+          },
+          {
+            "n": 12,
+            "station": "bench",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0163,
+            "oracle_error_rad": 0.0094,
+            "sim_s": 75.0,
+            "wall_s": 75.0,
+            "servo_looks": 6,
+            "events": {
+              "localized": 14,
+              "creep": 1
+            },
+            "heading": {
+              "source": "imu_yaw",
+              "fixes": 235,
+              "bias_rad_s": 0.00295,
+              "jump_rad_max": 0.0262,
+              "jump_rad_mean": 0.0033,
+              "creep_rad_s": 0.017,
+              "creep_imu_reads": 138
+            },
+            "imu_truth": {
+              "gyro_bias": [
+                -0.002083,
+                -0.002619,
+                0.003044
+              ],
+              "yaw_error_rad": 4.33355,
+              "ideal": false
+            },
+            "trace": [
+              698,
+              735
+            ]
+          },
+          {
+            "n": 13,
+            "station": "shelf",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0126,
+            "oracle_error_rad": 0.0232,
+            "sim_s": 119.8,
+            "wall_s": 119.8,
+            "servo_looks": 6,
+            "events": {
+              "localized": 16,
+              "sidestep": 1,
+              "rejected": 2,
+              "unseen": 6,
+              "creep": 1
+            },
+            "heading": {
+              "source": "imu_yaw",
+              "fixes": 251,
+              "bias_rad_s": 0.00296,
+              "jump_rad_max": 0.0262,
+              "jump_rad_mean": 0.0035,
+              "creep_rad_s": 0.0165,
+              "creep_imu_reads": 153
+            },
+            "imu_truth": {
+              "gyro_bias": [
+                -0.002462,
+                -0.00239,
+                0.002857
+              ],
+              "yaw_error_rad": 4.68509,
+              "ideal": false
+            },
+            "trace": [
+              735,
+              800
+            ]
+          },
+          {
+            "n": 14,
+            "station": "bench",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0203,
+            "oracle_error_rad": 0.021,
+            "sim_s": 61.8,
+            "wall_s": 61.8,
+            "servo_looks": 5,
+            "events": {
+              "localized": 10,
+              "rejected": 1,
+              "creep": 1
+            },
+            "heading": {
+              "source": "imu_yaw",
+              "fixes": 261,
+              "bias_rad_s": 0.00293,
+              "jump_rad_max": 0.0262,
+              "jump_rad_mean": 0.0036,
+              "creep_rad_s": 0.0169,
+              "creep_imu_reads": 161
+            },
+            "imu_truth": {
+              "gyro_bias": [
+                -0.002238,
+                -0.002443,
+                0.002878
+              ],
+              "yaw_error_rad": 4.86476,
+              "ideal": false
+            },
+            "trace": [
+              800,
+              830
+            ]
+          },
+          {
+            "n": 15,
+            "station": "shelf",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0383,
+            "oracle_error_rad": 0.0169,
+            "sim_s": 156.4,
+            "wall_s": 156.4,
+            "servo_looks": 19,
+            "events": {
+              "localized": 28,
+              "sidestep": 1,
+              "rejected": 1,
+              "unseen": 6,
+              "blocked": 1,
+              "creep": 1
+            },
+            "heading": {
+              "source": "imu_yaw",
+              "fixes": 289,
+              "bias_rad_s": 0.0029,
+              "jump_rad_max": 0.0262,
+              "jump_rad_mean": 0.0035,
+              "creep_rad_s": 0.0163,
+              "creep_imu_reads": 175
+            },
+            "imu_truth": {
+              "gyro_bias": [
+                -0.002239,
+                -0.002431,
+                0.002761
+              ],
+              "yaw_error_rad": 5.31352,
+              "ideal": false
+            },
+            "trace": [
+              830,
+              919
+            ]
+          },
+          {
+            "n": 16,
+            "station": "bench",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0088,
+            "oracle_error_rad": 0.0178,
+            "sim_s": 136.4,
+            "wall_s": 136.4,
+            "servo_looks": 24,
+            "events": {
+              "localized": 28,
+              "creep": 1
+            },
+            "heading": {
+              "source": "imu_yaw",
+              "fixes": 317,
+              "bias_rad_s": 0.00286,
+              "jump_rad_max": 0.0262,
+              "jump_rad_mean": 0.0036,
+              "creep_rad_s": 0.0163,
+              "creep_imu_reads": 193
+            },
+            "imu_truth": {
+              "gyro_bias": [
+                -0.002418,
+                -0.002619,
+                0.00269
+              ],
+              "yaw_error_rad": 5.69008,
+              "ideal": false
+            },
+            "trace": [
+              919,
+              992
+            ]
+          },
+          {
+            "n": 17,
+            "station": "shelf",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.012,
+            "oracle_error_rad": 0.0213,
+            "sim_s": 88.8,
+            "wall_s": 88.8,
+            "servo_looks": 5,
+            "events": {
+              "localized": 15,
+              "sidestep": 1,
+              "rejected": 1,
+              "creep": 1
+            },
+            "heading": {
+              "source": "imu_yaw",
+              "fixes": 332,
+              "bias_rad_s": 0.00283,
+              "jump_rad_max": 0.0262,
+              "jump_rad_mean": 0.0036,
+              "creep_rad_s": 0.0124,
+              "creep_imu_reads": 202
+            },
+            "imu_truth": {
+              "gyro_bias": [
+                -0.002383,
+                -0.003026,
+                0.002633
+              ],
+              "yaw_error_rad": 5.92108,
+              "ideal": false
+            },
+            "trace": [
+              992,
+              1036
+            ]
+          },
+          {
+            "n": 18,
+            "station": "bench",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0353,
+            "oracle_error_rad": 0.005,
+            "sim_s": 144.6,
+            "wall_s": 144.6,
+            "servo_looks": 24,
+            "events": {
+              "localized": 32,
+              "creep": 1
+            },
+            "heading": {
+              "source": "imu_yaw",
+              "fixes": 364,
+              "bias_rad_s": 0.00279,
+              "jump_rad_max": 0.0259,
+              "jump_rad_mean": 0.0033,
+              "creep_rad_s": 0.0153,
+              "creep_imu_reads": 214
+            },
+            "imu_truth": {
+              "gyro_bias": [
+                -0.002024,
+                -0.003168,
+                0.002503
+              ],
+              "yaw_error_rad": 6.31063,
+              "ideal": false
+            },
+            "trace": [
+              1036,
+              1114
+            ]
+          },
+          {
+            "n": 19,
+            "station": "shelf",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0264,
+            "oracle_error_rad": 0.0203,
+            "sim_s": 95.8,
+            "wall_s": 95.8,
+            "servo_looks": 5,
+            "events": {
+              "localized": 16,
+              "sidestep": 1,
+              "rejected": 1,
+              "creep": 1
+            },
+            "heading": {
+              "source": "imu_yaw",
+              "fixes": 380,
+              "bias_rad_s": 0.00271,
+              "jump_rad_max": 0.0211,
+              "jump_rad_mean": 0.0032,
+              "creep_rad_s": 0.0171,
+              "creep_imu_reads": 223
+            },
+            "imu_truth": {
+              "gyro_bias": [
+                -0.001872,
+                -0.003587,
+                0.002503
+              ],
+              "yaw_error_rad": 6.55103,
+              "ideal": false
+            },
+            "trace": [
+              1114,
+              1163
+            ]
+          },
+          {
+            "n": 20,
+            "station": "bench",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.018,
+            "oracle_error_rad": 0.0139,
+            "sim_s": 115.8,
+            "wall_s": 115.8,
+            "servo_looks": 18,
+            "events": {
+              "localized": 26,
+              "blocked": 1,
+              "creep": 1
+            },
+            "heading": {
+              "source": "imu_yaw",
+              "fixes": 406,
+              "bias_rad_s": 0.00257,
+              "jump_rad_max": 0.0211,
+              "jump_rad_mean": 0.0032,
+              "creep_rad_s": 0.0151,
+              "creep_imu_reads": 231
+            },
+            "imu_truth": {
+              "gyro_bias": [
+                -0.002007,
+                -0.003391,
+                0.002406
+              ],
+              "yaw_error_rad": 6.82388,
+              "ideal": false
+            },
+            "trace": [
+              1163,
+              1225
+            ]
+          },
+          {
+            "n": 21,
+            "station": "shelf",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0343,
+            "oracle_error_rad": 0.0347,
+            "sim_s": 92.8,
+            "wall_s": 92.8,
+            "servo_looks": 6,
+            "events": {
+              "localized": 16,
+              "sidestep": 1,
+              "rejected": 1,
+              "creep": 1
+            },
+            "heading": {
+              "source": "imu_yaw",
+              "fixes": 422,
+              "bias_rad_s": 0.00254,
+              "jump_rad_max": 0.0149,
+              "jump_rad_mean": 0.0031,
+              "creep_rad_s": 0.015,
+              "creep_imu_reads": 242
+            },
+            "imu_truth": {
+              "gyro_bias": [
+                -0.002116,
+                -0.003389,
+                0.002273
+              ],
+              "yaw_error_rad": 7.03793,
+              "ideal": false
+            },
+            "trace": [
+              1225,
+              1274
+            ]
+          },
+          {
+            "n": 22,
+            "station": "bench",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0337,
+            "oracle_error_rad": 0.0033,
+            "sim_s": 69.6,
+            "wall_s": 69.6,
+            "servo_looks": 5,
+            "events": {
+              "localized": 15,
+              "creep": 1
+            },
+            "heading": {
+              "source": "imu_yaw",
+              "fixes": 437,
+              "bias_rad_s": 0.00245,
+              "jump_rad_max": 0.0149,
+              "jump_rad_mean": 0.0032,
+              "creep_rad_s": 0.0142,
+              "creep_imu_reads": 244
+            },
+            "imu_truth": {
+              "gyro_bias": [
+                -0.002258,
+                -0.003347,
+                0.00214
+              ],
+              "yaw_error_rad": 7.18672,
+              "ideal": false
+            },
+            "trace": [
+              1274,
+              1309
+            ]
+          },
+          {
+            "n": 23,
+            "station": "shelf",
+            "pass": false,
+            "failure": {
+              "code": "S504",
+              "message": "did not converge on station shelf in time (errors forward, left, yaw, last 14 looks: [[-0.019, 0.04, 0.037], [-0.021, 0.04, 0.048], [-0.024, 0.043, 0.059], [-0.024, 0.039, 0.065], [-0.024, 0.042, 0.042], [-0.025, 0.039, 0.057], [-0.024, 0.032, 0.052], [-0.023, 0.042, 0.024], [-0.024, 0.039, 0.03], [-0.022, 0.034, 0.041], [-0.022, 0.039, 0.015], [-0.025, 0.041, 0.018], [-0.022, 0.035, 0.044], [-0.022, 0.037, 0.021]])"
+            },
+            "oracle_error_m": 0.0436,
+            "oracle_error_rad": 0.0148,
+            "sim_s": 227.8,
+            "wall_s": 227.8,
+            "servo_looks": 0,
+            "events": {
+              "localized": 58,
+              "sidestep": 1,
+              "rejected": 1,
+              "blocked": 8,
+              "creep": 3
+            },
+            "heading": {
+              "source": "imu_yaw",
+              "fixes": 495,
+              "bias_rad_s": 0.00227,
+              "jump_rad_max": 0.0116,
+              "jump_rad_mean": 0.0031,
+              "creep_rad_s": 0.0135,
+              "creep_imu_reads": 258
+            },
+            "imu_truth": {
+              "gyro_bias": [
+                -0.002181,
+                -0.003517,
+                0.002042
+              ],
+              "yaw_error_rad": 7.64498,
+              "ideal": false
+            },
+            "trace": [
+              1309,
+              1438
+            ]
+          },
+          {
+            "n": 24,
+            "station": "bench",
+            "pass": false,
+            "failure": {
+              "code": "S504",
+              "message": "did not converge on station bench in time (errors forward, left, yaw, last 14 looks: [[-0.021, -0.038, -0.05], [-0.021, -0.037, -0.047], [-0.017, -0.04, -0.042], [-0.02, -0.041, -0.042], [-0.021, -0.041, -0.04], [-0.023, -0.037, -0.036], [-0.025, -0.041, -0.023], [-0.022, -0.035, -0.019], [-0.02, -0.04, -0.037], [-0.022, -0.039, -0.038], [-0.02, -0.039, -0.037], [-0.019, -0.041, -0.033], [-0.025, -0.045, -0.026], [-0.022, -0.042, -0.02]])"
+            },
+            "oracle_error_m": 0.0504,
+            "oracle_error_rad": 0.0258,
+            "sim_s": 189.0,
+            "wall_s": 189.0,
+            "servo_looks": 0,
+            "events": {
+              "localized": 50,
+              "creep": 5,
+              "blocked": 7
+            },
+            "heading": {
+              "source": "imu_yaw",
+              "fixes": 545,
+              "bias_rad_s": 0.00217,
+              "jump_rad_max": 0.0142,
+              "jump_rad_mean": 0.003,
+              "creep_rad_s": 0.0137,
+              "creep_imu_reads": 272
+            },
+            "imu_truth": {
+              "gyro_bias": [
+                -0.001914,
+                -0.003054,
+                0.002249
+              ],
+              "yaw_error_rad": 8.06882,
+              "ideal": false
+            },
+            "trace": [
+              1438,
+              1547
+            ]
+          },
+          {
+            "n": 25,
+            "station": "shelf",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0365,
+            "oracle_error_rad": 0.0233,
+            "sim_s": 111.0,
+            "wall_s": 111.0,
+            "servo_looks": 10,
+            "events": {
+              "localized": 16,
+              "sidestep": 1,
+              "rejected": 1,
+              "unseen": 6,
+              "creep": 1
+            },
+            "heading": {
+              "source": "imu_yaw",
+              "fixes": 561,
+              "bias_rad_s": 0.00222,
+              "jump_rad_max": 0.0142,
+              "jump_rad_mean": 0.003,
+              "creep_rad_s": 0.0161,
+              "creep_imu_reads": 284
+            },
+            "imu_truth": {
+              "gyro_bias": [
+                -0.001897,
+                -0.003254,
+                0.002368
+              ],
+              "yaw_error_rad": 8.32136,
+              "ideal": false
+            },
+            "trace": [
+              1547,
+              1607
+            ]
+          },
+          {
+            "n": 26,
+            "station": "bench",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0386,
+            "oracle_error_rad": 0.0409,
+            "sim_s": 88.0,
+            "wall_s": 88.0,
+            "servo_looks": 15,
+            "events": {
+              "localized": 19,
+              "blocked": 1,
+              "creep": 1
+            },
+            "heading": {
+              "source": "imu_yaw",
+              "fixes": 580,
+              "bias_rad_s": 0.00221,
+              "jump_rad_max": 0.0142,
+              "jump_rad_mean": 0.0031,
+              "creep_rad_s": 0.0172,
+              "creep_imu_reads": 290
+            },
+            "imu_truth": {
+              "gyro_bias": [
+                -0.001843,
+                -0.002908,
+                0.002491
+              ],
+              "yaw_error_rad": 8.5344,
+              "ideal": false
+            },
+            "trace": [
+              1607,
+              1654
+            ]
+          },
+          {
+            "n": 27,
+            "station": "shelf",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.019,
+            "oracle_error_rad": 0.0066,
+            "sim_s": 97.6,
+            "wall_s": 97.6,
+            "servo_looks": 5,
+            "events": {
+              "localized": 14,
+              "sidestep": 1,
+              "unseen": 2,
+              "rejected": 1,
+              "creep": 1
+            },
+            "heading": {
+              "source": "imu_yaw",
+              "fixes": 594,
+              "bias_rad_s": 0.00234,
+              "jump_rad_max": 0.0218,
+              "jump_rad_mean": 0.0032,
+              "creep_rad_s": 0.0159,
+              "creep_imu_reads": 300
+            },
+            "imu_truth": {
+              "gyro_bias": [
+                -0.001866,
+                -0.002621,
+                0.002439
+              ],
+              "yaw_error_rad": 8.77462,
+              "ideal": false
+            },
+            "trace": [
+              1654,
+              1704
+            ]
+          },
+          {
+            "n": 28,
+            "station": "bench",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0267,
+            "oracle_error_rad": 0.0287,
+            "sim_s": 84.4,
+            "wall_s": 84.4,
+            "servo_looks": 6,
+            "events": {
+              "localized": 15,
+              "unseen": 2,
+              "creep": 1
+            },
+            "heading": {
+              "source": "imu_yaw",
+              "fixes": 609,
+              "bias_rad_s": 0.00237,
+              "jump_rad_max": 0.0218,
+              "jump_rad_mean": 0.0032,
+              "creep_rad_s": 0.0179,
+              "creep_imu_reads": 308
+            },
+            "imu_truth": {
+              "gyro_bias": [
+                -0.001963,
+                -0.002673,
+                0.002625
+              ],
+              "yaw_error_rad": 8.98969,
+              "ideal": false
+            },
+            "trace": [
+              1704,
+              1749
+            ]
+          },
+          {
+            "n": 29,
+            "station": "shelf",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.013,
+            "oracle_error_rad": 0.0025,
+            "sim_s": 85.8,
+            "wall_s": 85.8,
+            "servo_looks": 5,
+            "events": {
+              "localized": 14,
+              "sidestep": 2,
+              "creep": 1
+            },
+            "heading": {
+              "source": "imu_yaw",
+              "fixes": 623,
+              "bias_rad_s": 0.00241,
+              "jump_rad_max": 0.0218,
+              "jump_rad_mean": 0.0032,
+              "creep_rad_s": 0.0159,
+              "creep_imu_reads": 316
+            },
+            "imu_truth": {
+              "gyro_bias": [
+                -0.001864,
+                -0.002946,
+                0.002682
+              ],
+              "yaw_error_rad": 9.21311,
+              "ideal": false
+            },
+            "trace": [
+              1749,
+              1792
+            ]
+          },
+          {
+            "n": 30,
+            "station": "bench",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0124,
+            "oracle_error_rad": 0.009,
+            "sim_s": 71.4,
+            "wall_s": 71.4,
+            "servo_looks": 8,
+            "events": {
+              "localized": 14,
+              "creep": 1
+            },
+            "heading": {
+              "source": "imu_yaw",
+              "fixes": 637,
+              "bias_rad_s": 0.00246,
+              "jump_rad_max": 0.0218,
+              "jump_rad_mean": 0.0032,
+              "creep_rad_s": 0.017,
+              "creep_imu_reads": 322
+            },
+            "imu_truth": {
+              "gyro_bias": [
+                -0.001651,
+                -0.002908,
+                0.002631
+              ],
+              "yaw_error_rad": 9.40695,
+              "ideal": false
+            },
+            "trace": [
+              1792,
+              1828
+            ]
+          },
+          {
+            "n": 31,
+            "station": "shelf",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.017,
+            "oracle_error_rad": 0.0059,
+            "sim_s": 142.6,
+            "wall_s": 142.6,
+            "servo_looks": 20,
+            "events": {
+              "localized": 28,
+              "sidestep": 1,
+              "rejected": 1,
+              "blocked": 1,
+              "creep": 1
+            },
+            "heading": {
+              "source": "imu_yaw",
+              "fixes": 665,
+              "bias_rad_s": 0.00246,
+              "jump_rad_max": 0.0218,
+              "jump_rad_mean": 0.003,
+              "creep_rad_s": 0.0184,
+              "creep_imu_reads": 336
+            },
+            "imu_truth": {
+              "gyro_bias": [
+                -0.001782,
+                -0.002754,
+                0.002341
+              ],
+              "yaw_error_rad": 9.76695,
+              "ideal": false
+            },
+            "trace": [
+              1828,
+              1903
+            ]
+          },
+          {
+            "n": 32,
+            "station": "bench",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0336,
+            "oracle_error_rad": 0.0225,
+            "sim_s": 68.0,
+            "wall_s": 68.0,
+            "servo_looks": 6,
+            "events": {
+              "localized": 12,
+              "creep": 1
+            },
+            "heading": {
+              "source": "imu_yaw",
+              "fixes": 677,
+              "bias_rad_s": 0.00235,
+              "jump_rad_max": 0.0218,
+              "jump_rad_mean": 0.003,
+              "creep_rad_s": 0.0158,
+              "creep_imu_reads": 342
+            },
+            "imu_truth": {
+              "gyro_bias": [
+                -0.001778,
+                -0.002783,
+                0.001802
+              ],
+              "yaw_error_rad": 9.90427,
+              "ideal": false
+            },
+            "trace": [
+              1903,
+              1936
+            ]
+          },
+          {
+            "n": 33,
+            "station": "shelf",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0139,
+            "oracle_error_rad": 0.0044,
+            "sim_s": 135.6,
+            "wall_s": 135.6,
+            "servo_looks": 5,
+            "events": {
+              "localized": 21,
+              "sidestep": 1,
+              "rejected": 2,
+              "unseen": 8,
+              "reacquire": 1,
+              "creep": 1
+            },
+            "heading": {
+              "source": "imu_yaw",
+              "fixes": 698,
+              "bias_rad_s": 0.0021,
+              "jump_rad_max": 0.0227,
+              "jump_rad_mean": 0.0032,
+              "creep_rad_s": 0.0152,
+              "creep_imu_reads": 354
+            },
+            "imu_truth": {
+              "gyro_bias": [
+                -0.001613,
+                -0.002851,
+                0.001554
+              ],
+              "yaw_error_rad": 10.14245,
+              "ideal": false
+            },
+            "trace": [
+              1936,
+              2013
+            ]
+          },
+          {
+            "n": 34,
+            "station": "bench",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.037,
+            "oracle_error_rad": 0.0352,
+            "sim_s": 77.6,
+            "wall_s": 77.6,
+            "servo_looks": 8,
+            "events": {
+              "localized": 15,
+              "creep": 1
+            },
+            "heading": {
+              "source": "imu_yaw",
+              "fixes": 713,
+              "bias_rad_s": 0.00199,
+              "jump_rad_max": 0.0227,
+              "jump_rad_mean": 0.0034,
+              "creep_rad_s": 0.0158,
+              "creep_imu_reads": 358
+            },
+            "imu_truth": {
+              "gyro_bias": [
+                -0.001708,
+                -0.003058,
+                0.001585
+              ],
+              "yaw_error_rad": 10.2625,
+              "ideal": false
+            },
+            "trace": [
+              2013,
+              2052
+            ]
+          },
+          {
+            "n": 35,
+            "station": "shelf",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0075,
+            "oracle_error_rad": 0.0248,
+            "sim_s": 83.0,
+            "wall_s": 83.0,
+            "servo_looks": 2,
+            "events": {
+              "localized": 12,
+              "sidestep": 2,
+              "creep": 1
+            },
+            "heading": {
+              "source": "imu_yaw",
+              "fixes": 725,
+              "bias_rad_s": 0.00191,
+              "jump_rad_max": 0.0227,
+              "jump_rad_mean": 0.0035,
+              "creep_rad_s": 0.0097,
+              "creep_imu_reads": 362
+            },
+            "imu_truth": {
+              "gyro_bias": [
+                -0.001663,
+                -0.003299,
+                0.001872
+              ],
+              "yaw_error_rad": 10.40256,
+              "ideal": false
+            },
+            "trace": [
+              2052,
+              2094
+            ]
+          },
+          {
+            "n": 36,
+            "station": "bench",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.024,
+            "oracle_error_rad": 0.0023,
+            "sim_s": 168.0,
+            "wall_s": 168.0,
+            "servo_looks": 39,
+            "events": {
+              "localized": 43,
+              "blocked": 7,
+              "creep": 2
+            },
+            "heading": {
+              "source": "imu_yaw",
+              "fixes": 768,
+              "bias_rad_s": 0.00186,
+              "jump_rad_max": 0.0227,
+              "jump_rad_mean": 0.0034,
+              "creep_rad_s": 0.0125,
+              "creep_imu_reads": 373
+            },
+            "imu_truth": {
+              "gyro_bias": [
+                -0.001744,
+                -0.002893,
+                0.001893
+              ],
+              "yaw_error_rad": 10.70473,
+              "ideal": false
+            },
+            "trace": [
+              2094,
+              2188
+            ]
+          },
+          {
+            "n": 37,
+            "station": "shelf",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0113,
+            "oracle_error_rad": 0.009,
+            "sim_s": 108.4,
+            "wall_s": 108.4,
+            "servo_looks": 5,
+            "events": {
+              "localized": 12,
+              "sidestep": 1,
+              "rejected": 2,
+              "unseen": 8,
+              "creep": 1
+            },
+            "heading": {
+              "source": "imu_yaw",
+              "fixes": 780,
+              "bias_rad_s": 0.00186,
+              "jump_rad_max": 0.0227,
+              "jump_rad_mean": 0.0034,
+              "creep_rad_s": 0.0156,
+              "creep_imu_reads": 384
+            },
+            "imu_truth": {
+              "gyro_bias": [
+                -0.001825,
+                -0.003054,
+                0.001855
+              ],
+              "yaw_error_rad": 10.90425,
+              "ideal": false
+            },
+            "trace": [
+              2188,
+              2248
+            ]
+          },
+          {
+            "n": 38,
+            "station": "bench",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0128,
+            "oracle_error_rad": 0.028,
+            "sim_s": 75.8,
+            "wall_s": 75.8,
+            "servo_looks": 8,
+            "events": {
+              "localized": 14,
+              "creep": 1
+            },
+            "heading": {
+              "source": "imu_yaw",
+              "fixes": 794,
+              "bias_rad_s": 0.00183,
+              "jump_rad_max": 0.0227,
+              "jump_rad_mean": 0.0032,
+              "creep_rad_s": 0.0171,
+              "creep_imu_reads": 391
+            },
+            "imu_truth": {
+              "gyro_bias": [
+                -0.001815,
+                -0.003198,
+                0.001986
+              ],
+              "yaw_error_rad": 11.04469,
+              "ideal": false
+            },
+            "trace": [
+              2248,
+              2286
+            ]
+          },
+          {
+            "n": 39,
+            "station": "shelf",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0121,
+            "oracle_error_rad": 0.0282,
+            "sim_s": 148.2,
+            "wall_s": 148.2,
+            "servo_looks": 13,
+            "events": {
+              "localized": 23,
+              "sidestep": 1,
+              "rejected": 1,
+              "unseen": 8,
+              "creep": 1
+            },
+            "heading": {
+              "source": "imu_yaw",
+              "fixes": 817,
+              "bias_rad_s": 0.00204,
+              "jump_rad_max": 0.0238,
+              "jump_rad_mean": 0.0034,
+              "creep_rad_s": 0.0164,
+              "creep_imu_reads": 412
+            },
+            "imu_truth": {
+              "gyro_bias": [
+                -0.001774,
+                -0.003648,
+                0.002512
+              ],
+              "yaw_error_rad": 11.40653,
+              "ideal": false
+            },
+            "trace": [
+              2286,
+              2369
+            ]
+          },
+          {
+            "n": 40,
+            "station": "bench",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0318,
+            "oracle_error_rad": 0.0046,
+            "sim_s": 96.0,
+            "wall_s": 96.0,
+            "servo_looks": 12,
+            "events": {
+              "localized": 20,
+              "creep": 1
+            },
+            "heading": {
+              "source": "imu_yaw",
+              "fixes": 837,
+              "bias_rad_s": 0.00212,
+              "jump_rad_max": 0.0238,
+              "jump_rad_mean": 0.0035,
+              "creep_rad_s": 0.0177,
+              "creep_imu_reads": 421
+            },
+            "imu_truth": {
+              "gyro_bias": [
+                -0.00167,
+                -0.00356,
+                0.002611
+              ],
+              "yaw_error_rad": 11.64891,
+              "ideal": false
+            },
+            "trace": [
+              2369,
+              2418
+            ]
+          }
+        ],
+        "realtime_ratio": null
+      },
+      "elapsed_s": 4534.9
+    }
+  },
+  "stance_model": "free",
+  "versions": {
+    "arch": "aarch64",
+    "python": "3.11.2",
+    "assets": {
+      "unitree_mujoco": "1eb6642e3f3fdfb7fb13a9794fd6a2dd93ea0e7d",
+      "unitree_rl_lab": "4960b84732b0c2ec593dccbfe963fda1bcd7b1e3",
+      "mujoco_menagerie": "370c43965323c0944b433b202aac5058b5f907a9",
+      "unitree_rl_gym": "276801e46c5d433564f24658bac64f254b7d2d4b",
+      "unitree_sdk2_python": "814556d15970dd2ecf1c9984e845ca02ab07e206",
+      "cyclonedds_c": "abb064e35b6fbc79554c255ff8b371333e87b029"
+    },
+    "packages": {
+      "mujoco": "4.0.1",
+      "onnxruntime": "1.32.0",
+      "numpy": "2.4.6",
+      "opencv-python-headless": "5.1.0.95",
+      "cyclonedds": "0.10.2",
+      "unitree_sdk2py": "1.0.1"
+    }
+  },
+  "arch": "aarch64",
+  "go": false,
+  "realtime_valid_all_runs": true,
+  "elapsed_s": 4534.9,
+  "runs": [
+    {
+      "scenario": "move_stress_carry_creep0.5",
+      "realtime_ratio": 1.0,
+      "worst_second_ratio": 0.9921,
+      "stalls": 0,
+      "realtime_valid": true,
+      "step_compute_ms": {
+        "budget": 2.0,
+        "mean": 0.437,
+        "p99": 1.619,
+        "max": 6.5,
+        "over_budget": 0.004
+      },
+      "gc": [
+        0.1,
+        0.76,
+        11.74
+      ],
+      "slow_steps": [
+        [
+          101.43,
+          38.2,
+          0
+        ],
+        [
+          691.244,
+          44.2,
+          0
+        ],
+        [
+          2981.428,
+          24.4,
+          0
+        ]
+      ],
+      "slow_windows": [],
+      "camera": {
+        "frames": 22644,
+        "dropped": 10,
+        "render_ms": 118.5,
+        "hz": 4.99
+      },
+      "failure": null,
+      "record": "move_stress_carry_creep0.5/record.json"
+    }
+  ]
+}

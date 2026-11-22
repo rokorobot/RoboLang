@@ -132,13 +132,23 @@ and region limits, `do`, a task without a goal, and any condition other than `ob
 seen (the marker's map pose composed with the inverse of its observed pose; a solution whose vertical disagrees with the
 IMU's is the wrong one of the two a planar marker allows, and is ignored). Between fixes the **position** is dead
 reckoning from the velocities it commands, taken along the heading the robot had while the command ran, and the
-**heading** is the IMU's ("The IMU", below), not the commanded yaw rates'. The walking stand-in turns in place only by a *shuffle* (alternating sideways commands, each with a yaw rate),
+**heading** is the IMU's ("The IMU", below), not the commanded yaw rates'.
+
+The walking stand-in turns in place only by a *shuffle* (alternating sideways commands, each with a yaw rate),
 takes a step only when a command lasts about 0.3 s, and ignores commands smaller than about 0.3, so a move is: turn to face
 the approach point (0.5 m before the station, facing it), walk in legs with a look between them, turn to the station's
 heading, find the station marker (a scan by turning in place if it is not in view; **S517** if not seen within 70 s), then
-correct with short bursts chosen from the measured step sizes until the marker puts the robot within **4.4 cm and 0.085
-rad** of the station pose, wait for the stance to settle (from `lowstate` only: pelvis IMU rate and leg joint velocities
-quiet), and look again (within 4.7 cm and 0.09 rad). **S504** if it does not converge in 90 s.
+correct with short bursts chosen from the measured step sizes, first to the approach point (within 8 cm and 0.07 rad) and
+then until the marker puts the robot within **4.4 cm and 0.085 rad** of the station pose, wait for the stance to settle
+(from `lowstate` only: pelvis IMU rate and leg joint velocities quiet), and look again (within 4.7 cm and 0.09 rad).
+**S504** if it does not converge in 90 s. **The heading creeps**: a standing robot turns slowly to the left by itself
+(0.007 rad/s measured, 0.025 under the stress check's torque). The corrections are chosen to leave the heading, counted as
+it will be at the next look and at the confirming look, inside the band; the creep they are aimed against is read from the
+IMU's yaw over a quiet second (at least 2 s after the last command), less the learned bias, and from the markers between
+two looks. After four looks without a better error a servo goes on from a wider band (the final servo to the confirming
+look from 4.2 cm and 0.07 rad, which still decides; the approach point, which no confirmation follows, from 12 cm and
+0.15 rad, which the last walk corrects: under a creep of 0.025 rad/s the heading was inside 0.07 rad for a moment in each
+5 s look, and one move spent its whole 150 s at the approach point).
 
 **`grasp r O`.** Re-observe the station marker (and re-servo if the robot moved); observe the object's marker (**S506**
 before anything moves if it is not seen); choose the hand (the site's, or the nearer side); inverse kinematics on the
