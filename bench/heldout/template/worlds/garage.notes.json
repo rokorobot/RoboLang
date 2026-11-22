@@ -1,0 +1,8 @@
+{
+  "door": "the roller door to the street",
+  "workbench": "the long bench along the back wall",
+  "shelf": "the metal shelf next to the bench",
+  "charger": "rover's charging dock",
+  "sweeper": "a floor-cleaning robot with no arm",
+  "rover_cam": "rover's camera; broken today"
+}

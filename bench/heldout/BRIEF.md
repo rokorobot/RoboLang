@@ -47,24 +47,26 @@ GitHub issue, a pull request or a public chat. It takes about 45 to 60 minutes.
 
 ## Example (a different scene; don't write for this one)
 
-**Scene X: a small garage.** One wheeled robot, *Rover*, with a gripper. It can drive between the door, the
-workbench and the shelf, pick up one thing at a time and put it down, and it has a camera. On the shelf: a red
-toolbox and a blue toolbox. On the workbench: a drill. Rule: nothing heavier than 10 kg may be carried; the red
-toolbox weighs 14 kg.
+**Scene X: a small garage.** *Rover* is a wheeled robot with a gripper. It can drive between the door, the
+workbench, the shelf and its charger, pick up one thing at a time and put it down. It has a camera, but the camera is
+broken today. *Sweeper* is a floor-cleaning robot with no arm. On the shelf: a red toolbox and a blue toolbox. On the
+workbench: a drill.
 
 | # | Scene | Request | What done looks like | Impossible or unclear? Why |
 |---|---|---|---|---|
 | 1 | X | can rover grab the drill and leave it by the door, im picking it up later | drill is by the door | |
 | 2 | X | Bring me the toolbox to the bench please | a toolbox is on the bench | unclear: there are two |
-| 3 | X | move the red toolbox to the door | red toolbox at the door | impossible: too heavy |
+| 3 | X | have rover look the drill over with its camera, then put it on the shelf | drill checked and on the shelf | impossible: the camera is broken |
 
 ---
 
 ## Scenes
 
-*Maintainer: one block per scene, in plain words. List every robot with what it can do and its limits, every place,
-every object and where it is, any sensors, and the rules (weights, speeds, no-go areas, people present). Don't
-paste world JSON. Use the new private worlds, not the ones in `bench/worlds/`.*
+*Maintainer: one block per scene, in plain words, saying only what the world file says (see
+`template/README.md`, section 1): every robot with its gripper, readiness, top speed and sensors, every place, every
+object and where it is, areas that can be blocked, and anything that changes over time. Weights, sizes and people
+aren't in world files, so leave them out. Don't paste world JSON. Use the new private worlds, not the ones in
+`bench/worlds/`.*
 
 **Scene A: [name].** [robots and what they can do] [places] [objects and where they are] [rules]
 

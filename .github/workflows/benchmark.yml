@@ -59,6 +59,7 @@ on:
       - "bench/**"
       - "!bench/**/*.md"        # docs do not change scores
       - "bench/prompt*.md"      # but the prompts do
+      - "!bench/heldout/**"     # the public held-out folder holds only rules and templates
       - ".github/workflows/benchmark.yml"
   schedule:
     - cron: "0 6 * * 1"

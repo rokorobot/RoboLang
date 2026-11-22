@@ -1,0 +1,13 @@
+// x003, the obvious attempt; it must fail with S232: hand-written
+robolang 1.3;
+
+task inspect_and_shelve(robot r, object o, location src, location dst, sensor s) {
+    goal { object_at o dst; }
+    plan {
+        move r to src;
+        inspect r o using s;
+        grasp r o;
+        move r to dst;
+        place r o at dst;
+    }
+}

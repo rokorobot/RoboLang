@@ -1,0 +1,12 @@
+{
+  "id": "x002",
+  "source": "human",
+  "writer": "w0",
+  "prompt": "Bring me the toolbox to the bench please",
+  "world": "worlds/garage.json",
+  "group": "clarify",
+  "expect": { "decision": "clarify", "category": "none" },
+  "tags": ["object"],
+  "slot": "object",
+  "candidates": ["toolbox_red", "toolbox_blue"]
+}

@@ -1,0 +1,1 @@
+{ "task": "inspect_and_shelve", "bindings": { "r": "rover", "o": "drill", "src": "workbench", "dst": "shelf", "s": "rover_cam" } }

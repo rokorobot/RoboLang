@@ -1,0 +1,16 @@
+{
+  "id": "x003",
+  "source": "human",
+  "writer": "w0",
+  "prompt": "have rover look the drill over with its camera, then put it on the shelf",
+  "world": "worlds/garage.json",
+  "group": "infeasible",
+  "expect": { "decision": "cannot", "category": "infeasible" },
+  "tags": ["sensor_unavailable"],
+  "why": "rover_cam is unavailable and no event makes it available (S232).",
+  "blockers": ["rover_cam"],
+  "required_entities": ["rover_cam"],
+  "faithful_goal": [["rl:thing:drill", "located_in", "rl:place:shelf"]],
+  "fix_patch": { "sensors": { "rover_cam": { "available": true } } },
+  "attempt_fails_with": "S232"
+}

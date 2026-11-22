@@ -1,0 +1,1 @@
+{ "task": "deliver", "bindings": { "r": "rover", "o": "drill", "src": "workbench", "dst": "door" } }
