@@ -201,6 +201,9 @@ def realtime_of(session: Session) -> dict:
         # (sim time, ratio, loop thread CPU s, loop thread run-queue wait s) of every second below 0.95: a loop that
         # waited for a CPU, against one that was computing (docs/evidence/g1-phase4-prereqs.md)
         "slow_windows": f.get("slow_windows"),
+        # the head camera's rate (the spec is 5 Hz): rendering in software is the stand-in's biggest use of CPU, and a
+        # host that is short of it keeps the physics loop in time and lets the camera fall to 2.5-3 Hz
+        "camera": f.get("camera"),
     }
 
 
