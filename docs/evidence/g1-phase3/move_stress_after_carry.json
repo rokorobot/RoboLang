@@ -1,0 +1,934 @@
+{
+  "checks": {
+    "move-stress": {
+      "pass": true,
+      "details": {
+        "protocol": "bench, then 20 x (shelf, bench): one stand-in, free stance, the oracle judges each, the box held throughout",
+        "grasp": {
+          "pass": true,
+          "carry_pose": {
+            "object_to_nearest_link_m": 0.0166,
+            "link": "right_hip_pitch_link",
+            "arm_deviation_rad": 0.045
+          }
+        },
+        "creep_torque_nm": 0.0,
+        "tolerance": {
+          "m": 0.05,
+          "rad": 0.1
+        },
+        "shelf": {
+          "arrivals": 20,
+          "pass": 20,
+          "sim_s": {
+            "min": 54.0,
+            "median": 68.8,
+            "max": 106.2,
+            "mean": 69.6
+          },
+          "worst_error_m": 0.0408,
+          "worst_error_rad": 0.0532
+        },
+        "bench": {
+          "arrivals": 20,
+          "pass": 20,
+          "sim_s": {
+            "min": 47.6,
+            "median": 59.6,
+            "max": 87.2,
+            "mean": 63.7
+          },
+          "worst_error_m": 0.0391,
+          "worst_error_rad": 0.0777
+        },
+        "moves": [
+          {
+            "n": 0,
+            "station": "bench",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0058,
+            "oracle_error_rad": 0.0273,
+            "sim_s": 35.1,
+            "wall_s": 42.7,
+            "servo_looks": 5,
+            "events": {
+              "localized": 10,
+              "creep": 1
+            },
+            "trace": [
+              0,
+              23
+            ]
+          },
+          {
+            "n": 1,
+            "station": "shelf",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0073,
+            "oracle_error_rad": 0.0414,
+            "sim_s": 69.9,
+            "wall_s": 69.9,
+            "servo_looks": 5,
+            "events": {
+              "localized": 15,
+              "creep": 1
+            },
+            "trace": [
+              26,
+              62
+            ]
+          },
+          {
+            "n": 2,
+            "station": "bench",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0382,
+            "oracle_error_rad": 0.0464,
+            "sim_s": 52.6,
+            "wall_s": 52.6,
+            "servo_looks": 2,
+            "events": {
+              "localized": 11,
+              "creep": 1
+            },
+            "trace": [
+              62,
+              87
+            ]
+          },
+          {
+            "n": 3,
+            "station": "shelf",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0326,
+            "oracle_error_rad": 0.0266,
+            "sim_s": 106.2,
+            "wall_s": 106.2,
+            "servo_looks": 23,
+            "events": {
+              "localized": 29,
+              "creep": 1
+            },
+            "trace": [
+              87,
+              149
+            ]
+          },
+          {
+            "n": 4,
+            "station": "bench",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0211,
+            "oracle_error_rad": 0.0124,
+            "sim_s": 64.2,
+            "wall_s": 64.2,
+            "servo_looks": 6,
+            "events": {
+              "localized": 15,
+              "creep": 1
+            },
+            "trace": [
+              149,
+              180
+            ]
+          },
+          {
+            "n": 5,
+            "station": "shelf",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0402,
+            "oracle_error_rad": 0.0227,
+            "sim_s": 101.2,
+            "wall_s": 101.2,
+            "servo_looks": 22,
+            "events": {
+              "localized": 27,
+              "sidestep": 2,
+              "blocked": 1,
+              "creep": 3
+            },
+            "trace": [
+              180,
+              241
+            ]
+          },
+          {
+            "n": 6,
+            "station": "bench",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0116,
+            "oracle_error_rad": 0.0277,
+            "sim_s": 58.4,
+            "wall_s": 58.4,
+            "servo_looks": 5,
+            "events": {
+              "localized": 14,
+              "creep": 1
+            },
+            "trace": [
+              241,
+              270
+            ]
+          },
+          {
+            "n": 7,
+            "station": "shelf",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0184,
+            "oracle_error_rad": 0.0022,
+            "sim_s": 70.8,
+            "wall_s": 70.8,
+            "servo_looks": 7,
+            "events": {
+              "localized": 14,
+              "sidestep": 1,
+              "creep": 1
+            },
+            "trace": [
+              270,
+              308
+            ]
+          },
+          {
+            "n": 8,
+            "station": "bench",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0232,
+            "oracle_error_rad": 0.0033,
+            "sim_s": 58.8,
+            "wall_s": 58.8,
+            "servo_looks": 5,
+            "events": {
+              "localized": 14,
+              "creep": 1
+            },
+            "trace": [
+              308,
+              338
+            ]
+          },
+          {
+            "n": 9,
+            "station": "shelf",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0199,
+            "oracle_error_rad": 0.0247,
+            "sim_s": 79.2,
+            "wall_s": 79.2,
+            "servo_looks": 8,
+            "events": {
+              "localized": 15,
+              "sidestep": 1,
+              "creep": 1
+            },
+            "trace": [
+              338,
+              380
+            ]
+          },
+          {
+            "n": 10,
+            "station": "bench",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0232,
+            "oracle_error_rad": 0.0777,
+            "sim_s": 73.2,
+            "wall_s": 73.2,
+            "servo_looks": 9,
+            "events": {
+              "localized": 18,
+              "creep": 1
+            },
+            "trace": [
+              380,
+              422
+            ]
+          },
+          {
+            "n": 11,
+            "station": "shelf",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0156,
+            "oracle_error_rad": 0.0373,
+            "sim_s": 59.4,
+            "wall_s": 59.4,
+            "servo_looks": 4,
+            "events": {
+              "localized": 10,
+              "sidestep": 2,
+              "creep": 1
+            },
+            "trace": [
+              422,
+              452
+            ]
+          },
+          {
+            "n": 12,
+            "station": "bench",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.038,
+            "oracle_error_rad": 0.0182,
+            "sim_s": 58.0,
+            "wall_s": 58.0,
+            "servo_looks": 4,
+            "events": {
+              "localized": 13,
+              "creep": 1
+            },
+            "trace": [
+              452,
+              481
+            ]
+          },
+          {
+            "n": 13,
+            "station": "shelf",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0252,
+            "oracle_error_rad": 0.0532,
+            "sim_s": 54.0,
+            "wall_s": 54.0,
+            "servo_looks": 4,
+            "events": {
+              "localized": 9,
+              "sidestep": 1,
+              "creep": 1
+            },
+            "trace": [
+              481,
+              509
+            ]
+          },
+          {
+            "n": 14,
+            "station": "bench",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0324,
+            "oracle_error_rad": 0.001,
+            "sim_s": 47.6,
+            "wall_s": 47.6,
+            "servo_looks": 2,
+            "events": {
+              "localized": 10,
+              "creep": 1
+            },
+            "trace": [
+              509,
+              532
+            ]
+          },
+          {
+            "n": 15,
+            "station": "shelf",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0255,
+            "oracle_error_rad": 0.0252,
+            "sim_s": 63.4,
+            "wall_s": 63.4,
+            "servo_looks": 4,
+            "events": {
+              "localized": 10,
+              "sidestep": 2,
+              "creep": 1
+            },
+            "trace": [
+              532,
+              565
+            ]
+          },
+          {
+            "n": 16,
+            "station": "bench",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0272,
+            "oracle_error_rad": 0.022,
+            "sim_s": 52.6,
+            "wall_s": 52.6,
+            "servo_looks": 4,
+            "events": {
+              "localized": 13,
+              "creep": 1
+            },
+            "trace": [
+              565,
+              592
+            ]
+          },
+          {
+            "n": 17,
+            "station": "shelf",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0408,
+            "oracle_error_rad": 0.0299,
+            "sim_s": 73.2,
+            "wall_s": 73.2,
+            "servo_looks": 7,
+            "events": {
+              "localized": 15,
+              "sidestep": 1,
+              "creep": 1
+            },
+            "trace": [
+              592,
+              632
+            ]
+          },
+          {
+            "n": 18,
+            "station": "bench",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0144,
+            "oracle_error_rad": 0.0212,
+            "sim_s": 56.2,
+            "wall_s": 56.2,
+            "servo_looks": 4,
+            "events": {
+              "localized": 13,
+              "creep": 1
+            },
+            "trace": [
+              632,
+              659
+            ]
+          },
+          {
+            "n": 19,
+            "station": "shelf",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0298,
+            "oracle_error_rad": 0.0136,
+            "sim_s": 57.8,
+            "wall_s": 57.8,
+            "servo_looks": 4,
+            "events": {
+              "localized": 10,
+              "sidestep": 2,
+              "creep": 1
+            },
+            "trace": [
+              659,
+              688
+            ]
+          },
+          {
+            "n": 20,
+            "station": "bench",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0319,
+            "oracle_error_rad": 0.0376,
+            "sim_s": 62.2,
+            "wall_s": 62.2,
+            "servo_looks": 6,
+            "events": {
+              "localized": 14,
+              "creep": 1
+            },
+            "trace": [
+              688,
+              720
+            ]
+          },
+          {
+            "n": 21,
+            "station": "shelf",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.012,
+            "oracle_error_rad": 0.0037,
+            "sim_s": 60.6,
+            "wall_s": 60.6,
+            "servo_looks": 5,
+            "events": {
+              "localized": 11,
+              "sidestep": 2,
+              "creep": 1
+            },
+            "trace": [
+              720,
+              752
+            ]
+          },
+          {
+            "n": 22,
+            "station": "bench",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0081,
+            "oracle_error_rad": 0.071,
+            "sim_s": 75.2,
+            "wall_s": 75.2,
+            "servo_looks": 9,
+            "events": {
+              "localized": 18,
+              "creep": 1
+            },
+            "trace": [
+              752,
+              791
+            ]
+          },
+          {
+            "n": 23,
+            "station": "shelf",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0103,
+            "oracle_error_rad": 0.0154,
+            "sim_s": 69.2,
+            "wall_s": 69.2,
+            "servo_looks": 5,
+            "events": {
+              "localized": 15,
+              "creep": 1
+            },
+            "trace": [
+              791,
+              828
+            ]
+          },
+          {
+            "n": 24,
+            "station": "bench",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0205,
+            "oracle_error_rad": 0.0428,
+            "sim_s": 87.2,
+            "wall_s": 87.2,
+            "servo_looks": 13,
+            "events": {
+              "localized": 22,
+              "creep": 1
+            },
+            "trace": [
+              828,
+              876
+            ]
+          },
+          {
+            "n": 25,
+            "station": "shelf",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0175,
+            "oracle_error_rad": 0.0443,
+            "sim_s": 60.2,
+            "wall_s": 60.2,
+            "servo_looks": 7,
+            "events": {
+              "localized": 11,
+              "rejected": 2,
+              "creep": 1
+            },
+            "trace": [
+              876,
+              906
+            ]
+          },
+          {
+            "n": 26,
+            "station": "bench",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0227,
+            "oracle_error_rad": 0.0223,
+            "sim_s": 57.8,
+            "wall_s": 57.8,
+            "servo_looks": 4,
+            "events": {
+              "localized": 13,
+              "creep": 1
+            },
+            "trace": [
+              906,
+              935
+            ]
+          },
+          {
+            "n": 27,
+            "station": "shelf",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0006,
+            "oracle_error_rad": 0.0118,
+            "sim_s": 61.8,
+            "wall_s": 61.8,
+            "servo_looks": 5,
+            "events": {
+              "localized": 11,
+              "sidestep": 2,
+              "creep": 1
+            },
+            "trace": [
+              935,
+              966
+            ]
+          },
+          {
+            "n": 28,
+            "station": "bench",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0172,
+            "oracle_error_rad": 0.0291,
+            "sim_s": 77.2,
+            "wall_s": 77.2,
+            "servo_looks": 10,
+            "events": {
+              "localized": 19,
+              "creep": 1
+            },
+            "trace": [
+              966,
+              1008
+            ]
+          },
+          {
+            "n": 29,
+            "station": "shelf",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0365,
+            "oracle_error_rad": 0.0321,
+            "sim_s": 54.6,
+            "wall_s": 54.6,
+            "servo_looks": 4,
+            "events": {
+              "localized": 10,
+              "sidestep": 2,
+              "creep": 1
+            },
+            "trace": [
+              1008,
+              1036
+            ]
+          },
+          {
+            "n": 30,
+            "station": "bench",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0176,
+            "oracle_error_rad": 0.0092,
+            "sim_s": 76.2,
+            "wall_s": 76.2,
+            "servo_looks": 7,
+            "events": {
+              "localized": 18,
+              "creep": 1
+            },
+            "trace": [
+              1036,
+              1076
+            ]
+          },
+          {
+            "n": 31,
+            "station": "shelf",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0359,
+            "oracle_error_rad": 0.0029,
+            "sim_s": 86.8,
+            "wall_s": 86.8,
+            "servo_looks": 8,
+            "events": {
+              "localized": 12,
+              "sidestep": 1,
+              "rejected": 1,
+              "unseen": 6,
+              "creep": 1
+            },
+            "trace": [
+              1076,
+              1129
+            ]
+          },
+          {
+            "n": 32,
+            "station": "bench",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0339,
+            "oracle_error_rad": 0.0372,
+            "sim_s": 63.4,
+            "wall_s": 63.4,
+            "servo_looks": 7,
+            "events": {
+              "localized": 16,
+              "creep": 1
+            },
+            "trace": [
+              1129,
+              1162
+            ]
+          },
+          {
+            "n": 33,
+            "station": "shelf",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0331,
+            "oracle_error_rad": 0.0021,
+            "sim_s": 68.8,
+            "wall_s": 68.8,
+            "servo_looks": 8,
+            "events": {
+              "localized": 14,
+              "sidestep": 2,
+              "creep": 1
+            },
+            "trace": [
+              1162,
+              1198
+            ]
+          },
+          {
+            "n": 34,
+            "station": "bench",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0262,
+            "oracle_error_rad": 0.0291,
+            "sim_s": 59.6,
+            "wall_s": 59.6,
+            "servo_looks": 5,
+            "events": {
+              "localized": 14,
+              "creep": 1
+            },
+            "trace": [
+              1198,
+              1228
+            ]
+          },
+          {
+            "n": 35,
+            "station": "shelf",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0178,
+            "oracle_error_rad": 0.046,
+            "sim_s": 56.6,
+            "wall_s": 56.6,
+            "servo_looks": 8,
+            "events": {
+              "localized": 13,
+              "sidestep": 2,
+              "creep": 1
+            },
+            "trace": [
+              1228,
+              1257
+            ]
+          },
+          {
+            "n": 36,
+            "station": "bench",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0154,
+            "oracle_error_rad": 0.0422,
+            "sim_s": 56.0,
+            "wall_s": 56.0,
+            "servo_looks": 5,
+            "events": {
+              "localized": 12,
+              "creep": 1
+            },
+            "trace": [
+              1257,
+              1286
+            ]
+          },
+          {
+            "n": 37,
+            "station": "shelf",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0211,
+            "oracle_error_rad": 0.0525,
+            "sim_s": 66.6,
+            "wall_s": 66.6,
+            "servo_looks": 5,
+            "events": {
+              "localized": 12,
+              "sidestep": 1,
+              "creep": 1
+            },
+            "trace": [
+              1286,
+              1322
+            ]
+          },
+          {
+            "n": 38,
+            "station": "bench",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0183,
+            "oracle_error_rad": 0.0414,
+            "sim_s": 79.8,
+            "wall_s": 79.8,
+            "servo_looks": 10,
+            "events": {
+              "localized": 19,
+              "creep": 1
+            },
+            "trace": [
+              1322,
+              1364
+            ]
+          },
+          {
+            "n": 39,
+            "station": "shelf",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0254,
+            "oracle_error_rad": 0.0069,
+            "sim_s": 72.0,
+            "wall_s": 72.0,
+            "servo_looks": 4,
+            "events": {
+              "localized": 17,
+              "creep": 1
+            },
+            "trace": [
+              1364,
+              1401
+            ]
+          },
+          {
+            "n": 40,
+            "station": "bench",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0391,
+            "oracle_error_rad": 0.0115,
+            "sim_s": 58.2,
+            "wall_s": 58.2,
+            "servo_looks": 6,
+            "events": {
+              "localized": 14,
+              "creep": 1
+            },
+            "trace": [
+              1401,
+              1432
+            ]
+          }
+        ],
+        "realtime_ratio": null
+      },
+      "elapsed_s": 2744.7
+    }
+  },
+  "stance_model": "free",
+  "versions": {
+    "arch": "aarch64",
+    "python": "3.11.2",
+    "assets": {
+      "unitree_mujoco": "1eb6642e3f3fdfb7fb13a9794fd6a2dd93ea0e7d",
+      "unitree_rl_lab": "4960b84732b0c2ec593dccbfe963fda1bcd7b1e3",
+      "mujoco_menagerie": "370c43965323c0944b433b202aac5058b5f907a9",
+      "unitree_rl_gym": "276801e46c5d433564f24658bac64f254b7d2d4b",
+      "unitree_sdk2_python": "814556d15970dd2ecf1c9984e845ca02ab07e206",
+      "cyclonedds_c": "abb064e35b6fbc79554c255ff8b371333e87b029"
+    },
+    "packages": {
+      "mujoco": "4.0.1",
+      "onnxruntime": "1.32.0",
+      "numpy": "2.4.6",
+      "opencv-python-headless": "5.1.0.95",
+      "cyclonedds": "0.10.2",
+      "unitree_sdk2py": "1.0.1"
+    }
+  },
+  "arch": "aarch64",
+  "go": true,
+  "realtime_valid_all_runs": false,
+  "elapsed_s": 2744.7,
+  "runs": [
+    {
+      "scenario": "move_stress_carry",
+      "realtime_ratio": 0.9972,
+      "worst_second_ratio": 0.1648,
+      "stalls": 2,
+      "realtime_valid": false,
+      "step_compute_ms": {
+        "budget": 2.0,
+        "mean": 0.57,
+        "p99": 1.574,
+        "max": 13.0,
+        "over_budget": 0.0027
+      },
+      "gc": [
+        0.1,
+        0.0,
+        12.66
+      ],
+      "slow_steps": [
+        [
+          3.13,
+          27.3,
+          0
+        ],
+        [
+          4.58,
+          5069.3,
+          0
+        ],
+        [
+          5.26,
+          2530.7,
+          0
+        ],
+        [
+          54.08,
+          29.4,
+          0
+        ],
+        [
+          585.44,
+          22.4,
+          0
+        ],
+        [
+          796.18,
+          42.3,
+          0
+        ],
+        [
+          2372.24,
+          20.8,
+          0
+        ]
+      ],
+      "failure": null,
+      "record": "move_stress_carry/record.json"
+    }
+  ]
+}

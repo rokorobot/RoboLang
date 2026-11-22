@@ -13,5 +13,8 @@ API_IDENTITY, API_STATUS, API_ATTACH, API_DETACH = 1001, 1002, 1003, 1004
 API_SET_STANCE = 1006  # the stand-in's balance support: free or supported (the approved fallback, 0046 U4)
 # Test hook, answered only by a stand-in started with --test-hooks (the executor never calls it): push the torso.
 API_PUSH = 1005
+# More test hooks, answered only with --test-hooks (the executor never calls them): cover the head camera (black frames)
+# and put an object down somewhere (phase 3 checks: a scene changes while a run is under way).
+API_COVER_CAMERA, API_PLACE_OBJECT = 1007, 1008
 # Error code the stand-in's `sport` service returns for a request it refuses (not a code the robot uses).
 ERR_REFUSED = 7400

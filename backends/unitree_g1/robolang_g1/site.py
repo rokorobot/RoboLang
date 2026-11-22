@@ -13,6 +13,7 @@ site the executor is given (an object removed, a marker covered): that is how th
                                                                        # in the map at start (what the robot is told)
       "camera": {"width": 640, "height": 480, "fovy": 58.0, "pos": [x, y, z], "pitch": 0.83},  # head calibration
       "tables": [{"name", "pos", "half_size", "rgba"?}],
+      "obstacles": [{"name", "pos", "half_size", "rgba"?}],   # other boxes the arm must keep clear of (map frame)
       "objects": [{"name", "pos", "half_size", "mass"?, "rgba"?, "marker": {"id", "face", "size"?},
                    "grasp"?: {"hand": "nearest" | "left" | "right"}}],
       "stations": [{"name", "marker": {"id", "size", "pos": [x, y, z], "facing": yaw, "tilt"?: 0.0, "covered"?: false},
@@ -47,7 +48,8 @@ FACE_NORMALS = {"top": (0, 0, 1), "-x": (-1, 0, 0), "+x": (1, 0, 0), "-y": (0, -
 # down). The field of view (58 degrees vertical, 640x480) is the spike's choice and is not checked against a D435.
 DEFAULT_CAMERA = {"width": 640, "height": 480, "fovy": 58.0, "pos": [0.0576235, 0.01753, 0.41987], "pitch": 0.8307767}
 HANDS = ("nearest", "left", "right")
-_TOP = {"schema", "name", "floor", "robot", "camera", "tables", "objects", "stations", "locations", "bindings"}
+_TOP = {"schema", "name", "floor", "robot", "camera", "tables", "obstacles", "objects", "stations", "locations",
+        "bindings"}
 
 
 class SiteError(ValueError):
@@ -98,7 +100,7 @@ def load_site(site) -> dict:
     data.setdefault("name", "site")
     data.setdefault("floor", {})
     data.setdefault("robot", {})
-    for kind in ("tables", "objects", "stations", "locations"):
+    for kind in ("tables", "obstacles", "objects", "stations", "locations"):
         data.setdefault(kind, [])
     data.setdefault("bindings", {})
     data["robot"] = dict(data["robot"])
@@ -121,6 +123,12 @@ def load_site(site) -> dict:
     data["camera"] = camera
     for t in data["tables"]:
         where = name_of(t, "table")
+        need(t, "pos", 3, where)
+        need(t, "half_size", 3, where)
+    for t in data["obstacles"]:  # declared like tables: the scene builds them, and the executor keeps the arm clear
+        where = name_of(t, "obstacle")
+        if ("table", t["name"]) in names:  # the scene names a geom after it: one namespace
+            raise SiteError(f"{where}: the name is a table's")
         need(t, "pos", 3, where)
         need(t, "half_size", 3, where)
     for o in data["objects"]:
@@ -203,6 +211,22 @@ def marker_frame(marker: dict) -> tuple[np.ndarray, np.ndarray]:
     z = out * math.cos(tilt) + up * math.sin(tilt)
     y = up * math.cos(tilt) - out * math.sin(tilt)
     return np.column_stack([np.cross(y, z), y, z]), np.array(marker["pos"], float)
+
+
+def declared_boxes(site: dict) -> list[dict]:
+    """The boxes the site declares that the arm must keep clear of: its tables and its obstacles (map frame)."""
+    return [*site["tables"], *site["obstacles"]]
+
+
+def box_clearance(centre, radius: float, box: dict, xy_margin: float = 0.0, z_margin: float = 0.0) -> float:
+    """How far a sphere (map frame) is from a declared box grown by `xy_margin` sideways and `z_margin` up and down:
+    positive when apart (the distance between the surfaces), negative when they overlap (minus the depth)."""
+    c = np.asarray(centre, float) - np.array(box["pos"], float)
+    half = np.array(box["half_size"], float) + np.array([xy_margin, xy_margin, z_margin])
+    outside = np.maximum(np.abs(c) - half, 0.0)
+    if np.any(outside > 0):
+        return float(np.linalg.norm(outside)) - radius
+    return -float(np.min(half - np.abs(c))) - radius  # inside the box: the depth to its nearest face
 
 
 def station(site: dict, name: str) -> dict:

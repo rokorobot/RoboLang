@@ -210,6 +210,21 @@ stop for cancel, revoke, deadline and a fall, and refusals before motion. Decide
 - **Real time:** Python's garbage collector was not the cause of the long step on x86 CI; the stand-in now reports
   slow steps with the collections in them.
 
+## Resolved in phase 3 (2026-11-21)
+
+Goal and precondition verdicts from observations passed checks O1–O7 twice on aarch64: 34 of 34 verdicts agree with
+the oracle, 0 false successes ([evidence](../../docs/evidence/g1-phase3-observations.md)). Owner decisions of 2026-11-21:
+
+- **U8 exception: lift-to-view.** After the last step, only when a goal names a held object, the arm lifts it into the
+  head camera's view (the carry pose keeps it out of view), after a clearance check against the station's declared
+  tables and obstacles. Logged as `observation_motion`. A carry pose that keeps the object in view was tested first:
+  the robot veered, swayed 4–5 times more and turned unreliably, so it was not adopted.
+- **Carry-pose clearance:** planned 2.1 cm from every robot link, measured 1.6–2.2 cm (was 0.1–0.6 cm); accepted as
+  measured. Recheck on hardware.
+
+Found and fixed: the grasp and place arm paths went through the tables (invisible, because the simulated hands do not
+collide). Every arm motion is now checked for clearance first, with S502 if no clear path exists.
+
 ## 8. Review and corrections (2026-11-19)
 
 Reviewed before approval. Changed: U4 now rests on a corrected port of the whole-body policy (the first port applied

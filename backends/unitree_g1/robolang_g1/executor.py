@@ -1,14 +1,19 @@
-"""Validated IR to robot operations, with the stop of decision 0038 adapted to a biped, and the run record.
+"""Validated IR to robot operations, with the biped stop of decision 0038, the verdicts, and the run record.
 
 The shape is the ROS 2 backend's executor (`backends/ros2/robolang_ros2/executor.py`): guard first, then the refusals
-(everything the backend cannot run or observe is refused before any motion, with the ROS 2 backend's codes), then the
-steps in order, then the record. What differs:
+(everything the backend cannot run or observe is refused before any motion, with the ROS 2 backend's codes), the
+preconditions from one observation snapshot at the start pose (S101 false, S102 unknown), the steps in order, and the
+goal from one snapshot after the last step (all true: `SUCCEEDED`; any false: S301; otherwise S302), then the record.
+The verdicts come only from the robot's own interfaces (`observe.py`); the executor never reads ground truth. What
+differs from the ROS 2 backend:
 
 * the stop is a biped's: zero velocity, the arms held where they are through `arm_sdk`, the hands unchanged, the robot
   kept standing, confirmed from `lowstate` (decision 0046 U9, hazard H25). A fall (S516) sends nothing at all;
-* **goal and precondition verdicts are phase 3**. A task with a precondition is refused (S508): its atoms cannot be
-  observed yet. The goal is recorded as `not_evaluated`, and the run never says SUCCEEDED from completed steps alone:
-  it ends `STEPS_COMPLETED` (exit status 4 of the CLI) or `FAILED`.
+* the snapshots are taken with the robot as the plan left it, with **one exception** (0046 U8 exception, approved by the
+  owner 2026-11-21): after the last step, when a goal atom names an object the robot holds, the arm shows the object to
+  the head camera (the carry pose hangs it out of view) and goes back, if the path is shown clear of the site's declared
+  tables and obstacles; the record's `observation_motion` says when, why, along which waypoints and with what
+  clearance, and a motion that was refused (the atoms stay `unknown`) is recorded too.
 """
 
 from __future__ import annotations
@@ -21,9 +26,10 @@ from pathlib import Path
 from robolang import ir
 from robolang.sim.messages import has_message
 
+from . import observe
 from . import site as site_mod
 
-SCHEMA, SCHEMA_VERSION = "robolang.g1.run", "0.1"
+SCHEMA, SCHEMA_VERSION = "robolang.g1.run", "0.2"  # 0.2: verdicts, snapshots, goal_evaluated
 GRASP_MODEL = "weld_after_hand_close"
 STOP_CODES = {"cancelled": "S511", "expired": "S512", "revoked": "S513"}
 STOP_MESSAGES = {
@@ -83,13 +89,9 @@ class Stop:
 
 
 def verify_policy(task: ir.Task) -> dict:
-    """The `@verify` thresholds, or the RoboLang 1.3 defaults (0.9, 10 s). Phase 3 uses them; the record keeps them."""
-    verify = task.verify
-    from robolang.sim.values import duration_ms_of
-
-    age = int(duration_ms_of(verify.max_age)) if verify and verify.max_age is not None else 10_000
-    conf = str(verify.min_confidence) if verify and verify.min_confidence is not None else "0.9"
-    return {"min_confidence": conf, "max_age_ms": age}
+    """The `@verify` thresholds, or the RoboLang 1.3 defaults (0.9, 10 s), as the record keeps them."""
+    policy = observe.Policy.of(task)
+    return {"min_confidence": str(policy.min_confidence), "max_age_ms": policy.max_age_ms}
 
 
 def resolve(task: ir.Task, bindings: dict[str, str], site: dict) -> dict[str, str]:
@@ -115,19 +117,24 @@ def resolve(task: ir.Task, bindings: dict[str, str], site: dict) -> dict[str, st
     return out
 
 
-def _check_goal_atoms(condition, names: dict[str, str], site: dict) -> None:
-    """Every goal atom must be one a later phase can observe: a marked object, a location with a region or station."""
+def _check_atoms(condition, names: dict[str, str], site: dict) -> None:
+    """Every atom of a precondition or goal condition must be one this backend can observe: a marked object, a location
+    with a region (`object_at`) or a station, and the site's robot."""
     if isinstance(condition, (ir.And, ir.Or)):
         for child in condition.conditions:
-            _check_goal_atoms(child, names, site)
+            _check_atoms(child, names, site)
     elif isinstance(condition, ir.Not):
-        _check_goal_atoms(condition.condition, names, site)
+        _check_atoms(condition.condition, names, site)
     elif isinstance(condition, (ir.ObjectAt, ir.Holding, ir.RobotAt, ir.RobotReady)):
         if isinstance(condition, (ir.ObjectAt, ir.Holding)):
             if not site_mod.obj(site, names[condition.obj]).get("marker"):
                 raise BackendFailure("S507", f"no marker for object {condition.obj!r}")
         if isinstance(condition, ir.ObjectAt) and "region" not in site_mod.location(site, names[condition.location]):
             raise BackendFailure("S507", f"no region for location {condition.location!r}")
+        if isinstance(condition, (ir.Holding, ir.RobotAt, ir.RobotReady)) and (
+            names[condition.robot] != site["robot"]["name"]
+        ):
+            raise BackendFailure("S507", "condition names a robot outside this site")
     else:
         raise BackendFailure("S508", f"{condition.KIND} has no observation in this backend")
 
@@ -153,14 +160,10 @@ def refuse(task: ir.Task, bindings: dict[str, str], site: dict) -> dict[str, str
         raise BackendFailure(
             "S508", "declared actions (do) and states (in_state) can be neither run nor observed by this backend"
         )
-    if task.preconditions:
-        raise BackendFailure(
-            "S508",
-            "preconditions are evaluated from observations in phase 3 of this backend; in "
-            "phase 2 a task with a precondition is refused before any motion",
-        )
-    for condition in task.goal or ():
-        _check_goal_atoms(condition, names, site)
+    if not task.goal:
+        raise BackendFailure("S508", "a task without a goal has nothing to observe: success is decided from the goal")
+    for condition in (*task.preconditions, *task.goal):
+        _check_atoms(condition, names, site)
     if task.region_limits:
         raise BackendFailure(
             "S508", "declared region limits (no_go_region, in_region) are not enforced by this backend"
@@ -198,11 +201,15 @@ def _station_of(site: dict, location: str) -> str:
 
 
 def execute(task: ir.Task, bindings: dict[str, str], site: dict, ops, stop: Stop | None = None) -> dict:
-    """Run a validated task. The steps run in order and stop at the first failure. The goal is not evaluated here.
+    """Run a validated task. The preconditions are decided from one snapshot at the start pose, before any command that
+    moves the robot (false: S101, unknown: S102). The steps run in order and stop at the first failure. The goal is
+    decided from one snapshot after the last step: all true is `SUCCEEDED`, any false S301, otherwise S302, each with
+    `step: null` and no stop (nothing is moving). Verdicts come from observations only.
 
     `stop` ends the run early (cancel, deadline, revocation; decision 0038 P7). After a stop or a failed step the
     robot is put in the biped's safe state, and the record's `stop` says why and what was done.
     """
+    policy = observe.Policy.of(task)
     record = {
         "run_record_schema": SCHEMA,
         "run_record_schema_version": SCHEMA_VERSION,
@@ -227,14 +234,15 @@ def execute(task: ir.Task, bindings: dict[str, str], site: dict, ops, stop: Stop
             for i, c in enumerate(task.goal or (), 1)
         ],
         "goal_evaluated": False,
-        "goal_note": "goal verdicts from observations are phase 3 of this backend: the goal was not evaluated, and "
-        "completed steps are not a success",
-        "observations": [],
+        "snapshots": [],  # every observation snapshot, with each marker reading's confidence and age
+        # arm motions made only to observe (0046 U8 avoids motion outside the plan): when, why, the path, the clearance
+        "observation_motion": [],
+        "observations": [],  # the markers the executor looked at while it moved and reached (not verdicts)
         "stop": None,
         "realtime": None,
         "core_outcome": None,
     }
-    status_before = None
+    status_before, goal_snap, names = None, None, None
     try:
         ops.guard(site["name"])  # the first operation: nothing is sent to the robot before it passes (S501)
         record["backend"]["versions"] = ops.versions()
@@ -244,6 +252,15 @@ def execute(task: ir.Task, bindings: dict[str, str], site: dict, ops, stop: Stop
             stop.start(ops.now_ms())
         names = refuse(task, bindings, site)
         record["start_pose"] = [round(v, 4) for v in ops.pose]
+        if task.preconditions:  # one snapshot at the start pose: reading it commands nothing
+            ready = observe.uses_ready(task.preconditions)
+            snap = _snapshot(ops, record, "preconditions", frozenset(), ready, (), names)  # never an arm motion
+            _verdicts(record["preconditions"], task.preconditions, names, site, snap, policy)
+            results = [e["result"] for e in record["preconditions"]]
+            if "false" in results:
+                raise BackendFailure("S101", "a precondition is false from the observations")
+            if "unknown" in results:
+                raise BackendFailure("S102", "a precondition is unknown from the observations")
         for index, step in enumerate(task.steps, 1):
             ops.check()
             entry = {"index": index, "kind": step.KIND, "status": "running", "t_start_ms": ops.now_ms()}
@@ -268,16 +285,28 @@ def execute(task: ir.Task, bindings: dict[str, str], site: dict, ops, stop: Stop
                 entry["t_end_ms"] = ops.now_ms()
                 entry["wall_s"] = round(time.monotonic() - wall, 2)
             entry["status"] = "succeeded"
-        record["state"] = "STEPS_COMPLETED"
+        # one snapshot after the last step; a held object the goal speaks of is shown to the camera first
+        snap = _snapshot(ops, record, "goal", observe.held_objects(task.goal, names), observe.uses_ready(task.goal),
+                         task.goal, names)
+        goal_snap = snap
+        record["goal_evaluated"] = True
+        _verdicts(record["goal"], task.goal, names, site, snap, policy)
+        results = [e["result"] for e in record["goal"]]
+        if "false" in results:
+            raise BackendFailure("S301", "a goal condition is false from the observations")
+        if "unknown" in results:
+            raise BackendFailure("S302", "a goal condition is unknown from the observations")
+        record["state"] = "SUCCEEDED"
     except BackendFailure as exc:
         record["state"] = "FAILED"
         stepped = bool(record["steps"])
+        decided = exc.code in ("S301", "S302")  # a verdict, not a failure to act: nothing is moving, so no stop
         record["failure"] = {
             "code": exc.code,
             "message": exc.message,
-            "step": record["steps"][-1]["index"] if stepped else None,
+            "step": record["steps"][-1]["index"] if stepped and not decided else None,
         }
-        if stepped:
+        if stepped and not decided:
             record["stop"] = _hold(ops, exc.code)
     if getattr(ops, "perc", None) is not None:
         record["observations"] = ops.observations
@@ -287,7 +316,39 @@ def execute(task: ir.Task, bindings: dict[str, str], site: dict, ops, stop: Stop
         json.dumps([record["task"], record["bindings"], record["steps"][:1]], sort_keys=True).encode()
     ).hexdigest()[:16]
     record["run_id"] = run_id
+    if names is not None:
+        record["core_outcome"] = observe.core_outcome(
+            task, bindings, names, site, goal_snap, policy, record["state"], (record["failure"] or {}).get("code"),
+            run_id,
+        )
     return record
+
+
+def _snapshot(ops, record: dict, purpose: str, show, ready: bool, conditions, names):
+    """One observation snapshot, kept in the record so every verdict can be audited. If the robot moved its arm only to
+    be able to observe (or refused to, `performed: false`), that is recorded apart from the plan's steps, with the atoms
+    that asked for it."""
+    snap, note = ops.snapshot(show=show, ready=ready)
+    entry = observe.snapshot_record(snap, purpose)
+    motion = note.get("observation_motion")
+    if motion is not None:
+        why = [
+            ir.to_dict(a)
+            for c in conditions
+            for a in observe.atoms_of(c)
+            if isinstance(a, (ir.Holding, ir.ObjectAt)) and names[a.obj] == motion["object"]
+        ]
+        record["observation_motion"].append({"phase": purpose, "why": why, **motion})
+        entry["observation_motion"] = len(record["observation_motion"]) - 1
+    record["snapshots"].append(entry)
+    return snap
+
+
+def _verdicts(entries: list, conditions, names, site: dict, snap, policy) -> None:
+    """Each condition's three-valued result, and the numbers behind every atom of it (offsets, distances, why)."""
+    for entry, condition in zip(entries, conditions):
+        entry["result"] = observe.evaluate(condition, names, site, snap, policy)
+        entry["atoms"] = observe.atoms_report([condition], names, site, snap, policy)
 
 
 def _realtime(before: dict | None, ops) -> dict | None:

@@ -1,0 +1,1264 @@
+{
+  "checks": {
+    "E1": {
+      "pass": true,
+      "details": {
+        "tour_runs": [
+          {
+            "pass": true,
+            "state": "SUCCEEDED",
+            "failure": null,
+            "stations": [
+              {
+                "station": "bench",
+                "status": "succeeded",
+                "error_m": 0.0346,
+                "error_rad": 0.0196,
+                "wall_s": 54.18,
+                "sim_s": 43.2
+              },
+              {
+                "station": "shelf",
+                "status": "succeeded",
+                "error_m": 0.0314,
+                "error_rad": 0.0739,
+                "wall_s": 129.82,
+                "sim_s": 129.8
+              },
+              {
+                "station": "pad",
+                "status": "succeeded",
+                "error_m": 0.0273,
+                "error_rad": 0.0851,
+                "wall_s": 69.59,
+                "sim_s": 69.6
+              }
+            ]
+          },
+          {
+            "pass": true,
+            "state": "SUCCEEDED",
+            "failure": null,
+            "stations": [
+              {
+                "station": "bench",
+                "status": "succeeded",
+                "error_m": 0.0029,
+                "error_rad": 0.0064,
+                "wall_s": 24.14,
+                "sim_s": 24.1
+              },
+              {
+                "station": "shelf",
+                "status": "succeeded",
+                "error_m": 0.0365,
+                "error_rad": 0.0634,
+                "wall_s": 71.59,
+                "sim_s": 71.6
+              },
+              {
+                "station": "pad",
+                "status": "succeeded",
+                "error_m": 0.0088,
+                "error_rad": 0.0003,
+                "wall_s": 50.81,
+                "sim_s": 50.8
+              }
+            ]
+          }
+        ],
+        "covered_marker": {
+          "state": "FAILED",
+          "stop": {
+            "code": "S517",
+            "confirmed": true,
+            "after_ms": 512,
+            "recorded": {
+              "max_gyro_rad_s": 0.0072,
+              "max_joint_velocity_rad_s": 0.0059,
+              "max_tilt_deg": 1.18,
+              "window_start_ms": 53684
+            },
+            "oracle": {
+              "pelvis_path_m": 0.0006,
+              "max_tilt_deg": 1.18,
+              "fallen": false,
+              "velocity_command": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "wrist_path_m": {
+                "left": 0.0012,
+                "right": 0.0004
+              }
+            },
+            "pass": true
+          },
+          "message": "station marker 20 was not seen after four approaches"
+        }
+      },
+      "elapsed_s": 478.1
+    },
+    "E2": {
+      "pass": true,
+      "details": {
+        "grasp_runs": [
+          {
+            "pass": true,
+            "lift_m": 0.1437,
+            "attached": {
+              "box": "right"
+            },
+            "hand": "right",
+            "marker_at_hand_m": 0.051,
+            "robot_moved_m": 0.0197,
+            "grasp_s": 27.8
+          },
+          {
+            "pass": true,
+            "lift_m": 0.1429,
+            "attached": {
+              "box": "right"
+            },
+            "hand": "right",
+            "marker_at_hand_m": 0.0504,
+            "robot_moved_m": 0.0181,
+            "grasp_s": 27.7
+          }
+        ],
+        "absent": {
+          "pass": true,
+          "failure": {
+            "code": "S506",
+            "message": "the marker of box (id 7) was not seen at the station: the object is absent or has been moved (checked before the hand moves)",
+            "step": 2
+          },
+          "commands": {
+            "sport": {
+              "count": 7,
+              "last_sim_time": 32.083999999993246
+            },
+            "arm_sdk": {
+              "count": 0,
+              "last_sim_time": null
+            },
+            "hand_left": {
+              "count": 0,
+              "last_sim_time": null
+            },
+            "hand_right": {
+              "count": 0,
+              "last_sim_time": null
+            },
+            "attach": {
+              "count": 0,
+              "last_sim_time": null
+            },
+            "detach": {
+              "count": 0,
+              "last_sim_time": null
+            }
+          }
+        },
+        "out_of_reach": {
+          "pass": true,
+          "failure": {
+            "code": "S502",
+            "message": "no inverse-kinematics solution: the target is 0.67 m from the shoulder, further than the arm reaches",
+            "step": 2
+          },
+          "commands": {
+            "sport": {
+              "count": 7,
+              "last_sim_time": 31.693999999993313
+            },
+            "arm_sdk": {
+              "count": 0,
+              "last_sim_time": null
+            },
+            "hand_left": {
+              "count": 0,
+              "last_sim_time": null
+            },
+            "hand_right": {
+              "count": 0,
+              "last_sim_time": null
+            },
+            "attach": {
+              "count": 0,
+              "last_sim_time": null
+            },
+            "detach": {
+              "count": 0,
+              "last_sim_time": null
+            }
+          }
+        }
+      },
+      "elapsed_s": 218.7
+    },
+    "E3": {
+      "pass": true,
+      "details": {
+        "box_world": [
+          2.745,
+          2.305,
+          0.79
+        ],
+        "in_dst_region": true,
+        "released": true,
+        "box_on_table": true,
+        "wrist_from_carry_m": 0.047
+      },
+      "elapsed_s": 272.7
+    },
+    "E4": {
+      "pass": true,
+      "details": {
+        "e_pick_place": {
+          "pass": true,
+          "details": {
+            "steps": [
+              [
+                "move",
+                "succeeded",
+                23.9
+              ],
+              [
+                "grasp",
+                "succeeded",
+                27.7
+              ],
+              [
+                "move",
+                "succeeded",
+                61.3
+              ],
+              [
+                "place",
+                "succeeded",
+                24.6
+              ]
+            ],
+            "end_state": {
+              "box_world": [
+                2.745,
+                2.305,
+                0.79
+              ],
+              "in_dst_region": true,
+              "released": true,
+              "box_on_table": true,
+              "wrist_from_carry_m": 0.047
+            },
+            "robot_at_dst_error": [
+              0.0225,
+              0.0088
+            ],
+            "exit": 0,
+            "record_state": "SUCCEEDED",
+            "goal_evaluated": true
+          }
+        },
+        "w_carry_hold": {
+          "pass": true,
+          "details": {
+            "crate_attached_to": {
+              "crate": "right"
+            },
+            "robot_at_dst_error": [
+              0.0262,
+              0.0765
+            ],
+            "crate_to_wrist_m": 0.113,
+            "fallen": false,
+            "steps": [
+              [
+                "move",
+                "succeeded",
+                24.1
+              ],
+              [
+                "grasp",
+                "succeeded",
+                27.7
+              ],
+              [
+                "move",
+                "succeeded",
+                53.3
+              ]
+            ],
+            "exit": 0,
+            "record_state": "SUCCEEDED",
+            "goal_evaluated": true,
+            "grasp": {
+              "lift_m": 0.142,
+              "attached": {
+                "crate": "right"
+              },
+              "hand": "right",
+              "marker_at_hand_m": 0.0496,
+              "robot_moved_m": 0.0171,
+              "grasp_s": 27.7
+            }
+          }
+        }
+      }
+    },
+    "E5": {
+      "pass": true,
+      "details": {
+        "cancel_mid_walk": {
+          "exit": 1,
+          "state": "FAILED",
+          "failure": {
+            "code": "S511",
+            "message": "the run was cancelled",
+            "step": 1
+          },
+          "trigger": {
+            "t": 7.09999999999944,
+            "written": 8.159999999999394,
+            "walking_at_cancel": [
+              0.5,
+              0.0,
+              0.0
+            ]
+          },
+          "stop": {
+            "code": "S511",
+            "confirmed": true,
+            "after_ms": 2053,
+            "recorded": {
+              "max_gyro_rad_s": 0.0166,
+              "max_joint_velocity_rad_s": 0.0854,
+              "max_tilt_deg": 0.78,
+              "window_start_ms": 9735
+            },
+            "oracle": {
+              "pelvis_path_m": 0.0037,
+              "max_tilt_deg": 0.78,
+              "fallen": false,
+              "velocity_command": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "wrist_path_m": {
+                "left": 0.0026,
+                "right": 0.0094
+              }
+            },
+            "pass": true
+          },
+          "pass": true
+        },
+        "revoke_mid_reach": {
+          "exit": 1,
+          "state": "FAILED",
+          "failure": {
+            "code": "S513",
+            "message": "the run's authorization was revoked",
+            "step": 2
+          },
+          "trigger": {
+            "t": 32.71999999999402,
+            "written": 33.91999999999549
+          },
+          "stop": {
+            "code": "S513",
+            "confirmed": true,
+            "after_ms": 668,
+            "recorded": {
+              "max_gyro_rad_s": 0.0267,
+              "max_joint_velocity_rad_s": 0.089,
+              "max_tilt_deg": 0.21,
+              "window_start_ms": 34111
+            },
+            "oracle": {
+              "pelvis_path_m": 0.0,
+              "max_tilt_deg": 0.21,
+              "fallen": false,
+              "velocity_command": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "wrist_path_m": {
+                "left": 0.0005,
+                "right": 0.0032
+              }
+            },
+            "pass": true
+          },
+          "pass": true,
+          "hand_commands": [
+            0,
+            0
+          ]
+        },
+        "deadline_holding": {
+          "exit": 1,
+          "state": "FAILED",
+          "failure": {
+            "code": "S512",
+            "message": "the run's deadline passed",
+            "step": 3
+          },
+          "trigger": {},
+          "stop": {
+            "code": "S512",
+            "confirmed": true,
+            "after_ms": 616,
+            "recorded": {
+              "max_gyro_rad_s": 0.0172,
+              "max_joint_velocity_rad_s": 0.0807,
+              "max_tilt_deg": 0.72,
+              "window_start_ms": 134279
+            },
+            "oracle": {
+              "pelvis_path_m": 0.0005,
+              "max_tilt_deg": 0.72,
+              "fallen": false,
+              "velocity_command": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "wrist_path_m": {
+                "left": 0.0012,
+                "right": 0.0019
+              }
+            },
+            "pass": true
+          },
+          "pass": true,
+          "held_object_attached": {
+            "box": "right"
+          },
+          "hand_commands_before_after_stop": [
+            [
+              0,
+              99
+            ],
+            [
+              0,
+              99
+            ]
+          ]
+        },
+        "push_falls": {
+          "exit": 1,
+          "state": "FAILED",
+          "failure": {
+            "code": "S516",
+            "message": "the robot's IMU tilt reached 44 degrees (limit 40): it fell or is falling",
+            "step": 1
+          },
+          "trigger": {
+            "t": 7.519999999999394,
+            "pushed": 9.019999999999682,
+            "push_reply": 0
+          },
+          "fallen_per_oracle": true,
+          "fell_at": 10.03200000000002,
+          "last_command_sim_time": {
+            "sport": 7.479999999999398,
+            "arm_sdk": null,
+            "hand_left": null,
+            "hand_right": null,
+            "attach": null,
+            "detach": null
+          },
+          "command_after_fall": {
+            "sport": false,
+            "arm_sdk": false,
+            "hand_left": false,
+            "hand_right": false,
+            "attach": false,
+            "detach": false
+          },
+          "stop_kind": "no_further_command",
+          "tilt_at_detection": "the robot's IMU tilt reached 44 degrees (limit 40): it fell or is falling",
+          "pass": true
+        }
+      },
+      "elapsed_s": 208.2
+    },
+    "E6": {
+      "pass": true,
+      "details": {
+        "S508": {
+          "pass": true,
+          "exit": 1,
+          "code": "S508",
+          "commands_sent": {
+            "sport": 0,
+            "arm_sdk": 0,
+            "hand_left": 0,
+            "hand_right": 0,
+            "attach": 0,
+            "detach": 0
+          },
+          "message": "inspect is not supported by this backend yet"
+        },
+        "S509": {
+          "pass": true,
+          "exit": 1,
+          "code": "S509",
+          "commands_sent": {
+            "sport": 0,
+            "arm_sdk": 0,
+            "hand_left": 0,
+            "hand_right": 0,
+            "attach": 0,
+            "detach": 0
+          },
+          "message": "measure reads values, and this backend has no value sensors"
+        },
+        "S510": {
+          "pass": true,
+          "exit": 1,
+          "code": "S510",
+          "commands_sent": {
+            "sport": 0,
+            "arm_sdk": 0,
+            "hand_left": 0,
+            "hand_right": 0,
+            "attach": 0,
+            "detach": 0
+          },
+          "message": "a clock reading (measure r time, measure r elapsed) is refused: this backend has no wall clock, and `elapsed` needs value bindings it does not have"
+        },
+        "S514": {
+          "pass": true,
+          "exit": 1,
+          "code": "S514",
+          "commands_sent": {
+            "sport": 0,
+            "arm_sdk": 0,
+            "hand_left": 0,
+            "hand_right": 0,
+            "attach": 0,
+            "detach": 0
+          },
+          "message": "'rounds' is a mission: a mission runs on the planner's side and this backend is sent tasks only, one task run at a time (RoboLang 2.0, decision 0041 M8)"
+        },
+        "S515": {
+          "pass": true,
+          "exit": 1,
+          "code": "S515",
+          "commands_sent": {
+            "sport": 0,
+            "arm_sdk": 0,
+            "hand_left": 0,
+            "hand_right": 0,
+            "attach": 0,
+            "detach": 0
+          },
+          "message": "message_received is refused: this backend has no message service, and no channel or sender is declared for it"
+        }
+      },
+      "elapsed_s": 19.1
+    },
+    "E7": {
+      "pass": true,
+      "details": {
+        "limit_m": 0.03,
+        "worst_m": 0.0197,
+        "stance_model": "free",
+        "steps": [
+          {
+            "scenario": "e2_grasp_1",
+            "step": "grasp",
+            "robot_moved_m": 0.0197
+          },
+          {
+            "scenario": "e2_grasp_2",
+            "step": "grasp",
+            "robot_moved_m": 0.0181
+          },
+          {
+            "scenario": "e4_pick_place",
+            "step": "grasp",
+            "robot_moved_m": 0.0167
+          },
+          {
+            "scenario": "e4_pick_place",
+            "step": "place",
+            "robot_moved_m": 0.0168
+          },
+          {
+            "scenario": "e4_carry_hold",
+            "step": "grasp",
+            "robot_moved_m": 0.0171
+          }
+        ],
+        "free_stance_trial": {
+          "state": "FAILED",
+          "failure": {
+            "code": "S502",
+            "message": "no carry pose clears the held object from every link of the robot by 2 cm",
+            "step": 2
+          },
+          "robot_moved_m": 0.1511,
+          "pelvis_path_m": 0.5172
+        },
+        "note": "the robot's largest pelvis displacement from where it was when the step began, per grasp or place step (oracle); the free stance takes a recovery step of 0.2-0.35 m about every 45 s, and a step that long would show here"
+      },
+      "elapsed_s": 59.2
+    }
+  },
+  "stance_model": "free",
+  "versions": {
+    "arch": "aarch64",
+    "python": "3.11.2",
+    "assets": {
+      "unitree_mujoco": "1eb6642e3f3fdfb7fb13a9794fd6a2dd93ea0e7d",
+      "unitree_rl_lab": "4960b84732b0c2ec593dccbfe963fda1bcd7b1e3",
+      "mujoco_menagerie": "370c43965323c0944b433b202aac5058b5f907a9",
+      "unitree_rl_gym": "276801e46c5d433564f24658bac64f254b7d2d4b",
+      "unitree_sdk2_python": "814556d15970dd2ecf1c9984e845ca02ab07e206",
+      "cyclonedds_c": "abb064e35b6fbc79554c255ff8b371333e87b029"
+    },
+    "packages": {
+      "mujoco": "4.0.1",
+      "onnxruntime": "1.32.0",
+      "numpy": "2.4.6",
+      "opencv-python-headless": "5.1.0.95",
+      "cyclonedds": "0.10.2",
+      "unitree_sdk2py": "1.0.1"
+    }
+  },
+  "arch": "aarch64",
+  "go": true,
+  "realtime_valid_all_runs": false,
+  "elapsed_s": 1256.0,
+  "runs": [
+    {
+      "scenario": "e1_tour_1",
+      "realtime_ratio": 0.9572,
+      "worst_second_ratio": 0.1518,
+      "stalls": 14,
+      "realtime_valid": false,
+      "step_compute_ms": {
+        "budget": 2.0,
+        "mean": 0.534,
+        "p99": 1.471,
+        "max": 8.6,
+        "over_budget": 0.0019
+      },
+      "gc": [
+        0.11,
+        0.9,
+        10.65
+      ],
+      "slow_steps": [
+        [
+          14.52,
+          55.3,
+          0
+        ],
+        [
+          14.54,
+          58.6,
+          0
+        ],
+        [
+          14.62,
+          21.6,
+          0
+        ],
+        [
+          14.72,
+          24.3,
+          0
+        ],
+        [
+          14.848,
+          21.0,
+          0
+        ],
+        [
+          14.86,
+          39.2,
+          0
+        ],
+        [
+          14.88,
+          24.3,
+          0
+        ],
+        [
+          16.18,
+          21.4,
+          0
+        ],
+        [
+          16.502,
+          26.7,
+          0
+        ],
+        [
+          17.14,
+          22.5,
+          0
+        ]
+      ],
+      "failure": null,
+      "record": "e1_tour_1/record.json",
+      "exit": 0
+    },
+    {
+      "scenario": "e1_tour_2",
+      "realtime_ratio": 0.9987,
+      "worst_second_ratio": 0.9991,
+      "stalls": 0,
+      "realtime_valid": true,
+      "step_compute_ms": {
+        "budget": 2.0,
+        "mean": 0.51,
+        "p99": 1.349,
+        "max": 4.6,
+        "over_budget": 0.0006
+      },
+      "gc": [
+        0.09,
+        1.01,
+        13.23
+      ],
+      "slow_steps": [],
+      "failure": null,
+      "record": "e1_tour_2/record.json",
+      "exit": 0
+    },
+    {
+      "scenario": "e1_covered",
+      "realtime_ratio": 0.9979,
+      "worst_second_ratio": 0.9963,
+      "stalls": 0,
+      "realtime_valid": true,
+      "step_compute_ms": {
+        "budget": 2.0,
+        "mean": 0.527,
+        "p99": 1.454,
+        "max": 13.5,
+        "over_budget": 0.0028
+      },
+      "gc": [
+        0.1,
+        0.96,
+        12.93
+      ],
+      "slow_steps": [],
+      "failure": {
+        "code": "S517",
+        "message": "station marker 20 was not seen after four approaches",
+        "step": 1
+      },
+      "record": "e1_covered/record.json",
+      "exit": 1
+    },
+    {
+      "scenario": "e2_grasp_1",
+      "realtime_ratio": 0.998,
+      "worst_second_ratio": 0.9968,
+      "stalls": 0,
+      "realtime_valid": true,
+      "step_compute_ms": {
+        "budget": 2.0,
+        "mean": 0.468,
+        "p99": 1.322,
+        "max": 5.7,
+        "over_budget": 0.0007
+      },
+      "gc": [
+        0.09,
+        1.04,
+        10.12
+      ],
+      "slow_steps": [
+        [
+          3.3,
+          30.8,
+          0
+        ]
+      ],
+      "failure": null,
+      "record": "e2_grasp_1/record.json",
+      "exit": 0
+    },
+    {
+      "scenario": "e2_grasp_2",
+      "realtime_ratio": 0.9988,
+      "worst_second_ratio": 0.9994,
+      "stalls": 0,
+      "realtime_valid": true,
+      "step_compute_ms": {
+        "budget": 2.0,
+        "mean": 0.451,
+        "p99": 1.307,
+        "max": 5.7,
+        "over_budget": 0.0008
+      },
+      "gc": [
+        0.09,
+        0.96,
+        12.04
+      ],
+      "slow_steps": [
+        [
+          3.448,
+          70.5,
+          0
+        ],
+        [
+          3.56,
+          60.1,
+          0
+        ]
+      ],
+      "failure": null,
+      "record": "e2_grasp_2/record.json",
+      "exit": 0
+    },
+    {
+      "scenario": "e2_absent",
+      "realtime_ratio": 0.9942,
+      "worst_second_ratio": 0.9994,
+      "stalls": 0,
+      "realtime_valid": true,
+      "step_compute_ms": {
+        "budget": 2.0,
+        "mean": 0.524,
+        "p99": 1.465,
+        "max": 75.7,
+        "over_budget": 0.0026
+      },
+      "gc": [
+        0.13,
+        0.97,
+        17.98
+      ],
+      "slow_steps": [
+        [
+          3.336,
+          27.1,
+          0
+        ],
+        [
+          3.388,
+          75.7,
+          0
+        ],
+        [
+          3.64,
+          24.0,
+          0
+        ]
+      ],
+      "failure": {
+        "code": "S506",
+        "message": "the marker of box (id 7) was not seen at the station: the object is absent or has been moved (checked before the hand moves)",
+        "step": 2
+      },
+      "record": "e2_absent/record.json",
+      "exit": 1
+    },
+    {
+      "scenario": "e2_far",
+      "realtime_ratio": 0.9952,
+      "worst_second_ratio": 0.9996,
+      "stalls": 0,
+      "realtime_valid": true,
+      "step_compute_ms": {
+        "budget": 2.0,
+        "mean": 0.492,
+        "p99": 1.315,
+        "max": 36.9,
+        "over_budget": 0.0005
+      },
+      "gc": [
+        0.09,
+        0.98,
+        12.65
+      ],
+      "slow_steps": [
+        [
+          3.64,
+          36.9,
+          0
+        ]
+      ],
+      "failure": {
+        "code": "S502",
+        "message": "no inverse-kinematics solution: the target is 0.67 m from the shoulder, further than the arm reaches",
+        "step": 2
+      },
+      "record": "e2_far/record.json",
+      "exit": 1
+    },
+    {
+      "scenario": "e4_pick_place",
+      "realtime_ratio": 0.9987,
+      "worst_second_ratio": 0.999,
+      "stalls": 0,
+      "realtime_valid": true,
+      "step_compute_ms": {
+        "budget": 2.0,
+        "mean": 0.474,
+        "p99": 1.313,
+        "max": 6.3,
+        "over_budget": 0.0003
+      },
+      "gc": [
+        0.09,
+        0.95,
+        10.34
+      ],
+      "slow_steps": [
+        [
+          3.3,
+          55.1,
+          0
+        ]
+      ],
+      "failure": null,
+      "record": "e4_pick_place/record.json",
+      "exit": 0
+    },
+    {
+      "scenario": "e4_carry_hold",
+      "realtime_ratio": 0.9991,
+      "worst_second_ratio": 0.9775,
+      "stalls": 0,
+      "realtime_valid": true,
+      "step_compute_ms": {
+        "budget": 2.0,
+        "mean": 0.563,
+        "p99": 1.708,
+        "max": 26.0,
+        "over_budget": 0.0043
+      },
+      "gc": [
+        0.08,
+        0.9,
+        10.78
+      ],
+      "slow_steps": [
+        [
+          3.296,
+          27.0,
+          0
+        ],
+        [
+          82.996,
+          26.0,
+          0
+        ]
+      ],
+      "failure": null,
+      "record": "e4_carry_hold/record.json",
+      "exit": 0
+    },
+    {
+      "scenario": "e5_cancel",
+      "realtime_ratio": 0.9946,
+      "worst_second_ratio": 0.9997,
+      "stalls": 0,
+      "realtime_valid": true,
+      "step_compute_ms": {
+        "budget": 2.0,
+        "mean": 0.552,
+        "p99": 1.486,
+        "max": 83.8,
+        "over_budget": 0.0031
+      },
+      "gc": [
+        0.09,
+        1.02,
+        12.2
+      ],
+      "slow_steps": [
+        [
+          3.32,
+          83.8,
+          0
+        ],
+        [
+          3.86,
+          44.5,
+          0
+        ]
+      ],
+      "failure": {
+        "code": "S511",
+        "message": "the run was cancelled",
+        "step": 1
+      },
+      "record": "e5_cancel/record.json",
+      "exit": 1
+    },
+    {
+      "scenario": "e5_revoke",
+      "realtime_ratio": 0.9961,
+      "worst_second_ratio": 0.9867,
+      "stalls": 0,
+      "realtime_valid": true,
+      "step_compute_ms": {
+        "budget": 2.0,
+        "mean": 0.592,
+        "p99": 2.023,
+        "max": 12.2,
+        "over_budget": 0.0107
+      },
+      "gc": [
+        0.1,
+        1.39,
+        13.2
+      ],
+      "slow_steps": [],
+      "failure": {
+        "code": "S513",
+        "message": "the run's authorization was revoked",
+        "step": 2
+      },
+      "record": "e5_revoke/record.json",
+      "exit": 1
+    },
+    {
+      "scenario": "e5_deadline",
+      "realtime_ratio": 0.9986,
+      "worst_second_ratio": 0.9986,
+      "stalls": 0,
+      "realtime_valid": true,
+      "step_compute_ms": {
+        "budget": 2.0,
+        "mean": 0.531,
+        "p99": 1.444,
+        "max": 13.0,
+        "over_budget": 0.0013
+      },
+      "gc": [
+        0.09,
+        0.99,
+        14.84
+      ],
+      "slow_steps": [
+        [
+          3.456,
+          54.0,
+          0
+        ],
+        [
+          3.644,
+          66.0,
+          0
+        ],
+        [
+          3.77,
+          35.5,
+          0
+        ]
+      ],
+      "failure": {
+        "code": "S512",
+        "message": "the run's deadline passed",
+        "step": 3
+      },
+      "record": "e5_deadline/record.json",
+      "exit": 1
+    },
+    {
+      "scenario": "e5_push",
+      "realtime_ratio": 0.9825,
+      "worst_second_ratio": 0.9989,
+      "stalls": 0,
+      "realtime_valid": true,
+      "step_compute_ms": {
+        "budget": 2.0,
+        "mean": 0.538,
+        "p99": 1.467,
+        "max": 53.9,
+        "over_budget": 0.0019
+      },
+      "gc": [
+        0.1,
+        0.92,
+        13.02
+      ],
+      "slow_steps": [
+        [
+          3.32,
+          53.9,
+          0
+        ],
+        [
+          3.84,
+          33.7,
+          0
+        ]
+      ],
+      "failure": {
+        "code": "S516",
+        "message": "the robot's IMU tilt reached 44 degrees (limit 40): it fell or is falling",
+        "step": 1
+      },
+      "record": "e5_push/record.json",
+      "exit": 1
+    },
+    {
+      "scenario": "e6_refusals",
+      "realtime_ratio": 0.9878,
+      "worst_second_ratio": 0.9696,
+      "stalls": 0,
+      "realtime_valid": true,
+      "step_compute_ms": {
+        "budget": 2.0,
+        "mean": 0.586,
+        "p99": 1.401,
+        "max": 86.1,
+        "over_budget": 0.0026
+      },
+      "gc": [
+        0.09,
+        0.92,
+        10.16
+      ],
+      "slow_steps": [
+        [
+          3.46,
+          62.8,
+          0
+        ],
+        [
+          6.776,
+          46.0,
+          0
+        ],
+        [
+          6.85,
+          72.2,
+          0
+        ],
+        [
+          6.956,
+          66.3,
+          0
+        ],
+        [
+          10.29,
+          32.1,
+          0
+        ],
+        [
+          10.336,
+          86.1,
+          0
+        ],
+        [
+          10.46,
+          60.2,
+          0
+        ],
+        [
+          10.7,
+          24.7,
+          0
+        ],
+        [
+          14.34,
+          82.9,
+          0
+        ],
+        [
+          14.456,
+          66.1,
+          0
+        ]
+      ],
+      "failure": null,
+      "record": "e6_refusals/record.json"
+    },
+    {
+      "scenario": "e7_free_stance",
+      "realtime_ratio": 0.9993,
+      "worst_second_ratio": 0.9986,
+      "stalls": 0,
+      "realtime_valid": true,
+      "step_compute_ms": {
+        "budget": 2.0,
+        "mean": 0.592,
+        "p99": 1.477,
+        "max": 49.8,
+        "over_budget": 0.0029
+      },
+      "gc": [
+        0.11,
+        0.98,
+        11.84
+      ],
+      "slow_steps": [
+        [
+          50.48,
+          29.7,
+          0
+        ],
+        [
+          50.88,
+          32.2,
+          0
+        ],
+        [
+          51.08,
+          29.6,
+          0
+        ],
+        [
+          51.262,
+          44.6,
+          0
+        ],
+        [
+          51.862,
+          42.1,
+          0
+        ],
+        [
+          52.262,
+          42.3,
+          0
+        ],
+        [
+          53.28,
+          31.2,
+          0
+        ],
+        [
+          53.464,
+          41.3,
+          0
+        ],
+        [
+          53.678,
+          32.1,
+          0
+        ],
+        [
+          54.28,
+          29.7,
+          0
+        ]
+      ],
+      "failure": {
+        "code": "S502",
+        "message": "no carry pose clears the held object from every link of the robot by 2 cm",
+        "step": 2
+      },
+      "record": "e7_free_stance/record.json",
+      "exit": 1
+    }
+  ]
+}

@@ -47,6 +47,7 @@ class LowSample:
     dq: np.ndarray
     quat: tuple  # (w, x, y, z)
     gyro: tuple
+    motor_error: int = 0  # the 29 body motors' `motorstate` words ORed together: 0 when no motor reports an error
 
 
 class Robot:
@@ -61,11 +62,13 @@ class Robot:
         self.loco = LocoClient()
         self.loco.SetTimeout(3.0)
         self.loco.Init()
-        self.low_q, self.low_tick, self.low_count = np.zeros(29), 0, 0
+        self.low_q, self.low_tick, self.low_count, self.low_wall = np.zeros(29), 0, 0, 0.0
         self.last: LowSample | None = None
         self.history: collections.deque[LowSample] = collections.deque(maxlen=int(HISTORY_S * 250))
         self.hand_q = {"left": np.zeros(7), "right": np.zeros(7)}
         self.hand_dq = {"left": np.zeros(7), "right": np.zeros(7)}
+        self.hand_wall = {"left": 0.0, "right": 0.0}  # when each hand's state last arrived (wall clock)
+        self.hand_tick = {"left": 0, "right": 0}  # simulation time (lowstate tick) when it did
         self.commands_sent = {"set_velocity": 0, "arm_sdk": 0, "hand": 0}
         self.silenced = False  # after a fall: nothing more is sent, whatever the caller asks
         sub = ChannelSubscriber("rt/lowstate", LowState_)
@@ -93,13 +96,18 @@ class Robot:
         q = np.array([m.q for m in msg.motor_state[:29]])
         dq = np.array([m.dq for m in msg.motor_state[:29]])
         imu = msg.imu_state
-        sample = LowSample(int(msg.tick), q, dq, tuple(imu.quaternion), tuple(imu.gyroscope))
+        errors = 0
+        for m in msg.motor_state[:29]:
+            errors |= int(m.motorstate)
+        sample = LowSample(int(msg.tick), q, dq, tuple(imu.quaternion), tuple(imu.gyroscope), errors)
+        self.low_wall = time.monotonic()
         self.low_q, self.low_tick, self.low_count, self.last = q, sample.tick, self.low_count + 1, sample
         self.history.append(sample)
 
     def _on_hand(self, side, msg):
         self.hand_q[side] = np.array([x.q for x in msg.motor_state[:7]])
         self.hand_dq[side] = np.array([x.dq for x in msg.motor_state[:7]])
+        self.hand_wall[side], self.hand_tick[side] = time.monotonic(), self.low_tick
 
     @property
     def now_ms(self) -> int:
@@ -122,6 +130,10 @@ class Robot:
                 return
             time.sleep(0.02)
         raise TimeoutError("no rt/lowstate")
+
+    def fsm_id(self) -> tuple[int, int | None]:
+        """`LocoClient.GetFsmId` (the SDK's own call, a read): (code, the walking service's state id or None)."""
+        return self.loco.GetFsmId()
 
     # ------------------------------------------------------------------------------------------ walking
 

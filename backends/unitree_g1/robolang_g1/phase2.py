@@ -9,7 +9,9 @@ the physical effect; the executor never does. Exit status 0 only if every check 
 
 E1 move: three stations in turn, twice, and a covered marker (S517). E2 grasp: lifted and welded, twice; an absent box
 (S506 before the hand closes); a box out of reach (S502 before any arm motion). E3 place: in the region, released, hand
-retracted. E4 the two reference tasks, unchanged, through the CLI. E5 stop: cancel mid-walk, revoke mid-reach, a
+retracted. E4 the two reference tasks, unchanged, through the CLI: since phase 3 they end `SUCCEEDED` (exit 0) from the
+observations, not `STEPS_COMPLETED`; E1, E2, E3 and E7 ask the same of their short tasks (every step ran and the goal
+is true). E5 stop: cancel mid-walk, revoke mid-reach, a
 deadline while holding, and a push (S516). E6 refusals. E7 the free stance during arm work.
 """
 
@@ -298,7 +300,7 @@ def check_e1(ctx: Ctx) -> dict:
             })
         ok = (
             rec is not None
-            and rec["state"] == "STEPS_COMPLETED"
+            and rec["state"] == "SUCCEEDED"
             and len(errs) == 3
             and all(
                 e["status"] == "succeeded" and e["error_m"] <= STATION_TOL_M and e["error_rad"] <= STATION_TOL_RAD
@@ -354,7 +356,7 @@ def check_e2(ctx: Ctx) -> dict:
         status, rec, log, s, samples, _ = run_scenario(
             ctx, f"e2_grasp_{k + 1}", SITES / "pick_place.json", "pick_place", src, "grab", bind
         )
-        if rec and rec["state"] == "STEPS_COMPLETED":
+        if rec and rec["state"] == "SUCCEEDED":
             fx = grasp_effect(rec, samples, "box")
             ctx.stay.append({"scenario": f"e2_grasp_{k + 1}", "step": "grasp", "robot_moved_m": fx["robot_moved_m"]})
             ok = (
@@ -433,7 +435,7 @@ def check_e3_e4(ctx: Ctx) -> tuple[dict, dict]:
     )
     e3 = {"pass": False, "details": {"state": rec and rec["state"], "failure": rec and rec["failure"]}}
     e4a = dict(e3)
-    if rec and rec["state"] == "STEPS_COMPLETED":
+    if rec and rec["state"] == "SUCCEEDED":
         fx = pick_place_effect(rec, samples, site_pp)
         place = next(x for x in rec["steps"] if x["kind"] == "place")
         w = between(samples, *place["details"]["arm_work_ms"])
@@ -459,8 +461,9 @@ def check_e3_e4(ctx: Ctx) -> tuple[dict, dict]:
                 fx["in_dst_region"]
                 and all(x["status"] == "succeeded" for x in rec["steps"])
                 and len(rec["steps"]) == 4
-                and rec["goal_evaluated"] is False
-                and rec["state"] != "SUCCEEDED"
+                and rec["goal_evaluated"] is True
+                and rec["state"] == "SUCCEEDED"
+                and status == 0
             ),
             "details": {
                 "steps": [
@@ -483,7 +486,7 @@ def check_e3_e4(ctx: Ctx) -> tuple[dict, dict]:
         BIND_CH,
     )
     e4b: dict = {"pass": False, "details": {"state": rec and rec["state"], "failure": rec and rec["failure"]}}
-    if rec and rec["state"] == "STEPS_COMPLETED":
+    if rec and rec["state"] == "SUCCEEDED":
         last = samples[-1]
         err = station_error(last, site_mod.station(site_ch, "dst"))
         grasp = grasp_effect(rec, samples, "crate")
@@ -497,8 +500,9 @@ def check_e3_e4(ctx: Ctx) -> tuple[dict, dict]:
             and not last["fallen"]
             and float(np.linalg.norm(crate - right)) < 0.25
             and len(rec["steps"]) == 3
-            and rec["goal_evaluated"] is False
-            and rec["state"] != "SUCCEEDED"
+            and rec["goal_evaluated"] is True
+            and rec["state"] == "SUCCEEDED"
+            and status == 0
         )
         e4b = {
             "pass": bool(ok),
@@ -536,15 +540,16 @@ class _Push:
                 self._SetApiVerson(SIM_API_VERSION)
                 self._RegistApi(API_PUSH, 0)
 
-            def push(self, force, duration):
-                return self._Call(API_PUSH, json.dumps({"force": list(force), "duration": duration}))
+            def push(self, force, duration, torque=(0.0, 0.0, 0.0)):
+                body = {"force": list(force), "duration": duration, "torque": list(torque)}
+                return self._Call(API_PUSH, json.dumps(body))
 
         self.client = PushClient()
         self.client.SetTimeout(2.0)
         self.client.Init()
 
-    def push(self, force, duration):
-        return self.client.push(force, duration)
+    def push(self, force, duration, torque=(0.0, 0.0, 0.0)):
+        return self.client.push(force, duration, torque)
 
 
 def check_e5(ctx: Ctx) -> dict:
@@ -793,6 +798,148 @@ def check_e7(ctx: Ctx) -> dict:
     }
 
 
+# ------------------------------------------------------------------------------------------------ move stress
+
+
+def _sample_at(samples: list, t_s: float) -> dict:
+    """The oracle sample nearest to simulation time `t_s`, searched from the end (the tail is live and append-only)."""
+    i = len(samples) - 1
+    while i > 0 and samples[i]["sim_time"] > t_s:
+        i -= 1
+    j = min(i + 1, len(samples) - 1)
+    return samples[j] if abs(samples[j]["sim_time"] - t_s) < abs(samples[i]["sim_time"] - t_s) else samples[i]
+
+
+def _oracle_pose(sample) -> list[float]:
+    x, y = pelvis_xy(sample)
+    return [round(float(x), 4), round(float(y), 4), round(float(yaw_of(sample["pelvis"]["quat"])), 4)]
+
+
+def _event_counts(events: list) -> dict:
+    counts: dict[str, int] = {}
+    for e in events:
+        counts[e["event"]] = counts.get(e["event"], 0) + 1
+    return counts
+
+
+def check_move_stress(ctx: Ctx, arrivals: int = 20, carry: bool = False, creep: float = 0.0) -> dict:
+    """`move` between the bench station and the shelf station and back, `arrivals` arrivals at the shelf (and as many at
+    the bench), in one stand-in and one executor (the free stance, as the checks run). Each arrival is judged by the
+    oracle at the moment `move` returned: within the station tolerance (5 cm, 0.1 rad) and no failure. A move that
+    fails is recorded (code and message) and the run goes on with the next one. Every `look` and every velocity command
+    is also traced with the oracle's pose beside the belief, so the heading's behaviour can be read afterwards; the
+    executor does not know of it (the trace wraps its methods from here).
+
+        python -m robolang_g1.phase2 --only move-stress [--arrivals 20] [--carry] --out stress.json
+
+    With `creep` (N m) the stand-in's test hook puts a steady torque about the vertical on the torso for the whole run:
+    a heading creep added to the stance's own (about 0.01 rad/s), which the x86_64 CI runs showed more of.
+
+    With `carry` the robot first grasps the box at the bench and holds it through every move (the arm in its carry
+    pose, as in `e_pick_place`'s move to the shelf, which is where the x86_64 CI runs failed).
+    """
+    from .executor import BackendFailure
+    from .ops import G1Operations
+
+    site = ctx.sites["pick_place"]
+    moves: list[dict] = []
+    trace: list[dict] = []
+    name = "move_stress" + ("_carry" if carry else "") + (f"_creep{creep:g}" if creep else "")
+    with ctx.session(name, SITES / "pick_place.json") as s:
+        samples = s.tail.samples
+        ops = G1Operations(site)
+        ops.guard(site["name"])
+        if creep:
+            _Push().push((0.0, 0.0, 0.0), 1e6, (0.0, 0.0, creep))
+        look, command = ops.look, ops.command
+
+        def traced_look(*a, **kw):
+            before = getattr(ops, "fix", None)
+            readings = look(*a, **kw)
+            t = ops.now_ms()
+            trace.append({"k": "look", "t": t, "belief": [round(float(v), 4) for v in ops.pose],
+                          "fix": getattr(ops, "fix", None) is not before,
+                          "oracle": _oracle_pose(_sample_at(samples, t / 1000))})
+            return readings
+
+        def traced_command(vx, vy, wz, seconds, wait=True, shuffle=False):
+            t = ops.now_ms()
+            trace.append({"k": "cmd", "t": t, "cmd": [round(vx, 3), round(vy, 3), round(wz, 3), round(seconds, 3)],
+                          "shuffle": shuffle, "oracle": _oracle_pose(_sample_at(samples, t / 1000))})
+            return command(vx, vy, wz, seconds, wait, shuffle)
+
+        ops.look, ops.command = traced_look, traced_command
+
+        def one(station: str, n: int) -> None:
+            t0, wall0, first = ops.now_ms(), time.monotonic(), len(trace)
+            failure, details = None, None
+            try:
+                details = ops.move(station)
+            except BackendFailure as exc:
+                failure = {"code": exc.code, "message": exc.message}
+            t1 = ops.now_ms()
+            err = station_error(_sample_at(samples, t1 / 1000), site_mod.station(site, station))
+            ok = failure is None and err[0] <= STATION_TOL_M and err[1] <= STATION_TOL_RAD
+            moves.append({
+                "n": n, "station": station, "pass": ok, "failure": failure,
+                "oracle_error_m": round(err[0], 4), "oracle_error_rad": round(err[1], 4),
+                "sim_s": round((t1 - t0) / 1000, 1), "wall_s": round(time.monotonic() - wall0, 1),
+                "servo_looks": len((details or {}).get("iterations", [])),
+                "events": _event_counts(ops.events),
+                "trace": [first, len(trace)],
+            })
+            m = moves[-1]
+            print(f"  move {n:2d} {station:5s} {'ok  ' if ok else 'FAIL'} {m['sim_s']:6.1f} s  "
+                  f"{m['oracle_error_m'] * 100:5.1f} cm  {m['oracle_error_rad']:.3f} rad  "
+                  f"{failure['code'] if failure else ''}", flush=True)
+            (ctx.dir / f"{name}_trace.json").write_text(json.dumps({"moves": moves, "trace": trace}))  # as it goes
+
+        one("bench", 0)  # from the start pose: not counted
+        grasp = None
+        if carry:
+            try:
+                grasp = {"pass": True, "carry_pose": ops.grasp("box").get("carry_pose")}
+            except BackendFailure as exc:
+                grasp = {"pass": False, "failure": {"code": exc.code, "message": exc.message}}
+                moves.append({"n": 0, "station": "grasp", "pass": False, "failure": grasp["failure"]})
+                arrivals = 0
+        for k in range(arrivals):
+            one("shelf", 2 * k + 1)
+            one("bench", 2 * k + 2)
+        status = s.sim.Status()[1]
+    ctx.done(name, s, None)
+    (ctx.dir / f"{name}_trace.json").write_text(json.dumps({"moves": moves, "trace": trace}))
+    shelf = [m for m in moves if m["station"] == "shelf"]
+    bench = [m for m in moves[1:] if m["station"] == "bench"]
+
+    def stats(group):
+        if not group:
+            return {"arrivals": 0, "pass": 0}
+        times = sorted(m["sim_s"] for m in group)
+        return {
+            "arrivals": len(group),
+            "pass": sum(m["pass"] for m in group),
+            "sim_s": {"min": times[0], "median": times[len(times) // 2], "max": times[-1],
+                      "mean": round(sum(times) / len(times), 1)},
+            "worst_error_m": max(m["oracle_error_m"] for m in group),
+            "worst_error_rad": max(m["oracle_error_rad"] for m in group),
+        }
+
+    return {
+        "pass": bool(shelf) and len(shelf) == arrivals and all(m["pass"] for m in shelf)
+        and all(m["pass"] for m in bench) and (grasp is None or grasp["pass"]),
+        "details": {
+            "protocol": f"bench, then {arrivals} x (shelf, bench): one stand-in, free stance, the oracle judges each"
+            + (", the box held throughout" if carry else ""),
+            "grasp": grasp,
+            "creep_torque_nm": creep,
+            "tolerance": {"m": STATION_TOL_M, "rad": STATION_TOL_RAD},
+            "shelf": stats(shelf), "bench": stats(bench), "moves": moves,
+            "realtime_ratio": status.get("ratio") if isinstance(status, dict) else None,
+        },
+    }
+
+
 # ------------------------------------------------------------------------------------------------ main
 
 
@@ -801,7 +948,11 @@ def main(argv=None) -> int:
     ap.add_argument("--out", default="phase2.json")
     ap.add_argument("--run-dir")
     ap.add_argument("--stance", default="free", choices=["free", "supported"])
-    ap.add_argument("--only", default="", help="development: comma list of E1,E2,E34,E5,E6 to run (E7 follows E2/E34)")
+    ap.add_argument("--only", default="", help="development: comma list of E1,E2,E34,E5,E6 to run (E7 follows E2/E34); "
+                    "`move-stress` runs the shelf-move stress check (never part of a full run)")
+    ap.add_argument("--arrivals", type=int, default=20, help="move-stress: arrivals at the shelf")
+    ap.add_argument("--carry", action="store_true", help="move-stress: hold the box through every move")
+    ap.add_argument("--creep", type=float, default=0.0, help="move-stress: a steady torque (N m) about the vertical")
     args = ap.parse_args(argv)
     out = Path(args.out)
     ctx = Ctx(Path(args.run_dir) if args.run_dir else out.with_suffix(".run"), args.stance)
@@ -852,6 +1003,8 @@ def main(argv=None) -> int:
         record("E5", lambda: check_e5(ctx))
     if wanted("E6"):
         record("E6", lambda: check_e6(ctx))
+    if "move-stress" in only:
+        record("move-stress", lambda: check_move_stress(ctx, args.arrivals, args.carry, args.creep))
     if ctx.stay or not only:
         record("E7", lambda: check_e7(ctx))
     for name in ("E1", "E2", "E3", "E4", "E5", "E6", "E7"):

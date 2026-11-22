@@ -1,0 +1,158 @@
+{
+ "mode": "view",
+ "target_pinch_pelvis": [
+  0.3,
+  -0.15,
+  0.0
+ ],
+ "runs": [
+  {
+   "run": 1,
+   "fell": false,
+   "forward_m": 2.034,
+   "forward_error_m": 0.034,
+   "sideways_m": -0.038,
+   "heading_change_during_walk_rad": 0.319,
+   "max_tilt_deg": 6.11,
+   "rest_torso_sway_max_dev_cm": 1.76,
+   "rest_torso_range_cm": 3.15,
+   "attached": "right",
+   "camera_walk": {
+    "frames": 28,
+    "detections": 28,
+    "confidence": 1.0,
+    "spread_cm": 0.77,
+    "range_m": 0.527
+   },
+   "camera_rest": {
+    "frames": 10,
+    "detections": 10,
+    "confidence": 1.0,
+    "spread_cm": 0.29,
+    "range_m": 0.526
+   },
+   "arm_tracking_walk": {
+    "max_rad": 0.0308,
+    "rms_rad": 0.0107,
+    "worst_joint": 27
+   },
+   "arm_tracking_rest": {
+    "max_rad": 0.0253,
+    "rms_rad": 0.0101,
+    "worst_joint": 27
+   },
+   "turn_90": {
+    "achieved_rad": 0.576,
+    "error_rad": -0.995,
+    "took_s": 44.8,
+    "position_drift_cm": 74.1
+   }
+  },
+  {
+   "run": 2,
+   "fell": false,
+   "forward_m": 2.049,
+   "forward_error_m": 0.049,
+   "sideways_m": -0.04,
+   "heading_change_during_walk_rad": 0.342,
+   "max_tilt_deg": 6.07,
+   "rest_torso_sway_max_dev_cm": 1.45,
+   "rest_torso_range_cm": 1.98,
+   "attached": "right",
+   "camera_walk": {
+    "frames": 28,
+    "detections": 28,
+    "confidence": 1.0,
+    "spread_cm": 0.59,
+    "range_m": 0.527
+   },
+   "camera_rest": {
+    "frames": 10,
+    "detections": 10,
+    "confidence": 1.0,
+    "spread_cm": 0.25,
+    "range_m": 0.526
+   },
+   "arm_tracking_walk": {
+    "max_rad": 0.0302,
+    "rms_rad": 0.0107,
+    "worst_joint": 27
+   },
+   "arm_tracking_rest": {
+    "max_rad": 0.0253,
+    "rms_rad": 0.0101,
+    "worst_joint": 27
+   },
+   "turn_90": {
+    "achieved_rad": 1.719,
+    "error_rad": 0.149,
+    "took_s": 23.0,
+    "position_drift_cm": 36.9
+   }
+  },
+  {
+   "run": 3,
+   "fell": false,
+   "forward_m": 2.081,
+   "forward_error_m": 0.081,
+   "sideways_m": -0.121,
+   "heading_change_during_walk_rad": 0.271,
+   "max_tilt_deg": 5.78,
+   "rest_torso_sway_max_dev_cm": 2.18,
+   "rest_torso_range_cm": 3.05,
+   "attached": "right",
+   "camera_walk": {
+    "frames": 28,
+    "detections": 28,
+    "confidence": 1.0,
+    "spread_cm": 0.58,
+    "range_m": 0.528
+   },
+   "camera_rest": {
+    "frames": 10,
+    "detections": 10,
+    "confidence": 1.0,
+    "spread_cm": 0.31,
+    "range_m": 0.525
+   },
+   "arm_tracking_walk": {
+    "max_rad": 0.0303,
+    "rms_rad": 0.0107,
+    "worst_joint": 27
+   },
+   "arm_tracking_rest": {
+    "max_rad": 0.0252,
+    "rms_rad": 0.0101,
+    "worst_joint": 27
+   },
+   "turn_90": {
+    "achieved_rad": 1.83,
+    "error_rad": 0.259,
+    "took_s": 22.0,
+    "position_drift_cm": 12.2
+   }
+  }
+ ],
+ "fingers_down_deg": 15,
+ "ik": {
+  "position_error_m": 0.0039,
+  "orientation_error_rad": 0.0167,
+  "iterations": 4.0
+ },
+ "marker_at_rest": {
+  "confidence": 1.0,
+  "range_m": 0.525,
+  "vertical_deg": -12.2,
+  "horizontal_deg": 19.3,
+  "position_pelvis": [
+   0.303,
+   -0.153,
+   0.04
+  ]
+ },
+ "standin": {
+  "realtime_ratio": 1.0,
+  "worst_second_ratio": 0.9959,
+  "stalls": 0
+ }
+}
