@@ -76,6 +76,7 @@ Do not read much into a few points of difference: 40 tasks is a small sample. Us
 | `prompt.md`, `prompt_minimal.md` | stable prompt wrappers (the hash of the assembled prompt is stored with each run); the full prompt inserts `docs/language-reference.md`, while the minimal prompt inserts the grammar |
 | `tasks_hard/`, `reference_hard/`, `worlds/*.notes.json` | set 2: tasks, references and attempts, entity descriptions |
 | `lib.py`, `run.py`, `score.py` | shared checks and prices; the runner; the scorer |
+| `heldout/` | rules and the writers' brief for the private held-out set (RL-20D, MC7); the requests themselves are never in git |
 
 To add a task: write `tasks/<id>.json`, `reference/<id>.rob` and `reference/<id>.json`, then run `pytest tests/test_bench.py`
 (the count in that test is 40; change it on purpose).
