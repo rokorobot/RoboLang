@@ -491,6 +491,20 @@ class Simulator:
         return {"budget": budget, "mean": round(sum(ms) / len(ms), 3), "p99": round(ms[int(0.99 * (len(ms) - 1))], 3),
                 "max": round(ms[-1], 1), "over_budget": round(sum(m > budget for m in ms) / len(ms), 4)}
 
+    def _close_window(self, now: float) -> None:
+        """One simulated second has passed, at wall time `now`: its real-time ratio, and for a slow one (below 0.95) how
+        much of the second the loop thread spent computing and how much waiting in the run queue for a CPU."""
+        t = self.timing
+        ratio = 1.0 / max(now - t.window_wall, 1e-9)
+        t.window_ratio_min = min(t.window_ratio_min, ratio)
+        sched = thread_sched()
+        if ratio < 0.95:
+            used = (None, None) if sched is None or t.sched_prev is None else (
+                round(sched[0] - t.sched_prev[0], 3), round(sched[1] - t.sched_prev[1], 3))
+            t.slow_windows.append((round(self.sim_time, 2), round(ratio, 3), *used))
+        t.sched_prev = sched
+        t.window_wall = now
+
     def status(self) -> dict:
         t = self.timing
         wall = time.perf_counter() - t.wall0 if t.wall0 else 0.0
@@ -555,16 +569,7 @@ class Simulator:
             if self.oracle_path is not None and self.n % oracle_every == 0:
                 self._write_atomic(self.oracle_path, json.dumps(self.oracle()).encode(), ".tmp")
             if self.n % steps_per_second == 0:
-                now = time.perf_counter()
-                ratio = 1.0 / max(now - t.window_wall, 1e-9)
-                t.window_ratio_min = min(t.window_ratio_min, ratio)
-                sched = thread_sched()
-                if ratio < 0.95:
-                    used = (None, None) if sched is None or t.sched_prev is None else (
-                        round(sched[0] - t.sched_prev[0], 3), round(sched[1] - t.sched_prev[1], 3))
-                    t.slow_windows.append((round(self.sim_time, 2), round(ratio, 3), *used))
-                t.sched_prev = sched
-                t.window_wall = now
+                self._close_window(time.perf_counter())
             took = (time.perf_counter() - loop_start) * 1000
             t.step_ms.append(took)
             if took > 20 and len(t.slow_steps) < 50:
