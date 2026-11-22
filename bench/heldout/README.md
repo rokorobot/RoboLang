@@ -15,24 +15,39 @@ first run.
 |---|---|---|
 | `README.md` | yes | these rules |
 | `BRIEF.md` | yes | the brief for the people who write the requests |
-| `manifest.sha256` | yes, once frozen | SHA-256 of every private file: proves what was frozen, and when, without showing it |
+| `manifest.sha256` | yes, once frozen | SHA-256 of the frozen private files: proves what was frozen, and when, without showing it |
 | `PREREGISTRATION.md` | yes, once frozen | the targets, the models, the prompt and the date, fixed before the first run |
 | `private/` | **never** (gitignored) | a safety net only. Keep the real copy **outside the repo** |
 
 The repo is public. Anything committed, pasted into an issue or PR, or shown to an AI coding session is no longer held
-out. Keep the set in a private place (a private repository or the owner's own storage) with one backup.
+out. Keep the set in its own private repository (for example `RoboLang-heldout`), cloned only on the owner's computer,
+with one backup. Never add it to an AI coding session, a cloud agent workspace or a public CI job: their logs and
+artifacts are visible, and agents can read everything in their workspace. Give access only to the owner and the
+person who checks the labels. Turn off AI features (code review, assistants) on that repository.
 
-Private layout, the same as the other sets:
+Layout of the private repository:
 
 ```
-<private>/tasks/h001.json        id, prompt, world, group, expect, expected_goal, tags (as in bench/tasks_ask/)
-<private>/reference/h001.rob     + h001.json: a hand-written solution and its bindings (feasible tasks)
-<private>/reference/h001.attempt.rob   the obvious attempt that fails (infeasible or inexpressible tasks)
-<private>/worlds/*.json          new worlds, not copies of bench/worlds/
-<private>/raw/                   the writers' original files, unedited
+RoboLang-heldout/
+├── README.md                 who has access; a link to these rules
+├── scenes/scene-a.md         the plain-English scene sent to the writers
+├── worlds/scene-a.json       world files, same format as bench/worlds/; new worlds, not copies
+├── raw/w1.xlsx               the writers' files exactly as received, never edited
+├── raw/dropped.md            requests dropped while labelling, and why
+├── tasks/h001.json           as in bench/tasks_ask/, plus "source": "human" and "writer": "w1"
+├── reference/h001.rob        + h001.json: a hand-written solution and its bindings (feasible tasks)
+├── reference/h002.attempt.rob   the obvious attempt that fails (infeasible or inexpressible tasks)
+├── synthetic/tasks/          optional model-written requests, scored separately (see below)
+├── synthetic/reference/
+├── results/2027-01-v2.0/     raw answers; they contain the requests, so they never leave this repository
+├── reports/2027-01-v2.0.md   totals only: the one thing copied to the public repo
+├── manifest.sha256           the freeze: fingerprints of tasks/, reference/ and worlds/
+└── PREREGISTRATION.md        the draft; the approved copy is committed in RoboLang's bench/heldout/
 ```
 
-Use neutral IDs (`h001`, `h002`, ...). File names appear in the manifest.
+- Use neutral task IDs (`h001`, `h002`, ...): file names appear in the public manifest.
+- Writers are `w1`, `w2`, ... in every file. Keep names and contact details out of the repository.
+- Publish only totals and failure categories, never request text or raw answers.
 
 ## Steps
 
@@ -47,8 +62,8 @@ Use neutral IDs (`h001`, `h002`, ...). File names appear in the manifest.
    including typos. Drop a request only if its meaning cannot be recovered, and record why in `raw/dropped.md`. A
    second person checks every label. Label by hand with `robolang validate` and `robolang simulate`, not with a
    model under test.
-5. **Freeze.** From the private folder, `find . -type f -not -path './raw/*' | sort | xargs sha256sum >
-   manifest.sha256`. Copy that file here. Write `PREREGISTRATION.md`: the targets (at least the plan's
+5. **Freeze.** In the private repository, `sha256sum tasks/* reference/* worlds/* > manifest.sha256`. Only these
+   three folders are frozen: `raw/`, `results/` and `reports/` keep changing. Copy the manifest here. Write `PREREGISTRATION.md`: the targets (at least the plan's
    "≥ 90% valid within two attempts" and 0 false programs), the models, the prompt hash, the number of tasks per
    group, and the date. The owner approves it. Commit both.
 6. **Run.** Only at milestones: the v2.0 sign-off, and after a major language or prompt change. At most once per
@@ -61,7 +76,7 @@ Requests written by a model (any provider) are not held out: they are tidy, they
 models like the one that wrote them. They are still useful for volume, for more infeasible and unclear cases, and
 for rehearsing the labelling. Keep them apart:
 
-- Store them in their own folder, never in the held-out `tasks/`, and give each task `"source": "synthetic-<provider>"`
+- Store them in `synthetic/`, never in the held-out `tasks/`, and give each task `"source": "synthetic-<provider>"`
   (for example `synthetic-openai`). Human tasks have `"source": "human"`.
 - Score and report them separately. They never count toward the 50 held-out tasks or toward the MC7 target.
 - Never show a model the human requests as examples when generating. If a model writes or rewrites a request, it is
