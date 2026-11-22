@@ -55,6 +55,20 @@ Use neutral IDs (`h001`, `h002`, ...). File names appear in the manifest.
    release. Record every run in `PREREGISTRATION.md`, including ones you would rather forget. Report every failure.
    Do not exclude any afterwards.
 
+## Synthetic requests are a different set
+
+Requests written by a model (any provider) are not held out: they are tidy, they share one style, and they favour
+models like the one that wrote them. They are still useful for volume, for more infeasible and unclear cases, and
+for rehearsing the labelling. Keep them apart:
+
+- Store them in their own folder, never in the held-out `tasks/`, and give each task `"source": "synthetic-<provider>"`
+  (for example `synthetic-openai`). Human tasks have `"source": "human"`.
+- Score and report them separately. They never count toward the 50 held-out tasks or toward the MC7 target.
+- Never show a model the human requests as examples when generating. If a model writes or rewrites a request, it is
+  synthetic, even if a person edited it afterwards.
+- A model may help build the worlds and scene descriptions. That does not make the requests written for them synthetic.
+- Synthetic sets need not be private. They can become a public bench set.
+
 ## Using the results without spoiling the set
 
 - Look at the totals and the failure categories (diagnostic codes, groups), not at individual requests while you
