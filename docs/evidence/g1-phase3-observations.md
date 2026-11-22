@@ -257,6 +257,89 @@ The contract is in the spec. What was chosen, and why:
 * **Phase 2's checks that expected `STEPS_COMPLETED` now expect `SUCCEEDED`**: E4 as the brief says, and E1, E2, E3 and E7
   for the same reason (their tasks have goals the observations now decide). Nothing else in them changed.
 
+## Shelf move convergence
+
+x86_64 CI (run 44930906182) failed phase 3 twice with S504 on `move` to the shelf: O3 `o3_e_pick_place_1` and O4 `no_place_step`, both
+step 3, which is the move **after the grasp, with the box in the right hand** (heading errors -0.03 to -0.14 and -0.07 to -0.45 rad
+around the 0.09 rad confirm limit). The verdicts were right; `move` did not converge. Everything below was measured on aarch64 with
+the oracle (the checks read it, the executor never does); scripts and raw data are in [`g1-phase3/`](g1-phase3/).
+
+**The stress check.** `python -m robolang_g1.phase2 --only move-stress [--carry] [--creep N] [--arrivals 20] --out X.json` starts one
+stand-in and sends `move` from the bench station to the shelf station and back: 20 arrivals at the shelf, 20 at the bench (21
+moves from the start pose), each judged by the oracle at the moment `move` returns (no failure, within 5 cm and 0.1 rad). `--carry`
+grasps the box first, so every move has it in the hand: the CI's case. Before = the commit this branch started from (a worktree;
+only the check was added to it); after = the final code. Times are simulation seconds per `move`.
+
+| | arrivals | pass | time per move: mean / median / p90 / max | oracle error: cm mean / max | rad mean / p90 / max |
+|---|---|---|---|---|---|
+| empty hands, shelf, before | 20 | 20/20 | 69 / 58 / 118 / 164 s | 1.9 / 3.8 | 0.032 / 0.072 / 0.093 |
+| empty hands, shelf, **after** | 20 | **20/20** | **60 / 61 / 72 / 75 s** | 2.5 / 3.9 | **0.019 / 0.051 / 0.059** |
+| empty hands, bench, before | 20 | 20/20 | 74 / 63 / 129 / 158 s | 1.9 / 3.5 | 0.050 / 0.091 / 0.093 |
+| empty hands, bench, **after** | 20 | **20/20** | **57 / 56 / 73 / 74 s** | 2.4 / 3.7 | **0.019 / 0.037 / 0.045** |
+| box in hand, shelf, before | 20 | 20/20 | 86 / 82 / 140 / 140 s | 2.6 / 4.2 | 0.054 / 0.091 / 0.096 |
+| box in hand, shelf, **after** | 20 | **20/20** | **70 / 68 / 101 / 106 s** | 2.3 / 4.1 | **0.025 / 0.052 / 0.053** |
+| box in hand, bench, before | 20 | **19/20** (S504 after 209 s, 9.2 cm) | 90 / 74 / 185 / 209 s | 3.1 / 9.2 | 0.058 / 0.083 / 0.086 |
+| box in hand, bench, **after** | 20 | **20/20** | **64 / 59 / 80 / 87 s** | 2.4 / 3.9 | **0.030 / 0.071 / 0.078** |
+
+Arrivals with the oracle's heading above 0.07 rad: before 9 of 40 (empty) and 12 of 40 (loaded), 3 and 8 of them above 0.08; after 0 and
+2, none above 0.08. Moves over 100 s: before 6 and 10 of 40, after 0 and 2. The one failure before is the CI's, reproduced: a loaded
+robot at the bench, S504 after 209 s, last looks `[0.059, -0.045, -0.152], [-0.047, -0.044, -0.109], [0.042, -0.086, -0.184], [-0.011,
+-0.031, -0.147], ...`, forward errors of +-0.05 to -0.12 alternating with a heading around -0.1 (the CI's `[-0.105, ...], [-0.122, ...]`).
+Phase 2's E1 tour and the phase 3 runs below are the other evidence; the full-suite numbers are at the end of this section.
+
+**Why the heading oscillated** (measured, in this order of weight):
+
+1. **The servo stopped at the confirm limit, and the stance's heading creeps.** `SERVO_TOL_RAD` was 0.09, the confirm limit 0.09. A standing
+   G1 in the free stance turns to the left by itself: 0.0059 rad/s with empty hands (rest trials of 20 s: +0.0056, +0.0090, +0.0031),
+   0.0083 loaded (+0.0095, +0.0068, +0.0087); two looks with nothing commanded between them show 0.006-0.009 rad/s (61 pairs empty, 79
+   loaded). From the last servo look to the confirming look there are 2.5-6 s of settle and frames: 0.015-0.05 rad. A servo that stops
+   anywhere inside the band is confirmed outside it often; the oracle saw 0.093 and 0.096 rad at arrival, against a limit of 0.1.
+2. **A burst does not do what the servo thought it did, and it does it to every axis.** Measured from a robot standing still
+   ([`exp_move_response.py`](g1-phase3/exp_move_response.py): 48 corrections, three repeats, empty and loaded) and then from the 1,150
+   corrections the servo itself sent (oracle pose before the command and at the next look): a lone shuffle burst, which `turn_by` used for
+   0.1-0.2 rad, also moves the robot 0.09-0.16 m sideways; the yaw rate of 0.2 rad/s the old servo added to every sideways burst "to
+   help the heading" turns the robot 0.02-0.04 rad in 0.5 s, 0.07 in 0.8 s and 0.11-0.12 in 1.2 s, as much as the error it was
+   meant to cancel, and the other way at the next burst (the overshoot); a 0.2 s step back takes a step half the time (81 uses: mean
+   -0.033 m, spread 0.030; phase 2's table said 0.07-0.11 m); a yaw rate on a forward burst turns -0.08 rad at -0.2 and only +0.02 at +0.2;
+   and a heading error under 0.11 rad was "corrected" by a forward burst of 0.1 m whose yaw rate does little (the CI's forward errors of
+   -0.10 to -0.12 between looks). A step to the left with a turn to the right moves an empty robot 0.16 m and a loaded one 0.00 m: **the
+   loaded robot's responses differ from the empty one's by up to 0.16 m.** Every position fix cost a heading error and every heading fix a
+   position error.
+3. **It is not the marker.** Belief against oracle at the looks that localized (n = 953): 0.7-2.0 cm and 0.003-0.007 rad mean, at 0-0.8,
+   0.8-1.5, 1.5-2.2 and 2.2-3.0 m alike (largest 3.4 cm, 0.015 rad). The shelf's viewing angle is not worse than the bench's.
+4. **The shelf is worse because it arrives worse, not because it is read worse.** At the first look within 0.9 m the robot's heading was
+   off by 0.16 rad (empty) and 0.27 rad (loaded) at the shelf, 0.06 and 0.12 at the bench (a long diagonal walk with the heading
+   creeping all the way), and 0.16-0.21 m off the station's axis on average, up to 0.4 m, either side: a table hides the marker from a
+   robot about 0.1 m to the right of the axis (phase 3 findings), and a loaded robot's sidestep toward it often takes no step. The
+   S517 in 47 s below was one such case.
+
+**What changed** (all in [`ops.py`](../../backends/unitree_g1/robolang_g1/ops.py) and the new [`response.py`](../../backends/unitree_g1/robolang_g1/response.py)):
+
+* `move`'s last centimetres are a servo on a **measured response table** (35 corrections empty, 34 loaded: bursts and pairs of bursts,
+  what each did to the pose in forward, left and heading, from the lab trials and the servo's own corrections;
+  [`build_response_table.py`](g1-phase3/build_response_table.py) rebuilds `response.py`). A correction that does not do the same twice
+  (spread above 2.5 cm forward, 3 cm sideways or 0.04 rad) is not in it. `plan_correction` picks the first of two corrections that leave
+  the smallest error where the pose will be confirmed, position and heading together, so a sideways error is cancelled by a burst
+  whose turn is wanted too, and a turn that must go nowhere is a pair of bursts, one each way.
+* **The heading is aimed against its creep**: the servo stops inside 0.035 m and **0.05 rad** (was 0.09), the heading counted as it will be
+  at the confirming look; the creep starts at 0.007 rad/s and is re-estimated from what the heading does between looks.
+* **A correction that does not do here what the table says is believed less each time it is sent** (the table counts as four
+  observations): a loaded robot 4 cm to the left of the shelf's station sent two corrections that moved it 0.00 m, 40 times in 150 s (S504).
+  After four looks without a better error the servo goes on to the confirming look (**0.042 m and 0.07 rad, never more than the
+  confirm limits**), which still decides.
+* **A marker not seen is looked for again, not faced.** The old `reacquire` turned the robot to the believed bearing of the marker (0.25
+  rad off the station's heading) and the belief, now taken from the table after a correction, carries on; the search for the station's
+  marker no longer gives up (S517, "four approaches") because its own dead-reckoned sidesteps moved the belief 0.35 m.
+* The last walk to the station was sized at 0.30 m/s; a forward walk covers 0.35 m/s (fit over 85 walks, spread 1.2 cm), so every last
+  walk overshot by 0.1 m. Errors beyond 0.25 m or 0.3 rad are still walked and turned the old way.
+* **Unchanged**: `STATION_TOL_M/RAD` (the confirm: 0.042 m, 0.09 rad), the station tolerance (5 cm, 0.1 rad), `robot_at` and `observe.py`,
+  the confirming look, the 300 s and 150 s limits, and the rule that the executor never reads the oracle (`test_no_oracle.py` green).
+
+**What the stress found on the way** (each fixed, the final numbers are from the final code): the servo stuck for 150 s at 4 cm to the left
+of the shelf with a correction that moved a loaded robot 0.00 m (S504), `replan` abandoning the marker search after two blind sidesteps
+(S517 at 47 s, oracle 61 cm), and `IndexError` naming a repeated wait. A first version with every correction in the table and a servo band
+of 0.065 rad passed 20 of 20 empty but dithered 8-10 looks on small errors.
+
 ## Deviations
 
 1. **The observation motion is a deviation from 0046 U8** ("goal from observations; no motion for it"): "0046 U8 exception,

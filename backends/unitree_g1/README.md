@@ -17,6 +17,7 @@ python -m pytest -q backends/unitree_g1/tests
 MUJOCO_GL=egl python -m robolang_g1.harness --out harness.json    # P1-P6; exit 0 = go; takes about 2 minutes
 MUJOCO_GL=egl python -m robolang_g1.phase2 --out phase2.json      # E1-E7; exit 0 = all pass; about half an hour
 MUJOCO_GL=egl python -m robolang_g1.phase3 --out phase3.json      # O1-O7; verdicts against the oracle; about half an hour
+MUJOCO_GL=egl python -m robolang_g1.phase2 --only move-stress --out stress.json   # 20 shelf arrivals; add --carry for the box in hand; about an hour
 ```
 
 Run a task (the stand-in starts for it; `python -m robolang_g1.cli` runs one against a stand-in that is already up):
@@ -49,6 +50,7 @@ if you do not activate it. It needs `git`, `cmake`, a C compiler and `python3-de
 | `robolang_g1/site.py` | the site file, `robolang-g1-site/2` (`/1` still loads) |
 | `robolang_g1/kinematics.py`, `perception.py` | the robot's own kinematic model, damped-least-squares IK; ArUco poses in the pelvis frame |
 | `robolang_g1/ops.py`, `executor.py`, `cli.py` | what is done to the robot (and the observation snapshots); the run, the stop, the verdicts and the record; the command line |
+| `robolang_g1/response.py` | what each burst of velocity command does to a standing robot (measured, empty and loaded) and `plan_correction`, which `move`'s last centimetres use (pure: no DDS, no ground truth) |
 | `robolang_g1/observe.py` | verdicts from observations: `object_at`, `holding`, `robot_at`, `robot_ready`, three-valued logic, `@verify`, the Core outcome (pure: no DDS, no ground truth) |
 | `robolang_g1/phase2.py`, `phase3.py`, `run_task.py` | checks E1-E7 and O1-O7 (they read the oracle; the executor never does); start a stand-in and run one task |
 | `robolang_g1/sites/` | `phase1.json` (the harness's, `/1`), `pick_place.json`, `carry_hold.json` and `part_precheck.json` (for `bench/reference/e_pick_place.rob`, `w_carry_hold.rob` and `w_part_precheck.rob`) |
