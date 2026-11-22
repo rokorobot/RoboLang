@@ -25,6 +25,7 @@ EXECUTOR_MODULES = [
     "guard.py",
     "observe.py",
     "response.py",
+    "heading.py",
 ]
 FORBIDDEN = re.compile(
     r"oracle|SportModeState|sportmodestate|\bstandin\b|\.sim\.standin|rt/lowcmd|LowCmd_\b.*lowcmd|"

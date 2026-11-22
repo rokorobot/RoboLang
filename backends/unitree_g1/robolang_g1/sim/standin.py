@@ -62,6 +62,7 @@ from .. import INTERFACE
 from .. import SIM_API_VERSION
 from .. import SIM_SERVICE, assets
 from . import scene
+from .imu import Imu
 from .policy import STEP_DT, WholeBodyPolicy
 from .scene import HAND_ACT, HAND_BODY, N_BODY
 from .stance import STANCES, Body, make_stance
@@ -120,8 +121,10 @@ class Timing:
 class Simulator:
     """MuJoCo, the policy, a stance, the arm blend, the hands, the camera thread and the oracle. No DDS in here."""
 
-    def __init__(self, site, stance: str = "free", run_dir=None, oracle=None, camera: bool = True):
+    def __init__(self, site, stance: str = "free", run_dir=None, oracle=None, camera: bool = True,
+                 imu_seed: int | None = None, imu_bias: float | None = None, imu_ideal: bool = False):
         self.model, self.robot, self.site = scene.build(site)
+        self.imu = Imu(imu_seed, imu_bias, imu_ideal)  # what `rt/lowstate` carries as the IMU (sim/imu.py)
         self.data = mujoco.MjData(self.model)
         m, d, r = self.model, self.data, self.robot
         pol_dir = assets.asset(*assets.POLICY_DIR)
@@ -380,6 +383,7 @@ class Simulator:
             "markers": {name: {"id": mid, "size": size, "pos": np.round(d.geom_xpos[g], 5).tolist()}
                         for name, (g, mid, size) in self._markers.items()},
             "attached": dict(self.attached),
+            "imu": self.imu.truth(),
             "hands": {side: np.round(d.qpos[r.hand_qadr[side]], 4).tolist() for side in ("left", "right")},
             "wrists": {side: np.round(d.xpos[self.model.body(HAND_BODY[side]).id], 4).tolist()
                        for side in ("left", "right")},
@@ -609,10 +613,11 @@ class Bridge:
             ms = low.motor_state[i]
             ms.mode, ms.q, ms.dq, ms.tau_est = 1, float(q[i]), float(dq[i]), float(tau[i])
         imu = low.imu_state
-        quat = d.sensordata[r.imu_quat:r.imu_quat + 4]
+        quat, gyro, acc = sim.imu.read(sim.sim_time, d.sensordata[r.imu_quat:r.imu_quat + 4],
+                                       d.sensordata[r.imu_gyro:r.imu_gyro + 3], d.sensordata[r.imu_acc:r.imu_acc + 3])
         imu.quaternion[:] = quat
-        imu.gyroscope[:] = d.sensordata[r.imu_gyro:r.imu_gyro + 3]
-        imu.accelerometer[:] = d.sensordata[r.imu_acc:r.imu_acc + 3]
+        imu.gyroscope[:] = gyro
+        imu.accelerometer[:] = acc
         w, x, y, z = quat
         imu.rpy[:] = [np.arctan2(2 * (w * x + y * z), 1 - 2 * (x * x + y * y)),
                       np.arcsin(np.clip(2 * (w * y - z * x), -1, 1)),
@@ -734,6 +739,11 @@ def main(argv=None) -> int:
     parser.add_argument("--stance", default="free", choices=sorted(STANCES),
                         help="what the robot does when it stands still: free (the policy alone) or "
                              "supported (the torso welded to a mocap body; the approved fallback)")
+    parser.add_argument("--imu-seed", type=int, help="the seed of the IMU's bias and noise (default: random, printed)")
+    parser.add_argument("--imu-bias", type=float,
+                        help="the gyro's z bias in rad/s, instead of the drawn one (a worst case for the stress check)")
+    parser.add_argument("--ideal-imu", action="store_true",
+                        help="measurement only: publish MuJoCo's exact IMU (no bias, no noise, no yaw drift)")
     parser.add_argument("--no-gc-freeze", action="store_true",
                         help="measurement only: leave the garbage collector as it is (to compare step_compute_ms)")
     parser.add_argument("--test-hooks", action="store_true",
@@ -742,7 +752,8 @@ def main(argv=None) -> int:
 
     from unitree_sdk2py.core.channel import ChannelFactoryInitialize
 
-    sim = Simulator(args.site, stance=args.stance, run_dir=args.run_dir, oracle=args.oracle)
+    sim = Simulator(args.site, stance=args.stance, run_dir=args.run_dir, oracle=args.oracle, imu_seed=args.imu_seed,
+                    imu_bias=args.imu_bias, imu_ideal=args.ideal_imu)
     sim.watch_gc()
     ChannelFactoryInitialize(DOMAIN, INTERFACE)  # domain 1 and loopback are not options
     bridge = Bridge(sim)
@@ -757,7 +768,8 @@ def main(argv=None) -> int:
     if not args.no_gc_freeze:
         sim.freeze_gc()
     print(json.dumps({"ready": True, "pid": os.getpid(), "domain": DOMAIN, "interface": INTERFACE,
-                      "stance_model": sim.stance.name, "run_dir": str(args.run_dir), "versions": assets.versions()}),
+                      "stance_model": sim.stance.name, "run_dir": str(args.run_dir), "imu": sim.imu.truth(),
+                      "versions": assets.versions()}),
           flush=True)
     try:
         sim.run(stop)

@@ -23,6 +23,7 @@ import numpy as np
 from . import assets, guard
 from . import site as site_mod
 from .executor import STOP_CODES, STOP_MESSAGES, BackendFailure, Stop
+from .heading import HeadingTracker, yaw_of
 from .kinematics import ARM_JOINTS, WAIST_PITCH, Clearance, Kinematics
 from .observe import HAND_CLOSED, HELD_RADIUS_M, READY_LOWSTATE_AGE_S, Hand, Ready, Snapshot
 from .observe import hand_state
@@ -70,7 +71,8 @@ WALK_SPEED = 0.5
 WALK_GAIN, BACK_GAIN, SIDE_GAIN, YAW_GAIN = 0.95, 0.9, 0.64, 0.7  # travel (coast included) per unit commanded, measured
 SHUFFLE_S = 1.2  # one burst of the turn-in-place shuffle ...
 SHUFFLE_BACK_M = 0.035  # ... and drifts this far backward (measured: 0.03-0.04 m a burst), which the belief must carry
-SHUFFLE_RAD = {1: 0.127, -1: 0.111}  # ... turns this much to the left (+) and to the right (-): measured
+SHUFFLE_RAD = {1: 0.127, -1: 0.111}  # ... turns this much to the left (+) and to the right (-): measured (the plan's
+# aim; the belief's heading comes from the IMU, heading.py)
 LEG_MAX_M = 1.6  # the longest walk between two looks
 SCAN_STEP_RAD = 0.6  # a scan for a marker turns this much between looks
 SIDESTEPS, SIDESTEP_M = 3, 0.2  # ... after this many sidesteps of about this much toward the marker's side
@@ -159,11 +161,19 @@ def _minjerk(a: float) -> float:
 class G1Operations:
     """The operations of the executor. `guard()` must run first: it creates the DDS participant and the clients."""
 
+    tracker: HeadingTracker | None = None  # the belief heading (made in guard(), once there is an IMU to read)
+    robot: Robot | None = None
+
     def __init__(self, site: dict, stop: Stop | None = None, head_dir: str | None = None):
         self.site, self.stop, self.head_dir = site, stop, head_dir
         self.stations = {s["name"]: s for s in site["stations"]}
         self.by_marker = {s["marker"]["id"]: s for s in site["stations"]}
-        self.pose = list(site["robot"]["start"])  # the belief: pelvis (x, y, yaw) in the map
+        start = site["robot"]["start"]
+        # The belief: pelvis (x, y, yaw) in the map (the `pose` property). Position is dead-reckoned from the commands
+        # and put right by a station marker; the heading is the last marker fix's plus the IMU's change in yaw since
+        # (heading.py), the dead reckoning of the commanded yaw rates having been 0.4 rad out under heading creep.
+        self._xy = [float(start[0]), float(start[1])]
+        self._heading0 = float(start[2])
         self.station: str | None = None  # the station the robot last arrived at
         self.held: dict | None = None  # {"object", "hand"} while an object is welded to a hand
         self.events: list[dict] = []  # what the current step did, for its record
@@ -197,6 +207,7 @@ class G1Operations:
             raise BackendFailure("S501", "the robot reports no head camera frame source and none was given")
         self.robot = Robot()
         self.robot.wait_state()
+        self.tracker = HeadingTracker(self._heading0, yaw_of(self.robot.last.quat), self.robot.last.tick)
         self.kin = Kinematics(self.site["camera"])
         self.clr = Clearance(self.site["camera"], n_boxes=len(site_mod.declared_boxes(self.site)))
         self.perc = Perception(self.robot, self.kin, self.site, head)
@@ -213,6 +224,42 @@ class G1Operations:
     def status(self) -> dict | None:
         code, status = self.sim.Status()
         return status if code == 0 else None
+
+    # ------------------------------------------------------------------------------------------ belief
+
+    @property
+    def pose(self) -> list[float]:
+        """The belief pose of the pelvis in the map, [x, y, yaw]: the heading is read from the IMU now (heading.py)."""
+        return [self._xy[0], self._xy[1], self._heading()]
+
+    @pose.setter
+    def pose(self, value) -> None:
+        """Set the belief outright (a pose given, not seen: the heading is true from now on, nothing is learned)."""
+        self._xy = [float(value[0]), float(value[1])]
+        self._heading0 = float(value[2])
+        last = getattr(self.robot, "last", None)
+        if self.tracker is not None and last is not None:
+            self.tracker.reset(self._heading0, yaw_of(last.quat), last.tick)
+
+    def _heading(self) -> float:
+        last = getattr(self.robot, "last", None)
+        if self.tracker is None or last is None:
+            return self._heading0
+        return self.tracker.heading(yaw_of(last.quat), last.tick)
+
+    def _heading_at(self, tick_ms: int) -> float | None:
+        """The belief heading at the lowstate sample nearest to simulation time `tick_ms`, or None if there is none."""
+        sample = self.robot.sample_at(tick_ms) if self.robot is not None and self.tracker is not None else None
+        return None if sample is None else self.tracker.heading(yaw_of(sample.quat), sample.tick)
+
+    def _fix_pose(self, new, stamp_ms: int) -> float:
+        """A station marker gave the pose `new` at simulation time `stamp_ms`: the position and the heading are right as
+        of then, and the IMU carries the heading on from there. Returns how far the fix moved the heading."""
+        self._xy = [float(new[0]), float(new[1])]
+        sample = self.robot.sample_at(stamp_ms)
+        if sample is None:
+            sample = self.robot.last
+        return self.tracker.fix(float(new[2]), yaw_of(sample.quat), sample.tick)
 
     # ------------------------------------------------------------------------------------------ checks
 
@@ -303,16 +350,18 @@ class G1Operations:
                     }
                 )
             else:
+                before = [round(float(v), 3) for v in self.pose]
+                jump = self._fix_pose(new, reading.stamp_ms)
                 self.events.append(
                     {
                         "t_ms": self.now_ms(),
                         "event": "localized",
                         "marker": mid,
-                        "from": [round(float(v), 3) for v in self.pose],
+                        "from": before,
                         "to": [round(v, 3) for v in new],
+                        "heading_jump_rad": round(jump, 4),
                     }
                 )
-                self.pose = list(new)
                 self.fix = (self.now_ms(), float(new[2]))
                 self.last_look = (self.now_ms(), True)
         return readings
@@ -462,38 +511,54 @@ class G1Operations:
 
     # ------------------------------------------------------------------------------------------ walking
 
-    def _dead_reckon(self, vx: float, vy: float, wz: float, seconds: float, shuffle: bool = False) -> None:
-        """Advance the belief by what a command should do (measured gains: the policy ramps up, coasts, and sidesteps at
-        about 0.64 of what is asked). A shuffle turns by its measured step and goes nowhere."""
-        x, y, yaw = self.pose
+    def _dead_reckon(
+        self, vx: float, vy: float, wz: float, seconds: float, shuffle: bool, t0_ms: int, t1_ms: int
+    ) -> None:
+        """Advance the belief's *position* by what a command should have done (measured gains: the policy ramps up,
+        coasts, and sidesteps at about 0.64 of what is asked; a shuffle goes nowhere but a little backward). The heading
+        is not dead-reckoned: it is the IMU's (`pose`), and the displacement is taken along the heading the robot had
+        while the command ran (the mean over [t0, t1] of the IMU's), not the one it had when the command was sent: a
+        walk that turns as it goes curves."""
+        yaw = self._mean_heading(t0_ms, t1_ms)
         if shuffle:
             back = SHUFFLE_BACK_M * seconds / SHUFFLE_S
-            self.pose = [
-                x - back * math.cos(yaw),
-                y - back * math.sin(yaw),
-                site_mod.wrap(yaw + SHUFFLE_RAD[1 if wz > 0 else -1] * np.sign(wz) * seconds / SHUFFLE_S),
-            ]
-            return
-        forward = (WALK_GAIN if vx > 0 else BACK_GAIN) * vx * seconds
-        left = SIDE_GAIN * vy * seconds
-        self.pose = [
+            forward, left = -back, 0.0
+        else:
+            forward = (WALK_GAIN if vx > 0 else BACK_GAIN) * vx * seconds
+            left = SIDE_GAIN * vy * seconds
+        x, y = self._xy
+        self._xy = [
             x + forward * math.cos(yaw) - left * math.sin(yaw),
             y + forward * math.sin(yaw) + left * math.cos(yaw),
-            site_mod.wrap(yaw + YAW_GAIN * wz * seconds),
         ]
+
+    def _mean_heading(self, t0_ms: int, t1_ms: int) -> float:
+        """The belief heading averaged over simulation time [t0, t1] from the lowstate samples in it (the heading now if
+        there are none)."""
+        h_now = self._heading()
+        if self.tracker is None or self.robot is None:
+            return h_now
+        samples = [x for x in self.robot.samples_since(t0_ms) if x.tick <= t1_ms][::10]
+        if not samples:
+            return h_now
+        rel = [site_mod.wrap(self.tracker.heading(yaw_of(x.quat), x.tick) - h_now) for x in samples]
+        return site_mod.wrap(h_now + sum(rel) / len(rel))
 
     def command(
         self, vx: float, vy: float, wz: float, seconds: float, wait: bool = True, shuffle: bool = False
     ) -> None:
         """One SetVelocity, the belief advanced by what it should do, and (unless `wait` is False) the wait for it."""
         self.check()
+        t0 = self.now_ms()
         code = self.robot.set_velocity(vx, vy, wz, seconds)
         if code != 0:
             raise BackendFailure("S503", f"SetVelocity({vx:.2f}, {vy:.2f}, {wz:.2f}, {seconds:.2f}) returned {code}")
-        self._dead_reckon(vx, vy, wz, seconds, shuffle)
         self.moved_ms = self.now_ms() + int(seconds * 1000)
-        if wait:
-            self.sleep(seconds)
+        try:
+            if wait:
+                self.sleep(seconds)
+        finally:
+            self._dead_reckon(vx, vy, wz, seconds, shuffle, t0, self.now_ms())
 
     def turn_by(self, angle: float) -> None:
         """Turn in place by `angle` rad (+ left) from the belief heading. See `turn_to`."""
@@ -577,6 +642,7 @@ class G1Operations:
         result = self._servo(station, marker, deadline)
         self.station = station_name
         result["events"] = self.events
+        result["heading"] = self.tracker.summary()  # what the IMU's heading got wrong between fixes, as the fixes saw
         return result
 
     def _find_marker(self, station: dict, deadline_ms: int, scan_end_ms: int, approach: tuple):
@@ -735,12 +801,11 @@ class G1Operations:
     def _expect(self, pose_before: list, correction) -> None:
         """The belief after a correction, from what the table says it does (the commands' own dead reckoning uses gains
         that are right on average for a walk, and far off for a step to the side with a turn)."""
-        forward, left, heading = expected(correction, self.held is not None, self.seen)
+        forward, left, _ = expected(correction, self.held is not None, self.seen)  # (the heading is the IMU's)
         x, y, yaw = pose_before
-        self.pose = [
+        self._xy = [
             x + forward * math.cos(yaw) - left * math.sin(yaw),
             y + forward * math.sin(yaw) + left * math.cos(yaw),
-            site_mod.wrap(yaw + heading),
         ]
 
     def _coarse(self, error: tuple) -> None:

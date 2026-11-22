@@ -118,8 +118,10 @@ def test_the_belief_after_a_correction_is_what_the_table_says_it_does():
     ops = _ops()
     correction = ((0.1, -0.3, 0.2, 0.8),)
     forward, left, turned = expected(correction)
+    ops.pose = [0.0, 0.0, 0.31]
     ops._expect([1.0, 2.0, math.pi / 2], correction)  # facing +y: forward is +y, left is -x
-    assert ops.pose == pytest.approx([1.0 - left, 2.0 + forward, math.pi / 2 + turned])
+    assert turned != 0  # ... and the table's heading is not the belief's: that is the IMU's (heading.py)
+    assert ops.pose == pytest.approx([1.0 - left, 2.0 + forward, 0.31])
 
 
 def test_the_creep_is_learned_from_a_correction_that_turned_the_robot_little_and_not_from_one_that_turned_it_a_lot():
