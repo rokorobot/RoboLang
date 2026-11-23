@@ -369,6 +369,19 @@ shelf moves 90 and 79 s; one run, `o3_w_carry_hold_1`, had 2 stalls and is not r
 `python -m ruff check .` clean. The stress runs above are real-time valid except the loaded run after (2 stalls, worst second at 0.16 of
 real time, a host slowdown): its arrival counts and errors do not depend on it, its times are if anything pessimistic.
 
+## Shelf station moved back 5 cm (PR #181, 2026-11-23)
+
+x86 CI on the phase 4 prerequisites failed two phase 3 runs at the shelf:
+- `o3_w_part_precheck_2`: S502, the place path's hand 1.3 cm inside the clearance margin of `shelf_table`;
+- `o4_no_place`: S302 instead of S301, because the lift-to-view was refused when the held object was 0.4 cm inside the margin.
+
+In both runs the robot had stopped 1.3–1.8 cm forward and 2.8–4.1 cm sideways of the station pose (oracle). That is
+inside the 5 cm station tolerance, so the site, not the executor, was wrong: with the station 23 cm from the shelf's front
+edge, a stop inside the tolerance could leave the arm without its 3 cm margin. Fix: the shelf station's `stand` moves
+from 1.30 to 1.35 m from its marker in both sites (`pick_place.json`, `part_precheck.json`). The location regions are in
+the marker's frame and do not move, and no margin or tolerance changed. Locally (aarch64), `phase3 --only O3,O4`: all 6
+O3 runs `SUCCEEDED` (both `w_part_precheck` runs included), `no_place_step` S301, and O6 and O7 pass.
+
 ## Deviations
 
 1. **The observation motion is a deviation from 0046 U8** ("goal from observations; no motion for it"): "0046 U8 exception,
