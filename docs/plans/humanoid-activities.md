@@ -26,10 +26,10 @@ headed, and what a near design must not rule out. It never gives syntax by itsel
 |---|---|---|---|---|---|---|
 | 1 | action | 4.52 | 0.00 | 1.01 | 21 | — |
 | 2 | perception | 2.78 | 5.23 | 0.45 | 11 | G-CHOOSE |
-| 3 | cooperation | 1.07 | 1.00 | 1.81 | 13 | G-CONC |
-| 4 | communication | 0.95 | 0.00 | 0.52 | 6 | — |
+| 3 | cooperation | 1.21 | 1.00 | 2.01 | 14 | G-CONC |
+| 4 | communication | 1.09 | 0.00 | 0.72 | 7 | — |
 | 5 | learning | 0.75 | 0.65 | 0.70 | 6 | — |
-| 6 | reasoning | 0.68 | 1.55 | 0.88 | 7 | G-CALC |
+| 6 | reasoning | 0.68 | 1.83 | 0.88 | 7 | G-CALC |
 | 7 | autonomy | 0.67 | 1.50 | 0.38 | 4 | G-SELF |
 | 8 | safety | 0.49 | 1.95 | 0.74 | 5 | — |
 | 9 | prediction | 0.25 | 0.50 | 0.68 | 4 | — |
@@ -59,6 +59,7 @@ roadmap, funding, standard, demand, forecast.
 | `ACT-AGR-001` Greenhouse fruit harvesting | perception, action | pilot | 3-7y | 0.60 | G-CHOOSE, G-FORCE | [roadmap](https://www.freshplaza.com/europe/article/9842754/japanese-agri-tech-startup-puts-cherry-tomato-harvesting-robot-into-routine-production-use/) [funding](https://agfundernews.com/🎥-carbon-robotics-100m-revenue-new-machine-and-a-path-to-ipo) |
 | `ACT-AUTO-003` Self-diagnosis, safe degradation and service requests | autonomy, safety | research | 3-7y | 0.45 | G-SELF | [research](https://arxiv.org/abs/2602.01515) [roadmap](https://en.edaily.co.kr/news/eda202606185436/) |
 | `ACT-PRED-002` Checking a plan with a world model before acting | prediction, learning | research | 3-7y | 0.45 | G-PREDICT, G-CHOOSE | [research](https://arxiv.org/abs/2606.13672) |
+| `ACT-CARE-002` Answering a nurse call: the robot goes to the resident and reports back | communication, cooperation | concept | 1-3y | 0.40 | G-TRIGGER | [roadmap](https://roboticsandautomationnews.com/2026/10/05/japanese-nursing-home-operator-charm-care-invests-in-humanoid-company-donut-robotics/105545/) [funding](https://roboticsandautomationnews.com/2026/10/05/japanese-nursing-home-operator-charm-care-invests-in-humanoid-company-donut-robotics/105545/) [demand](https://www.thestar.com.my/aseanplus/aseanplus-news/2024/12/17/japan-to-actively-recruit-nurses-from-south-east-asia) |
 | `ACT-HOME-002` General household chores by a home humanoid | action, reasoning | demo | 3-7y | 0.40 | G-CHOOSE | [research](https://arxiv.org/abs/2604.15483) [forecast](https://humanoid.guide/goldman-raises-2035-humanoid-robot-forecast-to-6-5-million/) |
 | `ACT-HRC-002` Following ambiguous and corrective instructions during shared work | reasoning, cooperation | research | 3-7y | 0.40 | G-CHOOSE | [research](https://arxiv.org/abs/2602.14551) |
 | `ACT-HRC-003` Handing a stuck job to a remote operator and taking it back | cooperation, communication | concept | 3-7y | 0.40 | G-SELF | [roadmap](https://roadtovr.com/helper-robot-neo-vr-telepresence/) [roadmap](https://sacra.com/chat/h/93dc70de-7775-4bc2-b477-ce4cd741da03/) [research](https://arxiv.org/abs/2605.00416) |
@@ -83,6 +84,7 @@ before.
 
 | Date | Note | Added | Removed | Changed | Ranking |
 |---|---|---|---|---|---|
+| 2026-11-23 | Weekly A1/A2: new concept ACT-CARE-002 (nurse-call response in care homes, donut robotics/Charm Care); A1 found no maturity or horizon change | ACT-CARE-002 | — | — | 1. action 4.52 · 2. perception 2.78 · 3. cooperation 1.21 · 4. communication 1.09 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
 | 2026-11-18 | L6 of I6: G-PERCEIVE closed by RoboLang 2.2 measured kinds | — | — | — | 1. action 4.52 · 2. perception 2.78 · 3. cooperation 1.07 · 4. communication 0.95 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
 | 2026-11-18 | I6 L4: RoboLang 2.2 built and taught | — | — | — | 1. action 4.52 · 2. perception 2.78 · 3. cooperation 1.07 · 4. communication 0.95 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
 | 2026-11-18 | I6 L3: set 11 kinds pre-registered (24 tasks) | — | — | — | 1. action 4.52 · 2. perception 2.78 · 3. cooperation 1.07 · 4. communication 0.95 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
@@ -175,6 +177,7 @@ before.
 |---|---|---|---|---|---|---|
 | `ACT-MFG-002` Humanoid-to-tugger handoff of totes in a car plant | pilot | 1-3y | 0.65 | 0.45 | G-CONC, G-CHOOSE | [1](https://agilityrobotics.com/content/agility-robotics-announces-commercial-agreement-with-toyota-motor-manufacturing-canada) [2](https://www.therobotreport.com/bmw-group-deploys-figure-03-humanoid-after-tests-previous-version/) |
 | `ACT-MRC-002` Multi-vendor fleet interoperability | demo | 1-3y | 0.55 | 0.39 | G-CHOOSE, G-CONC | [1](https://www.therobotreport.com/new-iso-interoperability-standard-covers-collaboration-among-mobile-robots-from-multiple-vendors/) |
+| `ACT-CARE-002` Answering a nurse call: the robot goes to the resident and reports back | concept | 1-3y | 0.40 | 0.28 | G-TRIGGER | [1](https://roboticsandautomationnews.com/2026/10/05/japanese-nursing-home-operator-charm-care-invests-in-humanoid-company-donut-robotics/105545/) [2](https://www.thestar.com.my/aseanplus/aseanplus-news/2024/12/17/japan-to-actively-recruit-nurses-from-south-east-asia) |
 | `ACT-SAFE-001` Fence-free humanoid work beside people | demo | 3-7y | 0.65 | 0.26 | G-PROX, G-FORCE | [1](https://letsdatascience.com/news/agility-robotics-previews-cage-free-digit-v5-847ce6a1) [2](https://www.i-scoop.eu/iso-25785-1-explained-and-what-it-means-for-humanoid-robot-safety/) |
 | `ACT-HRC-002` Following ambiguous and corrective instructions during shared work | research | 3-7y | 0.40 | 0.16 | G-CHOOSE | [1](https://arxiv.org/abs/2602.14551) |
 | `ACT-HRC-003` Handing a stuck job to a remote operator and taking it back | concept | 3-7y | 0.40 | 0.16 | G-SELF | [1](https://roadtovr.com/helper-robot-neo-vr-telepresence/) [2](https://sacra.com/chat/h/93dc70de-7775-4bc2-b477-ce4cd741da03/) [3](https://arxiv.org/abs/2605.00416) |
@@ -198,6 +201,7 @@ before.
 | `ACT-HLTH-001` Hospital delivery and supply runs for nurses and pharmacy | deployment | now | 0.55 | 0.55 | — | [1](https://www.therobotreport.com/five-years-operation-shape-diligent-robotics-rollout-moxi-2-0/) |
 | `ACT-RET-001` Store shelf scanning and out-of-stock reporting | deployment | now | 0.55 | 0.55 | G-CHOOSE | [1](https://theshelbyreport.com/2026/09/21/simbe-surpasses-3000-units-in-shelf-intelligence-fleet/) |
 | `ACT-MRC-002` Multi-vendor fleet interoperability | demo | 1-3y | 0.55 | 0.39 | G-CHOOSE, G-CONC | [1](https://www.therobotreport.com/new-iso-interoperability-standard-covers-collaboration-among-mobile-robots-from-multiple-vendors/) |
+| `ACT-CARE-002` Answering a nurse call: the robot goes to the resident and reports back | concept | 1-3y | 0.40 | 0.28 | G-TRIGGER | [1](https://roboticsandautomationnews.com/2026/10/05/japanese-nursing-home-operator-charm-care-invests-in-humanoid-company-donut-robotics/105545/) [2](https://www.thestar.com.my/aseanplus/aseanplus-news/2024/12/17/japan-to-actively-recruit-nurses-from-south-east-asia) |
 | `ACT-HRC-003` Handing a stuck job to a remote operator and taking it back | concept | 3-7y | 0.40 | 0.16 | G-SELF | [1](https://roadtovr.com/helper-robot-neo-vr-telepresence/) [2](https://sacra.com/chat/h/93dc70de-7775-4bc2-b477-ce4cd741da03/) [3](https://arxiv.org/abs/2605.00416) |
 | `ACT-HRC-001` Task-oriented object handover to a person | research | 3-7y | 0.35 | 0.14 | G-CHOOSE | [1](https://arxiv.org/abs/2602.05760v1) |
 | `ACT-ELD-001` Companion robot in dementia and memory care | pilot | 3-7y | 0.30 | 0.12 | — | [1](https://health.ucdavis.edu/medical-center/news/headlines/uc-davis-launches-first-long-term-us-study-led-by-nurses-on-humanoid-robots-in-dementia-care/2026/05) |
@@ -238,11 +242,11 @@ before.
 | Language gap | Scope | Priority | Near | Benchmark tasks |
 |---|---|---|---|---|
 | `G-CALC` Arithmetic, counting and text built from values | open | 1.55 | yes | 11 |
+| `G-TRIGGER` Triggers on missions: every hour, at a time, on a message or an event, on the robot's own state | open | 0.28 | — | 11 |
 | `G-CLOCK` Clock readings and times of day | closed | 0.00 | — | 0 |
 | `G-DATE` Dates and times on another day: tomorrow, a weekday, a calendar date | open | 0.00 | — | 2 |
 | `G-FALLBACK` A different end state counts as done | out | 0.00 | — | 1 |
 | `G-LOOP` Repetition without a fixed bound: loops, retry until it works, schedules, event streams | closed | 0.00 | — | 0 |
-| `G-TRIGGER` Triggers on missions: every hour, at a time, on a message or an event, on the robot's own state | open | 0.00 | — | 11 |
 | `G-UNBOUNDED` Repetition with no bound (forever, until it works with no limit) and nested repetition | out | 0.00 | — | 8 |
 
 ## Autonomy
