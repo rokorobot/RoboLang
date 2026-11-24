@@ -210,6 +210,12 @@ def evaluate_record(task_def: dict, record: dict) -> dict:
         "speed_below", "expected_message_waits", "expected_comparisons", "expected_choices"))
     expect, expect_category = lib.expectation(task_def)
     decision = first["decision"] if first else None
+    also = (task_def.get("expect_2_3") or {}).get("program_also_ok")  # erratum Q11: a decline, or this program
+    if also and expect == "cannot" and decision == "program" and valid_after:
+        variant = {**task_def, "expect_2_3": {"decision": "program", "paths": also["paths"]}}
+        each = lib.judge(variant, final[1], final[0]["bindings"])
+        if each.goal_correct and each.plan_succeeds and lib.pre_pins(final[1], also["pinned"], final[0]["bindings"]):
+            expect, expect_category, judgement = "program", None, each
     decision_final = final[0]["decision"] if final[0] else None
     category_final = final[0]["category"] if final[0] else None
     return {

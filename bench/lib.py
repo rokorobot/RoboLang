@@ -1773,6 +1773,16 @@ def judge_mission_paths(task_def: dict, label: dict, checked: Checked, bindings:
     return results
 
 
+def pre_pins(checked: Checked, pinned: list[list[str]], bindings: dict[str, str]) -> bool:
+    """Erratum Q11: the task's `pre` states `object_at O L` for each pinned [object, location] (world IDs), so the
+    program fails closed when the set at L is not the one the world listed."""
+    if checked.task is None:
+        return False
+    stated = {(bindings.get(c.obj, c.obj), bindings.get(c.location, c.location))
+              for c in checked.task.preconditions if isinstance(c, task_ir.ObjectAt)}
+    return {tuple(p) for p in pinned} <= stated
+
+
 def judge_mission(task_def: dict, checked: Checked, bindings: dict[str, str]) -> Judgement:
     """
     A valid answer that is a mission (RoboLang 2.0). Run in the unpatched world, then once per path of the label.

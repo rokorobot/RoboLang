@@ -1,5 +1,5 @@
 {
-  "sha256": "eaabc67aaca5860ee3ac4cc890efc1e2fdd70ce7c4ea22a0a5f6c4589c22edc6",
+  "sha256": "30efb6f2c7d6a062f2a77b05a45337647a147641fd12b7d0e8430f58133496e3",
   "schema": "robolang.bench.freeze.v2",
   "patterns": [
     "bench/tasks*/*.json",
@@ -24,7 +24,7 @@
     "bench/cascade.py": "961f7de80e241fb16370ea880ddf154e24366aeebcdd902c942c6530e52112a3",
     "bench/gate.json": "eee14479043dc6fdd5cf504d92b3514138c903f20a79cea053939bdf1a1134d5",
     "bench/gate.py": "85461506edd726f72c14830a682846715415404971f6e464a49218e58466b2db",
-    "bench/lib.py": "d4a1e1f95a8b0e60b9e45129f2a1bcd0fe9f42fc51aed895ba1584c4110c945e",
+    "bench/lib.py": "f21e679cbb8bbd6c9a88ac739b8114c9047df6e6ff45575ad27a28283be08151",
     "bench/prompt.md": "c61eb59cf4ddef6ed7eb87f29826e4ef688bd4bdf373d9f2da41c810214546ea",
     "bench/prompt_minimal.md": "be380345435f7b45cf33a4b569db4e6949f30b77872dba3dd46671c3ac4b4132",
     "bench/reference/a_amr_ferry.json": "abec64c10f81cf7a91c2539fc38244cebba832903646ab1540fa52680a82a939",
@@ -1102,7 +1102,7 @@
     "bench/reference_values/x06_set_oven.rob": "3b5f35dbd05da573aadf0d9b40708f04c058f6bc1db4bb09660cec7edf014040",
     "bench/requirements.txt": "075e7806ef4ff0ea8ef041b1ce2b37d3515d70a444a29d1f65440fd9d8a9f35f",
     "bench/run.py": "c2bebfbb4047c5d3a31f6cc38f6bb5671f86827d27c10a0a08b7c104737d48f9",
-    "bench/score.py": "64c0280e62ecbd95fd23e3b67df24cdb6084c2e91919bf5d8855aee0fa3bc81f",
+    "bench/score.py": "8e91f03835265f6edcafbe8ab0d7b78ae44caeb36cb85cf418015243c0808020",
     "bench/tasks/a_amr_ferry.json": "f00c7b2ad1ac13f8b74372dc43e253ad6316d586d85a6552dc2d06b41e030664",
     "bench/tasks/a_arm_handover.json": "331fe4a6c5e963778a9f97390ff1b787c9415f345bebf7a08251e21058d1e999",
     "bench/tasks/a_inspect_hold.json": "fb50b5fc5fe8c40dde51442c29474c829cfea8db7e3e86ca63724f4c5b604768",
@@ -1304,7 +1304,7 @@
     "bench/tasks_choose/p10_dock_near_stop_c_around_the_wet_floor.json": "79d75c58aa508bea8ce443546f1a92b61b5bc0a829236be99c9b23b33154939a",
     "bench/tasks_choose/p11_parts_until_five.json": "d4d695c7b27762ce852da49927a942f4177322ae070797797b5a234b6db77c31",
     "bench/tasks_choose/x01_fullest_bin_on_the_row.json": "592316ca8f17fe350147895b81e1c478c4f7ade5712ac9cdc992dfccca340e4c",
-    "bench/tasks_choose/x02_every_pan_above_75.json": "4b635a86f5e5845fd6ee902797d2d25b0a4fdd606a51e97e44f6622280490e48",
+    "bench/tasks_choose/x02_every_pan_above_75.json": "c9dd0540a77c5b268f7b67503ed1bcf9bfcacd5a1858f0409bb400464bfd6727",
     "bench/tasks_choose/x03_carry_as_many_as_there_are_bins.json": "72e6a257aa73cb26ce025c4b021d4b13de9783224f741041ba161cd9d744d0c8",
     "bench/tasks_choose/x04_the_robot_nearest_the_caller.json": "b11ec7a2036aa7a0948aac36319f4ae46b6e5e34226b74ad2d612972e26399c3",
     "bench/tasks_choose/x05_an_object_the_list_does_not_know.json": "3fcb44ec2da35798354a6c83ee6fa864b9d98e9004e3ba1a570a74a4e875476f",

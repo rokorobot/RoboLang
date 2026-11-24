@@ -140,6 +140,13 @@ right. Rescored offline, Haiku's repeat 1 of the full prompt is now right. Repea
 `bench/worlds/choose_x02_every_pan_above_75.json` is `kitchen_values` with `pan_2` at the stove. With only `pan_1` there,
 one choice and one reading did "each pan" for that world, so the task did not test "each".
 
+## Erratum Q11 (2026-11-24, L5, approved by the owner): `x02` accepts a program that pins the listed pans
+
+In a closed world, a program that pins the listed pans in `pre` and reads and moves each one does what "each pan on the
+stove" means in that world, and fails closed otherwise. So `x02` accepts either a decline or such a program. The program
+is described in `expect_2_3.program_also_ok`: the pinned `[object, location]` pairs and three paths. `bench/score.py`
+scores it with `lib.pre_pins`. A program without the `pre` stays a false program.
+
 ## Freeze
 
 `docs/evidence/bench-freeze-v2.json` is regenerated for all of the above (the old manifest deleted, then
