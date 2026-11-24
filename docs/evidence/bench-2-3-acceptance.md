@@ -64,8 +64,38 @@ Bounds B1–B9 were approved before the run ([plan](../plans/bench-12-choose.md)
   - **Haiku meets B1** if it gets at least 3 more of its 6 misses right.
   - **Haiku meets B9** if it gets at most 1 criterion change.
 
+## Confirming run (2026-11-24, after Z1, Q9 and Q10)
+
+[Run 45502242195](https://github.com/rokorobot/RoboLang/actions/runs/45502242195) (full prompt: `p01`, `p06`, `p07`, `p11`,
+`c03`; $0.25) and [run 45502453258](https://github.com/rokorobot/RoboLang/actions/runs/45502453258) (grammar-only: `x02`;
+$0.07). The answers of these tasks replace those of the acceptance run, as in I4 (M1/M2). B6 is measured again on PR #172
+after Z1 changed the reference ([run 45502256641](https://github.com/rokorobot/RoboLang/actions/runs/45502256641)).
+
+| # | Bound | Sonnet | Haiku | Verdict |
+|---|---|---|---|---|
+| B1 | ≥ 30/33 | 33/33 | **32/33** (`p01` 3/3, `p06` 2/3, `p07` 3/3, `p11` 3/3) | met |
+| B3 | ≤ 1/15, grammar-only | 1/15 (`x02` now 0/3) | **3/15** (`x02` 3/3) | **Haiku missed** |
+| B5 | ≥ 11/12 | 12/12 | **11/12** (`c03` 2/3) | met |
+| B6 | the gate passes, at most one answer lost | gate passes; set 2 38/40 | gate passes; set 1 40 → 39/40 (`w_notify_fleet` declined) | met |
+| B9 | ≤ 1/33 | 0/33 | **1/33** (`p06` repeat 3) | met |
+
+**`x02` with two pans.** Haiku wrote the same program 3 times. It has `pre { object_at p1 stove; object_at p2 stove; }`, reads
+each of the two listed pans, and moves each one above 75 °C. That is the closed-world argument of erratum Q4 again:
+
+- the simulated world lists every object, so a program that pins the listed set in `pre` and reads each member does
+  what "each pan on the stove" means in that world;
+- if the set is not the listed one, the program fails closed.
+
+Sonnet declined 3/3. Under the label as frozen this is a false program, but it is a correct and safe program for the
+world shown. "Each of a set that is truly unknown" cannot be posed in a closed world, so `x02`, like `p05` before Q4,
+does not test what it was meant to.
+
+**Recommended erratum Q11 (owner):** `x02` accepts both answers: a decline (`inexpressible`, G-EACH), or a program that
+pins the listed set in `pre` and acts on each member as asked. With Q11, Haiku's B3 is 0/15 and every bound is met. The
+alternative is to accept 2.3 with B3 missed for Haiku on the grammar-only prompt, as a recorded exception.
+
 ## Verdict
 
 Pending the owner.
 
-**Paid cost of I7 so far:** baseline $1.32, acceptance $1.99, per-PR $0.39 (plus the cancelled run).
+**Paid cost of I7 so far:** baseline $1.32, acceptance $1.99, confirming $0.32, per-PR runs about $0.8 (plus one cancelled run).
