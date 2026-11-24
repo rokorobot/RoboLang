@@ -1,0 +1,18 @@
+// bench/reference_self/p05_patrol_until_the_battery_is_low.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 2.3;
+
+task round(robot r, location far, location home) {
+    goal { robot_at r home; }
+    plan {
+        move r to far;
+        wait for 10 min;
+        move r to home;
+    }
+}
+
+mission patrol(robot r, location far, location home) {
+    repeat at most 6 runs {
+        run round(r, far, home);
+    } until robot_charge r < 30 %;                                                                  // @charge => };
+    on failure { stop; }
+}

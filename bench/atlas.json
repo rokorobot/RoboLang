@@ -181,8 +181,11 @@
       "name": "Acting on a predicted future: a person's next move, the outcome of a plan, time to failure",
       "direction": "prediction",
       "scope": "open",
-      "scope_note": "from foresight pass 1, no benchmark task yet",
-      "tasks": []
+      "scope_note": "from foresight pass 1. Set 13 \"self\" (I8 L3, 2026-11-24) holds its first two tasks: time to empty and energy for a route stay out of 2.4 (decision 0048 S10; the simulation has no drain model, S4)",
+      "tasks": [
+        "x03_minutes_until_empty",
+        "x04_if_you_will_not_make_it_back"
+      ]
     },
     {
       "id": "G-TEACH",
@@ -198,15 +201,41 @@
       "id": "G-SELF",
       "name": "The robot's own state as readings and conditions: battery level, health, faults; acting on them and asking for service",
       "scope": "open",
-      "scope_note": "owner added the autonomy direction 2026-11-17, no benchmark task yet",
+      "scope_note": "Owner added the autonomy direction 2026-11-17. I8 (decision 0048, approved 2026-11-24): RoboLang 2.4 reads the robot's charge (`measure r charge as c;`, `robot_charge r` in `wait until`), in `%`, with scheduled charge events and no drain model. Set 13 \"self\" is pre-registered (L3, 2026-11-24); health beyond `robot_ready` and `sensor_ok` went to G-HEALTH (erratum R2 of 2.4)",
       "tasks": [
         "f_self_low_battery",
         "f_self_enough_for_route",
         "f_self_report_charge",
-        "x02_selftest_result",
-        "x02_own_battery_first"
+        "x02_own_battery_first",
+        "i01_spot3_has_no_charge_reading",
+        "i02_the_charge_never_gets_to_ninety",
+        "i03_the_carrier_cannot_charge",
+        "i04_nobody_has_seventy_percent",
+        "i05_spot2_cannot_swap_a_battery",
+        "p01_low_battery_then_dock",
+        "p02_enough_charge_for_the_round",
+        "p03_tell_the_lead_the_charge",
+        "p04_charge_until_eighty",
+        "p05_patrol_until_the_battery_is_low",
+        "p06_the_peer_with_enough_charge",
+        "p07_charge_the_other_robot_if_low",
+        "p08_dock_if_low_around_the_wet_floor",
+        "p09_wait_for_go_then_look_if_charged",
+        "p10_swap_then_check_ninety"
       ],
       "direction": "autonomy"
+    },
+    {
+      "id": "G-HEALTH",
+      "name": "The robot's own health beyond readiness and the battery: faults, self-test results, requests for service",
+      "direction": "autonomy",
+      "scope": "open",
+      "scope_note": "Far (decision 0048 S10, I8 L3, 2026-11-24): RoboLang 2.4 reads the robot's charge only. A self-test is a declared action that returns a value (0040 A10), and a list of faults has no kind. A decline is the right answer; a later decision may reuse `measure r KIND as ...` for other self-state kinds (0048 S11)",
+      "tasks": [
+        "x02_selftest_result",
+        "x01_run_your_self_test_and_report",
+        "x02_report_your_faults"
+      ]
     },
     {
       "id": "G-STEPLIMIT",
@@ -260,7 +289,8 @@
         "x02_each_time_the_line_says_ready",
         "x03_for_each_go_message",
         "f_trigger_rounds_every_hour",
-        "f_trigger_scan_every_two_hours"
+        "f_trigger_scan_every_two_hours",
+        "x05_every_time_it_drops_below_twenty"
       ]
     },
     {
@@ -3631,6 +3661,63 @@
     {
       "date": "2026-11-24",
       "note": "L6 of I7: G-CHOOSE closed by RoboLang 2.3 choices",
+      "activities": {
+        "ACT-LOG-001": "deployment now",
+        "ACT-LOG-002": "deployment now",
+        "ACT-MFG-001": "pilot 1-3y",
+        "ACT-MFG-002": "pilot 1-3y",
+        "ACT-RET-001": "deployment now",
+        "ACT-HOS-001": "deployment now",
+        "ACT-HLTH-001": "deployment now",
+        "ACT-ELD-001": "pilot 3-7y",
+        "ACT-HOME-001": "research 3-7y",
+        "ACT-HOME-002": "demo 3-7y",
+        "ACT-INSP-001": "demo now",
+        "ACT-INSP-002": "demo 1-3y",
+        "ACT-SEC-001": "demo 1-3y",
+        "ACT-SAFE-001": "demo 3-7y",
+        "ACT-CON-001": "deployment now",
+        "ACT-AGR-001": "pilot 3-7y",
+        "ACT-EV-001": "pilot 1-3y",
+        "ACT-CLN-001": "deployment now",
+        "ACT-MRC-001": "demo 3-7y",
+        "ACT-MRC-002": "demo 1-3y",
+        "ACT-HRC-001": "research 3-7y",
+        "ACT-HRC-002": "research 3-7y",
+        "ACT-ASM-001": "research 7y+",
+        "ACT-PRED-001": "research 3-7y",
+        "ACT-PRED-002": "research 3-7y",
+        "ACT-AUTO-001": "deployment now",
+        "ACT-AUTO-002": "demo 1-3y",
+        "ACT-AUTO-003": "research 3-7y",
+        "ACT-MFG-003": "demo 1-3y",
+        "ACT-AGR-002": "deployment now",
+        "ACT-SOL-001": "deployment now",
+        "ACT-PRED-003": "concept 3-7y",
+        "ACT-PRED-004": "concept 7y+",
+        "ACT-LRN-001": "concept 3-7y",
+        "ACT-LRN-002": "concept 3-7y",
+        "ACT-AUTO-004": "concept 3-7y",
+        "ACT-SAFE-002": "concept 3-7y",
+        "ACT-CARE-001": "concept 7y+",
+        "ACT-MFG-004": "demo 1-3y",
+        "ACT-HRC-003": "concept 3-7y"
+      },
+      "directions": {
+        "perception": 2.78,
+        "reasoning": 0.68,
+        "prediction": 0.25,
+        "action": 4.52,
+        "learning": 0.75,
+        "cooperation": 1.07,
+        "safety": 0.49,
+        "communication": 0.95,
+        "autonomy": 0.67
+      }
+    },
+    {
+      "date": "2026-11-24",
+      "note": "I8 L3: set 13 self pre-registered (24 tasks)",
       "activities": {
         "ACT-LOG-001": "deployment now",
         "ACT-LOG-002": "deployment now",

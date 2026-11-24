@@ -1,0 +1,9 @@
+{
+  "task": "go_by_charge",
+  "bindings": {
+    "r": "cleaner1",
+    "far": "stop_c",
+    "dock": "dock_1",
+    "wet": "wet_floor"
+  }
+}

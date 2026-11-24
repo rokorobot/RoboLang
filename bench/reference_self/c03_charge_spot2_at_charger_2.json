@@ -1,0 +1,7 @@
+{
+  "task": "charge_it",
+  "bindings": {
+    "r": "spot2",
+    "charger": "charger_2"
+  }
+}

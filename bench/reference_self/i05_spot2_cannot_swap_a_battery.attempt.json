@@ -1,0 +1,7 @@
+{
+  "task": "swap_and_check",
+  "bindings": {
+    "r": "spot2",
+    "bay": "swap_bay"
+  }
+}

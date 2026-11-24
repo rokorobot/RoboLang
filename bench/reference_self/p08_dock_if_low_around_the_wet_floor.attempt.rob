@@ -1,0 +1,15 @@
+// bench/reference_self/p08_dock_if_low_around_the_wet_floor.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 2.3;
+
+task go_by_charge(robot r, location far, location dock, region wet) {
+    @safety no_go_region wet;
+    goal { robot_at r far; }
+    plan {
+        measure r charge as c;                                                                      // @charge
+        if c < 40 % {                                                                               // @charge
+            move r to dock;                                                                         // @charge
+        } else {                                                                                    // @charge
+            move r to far;
+        }                                                                                           // @charge
+    }
+}

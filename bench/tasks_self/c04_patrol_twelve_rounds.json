@@ -1,0 +1,109 @@
+{
+  "id": "c04_patrol_twelve_rounds",
+  "prompt": "With spot1, patrol: drive to stop_b, wait 5 minutes there and drive back to stop_a, 12 rounds in all.",
+  "world": "bench/worlds/charge_hall.json",
+  "group": "control",
+  "expect": {
+    "decision": "program"
+  },
+  "expect_2_0": {
+    "decision": "program",
+    "expected_mission": {
+      "runs": [
+        {
+          "task": "round",
+          "entities": [
+            "spot1",
+            "stop_b",
+            "stop_a"
+          ],
+          "goal": [
+            [
+              "rl:robot:spot1",
+              "located_in",
+              "rl:place:stop_a"
+            ]
+          ]
+        }
+      ],
+      "repeat": {
+        "max_runs": 12,
+        "max_duration": null
+      },
+      "until": null,
+      "on_failure": "stop",
+      "policy_stated": false
+    },
+    "paths": [
+      {
+        "when": "12 rounds run",
+        "world_patch": {},
+        "outcome": "bounded",
+        "runs": 12,
+        "runs_verified": 12
+      }
+    ],
+    "mission_alternatives": [
+      {
+        "runs": [
+          {
+            "task": "out",
+            "entities": [
+              "spot1",
+              "stop_b"
+            ],
+            "goal": [
+              [
+                "rl:robot:spot1",
+                "located_in",
+                "rl:place:stop_b"
+              ]
+            ]
+          },
+          {
+            "task": "back",
+            "entities": [
+              "spot1",
+              "stop_a"
+            ],
+            "goal": [
+              [
+                "rl:robot:spot1",
+                "located_in",
+                "rl:place:stop_a"
+              ]
+            ]
+          }
+        ],
+        "repeat": {
+          "max_runs": 24,
+          "max_duration": null
+        },
+        "until": null,
+        "on_failure": "stop",
+        "policy_stated": false,
+        "paths": [
+          {
+            "when": "24 runs, 12 rounds in all",
+            "world_patch": {},
+            "outcome": "bounded",
+            "runs": 24,
+            "runs_verified": 24
+          }
+        ]
+      }
+    ]
+  },
+  "expect_2_3": {
+    "decision": "program"
+  },
+  "expect_2_4": {
+    "decision": "program"
+  },
+  "tags": [
+    "mission",
+    "count_bound",
+    "no_charge_reading",
+    "fixed_entities"
+  ]
+}

@@ -58,6 +58,8 @@ KINDS_REFERENCE_DIR = BENCH / "reference_kinds"
 # set 12: choosing at run time, pre-registered on 2.2, labelled for 2.3 (0045)
 CHOOSE_TASKS_DIR = BENCH / "tasks_choose"
 CHOOSE_REFERENCE_DIR = BENCH / "reference_choose"
+SELF_TASKS_DIR = BENCH / "tasks_self"  # set 13: the robot's own state, pre-registered on 2.3, labelled for 2.4 (0048)
+SELF_REFERENCE_DIR = BENCH / "reference_self"
 PROMPT_FILE = BENCH / "prompt.md"
 REFERENCE_FILE = ROOT / "docs" / "language-reference.md"
 MINIMAL_PROMPT_FILE = BENCH / "prompt_minimal.md"
@@ -86,7 +88,8 @@ SETS = {"1": (TASKS_DIR, REFERENCE_DIR), "hard": (HARD_TASKS_DIR, HARD_REFERENCE
         "missions": (MISSIONS_TASKS_DIR, MISSIONS_REFERENCE_DIR),
         "messages": (MESSAGES_TASKS_DIR, MESSAGES_REFERENCE_DIR),
         "kinds": (KINDS_TASKS_DIR, KINDS_REFERENCE_DIR),
-        "choose": (CHOOSE_TASKS_DIR, CHOOSE_REFERENCE_DIR)}
+        "choose": (CHOOSE_TASKS_DIR, CHOOSE_REFERENCE_DIR),
+        "self": (SELF_TASKS_DIR, SELF_REFERENCE_DIR)}
 PROMPTS = ("full", "minimal")
 
 # $ per million tokens: (input, output, cache read). A cache write (5 minutes) costs 1.25 x input.

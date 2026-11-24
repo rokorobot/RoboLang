@@ -1,0 +1,8 @@
+{
+  "task": "send_charged",
+  "bindings": {
+    "a": "spot2",
+    "b": "spot3",
+    "dest": "stop_c"
+  }
+}

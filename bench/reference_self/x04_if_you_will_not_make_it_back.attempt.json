@@ -1,0 +1,8 @@
+{
+  "task": "go_or_turn_back",
+  "bindings": {
+    "r": "spot1",
+    "far": "stop_c",
+    "home": "dock_1"
+  }
+}

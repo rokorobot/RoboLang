@@ -1,0 +1,15 @@
+// bench/reference_self/i05_spot2_cannot_swap_a_battery.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 2.3;
+
+task swap_and_check(robot r, location bay) {
+    goal { robot_at r bay; }
+    plan {
+        move r to bay;
+        do r swap_battery bay;                                                                      // @charge
+        wait for 2 min;                                                                             // @charge
+        measure r charge as c;                                                                      // @charge
+        if c < 90 % {                                                                               // @charge
+            fail "the new battery is not charged";                                                  // @charge
+        }                                                                                           // @charge
+    }
+}

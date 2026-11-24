@@ -1,0 +1,42 @@
+{
+  "id": "x03_minutes_until_empty",
+  "prompt": "With spot1, drive to dock_3 and tell channel \"lead\" how many minutes you can still run.",
+  "world": "bench/worlds/charge_hall.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_4": {
+    "decision": "cannot",
+    "category": "inexpressible",
+    "because": "0048 S10 (G-PREDICT: time to empty is a prediction; the simulation has no drain model, S4)",
+    "world_2_4": {
+      "robots": {
+        "spot1": {
+          "charge": {
+            "value": "64",
+            "unit": "%",
+            "uncertainty": "1"
+          }
+        },
+        "spot2": {
+          "charge": {
+            "value": "55",
+            "unit": "%",
+            "uncertainty": "1"
+          }
+        }
+      },
+      "charge_events": []
+    }
+  },
+  "gap": "G-PREDICT",
+  "tags": [
+    "prediction",
+    "time_to_empty",
+    "report"
+  ],
+  "why": "Time to empty (0048 S10, G-PREDICT): there is no drain model (S4), so a number of minutes cannot be computed; reporting the charge in % is the silent replacement. Under 2.3 the attempt fails at the kind (`E217`).",
+  "attempt_fails_with": "E217"
+}

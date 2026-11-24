@@ -494,7 +494,7 @@ def test_action_replaced_is_a_valid_succeeding_program_without_the_asked_action(
 def test_every_task_1_7_declined_is_labelled_for_1_8_and_g_act_is_closed():
     in_gaps = {t: g["id"] for g in ATLAS["gaps"] for t in g["tasks"] if t in SET}
     assert set(in_gaps) == set(INEXPRESSIBLE)  # the programs and the infeasible tasks left the atlas (as set 6's did)
-    assert in_gaps == {"x01_hand_to_ana": "G-PROX", "x02_selftest_result": "G-SELF", "x03_teach_restock": "G-TEACH",
+    assert in_gaps == {"x01_hand_to_ana": "G-PROX", "x02_selftest_result": "G-HEALTH", "x03_teach_restock": "G-TEACH",
                        "x04_open_until_open": "G-UNBOUNDED"}  # x05_open_at_six is a 1.9 program, G-CLOCK lists none
     for task_id, gap in in_gaps.items():
         assert DECLINED[task_id]["gap"] == gap and GAPS[gap]["scope"] in ("open", "out")  # G-UNBOUNDED: out (0041)

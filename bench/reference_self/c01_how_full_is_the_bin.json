@@ -1,0 +1,9 @@
+{
+  "task": "check_bin",
+  "bindings": {
+    "r": "spot1",
+    "bin": "bin_1",
+    "cam": "cam_s1",
+    "bay": "bay_1"
+  }
+}

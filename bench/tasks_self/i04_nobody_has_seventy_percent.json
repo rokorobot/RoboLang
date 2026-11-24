@@ -1,0 +1,59 @@
+{
+  "id": "i04_nobody_has_seventy_percent",
+  "prompt": "Send whichever of spot2 and spot3 has at least 70 percent charge to stop_c.",
+  "world": "bench/worlds/charge_hall.json",
+  "group": "infeasible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_4": {
+    "decision": "cannot",
+    "category": "infeasible",
+    "because": "0048 S7 and 0045 C6 (no candidate is left: spot2 has 55 % and spot3 40 %, `else` runs and the request names no fallback)",
+    "world_2_4": {
+      "robots": {
+        "spot2": {
+          "charge": {
+            "value": "55",
+            "unit": "%",
+            "uncertainty": "1"
+          }
+        },
+        "spot3": {
+          "charge": {
+            "value": "40",
+            "unit": "%",
+            "uncertainty": "1"
+          }
+        }
+      },
+      "charge_events": []
+    },
+    "choices": [
+      {
+        "type": "robot",
+        "from": [
+          "spot2",
+          "spot3"
+        ],
+        "where": "robot_charge >= 70 %",
+        "order": null
+      }
+    ]
+  },
+  "blockers": [
+    "spot2",
+    "spot3"
+  ],
+  "gap": "G-SELF",
+  "tags": [
+    "charge",
+    "choose",
+    "where",
+    "no_candidate_left",
+    "no_fallback"
+  ],
+  "why": "Infeasible in 2.4: in the world of the job neither robot has 70 %, so `where` leaves no candidate and `else` runs; the request names no fallback. Under 2.3 the attempt fails earlier, at `robot_charge` (`E204`).",
+  "attempt_fails_with": "E204"
+}

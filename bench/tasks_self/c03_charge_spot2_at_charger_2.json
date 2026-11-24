@@ -1,0 +1,49 @@
+{
+  "id": "c03_charge_spot2_at_charger_2",
+  "prompt": "Send spot2 to charger_2 and have it charge there.",
+  "world": "bench/worlds/charge_hall.json",
+  "group": "control",
+  "expect": {
+    "decision": "program"
+  },
+  "expect_2_3": {
+    "decision": "program"
+  },
+  "expect_2_4": {
+    "decision": "program"
+  },
+  "expected_goals": [
+    [
+      [
+        "rl:place:charger_2",
+        "in_state",
+        "charging"
+      ]
+    ],
+    [
+      [
+        "rl:place:charger_2",
+        "in_state",
+        "charging"
+      ],
+      [
+        "rl:robot:spot2",
+        "located_in",
+        "rl:place:charger_2"
+      ]
+    ]
+  ],
+  "expected_actions": [
+    {
+      "robot": "spot2",
+      "action": "charge",
+      "target": "charger_2"
+    }
+  ],
+  "tags": [
+    "do_charge",
+    "in_state",
+    "no_charge_reading",
+    "declared_action"
+  ]
+}

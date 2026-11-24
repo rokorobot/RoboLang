@@ -84,6 +84,7 @@ before.
 
 | Date | Note | Added | Removed | Changed | Ranking |
 |---|---|---|---|---|---|
+| 2026-11-24 | I8 L3: set 13 self pre-registered (24 tasks) | — | — | — | 1. action 4.52 · 2. perception 2.78 · 3. cooperation 1.07 · 4. communication 0.95 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
 | 2026-11-24 | L6 of I7: G-CHOOSE closed by RoboLang 2.3 choices | — | — | — | 1. action 4.52 · 2. perception 2.78 · 3. cooperation 1.07 · 4. communication 0.95 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
 | 2026-11-24 | R3b: G-TRIGGER and G-DATE near (needs dropped when G-LOOP closed, now claimed again with probes); G-CATEGORY, G-NEGOTIATE and G-SHARED refuted as new gaps | — | — | — | 1. action 4.52 · 2. perception 2.78 · 3. cooperation 1.07 · 4. communication 0.95 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
 | 2026-11-19 | I7 L4: RoboLang 2.3 built and taught | — | — | — | 1. action 4.52 · 2. perception 2.78 · 3. cooperation 1.07 · 4. communication 0.95 · 5. learning 0.75 · 6. reasoning 0.68 · 7. autonomy 0.67 · 8. safety 0.49 · 9. prediction 0.25 |
@@ -243,7 +244,7 @@ before.
 
 | Language gap | Scope | Priority | Near | Benchmark tasks |
 |---|---|---|---|---|
-| `G-TRIGGER` Triggers on missions: every hour, at a time, on a message or an event, on the robot's own state | open | 3.11 | yes | 13 |
+| `G-TRIGGER` Triggers on missions: every hour, at a time, on a message or an event, on the robot's own state | open | 3.11 | yes | 14 |
 | `G-DATE` Dates and times on another day: tomorrow, a weekday, a calendar date | open | 1.76 | yes | 4 |
 | `G-CALC` Arithmetic, counting and text built from values | open | 1.55 | yes | 11 |
 | `G-CLOCK` Clock readings and times of day | closed | 0.00 | — | 0 |
@@ -263,7 +264,8 @@ before.
 
 | Language gap | Scope | Priority | Near | Benchmark tasks |
 |---|---|---|---|---|
-| `G-SELF` The robot's own state as readings and conditions: battery level, health, faults; acting on them and asking for service | open | 1.50 | yes | 5 |
+| `G-SELF` The robot's own state as readings and conditions: battery level, health, faults; acting on them and asking for service | open | 1.50 | yes | 19 |
+| `G-HEALTH` The robot's own health beyond readiness and the battery: faults, self-test results, requests for service | open | 0.00 | — | 3 |
 
 ## Safety
 
@@ -294,4 +296,4 @@ before.
 
 | Language gap | Scope | Priority | Near | Benchmark tasks |
 |---|---|---|---|---|
-| `G-PREDICT` Acting on a predicted future: a person's next move, the outcome of a plan, time to failure | open | 0.50 | — | 0 |
+| `G-PREDICT` Acting on a predicted future: a person's next move, the outcome of a plan, time to failure | open | 0.50 | — | 2 |

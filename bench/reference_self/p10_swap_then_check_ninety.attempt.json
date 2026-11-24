@@ -1,0 +1,8 @@
+{
+  "task": "swap_and_check",
+  "bindings": {
+    "r": "spot1",
+    "bay": "swap_bay",
+    "dest": "stop_c"
+  }
+}

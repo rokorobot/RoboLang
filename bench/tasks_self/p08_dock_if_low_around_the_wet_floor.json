@@ -1,0 +1,176 @@
+{
+  "id": "p08_dock_if_low_around_the_wet_floor",
+  "prompt": "With cleaner1, never entering wet_floor: if your battery is at least 40 percent, drive to stop_c; if it is lower, drive to dock_1.",
+  "world": "bench/worlds/site_1_3.json",
+  "group": "self",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_4": {
+    "decision": "program",
+    "world_2_4": {
+      "robots": {
+        "cleaner1": {
+          "charge": {
+            "value": "75",
+            "unit": "%",
+            "uncertainty": "1"
+          }
+        },
+        "weeder1": {
+          "charge": {
+            "value": "90",
+            "unit": "%",
+            "uncertainty": "1"
+          }
+        }
+      },
+      "charge_events": []
+    },
+    "expected_charge": [
+      {
+        "use": "if",
+        "robot": "cleaner1",
+        "op": ">=",
+        "value": "40",
+        "unit": "%",
+        "decoy": "weeder1"
+      }
+    ],
+    "expected_limits": [
+      [
+        "no_go_region",
+        "wet_floor"
+      ]
+    ],
+    "paths": [
+      {
+        "when": "cleaner1 has 75 % (+-1): stop_c; weeder1 has 10 %",
+        "check": true,
+        "messages": [],
+        "world_patch": {
+          "robots": {
+            "cleaner1": {
+              "charge": {
+                "value": "75",
+                "unit": "%",
+                "uncertainty": "1"
+              }
+            },
+            "weeder1": {
+              "charge": {
+                "value": "10",
+                "unit": "%",
+                "uncertainty": "1"
+              }
+            }
+          }
+        },
+        "goal": [
+          [
+            "rl:robot:cleaner1",
+            "located_in",
+            "rl:place:stop_c"
+          ]
+        ]
+      },
+      {
+        "when": "cleaner1 has exactly 40 %: at least 40 %, so stop_c (a `>` docks)",
+        "check": true,
+        "messages": [],
+        "world_patch": {
+          "robots": {
+            "cleaner1": {
+              "charge": {
+                "value": "40",
+                "unit": "%",
+                "uncertainty": "0"
+              }
+            },
+            "weeder1": {
+              "charge": {
+                "value": "10",
+                "unit": "%",
+                "uncertainty": "1"
+              }
+            }
+          }
+        },
+        "goal": [
+          [
+            "rl:robot:cleaner1",
+            "located_in",
+            "rl:place:stop_c"
+          ]
+        ]
+      },
+      {
+        "when": "cleaner1 has 22 % (+-1): dock_1; weeder1 has 90 %",
+        "check": false,
+        "messages": [],
+        "world_patch": {
+          "robots": {
+            "cleaner1": {
+              "charge": {
+                "value": "22",
+                "unit": "%",
+                "uncertainty": "1"
+              }
+            },
+            "weeder1": {
+              "charge": {
+                "value": "90",
+                "unit": "%",
+                "uncertainty": "1"
+              }
+            }
+          }
+        },
+        "goal": [
+          [
+            "rl:robot:cleaner1",
+            "located_in",
+            "rl:place:dock_1"
+          ]
+        ]
+      },
+      {
+        "when": "cleaner1 has 41 % +-2: the interval holds 40 %, unknown, fails closed",
+        "check": null,
+        "messages": [],
+        "world_patch": {
+          "robots": {
+            "cleaner1": {
+              "charge": {
+                "value": "41",
+                "unit": "%",
+                "uncertainty": "2"
+              }
+            },
+            "weeder1": {
+              "charge": {
+                "value": "90",
+                "unit": "%",
+                "uncertainty": "1"
+              }
+            }
+          }
+        },
+        "fails": true
+      }
+    ]
+  },
+  "gap": "G-SELF",
+  "tags": [
+    "charge",
+    "if",
+    "region_limit",
+    "threshold_at_least",
+    "decoy",
+    "near_threshold",
+    "1_7_feature"
+  ],
+  "why": "A charge check with a 1.7 region limit (`@safety no_go_region wet_floor;`): both must stay. Dropping the limit or the check is a different request. 2.3 has no such kind (`E217`).",
+  "attempt_fails_with": "E217"
+}

@@ -1,0 +1,53 @@
+{
+  "id": "c02_if_spot2_is_ready",
+  "prompt": "With spot2, if you are ready, drive to stop_c; if you are not, tell channel \"lead\" \"spot2 is not ready\" and stop the job as failed.",
+  "world": "bench/worlds/charge_hall.json",
+  "group": "control",
+  "expect": {
+    "decision": "program"
+  },
+  "expect_2_3": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "spot2 is ready",
+        "goal": [
+          [
+            "rl:robot:spot2",
+            "located_in",
+            "rl:place:stop_c"
+          ]
+        ],
+        "messages": [],
+        "world_patch": {}
+      },
+      {
+        "when": "spot2 is not ready: the lead is told and the job fails",
+        "fails": true,
+        "messages": [
+          [
+            "lead",
+            "spot2 is not ready"
+          ]
+        ],
+        "world_patch": {
+          "robots": {
+            "spot2": {
+              "ready": false
+            }
+          }
+        }
+      }
+    ]
+  },
+  "expect_2_4": {
+    "decision": "program"
+  },
+  "tags": [
+    "robot_ready",
+    "if",
+    "no_charge_reading",
+    "message",
+    "fail_otherwise"
+  ]
+}

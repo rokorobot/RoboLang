@@ -1,0 +1,42 @@
+{
+  "id": "x02_report_your_faults",
+  "prompt": "With spot2, drive to stop_b and tell channel \"lead\" which faults you have, if any.",
+  "world": "bench/worlds/charge_hall.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_4": {
+    "decision": "cannot",
+    "category": "inexpressible",
+    "because": "0048 S10 (G-HEALTH: faults)",
+    "world_2_4": {
+      "robots": {
+        "spot1": {
+          "charge": {
+            "value": "64",
+            "unit": "%",
+            "uncertainty": "1"
+          }
+        },
+        "spot2": {
+          "charge": {
+            "value": "55",
+            "unit": "%",
+            "uncertainty": "1"
+          }
+        }
+      },
+      "charge_events": []
+    }
+  },
+  "gap": "G-HEALTH",
+  "tags": [
+    "faults",
+    "health",
+    "report"
+  ],
+  "why": "Faults (0048 S10, G-HEALTH): a list of faults is not a charge and not `robot_ready`; the language has no kind for it. Reporting a literal 'no faults' is the silent replacement. Under 2.3 the attempt fails at the kind (`E217`).",
+  "attempt_fails_with": "E217"
+}

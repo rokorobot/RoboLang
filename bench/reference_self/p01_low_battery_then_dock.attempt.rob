@@ -1,0 +1,15 @@
+// bench/reference_self/p01_low_battery_then_dock.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 2.3;
+
+task dock_or_go_on(robot r, location dock, location next) {
+    goal { robot_at r next; }
+    plan {
+        measure r charge as c;                                                                      // @charge
+        if c < 25 % {                                                                               // @charge
+            move r to dock;                                                                         // @charge
+            communicate r to "lead" with "spot1 is docked";                                         // @charge
+        } else {                                                                                    // @charge
+            move r to next;
+        }                                                                                           // @charge
+    }
+}

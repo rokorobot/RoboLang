@@ -1,0 +1,42 @@
+{
+  "id": "x01_run_your_self_test_and_report",
+  "prompt": "With spot1, run your own self-test and tell channel \"lead\" the result.",
+  "world": "bench/worlds/charge_hall.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_4": {
+    "decision": "cannot",
+    "category": "inexpressible",
+    "because": "0048 S10 (G-HEALTH: a self-test returns a value; an action returns none, 0040 A10)",
+    "world_2_4": {
+      "robots": {
+        "spot1": {
+          "charge": {
+            "value": "64",
+            "unit": "%",
+            "uncertainty": "1"
+          }
+        },
+        "spot2": {
+          "charge": {
+            "value": "55",
+            "unit": "%",
+            "uncertainty": "1"
+          }
+        }
+      },
+      "charge_events": []
+    }
+  },
+  "gap": "G-HEALTH",
+  "tags": [
+    "self_test",
+    "action_returns_value",
+    "health"
+  ],
+  "why": "Health beyond `robot_ready` and `sensor_ok` (0048 S10, G-HEALTH): the self-test is a declared action that returns a value, and a `do` returns none. Doing the test and sending a literal text is the silent replacement. Under 2.3 the attempt fails at the kind (`E217`).",
+  "attempt_fails_with": "E217"
+}

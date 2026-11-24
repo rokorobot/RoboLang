@@ -1,0 +1,7 @@
+{
+  "task": "self_test_report",
+  "bindings": {
+    "r": "spot1",
+    "spot": "stop_a"
+  }
+}

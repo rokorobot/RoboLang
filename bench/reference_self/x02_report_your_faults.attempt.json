@@ -1,0 +1,7 @@
+{
+  "task": "report_faults",
+  "bindings": {
+    "r": "spot2",
+    "d": "stop_b"
+  }
+}

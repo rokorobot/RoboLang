@@ -1,0 +1,10 @@
+// bench/reference_self/c03_charge_spot2_at_charger_2.rob: hand-written reference (RoboLang 2.3)
+robolang 2.3;
+
+task charge_it(robot r, location charger) {
+    goal { in_state charger "charging"; }
+    plan {
+        move r to charger;
+        do r charge charger;
+    }
+}

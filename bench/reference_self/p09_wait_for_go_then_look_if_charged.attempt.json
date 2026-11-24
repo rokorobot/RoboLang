@@ -1,0 +1,9 @@
+{
+  "task": "wait_then_look",
+  "bindings": {
+    "r": "spot1",
+    "bin": "bin_1",
+    "cam": "cam_s1",
+    "home": "stop_a"
+  }
+}

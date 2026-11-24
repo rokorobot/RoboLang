@@ -1,0 +1,230 @@
+{
+  "id": "p06_the_peer_with_enough_charge",
+  "prompt": "Send whichever of spot2 and spot3 has at least 50 percent charge to stop_c. If neither has, stop the job as failed.",
+  "world": "bench/worlds/charge_hall.json",
+  "group": "self",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_4": {
+    "decision": "program",
+    "world_2_4": {
+      "robots": {
+        "spot2": {
+          "charge": {
+            "value": "90",
+            "unit": "%",
+            "uncertainty": "1"
+          }
+        },
+        "spot3": {
+          "charge": {
+            "value": "80",
+            "unit": "%",
+            "uncertainty": "1"
+          }
+        }
+      },
+      "charge_events": []
+    },
+    "choices": [
+      {
+        "type": "robot",
+        "from": [
+          "spot2",
+          "spot3"
+        ],
+        "where": "robot_charge >= 50 %",
+        "order": null
+      }
+    ],
+    "expected_charge": [
+      {
+        "use": "where",
+        "robot": "candidate",
+        "op": ">=",
+        "value": "50",
+        "unit": "%"
+      }
+    ],
+    "paths": [
+      {
+        "when": "spot2 has 40 %, spot3 70 %: only spot3 has enough (the first written does not)",
+        "chosen": [
+          "spot3"
+        ],
+        "messages": [],
+        "world_patch": {
+          "robots": {
+            "spot2": {
+              "charge": {
+                "value": "40",
+                "unit": "%",
+                "uncertainty": "1"
+              }
+            },
+            "spot3": {
+              "charge": {
+                "value": "70",
+                "unit": "%",
+                "uncertainty": "1"
+              }
+            }
+          }
+        },
+        "goal": [
+          [
+            "rl:robot:spot3",
+            "located_in",
+            "rl:place:stop_c"
+          ]
+        ]
+      },
+      {
+        "when": "spot2 has 90 %, spot3 80 %: both have enough, the request is indifferent (any of them; the first written is taken)",
+        "chosen": [
+          "spot2"
+        ],
+        "messages": [],
+        "world_patch": {
+          "robots": {
+            "spot2": {
+              "charge": {
+                "value": "90",
+                "unit": "%",
+                "uncertainty": "1"
+              }
+            },
+            "spot3": {
+              "charge": {
+                "value": "80",
+                "unit": "%",
+                "uncertainty": "1"
+              }
+            }
+          }
+        },
+        "goals": [
+          [
+            [
+              "rl:robot:spot2",
+              "located_in",
+              "rl:place:stop_c"
+            ]
+          ],
+          [
+            [
+              "rl:robot:spot3",
+              "located_in",
+              "rl:place:stop_c"
+            ]
+          ]
+        ]
+      },
+      {
+        "when": "spot2 has 40 %, spot3 30 %: no candidate is left, `else` runs and the job fails",
+        "chosen": [
+          null
+        ],
+        "messages": [],
+        "world_patch": {
+          "robots": {
+            "spot2": {
+              "charge": {
+                "value": "40",
+                "unit": "%",
+                "uncertainty": "1"
+              }
+            },
+            "spot3": {
+              "charge": {
+                "value": "30",
+                "unit": "%",
+                "uncertainty": "1"
+              }
+            }
+          }
+        },
+        "fails": true
+      },
+      {
+        "when": "spot2 has exactly 50 %, spot3 45 %: at least 50 % is enough, spot2",
+        "chosen": [
+          "spot2"
+        ],
+        "messages": [],
+        "world_patch": {
+          "robots": {
+            "spot2": {
+              "charge": {
+                "value": "50",
+                "unit": "%",
+                "uncertainty": "0"
+              }
+            },
+            "spot3": {
+              "charge": {
+                "value": "45",
+                "unit": "%",
+                "uncertainty": "1"
+              }
+            }
+          }
+        },
+        "goal": [
+          [
+            "rl:robot:spot2",
+            "located_in",
+            "rl:place:stop_c"
+          ]
+        ]
+      },
+      {
+        "when": "spot2 has 52 % +-3: unknown, so it is left out (fails closed); spot3 has 80 %",
+        "chosen": [
+          "spot3"
+        ],
+        "messages": [],
+        "world_patch": {
+          "robots": {
+            "spot2": {
+              "charge": {
+                "value": "52",
+                "unit": "%",
+                "uncertainty": "3"
+              }
+            },
+            "spot3": {
+              "charge": {
+                "value": "80",
+                "unit": "%",
+                "uncertainty": "1"
+              }
+            }
+          }
+        },
+        "goal": [
+          [
+            "rl:robot:spot3",
+            "located_in",
+            "rl:place:stop_c"
+          ]
+        ]
+      }
+    ]
+  },
+  "gap": "G-SELF",
+  "tags": [
+    "charge",
+    "choose",
+    "where",
+    "robot_charge",
+    "peer",
+    "else_runs",
+    "near_threshold",
+    "indifferent"
+  ],
+  "why": "A choice by charge (0048 S7, narrowing 0045 point 5): `choose robot t from (spot2, spot3) where robot_charge t >= 50 %`. One robot fixed in advance, the `where` dropped, or another threshold is a different request. The request is indifferent when both have enough, so its goal accepts either. 2.3 has no `robot_charge` (`E204`).",
+  "attempt_fails_with": "E204"
+}

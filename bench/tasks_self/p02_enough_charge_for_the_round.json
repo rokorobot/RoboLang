@@ -1,0 +1,164 @@
+{
+  "id": "p02_enough_charge_for_the_round",
+  "prompt": "Before the round, check that spot1 has at least 60 percent charge. If it has, drive to stop_b and on to stop_c; if it has not, stop the job as failed.",
+  "world": "bench/worlds/site.json",
+  "group": "self",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_4": {
+    "decision": "program",
+    "world_2_4": {
+      "robots": {
+        "spot1": {
+          "charge": {
+            "value": "80",
+            "unit": "%",
+            "uncertainty": "1"
+          }
+        },
+        "weeder1": {
+          "charge": {
+            "value": "95",
+            "unit": "%",
+            "uncertainty": "1"
+          }
+        }
+      },
+      "charge_events": []
+    },
+    "expected_charge": [
+      {
+        "use": "if",
+        "robot": "spot1",
+        "op": ">=",
+        "value": "60",
+        "unit": "%",
+        "decoy": "weeder1"
+      }
+    ],
+    "paths": [
+      {
+        "when": "spot1 has 80 % (+-1): the round is driven; weeder1 (the decoy) has 10 %",
+        "check": true,
+        "world_patch": {
+          "robots": {
+            "spot1": {
+              "charge": {
+                "value": "80",
+                "unit": "%",
+                "uncertainty": "1"
+              }
+            },
+            "weeder1": {
+              "charge": {
+                "value": "10",
+                "unit": "%",
+                "uncertainty": "1"
+              }
+            }
+          }
+        },
+        "goal": [
+          [
+            "rl:robot:spot1",
+            "located_in",
+            "rl:place:stop_c"
+          ]
+        ],
+        "messages": []
+      },
+      {
+        "when": "spot1 has exactly 60 %: at least 60 %, so the round is driven (a `>` fails)",
+        "check": true,
+        "world_patch": {
+          "robots": {
+            "spot1": {
+              "charge": {
+                "value": "60",
+                "unit": "%",
+                "uncertainty": "0"
+              }
+            },
+            "weeder1": {
+              "charge": {
+                "value": "10",
+                "unit": "%",
+                "uncertainty": "1"
+              }
+            }
+          }
+        },
+        "goal": [
+          [
+            "rl:robot:spot1",
+            "located_in",
+            "rl:place:stop_c"
+          ]
+        ],
+        "messages": []
+      },
+      {
+        "when": "spot1 has 52 % (+-1): below 60 %, the job fails before anything moves; weeder1 has 95 %",
+        "check": false,
+        "world_patch": {
+          "robots": {
+            "spot1": {
+              "charge": {
+                "value": "52",
+                "unit": "%",
+                "uncertainty": "1"
+              }
+            },
+            "weeder1": {
+              "charge": {
+                "value": "95",
+                "unit": "%",
+                "uncertainty": "1"
+              }
+            }
+          }
+        },
+        "fails": true,
+        "messages": []
+      },
+      {
+        "when": "spot1 has 61 % +-3: the interval holds 60 %, the comparison is unknown and fails closed (a threshold of 55 would drive)",
+        "check": null,
+        "world_patch": {
+          "robots": {
+            "spot1": {
+              "charge": {
+                "value": "61",
+                "unit": "%",
+                "uncertainty": "3"
+              }
+            },
+            "weeder1": {
+              "charge": {
+                "value": "95",
+                "unit": "%",
+                "uncertainty": "1"
+              }
+            }
+          }
+        },
+        "fails": true,
+        "messages": []
+      }
+    ]
+  },
+  "gap": "G-SELF",
+  "tags": [
+    "charge",
+    "if",
+    "threshold_at_least",
+    "fail_otherwise",
+    "near_threshold",
+    "fails_closed",
+    "decoy"
+  ],
+  "why": "An 'at least' check before a round (0048 S2): `c >= 60 %`, with the failure the request states. A program that drops the check, takes `robot_ready` as a stand-in, guesses a `wait for`, or reads another threshold, operator or robot is a different request. 2.3 has no such kind (`E217`).",
+  "attempt_fails_with": "E217"
+}
