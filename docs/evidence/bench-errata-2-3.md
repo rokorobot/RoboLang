@@ -119,6 +119,27 @@ them with the 2.3 relabels of Q5 changed no label. The test of set "future" coun
 inexpressible and 3 are `choose`. The safety case hazard of 0045 C11 is renumbered from H25 to **H27**, because H25 and H26
 are now the humanoid hazards of 0046.
 
+## Teaching fix Z1 (2026-11-24, L5, approved by the owner)
+
+The acceptance run showed Haiku adding `where robot_ready` to "whichever is nearer" (`p01`, `p06`). The only `choose`
+example in the reference had that `where`, so the models were copying our teaching. Changes:
+
+- The example in `docs/language-reference.md` (top and "Choosing at run time"), in its packaged copy and in
+  `spec/grammar-v2.3.ebnf` has no `where`.
+- The reference says to write `where` only for a condition the request states.
+- "Missions" says that a time of day in `until` is the bound by itself (0041 clarification 2), for `p11`.
+
+## Erratum Q9 (2026-11-24, L5, approved by the owner): `c03` accepts a round trip run 6 times
+
+"12 carries in all" may be one task that carries p1 there and back, run 6 times. The label lists that shape in
+`expect_2_0.mission_alternatives`, and the scorer (`bench/lib.py` `judge_mission`) accepts the first listed shape that is
+right. Rescored offline, Haiku's repeat 1 of the full prompt is now right. Repeat 3 is still wrong (24 carries).
+
+## Erratum Q10 (2026-11-24, L5, approved by the owner): `x02` gets a second pan at the stove
+
+`bench/worlds/choose_x02_every_pan_above_75.json` is `kitchen_values` with `pan_2` at the stove. With only `pan_1` there,
+one choice and one reading did "each pan" for that world, so the task did not test "each".
+
 ## Freeze
 
 `docs/evidence/bench-freeze-v2.json` is regenerated for all of the above (the old manifest deleted, then

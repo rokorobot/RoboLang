@@ -21,7 +21,8 @@ order         = "nearest" , "to" , NAME
 (* [2.3] "choose", "from", "where", "nearest", "farthest", "objects" and "robots" are recognised by their position and are NOT
    reserved: a program of any version may still use them as names. In a file below 2.3 "choose" is E203.
    [2.3] Example:
-       choose robot t from (a, b) where robot_ready t nearest to handoff else { fail "no tugger is free"; }
+       choose robot t from (a, b) nearest to handoff else { fail "no tugger has a position"; }
+   [2.3] where is written only for a condition the request states ("whichever is ready"); "whichever is nearer" has no where.
        move t to handoff;
    [2.3] The name after the type is new, and is used like a parameter from the end of the statement to the end of its block, and in
    a goal block of the plan or branch that holds the choose at its top level (the goal is checked for the entity chosen). A

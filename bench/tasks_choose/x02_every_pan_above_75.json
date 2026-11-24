@@ -1,7 +1,7 @@
 {
   "id": "x02_every_pan_above_75",
   "prompt": "With chef_arm, take the temperature of every pan at the stove with probe_temp and put each pan above 75 degC in the sink. Pans come and go, so go by what is on the stove when you start.",
-  "world": "bench/worlds/kitchen_values.json",
+  "world": "bench/worlds/choose_x02_every_pan_above_75.json",
   "group": "inexpressible",
   "expect": {
     "decision": "cannot",

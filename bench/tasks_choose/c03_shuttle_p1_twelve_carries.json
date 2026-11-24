@@ -62,6 +62,44 @@
         "runs": 12,
         "runs_verified": 12
       }
+    ],
+    "mission_alternatives": [
+      {
+        "runs": [
+          {
+            "task": "round_trip",
+            "entities": [
+              "arm_a",
+              "p1",
+              "conveyor_in",
+              "bin"
+            ],
+            "goal": [
+              [
+                "rl:thing:p1",
+                "located_in",
+                "rl:place:conveyor_in"
+              ]
+            ]
+          }
+        ],
+        "repeat": {
+          "max_runs": 6,
+          "max_duration": null
+        },
+        "until": null,
+        "on_failure": "stop",
+        "policy_stated": false,
+        "paths": [
+          {
+            "when": "6 round trips, 12 carries in all, p1 ends at conveyor_in",
+            "world_patch": {},
+            "outcome": "bounded",
+            "runs": 6,
+            "runs_verified": 6
+          }
+        ]
+      }
     ]
   },
   "expect_2_3": {

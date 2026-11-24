@@ -14,7 +14,7 @@ limits (`@safety no_go_region R;`, `@safety in_region R;`: where the robots may 
 time of day, `22:00` is a time, `wait until clock_time >= 23:00 ...` waits for one, see "Clock readings") and
 **missions** (a `mission` runs tasks one after another, again and again, with a hard bound: a count, a duration or a
 time of day, see "Missions"), **incoming messages** (`message_received "line" with "DOCKED"` is true once a message has
-arrived on a channel, see "Incoming messages") and **choosing at run time** (`choose robot t from (a, b) where robot_ready t
+arrived on a channel, see "Incoming messages") and **choosing at run time** (`choose robot t from (a, b)
 nearest to spot else { ... }` binds a name to one robot, object or location when the job runs, see "Choosing at run time").
 A task itself never loops: it runs once. **A fixed count is not a mission:** "three round
 trips" is one task with the steps written out three times (a mission with `at most 3 runs` is also accepted), and
@@ -304,7 +304,7 @@ robolang 2.3;
 task send_tugger(robot a, robot b, location handoff) {
     goal { robot_at t handoff; }
     plan {
-        choose robot t from (a, b) where robot_ready t nearest to handoff else { fail "no tugger is free"; }
+        choose robot t from (a, b) nearest to handoff else { fail "no tugger has a position"; }
         move t to handoff;
         communicate t to "ops" with "tugger sent";
     }
@@ -319,7 +319,9 @@ statement. Use it when the request leaves the entity to the world: "whichever tu
   them; **`objects at L`**, the objects that are at location `L` when the choice is made (a part that was moved is no
   longer there); **`robots`**, every robot the world lists. `objects at L` takes every object at `L`: filter with `where`.
   There is no "any object in the world".
-- **`where`** is a condition over the new name, evaluated from the world as it is at the choice: `robot_ready t`,
+- **`where`** is written **only for a condition the request states** ("whichever is ready": `where robot_ready t`;
+  "a clean one": `where in_state p "clean"`). "Whichever is nearer" has no `where`: an added `where robot_ready t` would
+  send the farther robot when the nearer one is not ready, which the request did not ask. It is a condition over the new name, evaluated from the world as it is at the choice: `robot_ready t`,
   `object_at p dock`, `in_state p "clean"`, `not`, `and`, `or`. A value the world does not know **excludes** the
   candidate. It states **world facts only**: a reading, the clock or a message is `E330`.
 - **`nearest to X`** or **`farthest from X`**, where `X` is a location, a robot or an object parameter, orders the
@@ -647,7 +649,8 @@ mission shuttle(robot r, location home, location far, region quay) {
   carries in all" is two `run` lines and `at most 24 runs`).
 - **Every repeat has a hard bound** (`E325` with none): `at most N runs` (1 to 1000), `for at most D` (a duration in `ms`,
   `s` or `min`: **no hours, 3 hours are `180 min`**), or an `until clock_time >= T` (a time of day, "until 22:00"), alone or
-  with a count. Give exactly the bounds the request states: a count when it says "30 times", a duration when it says
+  with a count. **A time of day in `until` is the bound by itself:** "until 17:00" is `until clock_time >= 17:00;` with no
+  `at most` count and no `for at most` duration added. Give exactly the bounds the request states: a count when it says "30 times", a duration when it says
   "for 2 hours", both when it says both, and never a count that was not asked for (a duration-only request is
   `for at most 120 min` with no `at most`).
 - **`until`** takes the conditions of a `pre` (`region_clear r`, `object_at o l`, `robot_at`, `holding`, `object_exists`,

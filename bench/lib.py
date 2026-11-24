@@ -1798,12 +1798,18 @@ def judge_mission(task_def: dict, checked: Checked, bindings: dict[str, str]) ->
     judgement.mission_added = False
     judge_kinds(task_def, checked, bindings, state, judgement)
     judge_messages(task_def, checked, judgement.plan_succeeds, judgement)
-    _, goals = _mission_runs_ok(label, checked, bindings, result)
     judge_choices(task_def, checked, bindings, judgement.plan_succeeds, judgement)  # as the base world ended
-    judgement.paths = judge_mission_paths(task_def, label, checked, bindings)
-    judgement.goal_correct = goals
-    judgement.plan_succeeds = bool(judgement.paths) and all(p["plan_ok"] for p in judgement.paths)
-    judgement.mission_ok = mission_ok(label, checked, bindings, result)
+    # erratum Q9: a label may list other mission shapes that do what the request says; the first that is right wins
+    for alternative in [label] + list((task_def.get("expect_2_0") or {}).get("mission_alternatives", [])):
+        _, goals = _mission_runs_ok(alternative, checked, bindings, result)
+        paths = judge_mission_paths(task_def, alternative, checked, bindings)
+        succeeds = bool(paths) and all(p["plan_ok"] for p in paths)
+        right = mission_ok(alternative, checked, bindings, result)
+        if alternative is label or (goals and succeeds and right):
+            judgement.paths, judgement.goal_correct, judgement.plan_succeeds = paths, goals, succeeds
+            judgement.mission_ok, label = right, alternative
+        if goals and succeeds and right:
+            break
     judgement.checks["mission"] = judgement.mission_ok
     judgement.bound_dropped_or_invented = bound_dropped_or_invented(label, checked)
     judgement.policy_invented = policy_invented(label, checked)

@@ -261,6 +261,14 @@ def test_the_two_new_1_7_worlds_and_a_world_file_1_8_copy_for_each_program_and_i
             assert set(world["robots"]) == set(before["robots"]) and set(world["objects"]) == set(before["objects"])
         else:
             assert task["world"].startswith("bench/worlds/") and "world_2_2" not in task
+            if task_id == "x02_every_pan_above_75":  # erratum Q10: a copy with a second pan at the stove
+                world = json.loads(read(REPO / task["world"]))
+                before = json.loads(read(REPO / "bench" / "worlds" / "kitchen_values.json"))
+                assert task["world"] == "bench/worlds/choose_x02_every_pan_above_75.json"
+                assert world["objects"]["pan_2"]["location"] == world["objects"]["pan_1"]["location"] == "stove"
+                before["objects"]["pan_2"]["location"] = "stove"
+                assert world == before  # nothing else differs
+                continue
             assert "choose_" not in task["world"], task_id
 
 
