@@ -31,7 +31,8 @@ timeline
     2026-11-17 : 23 · I1 G-PATH → 1.7 region limits (0039), 0.4.0 : 24 · I2 G-ACT → 1.8 declared actions (0040), 0.5.0 : 25 · I3 G-CLOCK → 1.9 clock readings (0042), 0.6.0
     2026-11-18 : 26 · I4 G-LOOP → 2.0 mission layer (0041), 0.7.0 : 27 · I5 G-MSG → 2.1 incoming messages (0043), 0.8.0 : 28 · I6 G-PERCEIVE → 2.2 more measured kinds (0044), 0.9.0 tagged : 29 · I7 G-CHOOSE L1–L2, 0045 approved
     2026-11-19 to 11-22 : 30 · H4-1 Unitree G1 humanoid backend in MuJoCo (0046), phases 1–3, simulation only : 31 · Held-out benchmark set rules (RL-20D)
-    Next : 32 · I7 L3 set 12 choose pre-registered : 33 · I7 L4 build RoboLang 2.3, Task IR 1.11, world file 1.8 : 34 · 0.9.0 on PyPI (owner approval) : 35 · Physical hardware (not authorized)
+    2026-11-24 : 32 · I7 G-CHOOSE → 2.3 choosing at run time (0045), 0.10.0 tagged
+    Next : 33 · I8 G-SELF : 34 · 0.10.0 on PyPI (owner approval) : 35 · Physical hardware (not authorized)
 ```
 
 ## Horizons ([strategy](STRATEGY.md) section 3)

@@ -108,11 +108,8 @@ def test_every_task_names_a_near_activity_and_every_probe_an_open_gap_that_activ
             assert "gap" not in task
             continue
         gap = GAPS[task["gap"]]
-        if task["group"] in ("region", "action", "clock", "message", "kind"):  # 1.7-2.2 programs: gaps closed at L6
+        if task["group"] in ("region", "action", "clock", "message", "kind", "choose"):  # 1.7-2.3: closed at L6
             assert gap["scope"] == "closed" and task_id not in gap["tasks"], task_id
-            continue
-        if task["group"] == "choose":  # a 2.3 program (0045): its gap is open until L6 of I7, and it left the atlas
-            assert gap["scope"] == "open" and task_id not in gap["tasks"] and task["gap"] == "G-CHOOSE", task_id
             continue
         assert gap["scope"] == "open" and task["gap"] != "G-LOOP", task_id
         assert task["gap"] in activity["needs"], f"{task_id}: {task['activity']} does not claim {task['gap']}"
@@ -127,9 +124,8 @@ def test_every_task_names_a_near_activity_and_every_probe_an_open_gap_that_activ
 def test_every_gap_a_near_activity_claims_is_probed_except_the_proven_loop():
     claimed = {g for a in ATLAS["activities"] if atlas_report.is_near(a) for g in a["needs"]
                if GAPS[g]["scope"] == "open" and g != "G-LOOP"}  # G-LOOP: 12 standing tasks prove it; reopened by 0041
-    # G-CHOOSE: built in 2.3, open until L6 of I7 (no probe is left in it)
-    assert claimed - {"G-CHOOSE"} == {t["gap"] for t in PROBES.values()}
-    assert {t["gap"] for t in CHOICES.values()} == {"G-CHOOSE"} and GAPS["G-CHOOSE"]["scope"] == "open"
+    assert claimed == {t["gap"] for t in PROBES.values()}
+    assert {t["gap"] for t in CHOICES.values()} == {"G-CHOOSE"} and GAPS["G-CHOOSE"]["scope"] == "closed"  # L6 of I7
     assert {t["gap"] for t in MESSAGES.values()} == {"G-MSG"} and GAPS["G-MSG"]["scope"] == "closed"  # L6 of I5
     assert {t["gap"] for t in KINDS.values()} == {"G-PERCEIVE"} and GAPS["G-PERCEIVE"]["scope"] == "closed"  # L6 of I6
     assert {t["gap"] for t in CLOCKS.values()} == {"G-CLOCK"} and GAPS["G-CLOCK"]["scope"] == "closed"  # L6 of I3
@@ -148,7 +144,8 @@ def test_refuted_claims_are_removed_from_needs_and_recorded_with_a_control():
         assert CONTROLS[control]["activity"] == activity
     for (activity, gap), control in WITHDRAWN.items():
         act = ACTIVITIES[activity]
-        assert gap in act["needs"] and "refutation is withdrawn" in act["basis"], (activity, gap)
+        assert gap in act["needs"] or GAPS[gap]["scope"] == "closed", (activity, gap)  # closed at L6 (G-CHOOSE, I7)
+        assert "refutation is withdrawn" in act["basis"], (activity, gap)
         assert CONTROLS[control]["activity"] == activity
     # a refuted claim has no probe: a probe for it would have been a control (and every probe's pair is still claimed)
     assert not {(t["activity"], t["gap"]) for t in PROBES.values()} & set(REFUTED)

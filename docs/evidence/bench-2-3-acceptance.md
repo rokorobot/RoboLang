@@ -11,7 +11,7 @@
 Bounds B1–B9 were approved before the run ([plan](../plans/bench-12-choose.md)). The baseline is in
 [bench-set12-baseline.md](bench-set12-baseline.md).
 
-**Status:** for the owner. **Sonnet meets every bound. Haiku misses B1, B5, B9 and the grammar-only B3.**
+**Status:** **ACCEPTED by the owner, 2026-11-24**, after teaching fix Z1, errata Q9 to Q11 and a confirming run, with one recorded exception: Haiku's B3 on the grammar-only prompt is 2/15 (bound ≤ 1). The first acceptance run is below; the confirming run and the verdict follow.
 
 | # | Measure (full prompt unless stated) | Bound (per model) | Sonnet | Haiku | Verdict |
 |---|---|---|---|---|---|
@@ -94,6 +94,14 @@ first version of this note said that all three pinned the set; that was wrong.)
 
 ## Verdict
 
-Pending the owner.
+**ACCEPTED by the owner, 2026-11-24, with one recorded exception.**
 
-**Paid cost of I7 so far:** baseline $1.32, acceptance $1.99, confirming $0.32, per-PR runs about $0.8 (plus one cancelled run).
+- Sonnet meets every bound.
+- Haiku meets every bound except B3 on the grammar-only prompt, which is 2/15 against a bound of at most 1.
+- Both of Haiku's grammar-only false programs are `x02`. That task cannot fully pose "each of an unknown set" in a closed
+  world.
+- With the full prompt, Haiku declines `x02` 3/3.
+
+G-CHOOSE closes at L6 (erratum Q12); release 0.10.0.
+
+**Paid cost of I7:** baseline $1.32, acceptance $1.99, confirming $0.32, per-PR runs about $0.8.

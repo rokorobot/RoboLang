@@ -786,7 +786,7 @@ def test_the_controls_name_every_entity_and_a_model_that_adds_a_choice_changes_t
 
 def test_only_what_2_3_still_declines_is_in_an_atlas_gap_and_the_two_new_gaps_are_far_and_open():
     """After L4 the gap membership is what 2.3 still declines: the programs and the infeasible tasks left, and the
-    controls were never in one. G-CHOOSE stays open until L6 and holds none of them."""
+    controls were never in one. G-CHOOSE is closed (L6 of I7) and holds none of them."""
     in_gaps = [(t, g["id"]) for g in ATLAS["gaps"] for t in g["tasks"] if t in SET]
     assert len(in_gaps) == len({t for t, _ in in_gaps}) == len(INEXPRESSIBLE) == 5
     assert {t for t, _ in in_gaps} == set(INEXPRESSIBLE)
@@ -794,8 +794,8 @@ def test_only_what_2_3_still_declines_is_in_an_atlas_gap_and_the_two_new_gaps_ar
         assert INEXPRESSIBLE[task_id]["gap"] == gap and GAPS[gap]["scope"] == "open"
     assert Counter(gap for _, gap in in_gaps) == {"G-EACH": 3, "G-PROX": 1, "G-DETECT": 1}
     assert {t["gap"] for t in PROGRAMS.values()} | {t["gap"] for t in INFEASIBLE.values()} == {"G-CHOOSE"}
-    assert GAPS["G-CHOOSE"]["scope"] == "open" and GAPS["G-CHOOSE"]["tasks"] == []
-    assert "2.3" in GAPS["G-CHOOSE"]["scope_note"] and "L6" in GAPS["G-CHOOSE"]["scope_note"]
+    assert GAPS["G-CHOOSE"]["scope"] == "closed" and GAPS["G-CHOOSE"]["tasks"] == []
+    assert GAPS["G-CHOOSE"]["closed_in"] == "RoboLang 2.3"
     for name, direction in (("G-EACH", "reasoning"), ("G-DETECT", "perception")):
         assert GAPS[name]["scope"] == "open" and GAPS[name]["direction"] == direction
         assert "Far" in GAPS[name]["scope_note"] and "0045" in GAPS[name]["scope_note"]

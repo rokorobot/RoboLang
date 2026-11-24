@@ -3,10 +3,11 @@
 The distribution version (this file) is independent of the language versions (1.1 to 2.3), the Task IR schema
 versions (1.0 to 1.11) and the Mission IR schema (1.0 to 1.3). Decision records are in [`spec/decisions/`](https://github.com/rokorobot/RoboLang/tree/main/spec/decisions).
 
-## Unreleased
+## 0.10.0 (2026-11-24)
 
-RoboLang 2.3, choosing at run time: iteration I7 of the [roadmap](docs/LANGUAGE_ROADMAP.md) (decision 0045). Built in step L4;
-the acceptance run on benchmark set 12 is the next step (L5) and 2.3 is not accepted until it passes the bounds B1 to B9.
+RoboLang 2.3, choosing at run time: iteration I7 of the [roadmap](docs/LANGUAGE_ROADMAP.md) (decision 0045). Accepted on
+benchmark set 12 with teaching fix Z1, errata Q9 to Q11 and one recorded exception (Haiku, grammar-only prompt, B3 2/15)
+([acceptance](docs/evidence/bench-2-3-acceptance.md)).
 
 - **RoboLang 2.3: choosing at run time** (decision 0045, step L4 of iteration I7). A `.rob` file `robolang 2.3;` may use the
   statement `choose TYPE NAME from CANDIDATES [where COND] [nearest to X | farthest from X] else { ... }`. `TYPE` is `robot`,

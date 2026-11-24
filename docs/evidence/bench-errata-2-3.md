@@ -147,6 +147,11 @@ stove" means in that world, and fails closed otherwise. So `x02` accepts either 
 is described in `expect_2_3.program_also_ok`: the pinned `[object, location]` pairs and three paths. `bench/score.py`
 scores it with `lib.pre_pins`. A program without the `pre` stays a false program.
 
+## Erratum Q12 (2026-11-24, L6): G-CHOOSE closed
+
+G-CHOOSE is closed in the atlas by RoboLang 2.3 and leaves the `needs` of 17 activities. The tests of sets "future" and 12
+now expect it closed. No task or label changed.
+
 ## Freeze
 
 `docs/evidence/bench-freeze-v2.json` is regenerated for all of the above (the old manifest deleted, then
