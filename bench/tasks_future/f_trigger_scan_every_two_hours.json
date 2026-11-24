@@ -1,0 +1,19 @@
+{
+  "id": "f_trigger_scan_every_two_hours",
+  "prompt": "Every two hours on the hour until 20:00, have arm1 inspect box1 on shelf_a with camera_top.",
+  "world": "bench/worlds/warehouse_1_5_1420.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "activity": "ACT-RET-001",
+  "gap": "G-TRIGGER",
+  "tags": [
+    "mission",
+    "every",
+    "time_trigger"
+  ],
+  "why": "The store's scheduled scan (\"every morning at 6\") within one day: a run starts at a time, which is a mission trigger (0041 M6, clarification 14), not a wait inside the task. 2.2 starts a run when the previous one is done and a mission has no `at` or `every` clause (language reference: 'Missions'). Only the trigger stays out; the scan itself is a 1.6 program.",
+  "attempt_fails_with": "E201"
+}

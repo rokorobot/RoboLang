@@ -216,10 +216,12 @@
       "name": "Dates and times on another day: tomorrow, a weekday, a calendar date",
       "direction": "reasoning",
       "scope": "open",
-      "scope_note": "From G-CLOCK by 0042 K11 (owner, 2026-11-17): 1.9 reads the time of day on the day the task starts only (T4); far until a sub-activity needs it",
+      "scope_note": "From G-CLOCK by 0042 K11 (owner, 2026-11-17): 1.9 reads the time of day on the day the task starts only (T4); far until a sub-activity needs it. Near since R3b (2026-11-24): RET-001 and CLN-001 (deployment, now) run on every day or past midnight, as do SEC-001 and AGR-001; probes `f_date_corridor_after_midnight` and `f_date_scan_tomorrow_at_0600` (docs/evidence/rsi-r3b-new-gaps.md)",
       "tasks": [
         "x02_tomorrow_at_0100",
-        "x05_on_monday"
+        "x05_on_monday",
+        "f_date_corridor_after_midnight",
+        "f_date_scan_tomorrow_at_0600"
       ]
     },
     {
@@ -227,7 +229,7 @@
       "name": "Triggers on missions: every hour, at a time, on a message or an event, on the robot's own state",
       "direction": "reasoning",
       "scope": "open",
-      "scope_note": "From G-LOOP by 0041 clarification 14 (owner, 2026-11-18): 2.0 starts a mission's run when the previous one is done, never at a time or on an event (M6). Time triggers (`every 1 h`, `at 06:00`, I5), message triggers (I6) and self-state triggers (I8) come later, each in its own iteration. Far: no sub-activity names it in `needs` yet; L6 of I4 moves the needs that are about triggers here before G-LOOP closes",
+      "scope_note": "From G-LOOP by 0041 clarification 14 (owner, 2026-11-18): 2.0 starts a mission's run when the previous one is done, never at a time or on an event (M6). Time triggers (`every 1 h`, `at 06:00`, I5), message triggers (I6) and self-state triggers (I8) come later, each in its own iteration. Near since R3b (2026-11-24): the trigger needs were dropped, not moved here, when G-LOOP closed at L6 of I4; three deployed sub-activities (HLTH-001, RET-001, CLN-001) and three later ones claim it again, probes `f_trigger_rounds_every_hour` and `f_trigger_scan_every_two_hours` (docs/evidence/rsi-r3b-new-gaps.md)",
       "tasks": [
         "x_every_hour",
         "x_keep_feeding",
@@ -239,7 +241,9 @@
         "x04_every_minute",
         "f13_retry_every_minute",
         "x02_each_time_the_line_says_ready",
-        "x03_for_each_go_message"
+        "x03_for_each_go_message",
+        "f_trigger_rounds_every_hour",
+        "f_trigger_scan_every_two_hours"
       ]
     },
     {
@@ -414,14 +418,16 @@
       ],
       "maturity": "deployment",
       "horizon": "now",
-      "basis": "The Shelby Report (2026-09-21): Simbe announced more than 3,000 autonomous units under contract across more than 75 retail banners in nearly a dozen countries; the robots digitise shelves (availability, location, prices, promotions) and work alongside other sensors. L6 (2026-11-17): G-CLOCK closed by RoboLang 1.9 clock readings. L6 (2026-11-18): G-LOOP closed by RoboLang 2.0 missions. L6 (2026-11-18): G-PERCEIVE closed by RoboLang 2.2 measured kinds.",
+      "basis": "The Shelby Report (2026-09-21): Simbe announced more than 3,000 autonomous units under contract across more than 75 retail banners in nearly a dozen countries; the robots digitise shelves (availability, location, prices, promotions) and work alongside other sensors. L6 (2026-11-17): G-CLOCK closed by RoboLang 1.9 clock readings. L6 (2026-11-18): G-LOOP closed by RoboLang 2.0 missions. L6 (2026-11-18): G-PERCEIVE closed by RoboLang 2.2 measured kinds. R3b (2026-11-24): G-TRIGGER and G-DATE claimed: \"Every morning at 6\" starts a run at a time (0041 M6) on every day, not only the day the task starts (0042 T4); probes `f_trigger_scan_every_two_hours` and `f_date_scan_tomorrow_at_0600`. When G-LOOP closed at L6 of I4 this need was dropped instead of moved to G-TRIGGER (docs/evidence/rsi-r3b-new-gaps.md).",
       "requests": [
         "Scan aisle 5 and tell the store lead which products are out of stock.",
         "Every morning at 6, scan all aisles and report any price that does not match its label.",
         "If the aisle is blocked by a pallet, skip it and tell the lead which aisle you missed."
       ],
       "needs": [
-        "G-CHOOSE"
+        "G-CHOOSE",
+        "G-TRIGGER",
+        "G-DATE"
       ],
       "forecast": {
         "claim": "Simbe announces at least 4,500 contracted units by 2028-09-30.",
@@ -468,13 +474,15 @@
       ],
       "maturity": "deployment",
       "horizon": "now",
-      "basis": "The Robot Report (2026): Diligent's Moxi (acquired by Serve Robotics in January 2026) runs in more than 25 US hospitals; Children's Hospital Los Angeles reports over 40,000 deliveries and 16,000 hours of work and has grown from two to three robots. Moxi 2.0 rollout was announced on 2026-08-17. L6 (2026-11-17): G-ACT closed by RoboLang 1.8 declared actions. L6 (2026-11-17): G-CLOCK closed by RoboLang 1.9 clock readings. L6 (2026-11-18): G-LOOP closed by RoboLang 2.0 missions. L6 (2026-11-18): G-MSG closed by RoboLang 2.1 messages.",
+      "basis": "The Robot Report (2026): Diligent's Moxi (acquired by Serve Robotics in January 2026) runs in more than 25 US hospitals; Children's Hospital Los Angeles reports over 40,000 deliveries and 16,000 hours of work and has grown from two to three robots. Moxi 2.0 rollout was announced on 2026-08-17. L6 (2026-11-17): G-ACT closed by RoboLang 1.8 declared actions. L6 (2026-11-17): G-CLOCK closed by RoboLang 1.9 clock readings. L6 (2026-11-18): G-LOOP closed by RoboLang 2.0 missions. L6 (2026-11-18): G-MSG closed by RoboLang 2.1 messages. R3b (2026-11-24): G-TRIGGER claimed: \"Every hour, bring the lab samples\" starts a run on the hour, a mission trigger (0041 M6); probe `f_trigger_rounds_every_hour`. When G-LOOP closed at L6 of I4 this need was dropped instead of moved to G-TRIGGER (docs/evidence/rsi-r3b-new-gaps.md).",
       "requests": [
         "Take the medication from the pharmacy to room 412 and wait for the nurse to confirm before leaving.",
         "Open the supply closet, take the IV kit to the ward, and tell the charge nurse it is there.",
         "Every hour, bring the lab samples from the ward to the lab."
       ],
-      "needs": [],
+      "needs": [
+        "G-TRIGGER"
+      ],
       "forecast": {
         "claim": "Serve Robotics or Diligent reports Moxi in at least 50 US hospitals by 2028-06-30.",
         "due": "2028-06-30",
@@ -612,13 +620,15 @@
       ],
       "maturity": "demo",
       "horizon": "now",
-      "basis": "The Robot Report (2026-01-21): Boston Dynamics' Orbit 5.1 lets operators author gauge-reading and thermal inspection actions for Spot, and Spot Cam 2 adds a radiometric thermal camera. The article names no customer for these features, so no named site is confirmed. L6 (2026-11-17): G-CLOCK closed by RoboLang 1.9 clock readings. L6 (2026-11-18): G-LOOP closed by RoboLang 2.0 missions. L6 (2026-11-18): G-PERCEIVE closed by RoboLang 2.2 measured kinds.",
+      "basis": "The Robot Report (2026-01-21): Boston Dynamics' Orbit 5.1 lets operators author gauge-reading and thermal inspection actions for Spot, and Spot Cam 2 adds a radiometric thermal camera. The article names no customer for these features, so no named site is confirmed. L6 (2026-11-17): G-CLOCK closed by RoboLang 1.9 clock readings. L6 (2026-11-18): G-LOOP closed by RoboLang 2.0 missions. L6 (2026-11-18): G-PERCEIVE closed by RoboLang 2.2 measured kinds. R3b (2026-11-24): G-TRIGGER claimed: \"Walk the boiler-room route every hour\" starts a run on the hour (0041 M6). When G-LOOP closed at L6 of I4 this need was dropped instead of moved to G-TRIGGER (docs/evidence/rsi-r3b-new-gaps.md).",
       "requests": [
         "Read the gauge on pump 3 and tell me if it is above 6 bar.",
         "Walk the boiler-room route every hour and report any gauge that is out of range.",
         "Take a thermal image of motor 7 and flag it if it is above 80 degrees."
       ],
-      "needs": [],
+      "needs": [
+        "G-TRIGGER"
+      ],
       "forecast": {
         "claim": "A named industrial customer publicly reports routine use of Spot automated gauge reading by 2027-12-31.",
         "due": "2027-12-31",
@@ -667,14 +677,16 @@
       ],
       "maturity": "demo",
       "horizon": "1-3y",
-      "basis": "The Robot Report (2026-01-21): Orbit 5.1 adds a security patrol mission type for Spot. When Spot detects a person it pauses, switches on lights, captures PTZ, panoramic and thermal images, triggers an alert and resumes its path. No customer is named. L6 (2026-11-17): G-PATH closed by RoboLang 1.7 region limits. L6 (2026-11-17): G-CLOCK closed by RoboLang 1.9 clock readings. L6 (2026-11-18): G-LOOP closed by RoboLang 2.0 missions. L6 (2026-11-18): G-PERCEIVE closed by RoboLang 2.2 measured kinds.",
+      "basis": "The Robot Report (2026-01-21): Orbit 5.1 adds a security patrol mission type for Spot. When Spot detects a person it pauses, switches on lights, captures PTZ, panoramic and thermal images, triggers an alert and resumes its path. No customer is named. L6 (2026-11-17): G-PATH closed by RoboLang 1.7 region limits. L6 (2026-11-17): G-CLOCK closed by RoboLang 1.9 clock readings. L6 (2026-11-18): G-LOOP closed by RoboLang 2.0 missions. L6 (2026-11-18): G-PERCEIVE closed by RoboLang 2.2 measured kinds. R3b (2026-11-24): G-TRIGGER and G-DATE claimed: \"Patrol the yard every two hours until 6 am\" starts runs at times (0041 M6) and ends on the next day (0042 T4). When G-LOOP closed at L6 of I4 this need was dropped instead of moved to G-TRIGGER (docs/evidence/rsi-r3b-new-gaps.md).",
       "requests": [
         "Patrol the north perimeter after 10 pm; if you see a person, stop, take a picture and alert security, then continue.",
         "Stay out of the lab corridor during the patrol.",
         "Patrol the yard every two hours until 6 am."
       ],
       "needs": [
-        "G-PROX"
+        "G-PROX",
+        "G-TRIGGER",
+        "G-DATE"
       ],
       "forecast": {
         "claim": "Boston Dynamics or a security firm publicly names a customer running Spot autonomous security patrols by 2028-03-31.",
@@ -763,7 +775,7 @@
       ],
       "maturity": "pilot",
       "horizon": "3-7y",
-      "basis": "FreshPlaza (2026): Tokuiten's suction-type cherry-tomato robot has been in full production use on its own 2,000 m2 farm in Aichi, Japan since 2026-05-25, picking about half of what one human picker does; a 1-hectare facility with six robots is scheduled for March 2027. The company seeks pilot partners. L6 (2026-11-17): G-CLOCK closed by RoboLang 1.9 clock readings. L6 (2026-11-18): G-LOOP closed by RoboLang 2.0 missions. L6 (2026-11-18): G-PERCEIVE closed by RoboLang 2.2 measured kinds.",
+      "basis": "FreshPlaza (2026): Tokuiten's suction-type cherry-tomato robot has been in full production use on its own 2,000 m2 farm in Aichi, Japan since 2026-05-25, picking about half of what one human picker does; a 1-hectare facility with six robots is scheduled for March 2027. The company seeks pilot partners. L6 (2026-11-17): G-CLOCK closed by RoboLang 1.9 clock readings. L6 (2026-11-18): G-LOOP closed by RoboLang 2.0 missions. L6 (2026-11-18): G-PERCEIVE closed by RoboLang 2.2 measured kinds. R3b (2026-11-24): G-TRIGGER and G-DATE claimed: \"Harvest on Tuesday and Thursday evenings\" starts runs on weekdays (0041 M6, 0042 T4). When G-LOOP closed at L6 of I4 this need was dropped instead of moved to G-TRIGGER (docs/evidence/rsi-r3b-new-gaps.md).",
       "requests": [
         "Harvest the ripe cherry tomatoes in row 4 and put them in the crate.",
         "Harvest on Tuesday and Thursday evenings.",
@@ -771,7 +783,9 @@
       ],
       "needs": [
         "G-CHOOSE",
-        "G-FORCE"
+        "G-FORCE",
+        "G-TRIGGER",
+        "G-DATE"
       ],
       "forecast": {
         "claim": "Tokuiten's 1-hectare, six-robot facility is operating by 2027-12-31.",
@@ -831,13 +845,16 @@
       ],
       "maturity": "deployment",
       "horizon": "now",
-      "basis": "Robotics Tomorrow (2026-04-07): Brain Corp says more than 40,000 robots are deployed across six continents; BrainOS Clean 2.0 for Tennant floor cleaners adds SelfPath AI (no manual route training), schedule-based operation and automatic charging, with fleet-wide rollout planned for May 2026. L6 (2026-11-17): G-PATH closed by RoboLang 1.7 region limits. L6 (2026-11-17): G-ACT closed by RoboLang 1.8 declared actions. L6 (2026-11-17): G-CLOCK closed by RoboLang 1.9 clock readings. L6 (2026-11-18): G-LOOP closed by RoboLang 2.0 missions.",
+      "basis": "Robotics Tomorrow (2026-04-07): Brain Corp says more than 40,000 robots are deployed across six continents; BrainOS Clean 2.0 for Tennant floor cleaners adds SelfPath AI (no manual route training), schedule-based operation and automatic charging, with fleet-wide rollout planned for May 2026. L6 (2026-11-17): G-PATH closed by RoboLang 1.7 region limits. L6 (2026-11-17): G-ACT closed by RoboLang 1.8 declared actions. L6 (2026-11-17): G-CLOCK closed by RoboLang 1.9 clock readings. L6 (2026-11-18): G-LOOP closed by RoboLang 2.0 missions. R3b (2026-11-24): G-TRIGGER and G-DATE claimed: \"Every night at 11 pm\" starts a run at a time (0041 M6), and a night clean runs past midnight (0042 T4); probe `f_date_corridor_after_midnight`. When G-LOOP closed at L6 of I4 this need was dropped instead of moved to G-TRIGGER (docs/evidence/rsi-r3b-new-gaps.md).",
       "requests": [
         "Clean the lobby every night at 11 pm, then go back to the dock to charge.",
         "Do not clean the wet-floor zone.",
         "If an aisle is blocked, clean the next one and tell the supervisor."
       ],
-      "needs": [],
+      "needs": [
+        "G-TRIGGER",
+        "G-DATE"
+      ],
       "forecast": {
         "claim": "Brain Corp reports at least 75,000 deployed robots by 2028-12-31.",
         "due": "2028-12-31",
@@ -3392,6 +3409,63 @@
     {
       "date": "2026-11-18",
       "note": "L6 of I6: G-PERCEIVE closed by RoboLang 2.2 measured kinds",
+      "activities": {
+        "ACT-LOG-001": "deployment now",
+        "ACT-LOG-002": "deployment now",
+        "ACT-MFG-001": "pilot 1-3y",
+        "ACT-MFG-002": "pilot 1-3y",
+        "ACT-RET-001": "deployment now",
+        "ACT-HOS-001": "deployment now",
+        "ACT-HLTH-001": "deployment now",
+        "ACT-ELD-001": "pilot 3-7y",
+        "ACT-HOME-001": "research 3-7y",
+        "ACT-HOME-002": "demo 3-7y",
+        "ACT-INSP-001": "demo now",
+        "ACT-INSP-002": "demo 1-3y",
+        "ACT-SEC-001": "demo 1-3y",
+        "ACT-SAFE-001": "demo 3-7y",
+        "ACT-CON-001": "deployment now",
+        "ACT-AGR-001": "pilot 3-7y",
+        "ACT-EV-001": "pilot 1-3y",
+        "ACT-CLN-001": "deployment now",
+        "ACT-MRC-001": "demo 3-7y",
+        "ACT-MRC-002": "demo 1-3y",
+        "ACT-HRC-001": "research 3-7y",
+        "ACT-HRC-002": "research 3-7y",
+        "ACT-ASM-001": "research 7y+",
+        "ACT-PRED-001": "research 3-7y",
+        "ACT-PRED-002": "research 3-7y",
+        "ACT-AUTO-001": "deployment now",
+        "ACT-AUTO-002": "demo 1-3y",
+        "ACT-AUTO-003": "research 3-7y",
+        "ACT-MFG-003": "demo 1-3y",
+        "ACT-AGR-002": "deployment now",
+        "ACT-SOL-001": "deployment now",
+        "ACT-PRED-003": "concept 3-7y",
+        "ACT-PRED-004": "concept 7y+",
+        "ACT-LRN-001": "concept 3-7y",
+        "ACT-LRN-002": "concept 3-7y",
+        "ACT-AUTO-004": "concept 3-7y",
+        "ACT-SAFE-002": "concept 3-7y",
+        "ACT-CARE-001": "concept 7y+",
+        "ACT-MFG-004": "demo 1-3y",
+        "ACT-HRC-003": "concept 3-7y"
+      },
+      "directions": {
+        "perception": 2.78,
+        "reasoning": 0.68,
+        "prediction": 0.25,
+        "action": 4.52,
+        "learning": 0.75,
+        "cooperation": 1.07,
+        "safety": 0.49,
+        "communication": 0.95,
+        "autonomy": 0.67
+      }
+    },
+    {
+      "date": "2026-11-24",
+      "note": "R3b: G-TRIGGER and G-DATE near (needs dropped when G-LOOP closed, now claimed again with probes); G-CATEGORY, G-NEGOTIATE and G-SHARED refuted as new gaps",
       "activities": {
         "ACT-LOG-001": "deployment now",
         "ACT-LOG-002": "deployment now",
