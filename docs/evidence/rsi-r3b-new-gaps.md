@@ -1,7 +1,8 @@
 # RSI-01 R3b: verifying the gaps proposed for I11–I20
 
 Date: 2026-11-24. Set `future` (`python bench/run.py --set future`): 4 new probes, now 15 `inexpressible` in all.
-Yardstick: [language-reference.md](../language-reference.md), RoboLang 2.2. No model was run and no money was spent.
+Yardstick: [language-reference.md](../language-reference.md), RoboLang 2.2. Model run: 8/8 declines on the new probes
+(see the end).
 Rule: [LE-7](../LANGUAGE_EVOLUTION_RULES.md). Why: the roadmap's I11–I20 (2026-11-18) named five gaps the atlas did not
 have (G-TRIGGER, G-SHIFT, G-CATEGORY, G-NEGOTIATE, G-SHARED) and had no priorities for any of them.
 
@@ -80,9 +81,14 @@ the others reuse the R3 clock worlds.
   claims (G-QUALITY, G-WORKSPACE, G-STEPLIMIT, G-OBSERVE). The roadmap does not move them ahead of I9 and I10; the
   monthly proposal decides that.
 
-## Not done, and follow-ups
+## Model run, and follow-ups
 
-- **No model run.** As in R3, the probes go to the `Benchmark` workflow with `set_only: future` (about $0.20). Until
-  then, only the language side is verified, not whether models decline these requests.
+- **Model run (2026-11-24)**, `Benchmark` workflow with `set_only: future`
+  ([run 45450391247](https://github.com/rokorobot/RoboLang/actions/runs/45450391247)), one repeat, $0.47. All 8
+  answers to the new probes are right: Sonnet 5.5 and Haiku 5.5 decline all four as `inexpressible`. Over the whole set,
+  no model writes a program for any of the 15 probes (0/15 false programs each). Sonnet's decisions are 37/37 right and
+  Haiku's 34/37; Haiku's three misses are `clarify` on the three G-CHOOSE probes, as in R3. Five programs reach the
+  wrong goal (`c_parts_left_in_container`, `c_retry_flag_carry_on` and `f_clock_shift_cutoff` for both models,
+  `f_perceive_weed_confidence` for Haiku). R3b did not change those tasks, so they are a follow-up, not R3b evidence.
 - **Follow-up: a check at L6.** When a gap closes, a test should fail if a sub-activity loses a need that its
   requests still show. The dropped trigger needs went unnoticed for six days.
