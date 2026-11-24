@@ -1,0 +1,149 @@
+{
+  "id": "x02_every_pan_above_75",
+  "prompt": "With chef_arm, take the temperature of every pan at the stove with probe_temp and put each pan above 75 degC in the sink. Pans come and go, so go by what is on the stove when you start.",
+  "world": "bench/worlds/choose_x02_every_pan_above_75.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_2": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_3": {
+    "decision": "cannot",
+    "category": "inexpressible",
+    "because": "0045 C9 (acting on each candidate in turn, with a reading of each)",
+    "program_also_ok": {
+      "erratum": "Q11",
+      "pinned": [
+        [
+          "pan_1",
+          "stove"
+        ],
+        [
+          "pan_2",
+          "stove"
+        ]
+      ],
+      "paths": [
+        {
+          "when": "both pans at 90 degC: both go to the sink",
+          "world_patch": {
+            "objects": {
+              "pan_1": {
+                "properties": {
+                  "temperature": {
+                    "value": "90",
+                    "unit": "degC"
+                  }
+                }
+              },
+              "pan_2": {
+                "properties": {
+                  "temperature": {
+                    "value": "90",
+                    "unit": "degC"
+                  }
+                }
+              }
+            }
+          },
+          "goal": [
+            [
+              "rl:thing:pan_1",
+              "located_in",
+              "rl:place:sink"
+            ],
+            [
+              "rl:thing:pan_2",
+              "located_in",
+              "rl:place:sink"
+            ]
+          ]
+        },
+        {
+          "when": "pan_1 at 90 degC, pan_2 at 40 degC: only pan_1 goes",
+          "world_patch": {
+            "objects": {
+              "pan_1": {
+                "properties": {
+                  "temperature": {
+                    "value": "90",
+                    "unit": "degC"
+                  }
+                }
+              },
+              "pan_2": {
+                "properties": {
+                  "temperature": {
+                    "value": "40",
+                    "unit": "degC"
+                  }
+                }
+              }
+            }
+          },
+          "goal": [
+            [
+              "rl:thing:pan_1",
+              "located_in",
+              "rl:place:sink"
+            ],
+            [
+              "rl:thing:pan_2",
+              "located_in",
+              "rl:place:stove"
+            ]
+          ]
+        },
+        {
+          "when": "both pans at 40 degC: both stay at the stove",
+          "world_patch": {
+            "objects": {
+              "pan_1": {
+                "properties": {
+                  "temperature": {
+                    "value": "40",
+                    "unit": "degC"
+                  }
+                }
+              },
+              "pan_2": {
+                "properties": {
+                  "temperature": {
+                    "value": "40",
+                    "unit": "degC"
+                  }
+                }
+              }
+            }
+          },
+          "goal": [
+            [
+              "rl:thing:pan_1",
+              "located_in",
+              "rl:place:stove"
+            ],
+            [
+              "rl:thing:pan_2",
+              "located_in",
+              "rl:place:stove"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  "gap": "G-EACH",
+  "tags": [
+    "temperature",
+    "each",
+    "reading_of_each_candidate",
+    "objects_at",
+    "run_time_set"
+  ],
+  "why": "Acting on each member of a set chosen at run time, by a reading (0045 C9): the standing task `x03_any_hot_pan` in a new wording. A choice picks one entity; the pans to move are as many as the readings say. G-EACH.",
+  "attempt_fails_with": "E203"
+}

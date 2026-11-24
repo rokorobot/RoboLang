@@ -1,11 +1,11 @@
 {
   "id": "x05_every_new_part",
   "prompt": "For the next 8 hours, move every new part that arrives at conveyor_in to the bin with arm_a.",
-  "world": "bench/worlds/assembly.json",
-  "group": "inexpressible",
+  "world": "bench/worlds/choose_x05_every_new_part.json",
+  "world_2_2": "bench/worlds/assembly.json",
+  "group": "choose",
   "expect": {
-    "decision": "cannot",
-    "category": "inexpressible"
+    "decision": "program"
   },
   "expect_1_9": {
     "decision": "cannot",
@@ -16,13 +16,128 @@
     "category": "inexpressible",
     "because": "0041 (G-CHOOSE, I7)"
   },
+  "expect_2_2": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_3": {
+    "decision": "program",
+    "world_2_3": {
+      "objects_at": {
+        "conveyor_in": [
+          "p1",
+          "p2",
+          "p3"
+        ]
+      }
+    },
+    "paths": [
+      {
+        "when": "p1, p2 and p3 are on the conveyor: three runs move them, a fourth finds none and fails the mission",
+        "chosen": [
+          "p1",
+          "p2",
+          "p3",
+          null
+        ],
+        "messages": [],
+        "world_patch": {},
+        "outcome": "failed",
+        "runs": 4,
+        "runs_verified": 3,
+        "parts_moved": 3
+      },
+      {
+        "when": "a fourth part has arrived: four runs move the parts, a fifth finds none",
+        "chosen": [
+          "p1",
+          "p2",
+          "p3",
+          "p4",
+          null
+        ],
+        "messages": [],
+        "world_patch": {
+          "objects": {
+            "p4": {
+              "location": "conveyor_in"
+            }
+          }
+        },
+        "outcome": "failed",
+        "runs": 5,
+        "runs_verified": 4,
+        "parts_moved": 4
+      },
+      {
+        "when": "the conveyor is empty: the first run finds none",
+        "chosen": [
+          null
+        ],
+        "messages": [],
+        "world_patch": {
+          "objects": {
+            "p1": {
+              "location": "station2"
+            },
+            "p2": {
+              "location": "station2"
+            },
+            "p3": {
+              "location": "station2"
+            }
+          }
+        },
+        "outcome": "failed",
+        "runs": 1,
+        "runs_verified": 0,
+        "parts_moved": 0
+      }
+    ]
+  },
+  "expected_choices": [
+    {
+      "type": "object",
+      "from": {
+        "objects_at": "conveyor_in"
+      },
+      "where": null,
+      "order": null,
+      "ladder_ok": false
+    }
+  ],
+  "expected_mission": {
+    "runs": [
+      {
+        "task": "a task that chooses a part from `objects at conveyor_in` and moves it to the bin",
+        "entities": [
+          "arm_a",
+          "conveyor_in",
+          "bin"
+        ]
+      }
+    ],
+    "repeat": {
+      "max_runs": null,
+      "max_duration": {
+        "value": 8,
+        "unit": "h"
+      }
+    },
+    "until": null,
+    "on_failure": "stop",
+    "policy_stated": false
+  },
   "gap": "G-CHOOSE",
   "tags": [
+    "choose",
+    "objects_at",
     "mission",
-    "stream",
-    "choose_object",
-    "duration_bound"
+    "duration_bound",
+    "choose_afresh",
+    "else_runs"
   ],
-  "why": "The bound is stated (8 hours) and the repetition is a mission, but the run needs the next part, which is chosen at run time from objects that do not exist yet: G-CHOOSE (I7). 0041 says how the next blank is named is not settled. The attempt names `next_part`, which is not a task parameter that any world declares.",
-  "attempt_fails_with": "E201"
+  "why": "RoboLang 2.3 (0045 C10): a mission for at most 8 hours (480 min) that repeats a task that chooses `object p from objects at conveyor_in` and moves it to the bin; each run chooses afresh and a part that was moved is no longer a candidate. The world is closed (nothing arrives while it runs) and the request states no wait, so the run that finds the conveyor empty fails and the mission stops as failed: `else` must end in `fail` (point 1), and a failed run under a time bound that changes nothing stops the mission (point 3).",
+  "attempt_fails_with": "E201",
+  "erratum": "Q5"
 }

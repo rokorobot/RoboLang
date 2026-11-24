@@ -1,0 +1,90 @@
+{
+  "ir_schema": "robolang.task-ir",
+  "ir_schema_version": "1.11",
+  "language_version": "2.3",
+  "tasks": [
+    {
+      "name": "store_far",
+      "parameters": [
+        {
+          "name": "r",
+          "type": "robot"
+        },
+        {
+          "name": "item",
+          "type": "object"
+        },
+        {
+          "name": "src",
+          "type": "location"
+        },
+        {
+          "name": "a",
+          "type": "location"
+        },
+        {
+          "name": "b",
+          "type": "location"
+        },
+        {
+          "name": "trailer",
+          "type": "location"
+        }
+      ],
+      "safety": [],
+      "preconditions": [],
+      "goal": [
+        {
+          "kind": "object_at",
+          "object": "item",
+          "location": "spot"
+        }
+      ],
+      "steps": [
+        {
+          "kind": "move",
+          "robot": "r",
+          "target": "src"
+        },
+        {
+          "kind": "grasp",
+          "robot": "r",
+          "object": "item"
+        },
+        {
+          "kind": "choose",
+          "type": "location",
+          "name": "spot",
+          "source": {
+            "kind": "list",
+            "candidates": [
+              "a",
+              "b"
+            ]
+          },
+          "order": {
+            "mode": "farthest",
+            "reference": "trailer"
+          },
+          "else": [
+            {
+              "kind": "fail",
+              "reason": "no place"
+            }
+          ]
+        },
+        {
+          "kind": "move",
+          "robot": "r",
+          "target": "spot"
+        },
+        {
+          "kind": "place",
+          "robot": "r",
+          "object": "item",
+          "target": "spot"
+        }
+      ]
+    }
+  ]
+}

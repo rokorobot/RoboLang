@@ -12,7 +12,8 @@ from decimal import Decimal
 
 from .. import ir
 from ..measured import COUNT, LABEL, Interval, compare_intervals, convert, reading_interval, to_base
-from .actions import action_problems
+from .actions import _step_problem as _action_problem, action_problems
+from .choice import NO_CANDIDATE, Choice, choice_problems, choose
 from .clock import DAY_S, clock_problems
 from .regions import CHECKED, limit_problems
 from .messages import ReceivedMessage, message_events, message_problems, received, same_text
@@ -186,6 +187,7 @@ class RunResult:
     final_world: FinalWorld
     decisions: tuple[Decision, ...] = ()
     messages: tuple[ReceivedMessage, ...] = ()  # RoboLang 2.1: what arrived from the start of the run to its end
+    choices: tuple[Choice, ...] = ()  # RoboLang 2.3 (decision 0045 C7): every choice that was reached, in order
 
 
 class SimulationInputError(ValueError):
@@ -205,6 +207,7 @@ class _State:
 
     def __init__(self, world: World):
         self.world = world
+        self.params: frozenset[str] = frozenset()  # the task's parameters; a run sets it, a name outside it is a choice
         self.ready = {k: v.ready for k, v in world.robots.items()}
         self.location = {k: v.location for k, v in world.robots.items()}
         self.holding: dict[str, str | None] = {k: None for k in world.robots}
@@ -468,15 +471,34 @@ def _authorize(task: ir.Task, world: World, bindings: tuple[tuple[str, str], ...
             failure = Failure(code, "authorization", None, None, index, culprit)
     if failure is None:  # RoboLang 1.8: the declared actions, after the limits (decision 0040 A6, C7)
         problems = action_problems(task, world, bound) or clock_problems(task, world, bound, elapsed_ms) \
-            or message_problems(task, world)
+            or message_problems(task, world) or choice_problems(task, world, bound)
         if problems:
             failure = Failure(problems[0].code, "authorization", problems[0].step, problems[0].precondition, None,
                               problems[0].robot)
     return tuple(LimitResult(lim, status) for lim, status in zip(task.safety, statuses)), failure
 
 
+def _region_guard(task: ir.Task, state: _State, bound: dict[str, str], step: ir.Move | ir.Place) -> None:
+    """
+    A region limit is checked before the run for the robots and places a task names (S003, S004). A robot or a
+    place that a `choose` bound (RoboLang 2.3) is known only now: the step then fails with the same code when the
+    robot does not honour the limit or the place is where the limit forbids (decision 0045 C11).
+    """
+    world = state.world
+    for limit in task.region_limits:
+        region = bound[limit.region]
+        if step.robot not in state.params and limit.kind not in world.robots[bound[step.robot]].honours:
+            raise _StepFailed("S003")
+        if step.target not in state.params:
+            contains = world.regions[region].contains
+            if contains is not None and ((bound[step.target] in contains) == (limit.kind == "no_go_region")):
+                raise _StepFailed("S004")
+
+
 def _execute(task: ir.Task, state: _State, bound: dict[str, str], step: ir.Step):
     """Perform one step. Returns (observation, message, condition_result, reading). Raises _StepFailed."""
+    if isinstance(step, (ir.Move, ir.Place)):
+        _region_guard(task, state, bound, step)
     if isinstance(step, ir.Move):
         robot = bound[step.robot]
         _require_ready(state.ready[robot])
@@ -509,8 +531,9 @@ def _execute(task: ir.Task, state: _State, bound: dict[str, str], step: ir.Step)
         robot, target = bound[step.robot], bound[step.target]
         _require_ready(state.ready[robot])
         action = state.world.robots[robot].action(step.action)
-        if action is None:  # authorization has failed such a run already
-            raise _StepFailed("S006")
+        problem = _action_problem(state.world, bound, step)  # also for a robot or target a `choose` bound (2.3)
+        if action is None or problem is not None:  # authorization has failed such a run already, except for a choice
+            raise _StepFailed("S006" if problem is None else problem[0])
         where = state.at[target] if target in state.at else target  # an object is where it is; a location is itself
         if state.held_by.get(target) != robot and where != state.location[robot]:
             raise _StepFailed("S271")
@@ -595,6 +618,12 @@ def _names(node, typed_sensors: bool) -> list[str]:
         return [name for condition in conditions for name in _names(condition, typed_sensors)]
     if isinstance(node, ir.Fail):
         return []
+    if isinstance(node, ir.Choose):  # the where is over the chosen name, which is no parameter
+        source = node.source
+        named = list(source.candidates) if isinstance(source, ir.ChooseList) \
+            else [source.location] if isinstance(source, ir.ObjectsAt) else []
+        found = [*named, *([node.order.reference] if node.order else [])]
+        return found + [n for n in _names(node.where, typed_sensors) if n != node.name] if node.where else found
     if isinstance(node, ir.Compare):  # only a live reading names parameters: its object and sensor
         return [name for side in (node.left, node.right) if isinstance(side, ir.LiveReading)
                 for name in (side.obj, side.sensor)]
@@ -634,9 +663,10 @@ def _check_inputs(task: ir.Task, world: World) -> None:
         if not world.binds(parameter.type, bound[parameter.name]):
             raise SimulationInputError(f"parameter '{parameter.name}' is not bound to a {parameter.type}")
     steps = [step for _, step in ir.walk(task.steps)]
+    chosen = {step.name for step in steps if isinstance(step, ir.Choose)}  # RoboLang 2.3: bound by a choice
     for node in (*task.preconditions, *(task.goal or ()), *steps):
         for name in _names(node, task.typed_sensors):
-            if name not in bound:
+            if name not in bound and name not in chosen:
                 raise SimulationInputError(f"task '{task.name}' refers to '{name}', which is not a parameter")
     script = world.task
     for index in (*script.faults, *(() if script.cancel_before_step is None else (script.cancel_before_step,))):
@@ -659,9 +689,10 @@ def run(task: ir.Task, world: World, state: _State | None = None) -> RunResult:
     """
     _check_inputs(task, world)
     bindings = world.task.bindings
-    bound = dict(bindings)
+    bound = dict(bindings)  # a `choose` adds its name here, for the rest of this run only (each run chooses afresh)
     if state is None:
         state = _State(world)
+    state.params = frozenset(bound)
     state.values, state.request, state.origin = {}, None, state.clock
     state.message_origin = state.clock  # S2: a run starts fresh; a message from before it does not count
     applied_before = len(state.applied)
@@ -697,6 +728,7 @@ def run(task: ir.Task, world: World, state: _State | None = None) -> RunResult:
 
     done: dict[int, StepResult] = {}
     decisions: list[Decision] = []
+    choices: list[Choice] = []
 
     def execute(steps: tuple[ir.Step, ...], first: int, prefix: str) -> bool:
         """Run a list of steps whose first has index `first`. True when the run is over (failed or cancelled)."""
@@ -731,7 +763,15 @@ def run(task: ir.Task, world: World, state: _State | None = None) -> RunResult:
                     i += 1 + size_then + sum(1 for _ in ir.walk(step.orelse))
                     continue
                 state.request = None
-                observation, message, condition_result, reading = _execute(task, state, bound, step)
+                if isinstance(step, ir.Choose):  # RoboLang 2.3 (decision 0045): bind the name, or run the `else`
+                    choice = choose(state, bound, step, label, i, lambda b, c: _evaluate(task, state, b, c))
+                    choices.append(choice)
+                    if choice.chosen is None:
+                        raise _StepFailed(NO_CANDIDATE)
+                    bound[step.name] = choice.chosen
+                    observation = message = condition_result = reading = None
+                else:
+                    observation, message, condition_result, reading = _execute(task, state, bound, step)
             except _StepFailed as exc:
                 handler = ir.handler_of(step)
                 if handler is None:
@@ -768,5 +808,5 @@ def run(task: ir.Task, world: World, state: _State | None = None) -> RunResult:
     return RunResult(
         task.name, bindings, tuple(states), states[-1], failure, cancelled, limits, pre, goal, results,
         tuple(state.applied[applied_before:]), state.clock, state.freeze(), tuple(decisions),
-        received(state.incoming, world, state.origin, state.clock),
+        received(state.incoming, world, state.origin, state.clock), tuple(choices),
     )

@@ -1,0 +1,11 @@
+// bench/reference_choose/x05_an_object_the_list_does_not_know.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 2.2;
+
+task look_for_unknown(robot r, location aisle) {
+    goal { robot_at r aisle; }
+    plan {
+        move r to aisle;
+        choose object thing from objects at aisle where object_exists thing else { fail "nothing seen"; } // @choice thing=shelf_2
+        communicate r to "lead" with "unknown object in aisle_2";
+    }
+}

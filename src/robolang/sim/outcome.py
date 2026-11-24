@@ -23,6 +23,18 @@ SIM_KEY = Key(SIM, SIM_HMAC, b"robolang-simulation-only-key-not-a-secret")
 OBSERVATION_VALID_FOR = {"value": "10", "unit": "s"}
 
 
+class _Bound(dict):
+    """The bindings of a run with the entities its choices made (RoboLang 2.3); a choice not made is a place-holder."""
+
+    def __missing__(self, name: str) -> str:
+        return f"?{name}"
+
+
+def run_bindings(result: RunResult) -> dict[str, str]:
+    """The task's bindings and, for each choice the run made, its name bound to the entity chosen."""
+    return _Bound({**dict(result.bindings), **{c.name: c.chosen for c in result.choices if c.chosen is not None}})
+
+
 def object_triple(obj: str, world: FinalWorld) -> Triple | None:
     """What is actually true of an object in the final world; None if unknown or absent (Core has no "nowhere")."""
     state = dict(world.objects)[obj]
@@ -84,7 +96,7 @@ evidence are listed in criterion order. The verifier stays SIM.
     """
     if core == "0.2":
         return _core_outcome_02(result, task, run_id, goal_id, reported_by, t0_ms, index_of)
-    bound = dict(result.bindings)
+    bound = run_bindings(result)
     try:
         # The goal of the path actually taken (decision 0027 B7); for a task without `if`, the task's goal.
         atoms = flatten_atoms(tuple(g.condition for g in result.goal))
@@ -129,7 +141,7 @@ def _core_outcome_02(result: RunResult, task: ir.Task, run_id: str, goal_id: str
     `or`, the first alternative whose criteria all hold in the final world, or null (every alternative is listed).
     A run ended by `fail` (S262) is `failed` with a `declared` reason and no verification.
     """
-    bound = dict(result.bindings)
+    bound = run_bindings(result)
     try:
         local = goal_alternatives(task, bound)
         pursued_goal = alternatives_of(tuple(g.condition for g in result.goal)) if result.goal else [()]

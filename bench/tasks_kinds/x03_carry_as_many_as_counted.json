@@ -16,12 +16,14 @@
     "category": "inexpressible",
     "because": "0044 K8"
   },
-  "gap": "G-CHOOSE",
   "tags": [
     "count",
     "run_time_choice",
     "each"
   ],
+  "gap": "G-EACH",
+  "gap_before": "G-CHOOSE",
+  "erratum": "Q2 (0045 C9, 2026-11-18): acting on each member of a run-time set stays out of 2.3; the old gap is kept here as history",
   "why": "Counting objects and acting on each of them (0044 K8, G-CHOOSE): the number of carry steps would come from the reading, and a plan has a fixed number of steps. 2.2 can compare a count, not repeat or choose by it.",
   "attempt_fails_with": "E217"
 }

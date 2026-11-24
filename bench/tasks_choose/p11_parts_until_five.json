@@ -1,0 +1,137 @@
+{
+  "id": "p11_parts_until_five",
+  "prompt": "Keep moving parts from conveyor_in to the bin with arm_a, taking whichever part is on the conveyor each time and waiting 20 minutes after each, until 17:00. If the conveyor is empty when a part is due, stop the job as failed.",
+  "world": "bench/worlds/choose_p11_parts_until_five.json",
+  "world_2_2": "bench/worlds/parts_line.json",
+  "group": "choose",
+  "expect": {
+    "decision": "program"
+  },
+  "expect_2_2": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_3": {
+    "decision": "program",
+    "world_2_3": {
+      "objects_at": {
+        "conveyor_in": [
+          "p1",
+          "p2",
+          "p3",
+          "p4"
+        ]
+      }
+    },
+    "paths": [
+      {
+        "when": "the clock starts at 16:30: run 1 ends 16:50, run 2 ends 17:10 and the until holds",
+        "chosen": [
+          "p1",
+          "p2"
+        ],
+        "messages": [],
+        "world_patch": {},
+        "outcome": "completed",
+        "runs": 2,
+        "runs_verified": 2,
+        "parts_moved": 2
+      },
+      {
+        "when": "the clock starts at 16:55: run 1 ends 17:15 and the until holds",
+        "chosen": [
+          "p1"
+        ],
+        "messages": [],
+        "world_patch": {
+          "clock": {
+            "start": "2026-11-18T16:55:00"
+          }
+        },
+        "outcome": "completed",
+        "runs": 1,
+        "runs_verified": 1,
+        "parts_moved": 1
+      },
+      {
+        "when": "one part only: run 2 finds the conveyor empty, `else` fails the run and the mission stops",
+        "chosen": [
+          "p1",
+          null
+        ],
+        "messages": [],
+        "world_patch": {
+          "objects": {
+            "p2": {
+              "location": "station2"
+            },
+            "p3": {
+              "location": "station2"
+            },
+            "p4": {
+              "location": "station2"
+            }
+          }
+        },
+        "outcome": "failed",
+        "runs": 2,
+        "runs_verified": 1,
+        "parts_moved": 1
+      }
+    ],
+    "expected_clock": [
+      {
+        "use": "until",
+        "reading": "time",
+        "op": ">=",
+        "value": "17:00"
+      }
+    ]
+  },
+  "expected_choices": [
+    {
+      "type": "object",
+      "from": {
+        "objects_at": "conveyor_in"
+      },
+      "where": null,
+      "order": null,
+      "ladder_ok": true
+    }
+  ],
+  "expected_mission": {
+    "runs": [
+      {
+        "task": "a task that chooses a part from `objects at conveyor_in`, moves it to the bin and waits 20 min",
+        "entities": [
+          "arm_a",
+          "conveyor_in",
+          "bin"
+        ],
+        "wait_min": 20,
+        "extra_entities_ok": true
+      }
+    ],
+    "repeat": {
+      "max_runs": null,
+      "max_duration": null
+    },
+    "until": {
+      "condition": "clock_time >= 17:00"
+    },
+    "on_failure": "stop",
+    "policy_stated": true
+  },
+  "gap": "G-CHOOSE",
+  "tags": [
+    "choose",
+    "objects_at",
+    "mission",
+    "until_clock",
+    "choose_afresh",
+    "else_runs",
+    "1_9_feature"
+  ],
+  "why": "The standing task `x_shuttle_until_five` with its choice stated (0045 C10): the mission ends at a time of day, and every run chooses afresh. No count of runs is asked for, so none may be added (0041). 2.2 has no `choose` (E203).",
+  "attempt_fails_with": "E203"
+}

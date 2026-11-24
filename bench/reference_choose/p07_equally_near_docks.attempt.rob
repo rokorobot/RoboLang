@@ -1,0 +1,10 @@
+// bench/reference_choose/p07_equally_near_docks.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 2.2;
+
+task to_dock(robot r, location d3, location d1, location hall) {
+    goal { robot_at r dock; }
+    plan {
+        choose location dock from (d3, d1) nearest to hall else { fail "no dock"; }                 // @choice dock=d3
+        move r to dock;
+    }
+}

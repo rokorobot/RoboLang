@@ -1,0 +1,213 @@
+{
+  "world_schema": "robolang.sim.world",
+  "world_schema_version": "1.8",
+  "locations": [
+    "dock_1",
+    {
+      "id": "dock_2",
+      "position": [
+        42,
+        18
+      ]
+    },
+    "dock_3",
+    {
+      "id": "gridline_a",
+      "position": [
+        5,
+        40
+      ]
+    },
+    "gridline_c",
+    "hall",
+    {
+      "id": "headland",
+      "position": [
+        80,
+        80
+      ]
+    },
+    "level_3_wall",
+    {
+      "id": "lobby",
+      "position": [
+        45,
+        12
+      ]
+    },
+    {
+      "id": "module_pallet",
+      "position": [
+        30,
+        50
+      ]
+    },
+    "row_12",
+    "row_14",
+    "row_15",
+    {
+      "id": "stop_a",
+      "position": [
+        0,
+        0
+      ]
+    },
+    "stop_b",
+    "stop_c",
+    "stop_d"
+  ],
+  "regions": {
+    "wet_floor": {
+      "clear": false
+    },
+    "layout_zone": {
+      "clear": true
+    },
+    "field_zone": {
+      "clear": true
+    },
+    "road_zone": {
+      "clear": true
+    }
+  },
+  "robots": {
+    "spot1": {
+      "ready": true,
+      "location": "stop_a",
+      "gripper": false,
+      "max_speed": [
+        {
+          "value": "1.6",
+          "unit": "m/s"
+        }
+      ]
+    },
+    "cleaner1": {
+      "ready": true,
+      "location": "dock_2",
+      "gripper": false,
+      "max_speed": [
+        {
+          "value": "1",
+          "unit": "m/s"
+        }
+      ]
+    },
+    "printer1": {
+      "ready": true,
+      "location": "gridline_a",
+      "gripper": false,
+      "max_speed": [
+        {
+          "value": "0.5",
+          "unit": "m/s"
+        }
+      ]
+    },
+    "weeder1": {
+      "ready": true,
+      "location": "headland",
+      "gripper": false,
+      "max_speed": [
+        {
+          "value": "1.2",
+          "unit": "m/s"
+        }
+      ]
+    },
+    "installer1": {
+      "ready": true,
+      "location": "module_pallet",
+      "gripper": true,
+      "max_speed": [
+        {
+          "value": "0.4",
+          "unit": "m/s"
+        }
+      ]
+    }
+  },
+  "objects": {
+    "plant_7": {
+      "present": true,
+      "location": "row_12",
+      "class": "plant",
+      "properties": {
+        "label": {
+          "value": "weed"
+        }
+      }
+    },
+    "table_14": {
+      "present": true,
+      "location": "row_14",
+      "class": "table",
+      "properties": {
+        "distance": {
+          "value": "3",
+          "unit": "mm"
+        }
+      }
+    },
+    "table_15": {
+      "present": true,
+      "location": "row_15",
+      "class": "table",
+      "properties": {
+        "distance": {
+          "value": "2",
+          "unit": "mm"
+        }
+      }
+    },
+    "module_14": {
+      "present": true,
+      "location": "module_pallet",
+      "class": "module"
+    },
+    "module_15": {
+      "present": true,
+      "location": "module_pallet",
+      "class": "module"
+    }
+  },
+  "sensors": {
+    "cam_spot": {
+      "robot": "spot1",
+      "available": true
+    },
+    "lidar_spot1": {
+      "robot": "spot1",
+      "available": true,
+      "measures": {
+        "distance": {
+          "unit": "m",
+          "uncertainty": "0.05",
+          "contact": false
+        }
+      }
+    },
+    "cam_weeder1": {
+      "robot": "weeder1",
+      "available": true,
+      "measures": {
+        "label": {
+          "contact": false
+        }
+      }
+    },
+    "laser_installer1": {
+      "robot": "installer1",
+      "available": true,
+      "measures": {
+        "distance": {
+          "unit": "mm",
+          "uncertainty": "0.5",
+          "contact": false
+        }
+      }
+    }
+  },
+  "events": [],
+  "tasks": {}
+}

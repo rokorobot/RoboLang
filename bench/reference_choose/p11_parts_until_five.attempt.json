@@ -1,0 +1,9 @@
+{
+  "task": "",
+  "mission": "move_parts",
+  "bindings": {
+    "arm": "arm_a",
+    "conveyor": "conveyor_in",
+    "bin": "bin"
+  }
+}

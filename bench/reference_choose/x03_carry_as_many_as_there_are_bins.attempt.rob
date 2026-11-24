@@ -1,0 +1,14 @@
+// bench/reference_choose/x03_carry_as_many_as_there_are_bins.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 2.2;
+
+task carry_counted(robot r, location row, object crate, sensor cam, location src, location dst) {
+    goal { object_at crate dst; }
+    plan {
+        measure r count of row using cam as n;
+        choose object crate from objects at src else { fail "no crate"; }                           // @choice crate=crate_1
+        move r to src;
+        grasp r crate;
+        move r to dst;
+        place r crate at dst;
+    }
+}

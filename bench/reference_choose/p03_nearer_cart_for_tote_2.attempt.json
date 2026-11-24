@@ -1,0 +1,11 @@
+{
+  "task": "to_closer",
+  "bindings": {
+    "r": "digit1",
+    "tote": "tote_2",
+    "src": "inbound_conveyor",
+    "a": "cart_3",
+    "b": "conveyor_b",
+    "ref": "outbound_conveyor"
+  }
+}

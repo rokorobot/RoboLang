@@ -1,0 +1,9 @@
+{
+  "task": "to_dock",
+  "bindings": {
+    "r": "cleaner1",
+    "d3": "dock_3",
+    "d1": "dock_1",
+    "hall": "hall"
+  }
+}

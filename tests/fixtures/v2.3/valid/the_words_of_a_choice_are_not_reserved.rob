@@ -1,0 +1,15 @@
+// RoboLang v2.3 fixture: valid
+// expect: ok
+// why: choose, from, where, nearest, farthest, objects and robots are names (point 10)
+
+robolang 2.3;
+
+task choose(robot nearest, location farthest, object objects, location robots, location from, location where) {
+    goal { object_at objects from; }
+    plan {
+        move nearest to farthest;
+        grasp nearest objects;
+        move nearest to robots;
+        place nearest objects at from;
+    }
+}

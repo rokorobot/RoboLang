@@ -1,0 +1,8 @@
+{
+  "task": "take_fullest",
+  "bindings": {
+    "r": "picker_h",
+    "row": "bin_row",
+    "dst": "dock_b"
+  }
+}

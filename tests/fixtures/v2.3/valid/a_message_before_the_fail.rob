@@ -1,0 +1,16 @@
+// RoboLang v2.3 fixture: valid
+// expect: ok
+// why: an else may do something before it ends in fail (point 1)
+
+robolang 2.3;
+
+task send_one(robot a, robot b, location dst) {
+    goal { robot_at t dst; }
+    plan {
+        choose robot t from (a, b) where robot_ready t and not robot_at t dst else {
+            communicate a to "ops" with "no tugger";
+            fail "no tugger is free";
+        }
+        move t to dst;
+    }
+}

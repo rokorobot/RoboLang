@@ -1513,3 +1513,72 @@ event of a count is `{ "value": "14" }` (no `unit`). Earlier sources write their
 
 `core_outcome` and `export-goal` are unchanged: goals have no values. `delegate` and the ROS 2 backend refuse a task with a
 `measure` whatever its kind (`S509`).
+
+## 21. RoboLang 2.3: choosing at run time
+
+Decision record [0045](decisions/0045-choosing-at-run-time.md) (C1 to C12); language in [robolang-v2.3.md](robolang-v2.3.md). A task
+of language 1.1 to 2.2 runs exactly as before, whatever the world file's version.
+
+### 21.1 World file 1.8
+
+`"world_schema_version": "1.8"` is 1.7 plus one thing: an entry of `locations` may be an object, `{ "id": ID, "position": [x, y] }`,
+instead of the ID. A coordinate is a JSON whole number or an exact decimal in a string (`"12.5"`, `"-3"`, at most 32
+characters), in metres; a float is `E504`, as everywhere in a world file. A location with no `position` has none. Files 1.0 to
+1.7 are still accepted and unchanged; in them an object in `locations` is `E504`. A robot or an object is at the position of its
+location; an object that a robot holds is where the robot is; an object that is absent or unknown has no position.
+
+### 21.2 A choice
+
+`choose` (robolang-v2.3.md section 2) is made when the run reaches it, from the state at that moment:
+
+1. the **candidates**: a list (each parameter's entity, once, in the order written), `objects at L` (the objects that are present,
+   not held and at `L`, in the order the world lists them) or `robots` (in the order the world lists them);
+2. `where` is evaluated for each, with the name bound to it; a candidate for which it is not true is **excluded** (`where_false`, or
+   `where_unknown` for an unknown value: it fails closed);
+3. with an order, the position of the reference point and of each candidate is looked up; one with no position is excluded
+   (`no_position`), the rest are ordered by the **exact squared** straight-line distance (nearest: smallest first; farthest:
+   largest first). A stable sort keeps the order written, so **a tie goes to the first candidate**;
+4. the first candidate left is bound to the name for the rest of the run; with none left the step fails with **`S272`** and its `else`
+   runs. A mission's later run chooses afresh.
+
+A step that uses a chosen robot or place is checked when it runs: `grasp` (`S211`), a sensor not mounted on the robot (`S231`), a
+declared action (`S006` to `S008`), a region limit (`S003`, `S004`: the robot honours it, the place is not where it forbids). The
+checks of 1.7 and 1.8 that use only parameters are made before the run as before.
+
+### 21.3 `S273`: no position for the reference point
+
+A choice with an order whose reference point is a **location** with no position in the world fails before the run (phase
+`authorization`, and in `validate --world`): positions are fixed, so every candidate would be left out. The run is `FAILED`
+with `S273` before any step. A robot or an object as the reference is checked when the choice is made: with no position the
+candidates are all excluded (`no_position`) and the `else` runs.
+
+### 21.4 Run record 1.11
+
+A 2.3 source writes `run_record_schema_version` `1.11` and embeds Task IR 1.11; a mission record is `1.3`. The key order is that of
+record 1.10 with **`choices`** after `decisions`: one entry per choice reached, in order:
+
+```json
+{ "step": "1", "type": "robot", "name": "t", "candidates": ["tugger_a", "tugger_b"],
+  "excluded": [ { "entity": "tugger_a", "reason": "where_false" } ],
+  "order": { "mode": "nearest", "reference": "trailer_4",
+             "distances_squared": [ { "entity": "tugger_b", "m2": "787.25" } ] },
+  "kept": ["tugger_b"], "chosen": "tugger_b", "t_ms": "0" }
+```
+
+`order` is null for a choice with none; `chosen` is null when no candidate was left. The goal is verified for the entity chosen: the
+goal conditions that name the chosen name are checked with it bound; a run that ends before the choice has not evaluated them.
+`core_outcome` is built with the entities chosen. Earlier sources write their records unchanged, byte for byte.
+
+### 21.5 Missions
+
+A mission runs a task with `choose` like any task, in its one world and clock; each run chooses from the state at its start
+(C10). In 2.3 a mission with a time bound stops with `ended_by` **`no_progress`** (outcome `failed`) after a failed run that left
+the world and the clock exactly as it found them and the policy is `continue` (robolang-v2.3.md section 4).
+
+### 21.6 `export-goal`, `delegate` and the ROS 2 backend (C8)
+
+`export-goal` and `delegate` make the choices first, from the world as it starts (`ground`): every `choose` must be at the top
+level of the plan with only other `choose` statements before it, and the choices must leave a candidate each; otherwise the task
+is refused with **`X609`**. The task they send has each chosen name as a parameter bound to the entity chosen and no `choose`; the
+delegate record has a `choices` array (as 21.4) after `robot`. A library task with a `choose` is `choose_unsupported`. The ROS 2
+backend refuses a `choose` with `S508` before any motion.

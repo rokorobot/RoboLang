@@ -1,10 +1,10 @@
-# RoboLang 2.2 language reference
+# RoboLang 2.3 language reference
 
 RoboLang is a small, checked language for robot tasks. A program describes a desired final state and
 a plan for reaching it in a symbolic world. A program is correct only when it validates, names the
 right entities, states the operator's requested outcome in `goal`, and reaches that goal.
 
-RoboLang 2.2 has bounded branching (`if`/`else`, see "Branching"), step failure handlers (a step
+RoboLang 2.3 has bounded branching (`if`/`else`, see "Branching"), step failure handlers (a step
 `else { ... }` that runs when that step fails, see "Failure handlers"), measured values (`measure`
 reads a temperature, a mass, a distance, a label, **how full something is, how sure the detector is, a
 pressure or a count** from a sensor, see "Measured values"), region
@@ -13,12 +13,14 @@ limits (`@safety no_go_region R;`, `@safety in_region R;`: where the robots may 
 `in_state door "open"` checks the result, see "Declared actions"), clock readings (`measure r time as t;` reads the
 time of day, `22:00` is a time, `wait until clock_time >= 23:00 ...` waits for one, see "Clock readings") and
 **missions** (a `mission` runs tasks one after another, again and again, with a hard bound: a count, a duration or a
-time of day, see "Missions") and **incoming messages** (`message_received "line" with "DOCKED"` is true once a message has
-arrived on a channel, see "Incoming messages"). A task itself never loops: it runs once. **A fixed count is not a mission:** "three round
+time of day, see "Missions"), **incoming messages** (`message_received "line" with "DOCKED"` is true once a message has
+arrived on a channel, see "Incoming messages") and **choosing at run time** (`choose robot t from (a, b)
+nearest to spot else { ... }` binds a name to one robot, object or location when the job runs, see "Choosing at run time").
+A task itself never loops: it runs once. **A fixed count is not a mission:** "three round
 trips" is one task with the steps written out three times (a mission with `at most 3 runs` is also accepted), and
 "try the grasp once more" or "retry the step up to 3 times" is a failure handler, a program, not a decline. It has no
 repeat without a bound ("forever", "until it works" with no count or time), triggers ("every hour", "every morning",
-"at 06:00", "when a message arrives"), loops inside loops, choosing the next object at run time, dates, arithmetic,
+"at 06:00", "when a message arrives"), loops inside loops, choosing by a reading of each candidate, acting on each member of a set chosen at run time, dates, arithmetic,
 string formatting, confirming that a message the robot sent was delivered, the content of a message as a value, patterns
 in a message text, readings of anything but the eight kinds, of a person or of the robot itself, limits on one step only,
 limits on an arm or a person, or variables beyond typed
@@ -27,7 +29,7 @@ world and robots cannot perform it, say that it cannot be represented or complet
 
 ## File and task structure
 
-A file starts with `robolang 2.2;` and holds one or more tasks, and missions that run them (see "Missions"). A file of
+A file starts with `robolang 2.3;` and holds one or more tasks, and missions that run them (see "Missions"). A file of
 tasks only needs no mission. `//` starts a comment. The language
 is case-sensitive. Whitespace only separates tokens.
 
@@ -122,8 +124,8 @@ if region_clear cell {
 
 **A condition about the moment the job runs is decided by the program, with `if`.** When the request
 says "if arm1 is ready when the job starts", "if the cell is clear at that moment", "if the box is
-still there", or "whichever robot is ready", the answer is not in the world description you were
-given: it is whatever is true when the program runs. Never settle it by reading the description and
+still there", or "whichever robot is ready" (two or three named robots: an `if`; a list or a set: `choose`, see "Choosing at run
+time"), the answer is not in the world description you were given: it is whatever is true when the program runs. Never settle it by reading the description and
 writing only the branch that is true there, and never write only one branch (with or without `pre`).
 Write the `if` with both branches, and with a goal for each path. A program with one branch passes
 in the world shown and fails in the other worlds the request was about.
@@ -236,14 +238,14 @@ program uses the value afterwards.
   uncertainty. "Tell the channel the value you measured" is this, never a literal text. There is no formatting: a
   message cannot be built from a value ("Pan 1 is at <reading> degC"), and the request is then not representable.
 - **Not in the language:** arithmetic (an average, a difference, a sum of readings), formatting a value into text,
-  and choosing an object at run time ("any pan
-  above 80 degC": there is no way to search; name the objects). Say that these cannot be represented. The clock has
-  its own section ("Clock readings").
+  and choosing an object by a reading of each candidate ("any pan above 80 degC", "the fullest bin on the row": `choose`
+  uses world facts, never a reading, see "Choosing at run time"; with two or three named objects, measure each and
+  compare the names in an `if`). Say that these cannot be represented. The clock has its own section ("Clock readings").
 
 ### More kinds: fill, confidence, pressure, count
 
 ```rob
-robolang 2.2;
+robolang 2.3;
 
 task shelf_check(robot r, location shelf, location aisle, object gauge, sensor cam, sensor tag, sensor pcam) {
     goal { robot_at r aisle; }
@@ -290,6 +292,78 @@ task shelf_check(robot r, location shelf, location aisle, object gauge, sensor c
   counting objects chosen at run time and acting on each one ("carry as many cartons as counted": a plan has a fixed number of
   steps); and arithmetic on readings (an average, a difference).
 
+## Choosing at run time
+
+```text
+choose TYPE NAME from CANDIDATES [where CONDITION] [nearest to X | farthest from X] else { ... fail "..."; }
+```
+
+```rob
+robolang 2.3;
+
+task send_tugger(robot a, robot b, location handoff) {
+    goal { robot_at t handoff; }
+    plan {
+        choose robot t from (a, b) nearest to handoff else { fail "no tugger has a position"; }
+        move t to handoff;
+        communicate t to "ops" with "tugger sent";
+    }
+}
+```
+
+`choose` binds a new name (`t` above) to **one** entity of `TYPE` (`robot`, `object` or `location`) when the job reaches the
+statement. Use it when the request leaves the entity to the world: "whichever tugger is nearest", "a part from the conveyor",
+"the robot that is ready", "the dock farthest from the gate".
+
+- **Candidates**, always finite, one of three forms: a **list** of parameters, `(a, b, c)`, in the order the request writes
+  them; **`objects at L`**, the objects that are at location `L` when the choice is made (a part that was moved is no
+  longer there); **`robots`**, every robot the world lists. `objects at L` takes every object at `L`: filter with `where`.
+  There is no "any object in the world".
+- **`where`** is written **only for a condition the request states** ("whichever is ready": `where robot_ready t`;
+  "a clean one": `where in_state p "clean"`). "Whichever is nearer" has no `where`: an added `where robot_ready t` would
+  send the farther robot when the nearer one is not ready, which the request did not ask. It is a condition over the new name, evaluated from the world as it is at the choice: `robot_ready t`,
+  `object_at p dock`, `in_state p "clean"`, `not`, `and`, `or`. A value the world does not know **excludes** the
+  candidate. It states **world facts only**: a reading, the clock or a message is `E330`.
+- **`nearest to X`** or **`farthest from X`**, where `X` is a location, a robot or an object parameter, orders the
+  candidates by straight-line distance. The world list gives each location's position, `dock_1 (50, 30)`, in metres; a
+  location shown `(no position)` is unknown, and an unknown candidate or reference point is left out. **A tie, and a
+  choice with no order, go to the first candidate in the order written** (a list) or listed (`objects at`, `robots`):
+  "if they are equally near take the one I named first" is that order. A number such as the distance cannot be read or
+  compared by a task.
+- **`else` is required, and it ends in `fail`** (`E316`, `E329`). It runs when no candidate is left. A message may come
+  before the `fail`: `else { communicate a to "ops" with "no tugger"; fail "no tugger is free"; }`. When the request gives
+  no fallback and the world leaves no candidate (nothing is ready, nothing is at that place, the place has no position),
+  the request is `infeasible`: say so.
+- **The new name is used like a parameter** afterwards, in the plan and in the goal: a `goal` block (the task's, or an
+  `if` branch's) may name what a `choose` at the top level of its plan or branch binds, though the goal comes first. The
+  goal is checked for the entity chosen, never "for some entity": write `goal { robot_at t handoff; }`, not a goal for
+  one fixed robot. A name chosen inside an `if` branch is not visible after it, and `pre` cannot name it.
+- **One choice uses parameters, never another choice** (`E331`); the new name must not be a parameter or a binding (`E302`).
+- **`choose` never reads a value.** "Whichever of bin_1 and bin_2 is fuller" is two or three named candidates compared by
+  readings: `measure` each and compare the names in an `if`, as in "Measured values". Do not add a `choose` to a request
+  that names its candidates and asks for a comparison of readings, and do not invent an order, a `where` or a bound the
+  request does not state.
+- **A choice that uses only world facts may come first**, before any action, even when the request mentions it late ("take
+  it to whichever place is nearest"): the choice is the same whether the robot holds the tote yet or not. Write
+  `choose location dst from (a, b) nearest to src else { ... }` first, then move, grasp and place at `dst`. Such a task can be
+  sent to a robot (`export-goal`, `delegate`): the planner makes the choice from its world model and sends the goal with it
+  filled in. A `choose` after an action, or inside an `if`, runs in simulation but cannot be sent.
+- **In a mission, each run chooses afresh.** "Move parts from the conveyor, one at a time, for 6 minutes" is a mission that
+  repeats a task that chooses `object part from objects at conveyor`: write the waits the request states, because a run
+  takes no simulated time of its own, and the bound the request states. A run that finds no candidate fails (`else`), and
+  `on failure { stop; }` ends the mission as failed. Where the request lists a few named objects, an `if` ladder over them
+  (`if object_at p1 conveyor { ... } else if object_at p2 conveyor { ... }`) does the same.
+- **`choose` is not a loop:** it picks one entity. A request for **every** member of a set ("check every pan", "carry as many
+  as counted") has no `choose`: a plan has a fixed number of steps.
+
+**Not in 2.3** (decline as `inexpressible`): choosing by a **reading** of each candidate ("the fullest bin", "any pan above
+80 degC"); acting on **each** candidate in turn, with a memory of which are done ("every pan", "as many crates as there
+are bins"); **detecting objects the world does not list** ("if the camera sees something the stock list does not know":
+`objects at L` yields only what the world lists); **choosing a person** ("the robot nearest the person who called": a person
+is not an entity of the world, and a stand-in place for them is another request); **several choices that depend on each
+other**. Do not replace a choice by one fixed candidate, by the first of a list with the order dropped, or by a stand-in:
+write the `choose` with the criteria the request states, or decline.
+
 ## Clock readings
 
 ```text
@@ -302,7 +376,7 @@ communicate r to "lead" with now;          // a time is sent as HH:MM:SS; an ela
 ```
 
 ```rob
-robolang 2.2;
+robolang 2.3;
 
 task tote_if_open(robot r, object tote, location inb, location outb) {
     plan {
@@ -379,7 +453,7 @@ goal { in_state door "open"; }      // the result is checked, never assumed
 ```
 
 ```rob
-robolang 2.2;
+robolang 2.3;
 
 task restock(robot r, object closet, object kit, location ward, location store) {
     goal { in_state closet "open"; object_at kit ward; }
@@ -496,7 +570,7 @@ Both words go after `@safety`, name a `region` parameter, and are written before
 order with `max_speed`. Bind the parameter to the region of the world that the request names, by its exact ID.
 
 ```rob
-robolang 2.2;
+robolang 2.3;
 
 task to_lobby(robot r, location lobby, region wet) {
     @safety no_go_region wet;
@@ -552,7 +626,7 @@ mission NAME(type param, ...) {
 ```
 
 ```rob
-robolang 2.2;
+robolang 2.3;
 
 task round(robot r, location home, location far) {
     goal { robot_at r home; }
@@ -575,7 +649,8 @@ mission shuttle(robot r, location home, location far, region quay) {
   carries in all" is two `run` lines and `at most 24 runs`).
 - **Every repeat has a hard bound** (`E325` with none): `at most N runs` (1 to 1000), `for at most D` (a duration in `ms`,
   `s` or `min`: **no hours, 3 hours are `180 min`**), or an `until clock_time >= T` (a time of day, "until 22:00"), alone or
-  with a count. Give exactly the bounds the request states: a count when it says "30 times", a duration when it says
+  with a count. **A time of day in `until` is the bound by itself:** "until 17:00" is `until clock_time >= 17:00;` with no
+  `at most` count and no `for at most` duration added. Give exactly the bounds the request states: a count when it says "30 times", a duration when it says
   "for 2 hours", both when it says both, and never a count that was not asked for (a duration-only request is
   `for at most 120 min` with no `at most`).
 - **`until`** takes the conditions of a `pre` (`region_clear r`, `object_at o l`, `robot_at`, `holding`, `object_exists`,
@@ -605,7 +680,7 @@ mission shuttle(robot r, location home, location far, region quay) {
   with `at most 3 runs` is also accepted); "retry the grasp up to twice" is a failure handler (see "Failure handlers"):
 
 ```rob
-robolang 2.2;
+robolang 2.3;
 
 task three_round_trips(robot r, location a, location b) {
     goal { robot_at r a; }
@@ -617,8 +692,9 @@ task three_round_trips(robot r, location a, location b) {
   "until I tell you to stop", "as long as it takes": do not invent one); **triggers** ("every hour", "every morning",
   "every 10 minutes", "at 06:00", "each time a message arrives", "when the oven is hot": a mission starts a run when the
   last one is done, never at a time or on an event, and "wait 60 min" at the end of a task is a different request);
-  **nesting** (a loop inside a loop, a mission that runs a mission); **choosing the next object at run time** ("every
-  part that arrives", "the next blank": a mission repeats a task whose parameters are fixed). A request whose count is
+  **nesting** (a loop inside a loop, a mission that runs a mission). **Choosing the next object** ("every
+  part on the conveyor", "the next blank") is a mission that repeats a task that chooses `from objects at L`: each run
+  chooses afresh, and a part that was moved is no longer a candidate (see "Choosing at run time"). A request whose count is
   small and fixed is **not** one of these: "three round trips" is one task with the steps repeated, and "retry the
   grasp up to twice" is a failure handler; neither is declined. A request that contradicts itself ("12 runs in all, and
   20 retries on top of the first") or cannot fit its own time is `infeasible`.
@@ -634,7 +710,7 @@ message_received "nurse"                         // any message at all on that c
 ```
 
 ```rob
-robolang 2.2;
+robolang 2.3;
 
 task feed(robot r, object tote, location src, location handoff, location line) {
     goal { object_at tote line; }
@@ -771,7 +847,7 @@ records completion. Its parameters still
 need bindings to concrete world entities before simulation.
 
 ```rob
-robolang 2.2;
+robolang 2.3;
 
 task deliver(robot r, object box, location src, location dst, region cell, sensor camera) {
     @safety max_speed 0.5 m/s;
@@ -795,7 +871,7 @@ This task chooses at run time. If the cell is clear when the job reaches the `if
 `a`; otherwise it goes to `b`. Each path has its own goal.
 
 ```rob
-robolang 2.2;
+robolang 2.3;
 
 task route(robot r, object box, location src, location a, location b, region cell) {
     plan {
@@ -817,7 +893,7 @@ task route(robot r, object box, location src, location a, location b, region cel
 This task retries a failed grasp once. If the second grasp also fails, it reports and stops.
 
 ```rob
-robolang 2.2;
+robolang 2.3;
 
 task fetch(robot r, object box, location src, location dst) {
     goal { object_at box dst; }
@@ -841,7 +917,7 @@ reading to the "pass" channel, and moves the pan only if the reading is clearly 
 may be too hot.
 
 ```rob
-robolang 2.2;
+robolang 2.3;
 
 task check_pan(robot r, object pan, sensor probe, location src, location dst) {
     goal { object_at pan dst; }

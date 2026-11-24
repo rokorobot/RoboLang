@@ -1,0 +1,14 @@
+// bench/reference_choose/i05_the_ready_scanbot_has_the_wrong_camera.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 2.2;
+
+task read_shelf(robot a, robot b, object shelf, sensor cam, location aisle, location ref) {
+    goal { robot_at who aisle; }
+    plan {
+        choose robot who from (a, b) where robot_ready who nearest to ref else { fail "no scanbot is ready"; } // @choice who=a
+        move who to aisle;
+        measure who fill of shelf using cam as level;
+        if level < 10 % {
+            communicate who to "lead" with "restock shelf_3";
+        }
+    }
+}

@@ -27,6 +27,7 @@ from .diagnostics import MAX_ERRORS, Diagnostic, RoboLangError, Severity
 from .lexer import Lexer
 from .nodes import Span
 from .tokens import (
+    CHOOSE_TYPES,
     CONDITIONS,
     CONDITIONS_V1_3,
     CONDITIONS_V1_8,
@@ -50,7 +51,7 @@ from .tokens import (
 )
 
 DEFAULT_VERSION = "1.1"  # the version of a file without a marker
-SUPPORTED_VERSIONS = ("1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "2.0", "2.1", "2.2")
+SUPPORTED_VERSIONS = ("1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "2.0", "2.1", "2.2", "2.3")
 SUPPORTED_VERSION = DEFAULT_VERSION  # kept for existing imports
 MAX_CONDITION_DEPTH = 8  # spec/robolang-v1.2.md section 3.3
 MAX_IF_DEPTH = 4  # spec/robolang-v1.4.md section 3.3 (E216)
@@ -118,47 +119,52 @@ class _Parser:
     @property
     def _typed(self) -> bool:
         """True in 1.3 to 1.8 files: goal blocks, outcome atoms and sensor parameters."""
-        return self._language in ("1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "2.0", "2.1", "2.2")
+        return self._language in ("1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "2.0", "2.1", "2.2", "2.3")
 
     @property
     def _branching(self) -> bool:
         """True in 1.4 to 1.8 files: `if`, `else` and `fail`."""
-        return self._language in ("1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "2.0", "2.1", "2.2")
+        return self._language in ("1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "2.0", "2.1", "2.2", "2.3")
 
     @property
     def _handlers(self) -> bool:
         """True in 1.5 to 1.8 files: a step may end with a failure handler `else { ... }`."""
-        return self._language in ("1.5", "1.6", "1.7", "1.8", "1.9", "2.0", "2.1", "2.2")
+        return self._language in ("1.5", "1.6", "1.7", "1.8", "1.9", "2.0", "2.1", "2.2", "2.3")
 
     @property
     def _values(self) -> bool:
         """True in 1.6 to 1.8 files: `measure`, comparisons, live readings and sending a binding (decision 0036)."""
-        return self._language in ("1.6", "1.7", "1.8", "1.9", "2.0", "2.1", "2.2")
+        return self._language in ("1.6", "1.7", "1.8", "1.9", "2.0", "2.1", "2.2", "2.3")
 
     @property
     def _regions(self) -> bool:
         """True in 1.7 and 1.8 files: `@safety no_go_region R;` and `@safety in_region R;` (decision 0039)."""
-        return self._language in ("1.7", "1.8", "1.9", "2.0", "2.1", "2.2")
+        return self._language in ("1.7", "1.8", "1.9", "2.0", "2.1", "2.2", "2.3")
 
     @property
     def _actions(self) -> bool:
         """True in 1.8 files: `do` and `in_state` (decision 0040)."""
-        return self._language in ("1.8", "1.9", "2.0", "2.1", "2.2")
+        return self._language in ("1.8", "1.9", "2.0", "2.1", "2.2", "2.3")
 
     @property
     def _clock(self) -> bool:
         """True in 1.9 files: `measure r time as t;`, time literals and `clock_time` (decision 0042)."""
-        return self._language in ("1.9", "2.0", "2.1", "2.2")
+        return self._language in ("1.9", "2.0", "2.1", "2.2", "2.3")
 
     @property
     def _messages(self) -> bool:
         """True in 2.1 files: the condition `message_received` (decision 0043)."""
-        return self._language in ("2.1", "2.2")
+        return self._language in ("2.1", "2.2", "2.3")
 
     @property
     def _kinds(self) -> bool:
         """True in 2.2 files: the kinds `fill`, `confidence`, `pressure` and `count` and the unit `%` (0044)."""
-        return self._language == "2.2"
+        return self._language in ("2.2", "2.3")
+
+    @property
+    def _choosing(self) -> bool:
+        """True in 2.3 files: the statement `choose` (decision 0045); the word is recognised by position."""
+        return self._language == "2.3"
 
     @property
     def _kind_units(self) -> dict[str, tuple[str, ...]]:
@@ -167,7 +173,7 @@ class _Parser:
     @property
     def _missions(self) -> bool:
         """True in 2.0 files: the top-level `mission` (decision 0041)."""
-        return self._language in ("2.0", "2.1", "2.2")
+        return self._language in ("2.0", "2.1", "2.2", "2.3")
 
     @property
     def _statements(self) -> tuple[str, ...]:
@@ -826,6 +832,9 @@ class _Parser:
         token = self._tok
         if self._at(TokenKind.AT_SAFETY):
             self._error("E211", f"'@safety' between statements {_NOT_IN_V1_1}; annotate the task instead")
+        if self._choosing and self._at(TokenKind.IDENT) and token.text == "choose":  # RoboLang 2.3 (decision 0045 C1)
+            self._advance()
+            return self._choose(token)
         if self._at(TokenKind.IDENT):
             self._error("E203", f"unknown statement '{token.text}'; expected one of {_listed(self._statements)}")
         if self._branching and self._at_keyword("if", "fail"):
@@ -835,6 +844,74 @@ class _Parser:
             self._error("E201", f"expected a statement or '}}', found {self._found()}")
         self._advance()
         return getattr(self, f"_{token.text}")(token)
+
+    def _word(self, word: str, context: str) -> Token:
+        """A word recognised by its position, not reserved (RoboLang 2.3: `from`, `where`, `nearest`, ...)."""
+        if not (self._at(TokenKind.IDENT) and self._tok.text == word):
+            self._error("E201", f"expected '{word}' {context}, found {self._found()}")
+        return self._advance()
+
+    def _at_word(self, *words: str) -> bool:
+        return self._at(TokenKind.IDENT) and self._tok.text in words
+
+    def _choose(self, start: Token) -> ast.Choose:
+        """
+        `choose TYPE NAME from CANDIDATES [where C] [nearest to X | farthest from X] else { ... }` (RoboLang 2.3,
+        decision 0045 C1 to C6). CANDIDATES is `(a, b, c)`, `objects at L` or `robots`. The `else` is mandatory (E316).
+        """
+        if not self._at_keyword(*CHOOSE_TYPES):
+            self._error("E201", f"expected the type of the choice ({_listed(CHOOSE_TYPES)}) after 'choose', "
+                                f"found {self._found()}")
+        kind = ast.Name(self._tok.text, self._advance().span)
+        name = self._name("a name for the chosen entity")
+        self._word("from", "after the name: the candidates follow")
+        end = self._tok
+        if self._at(TokenKind.LPAREN):
+            self._advance()
+            names = [self._name("a candidate name")]
+            while self._at(TokenKind.COMMA):
+                self._advance()
+                names.append(self._name("a candidate name after ','"))
+            close = self._expect(TokenKind.RPAREN, "')' to close the list of candidates")
+            source: ast.ChooseList | ast.ObjectsAt | ast.AllRobots = ast.ChooseList(tuple(names),
+                                                                                   end.span.to(close.span))
+        elif self._at_word("objects"):
+            self._advance()
+            self._expect_keyword("at", "after 'objects'")
+            place = self._name("a location name after 'objects at'")
+            source = ast.ObjectsAt(place, end.span.to(place.span))
+        elif self._at_word("robots"):
+            source = ast.AllRobots(self._advance().span)
+        else:
+            self._error("E201", f"expected the candidates: a list '(a, b)', 'objects at LOCATION' or 'robots', "
+                                f"found {self._found()}")
+        where = None
+        if self._at_word("where"):
+            self._advance()
+            where = self._condition("a condition after 'where'")
+        order = None
+        if self._at_word("nearest", "farthest"):
+            word = self._advance()
+            if word.text == "nearest":
+                self._expect_keyword("to", "after 'nearest'")
+            else:
+                self._word("from", "after 'farthest'")
+            reference = self._name(f"a location, robot or object name after '{word.text}'")
+            order = ast.ChooseOrder(ast.Name(word.text, word.span), reference, word.span.to(reference.span))
+        if not self._at_keyword("else"):
+            self._error("E316", "a 'choose' needs an 'else' that says what happens when no candidate is left "
+                                f"(decision 0045 C6): add 'else {{ ... fail \"...\"; }}', found {self._found()}")
+        else_token = self._advance()
+        if self._ifs == MAX_IF_DEPTH:  # recorded, not raised, as for a step's `else`
+            self._record(Diagnostic(
+                "E216", f"a choose's 'else' is nested deeper than {MAX_IF_DEPTH} levels; an 'if' and an 'else' "
+                "each count as one", else_token.span, filename=self._filename))
+        self._ifs += 1
+        try:
+            handler = self._branch("else", handler=True)
+        finally:
+            self._ifs -= 1
+        return ast.Choose(kind, name, source, where, order, start.span.to(handler.span), handler)
 
     def _fail(self, start: Token) -> ast.Fail:
         reason = self._string("a reason in quotes after 'fail'")

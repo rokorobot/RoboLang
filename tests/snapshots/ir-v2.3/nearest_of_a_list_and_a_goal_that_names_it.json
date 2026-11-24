@@ -1,0 +1,72 @@
+{
+  "ir_schema": "robolang.task-ir",
+  "ir_schema_version": "1.11",
+  "language_version": "2.3",
+  "tasks": [
+    {
+      "name": "send_tugger",
+      "parameters": [
+        {
+          "name": "a",
+          "type": "robot"
+        },
+        {
+          "name": "b",
+          "type": "robot"
+        },
+        {
+          "name": "handoff",
+          "type": "location"
+        }
+      ],
+      "safety": [],
+      "preconditions": [],
+      "goal": [
+        {
+          "kind": "robot_at",
+          "robot": "t",
+          "location": "handoff"
+        }
+      ],
+      "steps": [
+        {
+          "kind": "choose",
+          "type": "robot",
+          "name": "t",
+          "source": {
+            "kind": "list",
+            "candidates": [
+              "a",
+              "b"
+            ]
+          },
+          "where": {
+            "kind": "robot_ready",
+            "robot": "t"
+          },
+          "order": {
+            "mode": "nearest",
+            "reference": "handoff"
+          },
+          "else": [
+            {
+              "kind": "fail",
+              "reason": "no tugger is free"
+            }
+          ]
+        },
+        {
+          "kind": "move",
+          "robot": "t",
+          "target": "handoff"
+        },
+        {
+          "kind": "communicate",
+          "robot": "t",
+          "channel": "ops",
+          "message": "tugger sent"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "id": "x03_carry_as_many_as_there_are_bins",
+  "prompt": "With picker_h, count the bins at bin_row with cam_h and carry that many crates from dock_a to dock_b.",
+  "world": "bench/worlds/bin_hall.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_2": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_3": {
+    "decision": "cannot",
+    "category": "inexpressible",
+    "because": "0045 C9 (acting on each candidate: as many steps as the count)"
+  },
+  "gap": "G-EACH",
+  "tags": [
+    "count",
+    "each",
+    "run_time_number",
+    "pick_place"
+  ],
+  "why": "As many carries as a counted number (0045 C9): a plan has a fixed number of steps, and a mission needs a bound the request states. A fixed choice of one crate drops the count. G-EACH.",
+  "attempt_fails_with": "E203"
+}

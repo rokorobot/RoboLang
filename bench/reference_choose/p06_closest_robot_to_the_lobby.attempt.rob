@@ -1,0 +1,10 @@
+// bench/reference_choose/p06_closest_robot_to_the_lobby.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 2.2;
+
+task send_closest(location spot) {
+    goal { robot_at who spot; }
+    plan {
+        choose robot who from robots nearest to spot else { fail "no robot"; }                      // @choice who=spot1
+        move who to spot;
+    }
+}

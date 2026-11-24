@@ -1,0 +1,13 @@
+// bench/reference_choose/c04_carry_at_nine.rob: hand-written reference (RoboLang 2.2)
+robolang 2.2;
+
+task carry_at_nine(robot r, object item, location src, location dst) {
+    goal { object_at item dst; }
+    plan {
+        wait until clock_time >= 09:00 timeout 20 min else { fail "09:00 did not come in time"; }
+        move r to src;
+        grasp r item;
+        move r to dst;
+        place r item at dst;
+    }
+}

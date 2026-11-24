@@ -1,0 +1,92 @@
+{
+  "ir_schema": "robolang.task-ir",
+  "ir_schema_version": "1.11",
+  "language_version": "2.3",
+  "tasks": [
+    {
+      "name": "pair",
+      "parameters": [
+        {
+          "name": "a",
+          "type": "robot"
+        },
+        {
+          "name": "b",
+          "type": "robot"
+        },
+        {
+          "name": "x",
+          "type": "location"
+        },
+        {
+          "name": "y",
+          "type": "location"
+        },
+        {
+          "name": "ref",
+          "type": "location"
+        }
+      ],
+      "safety": [],
+      "preconditions": [],
+      "goal": [
+        {
+          "kind": "robot_at",
+          "robot": "r1",
+          "location": "ref"
+        }
+      ],
+      "steps": [
+        {
+          "kind": "choose",
+          "type": "robot",
+          "name": "r1",
+          "source": {
+            "kind": "list",
+            "candidates": [
+              "a",
+              "b"
+            ]
+          },
+          "order": {
+            "mode": "nearest",
+            "reference": "x"
+          },
+          "else": [
+            {
+              "kind": "fail",
+              "reason": "none"
+            }
+          ]
+        },
+        {
+          "kind": "choose",
+          "type": "location",
+          "name": "p",
+          "source": {
+            "kind": "list",
+            "candidates": [
+              "x",
+              "y"
+            ]
+          },
+          "order": {
+            "mode": "farthest",
+            "reference": "ref"
+          },
+          "else": [
+            {
+              "kind": "fail",
+              "reason": "none"
+            }
+          ]
+        },
+        {
+          "kind": "move",
+          "robot": "r1",
+          "target": "ref"
+        }
+      ]
+    }
+  ]
+}

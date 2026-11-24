@@ -54,8 +54,8 @@ def judged(task_id: str, answer: dict):
 def test_the_mix_of_tasks():
     assert len(SET) == 36
     groups = Counter(d["group"] for d in SET.values())
-    assert groups == {"branching": 20, "inexpressible": 4, "control": 8, "recover": 1, "clock": 1, "message": 1,
-                      "kind": 1}
+    assert groups == {"branching": 20, "inexpressible": 2, "control": 8, "recover": 1, "clock": 1, "message": 1,
+                      "kind": 1, "choose": 2}
     for task_id, task in SET.items():
         assert task["id"] == task_id and (REPO / task["world"]).is_file() and task["tags"]
         assert task["prompt"].endswith(".") and "expect_1_4" in task
@@ -66,7 +66,8 @@ def test_files_are_where_they_should_be():
     recover = {t for t, d in SET.items() if d["group"] == "recover"}
     messages = {t for t, d in SET.items() if d["group"] == "message"}  # 0043: a 2.1 program, its attempt kept
     kinds = {t for t, d in SET.items() if d["group"] == "kind"}  # 0044: a 2.2 program, its attempt kept
-    assert {n.split(".")[0] for n in names if ".attempt." in n} == set(CANNOT) | recover | messages | kinds
+    choices = {t for t, d in SET.items() if d["group"] == "choose"}  # 0045: a 2.3 program, its attempt kept
+    assert {n.split(".")[0] for n in names if ".attempt." in n} == set(CANNOT) | recover | messages | kinds | choices
     assert {n.split(".")[0] for n in names if ".attempt." not in n} == set(FEASIBLE)
     for task_id in BRANCHING:
         assert (REF / f"{task_id}.rob").read_text(encoding="utf-8").splitlines()[1] == "robolang 1.4;"
@@ -103,6 +104,14 @@ def test_expectations_are_well_formed():
             assert later == {"decision": "cannot", "category": "inexpressible"} and task["expect_2_1"] == later
             assert task["expect_2_2"]["decision"] == "program" and len(task["expect_2_2"]["paths"]) == 2
             assert task["world"] == "bench/worlds/kinds_x_count_and_send.json" and task["expected_readings"]
+            continue
+        # 0045 (erratum Q5): a program in 2.3 only (x_nearest_robot, x_shuttle_until_five)
+        if task["group"] == "choose":
+            assert (decision, category) == ("program", "none") and task["expect"] == {"decision": "program"}
+            assert later == {"decision": "cannot", "category": "inexpressible"} and task["expect_2_2"] == later
+            assert task["expect_2_3"]["decision"] == "program" and len(task["expect_2_3"]["paths"]) >= 2
+            assert task["world"].startswith("bench/worlds/choose_") and task["expected_choices"]
+            assert task["erratum"] == "Q5" and task["gap"] == "G-CHOOSE"
             continue
         if task["group"] == "inexpressible":
             assert (decision, category) == ("cannot", "inexpressible")

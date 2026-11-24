@@ -1,0 +1,13 @@
+// RoboLang v2.3 fixture: invalid
+// expect: error E302 (static) line 10
+// why: the chosen name is new
+
+robolang 2.3;
+
+task t(robot a, robot b, location dst) {
+    goal { robot_at a dst; }
+    plan {
+        choose robot a from (a, b) else { fail "none"; }
+        move a to dst;
+    }
+}

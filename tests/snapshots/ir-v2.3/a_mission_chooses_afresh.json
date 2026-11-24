@@ -1,0 +1,117 @@
+{
+  "ir_schema": "robolang.mission-ir",
+  "ir_schema_version": "1.3",
+  "task_ir_schema_version": "1.11",
+  "language_version": "2.3",
+  "tasks": [
+    {
+      "name": "move_part",
+      "parameters": [
+        {
+          "name": "arm",
+          "type": "robot"
+        },
+        {
+          "name": "conveyor",
+          "type": "location"
+        },
+        {
+          "name": "bin",
+          "type": "location"
+        }
+      ],
+      "safety": [],
+      "preconditions": [],
+      "goal": [
+        {
+          "kind": "object_at",
+          "object": "part",
+          "location": "bin"
+        }
+      ],
+      "steps": [
+        {
+          "kind": "choose",
+          "type": "object",
+          "name": "part",
+          "source": {
+            "kind": "objects_at",
+            "location": "conveyor"
+          },
+          "else": [
+            {
+              "kind": "fail",
+              "reason": "the conveyor is empty"
+            }
+          ]
+        },
+        {
+          "kind": "move",
+          "robot": "arm",
+          "target": "conveyor"
+        },
+        {
+          "kind": "grasp",
+          "robot": "arm",
+          "object": "part"
+        },
+        {
+          "kind": "move",
+          "robot": "arm",
+          "target": "bin"
+        },
+        {
+          "kind": "place",
+          "robot": "arm",
+          "object": "part",
+          "target": "bin"
+        },
+        {
+          "kind": "wait_for",
+          "duration": {
+            "value": "2",
+            "unit": "min"
+          }
+        }
+      ]
+    }
+  ],
+  "missions": [
+    {
+      "name": "move_parts",
+      "parameters": [
+        {
+          "name": "arm",
+          "type": "robot"
+        },
+        {
+          "name": "conveyor",
+          "type": "location"
+        },
+        {
+          "name": "bin",
+          "type": "location"
+        }
+      ],
+      "repeat": {
+        "max_duration": {
+          "value": "6",
+          "unit": "min"
+        }
+      },
+      "runs": [
+        {
+          "task": "move_part",
+          "arguments": [
+            "arm",
+            "conveyor",
+            "bin"
+          ]
+        }
+      ],
+      "on_failure": {
+        "policy": "stop"
+      }
+    }
+  ]
+}

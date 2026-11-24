@@ -1,0 +1,13 @@
+// RoboLang v2.3 fixture: invalid
+// expect: error E329 (static) line 10
+// why: an else must end in fail (point 1)
+
+robolang 2.3;
+
+task t(robot a, robot b, location dst) {
+    goal { robot_at s dst; }
+    plan {
+        choose robot s from (a, b) else { communicate a to "ops" with "no tugger"; }
+        move s to dst;
+    }
+}

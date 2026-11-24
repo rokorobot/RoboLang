@@ -1,0 +1,11 @@
+{
+  "task": "store_far",
+  "bindings": {
+    "r": "digit1",
+    "item": "case_1",
+    "src": "trailer_4",
+    "a": "trolley",
+    "b": "cart_3",
+    "c": "conveyor_b"
+  }
+}

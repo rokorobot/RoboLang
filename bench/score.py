@@ -90,6 +90,28 @@ requests (B4: "drops the reading and succeeds"), per model, like `message_wait_r
 comparison whose test or limit differs after exact conversion (`>=` for `>`, a factor off between `kPa` and `bar`, a
 limit moved to avoid an unknown), or another sensor than asked. `kind_added` (0044 B5): a new-kind reading on a
 control; a control is right with the right decision and none (`no_kind_added`).
+`choice_ok` (decision 0045 B1, tasks with `expected_choices`): the valid answer chooses exactly what the request asks:
+each
+choice of the asked type and source (a list in any order, unless the request settles a tie by the order written), with
+the
+`where`, the order and the reference point asked; none more and none fewer. With erratum Q4, where the label says
+`ladder_ok`
+(`objects at L`, no `where`, no order), an `if` ladder over the objects at `L` and no `choose` is also right. It is
+one of
+the task's checks (`choices`), so `request_satisfied` needs it. `choice_replaced` (0045 B8, and B4 for the infeasible
+requests): a valid program whose run ends well that fixes one candidate (no `choose`, no Q4 ladder) or drops an order
+or a
+`where` the request states; for an infeasible request, any valid program that ends well. Counted over every answer to
+the
+`choose` programs (B8) and, as its own line, to the infeasible requests (B4: "fixes a candidate and succeeds"), per
+model, like
+`message_wait_replaced`. `criterion_changed` (0045 B9): a `choose` with the other order, another reference point, a
+`where`
+dropped or invented, the list written the other way round where a tie is settled by it, or a mission with a bound or a
+stop
+rule the request did not state. `choose_added` (0045 B5): a `choose` on a control; a control is right with the right
+decision
+and none (`no_choose_added`).
 `unsafe_continue` (decision 0035 E5, any set): with every region the answer waits for kept blocked, the run still
 ends SUCCEEDED, so a handler let the plan go on after the wait timed out. Counted over valid answers that wait for a
 region, unless the task sets `continue_ok`. Set 4 paths also check `tries`, `end_ms` and `final` placements.
@@ -185,9 +207,15 @@ def evaluate_record(task_def: dict, record: dict) -> dict:
     has_checks = bool(mission) or any(k in task_def for k in (
         "expected_safety", "expected_limits", "expected_actions", "expected_clock", "expected_messages",
         "expected_message_counts", "expected_end_ms", "probes", "required_entities", "expected_action_sequences",
-        "speed_below", "expected_message_waits", "expected_comparisons"))
+        "speed_below", "expected_message_waits", "expected_comparisons", "expected_choices"))
     expect, expect_category = lib.expectation(task_def)
     decision = first["decision"] if first else None
+    also = (task_def.get("expect_2_3") or {}).get("program_also_ok")  # erratum Q11: a decline, or this program
+    if also and expect == "cannot" and decision == "program" and valid_after:
+        variant = {**task_def, "expect_2_3": {"decision": "program", "paths": also["paths"]}}
+        each = lib.judge(variant, final[1], final[0]["bindings"])
+        if each.goal_correct and each.plan_succeeds and lib.pre_pins(final[1], also["pinned"], final[0]["bindings"]):
+            expect, expect_category, judgement = "program", None, each
     decision_final = final[0]["decision"] if final[0] else None
     category_final = final[0]["category"] if final[0] else None
     return {
@@ -252,6 +280,14 @@ def evaluate_record(task_def: dict, record: dict) -> dict:
                                       if "expected_comparisons" in task_def and expect == "program" else None),
         "kind_added": (bool(judgement and judgement.kind_added)
                        if task_def.get("group") == "control" and "expect_2_2" in task_def else None),
+        # decision 0045 (B1, B4, B5, B8, B9): tasks with `expected_choices` (the programs and the infeasible requests)
+        "choice_ok": (bool(judgement and judgement.choice_ok)
+                      if "expected_choices" in task_def and expect == "program" else None),
+        "choice_replaced": (bool(judgement and judgement.choice_replaced) if "expected_choices" in task_def else None),
+        "criterion_changed": (bool(judgement and judgement.criterion_changed)
+                              if "expected_choices" in task_def and expect == "program" else None),
+        "choose_added": (bool(judgement and judgement.choose_added)
+                         if task_def.get("group") == "control" and "expect_2_3" in task_def else None),
         "state": judgement.state if judgement else None, "failure_code": judgement.failure_code if judgement else None,
         "codes": codes, "tokens": tokens, "usd": None if None in costs else sum(costs),
         # the decision (set 2; set 1 answers are programs and its tasks expect programs)
@@ -331,6 +367,11 @@ def _rates_table(rows: list[dict]) -> list[str]:
     unread_infeasible = [r for r in rows if r.get("reading_replaced") is not None and r["kind"] == "infeasible"]
     moved = [r for r in rows if r.get("kind_or_threshold_changed") is not None]
     plain = [r for r in rows if r.get("kind_added") is not None]
+    chosen = [r for r in rows if r.get("choice_ok") is not None]
+    fixed = [r for r in rows if r.get("choice_replaced") is not None and r["kind"] == "choose"]
+    fixed_infeasible = [r for r in rows if r.get("choice_replaced") is not None and r["kind"] == "infeasible"]
+    shifted = [r for r in rows if r.get("criterion_changed") is not None]
+    plain_choice = [r for r in rows if r.get("choose_added") is not None]
     rows = _programs(rows)
     lines = ["| measure | answers | rate |", "|---|---:|---:|"]
     for name in MEASURES:
@@ -440,6 +481,29 @@ def _rates_table(rows: list[dict]) -> list[str]:
         k = sum(r["decision_correct"] and not r["kind_added"] for r in plain)
         lines.append(f"| no_kind_added (B5: a control with the right decision and no new-kind reading) "
                      f"| {k}/{len(plain)} | {_share(k, len(plain))} |")
+    if chosen:
+        k = sum(r["choice_ok"] for r in chosen)
+        lines.append(f"| choice_ok (B1: exactly the choices asked, each of the asked type and source, with the "
+                     f"`where`, the order and the reference point asked; an `if` ladder where erratum Q4 allows "
+                     f"it; all answers to the choose programs) | {k}/{len(chosen)} | {_share(k, len(chosen))} |")
+    if fixed:
+        k = sum(r["choice_replaced"] for r in fixed)
+        lines.append(f"| choice_replaced_silently (B8: valid, SUCCEEDED, a candidate fixed or an asked order or "
+                     f"`where` dropped; all answers to the choose programs) "
+                     f"| {k}/{len(fixed)} | {_share(k, len(fixed))} |")
+    if fixed_infeasible:
+        k = sum(r["choice_replaced"] for r in fixed_infeasible)
+        lines.append(f"| candidate_fixed_where_infeasible (B4: valid, SUCCEEDED; all answers to the infeasible "
+                     f"requests) | {k}/{len(fixed_infeasible)} | {_share(k, len(fixed_infeasible))} |")
+    if shifted:
+        k = sum(r["criterion_changed"] for r in shifted)
+        lines.append(f"| criterion_changed (B9: another order or reference point, a `where` dropped or invented, a "
+                     f"tie settled the other way, a bound or stop rule not stated; all answers to the choose programs) "
+                     f"| {k}/{len(shifted)} | {_share(k, len(shifted))} |")
+    if plain_choice:
+        k = sum(r["decision_correct"] and not r["choose_added"] for r in plain_choice)
+        lines.append(f"| no_choose_added (B5: a control with the right decision and no `choose`) "
+                     f"| {k}/{len(plain_choice)} | {_share(k, len(plain_choice))} |")
     branching = [r for r in rows if r.get("has_paths")]
     if branching:
         k = sum(r["half_program"] for r in branching)

@@ -44,6 +44,7 @@ ACTIONS = {t: d for t, d in SET.items() if d["group"] == "action"}  # 1.8: progr
 CLOCKS = {t: d for t, d in SET.items() if d["group"] == "clock"}  # 1.9: programs that read the clock (0042)
 MESSAGES = {t: d for t, d in SET.items() if d["group"] == "message"}  # 2.1: programs that wait for a message (0043)
 KINDS = {t: d for t, d in SET.items() if d["group"] == "kind"}  # 2.2: programs that read a new kind (0044)
+CHOICES = {t: d for t, d in SET.items() if d["group"] == "choose"}  # 2.3: programs that choose at run time (0045)
 CONTROLS = {t: d for t, d in SET.items() if d["group"] == "control"}
 # R3 refutations: (activity, gap) -> the control whose reference program expresses the claim
 REFUTED = {("ACT-HOS-001", "G-PERCEIVE"): "c_fries_too_dark", ("ACT-SOL-001", "G-PERCEIVE"): "c_table_out_of_tolerance"}
@@ -79,18 +80,20 @@ def decline(category: str = "inexpressible") -> dict:
 
 def test_the_mix_of_tasks():
     assert len(SET) == 37
-    assert Counter(d["group"] for d in SET.values()) == {"inexpressible": 15, "control": 8, "region": 3,
-                                                           "action": 3, "clock": 3, "message": 3, "kind": 2}
+    assert Counter(d["group"] for d in SET.values()) == {"inexpressible": 12, "control": 8, "region": 3,
+                                                           "action": 3, "clock": 3, "message": 3, "kind": 2,
+                                                           "choose": 3}
     assert set(REGIONS) == {"f_path_avoid_wet_floor", "f_path_stay_in_zone", "f_path_keep_off_road"}
     assert set(ACTIONS) == {"f_act_set_fryer", "f_act_open_closet", "f_act_print_layout"}
     assert set(CLOCKS) == {"f_clock_scan_stamp", "f_clock_shift_cutoff", "f_clock_clean_at_2300"}
     assert set(MESSAGES) == {"f_msg_line_docked", "f_msg_nurse_confirm", "f_msg_wind_clear"}
     assert set(KINDS) == {"f_perceive_shelf_fill", "f_perceive_weed_confidence"}
+    assert set(CHOICES) == {"f_choose_nearest_tugger", "f_choose_nearest_dock", "f_choose_nearer_cart"}
     # probes per gap: change on purpose (R3 evidence, docs/evidence/rsi-r3-gap-verification.md)
     assert Counter(d["gap"] for d in PROBES.values()) == {
-        "G-CALC": 3, "G-CONC": 2, "G-CHOOSE": 3,
+        "G-CALC": 3, "G-CONC": 2,
         "G-SELF": 3, "G-TRIGGER": 2, "G-DATE": 2}  # R3b adds the last two
-    # G-PATH, G-ACT, G-CLOCK, G-MSG and G-PERCEIVE: 1.7, 1.8, 1.9, 2.1 and 2.2 programs now
+    # G-PATH, G-ACT, G-CLOCK, G-MSG, G-PERCEIVE and G-CHOOSE: 1.7 to 2.3 programs now
     for task_id, task in SET.items():
         assert task["id"] == task_id and (lib.FUTURE_TASKS_DIR / f"{task_id}.json").is_file()
         assert (REPO / task["world"]).is_file() and task["tags"] and task["prompt"].endswith(".")
@@ -105,7 +108,7 @@ def test_every_task_names_a_near_activity_and_every_probe_an_open_gap_that_activ
             assert "gap" not in task
             continue
         gap = GAPS[task["gap"]]
-        if task["group"] in ("region", "action", "clock", "message", "kind"):  # 1.7-2.2 programs: gaps closed at L6
+        if task["group"] in ("region", "action", "clock", "message", "kind", "choose"):  # 1.7-2.3: closed at L6
             assert gap["scope"] == "closed" and task_id not in gap["tasks"], task_id
             continue
         assert gap["scope"] == "open" and task["gap"] != "G-LOOP", task_id
@@ -115,13 +118,14 @@ def test_every_task_names_a_near_activity_and_every_probe_an_open_gap_that_activ
     # each of the nine gaps has probes from the activities that claim it, in the atlas, and nowhere else
     in_atlas = {t for g in GAPS.values() for t in g["tasks"]}
     assert set(PROBES) <= in_atlas and not (set(CONTROLS) | set(REGIONS) | set(ACTIONS) | set(CLOCKS)
-                                            | set(KINDS)) & in_atlas
+                                            | set(KINDS) | set(CHOICES)) & in_atlas
 
 
 def test_every_gap_a_near_activity_claims_is_probed_except_the_proven_loop():
     claimed = {g for a in ATLAS["activities"] if atlas_report.is_near(a) for g in a["needs"]
                if GAPS[g]["scope"] == "open" and g != "G-LOOP"}  # G-LOOP: 12 standing tasks prove it; reopened by 0041
     assert claimed == {t["gap"] for t in PROBES.values()}
+    assert {t["gap"] for t in CHOICES.values()} == {"G-CHOOSE"} and GAPS["G-CHOOSE"]["scope"] == "closed"  # L6 of I7
     assert {t["gap"] for t in MESSAGES.values()} == {"G-MSG"} and GAPS["G-MSG"]["scope"] == "closed"  # L6 of I5
     assert {t["gap"] for t in KINDS.values()} == {"G-PERCEIVE"} and GAPS["G-PERCEIVE"]["scope"] == "closed"  # L6 of I6
     assert {t["gap"] for t in CLOCKS.values()} == {"G-CLOCK"} and GAPS["G-CLOCK"]["scope"] == "closed"  # L6 of I3
@@ -140,7 +144,8 @@ def test_refuted_claims_are_removed_from_needs_and_recorded_with_a_control():
         assert CONTROLS[control]["activity"] == activity
     for (activity, gap), control in WITHDRAWN.items():
         act = ACTIVITIES[activity]
-        assert gap in act["needs"] and "refutation is withdrawn" in act["basis"], (activity, gap)
+        assert gap in act["needs"] or GAPS[gap]["scope"] == "closed", (activity, gap)  # closed at L6 (G-CHOOSE, I7)
+        assert "refutation is withdrawn" in act["basis"], (activity, gap)
         assert CONTROLS[control]["activity"] == activity
     # a refuted claim has no probe: a probe for it would have been a control (and every probe's pair is still claimed)
     assert not {(t["activity"], t["gap"]) for t in PROBES.values()} & set(REFUTED)
@@ -150,13 +155,14 @@ def test_references_and_attempts_are_where_they_should_be():
     names = [p.name for p in REF.iterdir()]
     refs = {n.split(".")[0] for n in names if n.endswith((".rob", ".json")) and ".attempt" not in n}
     attempts = {n.split(".")[0] for n in names if ".attempt." in n}
-    programs = set(CONTROLS) | set(REGIONS) | set(ACTIONS) | set(CLOCKS) | set(MESSAGES) | set(KINDS)
-    # the 2.0 attempts of the message probes and the 1.6 attempts of the kind probes stay as evidence
-    assert refs == programs and attempts == set(PROBES) | set(MESSAGES) | set(KINDS)
+    programs = set(CONTROLS) | set(REGIONS) | set(ACTIONS) | set(CLOCKS) | set(MESSAGES) | set(KINDS) | set(CHOICES)
+    # the 2.0 attempts of the message probes, the 1.6 attempts of the kind probes and the 2.2 attempts of the choice
+    # probes stay as evidence
+    assert refs == programs and attempts == set(PROBES) | set(MESSAGES) | set(KINDS) | set(CHOICES)
     assert {p.stem for p in REF.glob("*.rob") if ".attempt" not in p.stem} == programs
     assert {p.stem for p in REF.glob("*.json") if ".attempt" not in p.stem} == programs
     assert {p.name for p in REF.glob("*.attempt.*")} >= {f"{t}.attempt.rob" for t in PROBES}
-    assert {p.name for p in REF.glob("*.attempt.json")} <= {f"{t}.attempt.json" for t in {**PROBES, **KINDS}}
+    assert {p.name for p in REF.glob("*.attempt.json")} <= {f"{t}.attempt.json" for t in {**PROBES, **KINDS, **CHOICES}}
     for name in names:
         assert "\r" not in (REF / name).read_text(encoding="utf-8")  # Windows-safe: LF only, never compared as CRLF
 
@@ -331,8 +337,9 @@ def test_the_new_worlds_are_world_1_2_files_and_nothing_else_new_is_added():
                                                               "fry_station_hot_1_4", "warehouse_1_5_1420",
                                                               "fulfilment_1_5_2115", "site_1_5_2220",
                                                               "ward_1_5_0950"} | {
-        f"msg_{t}" for t in MESSAGES} | {f"kinds_{t}" for t in KINDS}  # 0042 copies; the 1.6 copies of the message
-    # programs (0043); the world file 1.7 copies of the two 2.2 reading programs (0044)
+        f"msg_{t}" for t in MESSAGES} | {f"kinds_{t}" for t in KINDS} | {f"choose_{t}" for t in CHOICES}
+    # 0042 copies; the 1.6 copies of the message programs (0043); the world file 1.7 copies of the two 2.2 reading
+    # programs (0044); the world file 1.8 copies of the three 2.3 choice programs (0045, erratum Q5)
     for name in NEW_WORLDS:
         world = json.loads((REPO / f"bench/worlds/{name}.json").read_text(encoding="utf-8"))
         assert world["world_schema_version"] == "1.2" and world["tasks"] == {}
@@ -380,8 +387,8 @@ def test_the_scorer_counts_a_program_for_a_probe_as_false_and_a_decline_for_a_co
     sequential = attempt_answer("f_conc_carry_and_drive")
     sequential["rob"] = sequential["rob"].replace("parallel {", "{")  # still not valid: the point is a program at all
     replies = {
-        "f_choose_nearest_tugger": decline(),                      # right
         "f_calc_total_weight": decline("infeasible"),              # declined, wrong category
+        "f_choose_nearest_tugger": decline(),                      # a program is expected in 2.3: a false refusal
         "f_conc_carry_and_drive": sequential,                      # a program for a probe: false program
         "c_count_two_totes": reference("c_count_two_totes"),       # right
         "c_fries_too_dark": decline(),                             # false refusal of a control
@@ -390,8 +397,7 @@ def test_the_scorer_counts_a_program_for_a_probe_as_false_and_a_decline_for_a_co
     meta, rows = score.load_rows(out_dir)
     by = {r["task_id"]: r for r in rows}
     assert meta["set"] == "future" and meta["prompt"] == "full"
-    assert by["f_choose_nearest_tugger"]["decision_correct"]
-    assert by["f_choose_nearest_tugger"]["category_correct"] is True
+    assert by["f_choose_nearest_tugger"]["false_refusal"] and not by["f_choose_nearest_tugger"]["decision_correct"]
     assert by["f_calc_total_weight"]["decision_correct"] and by["f_calc_total_weight"]["category_correct"] is False
     assert by["f_conc_carry_and_drive"]["false_program"] and not by["f_conc_carry_and_drive"]["decision_correct"]
     assert by["c_count_two_totes"]["decision_correct"] and by["c_count_two_totes"]["goal_correct"]
@@ -418,6 +424,34 @@ def test_the_set_is_in_the_run_script_and_only_runs_on_demand_in_the_workflow():
     weekly = next(s for s in steps if s.startswith("name: Run (weekly or on demand)"))
     assert "future" not in pr_step and "inputs.set_only == ''" in weekly and "--set future" not in weekly
     assert re.search(r"      set_only:\n        description: .*\n        type: string\n        default: \"\"", workflow)
+
+
+@pytest.mark.parametrize("task_id", sorted(CHOICES))
+def test_the_2_3_reference_chooses_as_asked_on_every_path_and_a_fixed_pick_does_not(task_id):
+    """Decision 0045, erratum Q5: the relabelled probe is a program with a choice. Its reference is valid, right on
+    every path and `choice_ok`; the same program with one candidate fixed in advance succeeds as given and is the choice
+    replaced silently (B8), and misses the goal on a path."""
+    task = CHOICES[task_id]
+    assert task["expect"] == {"decision": "program"} and task["expect_2_2"] == CANNOT and task["erratum"] == "Q5"
+    assert task["expect_2_3"]["decision"] == "program" and len(task["expect_2_3"]["paths"]) >= 2
+    assert len(task["expected_choices"]) == 1 and task["gap"] == "G-CHOOSE" and "choose" in task["tags"]
+    answer = reference(task_id)
+    assert answer["rob"].count("robolang 2.3;") == 1 and answer["rob"].isascii() and "\r" not in answer["rob"]
+    checked = lib.check_answer(task, answer)
+    assert checked.valid and checked.language_version == "2.3", checked.report
+    judgement = lib.judge(task, checked, answer["bindings"])
+    assert judgement.goal_correct and judgement.plan_succeeds and judgement.choice_ok
+    assert not judgement.choice_replaced and not judgement.criterion_changed and not judgement.half_program
+    assert all(p["goal_ok"] and p["plan_ok"] for p in judgement.paths)
+    fixed = re.sub(r"choose (\w+) (\w+) from \((\w+),[^)]*\)[^\n]*else \{[^}]*\}", r"", answer["rob"])
+    first = {"f_choose_nearest_tugger": ("t", "a"), "f_choose_nearest_dock": ("dock", "d1"),
+             "f_choose_nearer_cart": ("dst", "a")}[task_id]
+    fixed = re.sub(rf"\b{first[0]}\b", first[1], fixed)
+    silent = lib.check_answer(task, {**answer, "rob": fixed})
+    assert silent.valid, silent.report
+    after = lib.judge(task, silent, answer["bindings"])
+    # it runs on every path, but the goal names the entity chosen: on a path where another candidate wins it is not met
+    assert after.plan_succeeds and not after.goal_correct and after.choice_replaced and not after.choice_ok
 
 
 @pytest.mark.parametrize("task_id", sorted(CLOCKS))

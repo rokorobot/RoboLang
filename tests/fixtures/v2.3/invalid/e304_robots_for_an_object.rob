@@ -1,0 +1,13 @@
+// RoboLang v2.3 fixture: invalid
+// expect: error E304 (static) line 10
+// why: robots gives robots
+
+robolang 2.3;
+
+task t(robot a, location dst) {
+    goal { robot_at a dst; }
+    plan {
+        choose object o from robots else { fail "none"; }
+        move a to dst;
+    }
+}
