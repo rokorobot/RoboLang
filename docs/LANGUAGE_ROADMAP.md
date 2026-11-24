@@ -100,6 +100,7 @@ Frozen, dated copies with a git tag: [roadmap-snapshots/](roadmap-snapshots/READ
 | I5 G-MSG | L1–L5 done (accepted 2026-11-18, [acceptance](evidence/bench-2-1-acceptance.md): every bound met). **L6:** G-MSG closed in the atlas; release 0.8.0 with RoboLang 2.1, published after the owner approves the PyPI upload |
 | I6 G-PERCEIVE | L1–L5 done (accepted 2026-11-18 with erratum P7, [acceptance](evidence/bench-2-2-acceptance.md): no reading replaced or changed, 0/30). **L6:** G-PERCEIVE closed in the atlas, G-QUALITY split off (far); release 0.9.0 with RoboLang 2.2, published after the owner approves the PyPI upload |
 | I7 G-CHOOSE | L1–L5 done (accepted 2026-11-24 after Z1, Q9–Q11 and a confirming run, with one recorded exception: Haiku grammar-only B3 2/15; [set 12](plans/bench-12-choose.md), [acceptance](evidence/bench-2-3-acceptance.md)). **L6:** G-CHOOSE closed in the atlas, G-EACH and G-DETECT split off (far); release 0.10.0 with RoboLang 2.3, published after the owner approves the PyPI upload |
-| I8–I10 | Not started |
+| I8 G-SELF | **L1** done (first in the generated order, 2026-11-24). **L2:** decision record [0048](../spec/decisions/0048-the-robots-own-state.md) drafted (`measure r charge`, live `robot_charge r` in `wait until`, charge in `where`; G-HEALTH split off), for the owner |
+| I9–I10 | Not started |
 | I11–I20 | Ranked 2026-11-24 by R3b ([evidence](evidence/rsi-r3b-new-gaps.md)): I11 G-TRIGGER and I12 G-DATE near, the rest far. Not started |
 | Mission layer decision record | [0041](../spec/decisions/0041-mission-layer.md) **approved 2026-11-17**: G-LOOP reopened (LE-9), mission layer with a hard bound, `stop`/`continue`/`retry N`; built at I4 |
