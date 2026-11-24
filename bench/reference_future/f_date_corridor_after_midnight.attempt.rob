@@ -1,0 +1,13 @@
+// bench/reference_future/f_date_corridor_after_midnight.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 2.2;
+
+task night_clean(robot r, location lobby, location hall, location home) {
+    goal { robot_at r home; }
+    plan {
+        wait until clock_time >= 23:00 timeout 120 min else { fail "11 pm did not come in time"; }
+        move r to lobby;
+        wait until clock_time >= 01:00 timeout 180 min else { fail "1 am did not come in time"; }
+        move r to hall;
+        move r to home;
+    }
+}

@@ -1,0 +1,18 @@
+// bench/reference_future/f_trigger_rounds_every_hour.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 2.2;
+
+task round(robot r, location home, location ward, location lab) {
+    goal { robot_at r home; }
+    plan {
+        move r to ward;
+        move r to lab;
+        move r to home;
+    }
+}
+
+mission hourly(robot r, location home, location ward, location lab) {
+    repeat every 1 h until 13:00 {
+        run round(r, home, ward, lab);
+    };
+    on failure { stop; }
+}

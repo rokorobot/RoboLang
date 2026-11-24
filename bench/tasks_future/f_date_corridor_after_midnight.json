@@ -1,0 +1,19 @@
+{
+  "id": "f_date_corridor_after_midnight",
+  "prompt": "Send cleaner1 from dock_2 to the lobby at 23:00, then to the hall at 01:00, and back to dock_2.",
+  "world": "bench/worlds/site_1_5_2220.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "activity": "ACT-CLN-001",
+  "gap": "G-DATE",
+  "tags": [
+    "clock_time",
+    "another_day",
+    "wait"
+  ],
+  "why": "The night clean crosses midnight: 01:00 is on the next calendar day. A time literal means that time on the day the task starts (0042 T4) and a run never reads past the end of that day (`S238`), so the second wait cannot be written (language reference: 'Clock readings'). The 23:00 part alone is the 1.9 program `f_clock_clean_at_2300`.",
+  "attempt_fails_with": "S010"
+}
