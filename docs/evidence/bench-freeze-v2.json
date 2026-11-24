@@ -1,5 +1,5 @@
 {
-  "sha256": "75a069bb5a615c3acf74a84e35f81270b5b6e8100447b8f5429eaa8297ff2f99",
+  "sha256": "510e1f5eec585f3d10bd1c14a69fd162a807fbd58a2d0f87a0a506511814d279",
   "schema": "robolang.bench.freeze.v2",
   "patterns": [
     "bench/tasks*/*.json",
@@ -25,8 +25,8 @@
     "bench/gate.json": "eee14479043dc6fdd5cf504d92b3514138c903f20a79cea053939bdf1a1134d5",
     "bench/gate.py": "85461506edd726f72c14830a682846715415404971f6e464a49218e58466b2db",
     "bench/lib.py": "fd14a401b9f552b2ba95d4e59d0766dce414e5f45cf12420cecf6abf601febb3",
-    "bench/prompt.md": "c61eb59cf4ddef6ed7eb87f29826e4ef688bd4bdf373d9f2da41c810214546ea",
-    "bench/prompt_minimal.md": "be380345435f7b45cf33a4b569db4e6949f30b77872dba3dd46671c3ac4b4132",
+    "bench/prompt.md": "b55143ba365679eb031d29a5c29da4d5e54d6e684e06aaec9e4ae5f282caad8b",
+    "bench/prompt_minimal.md": "f11e657949d5616bbaeab4b0312670e8109dd159d9588d54abb1c8cd5eb955b7",
     "bench/reference/a_amr_ferry.json": "abec64c10f81cf7a91c2539fc38244cebba832903646ab1540fa52680a82a939",
     "bench/reference/a_amr_ferry.rob": "5a939e4b841328ed484a77b3ead6c2aafec306c2d4dc761c4961e71b51ed2ba4",
     "bench/reference/a_arm_handover.json": "da4a20f30cfb1cb662fce6b5e1b5f3eee4fbd1ebb203f40e3bc626dd275f24eb",
