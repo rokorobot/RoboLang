@@ -211,3 +211,5 @@ bench/.env
 
 # Benchmark raw results (large; summaries go to docs/evidence/)
 bench/results/
+# Held-out set: never in git; keep the real copy outside the repo (bench/heldout/README.md)
+bench/heldout/private/

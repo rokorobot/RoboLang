@@ -22,7 +22,7 @@ the acceptance run on benchmark set 12 is the next step (L5) and 2.3 is not acce
   world model, records them and sends the goal with them filled in (Core 0.2 is unchanged); otherwise `X609`. The ROS 2 backend
   refuses `choose` (`S508`). New codes `E329` (an `else` must end in `fail`), `E330` (`where` states world facts only and names
   the chosen name), `E331` (a choice cannot use an earlier choice), `S272` (no candidate left), `S273` (the place an order
-  measures from has no position), `X609` and the reader forms `I230` to `I232`. Safety case hazard H25 (a stale or wrong world
+  measures from has no position), `X609` and the reader forms `I230` to `I232`. Safety case hazard H27 (a stale or wrong world
   model makes a choice wrong). `robolang --version` shows language 2.3. Files of 1.1 to 2.2 are unchanged.
 - **Taught and relabelled** (decision 0045, step L4 of iteration I7): `robolang reference` and both benchmark prompts teach 2.3 (a section
   "Choosing at run time"; the grammar-only prompt pastes `spec/grammar-v2.3.ebnf`, which says what 2.3 cannot say: a choice by a reading of

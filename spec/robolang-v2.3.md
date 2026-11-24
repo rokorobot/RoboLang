@@ -142,7 +142,7 @@ A 2.3 file compiles to **Task IR 1.11** ([ir-schema-v1.11.md](ir-schema-v1.11.md
 
 ## 10. Safety (C11)
 
-**Hazard H25** ([safety case](../docs/safety-case-draft.md)): a stale or wrong world model makes a choice wrong, so a different
+**Hazard H27** ([safety case](../docs/safety-case-draft.md)): a stale or wrong world model makes a choice wrong, so a different
 robot or object is sent than the reviewer expected. Controls: the candidates are finite and appear in the task, so an approval
 ([0038](decisions/0038-authorization-and-approval.md)) names them; the choice is recorded with its reasons; an unknown value
 excludes a candidate; a step that uses a chosen robot or place is checked when it runs. In physical mode the positions and

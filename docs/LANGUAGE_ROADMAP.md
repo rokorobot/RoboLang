@@ -1,6 +1,7 @@
 # RoboLang language roadmap
 
-**Status:** PROVISIONAL, revised 2026-11-17 after R3. The tests of R3 confirm all nine near gaps, narrow
+**Status:** PROVISIONAL, revised 2026-11-17 after R3; I11–I20 ranked on 2026-11-24 by R3b. The tests of R3
+confirm all nine near gaps, narrow
 G-PERCEIVE, G-CHOOSE and G-SELF, and refute two sub-activity claims; a third refutation was withdrawn after the model run
 ([evidence](evidence/rsi-r3-gap-verification.md)). The model run meets the second half of LE-7: no model wrote a
 program for any of the 25 probes. This page sits at level 3 of the [document map](LANGUAGE_EVOLUTION.md#document-map), next
@@ -42,30 +43,37 @@ that are fully expressible once this gap and those above it are closed (13 near,
 | I8 | 2.4 | G-SELF | **Narrowed by R3:** the robot's battery as a reading and condition; acting on it and reporting it (`low_battery`, `enough_for_route`, `report_charge`). Own health is partly there (`sensor_ok`, `robot_ready`) | G-PREDICT (time to failure) | 10 / 19 |
 | I9 | 2.5 | G-CALC | Minimal arithmetic, counting and text built from values (`total_weight`, `over_limit`, `text_line`) | — | 12 / 22 |
 | I10 | 2.6 | G-CONC | Several robots acting at the same time (`carry_and_drive`, `two_hand_lift`). The largest semantic change (Core sequencing), so last | shared workspaces with people | 13 / 26 |
-| I11 | 2.7 | G-PROX | **Proposed.** Limits and reactions that depend on people nearby: slow, stop or yield within a distance. A request checked against the controller's envelope, as the region limits of I1 (LE-13). Safety first, as I1 | shared workspaces with people (I10), G-PREDICT (a person's next move) | not computed |
-| I12 | 2.8 | G-FORCE | **Proposed.** Grip and contact force limits, with the same "checked request" mechanism as I1 and I11 | taught skills (G-TEACH) that carry their own force limits | not computed |
-| I13 | 2.9 | *G-TRIGGER* (new) | **Proposed.** A mission that starts by itself: at a time of day, on a message, or on the robot's own state. Left out of 2.0 (0041 M6); each trigger starts one bounded, approved mission | the "design for" of I3, I5 and I8 | not computed |
-| I14 | 2.10 | *G-SHIFT* (new) | **Proposed.** Schedules beyond one day and across shifts. 1.9 reads one day only (`S238`, 0042 T4) | daylight-saving changes, calendars | not computed |
-| I15 | 2.11 | G-TEACH | **Proposed.** A skill, object or route taught by demonstration, then used by name. A taught skill becomes a declared action (I2), so it stays typed, checked and verified | skills shared across a fleet, learned object categories (I17) | not computed |
-| I16 | 2.12 | G-QUALITY | **Proposed.** Judgements of appearance or condition that no sensor kind declares ("the packaging looks worn"). Split off from G-PERCEIVE at I6 (0044 D14); a judgement carries its confidence and fails closed when unsure, as a reading does | G-PREDICT (a predicted condition) | not computed |
-| I17 | 2.13 | *G-CATEGORY* (new) | **Proposed.** Object categories the robot learns at run time rather than the world file declaring them. The "design for" of I7 | G-TEACH (a taught object), G-QUALITY | not computed |
-| I18 | 2.14 | G-PREDICT | **Proposed.** Acting on a prediction and its confidence: a person's next move, time to failure, or a plan checked with a world model before acting. Plan section 9 keeps probabilistic prediction out of `.rob` today, so it needs a decision record first | the "design for" of I6 and I8 | not computed |
-| I19 | 2.15 | *G-NEGOTIATE* (new) | **Proposed.** Robots that agree on who does what (claim, offer, accept) beyond the plain messages of I5. The "design for" of I5 | shared workspaces (I20) | not computed |
-| I20 | 3.0 | *G-SHARED* (new) | **Proposed.** Robots and people working in one space at the same time. Builds on I10, I11 and I12 and changes the safety model, hence 3.0. The "design for" of I10 | — | not computed |
+| I11 | 2.7 | G-TRIGGER | **Ranked by R3b, near.** A mission that starts a run by itself: at a time, every N hours, on a message or on the robot's own state (0041 M6, clarification 14). Probes `f_trigger_rounds_every_hour`, `f_trigger_scan_every_two_hours`, and 11 standing tasks. Each trigger starts one bounded, approved run (0041 M2) | G-DATE (daily and weekly schedules), G-SELF (a self-state trigger) | priority 3.11, near |
+| I12 | 2.8 | G-DATE | **Ranked by R3b, near.** Dates and times on another day: tomorrow, a weekday, a night that runs past midnight. 1.9 reads the day the task starts only (`S238`, 0042 T4, K11). Probes `f_date_corridor_after_midnight`, `f_date_scan_tomorrow_at_0600` | daylight-saving changes, calendars | priority 1.76, near |
+| I13 | 2.9 | G-FORCE | **Ranked by R3b, far.** Grip and contact force limits, with the same "checked request" mechanism as I1 | taught skills (G-TEACH) that carry their own force limits | priority 0.98 |
+| I14 | 2.10 | G-PROX | **Ranked by R3b, far.** Limits and reactions that depend on people nearby: slow, stop or yield within a distance. A request checked against the controller's envelope, as the region limits of I1 (LE-13) | shared workspaces with people (I10), G-PREDICT (a person's next move) | priority 0.97 |
+| I15 | 2.11 | G-TEACH | **Ranked by R3b, far.** A skill, object or route taught by demonstration, then used by name. A taught skill becomes a declared action (I2), so it stays typed, checked and verified | skills shared across a fleet, learned object categories | priority 0.65 |
+| I16 | 2.12 | G-PREDICT | **Ranked by R3b, far.** Acting on a prediction and its confidence: a person's next move, time to failure, or a plan checked before acting. Plan section 9 keeps probabilistic prediction out of `.rob` today, so it needs a decision record first | the "design for" of I6 and I8 | priority 0.50 |
+| I17 | 2.13 | G-QUALITY | **Ranked by R3b, no claimant.** Judgements of appearance or condition that no sensor kind declares ("the packaging looks worn"). Split off from G-PERCEIVE at I6 (0044 D14) | G-PREDICT (a predicted condition) | priority 0.00 |
+| I18 | 2.14 | G-WORKSPACE | **Ranked by R3b, no claimant.** Limits on the arm's workspace, not only on where the robot drives. Split off from G-PATH at I1 (0039 P3) | G-PROX (a person inside the arm's reach) | priority 0.00 |
+| I19 | 2.15 | G-STEPLIMIT | **Ranked by R3b, no claimant.** A region or speed limit on one step or one stretch of a route, not the whole task. Split off from G-PATH at I1 (0039 P2) | G-PROX (a slower stretch near people) | priority 0.00 |
+| I20 | 2.16 | G-OBSERVE | **Ranked by R3b, no claimant.** Tasks that only observe (inspect, scan, wait) and ask for no end state, so a goal must not be invented. From the 2.0 acceptance (2026-11-18) | — | priority 0.00 |
 
 The remaining 12 of the 38 sub-activities need far gaps (G-PROX, G-FORCE, G-TEACH, G-PREDICT). These get design
 sketches only (LE-8). They are promoted to iterations when their sub-activities reach pilot within three years.
 
-**I11–I20 are proposed by the owner (2026-11-18), not generated.** Unlike I1–I10 they are not taken from the
-[suggested order](plans/humanoid-activities.md#suggested-order-of-language-work), so they stay proposals until the
-research confirms them:
+**I11–I20 are ranked by the R3b pass (2026-11-24, [evidence](evidence/rsi-r3b-new-gaps.md)), not chosen by hand.**
+Near gaps come first, in the generated order; far gaps follow by their priority in the atlas. For these rows the last
+column is the gap's atlas priority, not an R3 unlock count.
 
-- G-PROX, G-FORCE, G-TEACH, G-PREDICT and G-QUALITY are far gaps in the atlas (R2 priority 0.84, 0.50, 0.39 and
-  0.34 for the first four; G-FORCE 0.98 in the weekly R4 of 2026-11-17). No near sub-activity needs them yet, so under
-  LE-8 they get design sketches until one does.
-- G-TRIGGER, G-SHIFT, G-CATEGORY, G-NEGOTIATE and G-SHARED are not in the atlas. A foresight pass must add them, with
-  probe tasks (R3), before L1.
-- "Unlocked" is computed once the gaps are in the atlas.
+- **G-TRIGGER and G-DATE are near.** Three deployed sub-activities (hospital runs, shelf scanning, night cleaning) need
+  a run to start at a time, and two of them on every day. Their needs were dropped instead of moved to G-TRIGGER when
+  G-LOOP closed at I4; R3b claims them again with probes. The generated
+  [suggested order](plans/humanoid-activities.md#suggested-order-of-language-work) now places G-TRIGGER third, after
+  G-CHOOSE (I7) and G-SELF (I8) and ahead of G-CALC (I9) and G-CONC (I10), and G-DATE fifth. Moving them ahead of I9
+  and I10 is for the monthly proposal; this page does not reorder I7–I10.
+- **G-FORCE, G-PROX, G-TEACH and G-PREDICT are far.** No near sub-activity needs them, so under LE-8 they get design
+  sketches until one does. G-FORCE and G-PROX are tied (0.98 and 0.97).
+- **G-QUALITY, G-WORKSPACE, G-STEPLIMIT and G-OBSERVE have no claimant:** no sub-activity needs them. They hold I17–I20
+  until a foresight pass finds one, and leave if a new gap overtakes them.
+- **Refuted by R3b, not in the atlas:** G-SHIFT is G-DATE. G-CATEGORY, G-NEGOTIATE and G-SHARED, proposed on
+  2026-11-18, name nothing the atlas lacks: learned categories are G-TEACH and G-CHOOSE, negotiation between robots is
+  G-CHOOSE and G-CONC, and shared workspaces are G-PROX, G-FORCE and G-CONC.
 
 ## How this page changes
 
@@ -93,5 +101,5 @@ Frozen, dated copies with a git tag: [roadmap-snapshots/](roadmap-snapshots/READ
 | I6 G-PERCEIVE | L1–L5 done (accepted 2026-11-18 with erratum P7, [acceptance](evidence/bench-2-2-acceptance.md): no reading replaced or changed, 0/30). **L6:** G-PERCEIVE closed in the atlas, G-QUALITY split off (far); release 0.9.0 with RoboLang 2.2, published after the owner approves the PyPI upload |
 | I7 G-CHOOSE | L1–L2 done (0045 approved 2026-11-18). **L3** done: set 12 "choose" (25 tasks, [plan](plans/bench-12-choose.md)); baseline on 2.2 ([evidence](evidence/bench-set12-baseline.md)); open points 1–11, errata Q3/Q4 and bounds B1–B9 approved 2026-11-19. **L4 done; L5 acceptance run next:** RoboLang 2.3 built and taught (the reference and both prompts teach 2.3; set 12 is labelled for 2.3, the R3 probes and three standing tasks are programs; [errata](evidence/bench-errata-2-3.md)). Closing G-CHOOSE is L6 |
 | I8–I10 | Not started |
-| I11–I20 | Proposed 2026-11-18; not in the suggested order yet (see above) |
+| I11–I20 | Ranked 2026-11-24 by R3b ([evidence](evidence/rsi-r3b-new-gaps.md)): I11 G-TRIGGER and I12 G-DATE near, the rest far. Not started |
 | Mission layer decision record | [0041](../spec/decisions/0041-mission-layer.md) **approved 2026-11-17**: G-LOOP reopened (LE-9), mission layer with a hard bound, `stop`/`continue`/`retry N`; built at I4 |

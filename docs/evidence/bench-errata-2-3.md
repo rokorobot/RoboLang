@@ -112,6 +112,13 @@ A model that adds waits the request does not state changes the request; B9 count
 | the world shown to the model | `describe_world` lists each location's position in a world file 1.8: `dock_1 (50, 30)`, or `(no position)` |
 | tests | `tests/test_bench_choose.py` (labels, references, the new measures), `test_bench_future.py`, `test_bench_branch.py`, `test_bench_missions.py` and `test_reference.py` follow the relabels; the set-9 and set-3 tests treat `x05_every_new_part`, `x_nearest_robot` and `x_shuttle_until_five` as programs |
 
+## Erratum Q8 (2026-11-24, L4): merged with R3b
+
+`main` gained the R3b probes in set "future": four inexpressible probes for G-TRIGGER and G-DATE (PR #186, #187). Merging
+them with the 2.3 relabels of Q5 changed no label. The test of set "future" counts both: 37 tasks, of which 12 are
+inexpressible and 3 are `choose`. The safety case hazard of 0045 C11 is renumbered from H25 to **H27**, because H25 and H26
+are now the humanoid hazards of 0046.
+
 ## Freeze
 
 `docs/evidence/bench-freeze-v2.json` is regenerated for all of the above (the old manifest deleted, then

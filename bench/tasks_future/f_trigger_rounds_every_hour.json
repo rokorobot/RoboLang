@@ -1,0 +1,19 @@
+{
+  "id": "f_trigger_rounds_every_hour",
+  "prompt": "Every hour on the hour until 13:00, send moxi1 from the nurse_station to ward_3, then to the lab, and back to the nurse_station.",
+  "world": "bench/worlds/ward_1_5_0950.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "activity": "ACT-HLTH-001",
+  "gap": "G-TRIGGER",
+  "tags": [
+    "mission",
+    "every",
+    "time_trigger"
+  ],
+  "why": "A time trigger: a run starts on the hour, not when the previous one is done (0041 M6, clarification 14). 2.2 repeats a task when its last run ends, so a round followed by a wait drifts by the length of the round; a mission has no `every` clause (language reference: 'Missions'). The bound (13:00) is stated; the trigger is what stays out.",
+  "attempt_fails_with": "E201"
+}

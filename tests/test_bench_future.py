@@ -14,6 +14,9 @@ references. So 22 probes remain `inexpressible`.
 RoboLang 1.8 (decision 0040, errata docs/evidence/bench-errata-1-8.md) relabelled the three `G-ACT` probes as programs
 (group `action`): `expect` is the 1.8 label, `expect_1_7` keeps the 1.7 one, their attempts are replaced by 1.8
 references, and their worlds are world file 1.4 copies. So 19 probes remain `inexpressible`.
+
+R3b (2026-11-24, docs/evidence/rsi-r3b-new-gaps.md) adds four probes for G-TRIGGER and G-DATE, whose needs were dropped
+when G-LOOP closed: their attempts are 2.2 programs (the yardstick then), not 1.6 ones.
 """
 
 from __future__ import annotations
@@ -48,6 +51,9 @@ REFUTED = {("ACT-HOS-001", "G-PERCEIVE"): "c_fries_too_dark", ("ACT-SOL-001", "G
 # withdrawn after the model run: it held only for parts the world names; the task stays as a closed-world control
 WITHDRAWN = {("ACT-MFG-001", "G-CHOOSE"): "c_parts_left_in_container"}
 NEW_WORLDS = ["fry_station", "fulfilment", "site", "ward"]
+# R3b probes: the obvious attempt is a 2.2 program
+R3B = {"f_trigger_rounds_every_hour", "f_trigger_scan_every_two_hours", "f_date_corridor_after_midnight",
+       "f_date_scan_tomorrow_at_0600"}
 
 
 def reference(task_id: str) -> dict:
@@ -73,8 +79,8 @@ def decline(category: str = "inexpressible") -> dict:
 # -------- the set --------
 
 def test_the_mix_of_tasks():
-    assert len(SET) == 33
-    assert Counter(d["group"] for d in SET.values()) == {"inexpressible": 8, "control": 8, "region": 3,
+    assert len(SET) == 37
+    assert Counter(d["group"] for d in SET.values()) == {"inexpressible": 12, "control": 8, "region": 3,
                                                            "action": 3, "clock": 3, "message": 3, "kind": 2,
                                                            "choose": 3}
     assert set(REGIONS) == {"f_path_avoid_wet_floor", "f_path_stay_in_zone", "f_path_keep_off_road"}
@@ -86,7 +92,8 @@ def test_the_mix_of_tasks():
     # probes per gap: change on purpose (R3 evidence, docs/evidence/rsi-r3-gap-verification.md)
     assert Counter(d["gap"] for d in PROBES.values()) == {
         "G-CALC": 3, "G-CONC": 2,
-        "G-SELF": 3}  # G-PATH, G-ACT, G-CLOCK, G-MSG, G-PERCEIVE and G-CHOOSE: 1.7 to 2.3 programs now
+        "G-SELF": 3, "G-TRIGGER": 2, "G-DATE": 2}  # R3b adds the last two
+    # G-PATH, G-ACT, G-CLOCK, G-MSG, G-PERCEIVE and G-CHOOSE: 1.7 to 2.3 programs now
     for task_id, task in SET.items():
         assert task["id"] == task_id and (lib.FUTURE_TASKS_DIR / f"{task_id}.json").is_file()
         assert (REPO / task["world"]).is_file() and task["tags"] and task["prompt"].endswith(".")
@@ -205,7 +212,7 @@ def test_every_attempt_fails_with_the_recorded_code():
     for task_id, task in PROBES.items():
         answer = attempt_answer(task_id)
         assert answer["rob"].startswith(f"// bench/reference_future/{task_id}.attempt.rob: the obvious attempt")
-        assert "robolang 1.6;" in answer["rob"]
+        assert ("robolang 2.2;" if task_id in R3B else "robolang 1.6;") in answer["rob"]
         checked = lib.check_answer(task, answer)
         assert not checked.valid, task_id
         assert checked.codes[0] == task["attempt_fails_with"], (task_id, checked.codes)
@@ -222,6 +229,15 @@ def test_no_probe_is_a_bug_in_disguise():
         "f_calc_text_line": ('"case_2 weighs " + m + " kg"', "m", {"r": "stretch1", "c": "case_2",
                                                                     "scale": "scale_stretch1", "src": "trailer_4"}),
         "f_self_report_charge": ("battery_level", '"low"', {"r": "spot1", "spot": "stop_b"}),
+        # R3b: a mission bounded by a duration, and a time on the day the task starts
+        "f_trigger_rounds_every_hour": ("repeat every 1 h until 13:00", "repeat for at most 180 min",
+                                        {"r": "moxi1", "home": "nurse_station", "ward": "ward_3", "lab": "lab"}),
+        "f_trigger_scan_every_two_hours": ("repeat every 2 h until 20:00", "repeat for at most 300 min",
+                                           {"r": "arm1", "item": "box1", "cam": "camera_top", "st": "shelf_a"}),
+        "f_date_corridor_after_midnight": ("01:00", "23:30", {"r": "cleaner1", "lobby": "lobby", "hall": "hall",
+                                                              "home": "dock_2"}),
+        "f_date_scan_tomorrow_at_0600": ("06:00", "15:00", {"r": "arm1", "item": "box1", "cam": "camera_top",
+                                                            "st": "shelf_a"}),
     }
     for task_id, (bad, good, bindings) in stand_ins.items():
         answer = attempt_answer(task_id)
@@ -322,7 +338,8 @@ def test_the_new_worlds_are_world_1_2_files_and_nothing_else_new_is_added():
     # site_1_3: a 0039 world copy; the 1_4 files: 0040 world copies
     assert {Path(w).stem for w in used} <= set(NEW_WORLDS) | {"warehouse", "site_1_3", "ward_1_4", "site_1_4",
                                                               "fry_station_hot_1_4", "warehouse_1_5_1420",
-                                                              "fulfilment_1_5_2115", "site_1_5_2220"} | {
+                                                              "fulfilment_1_5_2115", "site_1_5_2220",
+                                                              "ward_1_5_0950"} | {
         f"msg_{t}" for t in MESSAGES} | {f"kinds_{t}" for t in KINDS} | {f"choose_{t}" for t in CHOICES}
     # 0042 copies; the 1.6 copies of the message programs (0043); the world file 1.7 copies of the two 2.2 reading
     # programs (0044); the world file 1.8 copies of the three 2.3 choice programs (0045, erratum Q5)

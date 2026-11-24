@@ -1,0 +1,2654 @@
+{
+  "checks": {
+    "O1": {
+      "pass": true,
+      "details": {
+        "atoms": 30,
+        "not_the_expected_verdict": [],
+        "disagree_with_oracle_where_it_decides": [],
+        "verdicts_seen": {
+          "object_at": [
+            "false",
+            "true",
+            "unknown"
+          ],
+          "holding": [
+            "false",
+            "true",
+            "unknown"
+          ],
+          "robot_at": [
+            "false",
+            "true",
+            "unknown"
+          ],
+          "robot_ready": [
+            "true"
+          ]
+        },
+        "robot_ready_true": true,
+        "steps": [
+          {
+            "label": "at the bench",
+            "t_ms": 5695,
+            "rows": [
+              {
+                "scene": "A",
+                "step": "at the bench",
+                "atom": "object_at box at bench",
+                "expected": "true",
+                "verdict": "true",
+                "truth": true,
+                "detail": {
+                  "marker_in_station_frame": [
+                    0.5534,
+                    0.6409,
+                    1.0202
+                  ],
+                  "region_clearance_m": 0.0698
+                }
+              },
+              {
+                "scene": "A",
+                "step": "at the bench",
+                "atom": "object_at box at shelf",
+                "expected": "unknown",
+                "verdict": "unknown",
+                "truth": false,
+                "detail": {
+                  "why": "the station marker of shelf: not seen"
+                }
+              },
+              {
+                "scene": "A",
+                "step": "at the bench",
+                "atom": "holding g1 box",
+                "expected": "false",
+                "verdict": "false",
+                "truth": false,
+                "detail": {
+                  "hands": {
+                    "left": "open",
+                    "right": "open"
+                  },
+                  "why": "both hands are open"
+                }
+              },
+              {
+                "scene": "A",
+                "step": "at the bench",
+                "atom": "robot_at g1 bench",
+                "expected": "true",
+                "verdict": "true",
+                "truth": true,
+                "detail": {
+                  "station": "bench",
+                  "tolerance_m": 0.05,
+                  "tolerance_rad": 0.1,
+                  "offset_m": 0.0123,
+                  "offset_rad": 0.0445
+                }
+              },
+              {
+                "scene": "A",
+                "step": "at the bench",
+                "atom": "robot_at g1 shelf",
+                "expected": "false",
+                "verdict": "false",
+                "truth": false,
+                "detail": {
+                  "station": "shelf",
+                  "tolerance_m": 0.05,
+                  "tolerance_rad": 0.1,
+                  "why": "the station marker of shelf: not seen",
+                  "confirmed_at_station": "bench",
+                  "offset_m": 0.0123,
+                  "offset_rad": 0.0445
+                }
+              },
+              {
+                "scene": "A",
+                "step": "at the bench",
+                "atom": "robot_at g1 pad",
+                "expected": "false",
+                "verdict": "false",
+                "truth": false,
+                "detail": {
+                  "station": "pad",
+                  "tolerance_m": 0.05,
+                  "tolerance_rad": 0.1,
+                  "why": "the station marker of pad: not seen",
+                  "confirmed_at_station": "bench",
+                  "offset_m": 0.0123,
+                  "offset_rad": 0.0445
+                }
+              },
+              {
+                "scene": "A",
+                "step": "at the bench",
+                "atom": "robot_ready g1",
+                "expected": "true",
+                "verdict": "true",
+                "truth": true,
+                "detail": {
+                  "lowstate_fresh": true,
+                  "motor_error": 0,
+                  "fsm_id": 500,
+                  "tilt_deg": 0.86
+                }
+              }
+            ],
+            "motion": null,
+            "markers": {
+              "7": {
+                "confidence": 1.0,
+                "age_ms": 95,
+                "range_m": 0.51
+              },
+              "20": {
+                "confidence": 1.0,
+                "age_ms": 95,
+                "range_m": 1.71
+              }
+            }
+          },
+          {
+            "label": "item elsewhere on the bench",
+            "t_ms": 9279,
+            "rows": [
+              {
+                "scene": "A",
+                "step": "item elsewhere on the bench",
+                "atom": "object_at box at bench",
+                "expected": "false",
+                "verdict": "false",
+                "truth": false,
+                "detail": {
+                  "marker_in_station_frame": [
+                    0.5556,
+                    0.6376,
+                    0.8467
+                  ],
+                  "region_clearance_m": -0.0633
+                }
+              }
+            ],
+            "motion": null,
+            "markers": {
+              "7": {
+                "confidence": 1.0,
+                "age_ms": 79,
+                "range_m": 0.61
+              },
+              "20": {
+                "confidence": 1.0,
+                "age_ms": 79,
+                "range_m": 1.71
+              }
+            }
+          },
+          {
+            "label": "camera covered",
+            "t_ms": 12820,
+            "rows": [
+              {
+                "scene": "A",
+                "step": "camera covered",
+                "atom": "object_at box at bench",
+                "expected": "unknown",
+                "verdict": "unknown",
+                "truth": false,
+                "detail": {
+                  "why": "the marker of box: not seen"
+                }
+              },
+              {
+                "scene": "A",
+                "step": "camera covered",
+                "atom": "robot_at g1 bench",
+                "expected": "unknown",
+                "verdict": "unknown",
+                "truth": true,
+                "detail": {
+                  "station": "bench",
+                  "tolerance_m": 0.05,
+                  "tolerance_rad": 0.1,
+                  "why": "the station marker of bench: not seen"
+                }
+              },
+              {
+                "scene": "A",
+                "step": "camera covered",
+                "atom": "holding g1 box",
+                "expected": "false",
+                "verdict": "false",
+                "truth": false,
+                "detail": {
+                  "hands": {
+                    "left": "open",
+                    "right": "open"
+                  },
+                  "why": "both hands are open"
+                }
+              },
+              {
+                "scene": "A",
+                "step": "camera covered",
+                "atom": "robot_ready g1",
+                "expected": "true",
+                "verdict": "true",
+                "truth": true,
+                "detail": {
+                  "lowstate_fresh": true,
+                  "motor_error": 0,
+                  "fsm_id": 500,
+                  "tilt_deg": 0.66
+                }
+              }
+            ],
+            "motion": null,
+            "markers": {}
+          },
+          {
+            "label": "right hand closed on nothing",
+            "t_ms": 18088,
+            "rows": [
+              {
+                "scene": "A",
+                "step": "right hand closed on nothing",
+                "atom": "holding g1 box",
+                "expected": "false",
+                "verdict": "false",
+                "truth": false,
+                "detail": {
+                  "hands": {
+                    "left": "open",
+                    "right": "closed"
+                  },
+                  "why": "the marker is seen away from the closed hand",
+                  "marker_to_hand_m": 0.3858
+                }
+              },
+              {
+                "scene": "A",
+                "step": "right hand closed on nothing",
+                "atom": "object_at box at bench",
+                "expected": "true",
+                "verdict": "true",
+                "truth": true,
+                "detail": {
+                  "marker_in_station_frame": [
+                    0.5534,
+                    0.6425,
+                    1.0191
+                  ],
+                  "region_clearance_m": 0.0709
+                }
+              }
+            ],
+            "motion": null,
+            "markers": {
+              "7": {
+                "confidence": 1.0,
+                "age_ms": 88,
+                "range_m": 0.51
+              },
+              "20": {
+                "confidence": 1.0,
+                "age_ms": 88,
+                "range_m": 1.72
+              }
+            }
+          },
+          {
+            "label": "carrying the box, shown to the camera",
+            "t_ms": 97927,
+            "rows": [
+              {
+                "scene": "A",
+                "step": "carrying the box, shown to the camera",
+                "atom": "holding g1 box",
+                "expected": "true",
+                "verdict": "true",
+                "truth": true,
+                "detail": {
+                  "hands": {
+                    "left": "open",
+                    "right": "closed"
+                  },
+                  "hand": "right",
+                  "marker_to_hand_m": 0.0476
+                }
+              },
+              {
+                "scene": "A",
+                "step": "carrying the box, shown to the camera",
+                "atom": "object_at box at bench",
+                "expected": "false",
+                "verdict": "false",
+                "truth": false,
+                "detail": {
+                  "seen_at_hand": "right"
+                }
+              }
+            ],
+            "motion": {
+              "performed": true,
+              "object": "box",
+              "hand": "right",
+              "waypoints": [
+                "clear of the hip",
+                "raised",
+                "show",
+                "raised",
+                "clear of the hip",
+                "carry"
+              ],
+              "clearance": {
+                "clear": true,
+                "boxes": [
+                  "bench_table",
+                  "shelf_table"
+                ],
+                "pelvis_in_map": [
+                  2.446,
+                  0.03,
+                  0.059
+                ],
+                "margins_m": {
+                  "sideways": 0.03,
+                  "vertical": 0.015,
+                  "contact_overlap": 0.01
+                },
+                "legs": [
+                  "carry->clear of the hip",
+                  "clear of the hip->raised",
+                  "raised->show"
+                ],
+                "closest": {
+                  "over_limit_m": 0.0162,
+                  "clearance_m": 0.0162,
+                  "group": "held",
+                  "link": "right_wrist_yaw_link",
+                  "box": "bench_table",
+                  "leg": "clear of the hip->raised",
+                  "at": 0.33
+                },
+                "waypoints": [
+                  "carry",
+                  "clear of the hip",
+                  "raised",
+                  "show"
+                ]
+              },
+              "arm_stance": "supported",
+              "t_start_ms": 90067,
+              "t_end_ms": 102791,
+              "events": [
+                {
+                  "t_ms": 90067,
+                  "event": "show_held"
+                },
+                {
+                  "t_ms": 91691,
+                  "event": "arm",
+                  "label": "clear of the hip",
+                  "seconds": 1.6,
+                  "tracking_rad": 0.0263,
+                  "took_ms": 1620
+                },
+                {
+                  "t_ms": 93307,
+                  "event": "arm",
+                  "label": "raised",
+                  "seconds": 1.6,
+                  "tracking_rad": 0.0254,
+                  "took_ms": 1616
+                },
+                {
+                  "t_ms": 94963,
+                  "event": "arm",
+                  "label": "show",
+                  "seconds": 1.6,
+                  "tracking_rad": 0.0247,
+                  "took_ms": 1656
+                },
+                {
+                  "t_ms": 99551,
+                  "event": "arm",
+                  "label": "back raised",
+                  "seconds": 1.6,
+                  "tracking_rad": 0.0263,
+                  "took_ms": 1624
+                },
+                {
+                  "t_ms": 101171,
+                  "event": "arm",
+                  "label": "back clear of the hip",
+                  "seconds": 1.6,
+                  "tracking_rad": 0.0253,
+                  "took_ms": 1620
+                },
+                {
+                  "t_ms": 102791,
+                  "event": "arm",
+                  "label": "carry",
+                  "seconds": 1.6,
+                  "tracking_rad": 0.0122,
+                  "took_ms": 1620
+                }
+              ]
+            },
+            "markers": {
+              "7": {
+                "confidence": 1.0,
+                "age_ms": 127,
+                "range_m": 0.45
+              },
+              "20": {
+                "confidence": 1.0,
+                "age_ms": 127,
+                "range_m": 1.71
+              }
+            }
+          },
+          {
+            "label": "carrying the box, in the carry pose (out of view)",
+            "t_ms": 104683,
+            "rows": [
+              {
+                "scene": "A",
+                "step": "carrying the box, in the carry pose (out of view)",
+                "atom": "holding g1 box",
+                "expected": "unknown",
+                "verdict": "unknown",
+                "truth": true,
+                "detail": {
+                  "hands": {
+                    "left": "open",
+                    "right": "closed"
+                  },
+                  "why": "the marker of box: not seen"
+                }
+              },
+              {
+                "scene": "A",
+                "step": "carrying the box, in the carry pose (out of view)",
+                "atom": "object_at box at bench",
+                "expected": "unknown",
+                "verdict": "unknown",
+                "truth": false,
+                "detail": {
+                  "why": "the marker of box: not seen"
+                }
+              }
+            ],
+            "motion": null,
+            "markers": {
+              "20": {
+                "confidence": 1.0,
+                "age_ms": 83,
+                "range_m": 1.72
+              }
+            }
+          },
+          {
+            "label": "carrying the box, camera covered",
+            "t_ms": 112427,
+            "rows": [
+              {
+                "scene": "A",
+                "step": "carrying the box, camera covered",
+                "atom": "holding g1 box",
+                "expected": "unknown",
+                "verdict": "unknown",
+                "truth": true,
+                "detail": {
+                  "hands": {
+                    "left": "open",
+                    "right": "closed"
+                  },
+                  "why": "the marker of box: not seen"
+                }
+              },
+              {
+                "scene": "A",
+                "step": "carrying the box, camera covered",
+                "atom": "object_at box at bench",
+                "expected": "unknown",
+                "verdict": "unknown",
+                "truth": false,
+                "detail": {
+                  "why": "the marker of box: not seen"
+                }
+              }
+            ],
+            "motion": {
+              "performed": true,
+              "object": "box",
+              "hand": "right",
+              "waypoints": [
+                "clear of the hip",
+                "raised",
+                "show",
+                "raised",
+                "clear of the hip",
+                "carry"
+              ],
+              "clearance": {
+                "clear": true,
+                "boxes": [
+                  "bench_table",
+                  "shelf_table"
+                ],
+                "pelvis_in_map": [
+                  2.446,
+                  0.03,
+                  0.059
+                ],
+                "margins_m": {
+                  "sideways": 0.03,
+                  "vertical": 0.015,
+                  "contact_overlap": 0.01
+                },
+                "legs": [
+                  "carry->clear of the hip",
+                  "clear of the hip->raised",
+                  "raised->show"
+                ],
+                "closest": {
+                  "over_limit_m": 0.0162,
+                  "clearance_m": 0.0162,
+                  "group": "held",
+                  "link": "right_wrist_yaw_link",
+                  "box": "bench_table",
+                  "leg": "clear of the hip->raised",
+                  "at": 0.33
+                },
+                "waypoints": [
+                  "carry",
+                  "clear of the hip",
+                  "raised",
+                  "show"
+                ]
+              },
+              "arm_stance": "supported",
+              "t_start_ms": 104691,
+              "t_end_ms": 117307,
+              "events": [
+                {
+                  "t_ms": 104691,
+                  "event": "show_held"
+                },
+                {
+                  "t_ms": 106307,
+                  "event": "arm",
+                  "label": "clear of the hip",
+                  "seconds": 1.6,
+                  "tracking_rad": 0.0263,
+                  "took_ms": 1616
+                },
+                {
+                  "t_ms": 107923,
+                  "event": "arm",
+                  "label": "raised",
+                  "seconds": 1.6,
+                  "tracking_rad": 0.0254,
+                  "took_ms": 1616
+                },
+                {
+                  "t_ms": 109531,
+                  "event": "arm",
+                  "label": "show",
+                  "seconds": 1.6,
+                  "tracking_rad": 0.0249,
+                  "took_ms": 1608
+                },
+                {
+                  "t_ms": 114051,
+                  "event": "arm",
+                  "label": "back raised",
+                  "seconds": 1.6,
+                  "tracking_rad": 0.0262,
+                  "took_ms": 1624
+                },
+                {
+                  "t_ms": 115679,
+                  "event": "arm",
+                  "label": "back clear of the hip",
+                  "seconds": 1.6,
+                  "tracking_rad": 0.0253,
+                  "took_ms": 1628
+                },
+                {
+                  "t_ms": 117307,
+                  "event": "arm",
+                  "label": "carry",
+                  "seconds": 1.6,
+                  "tracking_rad": 0.0122,
+                  "took_ms": 1628
+                }
+              ]
+            },
+            "markers": {}
+          },
+          {
+            "label": "0.30 m short of the bench",
+            "t_ms": 5071,
+            "rows": [
+              {
+                "scene": "B",
+                "step": "0.30 m short of the bench",
+                "atom": "robot_at g1 bench",
+                "expected": "false",
+                "verdict": "false",
+                "truth": false,
+                "detail": {
+                  "station": "bench",
+                  "tolerance_m": 0.05,
+                  "tolerance_rad": 0.1,
+                  "offset_m": 0.314,
+                  "offset_rad": 0.0413
+                }
+              },
+              {
+                "scene": "B",
+                "step": "0.30 m short of the bench",
+                "atom": "object_at box at bench",
+                "expected": "true",
+                "verdict": "true",
+                "truth": true,
+                "detail": {
+                  "marker_in_station_frame": [
+                    0.5568,
+                    0.6337,
+                    1.0109
+                  ],
+                  "region_clearance_m": 0.0737
+                }
+              },
+              {
+                "scene": "B",
+                "step": "0.30 m short of the bench",
+                "atom": "robot_at g1 shelf",
+                "expected": "unknown",
+                "verdict": "unknown",
+                "truth": false,
+                "detail": {
+                  "station": "shelf",
+                  "tolerance_m": 0.05,
+                  "tolerance_rad": 0.1,
+                  "why": "the station marker of shelf: not seen"
+                }
+              },
+              {
+                "scene": "B",
+                "step": "0.30 m short of the bench",
+                "atom": "robot_ready g1",
+                "expected": "true",
+                "verdict": "true",
+                "truth": true,
+                "detail": {
+                  "lowstate_fresh": true,
+                  "motor_error": 0,
+                  "fsm_id": 500,
+                  "tilt_deg": 0.89
+                }
+              }
+            ],
+            "motion": null,
+            "markers": {
+              "7": {
+                "confidence": 1.0,
+                "age_ms": 71,
+                "range_m": 0.71
+              },
+              "20": {
+                "confidence": 1.0,
+                "age_ms": 71,
+                "range_m": 1.94
+              }
+            }
+          },
+          {
+            "label": "heading 0.2 rad off",
+            "t_ms": 5071,
+            "rows": [
+              {
+                "scene": "B2",
+                "step": "heading 0.2 rad off",
+                "atom": "robot_at g1 bench",
+                "expected": "false",
+                "verdict": "false",
+                "truth": false,
+                "detail": {
+                  "station": "bench",
+                  "tolerance_m": 0.05,
+                  "tolerance_rad": 0.1,
+                  "offset_m": 0.0095,
+                  "offset_rad": 0.2422
+                }
+              },
+              {
+                "scene": "B2",
+                "step": "heading 0.2 rad off",
+                "atom": "object_at box at bench",
+                "expected": "true",
+                "verdict": "true",
+                "truth": true,
+                "detail": {
+                  "marker_in_station_frame": [
+                    0.5536,
+                    0.6425,
+                    1.0178
+                  ],
+                  "region_clearance_m": 0.0722
+                }
+              }
+            ],
+            "motion": null,
+            "markers": {
+              "7": {
+                "confidence": 1.0,
+                "age_ms": 71,
+                "range_m": 0.51
+              },
+              "20": {
+                "confidence": 1.0,
+                "age_ms": 71,
+                "range_m": 1.7
+              }
+            }
+          },
+          {
+            "label": "facing away: nothing in view",
+            "t_ms": 5079,
+            "rows": [
+              {
+                "scene": "C",
+                "step": "facing away: nothing in view",
+                "atom": "object_at box at bench",
+                "expected": "unknown",
+                "verdict": "unknown",
+                "truth": true,
+                "detail": {
+                  "why": "the marker of box: not seen"
+                }
+              },
+              {
+                "scene": "C",
+                "step": "facing away: nothing in view",
+                "atom": "robot_at g1 bench",
+                "expected": "unknown",
+                "verdict": "unknown",
+                "truth": false,
+                "detail": {
+                  "station": "bench",
+                  "tolerance_m": 0.05,
+                  "tolerance_rad": 0.1,
+                  "why": "the station marker of bench: not seen"
+                }
+              },
+              {
+                "scene": "C",
+                "step": "facing away: nothing in view",
+                "atom": "holding g1 box",
+                "expected": "false",
+                "verdict": "false",
+                "truth": false,
+                "detail": {
+                  "hands": {
+                    "left": "open",
+                    "right": "open"
+                  },
+                  "why": "both hands are open"
+                }
+              },
+              {
+                "scene": "C",
+                "step": "facing away: nothing in view",
+                "atom": "robot_ready g1",
+                "expected": "true",
+                "verdict": "true",
+                "truth": true,
+                "detail": {
+                  "lowstate_fresh": true,
+                  "motor_error": 0,
+                  "fsm_id": 500,
+                  "tilt_deg": 0.89
+                }
+              }
+            ],
+            "motion": null,
+            "markers": {}
+          }
+        ]
+      },
+      "elapsed_s": 148.1
+    },
+    "O2": {
+      "pass": true,
+      "details": {
+        "item_at_src": {
+          "pass": true,
+          "exit": 0,
+          "state": "SUCCEEDED",
+          "failure": null,
+          "precondition": "true",
+          "atoms": [
+            {
+              "run": "o2_item_at_src",
+              "phase": "preconditions",
+              "atom": {
+                "kind": "object_at",
+                "object": "item",
+                "location": "src"
+              },
+              "verdict": "true",
+              "truth": true,
+              "expected_unknown": false,
+              "t_ms": 5915
+            },
+            {
+              "run": "o2_item_at_src",
+              "phase": "goal",
+              "atom": {
+                "kind": "object_at",
+                "object": "item",
+                "location": "dst"
+              },
+              "verdict": "true",
+              "truth": true,
+              "expected_unknown": false,
+              "t_ms": 193868
+            }
+          ]
+        },
+        "item_elsewhere": {
+          "pass": true,
+          "exit": 1,
+          "failure": {
+            "code": "S101",
+            "message": "a precondition is false from the observations",
+            "step": null
+          },
+          "commands_sent": {
+            "sport": 0,
+            "arm_sdk": 0,
+            "hand_left": 0,
+            "hand_right": 0,
+            "attach": 0,
+            "detach": 0
+          },
+          "precondition_atom": {
+            "atom": {
+              "kind": "object_at",
+              "object": "item",
+              "location": "src"
+            },
+            "result": "false",
+            "marker_in_station_frame": [
+              0.5537,
+              0.6367,
+              0.8364
+            ],
+            "region_clearance_m": -0.0736
+          },
+          "atoms": [
+            {
+              "run": "o2_item_elsewhere",
+              "phase": "preconditions",
+              "atom": {
+                "kind": "object_at",
+                "object": "item",
+                "location": "src"
+              },
+              "verdict": "false",
+              "truth": false,
+              "expected_unknown": false,
+              "t_ms": 5875
+            }
+          ]
+        },
+        "camera_covered": {
+          "pass": true,
+          "exit": 1,
+          "failure": {
+            "code": "S102",
+            "message": "a precondition is unknown from the observations",
+            "step": null
+          },
+          "commands_sent": {
+            "sport": 0,
+            "arm_sdk": 0,
+            "hand_left": 0,
+            "hand_right": 0,
+            "attach": 0,
+            "detach": 0
+          },
+          "atoms": [
+            {
+              "run": "o2_camera_covered",
+              "phase": "preconditions",
+              "atom": {
+                "kind": "object_at",
+                "object": "item",
+                "location": "src"
+              },
+              "verdict": "unknown",
+              "truth": true,
+              "expected_unknown": true,
+              "t_ms": 6807
+            }
+          ]
+        }
+      },
+      "elapsed_s": 218.4
+    },
+    "O3": {
+      "pass": true,
+      "details": {
+        "runs": [
+          {
+            "task": "e_pick_place",
+            "run": 1,
+            "scenario": "o3_e_pick_place_1",
+            "pass": true,
+            "state": "SUCCEEDED",
+            "failure": null,
+            "exit": 0,
+            "goal": [
+              [
+                "object_at",
+                "true",
+                true
+              ]
+            ],
+            "observation_motion": [],
+            "steps_s": [
+              24.5,
+              27.7,
+              54.1,
+              24.6
+            ]
+          },
+          {
+            "task": "e_pick_place",
+            "run": 2,
+            "scenario": "o3_e_pick_place_2",
+            "pass": true,
+            "state": "SUCCEEDED",
+            "failure": null,
+            "exit": 0,
+            "goal": [
+              [
+                "object_at",
+                "true",
+                true
+              ]
+            ],
+            "observation_motion": [],
+            "steps_s": [
+              23.9,
+              28.5,
+              81.5,
+              25.3
+            ]
+          },
+          {
+            "task": "w_carry_hold",
+            "run": 1,
+            "scenario": "o3_w_carry_hold_1",
+            "pass": true,
+            "state": "SUCCEEDED",
+            "failure": null,
+            "exit": 0,
+            "goal": [
+              [
+                "holding",
+                "true",
+                true
+              ],
+              [
+                "robot_at",
+                "true",
+                true
+              ]
+            ],
+            "observation_motion": [
+              [
+                "goal",
+                true
+              ]
+            ],
+            "steps_s": [
+              24.7,
+              27.9,
+              68.3
+            ]
+          },
+          {
+            "task": "w_carry_hold",
+            "run": 2,
+            "scenario": "o3_w_carry_hold_2",
+            "pass": true,
+            "state": "SUCCEEDED",
+            "failure": null,
+            "exit": 0,
+            "goal": [
+              [
+                "holding",
+                "true",
+                true
+              ],
+              [
+                "robot_at",
+                "true",
+                true
+              ]
+            ],
+            "observation_motion": [
+              [
+                "goal",
+                true
+              ]
+            ],
+            "steps_s": [
+              24.4,
+              27.7,
+              86.1
+            ]
+          },
+          {
+            "task": "w_part_precheck",
+            "run": 1,
+            "scenario": "o2_item_at_src",
+            "pass": true,
+            "state": "SUCCEEDED",
+            "failure": null,
+            "exit": 0,
+            "goal": [
+              [
+                "object_at",
+                "true",
+                true
+              ]
+            ],
+            "observation_motion": [],
+            "steps_s": [
+              14.2,
+              27.7,
+              119.5,
+              24.7
+            ]
+          },
+          {
+            "task": "w_part_precheck",
+            "run": 2,
+            "scenario": "o3_w_part_precheck_2",
+            "pass": true,
+            "state": "SUCCEEDED",
+            "failure": null,
+            "exit": 0,
+            "goal": [
+              [
+                "object_at",
+                "true",
+                true
+              ]
+            ],
+            "observation_motion": [],
+            "steps_s": [
+              14.6,
+              28.5,
+              71.1,
+              25.3
+            ]
+          }
+        ]
+      },
+      "elapsed_s": 762.1
+    },
+    "O4": {
+      "pass": true,
+      "details": {
+        "no_place_step": {
+          "pass": true,
+          "exit": 1,
+          "failure": {
+            "code": "S301",
+            "message": "a goal condition is false from the observations",
+            "step": null
+          },
+          "atoms": [
+            {
+              "run": "o4_no_place",
+              "phase": "goal",
+              "atom": {
+                "kind": "object_at",
+                "object": "box",
+                "location": "dst"
+              },
+              "verdict": "false",
+              "truth": false,
+              "expected_unknown": false,
+              "t_ms": 129919
+            }
+          ],
+          "observation_motion": [
+            [
+              "goal",
+              true,
+              [
+                {
+                  "kind": "object_at",
+                  "object": "box",
+                  "location": "dst"
+                }
+              ]
+            ]
+          ]
+        },
+        "camera_covered_before_goal": {
+          "pass": true,
+          "exit": 3,
+          "failure": {
+            "code": "S302",
+            "message": "a goal condition is unknown from the observations",
+            "step": null
+          },
+          "atoms": [
+            {
+              "run": "o4_covered",
+              "phase": "goal",
+              "atom": {
+                "kind": "object_at",
+                "object": "box",
+                "location": "dst"
+              },
+              "verdict": "unknown",
+              "truth": true,
+              "expected_unknown": true,
+              "t_ms": 154620
+            }
+          ]
+        },
+        "view_pose_blocked": {
+          "pass": true,
+          "exit": 3,
+          "failure": {
+            "code": "S302",
+            "message": "a goal condition is unknown from the observations",
+            "step": null
+          },
+          "observation_motion": {
+            "phase": "goal",
+            "why": [
+              {
+                "kind": "object_at",
+                "object": "box",
+                "location": "dst"
+              }
+            ],
+            "performed": false,
+            "object": "box",
+            "hand": "right",
+            "reason": "the path of the arm and the object is not shown clear of the declared tables and obstacles",
+            "clearance": {
+              "clear": false,
+              "boxes": [
+                "bench_table",
+                "shelf_table",
+                "post"
+              ],
+              "pelvis_in_map": [
+                2.453,
+                2.4,
+                0.074
+              ],
+              "margins_m": {
+                "sideways": 0.03,
+                "vertical": 0.015,
+                "contact_overlap": 0.01
+              },
+              "legs": [
+                "carry->clear of the hip",
+                "clear of the hip->raised",
+                "raised->show"
+              ],
+              "closest": {
+                "over_limit_m": -0.0956,
+                "clearance_m": -0.0956,
+                "group": "held",
+                "link": "right_wrist_yaw_link",
+                "box": "post",
+                "leg": "raised->show",
+                "at": 0.89
+              },
+              "waypoints": [
+                "carry",
+                "clear of the hip",
+                "raised",
+                "show"
+              ]
+            }
+          },
+          "wrist_moved_after_last_step_m": 0.0018466185312619398,
+          "stance_after_last_step": [
+            "supported"
+          ],
+          "atoms": [
+            {
+              "run": "o4_blocked",
+              "phase": "goal",
+              "atom": {
+                "kind": "object_at",
+                "object": "box",
+                "location": "dst"
+              },
+              "verdict": "unknown",
+              "truth": false,
+              "expected_unknown": true,
+              "t_ms": 135299
+            }
+          ]
+        },
+        "cancel_during_observation_motion": {
+          "pass": true,
+          "exit": 1,
+          "failure": {
+            "code": "S511",
+            "message": "the run was cancelled",
+            "step": 2
+          },
+          "stop": {
+            "reason": "cancelled",
+            "code": "S511",
+            "kind": "controlled_stand",
+            "safe_state": {
+              "velocity": "zero",
+              "arms": "hold",
+              "hands": "unchanged",
+              "balance": "kept"
+            }
+          },
+          "confirmation": {
+            "confirmed": true,
+            "timeout_ms": 3000,
+            "window_ms": 500,
+            "tolerances": {
+              "gyro_rad_s": 0.045,
+              "joint_velocity_rad_s": 0.09,
+              "tilt_deg": 15.0
+            },
+            "t_stop_ms": 59764,
+            "max_gyro_rad_s": 0.0327,
+            "max_joint_velocity_rad_s": 0.0598,
+            "max_tilt_deg": 0.29,
+            "samples": 126,
+            "window_start_ms": 59928,
+            "window_end_ms": 60428,
+            "after_ms": 664
+          },
+          "still_holding_at_end": {
+            "crate": "right"
+          },
+          "right_hand_joint_error_from_closed_rad": 0.0125,
+          "cancel_written": true,
+          "observation_motion_recorded": [
+            null
+          ]
+        }
+      },
+      "elapsed_s": 505.6
+    },
+    "O5": {
+      "pass": true,
+      "details": {
+        "max_age_1ms": {
+          "pass": true,
+          "exit": 3,
+          "state": "FAILED",
+          "failure": {
+            "code": "S302",
+            "message": "a goal condition is unknown from the observations",
+            "step": null
+          },
+          "verify": {
+            "min_confidence": "0.9",
+            "max_age_ms": 1
+          },
+          "atoms": [
+            {
+              "run": "o5_max_age_1ms",
+              "phase": "goal",
+              "atom": {
+                "kind": "robot_at",
+                "robot": "r",
+                "location": "a"
+              },
+              "verdict": "unknown",
+              "truth": true,
+              "expected_unknown": true,
+              "t_ms": 29879
+            }
+          ],
+          "marker_age_ms": [
+            79,
+            79
+          ]
+        },
+        "relaxed": {
+          "pass": true,
+          "exit": 0,
+          "state": "SUCCEEDED",
+          "failure": null,
+          "verify": {
+            "min_confidence": "0.5",
+            "max_age_ms": 30000
+          },
+          "atoms": [
+            {
+              "run": "o5_relaxed",
+              "phase": "goal",
+              "atom": {
+                "kind": "robot_at",
+                "robot": "r",
+                "location": "a"
+              },
+              "verdict": "true",
+              "truth": true,
+              "expected_unknown": false,
+              "t_ms": 30291
+            }
+          ],
+          "marker_age_ms": [
+            91,
+            91
+          ]
+        },
+        "defaults": {
+          "pass": true,
+          "exit": 0,
+          "state": "SUCCEEDED",
+          "failure": null,
+          "verify": {
+            "min_confidence": "0.9",
+            "max_age_ms": 10000
+          },
+          "atoms": [
+            {
+              "run": "o5_defaults",
+              "phase": "goal",
+              "atom": {
+                "kind": "robot_at",
+                "robot": "r",
+                "location": "a"
+              },
+              "verdict": "true",
+              "truth": true,
+              "expected_unknown": false,
+              "t_ms": 30483
+            }
+          ],
+          "marker_age_ms": [
+            83,
+            83
+          ]
+        }
+      },
+      "elapsed_s": 102.6
+    },
+    "O6": {
+      "pass": true,
+      "details": {
+        "atoms_the_oracle_decides": 34,
+        "agree": 34,
+        "agreement": 1.0,
+        "required": 0.98,
+        "unknown_where_the_oracle_decides": [],
+        "wrong_true_or_false": [],
+        "scripted_unknown_atoms": 14,
+        "scripted_unknown_decided_anyway": [],
+        "false_successes": [],
+        "runs_succeeded": 8
+      },
+      "elapsed_s": 0.0
+    },
+    "O7": {
+      "pass": true,
+      "details": {
+        "succeeded_records": [
+          {
+            "run": "o2_item_at_src",
+            "problems": [],
+            "evidence": [
+              [
+                "rl:thing:box_1",
+                "located_in",
+                "rl:place:loc_b",
+                "1"
+              ]
+            ]
+          },
+          {
+            "run": "o3_e_pick_place_1",
+            "problems": [],
+            "evidence": [
+              [
+                "rl:thing:box_1",
+                "located_in",
+                "rl:place:loc_b",
+                "1"
+              ]
+            ]
+          },
+          {
+            "run": "o3_e_pick_place_2",
+            "problems": [],
+            "evidence": [
+              [
+                "rl:thing:box_1",
+                "located_in",
+                "rl:place:loc_b",
+                "1"
+              ]
+            ]
+          },
+          {
+            "run": "o3_w_carry_hold_1",
+            "problems": [],
+            "evidence": [
+              [
+                "rl:thing:crate_1",
+                "carried_by",
+                "rl:robot:robot_1",
+                "1"
+              ],
+              [
+                "rl:robot:robot_1",
+                "located_in",
+                "rl:place:loc_dst",
+                "1"
+              ]
+            ]
+          },
+          {
+            "run": "o3_w_carry_hold_2",
+            "problems": [],
+            "evidence": [
+              [
+                "rl:thing:crate_1",
+                "carried_by",
+                "rl:robot:robot_1",
+                "1"
+              ],
+              [
+                "rl:robot:robot_1",
+                "located_in",
+                "rl:place:loc_dst",
+                "1"
+              ]
+            ]
+          },
+          {
+            "run": "o3_w_part_precheck_2",
+            "problems": [],
+            "evidence": [
+              [
+                "rl:thing:box_1",
+                "located_in",
+                "rl:place:loc_b",
+                "1"
+              ]
+            ]
+          },
+          {
+            "run": "o5_relaxed",
+            "problems": [],
+            "evidence": [
+              [
+                "rl:robot:robot_1",
+                "located_in",
+                "rl:place:loc_a",
+                "1"
+              ]
+            ]
+          },
+          {
+            "run": "o5_defaults",
+            "problems": [],
+            "evidence": [
+              [
+                "rl:robot:robot_1",
+                "located_in",
+                "rl:place:loc_a",
+                "1"
+              ]
+            ]
+          }
+        ]
+      },
+      "elapsed_s": 0.0
+    }
+  },
+  "stance_model": "free",
+  "versions": {
+    "arch": "aarch64",
+    "python": "3.11.2",
+    "assets": {
+      "unitree_mujoco": "1eb6642e3f3fdfb7fb13a9794fd6a2dd93ea0e7d",
+      "unitree_rl_lab": "4960b84732b0c2ec593dccbfe963fda1bcd7b1e3",
+      "mujoco_menagerie": "370c43965323c0944b433b202aac5058b5f907a9",
+      "unitree_rl_gym": "276801e46c5d433564f24658bac64f254b7d2d4b",
+      "unitree_sdk2_python": "814556d15970dd2ecf1c9984e845ca02ab07e206",
+      "cyclonedds_c": "abb064e35b6fbc79554c255ff8b371333e87b029"
+    },
+    "packages": {
+      "mujoco": "4.0.1",
+      "onnxruntime": "1.32.0",
+      "numpy": "2.4.6",
+      "opencv-python-headless": "5.1.0.95",
+      "cyclonedds": "0.10.2",
+      "unitree_sdk2py": "1.0.1"
+    }
+  },
+  "arch": "aarch64",
+  "go": true,
+  "realtime_valid_all_runs": false,
+  "robot_at_margins": {
+    "tolerance_m": 0.05,
+    "tolerance_rad": 0.1,
+    "largest_offset_m_when_true": 0.0245,
+    "largest_offset_rad_when_true": 0.0877
+  },
+  "elapsed_s": 1736.9,
+  "runs": [
+    {
+      "scenario": "o1_a_bench",
+      "realtime_ratio": 0.9992,
+      "worst_second_ratio": 0.999,
+      "stalls": 0,
+      "realtime_valid": true,
+      "step_compute_ms": {
+        "budget": 2.0,
+        "mean": 0.533,
+        "p99": 1.48,
+        "max": 25.2,
+        "over_budget": 0.0041
+      },
+      "gc": [
+        0.09,
+        0.96,
+        11.74
+      ],
+      "slow_steps": [
+        [
+          79.88,
+          20.9,
+          0
+        ],
+        [
+          80.676,
+          25.2,
+          0
+        ],
+        [
+          81.08,
+          20.8,
+          0
+        ],
+        [
+          94.48,
+          20.7,
+          0
+        ],
+        [
+          95.08,
+          20.7,
+          0
+        ],
+        [
+          95.68,
+          21.0,
+          0
+        ],
+        [
+          96.68,
+          20.7,
+          0
+        ],
+        [
+          97.88,
+          21.2,
+          0
+        ],
+        [
+          98.28,
+          20.7,
+          0
+        ],
+        [
+          98.48,
+          20.9,
+          0
+        ]
+      ],
+      "failure": null,
+      "record": "o1_a_bench/record.json"
+    },
+    {
+      "scenario": "o1_b_short",
+      "realtime_ratio": 0.9637,
+      "worst_second_ratio": 0.9998,
+      "stalls": 0,
+      "realtime_valid": true,
+      "step_compute_ms": {
+        "budget": 2.0,
+        "mean": 0.489,
+        "p99": 1.326,
+        "max": 8.2,
+        "over_budget": 0.0004
+      },
+      "gc": [
+        0.09,
+        0.99,
+        13.08
+      ],
+      "slow_steps": [],
+      "failure": null,
+      "record": "o1_b_short/record.json"
+    },
+    {
+      "scenario": "o1_b2_heading",
+      "realtime_ratio": 0.9621,
+      "worst_second_ratio": 0.9998,
+      "stalls": 0,
+      "realtime_valid": true,
+      "step_compute_ms": {
+        "budget": 2.0,
+        "mean": 0.497,
+        "p99": 1.294,
+        "max": 1.7,
+        "over_budget": 0.0
+      },
+      "gc": [
+        0.09,
+        0.93,
+        12.34
+      ],
+      "slow_steps": [],
+      "failure": null,
+      "record": "o1_b2_heading/record.json"
+    },
+    {
+      "scenario": "o1_c_away",
+      "realtime_ratio": 0.9661,
+      "worst_second_ratio": 0.9999,
+      "stalls": 0,
+      "realtime_valid": true,
+      "step_compute_ms": {
+        "budget": 2.0,
+        "mean": 0.472,
+        "p99": 1.287,
+        "max": 2.5,
+        "over_budget": 0.0004
+      },
+      "gc": [
+        0.09,
+        0.98,
+        12.19
+      ],
+      "slow_steps": [],
+      "failure": null,
+      "record": "o1_c_away/record.json"
+    },
+    {
+      "scenario": "o2_item_at_src",
+      "realtime_ratio": 0.999,
+      "worst_second_ratio": 0.9983,
+      "stalls": 0,
+      "realtime_valid": true,
+      "step_compute_ms": {
+        "budget": 2.0,
+        "mean": 0.543,
+        "p99": 1.455,
+        "max": 43.3,
+        "over_budget": 0.0011
+      },
+      "gc": [
+        0.1,
+        0.92,
+        11.78
+      ],
+      "slow_steps": [
+        [
+          3.304,
+          46.2,
+          0
+        ],
+        [
+          3.368,
+          82.0,
+          0
+        ],
+        [
+          155.5,
+          43.3,
+          0
+        ]
+      ],
+      "failure": null,
+      "record": "o2_item_at_src/record.json",
+      "exit": 0
+    },
+    {
+      "scenario": "o2_item_elsewhere",
+      "realtime_ratio": 0.9691,
+      "worst_second_ratio": 0.9999,
+      "stalls": 0,
+      "realtime_valid": true,
+      "step_compute_ms": {
+        "budget": 2.0,
+        "mean": 0.591,
+        "p99": 1.393,
+        "max": 88.3,
+        "over_budget": 0.0013
+      },
+      "gc": [
+        0.11,
+        0.95,
+        12.15
+      ],
+      "slow_steps": [
+        [
+          3.332,
+          88.3,
+          0
+        ],
+        [
+          3.45,
+          70.1,
+          0
+        ],
+        [
+          3.88,
+          40.8,
+          0
+        ]
+      ],
+      "failure": {
+        "code": "S101",
+        "message": "a precondition is false from the observations",
+        "step": null
+      },
+      "record": "o2_item_elsewhere/record.json",
+      "exit": 1
+    },
+    {
+      "scenario": "o2_camera_covered",
+      "realtime_ratio": 0.9969,
+      "worst_second_ratio": 0.9999,
+      "stalls": 0,
+      "realtime_valid": true,
+      "step_compute_ms": {
+        "budget": 2.0,
+        "mean": 0.519,
+        "p99": 1.437,
+        "max": 3.7,
+        "over_budget": 0.0006
+      },
+      "gc": [
+        0.09,
+        0.95,
+        11.61
+      ],
+      "slow_steps": [],
+      "failure": {
+        "code": "S102",
+        "message": "a precondition is unknown from the observations",
+        "step": null
+      },
+      "record": "o2_camera_covered/record.json",
+      "exit": 1
+    },
+    {
+      "scenario": "o3_e_pick_place_1",
+      "realtime_ratio": 0.9988,
+      "worst_second_ratio": 0.9942,
+      "stalls": 0,
+      "realtime_valid": true,
+      "step_compute_ms": {
+        "budget": 2.0,
+        "mean": 0.57,
+        "p99": 1.719,
+        "max": 13.0,
+        "over_budget": 0.0056
+      },
+      "gc": [
+        0.09,
+        0.94,
+        12.52
+      ],
+      "slow_steps": [
+        [
+          3.496,
+          67.1,
+          0
+        ],
+        [
+          3.62,
+          43.8,
+          0
+        ]
+      ],
+      "failure": null,
+      "record": "o3_e_pick_place_1/record.json",
+      "exit": 0
+    },
+    {
+      "scenario": "o3_e_pick_place_2",
+      "realtime_ratio": 0.9992,
+      "worst_second_ratio": 0.9966,
+      "stalls": 0,
+      "realtime_valid": true,
+      "step_compute_ms": {
+        "budget": 2.0,
+        "mean": 0.631,
+        "p99": 1.683,
+        "max": 47.4,
+        "over_budget": 0.005
+      },
+      "gc": [
+        0.12,
+        0.94,
+        11.84
+      ],
+      "slow_steps": [
+        [
+          131.28,
+          24.3,
+          0
+        ],
+        [
+          131.68,
+          24.3,
+          0
+        ],
+        [
+          133.676,
+          27.9,
+          0
+        ],
+        [
+          136.28,
+          24.1,
+          0
+        ],
+        [
+          139.68,
+          24.5,
+          0
+        ],
+        [
+          146.856,
+          47.4,
+          0
+        ],
+        [
+          147.058,
+          38.9,
+          0
+        ],
+        [
+          147.662,
+          35.6,
+          0
+        ],
+        [
+          148.26,
+          42.9,
+          0
+        ],
+        [
+          148.68,
+          23.8,
+          0
+        ]
+      ],
+      "failure": null,
+      "record": "o3_e_pick_place_2/record.json",
+      "exit": 0
+    },
+    {
+      "scenario": "o3_w_carry_hold_1",
+      "realtime_ratio": 0.9994,
+      "worst_second_ratio": 0.9941,
+      "stalls": 0,
+      "realtime_valid": true,
+      "step_compute_ms": {
+        "budget": 2.0,
+        "mean": 0.572,
+        "p99": 1.543,
+        "max": 11.7,
+        "over_budget": 0.0036
+      },
+      "gc": [
+        0.15,
+        0.94,
+        11.58
+      ],
+      "slow_steps": [
+        [
+          3.32,
+          45.3,
+          0
+        ],
+        [
+          3.828,
+          36.4,
+          0
+        ]
+      ],
+      "failure": null,
+      "record": "o3_w_carry_hold_1/record.json",
+      "exit": 0
+    },
+    {
+      "scenario": "o3_w_carry_hold_2",
+      "realtime_ratio": 0.9998,
+      "worst_second_ratio": 0.9879,
+      "stalls": 0,
+      "realtime_valid": true,
+      "step_compute_ms": {
+        "budget": 2.0,
+        "mean": 0.61,
+        "p99": 1.717,
+        "max": 16.2,
+        "over_budget": 0.0062
+      },
+      "gc": [
+        0.09,
+        0.99,
+        12.27
+      ],
+      "slow_steps": [
+        [
+          3.488,
+          67.3,
+          0
+        ],
+        [
+          3.612,
+          43.2,
+          0
+        ],
+        [
+          3.72,
+          35.9,
+          0
+        ]
+      ],
+      "failure": null,
+      "record": "o3_w_carry_hold_2/record.json",
+      "exit": 0
+    },
+    {
+      "scenario": "o3_w_part_precheck_2",
+      "realtime_ratio": 0.9986,
+      "worst_second_ratio": 0.9944,
+      "stalls": 0,
+      "realtime_valid": true,
+      "step_compute_ms": {
+        "budget": 2.0,
+        "mean": 0.607,
+        "p99": 1.687,
+        "max": 24.7,
+        "over_budget": 0.0063
+      },
+      "gc": [
+        0.09,
+        1.01,
+        12.42
+      ],
+      "slow_steps": [
+        [
+          132.26,
+          21.2,
+          0
+        ],
+        [
+          132.86,
+          21.7,
+          0
+        ],
+        [
+          133.26,
+          21.4,
+          0
+        ],
+        [
+          133.66,
+          21.5,
+          0
+        ],
+        [
+          135.46,
+          21.1,
+          0
+        ],
+        [
+          135.66,
+          21.9,
+          0
+        ],
+        [
+          136.06,
+          23.6,
+          0
+        ],
+        [
+          136.86,
+          20.3,
+          0
+        ],
+        [
+          138.856,
+          24.7,
+          0
+        ],
+        [
+          141.86,
+          20.5,
+          0
+        ]
+      ],
+      "failure": null,
+      "record": "o3_w_part_precheck_2/record.json",
+      "exit": 0
+    },
+    {
+      "scenario": "o4_no_place",
+      "realtime_ratio": 0.9684,
+      "worst_second_ratio": 0.2106,
+      "stalls": 2,
+      "realtime_valid": false,
+      "step_compute_ms": {
+        "budget": 2.0,
+        "mean": 0.614,
+        "p99": 1.784,
+        "max": 37.7,
+        "over_budget": 0.0075
+      },
+      "gc": [
+        0.09,
+        1.01,
+        12.43
+      ],
+      "slow_steps": [
+        [
+          80.48,
+          30.5,
+          0
+        ],
+        [
+          85.3,
+          619.7,
+          0
+        ],
+        [
+          98.464,
+          27.8,
+          0
+        ],
+        [
+          126.668,
+          21.2,
+          0
+        ],
+        [
+          126.864,
+          24.2,
+          0
+        ],
+        [
+          129.466,
+          23.8,
+          0
+        ],
+        [
+          129.864,
+          27.0,
+          0
+        ],
+        [
+          130.06,
+          37.7,
+          0
+        ],
+        [
+          130.26,
+          31.3,
+          0
+        ],
+        [
+          130.468,
+          23.3,
+          0
+        ]
+      ],
+      "failure": {
+        "code": "S301",
+        "message": "a goal condition is false from the observations",
+        "step": null
+      },
+      "record": "o4_no_place/record.json",
+      "exit": 1
+    },
+    {
+      "scenario": "o4_covered",
+      "realtime_ratio": 0.9987,
+      "worst_second_ratio": 0.9958,
+      "stalls": 0,
+      "realtime_valid": true,
+      "step_compute_ms": {
+        "budget": 2.0,
+        "mean": 0.603,
+        "p99": 1.618,
+        "max": 29.2,
+        "over_budget": 0.0043
+      },
+      "gc": [
+        0.09,
+        1.0,
+        11.72
+      ],
+      "slow_steps": [
+        [
+          50.258,
+          22.1,
+          0
+        ],
+        [
+          69.26,
+          27.2,
+          0
+        ],
+        [
+          76.664,
+          24.4,
+          0
+        ],
+        [
+          79.258,
+          25.5,
+          0
+        ],
+        [
+          80.86,
+          29.2,
+          0
+        ],
+        [
+          81.66,
+          24.5,
+          0
+        ],
+        [
+          131.86,
+          29.2,
+          0
+        ],
+        [
+          132.06,
+          24.8,
+          0
+        ],
+        [
+          132.26,
+          23.5,
+          0
+        ],
+        [
+          132.46,
+          23.9,
+          0
+        ]
+      ],
+      "failure": {
+        "code": "S302",
+        "message": "a goal condition is unknown from the observations",
+        "step": null
+      },
+      "record": "o4_covered/record.json",
+      "exit": 3
+    },
+    {
+      "scenario": "o4_blocked",
+      "realtime_ratio": 0.9985,
+      "worst_second_ratio": 0.9953,
+      "stalls": 0,
+      "realtime_valid": true,
+      "step_compute_ms": {
+        "budget": 2.0,
+        "mean": 0.654,
+        "p99": 1.808,
+        "max": 28.0,
+        "over_budget": 0.0073
+      },
+      "gc": [
+        0.1,
+        0.96,
+        12.99
+      ],
+      "slow_steps": [
+        [
+          49.466,
+          27.9,
+          0
+        ],
+        [
+          49.66,
+          34.0,
+          0
+        ],
+        [
+          50.06,
+          34.3,
+          0
+        ],
+        [
+          51.67,
+          24.1,
+          0
+        ],
+        [
+          79.87,
+          24.0,
+          0
+        ],
+        [
+          111.47,
+          24.1,
+          0
+        ],
+        [
+          127.068,
+          22.6,
+          0
+        ],
+        [
+          127.466,
+          27.8,
+          0
+        ],
+        [
+          128.266,
+          28.0,
+          0
+        ],
+        [
+          135.462,
+          26.4,
+          0
+        ]
+      ],
+      "failure": {
+        "code": "S302",
+        "message": "a goal condition is unknown from the observations",
+        "step": null
+      },
+      "record": "o4_blocked/record.json",
+      "exit": 3
+    },
+    {
+      "scenario": "o4_cancel_in_excursion",
+      "realtime_ratio": 0.9994,
+      "worst_second_ratio": 0.9997,
+      "stalls": 0,
+      "realtime_valid": true,
+      "step_compute_ms": {
+        "budget": 2.0,
+        "mean": 0.549,
+        "p99": 1.468,
+        "max": 24.3,
+        "over_budget": 0.004
+      },
+      "gc": [
+        0.11,
+        1.02,
+        15.02
+      ],
+      "slow_steps": [
+        [
+          3.61,
+          70.9,
+          0
+        ],
+        [
+          37.26,
+          21.3,
+          0
+        ],
+        [
+          37.66,
+          22.4,
+          0
+        ],
+        [
+          42.06,
+          21.3,
+          0
+        ],
+        [
+          42.66,
+          23.1,
+          0
+        ],
+        [
+          43.06,
+          21.8,
+          0
+        ],
+        [
+          44.06,
+          24.3,
+          0
+        ],
+        [
+          44.46,
+          21.0,
+          0
+        ],
+        [
+          49.86,
+          22.2,
+          0
+        ],
+        [
+          50.06,
+          21.0,
+          0
+        ]
+      ],
+      "failure": {
+        "code": "S511",
+        "message": "the run was cancelled",
+        "step": 2
+      },
+      "record": "o4_cancel_in_excursion/record.json",
+      "exit": 1
+    },
+    {
+      "scenario": "o5_max_age_1ms",
+      "realtime_ratio": 0.9934,
+      "worst_second_ratio": 0.9994,
+      "stalls": 0,
+      "realtime_valid": true,
+      "step_compute_ms": {
+        "budget": 2.0,
+        "mean": 0.567,
+        "p99": 1.487,
+        "max": 4.5,
+        "over_budget": 0.0011
+      },
+      "gc": [
+        0.1,
+        1.03,
+        12.74
+      ],
+      "slow_steps": [],
+      "failure": {
+        "code": "S302",
+        "message": "a goal condition is unknown from the observations",
+        "step": null
+      },
+      "record": "o5_max_age_1ms/record.json",
+      "exit": 3
+    },
+    {
+      "scenario": "o5_relaxed",
+      "realtime_ratio": 0.9934,
+      "worst_second_ratio": 0.9985,
+      "stalls": 0,
+      "realtime_valid": true,
+      "step_compute_ms": {
+        "budget": 2.0,
+        "mean": 0.541,
+        "p99": 1.374,
+        "max": 65.3,
+        "over_budget": 0.001
+      },
+      "gc": [
+        0.11,
+        0.95,
+        14.05
+      ],
+      "slow_steps": [
+        [
+          3.5,
+          65.3,
+          0
+        ],
+        [
+          3.84,
+          24.8,
+          0
+        ]
+      ],
+      "failure": null,
+      "record": "o5_relaxed/record.json",
+      "exit": 0
+    },
+    {
+      "scenario": "o5_defaults",
+      "realtime_ratio": 0.9946,
+      "worst_second_ratio": 0.9997,
+      "stalls": 0,
+      "realtime_valid": true,
+      "step_compute_ms": {
+        "budget": 2.0,
+        "mean": 0.601,
+        "p99": 1.516,
+        "max": 71.7,
+        "over_budget": 0.0021
+      },
+      "gc": [
+        0.1,
+        0.96,
+        13.73
+      ],
+      "slow_steps": [
+        [
+          3.54,
+          71.7,
+          0
+        ],
+        [
+          3.656,
+          53.1,
+          0
+        ],
+        [
+          3.77,
+          39.0,
+          0
+        ]
+      ],
+      "failure": null,
+      "record": "o5_defaults/record.json",
+      "exit": 0
+    }
+  ],
+  "robot_at_verdicts": [
+    {
+      "run": "A/at the bench",
+      "phase": "scripted",
+      "verdict": "true",
+      "truth": true,
+      "station": "bench",
+      "offset_m": 0.0123,
+      "offset_rad": 0.0445,
+      "tolerance_m": 0.05,
+      "tolerance_rad": 0.1,
+      "confirmed_at_station": null,
+      "why": null
+    },
+    {
+      "run": "A/at the bench",
+      "phase": "scripted",
+      "verdict": "false",
+      "truth": false,
+      "station": "shelf",
+      "offset_m": 0.0123,
+      "offset_rad": 0.0445,
+      "tolerance_m": 0.05,
+      "tolerance_rad": 0.1,
+      "confirmed_at_station": "bench",
+      "why": "the station marker of shelf: not seen"
+    },
+    {
+      "run": "A/at the bench",
+      "phase": "scripted",
+      "verdict": "false",
+      "truth": false,
+      "station": "pad",
+      "offset_m": 0.0123,
+      "offset_rad": 0.0445,
+      "tolerance_m": 0.05,
+      "tolerance_rad": 0.1,
+      "confirmed_at_station": "bench",
+      "why": "the station marker of pad: not seen"
+    },
+    {
+      "run": "A/camera covered",
+      "phase": "scripted",
+      "verdict": "unknown",
+      "truth": true,
+      "station": "bench",
+      "offset_m": null,
+      "offset_rad": null,
+      "tolerance_m": 0.05,
+      "tolerance_rad": 0.1,
+      "confirmed_at_station": null,
+      "why": "the station marker of bench: not seen"
+    },
+    {
+      "run": "B/0.30 m short of the bench",
+      "phase": "scripted",
+      "verdict": "false",
+      "truth": false,
+      "station": "bench",
+      "offset_m": 0.314,
+      "offset_rad": 0.0413,
+      "tolerance_m": 0.05,
+      "tolerance_rad": 0.1,
+      "confirmed_at_station": null,
+      "why": null
+    },
+    {
+      "run": "B/0.30 m short of the bench",
+      "phase": "scripted",
+      "verdict": "unknown",
+      "truth": false,
+      "station": "shelf",
+      "offset_m": null,
+      "offset_rad": null,
+      "tolerance_m": 0.05,
+      "tolerance_rad": 0.1,
+      "confirmed_at_station": null,
+      "why": "the station marker of shelf: not seen"
+    },
+    {
+      "run": "B2/heading 0.2 rad off",
+      "phase": "scripted",
+      "verdict": "false",
+      "truth": false,
+      "station": "bench",
+      "offset_m": 0.0095,
+      "offset_rad": 0.2422,
+      "tolerance_m": 0.05,
+      "tolerance_rad": 0.1,
+      "confirmed_at_station": null,
+      "why": null
+    },
+    {
+      "run": "C/facing away: nothing in view",
+      "phase": "scripted",
+      "verdict": "unknown",
+      "truth": false,
+      "station": "bench",
+      "offset_m": null,
+      "offset_rad": null,
+      "tolerance_m": 0.05,
+      "tolerance_rad": 0.1,
+      "confirmed_at_station": null,
+      "why": "the station marker of bench: not seen"
+    },
+    {
+      "station": "dst",
+      "offset_m": 0.0163,
+      "offset_rad": 0.0315,
+      "tolerance_m": 0.05,
+      "tolerance_rad": 0.1,
+      "confirmed_at_station": null,
+      "why": null,
+      "run": "o3_w_carry_hold_1",
+      "phase": "goal",
+      "verdict": "true",
+      "truth": true
+    },
+    {
+      "station": "dst",
+      "offset_m": 0.0152,
+      "offset_rad": 0.0877,
+      "tolerance_m": 0.05,
+      "tolerance_rad": 0.1,
+      "confirmed_at_station": null,
+      "why": null,
+      "run": "o3_w_carry_hold_2",
+      "phase": "goal",
+      "verdict": "true",
+      "truth": true
+    },
+    {
+      "station": "bench",
+      "offset_m": null,
+      "offset_rad": null,
+      "tolerance_m": 0.05,
+      "tolerance_rad": 0.1,
+      "confirmed_at_station": null,
+      "why": "the station marker of bench: age 79 ms above 1",
+      "run": "o5_max_age_1ms",
+      "phase": "goal",
+      "verdict": "unknown",
+      "truth": true
+    },
+    {
+      "station": "bench",
+      "offset_m": 0.0059,
+      "offset_rad": 0.0014,
+      "tolerance_m": 0.05,
+      "tolerance_rad": 0.1,
+      "confirmed_at_station": null,
+      "why": null,
+      "run": "o5_relaxed",
+      "phase": "goal",
+      "verdict": "true",
+      "truth": true
+    },
+    {
+      "station": "bench",
+      "offset_m": 0.0245,
+      "offset_rad": 0.0091,
+      "tolerance_m": 0.05,
+      "tolerance_rad": 0.1,
+      "confirmed_at_station": null,
+      "why": null,
+      "run": "o5_defaults",
+      "phase": "goal",
+      "verdict": "true",
+      "truth": true
+    }
+  ]
+}

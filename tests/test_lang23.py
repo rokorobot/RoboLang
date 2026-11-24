@@ -903,4 +903,4 @@ def test_no_dataclass_of_a_choice_has_a_mutable_default_python_3_11():
 
 def test_the_safety_case_has_hazard_h25():
     text = (ROOT / "docs" / "safety-case-draft.md").read_text(encoding="utf-8")
-    assert "| H25 | A stale or wrong world model makes a choice wrong |" in text
+    assert "| H27 | A stale or wrong world model makes a choice wrong |" in text

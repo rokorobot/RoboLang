@@ -1,0 +1,220 @@
+{
+  "run_record_schema": "robolang.g1.run",
+  "run_record_schema_version": "0.1",
+  "mode": "simulation",
+  "backend": {
+    "kind": "unitree-g1-mujoco",
+    "versions": {
+      "arch": "aarch64",
+      "python": "3.11.2",
+      "assets": {
+        "unitree_mujoco": "1eb6642e3f3fdfb7fb13a9794fd6a2dd93ea0e7d",
+        "unitree_rl_lab": "4960b84732b0c2ec593dccbfe963fda1bcd7b1e3",
+        "mujoco_menagerie": "370c43965323c0944b433b202aac5058b5f907a9",
+        "unitree_rl_gym": "276801e46c5d433564f24658bac64f254b7d2d4b",
+        "unitree_sdk2_python": "814556d15970dd2ecf1c9984e845ca02ab07e206",
+        "cyclonedds_c": "abb064e35b6fbc79554c255ff8b371333e87b029"
+      },
+      "packages": {
+        "mujoco": "4.0.1",
+        "onnxruntime": "1.32.0",
+        "numpy": "2.4.6",
+        "opencv-python-headless": "5.1.0.95",
+        "cyclonedds": "0.10.2",
+        "unitree_sdk2py": "1.0.1"
+      }
+    },
+    "grasp_model": "weld_after_hand_close",
+    "stance_model": "free"
+  },
+  "task": {
+    "name": "go",
+    "parameters": [
+      {
+        "name": "r",
+        "type": "robot"
+      },
+      {
+        "name": "a",
+        "type": "location"
+      }
+    ],
+    "safety": [],
+    "preconditions": [],
+    "goal": [
+      {
+        "kind": "robot_at",
+        "robot": "r",
+        "location": "a"
+      }
+    ],
+    "steps": [
+      {
+        "kind": "move",
+        "robot": "r",
+        "target": "a"
+      }
+    ]
+  },
+  "bindings": {
+    "a": "loc_a",
+    "r": "robot_1"
+  },
+  "site": {
+    "name": "pick_place",
+    "schema": "robolang-g1-site/2"
+  },
+  "verify": {
+    "min_confidence": "0.9",
+    "max_age_ms": 10000
+  },
+  "state": "FAILED",
+  "failure": {
+    "code": "S511",
+    "message": "the run was cancelled",
+    "step": 1
+  },
+  "preconditions": [],
+  "steps": [
+    {
+      "index": 1,
+      "kind": "move",
+      "status": "failed",
+      "t_start_ms": 3595,
+      "details": {
+        "events": []
+      },
+      "t_end_ms": 8331,
+      "wall_s": 4.74
+    }
+  ],
+  "goal": [
+    {
+      "index": 1,
+      "condition": {
+        "kind": "robot_at",
+        "robot": "r",
+        "location": "a"
+      },
+      "result": "not_evaluated"
+    }
+  ],
+  "goal_evaluated": false,
+  "goal_note": "goal verdicts from observations are phase 3 of this backend: the goal was not evaluated, and completed steps are not a success",
+  "observations": [
+    {
+      "t_ms": 4071,
+      "frames": 3,
+      "markers": {}
+    },
+    {
+      "t_ms": 7283,
+      "frames": 3,
+      "markers": {}
+    }
+  ],
+  "stop": {
+    "reason": "cancelled",
+    "code": "S511",
+    "kind": "controlled_stand",
+    "safe_state": {
+      "velocity": "zero",
+      "arms": "hold",
+      "hands": "unchanged",
+      "balance": "kept"
+    },
+    "hold": {
+      "velocity": "0",
+      "arms": "walking controller's own",
+      "hands": "unchanged"
+    },
+    "confirmation": {
+      "confirmed": true,
+      "timeout_ms": 3000,
+      "window_ms": 500,
+      "tolerances": {
+        "gyro_rad_s": 0.045,
+        "joint_velocity_rad_s": 0.09,
+        "tilt_deg": 15.0
+      },
+      "t_stop_ms": 8331,
+      "max_gyro_rad_s": 0.0366,
+      "max_joint_velocity_rad_s": 0.0884,
+      "max_tilt_deg": 2.32,
+      "samples": 126,
+      "window_start_ms": 9195,
+      "window_end_ms": 9695,
+      "after_ms": 1364
+    }
+  },
+  "realtime": {
+    "realtime_valid": true,
+    "ratio": 1.0,
+    "sim_s": 6.1,
+    "wall_s": 6.1,
+    "slow_seconds": [],
+    "stalls": 0,
+    "worst_second_ratio_overall": 0.9999,
+    "step_compute_ms": {
+      "budget": 2.0,
+      "mean": 0.502,
+      "p99": 1.236,
+      "max": 77.5,
+      "over_budget": 0.0019
+    },
+    "gc": {
+      "collections": [
+        7,
+        0,
+        1
+      ],
+      "max_ms": [
+        0.1,
+        0.0,
+        9.47
+      ],
+      "slow_steps": [
+        [
+          3.28,
+          77.5,
+          0
+        ],
+        [
+          3.39,
+          66.6,
+          0
+        ],
+        [
+          3.52,
+          37.3,
+          0
+        ]
+      ],
+      "frozen": 70623,
+      "enabled": true,
+      "threshold": [
+        700,
+        10,
+        1000000
+      ]
+    },
+    "camera": {
+      "frames": 48,
+      "dropped": 0,
+      "render_ms": 64.0,
+      "hz": 5.0
+    }
+  },
+  "core_outcome": null,
+  "start_pose": [
+    0.0,
+    0.0,
+    0.0
+  ],
+  "pose_belief_end": [
+    1.7,
+    0.0,
+    0.0
+  ],
+  "run_id": "868a40b697543afd"
+}

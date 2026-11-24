@@ -1,0 +1,14 @@
+// bench/reference_future/f_trigger_scan_every_two_hours.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 2.2;
+
+task scan(robot r, object item, sensor cam, location st) {
+    goal { object_at item st; }
+    plan { inspect r item using cam; }
+}
+
+mission scheduled_scan(robot r, object item, sensor cam, location st) {
+    repeat every 2 h until 20:00 {
+        run scan(r, item, cam, st);
+    };
+    on failure { stop; }
+}

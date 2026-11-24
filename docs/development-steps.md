@@ -1,13 +1,16 @@
 # RoboLang development steps
 
-A one-page history of RoboLang, from the legacy v1 code to RoboLang 1.5 and the ROS 2 physics
-simulation backend. Sources: [development plan](DEVELOPMENT_PLAN.md), [strategy](STRATEGY.md),
-[decision records](../spec/decisions/) 0001–0035 and git history up to 2026-11-04.
+A one-page history of RoboLang, from the legacy v1 code to RoboLang 2.2, iteration I7 of the
+[language roadmap](LANGUAGE_ROADMAP.md) and the Unitree G1 humanoid backend. Sources:
+[development plan](DEVELOPMENT_PLAN.md), [strategy](STRATEGY.md), [language roadmap](LANGUAGE_ROADMAP.md),
+[decision records](../spec/decisions/) 0001–0046 and git history up to 2026-11-22.
 
 > ⚠️ Everything below is simulation only. Physical execution is not authorized.
 
 The Mermaid diagram below is the editable source. Update it when a step lands.
-[`development-steps.png`](development-steps.png) is a static snapshot as of 2026-11-07.
+[`development-steps.png`](development-steps.png) is a snapshot as of 2026-11-24, rendered from
+[`development-steps.html`](development-steps.html): update the `steps` list there too, then re-render with
+`chromium --headless --screenshot=docs/development-steps.png --window-size=1500,1680 docs/development-steps.html`.
 
 ```mermaid
 timeline
@@ -22,14 +25,20 @@ timeline
     2026-10-30 to 11-01 : 13 · H3-1 ROS 2 backend in Gazebo, phases 1–4 : 11 tasks × 3 runs succeed, 51/51 oracle checks agree
     2026-11-02 : 14 · INTEROP-3 relaunched on Core 0.2 (0030), bundle frozen
     2026-11-02 to 11-04 : 15 · RoboLang 1.5 (0031–0034) : region_clear and robot_ready, holder check, step failure handlers
-    Next : 16 · Teach 1.5 and benchmark set 4 (0035, proposed) : 17 · Independent Core 0.2 implementation (open) : 18 · H4 hardware (not authorized)
+    2026-11-09 to 11-10 : 16 · Set 4, 1.5 taught and accepted (0035) : 17 · RoboLang 1.6 measured values (0036), set 5 : 18 · Gate 2 passed, independent amr-07 25/25 (0037), H3 met
+    2026-11-11 to 11-13 : 19 · Release 0.3.0 (1.5, 1.6, Core 0.2) and 0.3.1 : 20 · H4 starts, safety case draft, 0038 physical-mode authorization (still refused, A731) : 21 · G8 v1 ROS 2 adapter removed from legacy/ (H19)
+    2026-11-16 to 11-17 : 22 · RSI-01 activity atlas, foresight R2, gap check R3, language cycle L1–L6 (D5)
+    2026-11-17 : 23 · I1 G-PATH → 1.7 region limits (0039), 0.4.0 : 24 · I2 G-ACT → 1.8 declared actions (0040), 0.5.0 : 25 · I3 G-CLOCK → 1.9 clock readings (0042), 0.6.0
+    2026-11-18 : 26 · I4 G-LOOP → 2.0 mission layer (0041), 0.7.0 : 27 · I5 G-MSG → 2.1 incoming messages (0043), 0.8.0 : 28 · I6 G-PERCEIVE → 2.2 more measured kinds (0044), 0.9.0 tagged : 29 · I7 G-CHOOSE L1–L2, 0045 approved
+    2026-11-19 to 11-22 : 30 · H4-1 Unitree G1 humanoid backend in MuJoCo (0046), phases 1–3, simulation only : 31 · Held-out benchmark set rules (RL-20D)
+    Next : 32 · I7 L3 set 12 choose pre-registered : 33 · I7 L4 build RoboLang 2.3, Task IR 1.11, world file 1.8 : 34 · 0.9.0 on PyPI (owner approval) : 35 · Physical hardware (not authorized)
 ```
 
 ## Horizons ([strategy](STRATEGY.md) section 3)
 
-| Horizon | Target | State on 2026-11-07 |
+| Horizon | Target | State on 2026-11-24 |
 |---|---|---|
-| H1 Trust the basics | ~Nov 2026 | Likely met: reference shipped, PyPI live (≥97% accuracy target not re-checked) |
-| H2 Express real requests | ~Q1 2027 | Work done early: 1.4 branching, `validate --world`, Core 0.2 frozen |
-| H3 Leave the symbolic world | ~Q2 2027 | Half met: Gazebo task family passes; independent Core 0.2 implementation still open |
-| H4 Earn hardware | ~H2 2027 | Not started; needs owner sign-off on a written safety case |
+| H1 Trust the basics | ~Nov 2026 | Nearly met: reference shipped, PyPI live, accuracy 97.5–100% in single runs; the deciding three-repeat run (2026-11-16) is not recorded in the strategy |
+| H2 Express real requests | ~Q1 2027 | Met 2026-10-30. Since then 1.5 to 2.2 built and accepted on pre-registered sets 4–11 |
+| H3 Leave the symbolic world | ~Q2 2027 | Met 2026-11-10: Gazebo task family passes; gate 2 passed with an independent Core 0.2 implementation |
+| H4 Earn hardware | ~H2 2027 | Current horizon since 2026-11-12: safety case draft, 0038 steps 1–3 and the G1 backend phases 1–3, all in simulation. Physical mode not authorized |

@@ -1,0 +1,115 @@
+<!doctype html>
+<!--
+  Source of development-steps.png. Keep it in step with the Mermaid timeline in
+  development-steps.md: edit the `steps` and `horizons` lists below, then render:
+    chromium --headless --screenshot=docs/development-steps.png --window-size=1500,1680 docs/development-steps.html
+  No network, no dependencies.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>RoboLang — development steps</title>
+<style>
+  :root { --bg:#0d1117; --card:#161b22; --line:#30363d; --text:#e6edf3; --mute:#9da7b3;
+          --lang:#3b82f6; --exec:#22c55e; --core:#a855f7; --bench:#f59e0b; --ros:#ef4444; --gov:#8b949e; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:13px/1.45 -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
+  .page { width:1500px; padding:28px 36px 30px; }
+  h1 { margin:0 0 6px; font-size:26px; }
+  .sub { color:var(--mute); margin:0 0 14px; font-size:13.5px; }
+  .sub b { color:var(--text); }
+  .legend { display:flex; gap:18px; margin-bottom:18px; color:var(--text); }
+  .legend span::before { content:""; display:inline-block; width:11px; height:11px; border-radius:2px; margin-right:6px; vertical-align:-1px; background:var(--c); }
+  .row { display:grid; grid-template-columns:108px 22px 1fr; margin-bottom:10px; }
+  .date { text-align:right; color:var(--mute); font-weight:600; padding-top:10px; padding-right:12px; white-space:nowrap; }
+  .rail { position:relative; }
+  .rail::before { content:""; position:absolute; left:10px; top:0; bottom:-10px; border-left:2px solid var(--line); }
+  .rail::after { content:""; position:absolute; left:6px; top:14px; width:10px; height:10px; border-radius:50%; background:var(--text); }
+  .row.next .rail::after { background:var(--bench); }
+  .cards { display:grid; gap:10px; grid-template-columns:repeat(var(--n), minmax(0,1fr)); }
+  .card { background:var(--card); border:1px solid var(--line); border-left:4px solid var(--c); border-radius:4px; padding:9px 13px; }
+  .card h3 { margin:0 0 3px; font-size:14.5px; }
+  .card p { margin:0; color:var(--mute); }
+  .tag { display:inline-block; margin-left:6px; padding:0 7px; border-radius:9px; font-size:10.5px; font-weight:500; background:#2d333b; color:var(--mute); vertical-align:2px; }
+  .tag.ok { background:#163a24; color:#4ade80; }
+  .tag.warn { background:#3d2c0a; color:#fbbf24; }
+  .tag.no { background:#3d1418; color:#f87171; }
+  .horizons { display:grid; grid-template-columns:repeat(4, 1fr); gap:10px; margin-top:20px; }
+  .h { background:var(--card); border:1px solid var(--line); border-top:4px solid var(--c); border-radius:4px; padding:11px 13px; }
+  .h h3 { margin:0; font-size:14.5px; }
+  .h .t { color:var(--mute); font-size:12px; margin:2px 0 6px; }
+  .h p { margin:0; }
+  .h b { color:var(--c); }
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>RoboLang — development steps</h1>
+  <p class="sub">From legacy v1 to RoboLang 2.2, iteration I7 and the G1 humanoid backend. Source: docs/DEVELOPMENT_PLAN.md,
+    docs/STRATEGY.md, docs/LANGUAGE_ROADMAP.md, spec/decisions 0001–0046, git history (578 commits, last 2026-11-22).
+    <b>Everything is simulation only. Physical execution is not authorized.</b></p>
+  <div class="legend">
+    <span style="--c:var(--lang)">Language</span><span style="--c:var(--exec)">Execution / simulation</span>
+    <span style="--c:var(--core)">Core / interop</span><span style="--c:var(--bench)">AI benchmark</span>
+    <span style="--c:var(--ros)">ROS 2 / physics</span><span style="--c:var(--gov)">Governance / release</span>
+  </div>
+  <div id="timeline"></div>
+  <div class="horizons" id="horizons"></div>
+</div>
+<script>
+// [date, [[number, title, tag, tagClass, text, kind], ...], next?]
+// kind: lang | exec | core | bench | ros | gov. tagClass: '' | ok | warn | no.
+const steps = [
+  ['2025-11-08', [[0, 'Legacy v1 baseline', '9e9f92f', '', 'Text-scanner runtime, std library, ROS 2 adapter, PDF guides. No grammar, no tests, no safety checks (now in legacy/; ROS 2 adapter removed at 21).', 'gov']]],
+  ['2026-10-11', [[1, 'Development plan v1.1 → v2.0', '', '', 'Four evidence-gated milestones. Every step needs owner approval.', 'gov'],
+                  [2, 'RoboLang 1.1: language correctness', 'RL-11A–E', 'ok', 'Grammar, lexer, parser, validator, Task IR 1.0, read-only CLI (validate, inspect).', 'lang']]],
+  ['2026-10-19', [[3, 'RFC-001 AI-native architecture', '0002, D1–D8', '', 'Open interoperability platform for embodied AI. A2R / R2R profiles, shared Core, leased bilateral commitments.', 'core']]],
+  ['2026-10-27', [[4, 'Foundation 1: RL-BASIC-01', 'signed off', 'ok', 'Deterministic `robolang simulate` with run records and run IDs.', 'exec'],
+                  [5, 'RL-ARCH-02: Core 0.1', 'gate 1 PASS', 'ok', 'Core checks + in-process reference sim (1 AI agent, 2 robots).', 'core'],
+                  [6, 'RoboLang 1.2', 'LANG-1', '', 'and / or / not conditions.', 'lang']]],
+  ['2026-10-28', [[7, 'INTEROP-1/2: gate 2 bundle', 'frozen 28c69fe', 'ok', 'Binding self-test, errata 0010–0013, bundle audit. INTEROP-3/4 then deferred (0017, 0023).', 'core']]],
+  ['2026-10-29', [[8, 'Benchmark drives the roadmap', '0024', '', 'LLM authoring benchmark sets 1–2. Findings F1–F7 order the work (N1–N6).', 'bench'],
+                  [9, 'RoboLang 1.3 + tooling', '0014–0026', '', 'Required goals, typed sensors, --bind, CORE-1 IR reader, export-goal, delegate, validate --world, shipped reference.', 'lang']]],
+  ['2026-10-30', [[10, 'RoboLang 1.4: bounded branching', 'N4', '', 'if / else, fail. Half-programs 30/180 → 0/180.', 'lang'],
+                  [11, 'Core 0.2', 'frozen', 'ok', 'Disjunctive goals + 0.1 gaps (0028).', 'core'],
+                  [12, '0.2.0 on PyPI', 'first release', 'ok', 'pip install robolang.', 'gov']]],
+  ['10-30 → 11-01', [[13, 'H3-1: ROS 2 backend in Gazebo', 'phases 1–4', '', 'Same .rob drives a simulated UR5e via MoveIt 2; goals verified from camera / TF / gripper. 11 tasks × 3 runs, 51/51 checks agree with the oracle.', 'ros']]],
+  ['2026-11-02', [[14, 'INTEROP-3 relaunched on Core 0.2', '0030', 'ok', 'Bundle audit, reproducible archive, protocol for an independent implementer.', 'core']]],
+  ['11-02 → 11-04', [[15, 'RoboLang 1.5', '0031–0034', 'ok', 'region_clear / robot_ready, holder check, step failure handlers.', 'lang']]],
+  ['11-09 → 11-10', [[16, 'Set 4, 1.5 accepted', '0035', 'ok', 'Failure-handling set pre-registered; 1.5 taught and accepted.', 'bench'],
+                     [17, 'RoboLang 1.6 measured values', '0036', 'ok', 'measure, units, comparisons. Set 5: silent inspect-for-reading → 0.', 'lang'],
+                     [18, 'Gate 2 passed · H3 met', '0037', 'ok', 'Independent clean-room amr-07 (TypeScript): 25/25 cases, 442/442 messages identical.', 'core']]],
+  ['11-11 → 11-13', [[19, 'Releases 0.3.0 and 0.3.1', '', 'ok', '1.5, 1.6 and Core 0.2 on PyPI; robolang example.', 'gov'],
+                     [20, 'H4 starts', '0038', '', 'Safety case draft, hazard list, physical-mode authorization built in simulation (still A731).', 'gov'],
+                     [21, 'G8: v1 ROS 2 adapter removed', 'H19 closed', 'ok', 'Unvalidated code could drive a robot without the validator.', 'ros']]],
+  ['11-16 → 11-17', [[22, 'RSI-01: language follows activities', 'D5', '', 'Activity atlas, foresight R2, gap check R3, one gap per iteration, L1–L6.', 'gov']]],
+  ['2026-11-17', [[23, 'I1 → RoboLang 1.7', '0.4.0', 'ok', 'Region limits (G-PATH, 0039).', 'lang'],
+                  [24, 'I2 → RoboLang 1.8', '0.5.0', 'ok', 'Declared actions (G-ACT, 0040).', 'lang'],
+                  [25, 'I3 → RoboLang 1.9', '0.6.0', 'ok', 'Clock readings (G-CLOCK, 0042).', 'lang']]],
+  ['2026-11-18', [[26, 'I4 → RoboLang 2.0', '0.7.0', 'ok', 'Mission layer (G-LOOP, 0041).', 'lang'],
+                  [27, 'I5 → RoboLang 2.1', '0.8.0', 'ok', 'Incoming messages (G-MSG, 0043).', 'lang'],
+                  [28, 'I6 → RoboLang 2.2', '0.9.0 tagged', 'warn', 'More measured kinds (G-PERCEIVE, 0044). PyPI upload pending.', 'lang'],
+                  [29, 'I7 L1–L2: G-CHOOSE', '0045 approved', 'ok', 'Choosing robots and locations at run time.', 'lang']]],
+  ['11-19 → 11-22', [[30, 'H4-1: Unitree G1 in MuJoCo', '0046 phases 1–3', 'ok', 'Humanoid walk, grasp, place; verdicts from observations. Simulation only.', 'ros'],
+                     [31, 'Held-out benchmark set', 'RL-20D', '', 'Rules and writers’ brief; private set, run at milestones.', 'bench']]],
+  ['next', [[32, 'I7 L3: set 12 “choose”', 'in progress', 'warn', 'Pre-register tasks and bounds before any code.', 'bench'],
+            [33, 'I7 L4: build RoboLang 2.3', 'next', '', 'Task IR 1.11, world file 1.8.', 'lang'],
+            [34, '0.9.0 on PyPI', 'owner', '', 'Publishes RoboLang 2.2.', 'gov'],
+            [35, 'Physical hardware', 'not authorized', 'no', 'Needs owner sign-off on a written safety case.', 'ros']], true],
+];
+const horizons = [
+  ['H1 Trust the basics', '~Nov 2026', 'exec', 'Reference shipped, PyPI live, accuracy 97.5–100% in single runs.', 'Nearly met'],
+  ['H2 Express real requests', '~Q1 2027', 'exec', '1.4 branching, validate --world, Core 0.2 frozen.', 'Met 2026-10-30'],
+  ['H3 Leave the symbolic world', '~Q2 2027', 'exec', 'Gazebo family passes; gate 2 passed.', 'Met 2026-11-10'],
+  ['H4 Earn hardware', '~H2 2027', 'bench', 'Safety case draft, 0038 steps 1–3, G1 phases 1–3, all in simulation.', 'Current · not authorized'],
+];
+const esc = (t) => t.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+document.getElementById('timeline').innerHTML = steps.map(([date, cards, next]) =>
+  `<div class="row${next ? ' next' : ''}"><div class="date">${date}</div><div class="rail"></div>
+   <div class="cards" style="--n:${cards.length}">${cards.map(([n, title, tag, cls, text, kind]) =>
+     `<div class="card" style="--c:var(--${kind})"><h3>${n} · ${esc(title)}${tag ? `<span class="tag ${cls}">${esc(tag)}</span>` : ''}</h3><p>${esc(text)}</p></div>`).join('')}</div></div>`).join('');
+document.getElementById('horizons').innerHTML = horizons.map(([name, target, kind, text, state]) =>
+  `<div class="h" style="--c:var(--${kind})"><h3>${name}</h3><div class="t">target ${target}</div><p>${text} <b>${state}</b></p></div>`).join('');
+</script>
+</body>
+</html>

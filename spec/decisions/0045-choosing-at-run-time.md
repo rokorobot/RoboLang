@@ -81,7 +81,7 @@ task send_tugger(robot a, robot b, location handoff) {
 | C8 | Core and backends (**the Core decision**) | **Core 0.2 is unchanged.** A robot only ever receives ground goals. `export-goal` and `delegate` accept a task only if every `choose` comes before its first action and uses world facts (C3, C5) only. The planner then makes the choices from the world model, records them, and sends the task with the choices filled in. Any other task with `choose` is refused (new code). The ROS 2 / Gazebo backend refuses `choose` in 2.3 | Core 0.3 with choice variables in goals: Core is frozen, and every robot would need to understand choices. Refusing every `choose` in `delegate`: even the simplest "send the nearest free tugger" could then not be delegated |
 | C9 | Not in 2.3 | Choosing by a reading of each candidate ("the fullest bin", "any pan above 80 °C"); acting on **each** candidate in turn with a memory of which ones are done ("every pan", "carry as many as counted"); detecting objects the world does not list; choosing a person (G-PROX); several choices that depend on each other | — |
 | C10 | Missions | A task with `choose` may run in a mission, and each run chooses afresh. "Move every new part from the conveyor for 8 hours" is a mission that repeats a task choosing `from objects at conveyor_in`. A part that has been moved is no longer a candidate | A `for each` loop in tasks: N4's reason (no end state to verify) still holds |
-| C11 | Safety | A choice can send a different robot, or pick a different object, from what a reviewer expects. **Hazard H25: a stale or wrong world model makes a choice wrong.** Controls: the candidates are finite and appear in the task, so an approval (0038) names them; the choice is recorded with its reasons; unknown values exclude a candidate; in physical mode, positions and states come from the fleet manager (G4, commissioning) | — |
+| C11 | Safety | A choice can send a different robot, or pick a different object, from what a reviewer expects. **Hazard H27: a stale or wrong world model makes a choice wrong.** Controls: the candidates are finite and appear in the task, so an approval (0038) names them; the choice is recorded with its reasons; unknown values exclude a candidate; in physical mode, positions and states come from the fleet manager (G4, commissioning) | — |
 | C12 | Design for the far needs | G-PROX can reuse `nearest to` for a person once a person can be bound. G-CONC and ACT-AUTO-004 (a low-battery robot hands its job to a peer) choose a peer with `choose robot … where robot_ready …`. G-SELF can add a `where` on charge. Learned categories can extend C2 with `objects at L labelled "…"`. G-EACH (below) builds on C10 | — |
 
 ## What it makes expressible
@@ -146,3 +146,25 @@ are approved as recommended:
 - a finite named set compared by readings stays an `if`, and `choose` never reads a value;
 - C8 is unchanged;
 - `choose`, `nearest` and `farthest` are not reserved words.
+
+## Implementation readings (L4, APPROVED by the owner 2026-11-24)
+
+Built in PR #172. The owner confirmed the eight readings that the build chose where this record is silent:
+
+1. A choice may name only parameters. Naming an earlier choice is `E331`, because C9 excludes dependent choices.
+2. `where` names the chosen name and states world facts only, with no reading, clock or message (`E330`).
+3. `export-goal` and `delegate` accept a `choose` only at the top level of the plan, with nothing but other choices
+   before it. They also refuse a choice with no candidate in the starting world, or with a reference place that has no
+   position (`X609`).
+4. A step that uses a chosen robot or place is checked at run time (`S211`, `S231`, `S003`, `S004`).
+5. Under a time bound, a failed run that changes neither the world nor the clock stops a `continue` mission, with
+   `ended_by: no_progress`.
+6. World file 1.8 puts `position` in the `locations` entries, as whole numbers or exact decimal strings, never floats.
+7. `x05_every_new_part` and `x_shuttle_until_five` end `failed` in the closed world, because the requests state no wait.
+8. Both prompts add one sentence: `choose … from objects at L` is the exception to "entities that arrive later cannot be
+   represented". B6 checks sets 1 and 2.
+
+New codes: `E329`, `E330`, `E331`, `S272`, `S273` and `X609`, plus the reader forms `I230`–`I232`. That is more than the
+"about 4" of B7; the verdict on this is recorded at L5. The hazard of C11 is **H27** in the safety case (H25 and H26
+belong to 0046).
+
