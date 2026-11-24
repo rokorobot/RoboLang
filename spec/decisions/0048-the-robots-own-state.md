@@ -1,7 +1,8 @@
 # Decision record 0048: The robot's own state (I8, G-SELF, RoboLang 2.4)
 
 **Date:** 2026-11-24
-**Status:** **PROPOSED, for the owner.** This is step L2 of iteration I8 in the
+**Status:** **APPROVED by the owner, 2026-11-24**: S1–S11 as recommended. The kind is `charge` (S1), charge is
+allowed in `where` (S7), the simulation has scheduled events only (S4), and G-HEALTH is split off (S10). This is step L2 of iteration I8 in the
 [language roadmap](../../docs/LANGUAGE_ROADMAP.md). L1 is done: G-SELF is first in the generated
 [suggested order](../../docs/plans/humanoid-activities.md#suggested-order-of-language-work) (it unlocks the most).
 **Applies to (when decided):**
@@ -88,13 +89,22 @@ task round_or_dock(robot r, location dock, location stop) {
 **Stays out:** `x02_selftest_result` and self-diagnosis go to G-HEALTH; "do I have enough for the route" in the sense of
 a prediction goes to G-PREDICT.
 
-## Open points for the owner
+## Open points (answered 2026-11-24)
 
 1. **Kind name (S1):** `charge`, rather than reusing `fill` as 0044 K9 suggested? I recommend `charge`.
 2. **Charge in `where` (S7):** allow it, as a world fact from the fleet manager? I recommend yes, for mid-shift relief.
    It narrows 0045 point 5, which keeps every reading out of `where`.
 3. **Simulation (S4):** scheduled charge events only, with no drain model? I recommend events only.
 4. **G-HEALTH:** split off faults and self-tests now as a far gap, so that G-SELF can close at L6? I recommend yes.
+
+## Owner's answers (2026-11-24)
+
+The owner approved S1–S11 as recommended. This also answers the four open points:
+
+1. The kind is `charge` (S1).
+2. Charge is allowed in a `choose … where` (S7). This narrows 0045 point 5.
+3. The simulation has scheduled charge events only (S4).
+4. G-HEALTH is a new far gap (S10).
 
 ## Pre-registration (L3), before any code
 
