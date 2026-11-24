@@ -10,9 +10,9 @@ merely because the steps ran.
   Task IR 1.0 to 1.10, a symbolic simulator with reproducible run records, and RoboLang Core 0.1
   and 0.2 messages: `export-goal` sends a task's goal, and `delegate` hands it to a robot and
   accepts success only after checking the signed evidence. All of it runs in simulation.
-- **Not available:** physical robot execution and network transport. Unreleased work on `main`
-  adds optional Ed25519 signatures (`robolang[ed25519]`) and a signed authorization chain for
-  physical runs, which still always refuses (`A731`).
+- **Not available:** physical robot execution and network transport. The optional extra
+  `robolang[ed25519]` (since 0.4.0) adds real Ed25519 signatures and a signed authorization chain
+  for physical runs, which still always refuses (`A731`).
 
 > ⚠️ **Simulation only.** Physical robot execution is not implemented or authorized. RoboLang
 > does not replace ROS 2, MoveIt 2, Nav2 or hardware safety controllers. Do not run it against

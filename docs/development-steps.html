@@ -2,7 +2,7 @@
 <!--
   Source of development-steps.png. Keep it in step with the Mermaid timeline in
   development-steps.md: edit the `steps` and `horizons` lists below, then render:
-    chromium --headless --screenshot=docs/development-steps.png --window-size=1500,1680 docs/development-steps.html
+    chromium --headless --screenshot=docs/development-steps.png --window-size=1500,1740 docs/development-steps.html
   No network, no dependencies.
 -->
 <html lang="en">
@@ -46,7 +46,7 @@
 <div class="page">
   <h1>RoboLang — development steps</h1>
   <p class="sub">From legacy v1 to RoboLang 2.2, iteration I7 and the G1 humanoid backend. Source: docs/DEVELOPMENT_PLAN.md,
-    docs/STRATEGY.md, docs/LANGUAGE_ROADMAP.md, spec/decisions 0001–0046, git history (578 commits, last 2026-11-22).
+    docs/STRATEGY.md, docs/LANGUAGE_ROADMAP.md, spec/decisions 0001–0047, git history (last 2026-11-24).
     <b>Everything is simulation only. Physical execution is not authorized.</b></p>
   <div class="legend">
     <span style="--c:var(--lang)">Language</span><span style="--c:var(--exec)">Execution / simulation</span>
@@ -88,20 +88,21 @@ const steps = [
                   [25, 'I3 → RoboLang 1.9', '0.6.0', 'ok', 'Clock readings (G-CLOCK, 0042).', 'lang']]],
   ['2026-11-18', [[26, 'I4 → RoboLang 2.0', '0.7.0', 'ok', 'Mission layer (G-LOOP, 0041).', 'lang'],
                   [27, 'I5 → RoboLang 2.1', '0.8.0', 'ok', 'Incoming messages (G-MSG, 0043).', 'lang'],
-                  [28, 'I6 → RoboLang 2.2', '0.9.0 tagged', 'warn', 'More measured kinds (G-PERCEIVE, 0044). PyPI upload pending.', 'lang'],
+                  [28, 'I6 → RoboLang 2.2', '0.9.0', 'ok', 'More measured kinds (G-PERCEIVE, 0044). On PyPI 2026-11-24 (32).', 'lang'],
                   [29, 'I7 L1–L2: G-CHOOSE', '0045 approved', 'ok', 'Choosing robots and locations at run time.', 'lang']]],
   ['11-19 → 11-22', [[30, 'H4-1: Unitree G1 in MuJoCo', '0046 phases 1–3', 'ok', 'Humanoid walk, grasp, place; verdicts from observations. Simulation only.', 'ros'],
                      [31, 'Held-out benchmark set', 'RL-20D', '', 'Rules and writers’ brief; private set, run at milestones.', 'bench']]],
-  ['next', [[32, 'I7 L3: set 12 “choose”', 'in progress', 'warn', 'Pre-register tasks and bounds before any code.', 'bench'],
-            [33, 'I7 L4: build RoboLang 2.3', 'next', '', 'Task IR 1.11, world file 1.8.', 'lang'],
-            [34, '0.9.0 on PyPI', 'owner', '', 'Publishes RoboLang 2.2.', 'gov'],
-            [35, 'Physical hardware', 'not authorized', 'no', 'Needs owner sign-off on a written safety case.', 'ros']], true],
+  ['2026-11-24', [[32, '0.9.0 on PyPI', 'RoboLang 2.2', 'ok', 'Owner approved the upload of the release tagged 2026-11-18.', 'gov'],
+                  [33, 'Low-energy bench pilot proposed', '0047', 'warn', 'First physical runs on a desktop robot too weak to injure; not approved.', 'ros']]],
+  ['next', [[34, 'I7 L3: set 12 “choose”', 'in progress', 'warn', 'Pre-register tasks and bounds before any code.', 'bench'],
+            [35, 'I7 L4: build RoboLang 2.3', 'next', '', 'Task IR 1.11, world file 1.8.', 'lang'],
+            [36, 'Physical hardware', 'not authorized', 'no', 'Needs owner sign-off on a written safety case (0047 first).', 'ros']], true],
 ];
 const horizons = [
   ['H1 Trust the basics', '~Nov 2026', 'exec', 'Reference shipped, PyPI live, accuracy 97.5–100% in single runs.', 'Nearly met'],
   ['H2 Express real requests', '~Q1 2027', 'exec', '1.4 branching, validate --world, Core 0.2 frozen.', 'Met 2026-10-30'],
   ['H3 Leave the symbolic world', '~Q2 2027', 'exec', 'Gazebo family passes; gate 2 passed.', 'Met 2026-11-10'],
-  ['H4 Earn hardware', '~H2 2027', 'bench', 'Safety case draft, 0038 steps 1–3, G1 phases 1–3, all in simulation.', 'Current · not authorized'],
+  ['H4 Earn hardware', '~H2 2027', 'bench', 'Safety case draft, 0038 steps 1–3, G1 phases 1–3, all in simulation; bench pilot 0047 proposed.', 'Current · not authorized'],
 ];
 const esc = (t) => t.replace(/&/g, '&amp;').replace(/</g, '&lt;');
 document.getElementById('timeline').innerHTML = steps.map(([date, cards, next]) =>
