@@ -165,6 +165,7 @@ Built in PR #172. The owner confirmed the eight readings that the build chose wh
    represented". B6 checks sets 1 and 2.
 
 New codes: `E329`, `E330`, `E331`, `S272`, `S273` and `X609`, plus the reader forms `I230`–`I232`. That is more than the
-"about 4" of B7; the verdict on this is recorded at L5. The hazard of C11 is **H27** in the safety case (H25 and H26
+"about 4" of B7. **The owner approved this as a recorded exception to B7 on 2026-11-24**: each code
+comes from an approved rule. The hazard of C11 is **H27** in the safety case (H25 and H26
 belong to 0046).
 
