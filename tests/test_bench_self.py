@@ -743,4 +743,4 @@ def test_the_readme_the_errata_and_the_plan_name_the_set():
     for task_id in ("x02_selftest_result", "G-HEALTH", "G-SELF"):
         assert task_id in errata, task_id
     roadmap = read(REPO / "docs" / "LANGUAGE_ROADMAP.md")
-    assert "set 13 pre-registered" in roadmap and "bench-13-self.md" in roadmap
+    assert "plans/bench-13-self.md" in roadmap
