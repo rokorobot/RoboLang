@@ -1,0 +1,13 @@
+// bench/reference_choose/p04_ready_amr_nearer_to_shelf_a.rob: hand-written reference (RoboLang 2.3)
+robolang 2.3;
+
+task bring(robot a, robot b, object item, location src, location dst) {
+    goal { object_at item dst; }
+    plan {
+        choose robot who from (a, b) where robot_ready who nearest to src else { fail "no robot is ready"; }
+        move who to src;
+        grasp who item;
+        move who to dst;
+        place who item at dst;
+    }
+}

@@ -1,0 +1,10 @@
+{
+  "task": "carry_by_ready",
+  "bindings": {
+    "a": "digit2",
+    "b": "tugger_a",
+    "tote": "tote_1",
+    "src": "inbound_conveyor",
+    "dst": "outbound_conveyor"
+  }
+}

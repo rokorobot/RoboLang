@@ -1,0 +1,16 @@
+// bench/reference_choose/x02_every_pan_above_75.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 2.2;
+
+task cool_the_hot_pan(robot r, sensor probe, location stove, location sink) {
+    goal { robot_at r stove; }
+    plan {
+        move r to stove;
+        choose object pan from objects at stove else { fail "no pan on the stove"; }                // @choice pan=pan_1
+        measure r temperature of pan using probe as t;
+        if t > 75 degC {
+            grasp r pan;
+            move r to sink;
+            place r pan at sink;
+        }
+    }
+}

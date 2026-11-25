@@ -1,4 +1,4 @@
-"""The shipped RoboLang 2.2 reference, CLI command, examples, vocabulary and benchmark integration."""
+"""The shipped RoboLang 2.3 reference, CLI command, examples, vocabulary and benchmark integration."""
 
 from __future__ import annotations
 import io
@@ -35,7 +35,7 @@ def test_every_complete_rob_example_compiles():
     assert examples
     for index, source in enumerate(examples, start=1):
         result = compile_source(source, f"language-reference-example-{index}.rob")
-        assert result.ir.language_version == "2.2"
+        assert result.ir.language_version == "2.3"
 
 
 def test_reference_names_every_reserved_word_and_annotation_key():
@@ -53,9 +53,9 @@ def test_every_diagnostic_code_in_the_reference_exists_in_the_implementation():
     assert cited and cited <= implemented
 
 
-def test_reference_is_2_2_and_teaches_branching_handlers_missions_and_what_stays_out():
+def test_reference_is_2_3_and_teaches_branching_handlers_missions_and_what_stays_out():
     text = reference()
-    assert text.startswith("# RoboLang 2.2 language reference")
+    assert text.startswith("# RoboLang 2.3 language reference")
     for old in ("robolang 1.3;", "robolang 1.4;", "robolang 1.5;", "robolang 1.6;", "robolang 1.7;", "robolang 1.9;"):
         assert old not in text, old
     for new in ("`if", "`else if", "fail \"", "E216", "E307", "E309", "E313", "S261", "S262",
@@ -64,7 +64,7 @@ def test_reference_is_2_2_and_teaches_branching_handlers_missions_and_what_stays
     # nesting depth, the goal of a path, and what stays out of the language
     assert "at most 4 deep" in text and "Every path\n  must have at least one goal condition" in text
     for out in ("loops", "dates", "confirming that a message the robot sent was delivered", "arithmetic",
-                "string formatting", "triggers", "choosing the next object"):
+                "string formatting", "triggers", "choosing by a reading of each candidate"):
         assert out in " ".join(text.split()), out
 
 
@@ -97,9 +97,9 @@ def test_reference_teaches_measured_values():
                    '`communicate r to "pass" with t;`', "There is no formatting",
                    "**Contact.**", "`move r` to the object first", "`S235`", "`S236`",
                    "**The value is read when the program runs.**", "Never settle a comparison from a description",
-                   "arithmetic (an average", "choosing an object at run time"):
+                   "arithmetic (an average", "choosing an object by a reading of each candidate"):
         assert phrase in text, phrase
-    assert "robolang 2.2;" in text and "measure r" in text
+    assert "robolang 2.3;" in text and "measure r" in text
 
 
 def test_reference_teaches_that_a_run_time_condition_is_decided_by_an_if_never_by_the_description():
@@ -110,15 +110,18 @@ def test_reference_teaches_that_a_run_time_condition_is_decided_by_an_if_never_b
         assert phrase in text, phrase
 
 
-def test_the_prompts_are_for_2_2():
+def test_the_prompts_are_for_2_3():
     full, minimal = bench.load_prompt("full"), bench.load_prompt("minimal")
     for prompt in (full, minimal):
-        assert prompt.startswith("You write RoboLang 2.2 programs.") and "RoboLang 2.1 programs" not in prompt
-        assert "RoboLang 2.1 cannot say it" not in prompt and "RoboLang 2.2 cannot say it" in prompt
+        assert prompt.startswith("You write RoboLang 2.3 programs.") and "RoboLang 2.2 programs" not in prompt
+        assert "RoboLang 2.2 cannot say it" not in prompt and "RoboLang 2.3 cannot say it" in prompt
         assert '"mission": "<name of the mission>"' in prompt and "needs no mission, and no decline" in prompt
-    assert "measure" in full and "robolang 2.2;" in full and "robolang 2.1;" not in full and "robolang 1.4;" not in full
-    # 2.2 is a delta over 2.1, 2.0, 1.9, 1.8, 1.7, 1.6, 1.5, 1.4 and 1.3: the grammar-only prompt pastes all ten
-    assert "spec/grammar-v2.2.ebnf" in minimal and "spec/grammar-v2.1.ebnf" in minimal
+    assert "measure" in full and "robolang 2.3;" in full and "robolang 2.2;" not in full and "robolang 1.4;" not in full
+    # 2.3 is a delta over 2.2, 2.1, 2.0, 1.9, 1.8, 1.7, 1.6, 1.5, 1.4 and 1.3: the grammar-only prompt pastes all eleven
+    assert "spec/grammar-v2.3.ebnf" in minimal and "spec/grammar-v2.2.ebnf" in minimal and "The eleven files" in minimal
+    assert '"choose"' in minimal and "E329" in minimal and "E330" in minimal and "MUST END IN fail" in minimal
+    assert "choosing by a reading of each candidate" in minimal and "choosing a person" in minimal
+    assert "NEVER READS A VALUE" in minimal and "Do not replace a choice" in minimal and "may come first" in minimal
     assert '"measure"' in minimal and '"if"' in minimal and "handler" in minimal
     assert '"no_go_region"' in minimal and "S003" in minimal and "X605" in minimal
     assert '"do"' in minimal and '"in_state"' in minimal and "S006" in minimal
@@ -132,7 +135,7 @@ def test_the_prompts_are_for_2_2():
     assert [f.name for f in bench.GRAMMAR_FILES] == ["grammar-v1.3.ebnf", "grammar-v1.4.ebnf", "grammar-v1.5.ebnf",
                                                      "grammar-v1.6.ebnf", "grammar-v1.7.ebnf", "grammar-v1.8.ebnf",
                                                      "grammar-v1.9.ebnf", "grammar-v2.0.ebnf", "grammar-v2.1.ebnf",
-                                                     "grammar-v2.2.ebnf"]
+                                                     "grammar-v2.2.ebnf", "grammar-v2.3.ebnf"]
     texts = [f.read_text(encoding="utf-8").strip() for f in bench.GRAMMAR_FILES]
     assert all(t in minimal for t in texts)
     assert [minimal.index(t) for t in texts] == sorted(minimal.index(t) for t in texts)
@@ -150,7 +153,7 @@ def test_reference_teaches_missions_and_the_fixed_count_fix():
                    "Every repeat has a hard bound", "no hours, 3 hours are `180 min`", "`E325`", "`E326`", "`S401`",
                    "`S402`", "retry N;", "on failure",
                    "**Not in the language** (decline as `inexpressible`): **no bound**",
-                   "**triggers**", "**nesting**", "**choosing the next object at run time**",
+                   "**triggers**", "**nesting**", "**Choosing the next object**",
                    "Retries count against the bound", "A robot never receives a mission",
                    "never a count that was not asked for"):
         assert phrase in text, phrase
@@ -249,3 +252,37 @@ def test_reference_teaches_the_four_new_kinds_2_2():
                    "never what the value is"):
         assert phrase in text, phrase
     assert "fill" not in tokens.RESERVED_V2_0 and "count" not in tokens.RESERVED_V2_0  # recognised by position
+
+
+def test_reference_teaches_choosing_at_run_time_2_3():
+    """0045 (L4): the statement, the three candidate forms, `where`, the order and ties, `else` ends in `fail`, the goal
+    names the choice, `choose` never reads a value (point 5), a choice may come first so the task can be delegated
+    (point
+    8), missions choose afresh, and what stays out (C9)."""
+    text = " ".join(reference().split())
+    assert "## Choosing at run time" in text
+    for phrase in ("choose TYPE NAME from CANDIDATES [where CONDITION] [nearest to X | farthest from X]",
+                   "binds a new name", "**Candidates**", "**`objects at L`**", "**`robots`**",
+                   'There is no "any object in the world"', "**`where`**", "excludes", "world facts only", "`E330`",
+                   "**`nearest to X`** or **`farthest from X`**", "straight-line distance", "(no position)",
+                   "**A tie, and a choice with no order, go to the first candidate",
+                   "**`else` is required, and it ends in `fail`**", "`E316`", "`E329`",
+                   "A message may come before the `fail`", "`infeasible`",
+                   "**The new name is used like a parameter** afterwards", "checked for the entity chosen",
+                   'never "for some entity"', "`E331`", "`E302`", "**`choose` never reads a value.**",
+                   "compare the names in an `if`", "**A choice that uses only world facts may come first**",
+                   "can be sent to a robot", "**In a mission, each run chooses afresh.**", "no longer there",
+                   "**`choose` is not a loop:**", "**Not in 2.3**", "by a **reading** of each candidate",
+                   "acting on **each** candidate", "detecting objects the world does not list",
+                   "**choosing a person**", "several choices that depend on each other",
+                   "Do not replace a choice"):
+        assert phrase in text, phrase
+    for word in ("choose", "from", "where", "nearest", "farthest", "objects", "robots"):
+        assert word not in tokens.RESERVED_V2_0  # recognised by position, so a program may still use them as names
+
+
+def test_the_world_shown_to_the_model_lists_positions_in_a_world_file_1_8():
+    world = {"world_schema_version": "1.8", "locations": ["a", {"id": "b", "position": [3, 4]},
+                                                         {"id": "c", "position": ["1.5", 2]}]}
+    assert bench._locations(world) == ["locations (position x, y in metres): a (no position), b (3, 4), c (1.5, 2)"]
+    assert bench._locations({"world_schema_version": "1.7", "locations": ["a", "b"]}) == ["locations: a, b"]

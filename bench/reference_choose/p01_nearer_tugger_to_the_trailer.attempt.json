@@ -1,0 +1,8 @@
+{
+  "task": "send_nearer",
+  "bindings": {
+    "a": "tugger_a",
+    "b": "tugger_b",
+    "spot": "trailer_4"
+  }
+}

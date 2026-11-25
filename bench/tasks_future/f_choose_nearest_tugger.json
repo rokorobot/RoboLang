@@ -1,19 +1,99 @@
 {
   "id": "f_choose_nearest_tugger",
   "prompt": "Send whichever of tugger_a and tugger_b is nearest to the handoff point to the handoff point.",
-  "world": "bench/worlds/fulfilment.json",
-  "group": "inexpressible",
+  "world": "bench/worlds/choose_f_choose_nearest_tugger.json",
+  "world_2_2": "bench/worlds/fulfilment.json",
+  "group": "choose",
   "expect": {
+    "decision": "program"
+  },
+  "expect_2_2": {
     "decision": "cannot",
     "category": "inexpressible"
   },
+  "expect_2_3": {
+    "decision": "program",
+    "world_2_3": {
+      "positions": {
+        "tugger_bay": [
+          0,
+          0
+        ],
+        "line_feed": [
+          40,
+          0
+        ],
+        "handoff_point": [
+          38,
+          6
+        ]
+      }
+    },
+    "paths": [
+      {
+        "when": "tugger_b waits at line_feed, 6.3 m from the handoff point; tugger_a is at the bay, 38.5 m away",
+        "chosen": [
+          "tugger_b"
+        ],
+        "goal": [
+          [
+            "rl:robot:tugger_b",
+            "located_in",
+            "rl:place:handoff_point"
+          ]
+        ],
+        "messages": [],
+        "world_patch": {}
+      },
+      {
+        "when": "the two tuggers have swapped places: tugger_a is the nearer",
+        "chosen": [
+          "tugger_a"
+        ],
+        "goal": [
+          [
+            "rl:robot:tugger_a",
+            "located_in",
+            "rl:place:handoff_point"
+          ]
+        ],
+        "messages": [],
+        "world_patch": {
+          "robots": {
+            "tugger_a": {
+              "location": "line_feed"
+            },
+            "tugger_b": {
+              "location": "tugger_bay"
+            }
+          }
+        }
+      }
+    ]
+  },
+  "expected_choices": [
+    {
+      "type": "robot",
+      "from": [
+        "tugger_a",
+        "tugger_b"
+      ],
+      "where": null,
+      "order": {
+        "nearest_to": "handoff_point"
+      }
+    }
+  ],
   "activity": "ACT-MFG-002",
   "gap": "G-CHOOSE",
   "tags": [
     "choose",
-    "distance",
-    "robots"
+    "robots",
+    "list",
+    "nearest",
+    "named_in_goal"
   ],
-  "why": "Choosing by distance needs a reading of each candidate: `measure` takes an object, never a robot, so the distance of a tugger cannot be read (language reference: 'Measured values', and 'choosing an object at run time').",
-  "attempt_fails_with": "E304"
+  "why": "RoboLang 2.3 (0045 C1, C4, C5): `choose robot t from (a, b) nearest to handoff_point`, then `move t to handoff_point`. The goal names the tugger chosen, so a program that fixes one tugger fails the path where the other is nearer. Before 2.3 (E304): choosing by distance needed a reading of each candidate, and `measure` takes an object, never a robot.",
+  "attempt_fails_with": "E304",
+  "erratum": "Q5"
 }

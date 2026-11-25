@@ -1,0 +1,6 @@
+{
+  "task": "send_nearest",
+  "bindings": {
+    "person": "handoff"
+  }
+}

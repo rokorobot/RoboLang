@@ -1,7 +1,7 @@
 """
-Developer commands for RoboLang 1.1 to 2.2.
+Developer commands for RoboLang 1.1 to 2.3.
 
-    reference              print the shipped RoboLang 2.2 language reference
+    reference              print the shipped RoboLang 2.3 language reference
     example [DIR]          write a sample task (fetch.rob) and world (world.json) to start from
     validate FILE          check a .rob file against the language contract
     inspect  FILE          show what a validated file describes (text or JSON IR)
@@ -13,7 +13,7 @@ Developer commands for RoboLang 1.1 to 2.2.
                            send the task's goal to a robot that runs its own plan; print the delegate record
 
 validate, inspect, simulate, export-goal and delegate take `--ir IR` instead of FILE: a Task IR JSON
-document (schema 1.0 to 1.10) or a Mission IR document (1.0 to 1.2), read strictly and re-validated in full
+document (schema 1.0 to 1.11) or a Mission IR document (1.0 to 1.3), read strictly and re-validated in full
 (spec/ir-reader-v0.1.md). export-goal and delegate never take a mission: a robot is sent tasks only (X607).
     arch02 --scenario SCENARIO --cases CASES --case ID
                            run one case of the RFC-001 reference scenario in simulation
@@ -83,9 +83,9 @@ NOT_A_SAFETY_CHECK_IR = (
 NOTHING_EXECUTED = "This is a description only. Nothing was executed."
 
 _DESCRIPTION = f"""\
-Tools for RoboLang 1.1 to 2.2 task and mission files.
+Tools for RoboLang 1.1 to 2.3 task and mission files.
 
-reference prints the shipped 2.2 language reference. validate and inspect check and describe .rob
+reference prints the shipped 2.3 language reference. validate and inspect check and describe .rob
 files; they never execute anything.
 simulate runs a validated task in a symbolic, deterministic simulation only: it never loads a
 robot adapter or connects to ROS 2 or hardware, and its result is not evidence that a task is
@@ -395,6 +395,19 @@ def _condition(condition: task_ir.Condition, typed: bool = False) -> str:
     raise TypeError(f"not a condition: {type(condition).__name__}")
 
 
+def _choose(step: task_ir.Choose, typed: bool) -> str:
+    """`choose robot t from (a, b) where ... nearest to x` (the `else` is shown as the step's handler)."""
+    source = step.source
+    if isinstance(source, task_ir.ChooseList):
+        candidates = f"({', '.join(source.candidates)})"
+    else:
+        candidates = f"objects at {source.location}" if isinstance(source, task_ir.ObjectsAt) else "robots"
+    where = "" if step.where is None else f" where {_condition(step.where, typed)}"
+    order = "" if step.order is None else (f" nearest to {step.order.reference}" if step.order.mode == "nearest"
+                                           else f" farthest from {step.order.reference}")
+    return f"choose {step.type} {step.name} from {candidates}{where}{order}"
+
+
 def _step(step: task_ir.Step, typed: bool = False) -> str:
     if isinstance(step, task_ir.Move):
         return f"move {step.robot} to {step.target}"
@@ -420,6 +433,8 @@ def _step(step: task_ir.Step, typed: bool = False) -> str:
         return f"if {_condition(step.condition, typed)}"
     if isinstance(step, task_ir.Fail):
         return f"fail {_quoted(step.reason)}"
+    if isinstance(step, task_ir.Choose):  # RoboLang 2.3 (decision 0045 C1)
+        return _choose(step, typed)
     if step.binding is not None:  # RoboLang 1.6: the typed value of a `measure`
         return f"communicate {step.robot} to {_quoted(step.channel)} with {step.binding}"
     return f"communicate {step.robot} to {_quoted(step.channel)} with {_quoted(step.message)}"
@@ -433,7 +448,7 @@ def _plan_lines(steps, typed: bool, number: str = "") -> list[str]:
         lines.append(f"{label} {_step(step, typed)}")
         handler = task_ir.handler_of(step)
         if handler is not None:  # RoboLang 1.5: run when the step fails (decision 0033)
-            lines.append("  if it fails:")
+            lines.append("  if no candidate is left:" if isinstance(step, task_ir.Choose) else "  if it fails:")
             lines += [f"    {line}" for line in _plan_lines(handler, typed, f"{label[:-1]}.")]
         if isinstance(step, task_ir.If):
             for word, goal, body in (("then", step.goal_then, step.then), ("else", step.goal_else, step.orelse)):
@@ -961,7 +976,7 @@ def _input_arguments(command: argparse.ArgumentParser, what: str, note: str = ""
         "--ir",
         metavar="IR",
         help=(
-            "path to a Task IR JSON file (schema 1.0 to 1.10) instead of FILE. It is read strictly and "
+            "path to a Task IR JSON file (schema 1.0 to 1.11) instead of FILE. It is read strictly and "
             f"re-validated in full, whatever versions it claims (spec/ir-reader-v0.1.md){note}"
         ),
     )
@@ -984,8 +999,8 @@ def _parser(prog: str) -> argparse.ArgumentParser:
 
     reference = commands.add_parser(
         "reference",
-        help="print the shipped RoboLang 2.2 language reference",
-        description="Print the exact RoboLang 2.2 reference shipped with this installation. Nothing is executed.",
+        help="print the shipped RoboLang 2.3 language reference",
+        description="Print the exact RoboLang 2.3 reference shipped with this installation. Nothing is executed.",
     )
     reference.set_defaults(run=_reference)
 

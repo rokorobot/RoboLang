@@ -1,0 +1,120 @@
+{
+  "id": "p02_nearest_dock_to_the_hall",
+  "prompt": "Move spot1 to whichever of dock_1, dock_2 and dock_3 is nearest to the hall.",
+  "world": "bench/worlds/choose_p02_nearest_dock_to_the_hall.json",
+  "world_2_2": "bench/worlds/site.json",
+  "group": "choose",
+  "expect": {
+    "decision": "program"
+  },
+  "expect_2_2": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_3": {
+    "decision": "program",
+    "world_2_3": {
+      "positions": {
+        "hall": [
+          40,
+          10
+        ],
+        "dock_1": [
+          50,
+          30
+        ],
+        "dock_2": [
+          42,
+          18
+        ],
+        "dock_3": [
+          55,
+          12
+        ]
+      }
+    },
+    "paths": [
+      {
+        "when": "dock_2 is 8 m from the hall, dock_3 15 m, dock_1 22 m",
+        "chosen": [
+          "dock_2"
+        ],
+        "goal": [
+          [
+            "rl:robot:spot1",
+            "located_in",
+            "rl:place:dock_2"
+          ]
+        ],
+        "messages": [],
+        "world_patch": {}
+      },
+      {
+        "when": "dock_2 has no position: it is unknown and left out, so dock_3 is the nearest",
+        "chosen": [
+          "dock_3"
+        ],
+        "goal": [
+          [
+            "rl:robot:spot1",
+            "located_in",
+            "rl:place:dock_3"
+          ]
+        ],
+        "messages": [],
+        "world_patch": {
+          "positions": {
+            "dock_2": null
+          }
+        }
+      },
+      {
+        "when": "dock_1 is moved to 1.4 m from the hall",
+        "chosen": [
+          "dock_1"
+        ],
+        "goal": [
+          [
+            "rl:robot:spot1",
+            "located_in",
+            "rl:place:dock_1"
+          ]
+        ],
+        "messages": [],
+        "world_patch": {
+          "positions": {
+            "dock_1": [
+              41,
+              11
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "expected_choices": [
+    {
+      "type": "location",
+      "from": [
+        "dock_1",
+        "dock_2",
+        "dock_3"
+      ],
+      "where": null,
+      "order": {
+        "nearest_to": "hall"
+      }
+    }
+  ],
+  "gap": "G-CHOOSE",
+  "tags": [
+    "choose",
+    "locations",
+    "list",
+    "nearest",
+    "named_in_goal",
+    "no_position_excluded"
+  ],
+  "why": "The nearest of three named places. 2.2 has no position, and the distance to a location cannot be read (E304, as in the R3 probe `f_choose_nearest_dock`); the obvious attempt is a `choose` (E203), and without it the robot goes to one dock fixed in advance. One path has a dock with no position: unknown, so left out (0045 C5).",
+  "attempt_fails_with": "E203"
+}

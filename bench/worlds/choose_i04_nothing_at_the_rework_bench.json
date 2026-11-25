@@ -1,0 +1,106 @@
+{
+  "world_schema": "robolang.sim.world",
+  "world_schema_version": "1.8",
+  "clock": {
+    "start": "2026-11-18T16:30:00",
+    "zone": "Europe/Prague"
+  },
+  "locations": [
+    "conveyor_in",
+    "bin",
+    "station1",
+    "station2",
+    "station3",
+    "rework"
+  ],
+  "regions": {
+    "fence_a": {
+      "clear": true
+    }
+  },
+  "robots": {
+    "arm_a": {
+      "ready": true,
+      "location": "station1",
+      "gripper": true,
+      "max_speed": [
+        {
+          "value": "1",
+          "unit": "m/s"
+        }
+      ],
+      "honours": [
+        "no_go_region",
+        "in_region"
+      ],
+      "actions": {}
+    },
+    "arm_b": {
+      "ready": true,
+      "location": "station3",
+      "gripper": true,
+      "max_speed": [
+        {
+          "value": "1",
+          "unit": "m/s"
+        }
+      ],
+      "honours": [
+        "no_go_region",
+        "in_region"
+      ],
+      "actions": {}
+    },
+    "amr1": {
+      "ready": true,
+      "location": "station2",
+      "gripper": true,
+      "max_speed": [
+        {
+          "value": "1",
+          "unit": "m/s"
+        }
+      ],
+      "honours": [
+        "no_go_region",
+        "in_region"
+      ],
+      "actions": {}
+    }
+  },
+  "objects": {
+    "p1": {
+      "present": true,
+      "location": "conveyor_in",
+      "class": "part"
+    },
+    "p2": {
+      "present": true,
+      "location": "conveyor_in",
+      "class": "part"
+    },
+    "p3": {
+      "present": true,
+      "location": "conveyor_in",
+      "class": "part"
+    },
+    "p4": {
+      "present": true,
+      "location": "conveyor_in",
+      "class": "part"
+    },
+    "p5": {
+      "present": true,
+      "location": "station2",
+      "class": "part"
+    }
+  },
+  "sensors": {
+    "cam_s1": {
+      "robot": "arm_a",
+      "available": true
+    }
+  },
+  "events": [],
+  "tasks": {}
+}

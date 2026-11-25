@@ -1,0 +1,11 @@
+// bench/reference_choose/p01_nearer_tugger_to_the_trailer.rob: hand-written reference (RoboLang 2.3)
+robolang 2.3;
+
+task send_nearer(robot a, robot b, location spot) {
+    goal { robot_at tug spot; }
+    plan {
+        choose robot tug from (a, b) nearest to spot else { fail "no tugger can be sent"; }
+        move tug to spot;
+        communicate tug to "ops" with "tugger sent";
+    }
+}

@@ -1,0 +1,13 @@
+// bench/reference_choose/i04_nothing_at_the_rework_bench.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 2.2;
+
+task from_rework(robot arm, location bench, location bin) {
+    goal { object_at part bin; }
+    plan {
+        choose object part from objects at bench else { fail "nothing at the rework bench"; }       // @choice part=p5
+        move arm to bench;
+        grasp arm part;
+        move arm to bin;
+        place arm part at bin;
+    }
+}

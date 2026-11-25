@@ -1,0 +1,10 @@
+// bench/reference_choose/p06_closest_robot_to_the_lobby.rob: hand-written reference (RoboLang 2.3)
+robolang 2.3;
+
+task send_closest(location spot) {
+    goal { robot_at who spot; }
+    plan {
+        choose robot who from robots nearest to spot else { fail "no robot"; }
+        move who to spot;
+    }
+}

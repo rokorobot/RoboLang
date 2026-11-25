@@ -1,0 +1,14 @@
+// RoboLang v2.3 fixture: valid
+// expect: ok
+// why: the statement, a goal that names the chosen robot (C1, C7)
+
+robolang 2.3;
+
+task send_tugger(robot a, robot b, location handoff) {
+    goal { robot_at t handoff; }
+    plan {
+        choose robot t from (a, b) where robot_ready t nearest to handoff else { fail "no tugger is free"; }
+        move t to handoff;
+        communicate t to "ops" with "tugger sent";
+    }
+}

@@ -1,0 +1,97 @@
+{
+  "id": "p07_equally_near_docks",
+  "prompt": "Move cleaner1 to whichever of dock_3 and dock_1 is nearer to the hall; if they are equally near, take the one I named first.",
+  "world": "bench/worlds/choose_p07_equally_near_docks.json",
+  "world_2_2": "bench/worlds/site.json",
+  "group": "choose",
+  "expect": {
+    "decision": "program"
+  },
+  "expect_2_2": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_3": {
+    "decision": "program",
+    "world_2_3": {
+      "positions": {
+        "hall": [
+          40,
+          10
+        ],
+        "dock_1": [
+          40,
+          20
+        ],
+        "dock_3": [
+          50,
+          10
+        ]
+      }
+    },
+    "paths": [
+      {
+        "when": "dock_1 and dock_3 are both 10 m from the hall: a tie goes to the first written, dock_3",
+        "chosen": [
+          "dock_3"
+        ],
+        "goal": [
+          [
+            "rl:robot:cleaner1",
+            "located_in",
+            "rl:place:dock_3"
+          ]
+        ],
+        "messages": [],
+        "world_patch": {}
+      },
+      {
+        "when": "dock_1 is moved to 5 m from the hall: it is the nearer",
+        "chosen": [
+          "dock_1"
+        ],
+        "goal": [
+          [
+            "rl:robot:cleaner1",
+            "located_in",
+            "rl:place:dock_1"
+          ]
+        ],
+        "messages": [],
+        "world_patch": {
+          "positions": {
+            "dock_1": [
+              40,
+              15
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "expected_choices": [
+    {
+      "type": "location",
+      "from": [
+        "dock_3",
+        "dock_1"
+      ],
+      "where": null,
+      "order": {
+        "nearest_to": "hall"
+      }
+    }
+  ],
+  "gap": "G-CHOOSE",
+  "tags": [
+    "choose",
+    "locations",
+    "list",
+    "nearest",
+    "tie",
+    "order_written",
+    "named_in_goal"
+  ],
+  "why": "A tie broken by the order written (0045 C4). The list is written dock_3 first, so the first-listed dock wins only when the two are equally near; the other path moves dock_1 nearer. A program that takes dock_1 (the sorted order) or reverses the list changes the request. 2.2 has no `choose` (E203).",
+  "attempt_fails_with": "E203"
+}

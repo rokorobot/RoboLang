@@ -1,0 +1,10 @@
+// bench/reference_future/f_date_scan_tomorrow_at_0600.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 2.2;
+
+task morning_scan(robot r, object item, sensor cam, location st) {
+    goal { object_at item st; }
+    plan {
+        wait until clock_time >= 06:00 timeout 960 min else { fail "6 am did not come in time"; }
+        inspect r item using cam;
+    }
+}

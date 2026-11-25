@@ -1,0 +1,108 @@
+{
+  "id": "p10_dock_near_stop_c_around_the_wet_floor",
+  "prompt": "Move printer1 to whichever of dock_1, dock_2 and dock_3 is nearest to stop_c, without ever entering wet_floor.",
+  "world": "bench/worlds/choose_p10_dock_near_stop_c_around_the_wet_floor.json",
+  "world_2_2": "bench/worlds/site_1_3.json",
+  "group": "choose",
+  "expect": {
+    "decision": "program"
+  },
+  "expect_2_2": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_3": {
+    "decision": "program",
+    "world_2_3": {
+      "positions": {
+        "stop_c": [
+          20,
+          0
+        ],
+        "dock_1": [
+          50,
+          30
+        ],
+        "dock_2": [
+          42,
+          18
+        ],
+        "dock_3": [
+          55,
+          12
+        ]
+      }
+    },
+    "paths": [
+      {
+        "when": "dock_2 is 28 m from stop_c, dock_3 37 m, dock_1 42 m",
+        "chosen": [
+          "dock_2"
+        ],
+        "goal": [
+          [
+            "rl:robot:printer1",
+            "located_in",
+            "rl:place:dock_2"
+          ]
+        ],
+        "messages": [],
+        "world_patch": {}
+      },
+      {
+        "when": "dock_3 is moved to 3 m from stop_c: it is the nearest",
+        "chosen": [
+          "dock_3"
+        ],
+        "goal": [
+          [
+            "rl:robot:printer1",
+            "located_in",
+            "rl:place:dock_3"
+          ]
+        ],
+        "messages": [],
+        "world_patch": {
+          "positions": {
+            "dock_3": [
+              22,
+              2
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "expected_choices": [
+    {
+      "type": "location",
+      "from": [
+        "dock_1",
+        "dock_2",
+        "dock_3"
+      ],
+      "where": null,
+      "order": {
+        "nearest_to": "stop_c"
+      }
+    }
+  ],
+  "expected_limits": [
+    [
+      "no_go_region",
+      "wet_floor"
+    ]
+  ],
+  "gap": "G-CHOOSE",
+  "tags": [
+    "choose",
+    "locations",
+    "list",
+    "nearest",
+    "named_in_goal",
+    "region_limit",
+    "1_7_feature"
+  ],
+  "why": "A choice with a 1.7 region limit (`@safety no_go_region`): the limit must stay and the choice must be added to it. 2.2 has no `choose` (E203); the attempt without it keeps the limit and goes to one dock fixed in advance.",
+  "attempt_fails_with": "E203"
+}

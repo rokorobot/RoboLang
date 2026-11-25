@@ -1,0 +1,10 @@
+{
+  "task": "carry_counted",
+  "bindings": {
+    "r": "picker_h",
+    "row": "bin_row",
+    "cam": "cam_h",
+    "src": "dock_a",
+    "dst": "dock_b"
+  }
+}

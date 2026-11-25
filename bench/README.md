@@ -76,6 +76,7 @@ Do not read much into a few points of difference: 40 tasks is a small sample. Us
 | `prompt.md`, `prompt_minimal.md` | stable prompt wrappers (the hash of the assembled prompt is stored with each run); the full prompt inserts `docs/language-reference.md`, while the minimal prompt inserts the grammar |
 | `tasks_hard/`, `reference_hard/`, `worlds/*.notes.json` | set 2: tasks, references and attempts, entity descriptions |
 | `lib.py`, `run.py`, `score.py` | shared checks and prices; the runner; the scorer |
+| `heldout/` | rules and the writers' brief for the private held-out set (RL-20D, MC7); the requests themselves are never in git |
 
 To add a task: write `tasks/<id>.json`, `reference/<id>.rob` and `reference/<id>.json`, then run `pytest tests/test_bench.py`
 (the count in that test is 40; change it on purpose).
@@ -124,7 +125,7 @@ The owner approved the replacement plan, freeze, paid validation and merge. See 
 Run `python tools/bench_freeze.py --check` to verify the recorded inputs against freeze v2
 (`docs/evidence/bench-freeze-v2.json`, decision 0035 E9; v1 is kept as history). Changes after the freeze require errata
 ([errata for 1.5](../docs/evidence/bench-errata-1-5.md), [errata for 1.6](../docs/evidence/bench-errata-1-6.md),
-[errata for 1.7](../docs/evidence/bench-errata-1-7.md), [errata for 1.8](../docs/evidence/bench-errata-1-8.md), [errata for 1.9](../docs/evidence/bench-errata-1-9.md), [errata for 2.0](../docs/evidence/bench-errata-2-0.md), [errata for 2.1](../docs/evidence/bench-errata-2-1.md), [errata for 2.2](../docs/evidence/bench-errata-2-2.md)).
+[errata for 1.7](../docs/evidence/bench-errata-1-7.md), [errata for 1.8](../docs/evidence/bench-errata-1-8.md), [errata for 1.9](../docs/evidence/bench-errata-1-9.md), [errata for 2.0](../docs/evidence/bench-errata-2-0.md), [errata for 2.1](../docs/evidence/bench-errata-2-1.md), [errata for 2.2](../docs/evidence/bench-errata-2-2.md), [errata for 2.3](../docs/evidence/bench-errata-2-3.md)).
 A `decoy` looks impossible or unclear but is feasible. A `clarify` task
 expects `"decision": "clarify"`: the request could mean several entities (`candidates`) or omits a value, and the world
 does not decide. A request that leaves the choice to the model ("a shelf", "one of the vials", set 2's `ambiguous`
@@ -205,8 +206,8 @@ read from these numbers.
 
 Set 2 has the same for its three branching tasks (`x_route_by_cell`, `x_whichever_free`, `x_missing_box_branch`),
 group `branching`. The grammar-only prompt pastes `spec/grammar-v1.3.ebnf`, `spec/grammar-v1.4.ebnf`,
-`spec/grammar-v1.5.ebnf`, `spec/grammar-v1.6.ebnf`, `spec/grammar-v1.7.ebnf`, `spec/grammar-v1.8.ebnf`, `spec/grammar-v1.9.ebnf`, `spec/grammar-v2.0.ebnf`, `spec/grammar-v2.1.ebnf` and `spec/grammar-v2.2.ebnf`, each a delta
-over the one before. Since 0044 L4 the prompts teach RoboLang 2.2 (0043 L4 taught 2.1, 0041 L4 taught 2.0, 0042 L4 taught 1.9, 0040 L4 taught 1.8, 0039 L4 taught 1.7, 0036 PR 2 taught 1.6, 0035 PR 2 taught 1.5). In set 3,
+`spec/grammar-v1.5.ebnf`, `spec/grammar-v1.6.ebnf`, `spec/grammar-v1.7.ebnf`, `spec/grammar-v1.8.ebnf`, `spec/grammar-v1.9.ebnf`, `spec/grammar-v2.0.ebnf`, `spec/grammar-v2.1.ebnf`, `spec/grammar-v2.2.ebnf` and `spec/grammar-v2.3.ebnf`, each a delta
+over the one before. Since 0045 L4 the prompts teach RoboLang 2.3 (0044 L4 taught 2.2, 0043 L4 taught 2.1, 0041 L4 taught 2.0, 0042 L4 taught 1.9, 0040 L4 taught 1.8, 0039 L4 taught 1.7, 0036 PR 2 taught 1.6, 0035 PR 2 taught 1.5). In set 3,
 `x_failover_on_fault` is now a program judged per path (group `recover`; `expect_1_4` keeps the old label).
 
 Run it on demand from GitHub Actions: `Benchmark`, `set_only: set3`. That runs full and grammar-only prompts with 3
@@ -475,3 +476,37 @@ demand from GitHub Actions: `Benchmark`, `set_only: kinds` (full and minimal pro
 each, not gated, not in the per-PR or weekly runs).
 Locally: `python bench/run.py --set kinds --repeats 3 --models claude-sonnet-5-5,claude-haiku-5-5` (a paid run: confirm it
 first; estimate ~$3.8 for the full prompt and ~$3.6 for the grammar-only one).
+
+## Set 12: choosing at run time (`--set choose`)
+
+25 tasks in `tasks_choose/`, the 2.3 references of the 11 programs and 4 controls and the obvious 2.2 attempts in
+`reference_choose/`, decision record [0045](../spec/decisions/0045-choosing-at-run-time.md), plan, bounds and open points in
+[bench-12-choose.md](../docs/plans/bench-12-choose.md) (the bounds B1-B9 and the open points are approved). Pre-registered against 2.2
+(L3 of I7), **labelled for 2.3 at L4**: `expect` is the 2.3 label (11 `choose` programs, 5 `infeasible`, 5 `inexpressible` that stay out
+by 0045 C9, 4 `control` programs), `expect_2_2` the 2.2 label the baseline scored (every non-control task `cannot / inexpressible`, each
+with an attempt that fails with `E203`), `expect_2_3` the pre-registered 2.3 label with `world_2_3` (the world file 1.8 facts), its `paths`
+(each forced by a `world_patch` that changes which candidate wins, and that may set or remove a `positions` entry; a path where no
+candidate is left is `fails`, `else` runs) and `because`. The checks are task keys: `expected_choices` (type, source, `where`, order; `ladder_ok`
+where erratum Q4 accepts an `if` ladder), `expected_limits` and `expected_mission` (the bound the request states, `on_failure`). The goal of a
+path names the entity chosen (0045 C7). The worlds of the programs and the infeasible tasks are 16 world file 1.8 copies,
+`worlds/choose_<id>.json` (the 2.2 file is the task key `world_2_2`): positions in `locations`, the readiness and places that make `i01`,
+`i03`, `i04`, `i05` infeasible (erratum Q3). The attempts mark the choice line with `// @choice NAME=ENTITY`: with that line removed and the name
+replaced by the first candidate, each is a valid 2.2 program that succeeds in the 2.2 world, the choice replaced silently (a mission fails on
+its second run, `S215`; in the 2.3 copy of an infeasible task it fails).
+
+Scorer measures (erratum Q7), per model like `message_wait_replaced`: `choice_ok` (B1; one of the checks), `choice_replaced_silently` (B8, and
+`candidate_fixed_where_infeasible` for B4), `criterion_changed` (B9) and `no_choose_added` (B5: a control with no `choose`). The goal of a path
+is checked with the entities the run's choices chose.
+
+The R3 probes `f_choose_nearest_tugger`, `f_choose_nearest_dock` and `f_choose_nearer_cart` and the standing tasks `x_nearest_robot`,
+`x05_every_new_part` and `x_shuttle_until_five` are programs now (erratum Q5: world file 1.8 copies, references, `group` `choose`); erratum Q2
+moved `x03_any_hot_pan` and `x03_carry_as_many_as_counted` from G-CHOOSE to the far gap G-EACH
+([bench-errata-2-3.md](../docs/evidence/bench-errata-2-3.md)).
+
+`tests/test_bench_choose.py` checks the counts, the labels, a small model of 0045 C2 to C5 over every path (which candidate wins in each
+patched world, that a fixed pick, another order, no order and no `where` each lose a path), the mission paths, the infeasible and
+inexpressible reasons, that every 2.2 attempt fails with `E203` and every stripped attempt succeeds, the 2.3 reference of each program on
+every path, what the new measures see, the controls, the atlas, the scorer and the workflow. On demand from GitHub Actions: `Benchmark`,
+`set_only: choose` (full and minimal prompts, 3 repeats, Sonnet and Haiku, `--max-usd 3` each, not gated, not in the per-PR or weekly runs).
+Locally: `python bench/run.py --set choose --repeats 3 --models claude-sonnet-5-5,claude-haiku-5-5` (a paid run: confirm it first; estimate ~$4.0
+for the full prompt and ~$3.9 for the grammar-only one).

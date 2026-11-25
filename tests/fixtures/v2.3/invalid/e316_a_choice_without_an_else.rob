@@ -1,0 +1,13 @@
+// RoboLang v2.3 fixture: invalid
+// expect: error E316 (static) line 10
+// why: the else is mandatory (C6)
+
+robolang 2.3;
+
+task t(robot a, robot b, location dst) {
+    goal { robot_at s dst; }
+    plan {
+        choose robot s from (a, b) nearest to dst;
+        move s to dst;
+    }
+}

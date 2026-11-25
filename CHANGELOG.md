@@ -1,7 +1,40 @@
 # Changelog
 
-The distribution version (this file) is independent of the language versions (1.1 to 2.2), the Task IR schema
-versions (1.0 to 1.10) and the Mission IR schema (1.0 to 1.2). Decision records are in [`spec/decisions/`](https://github.com/rokorobot/RoboLang/tree/main/spec/decisions).
+The distribution version (this file) is independent of the language versions (1.1 to 2.3), the Task IR schema
+versions (1.0 to 1.11) and the Mission IR schema (1.0 to 1.3). Decision records are in [`spec/decisions/`](https://github.com/rokorobot/RoboLang/tree/main/spec/decisions).
+
+## 0.10.0 (2026-11-24)
+
+RoboLang 2.3, choosing at run time: iteration I7 of the [roadmap](docs/LANGUAGE_ROADMAP.md) (decision 0045). Accepted on
+benchmark set 12 with teaching fix Z1, errata Q9 to Q11 and one recorded exception (Haiku, grammar-only prompt, B3 2/15)
+([acceptance](docs/evidence/bench-2-3-acceptance.md)).
+
+- **RoboLang 2.3: choosing at run time** (decision 0045, step L4 of iteration I7). A `.rob` file `robolang 2.3;` may use the
+  statement `choose TYPE NAME from CANDIDATES [where COND] [nearest to X | farthest from X] else { ... }`. `TYPE` is `robot`,
+  `object` or `location`; the candidates are a list `(a, b, c)`, `objects at L` or `robots`; `where` is a world-fact condition
+  over the chosen name (an unknown value excludes the candidate); the order is the straight-line distance between positions, and a
+  tie, or no order, goes to the first candidate; the `else` is mandatory and ends in `fail`. The name is used like a parameter
+  afterwards, in the goal too, and the goal is checked for the entity chosen. `choose`, `nearest` and `farthest` are recognised
+  by position and are not reserved; in a file below 2.3 `choose` is still `E203`. A task with `choose` may run in a mission, and
+  each run chooses afresh; under a time bound a failed run that changes neither world nor clock now stops the mission
+  (`no_progress`) instead of repeating. World file 1.8 gives a location a `position`; Task IR 1.11 (and Mission IR 1.3), run
+  record 1.11 (a `choices` entry per choice: candidates, those excluded and why, the order, the entity chosen) and mission record
+  1.3. `export-goal` and `delegate` accept a task whose choices come before the first action: the planner makes them from the
+  world model, records them and sends the goal with them filled in (Core 0.2 is unchanged); otherwise `X609`. The ROS 2 backend
+  refuses `choose` (`S508`). New codes `E329` (an `else` must end in `fail`), `E330` (`where` states world facts only and names
+  the chosen name), `E331` (a choice cannot use an earlier choice), `S272` (no candidate left), `S273` (the place an order
+  measures from has no position), `X609` and the reader forms `I230` to `I232`. Safety case hazard H27 (a stale or wrong world
+  model makes a choice wrong). `robolang --version` shows language 2.3. Files of 1.1 to 2.2 are unchanged.
+- **Taught and relabelled** (decision 0045, step L4 of iteration I7): `robolang reference` and both benchmark prompts teach 2.3 (a section
+  "Choosing at run time"; the grammar-only prompt pastes `spec/grammar-v2.3.ebnf`, which says what 2.3 cannot say: a choice by a reading of
+  each candidate, acting on each member, unlisted objects, a person; that `choose` never reads a value; that a choice using world facts only may
+  come first so the task can be delegated). The world shown to the model lists each location's position. Benchmark set 12 is labelled for 2.3
+  (`expect`; the 2.2 label is `expect_2_2`) with a world file 1.8 copy and a 2.3 reference for each of the 11 programs, valid and ending as
+  labelled on every path, and the infeasible tasks made infeasible by their 2.3 world (erratum Q3); an `if` ladder over the listed objects is
+  also right where erratum Q4 says so. The R3 probes `f_choose_nearest_tugger`, `f_choose_nearest_dock` and `f_choose_nearer_cart` and the standing
+  tasks `x_nearest_robot`, `x05_every_new_part` and `x_shuttle_until_five` are programs. New scorer measures `choice_ok`, `choice_replaced`,
+  `criterion_changed` and `choose_added`, per model like `kind_or_threshold_changed`. Errata `docs/evidence/bench-errata-2-3.md` (Q5 to Q7);
+  freeze regenerated; atlas snapshot (G-CHOOSE stays open until L6 and holds none of the tasks).
 
 ## 0.9.0 (2026-11-18)
 

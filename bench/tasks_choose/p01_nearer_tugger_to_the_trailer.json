@@ -1,0 +1,109 @@
+{
+  "id": "p01_nearer_tugger_to_the_trailer",
+  "prompt": "Send whichever of tugger_a and tugger_b is nearer to trailer_4 to trailer_4, then tell channel \"ops\" \"tugger sent\".",
+  "world": "bench/worlds/choose_p01_nearer_tugger_to_the_trailer.json",
+  "world_2_2": "bench/worlds/fulfilment.json",
+  "group": "choose",
+  "expect": {
+    "decision": "program"
+  },
+  "expect_2_2": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_3": {
+    "decision": "program",
+    "world_2_3": {
+      "positions": {
+        "tugger_bay": [
+          0,
+          0
+        ],
+        "line_feed": [
+          40,
+          0
+        ],
+        "trailer_4": [
+          60,
+          20
+        ],
+        "trolley": [
+          55,
+          18
+        ]
+      }
+    },
+    "paths": [
+      {
+        "when": "tugger_b waits at line_feed, about 28 m from trailer_4; tugger_a is 63 m away",
+        "chosen": [
+          "tugger_b"
+        ],
+        "goal": [
+          [
+            "rl:robot:tugger_b",
+            "located_in",
+            "rl:place:trailer_4"
+          ]
+        ],
+        "messages": [
+          [
+            "ops",
+            "tugger sent"
+          ]
+        ],
+        "world_patch": {}
+      },
+      {
+        "when": "tugger_a is parked at trolley, 5 m from trailer_4: it is the nearer",
+        "chosen": [
+          "tugger_a"
+        ],
+        "goal": [
+          [
+            "rl:robot:tugger_a",
+            "located_in",
+            "rl:place:trailer_4"
+          ]
+        ],
+        "messages": [
+          [
+            "ops",
+            "tugger sent"
+          ]
+        ],
+        "world_patch": {
+          "robots": {
+            "tugger_a": {
+              "location": "trolley"
+            }
+          }
+        }
+      }
+    ]
+  },
+  "expected_choices": [
+    {
+      "type": "robot",
+      "from": [
+        "tugger_a",
+        "tugger_b"
+      ],
+      "where": null,
+      "order": {
+        "nearest_to": "trailer_4"
+      }
+    }
+  ],
+  "gap": "G-CHOOSE",
+  "tags": [
+    "choose",
+    "robots",
+    "list",
+    "nearest",
+    "named_in_goal",
+    "message"
+  ],
+  "why": "The nearest of two robots named in the request, chosen from where they are when the job starts. 2.2 has no position and no choice: a `measure` takes an object, never a robot (E304, as in the R3 probe `f_choose_nearest_tugger`), and the obvious attempt is a `choose` statement, which 2.2 does not know (E203). Without it the attempt sends one tugger fixed in advance.",
+  "attempt_fails_with": "E203"
+}

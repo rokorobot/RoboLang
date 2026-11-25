@@ -1,0 +1,9 @@
+{
+  "task": "night_clean",
+  "bindings": {
+    "r": "cleaner1",
+    "lobby": "lobby",
+    "hall": "hall",
+    "home": "dock_2"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "id": "f_date_scan_tomorrow_at_0600",
+  "prompt": "Tomorrow at 06:00, have arm1 inspect box1 on shelf_a with camera_top.",
+  "world": "bench/worlds/warehouse_1_5_1420.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "activity": "ACT-RET-001",
+  "gap": "G-DATE",
+  "tags": [
+    "clock_time",
+    "another_day",
+    "wait"
+  ],
+  "why": "The morning scan, asked for in the afternoon: 06:00 tomorrow is another day. A time literal means that time on the day the task starts (0042 T4), so a wait for 06:00 at 14:20 waits for a time that has passed (language reference: 'Clock readings'). Dates and weekdays are out of 1.9 (0042 K11).",
+  "attempt_fails_with": "S010"
+}

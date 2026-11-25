@@ -121,7 +121,7 @@ def test_the_prompts_example_is_valid_and_runs():
     assert checked.valid, checked.report
     from robolang.sim import run as simulate
     assert simulate(checked.task, checked.world).state == "SUCCEEDED"
-    assert text.startswith("You write RoboLang 2.2 programs.")
+    assert text.startswith("You write RoboLang 2.3 programs.")
 
 
 # -------- the fake client --------

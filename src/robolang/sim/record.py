@@ -24,11 +24,12 @@ RUN_RECORD_SCHEMA_VERSION = "1.0"
 # Language version -> run record schema version (robolang-v1.2.md section 8.3; v1.3 section 8.3).
 RUN_RECORD_SCHEMA_VERSIONS = {
     "1.1": "1.0", "1.2": "1.1", "1.3": "1.2", "1.4": "1.3", "1.5": "1.4", "1.6": "1.5", "1.7": "1.6",
-    "1.8": "1.7", "1.9": "1.8", "2.0": "1.8", "2.1": "1.9", "2.2": "1.10",
+    "1.8": "1.7", "1.9": "1.8", "2.0": "1.8", "2.1": "1.9", "2.2": "1.10", "2.3": "1.11",
 }
 MISSION_RECORD_SCHEMA = "robolang.sim.mission-run"  # RoboLang 2.0 (decision 0041): the record of a mission
 MISSION_RECORD_SCHEMA_VERSION = "1.0"
-MISSION_RECORD_SCHEMA_VERSIONS = {"2.0": "1.0", "2.1": "1.1", "2.2": "1.2"}  # 1.1 (2.1) adds `messages`; 1.2: 2.2
+MISSION_RECORD_SCHEMA_VERSIONS = {"2.0": "1.0", "2.1": "1.1", "2.2": "1.2",
+                                  "2.3": "1.3"}  # 1.1 (2.1) adds `messages`; 1.2: 2.2; 1.3: 2.3
 SEED = re.compile(r"[A-Za-z0-9._-]{1,64}")
 DEFAULT_SEED = "0"
 
@@ -191,6 +192,28 @@ def _step(step, branching: bool, handlers: bool = False, values: bool = False, a
     }
 
 
+def choice_entry(choice) -> dict:
+    """
+    RoboLang 2.3 (decision 0045 C7): one choice. `candidates` in the order written or listed; `excluded` each with why
+    ("where_false", "where_unknown" or "no_position"); `order` (or null) with the entity it measures from and the exact
+    squared distance in m2 of each candidate that was ordered; `kept` best first; `chosen` (null: no candidate left).
+    """
+    order = choice.order
+    return {
+        "step": choice.step,
+        "type": choice.type,
+        "name": choice.name,
+        "candidates": list(choice.candidates),
+        "excluded": [{"entity": entity, "reason": reason} for entity, reason in choice.excluded],
+        "order": None if order is None else {
+            "mode": order.mode, "reference": choice.reference,
+            "distances_squared": [{"entity": e, "m2": ir.decimal_text(d)} for e, d in choice.distances]},
+        "kept": list(choice.kept),
+        "chosen": choice.chosen,
+        "t_ms": ms_text(choice.t_ms),
+    }
+
+
 def _results(results, branching: bool = False) -> list[dict]:
     """Per-condition results of the `pre` or `goal` block; a 1.4 goal says where each condition came from."""
     return [
@@ -258,7 +281,8 @@ def to_record(
     1.8; `inputs.world_clock` after `world_schema_version`: the world's `start` and `zone`, or null; a reading of
     `time` or `elapsed` has a `text` after `t_ms`, as it is sent in a message: `HH:MM:SS` or `37 s`), 1.9 for a 2.1
     source (embeds Task IR 1.9; `messages` after `events_applied`: every message that arrived from the start of the run
-    to its end, each with `t_ms`, `channel`, `text`, `from` and `status` "accepted" or "ignored").
+    to its end, each with `t_ms`, `channel`, `text`, `from` and `status` "accepted" or "ignored"), 1.11 for a 2.3 source
+    (embeds Task IR 1.11; `choices` after `decisions`: each choice reached, see `choice_entry`).
     """
     inputs = {
         "source_sha256": source_sha256,
@@ -270,14 +294,14 @@ def to_record(
         "ir_schema_version": ir.IR_SCHEMA_VERSIONS[language_version],
         "world_schema_version": world_schema_version,
     }
-    if language_version in ("1.9", "2.0", "2.1", "2.2"):
+    if language_version in ("1.9", "2.0", "2.1", "2.2", "2.3"):
         inputs["world_clock"] = None if world_clock is None else {"start": world_clock.start, "zone": world_clock.zone}
     if bindings_source != "world":  # a record without the key has world-file bindings (section 5.1)
         inputs["bindings_source"] = bindings_source
-    branching = language_version in ("1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "2.0", "2.1", "2.2")
-    handlers = language_version in ("1.5", "1.6", "1.7", "1.8", "1.9", "2.0", "2.1", "2.2")
-    values = language_version in ("1.6", "1.7", "1.8", "1.9", "2.0", "2.1", "2.2")
-    actions = language_version in ("1.8", "1.9", "2.0", "2.1", "2.2")
+    branching = language_version in ("1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "2.0", "2.1", "2.2", "2.3")
+    handlers = language_version in ("1.5", "1.6", "1.7", "1.8", "1.9", "2.0", "2.1", "2.2", "2.3")
+    values = language_version in ("1.6", "1.7", "1.8", "1.9", "2.0", "2.1", "2.2", "2.3")
+    actions = language_version in ("1.8", "1.9", "2.0", "2.1", "2.2", "2.3")
     return {
         "run_record_schema": RUN_RECORD_SCHEMA,
         "run_record_schema_version": RUN_RECORD_SCHEMA_VERSIONS[language_version],
@@ -294,9 +318,10 @@ def to_record(
         "preconditions": _results(result.preconditions),
         **({} if result.goal is None else {"goal": _results(result.goal, branching)}),
         **({"decisions": [_decision(d) for d in result.decisions]} if branching else {}),
+        **({"choices": [choice_entry(c) for c in result.choices]} if language_version == "2.3" else {}),
         "steps": [_step(s, branching, handlers, values, actions) for s in result.steps],
         "events_applied": [_event(e) for e in result.events_applied],
-        **({"messages": [_received(m) for m in result.messages]} if language_version in ("2.1", "2.2") else {}),
+        **({"messages": [_received(m) for m in result.messages]} if language_version in ("2.1", "2.2", "2.3") else {}),
         "end_t_ms": ms_text(result.end_t_ms),
         "final_world": _final_world(result.final_world, actions),
         **({} if result.goal is None else {"core_outcome": core_outcome(result, task, run_id, core=core)}),
@@ -378,7 +403,7 @@ def to_mission_record(
         "runs": runs,
         "events_applied": [_event(e) for e in result.events_applied],
         **({"messages": [_received(m) for m in result.messages]}
-           if document.language_version in ("2.1", "2.2") else {}),
+           if document.language_version in ("2.1", "2.2", "2.3") else {}),
         "end_t_ms": ms_text(result.end_t_ms),
         "final_world": _final_world(result.final_world, True),
     }
