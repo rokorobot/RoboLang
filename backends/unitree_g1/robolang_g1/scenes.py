@@ -46,8 +46,8 @@ REGION_Y, REGION_Z = (0.56, 0.76), (0.91, 1.09)  # a region in the plate's frame
 # with the hand of that side (measured on the robot's own model: quick from 0.05 to 0.20 m, a minute of search with the
 # waist leaning at 0.22 m, none at 0.01 or 0.28 m), so a table holds two boxes for one hand and three for both:
 # "R" and "L" for two (one hand each), "R1" and "R2" for two of the right hand, "L1" and "L2" for two of the left.
-SLOT = {"M": -0.10, "R": -0.12, "L": 0.12, "R1": -0.20, "R2": -0.06, "L1": 0.06, "L2": 0.20}
-SLOT_HALF = 0.065
+SLOT = {"M": -0.10, "R": -0.12, "L": 0.12, "R1": -0.20, "R2": -0.07, "L1": 0.07, "L2": 0.20}
+SLOT_HALF = 0.06
 PAD = {"pos": [0.55, 2.5, PLATE["z"]], "facing": -1.570796325}  # a plate with no table: a place only the robot goes to
 
 FLOOR = {"center": [2.0, 1.2], "half_size": [5.5, 4.0], "friction": 1.0}
@@ -68,8 +68,10 @@ def _unit(name: str, y0: float, marker: int, stand: float, wide: bool) -> tuple[
     """A table and its station, for a robot that stands at y = `y0` facing the wall."""
     table = {
         "name": f"{name}_table",
-        "pos": [TABLE_X, round(y0 - (0.02 if wide else 0.065), 4), TABLE_HALF_Z],
-        "half_size": [TABLE_HALF_X, 0.28 if wide else 0.185, TABLE_HALF_Z],
+        # A wide table reaches as far to the left as every table does to the right (0.25 m), and no further: 5 cm more
+        # on the right and the arm, swung out beside the body, came within its margin of the table's corner (S502).
+        "pos": [TABLE_X, round(y0 - (0.0 if wide else 0.065), 4), TABLE_HALF_Z],
+        "half_size": [TABLE_HALF_X, 0.25 if wide else 0.185, TABLE_HALF_Z],
     }
     station = {
         "name": name,
@@ -223,7 +225,7 @@ def build(scene: str) -> dict:
     for param, (unit, slot) in spec["locations"].items():
         loc = {"name": param, "station": by_unit[unit]["name"]}
         if slot == "*":
-            loc["region"] = {"min": [0.20, REGION_Y[0], REGION_Z[0]], "max": [0.72, REGION_Y[1], REGION_Z[1]]}
+            loc["region"] = {"min": [0.20, REGION_Y[0], REGION_Z[0]], "max": [0.70, REGION_Y[1], REGION_Z[1]]}
         elif slot != "-":
             loc["region"] = _region(slot, spec.get("region_z", {}).get(unit, REGION_Z))
         locations.append(loc)

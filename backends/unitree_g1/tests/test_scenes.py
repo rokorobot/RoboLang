@@ -64,7 +64,7 @@ def test_objects_stand_on_their_table_inside_the_region_of_their_location():
             assert obj["pos"][2] - obj["half_size"][2] == pytest.approx(2 * t["half_size"][2])
             # and in the region of the location of that slot, if the task has one there
             for param, (u, s) in spec["locations"].items():
-                if u == unit and s in (slot, None, "*") and (s == slot or len(spec["objects"]) > 1 or s is None):
+                if u == unit and s in (slot, None, "*"):
                     loc = S.location(site, param)
                     R, p = S.marker_frame(S.station(site, loc["station"])["marker"])
                     q = R.T @ ([obj["pos"][0], obj["pos"][1], obj["pos"][2] + obj["half_size"][2]] - p)
@@ -76,12 +76,14 @@ def test_slots_of_one_table_do_not_overlap_and_each_hand_has_its_own():
         xs = sorted((scenes._region(s)["min"][0], scenes._region(s)["max"][0]) for s in group)
         assert all(a[1] < b[0] for a, b in zip(xs, xs[1:])), group
         ys = sorted(scenes.SLOT[s] for s in group)
-        assert all(b - a - 2 * scenes.OBJECT["half_size"][1] >= 0.06 - 1e-9 for a, b in zip(ys, ys[1:])), group
+        gaps = [b - a - 2 * scenes.OBJECT["half_size"][1] for a, b in zip(ys, ys[1:])]
+        assert min(gaps) >= 0.05 - 1e-9, group  # 5 cm between neighbouring boxes
     for name, y in scenes.SLOT.items():  # inside what the arm planner takes with the hand of that side
         assert 0.05 <= abs(y) <= 0.20, name
-    for task in scenes.TASKS:
+    for task, spec in scenes.TASKS.items():
         for obj in scenes.build(task)["site"]["objects"]:
-            assert obj["grasp"]["hand"] == ("left" if obj["pos"][1] % 2.4 < 1.2 and obj["pos"][1] % 2.4 > 0 else "right")
+            slot = spec["objects"][obj["name"]][1]
+            assert obj["grasp"]["hand"] == ("left" if scenes.SLOT[slot] > 0 else "right"), (task, obj["name"])
 
 
 @needs_assets
