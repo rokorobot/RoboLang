@@ -1,4 +1,4 @@
-# Decision record 0048: NVIDIA Isaac OS as an execution backend (design only)
+# Decision record 0049: NVIDIA Isaac OS as an execution backend (design only)
 
 **Date:** 2026-11-25
 **Status:** **APPROVED by the owner, 2026-11-25**: V1–V10 as recommended, and open points 1–4 as recommended
