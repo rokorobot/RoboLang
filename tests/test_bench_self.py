@@ -733,7 +733,7 @@ def test_the_readme_the_errata_and_the_plan_name_the_set():
     readme = read(REPO / "bench" / "README.md")
     assert "## Set 13: the robot's own state (`--set self`)" in readme and "set_only: self" in readme
     plan = read(REPO / "docs" / "plans" / "bench-13-self.md")
-    assert "draft for the owner" in plan[:900].lower()
+    assert "approved by the owner" in plan[:900].lower()
     for task_id in SET:
         assert f"`{task_id}`" in plan, task_id
     for bound in ("B1", "B2", "B3", "B4", "B5", "B6", "B7", "B8", "B9"):

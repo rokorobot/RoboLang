@@ -125,3 +125,19 @@ The owner approved S1–S11 as recommended. This also answers the four open poin
 - **Bounds:** fixed with the baseline (rule 6). They include a B8-like measure, **a charge check replaced silently**: the
   check dropped, `robot_ready` as a stand-in, or a guessed `wait for`.
 - **Economy:** 0 statements, 1 kind, 1 live form, 1 robot field plus a world event, about 3 codes. No reserved words.
+
+## Clarifications (APPROVED by the owner 2026-11-25, from writing the L3 set)
+
+The 12 open points in [bench-13-self.md](../../docs/plans/bench-13-self.md) are approved as recommended. In short:
+
+- charge events are a top-level `charge_events` list, and their uncertainty is optional;
+- only `wait for` advances time in a world with no positions;
+- a task is infeasible only when every program fails in its world and the request gives no fallback;
+- a task may read another robot's charge;
+- a candidate with an unknown charge is excluded from a choice;
+- a mission's `until` is checked after each run line, and an unknown `until` ends the mission `failed`;
+- `do r charge` changes no reading by itself;
+- `x05` ("every time it drops") stays a trigger (G-TRIGGER);
+- ACT-AUTO-003 moves to G-HEALTH at L6;
+- a charge is sent as `64 %`.
+

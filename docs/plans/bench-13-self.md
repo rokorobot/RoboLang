@@ -1,6 +1,6 @@
 # Benchmark set 13: self (pre-registration draft)
 
-**Status:** draft for the owner, drafted 2026-11-24. Decision [0048](../../spec/decisions/0048-the-robots-own-state.md) is approved (S1-S11 as
+**Status:** tasks, labels and open points 1–12 **APPROVED by the owner, 2026-11-25**; bounds are proposed with the baseline. Drafted 2026-11-24. Decision [0048](../../spec/decisions/0048-the-robots-own-state.md) is approved (S1-S11 as
 recommended); this plan is its "Pre-registration (L3)" section made concrete: 24 tasks, labels for 2.3 (baseline) and 2.4 (acceptance),
 placeholder bounds B1-B9 and the open points below. `tests/test_bench_self.py`; run with `python bench/run.py --set self`. Modelled on set
 12, [bench-12-choose.md](bench-12-choose.md), and set 11. No model was run and no money was spent. **The labels follow 0048 S1-S11 as
@@ -166,7 +166,7 @@ it with `set_only: self` (full and grammar-only prompts, `--max-usd 3` each, not
 The estimate is a guess (`bench/README.md`) and is above the $3 cap: the cap stops new requests, and a rerun with the same `--run-id`
 resumes. The earlier sets cost well below their estimates (set 11: $1.21 for ~$7.4). Nothing was sent.
 
-## Open points: where 0048 does not decide what a label needs
+## Open points: where 0048 does not decide what a label needs (approved as recommended, 2026-11-25)
 
 Each point names the labels that depend on it. The label uses the reading given first; the owner decides before L4.
 
