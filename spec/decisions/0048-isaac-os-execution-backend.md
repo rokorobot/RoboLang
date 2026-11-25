@@ -1,9 +1,11 @@
 # Decision record 0048: NVIDIA Isaac OS as an execution backend (design only)
 
 **Date:** 2026-11-25
-**Status:** **PROPOSED**, for the owner. Design only: no code, no new dependency, nothing here enables physical
+**Status:** **APPROVED by the owner, 2026-11-25**: V1–V10 as recommended, and open points 1–4 as recommended
+(section 7). Proposed the same day. **Nothing is built yet** (V10): the next step is the spike of section 5, after the G1
+acceptance run. Design only: no code, no new dependency, nothing here enables physical
 execution ([0038](0038-physical-mode-authorization-stop-approval.md); strategy H4).
-**Applies to (when decided):** a possible third optional backend package, `robolang-isaac` in `backends/isaac_os/`; one
+**Applies to:** a possible third optional backend package, `robolang-isaac` in `backends/isaac_os/`; one
 new hazard in the [safety case draft](../../docs/safety-case-draft.md); a spike on a rented GPU machine.
 **Builds on:** [0029](0029-physics-simulation-backend.md) (ROS 2 backend) and
 [0046](0046-humanoid-backend-unitree-g1.md) (Unitree G1 backend), unchanged.
@@ -47,7 +49,7 @@ statement below about Isaac OS is read from its documentation or source, not mea
 One coincidence helps: Isaac OS's `unitree_sim` mode uses Unitree MuJoCo on **DDS domain 1**, the simulator family and
 the domain convention 0046 already chose (U2, U3).
 
-## 3. Decisions proposed (recommendation first; owner picks)
+## 3. Decisions (approved as recommended; the alternatives are kept for the record)
 
 | # | Question | Recommended | Alternatives |
 |---|---|---|---|
@@ -104,7 +106,7 @@ alone means walking only, and `grasp` and `place` are refused with S508.
 
 - **A moving target.** One tag, one month old, 0.x, with a packaging change announced for Q1 2027. Pinning the tag
   contains it; it does not remove the upkeep.
-- **New hazard for the safety case (next free number, H28 today):** *the balance controller is a user process; its
+- **New hazard for the safety case, H28:** *the balance controller is a user process; its
   exit, stall or missed deadline drops the robot.* With Unitree's own controller the robot keeps standing if our
   process dies. With Isaac OS it does not. Control: V8, and a check like H18's that the robot is confirmed standing.
 - **No stop procedure from the vendor** (section 2, point 3). A pilot on this stack would need one written by whoever
@@ -125,7 +127,10 @@ alone means walking only, and `grasp` and `place` are refused with S508.
 4. **Contact with NVIDIA.** An issue or discussion upstream (for example on a documented way to feed commands from
    outside a graph) would be public. I recommend **after the spike**, and only by the owner.
 
-An approval can read: "V1–V10 as recommended; open points 1–4 as recommended".
+**Decided by the owner, 2026-11-25:** "V1–V10 and points 1–4 as recommended". So: Isaac OS is one optional backend
+behind ROS 2 topics (1); the spike runs after the G1 acceptance run, two days at most on a rented GPU machine (2);
+"G1 on Isaac OS" is not a G7 candidate for now (3); no contact with NVIDIA before the spike, and then only by the
+owner (4).
 
 ## 8. Sources (read 2026-11-25)
 
