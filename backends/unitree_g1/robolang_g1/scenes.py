@@ -314,7 +314,7 @@ def check_visibility(built: dict) -> list[str]:
     names from the start pose. This adds the range at which a box's marker is read: the centre of an `object_at`
     region is no further ahead of the pelvis than `SEEN_AHEAD_M`; and that the station plates the goal reads (for
     `robot_at`, and for the frame of an `object_at` region) are not hidden, corner by corner, by a table or by a box
-    standing where the goal puts it (run 2: a box placed at the destination hid the dock's plate, `robot_at` unknown)."""
+    standing where the goal puts it (run 2: the dock's plate grazed by a table, `robot_at` unknown)."""
     from robolang import ir
 
     from . import executor, kinematics, perception
