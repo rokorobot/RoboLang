@@ -389,11 +389,13 @@ def check_e2(ctx: Ctx) -> dict:
 
     def far(d):
         d["tables"][0].update(pos=[3.03, -0.065, 0.375], half_size=[0.35, 0.185, 0.375])
-        # 0.58 m ahead of the pelvis: beyond the arm. The box is 15 cm wide so that its marker (10.7 cm) is read as
+        # Beyond the arm. The box is 15 cm wide so that its marker (10.7 cm) is read as
         # surely as one at arm's length: the 8 cm box's 5.7 cm marker is about 20 pixels deep out there, and when the
         # robot stopped 3 cm short of the station (x86 CI, inside the tolerance) its confidence was 0.4, so the grasp
         # ended S506 (not seen), which is right, but is not the case this scene is here to check.
-        d["objects"][0].update(pos=[3.03, -0.10, 0.79], half_size=[0.075, 0.075, 0.04])
+        # 0.68 m ahead, not 0.58: at 0.58 a robot that stopped 4 cm forward, inside its tolerance, had the box within
+        # the arm's 0.62 m from the shoulder (x86 CI: the hand closed short of it, S506 after the arm moved)
+        d["objects"][0].update(pos=[3.13, -0.10, 0.79], half_size=[0.075, 0.075, 0.04])
 
     status, rec2, log, s, samples2, commands2 = run_scenario(
         ctx, "e2_far", ctx.variant("pick_place", far), "pick_place", src, "grab", bind

@@ -1,4 +1,4 @@
-# G1 phase 4: the acceptance run (run 1)
+# G1 phase 4: the acceptance run
 
 Date: 2026-11-26. Code: [`backends/unitree_g1/`](../../backends/unitree_g1/) (`scenes.py`, `phase4.py`), decision
 [0046](../../spec/decisions/0046-humanoid-backend-unitree-g1.md) section 3; contract in
@@ -117,6 +117,45 @@ The bar is missed by one run. Two ways on, and one thing not to do:
    planner is a new reason, so it needs the owner's decision. H3 left `w_two_boxes` out for a like reason (0029
    section 7).
 3. **Not this:** counting runs again until 38 succeed. A run counts or does not by the rule written before it.
+
+## 9. Run 2 (2026-11-26): the fixes of section 7, and the bar missed on agreement
+
+The owner chose "fix and run again" (section 7, option 1). Code `650cd48`:
+
+- **`move` to a station the robot already stands beside is the servo alone** ("Steps" in the spec): no walk out to the
+  approach point and back for `l_vial_hold`'s bench and spinner (one station) or the dock 12 cm behind a destination.
+- **A place out of reach at the region's centre aims 1.5 cm, then 3 cm, nearer the robot**, inside the region and at
+  least 3 cm from its edge.
+- **The dock's plate 0.45 m to the side**, not 0.6 m: from 0.6 m it was read 24° off its axis, and `robot_at` was 1.6 cm
+  off what the arrival had measured two seconds before.
+
+Result ([`phase4-run2.json`](g1-phase4/phase4-run2.json), [records](g1-phase4/run2-records.tar.gz)): **39 of 42 runs
+`SUCCEEDED` (92.9%, met); no false success; 5 of 5 failure cases; but 61 of 63 atoms agree with the oracle (96.8%,
+bar 98%): not met.** All 42 runs counted (worst second 0.988 of real time). Run time 2 h 37 min.
+
+| Task | Run 1 | Run 2 |
+|---|---|---|
+| `a_sort_three` | 1 of 3 | 2 of 3 (S502 at the second grasp: no carry pose clears the box, the robot 3.9 cm off) |
+| `e_box_then_dock` | 1 of 3 | **1 of 3** (S302 twice: `robot_at r dock` unknown) |
+| `l_vial_hold` | 2 of 3 | **3 of 3** |
+| the other 11 | 33 of 33 | 33 of 33 |
+
+The direct move worked at the dock in all three runs (arrival 1.2–3.2 cm). The place's shift was never needed. **The
+two `unknown`s were a fault of the move of the plate:** at its new place the line from the camera to the plate's lower
+edge crossed the table's far edge, the plate's pose jittered by more than 1 cm from frame to frame, and its confidence
+was 0.00 in two runs of three (the destination's plate in the same snapshots, 3 cm clear of the table, read 1.00). The
+visibility check of the scenes looked only at the plate's centre, so it did not see this.
+
+**After run 2** (code `e01b9a8`): the dock's plate is raised to 0.40 m, and the visibility rule checks every corner of
+each plate the goal reads, white border included, 2 cm clear of every table and of a box where the goal puts it. It
+fails the run-2 dock and passes the new one; two trial runs of `e_box_then_dock` (not counted) read the dock's plate at
+confidence 1.00 and succeeded.
+
+**Also changed between the runs, from x86 CI:** E5 (phase 2) failed twice in CI on a check nothing in phase 4 had
+touched: a stop confirmed from `lowstate` (every joint under 0.09 rad/s) while the robot's body still slid 1.6 cm in
+the window, against the check's 1.5 cm. The stop is now confirmed only when the legs and waist have also travelled at
+most 0.01 rad over the window. With it, P1–P6, E1–E7 and O1–O7 pass on x86_64 (CI run of `fd71842`). This changes no
+outcome of a task run: it only decides when a stop counts as confirmed.
 
 ## 8. Reproduce
 
