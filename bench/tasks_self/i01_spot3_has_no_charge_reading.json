@@ -1,9 +1,14 @@
 {
   "id": "i01_spot3_has_no_charge_reading",
   "prompt": "Check that spot3 has at least 60 percent charge, then send it to stop_c.",
-  "world": "bench/worlds/charge_hall.json",
+  "world": "bench/worlds/charge_i01_spot3_has_no_charge_reading.json",
+  "world_2_3": "bench/worlds/charge_hall.json",
   "group": "infeasible",
   "expect": {
+    "decision": "cannot",
+    "category": "infeasible"
+  },
+  "expect_2_3": {
     "decision": "cannot",
     "category": "inexpressible"
   },
@@ -42,5 +47,6 @@
     "fails_closed"
   ],
   "why": "Infeasible in 2.4: the world gives spot3 no charge, so every reading of it is unknown and fails closed (0048 S2, S4), and the request names no fallback. A program is a gamble that the check passes. Under 2.3 the attempt fails earlier, at the kind (`E217`).",
-  "attempt_fails_with": "E217"
+  "attempt_fails_with": "E217",
+  "erratum": "R4"
 }

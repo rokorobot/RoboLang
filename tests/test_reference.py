@@ -1,4 +1,4 @@
-"""The shipped RoboLang 2.3 reference, CLI command, examples, vocabulary and benchmark integration."""
+"""The shipped RoboLang 2.4 reference, CLI command, examples, vocabulary and benchmark integration."""
 
 from __future__ import annotations
 import io
@@ -35,7 +35,7 @@ def test_every_complete_rob_example_compiles():
     assert examples
     for index, source in enumerate(examples, start=1):
         result = compile_source(source, f"language-reference-example-{index}.rob")
-        assert result.ir.language_version == "2.3"
+        assert result.ir.language_version == "2.4"
 
 
 def test_reference_names_every_reserved_word_and_annotation_key():
@@ -55,7 +55,7 @@ def test_every_diagnostic_code_in_the_reference_exists_in_the_implementation():
 
 def test_reference_is_2_3_and_teaches_branching_handlers_missions_and_what_stays_out():
     text = reference()
-    assert text.startswith("# RoboLang 2.3 language reference")
+    assert text.startswith("# RoboLang 2.4 language reference")
     for old in ("robolang 1.3;", "robolang 1.4;", "robolang 1.5;", "robolang 1.6;", "robolang 1.7;", "robolang 1.9;"):
         assert old not in text, old
     for new in ("`if", "`else if", "fail \"", "E216", "E307", "E309", "E313", "S261", "S262",
@@ -99,7 +99,7 @@ def test_reference_teaches_measured_values():
                    "**The value is read when the program runs.**", "Never settle a comparison from a description",
                    "arithmetic (an average", "choosing an object by a reading of each candidate"):
         assert phrase in text, phrase
-    assert "robolang 2.3;" in text and "measure r" in text
+    assert "robolang 2.4;" in text and "measure r" in text
 
 
 def test_reference_teaches_that_a_run_time_condition_is_decided_by_an_if_never_by_the_description():
@@ -110,15 +110,16 @@ def test_reference_teaches_that_a_run_time_condition_is_decided_by_an_if_never_b
         assert phrase in text, phrase
 
 
-def test_the_prompts_are_for_2_3():
+def test_the_prompts_are_for_2_4():
     full, minimal = bench.load_prompt("full"), bench.load_prompt("minimal")
     for prompt in (full, minimal):
-        assert prompt.startswith("You write RoboLang 2.3 programs.") and "RoboLang 2.2 programs" not in prompt
-        assert "RoboLang 2.2 cannot say it" not in prompt and "RoboLang 2.3 cannot say it" in prompt
+        assert prompt.startswith("You write RoboLang 2.4 programs.") and "RoboLang 2.2 programs" not in prompt
+        assert "RoboLang 2.2 cannot say it" not in prompt and "RoboLang 2.4 cannot say it" in prompt
         assert '"mission": "<name of the mission>"' in prompt and "needs no mission, and no decline" in prompt
-    assert "measure" in full and "robolang 2.3;" in full and "robolang 2.2;" not in full and "robolang 1.4;" not in full
-    # 2.3 is a delta over 2.2, 2.1, 2.0, 1.9, 1.8, 1.7, 1.6, 1.5, 1.4 and 1.3: the grammar-only prompt pastes all eleven
-    assert "spec/grammar-v2.3.ebnf" in minimal and "spec/grammar-v2.2.ebnf" in minimal and "The eleven files" in minimal
+    assert "measure" in full and "robolang 2.4;" in full and "robolang 2.2;" not in full and "robolang 1.4;" not in full
+    # 2.4 is a delta over 2.3 and every grammar below it down to 1.3: the grammar-only prompt pastes twelve
+    assert "spec/grammar-v2.4.ebnf" in minimal and "spec/grammar-v2.3.ebnf" in minimal and "The twelve files" in minimal
+    assert "robolang 2.3;" not in full and "robolang 2.3;" not in minimal
     assert '"choose"' in minimal and "E329" in minimal and "E330" in minimal and "MUST END IN fail" in minimal
     assert "choosing by a reading of each candidate" in minimal and "choosing a person" in minimal
     assert "NEVER READS A VALUE" in minimal and "Do not replace a choice" in minimal and "may come first" in minimal
@@ -135,7 +136,7 @@ def test_the_prompts_are_for_2_3():
     assert [f.name for f in bench.GRAMMAR_FILES] == ["grammar-v1.3.ebnf", "grammar-v1.4.ebnf", "grammar-v1.5.ebnf",
                                                      "grammar-v1.6.ebnf", "grammar-v1.7.ebnf", "grammar-v1.8.ebnf",
                                                      "grammar-v1.9.ebnf", "grammar-v2.0.ebnf", "grammar-v2.1.ebnf",
-                                                     "grammar-v2.2.ebnf", "grammar-v2.3.ebnf"]
+                                                     "grammar-v2.2.ebnf", "grammar-v2.3.ebnf", "grammar-v2.4.ebnf"]
     texts = [f.read_text(encoding="utf-8").strip() for f in bench.GRAMMAR_FILES]
     assert all(t in minimal for t in texts)
     assert [minimal.index(t) for t in texts] == sorted(minimal.index(t) for t in texts)
@@ -272,13 +273,62 @@ def test_reference_teaches_choosing_at_run_time_2_3():
                    'never "for some entity"', "`E331`", "`E302`", "**`choose` never reads a value.**",
                    "compare the names in an `if`", "**A choice that uses only world facts may come first**",
                    "can be sent to a robot", "**In a mission, each run chooses afresh.**", "no longer there",
-                   "**`choose` is not a loop:**", "**Not in 2.3**", "by a **reading** of each candidate",
+                   "**`choose` is not a loop:**", "**Not in 2.4**", "by a **reading** of each candidate",
                    "acting on **each** candidate", "detecting objects the world does not list",
                    "**choosing a person**", "several choices that depend on each other",
                    "Do not replace a choice"):
         assert phrase in text, phrase
     for word in ("choose", "from", "where", "nearest", "farthest", "objects", "robots"):
         assert word not in tokens.RESERVED_V2_0  # recognised by position, so a program may still use them as names
+
+
+def test_reference_teaches_the_robots_own_charge_2_4():
+    """0048 (L4): the kind, the live form, charge events, the robot's own protection, G-PREDICT, G-HEALTH, G-TRIGGER and
+    erratum R3 (a world's declared channels limit what the robot receives, never what `communicate` may send)."""
+    text = " ".join(reference().split())
+    assert "## The robot's own charge" in text
+    for phrase in ("**`measure r charge as c;`**", "**no `of ... using ...`**", "any robot of the task",
+                   "**There is no `==`**", "`E320`", "`E319`",
+                   "**The world list shows whether a robot has a charge, never its value**", "`charge unknown`",
+                   "`S239`", "`S012`", "`infeasible`", "`S261`",
+                   "**A charge is sent as a value**", "sends `64 %`",
+                   "**`robot_charge r` is the live reading**", "`E322`",
+                   "**Charging is `do r charge charger;`", "changes no reading", "scheduled charge events",
+                   "a `wait for` of a guessed time", "`S013`", "**In a mission**", "**not a bound**", "**In a choice**",
+                   "where robot_charge t >= 50 %", "**The robot's own low-battery protection always comes first.**",
+                   "never overrides the robot's controller", "**Do not replace a charge check.**", "`robot_ready`",
+                   "**Not in 2.4**", "a self-test and its result", "its faults", "a charge cannot be predicted",
+                   "**arithmetic on a charge**", "**a trigger**", "never what it may send"):
+        assert phrase in text, phrase
+    for word in ("charge", "robot_charge"):
+        assert word not in tokens.RESERVED_V2_0  # recognised by position
+
+
+def test_every_example_of_the_charge_section_shows_only_what_its_request_states_z1():
+    """Lesson Z1 of 2.3: no invented condition, bound or `where` in an example of the section."""
+    section = reference().split("## The robot's own charge")[1].split("## Clock readings")[0]
+    examples = re.findall(r"```rob\n(.*?)```", section, flags=re.DOTALL)
+    assert len(examples) == 2
+    first, second = examples
+    assert first.count("if ") == 1 and "wait" not in first and "robot_ready" not in first
+    assert "where robot_charge t >= 50 %" in second and "robot_ready" not in second and second.count("where") == 1
+
+
+def test_the_world_shown_to_the_model_lists_charge_known_or_unknown_and_the_events_never_a_value_1_9():
+    world = {"world_schema_version": "1.9", "locations": ["a", {"id": "b", "position": [3, 4]}],
+             "robots": {"s1": {"ready": True, "location": "a", "gripper": False,
+                               "charge": {"value": "64", "unit": "%"}},
+                        "s2": {"ready": True, "location": "a", "gripper": False}},
+             "charge_events": [{"at": {"value": "8", "unit": "min"}, "robot": "s2",
+                                "charge": {"value": "70", "unit": "%", "uncertainty": "1"}}]}
+    shown = bench.describe_world(world)
+    assert "s1 (at a, no gripper, ready, can do no declared action, charge known)" in shown
+    assert "s2 (at a, no gripper, ready, can do no declared action, charge unknown)" in shown
+    assert "64" not in shown.replace("scheduled", "")  # the value of a robot's own charge is never shown
+    assert "scheduled: after 8 min, the charge of s2 becomes 70 %" in shown
+    assert "a (no position), b (3, 4)" in shown
+    older = bench.describe_world({**world, "world_schema_version": "1.8", "charge_events": []})
+    assert "charge known" not in older and "charge unknown" not in older
 
 
 def test_the_world_shown_to_the_model_lists_positions_in_a_world_file_1_8():

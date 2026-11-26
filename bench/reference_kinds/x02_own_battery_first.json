@@ -1,0 +1,8 @@
+{
+  "task": "battery_first",
+  "bindings": {
+    "r": "crawler1",
+    "charger": "charging",
+    "pump": "pump_2"
+  }
+}

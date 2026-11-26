@@ -53,8 +53,17 @@ def read(path: Path) -> str:
     return path.read_text(encoding="utf-8")
 
 
+LIFTED = ("expected_charge", "expected_actions", "expected_limits", "expected_readings", "expected_comparisons",
+          "expected_message_waits", "expected_mission", "mission_alternatives", "mission_clock")
+
+
 def label(task: dict) -> dict:
-    return task["expect_2_4"]
+    """The pre-registered 2.4 label: `expect_2_4` and the checks that L4 lifted to the task's own keys."""
+    merged = dict(task["expect_2_4"])
+    merged.update({key: task[key] for key in LIFTED if key in task})
+    if "expected_choices" in task:
+        merged["choices"] = task["expected_choices"]
+    return merged
 
 
 def base_world(task: dict) -> dict:
@@ -216,41 +225,65 @@ def test_the_ids_are_new_ones_and_no_prompt_is_a_copy_of_a_standing_task():
 
 
 def test_one_new_world_file_1_8_and_the_baseline_world_shows_no_charge():
-    used = {Path(t["world"]).name for t in SET.values()}
+    """The 2.3 world (`world_2_3`) shows no charge; the world of the task is a world file 1.9 that holds the notes."""
+    used = {Path(t["world_2_3"] if "world_2_3" in t else t["world"]).name for t in SET.values()}
     assert NEW_WORLDS <= used and len(NEW_WORLDS) <= 3
     for name in NEW_WORLDS:
         assert json.loads(read(REPO / "bench" / "worlds" / name))["world_schema_version"] == "1.8"
-    for task in SET.values():  # the 2.3 world has no charge: it is in `world_2_4` until world file 1.9 (L4)
-        for robot in base_world(task)["robots"].values():
+    for task in SET.values():
+        old = json.loads(read(REPO / task.get("world_2_3", task["world"])))
+        for robot in old["robots"].values():
             assert "charge" not in robot, task["id"]
 
 
-def test_expect_is_the_2_3_label_and_the_2_4_label_is_in_expect_2_4():
+def test_the_world_of_a_charge_task_is_world_file_1_9_with_the_notes_laid_over_the_2_3_world():
     for task_id, task in SET.items():
         if task["group"] == "control":
-            assert task["expect"] == label(task) == {"decision": "program"}
+            assert task["world"] == "bench/worlds/charge_hall.json" and "world_2_3" not in task
+            continue
+        assert task["world"] == f"bench/worlds/charge_{task_id}.json", task_id
+        new, old = base_world(task), json.loads(read(REPO / task["world_2_3"]))
+        assert new["world_schema_version"] == "1.9" and old["world_schema_version"] in ("1.2", "1.3", "1.8")
+        notes = label(task)["world_2_4"]
+        expected = lib._merge(old, {k: v for k, v in notes.items()})
+        expected["world_schema_version"] = "1.9"
+        if not expected.get("charge_events"):
+            expected.pop("charge_events", None)
+        assert new == expected, task_id  # and nothing else changed
+
+
+def test_expect_is_the_2_4_label_and_the_2_3_label_is_in_expect_2_3():
+    for task_id, task in SET.items():
+        if task["group"] == "control":
+            assert task["expect"] == task["expect_2_4"] == {"decision": "program"}
             assert not {"why", "attempt_fails_with", "gap", "blockers"} & set(task)
             assert lib.expectation(task) == ("program", "none")
             continue
-        assert task["expect"] == CANNOT and lib.expectation(task) == ("cannot", "inexpressible"), task_id
+        assert task["expect_2_3"] == CANNOT, task_id  # the baseline label, kept
+        later = label(task)
+        assert task["expect"] == {k: later[k] for k in ("decision", "category") if k in later}, task_id
         assert len(task["why"]) > 40 and task["gap"] in GAPS and task["attempt_fails_with"] in ("E217", "E204")
-        assert not {"expected_goal", "expected_goals", "paths", "expect_2_3", "expect_2_0"} & set(task), task_id
-        assert lib.task_paths(task) is None  # the baseline reads no path: every one of these declines
-        assert lib.mission_label(task) is None
+        assert not {"expected_goal", "expected_goals", "paths", "expect_2_0"} & set(task), task_id
     for task_id, task in PROGRAMS.items():
         later = label(task)
         assert later["decision"] == "program" and later["world_2_4"] and later["expected_charge"], task_id
+        assert lib.expectation(task) == ("program", "none")
         assert len({p["when"] for p in later["paths"]}) == len(later["paths"]) >= 3
         assert task["gap"] == "G-SELF" and ("expected_mission" in later) == (task_id in MISSION_PROGRAMS)
         assert ("goal_free" in task) == (task_id == "p09_wait_for_go_then_look_if_charged")
+        assert lib.task_paths(task) == (None if task_id in MISSION_PROGRAMS else later["paths"]), task_id
+        assert (lib.mission_label(task) is not None) == (task_id in MISSION_PROGRAMS), task_id
     for task_id, task in INFEASIBLE.items():
         later = label(task)
         assert later["decision"] == "cannot" and later["category"] == "infeasible" and later["because"], task_id
+        assert lib.expectation(task) == ("cannot", "infeasible") and task["expect"] == {
+            "decision": "cannot", "category": "infeasible"}
         assert task["blockers"] and task["gap"] == "G-SELF" and "paths" not in later
         assert "otherwise" not in task["prompt"]
     for task_id, task in INEXPRESSIBLE.items():
         later = label(task)
         assert {k: later[k] for k in ("decision", "category")} == CANNOT and later["because"].startswith("0048 S10")
+        assert lib.expectation(task) == ("cannot", "inexpressible")
 
 
 def test_the_programs_cover_what_the_pre_registration_lists():
@@ -262,7 +295,7 @@ def test_the_programs_cover_what_the_pre_registration_lists():
     uses = Counter(c["use"] for t in PROGRAMS.values() for c in label(t)["expected_charge"])
     assert uses == {"if": 6, "report": 1, "wait": 1, "until": 1, "where": 1}
     assert label(PROGRAMS["p08_dock_if_low_around_the_wet_floor"])["expected_limits"] == [["no_go_region", "wet_floor"]]
-    assert SET["p08_dock_if_low_around_the_wet_floor"]["world"].endswith("site_1_3.json")  # honours no_go_region
+    assert SET["p08_dock_if_low_around_the_wet_floor"]["world_2_3"].endswith("site_1_3.json")  # honours no_go_region
     assert label(PROGRAMS["p09_wait_for_go_then_look_if_charged"])["expected_message_waits"][0]["timeout"] == "15 min"
     assert label(PROGRAMS["p09_wait_for_go_then_look_if_charged"])["expected_readings"] == [["spot1", "fill", "bin_1"]]
     mission = label(PROGRAMS["p05_patrol_until_the_battery_is_low"])["expected_mission"]
@@ -505,7 +538,7 @@ def test_references_and_attempts_are_where_they_should_be():
     names = [p.name for p in REF.iterdir()]
     refs = {n.split(".")[0] for n in names if ".attempt" not in n}
     attempts = {n.split(".")[0] for n in names if ".attempt." in n}
-    assert refs == set(CONTROLS) and attempts == set(DECLINED)  # no 2.4 reference yet (L4)
+    assert refs == set(CONTROLS) | set(PROGRAMS) and attempts == set(DECLINED)  # the 2.4 references (L4)
     for name in names:
         assert "\r" not in read(REF / name)  # Windows-safe: LF only, never compared as CRLF
 
@@ -587,10 +620,10 @@ def test_the_attempt_binds_the_entities_the_request_names():
 def test_the_control_reference_is_valid_succeeds_on_every_path_and_reads_no_charge(task_id):
     task = CONTROLS[task_id]
     answer = reference(task_id)
-    assert answer["rob"].count("robolang 2.3;") == 1 and answer["rob"].isascii() and "\r" not in answer["rob"]
+    assert answer["rob"].count("robolang 2.4;") == 1 and answer["rob"].isascii() and "\r" not in answer["rob"]
     assert not re.search(r"measure \w+ charge|robot_charge|\bchoose\b|@charge", answer["rob"])
     checked = lib.check_answer(task, answer)
-    assert checked.valid and checked.language_version == "2.3", checked.report
+    assert checked.valid and checked.language_version == "2.4", checked.report
     judgement = lib.judge(task, checked, answer["bindings"])
     assert judgement.goal_correct and judgement.plan_succeeds, (judgement.state, judgement.failure_code)
     assert not judgement.half_program
@@ -615,21 +648,24 @@ def test_the_controls_are_what_a_model_that_adds_a_charge_reading_gets_wrong():
 
 # -------- the atlas --------
 
-def test_what_2_3_declines_is_in_exactly_one_atlas_gap_and_g_health_is_far_and_open():
+def test_only_what_2_4_still_declines_is_in_an_atlas_gap_g_self_stays_open_and_g_health_is_far_and_open():
+    """L4: the 15 charge programs and infeasible tasks and four standing ones left G-SELF, which stays open until L6."""
     in_gaps = [(t, g["id"]) for g in ATLAS["gaps"] for t in g["tasks"] if t in SET]
-    assert len(in_gaps) == len({t for t, _ in in_gaps}) == len(DECLINED) == 20
-    assert {t for t, _ in in_gaps} == set(DECLINED)  # the controls are in no gap
+    still_out = {**INEXPRESSIBLE}
+    assert len(in_gaps) == len({t for t, _ in in_gaps}) == len(still_out) == 5
+    assert {t for t, _ in in_gaps} == set(still_out)  # programs, infeasible tasks and controls are in no gap
     for task_id, gap in in_gaps:
-        assert DECLINED[task_id]["gap"] == gap and GAPS[gap]["scope"] == "open"
-    assert Counter(gap for _, gap in in_gaps) == {"G-SELF": 15, "G-HEALTH": 2, "G-PREDICT": 2, "G-TRIGGER": 1}
+        assert still_out[task_id]["gap"] == gap and GAPS[gap]["scope"] == "open"
+    assert Counter(gap for _, gap in in_gaps) == {"G-HEALTH": 2, "G-PREDICT": 2, "G-TRIGGER": 1}
+    assert GAPS["G-SELF"]["scope"] == "open" and GAPS["G-SELF"]["tasks"] == []  # closes at L6, holds none of the tasks
+    assert all(DECLINED[t]["gap"] == "G-SELF" for t in {**PROGRAMS, **INFEASIBLE})
     health = GAPS["G-HEALTH"]
     assert health["direction"] == "autonomy" and health["scope"] == "open"
     assert "Far" in health["scope_note"] and "0048" in health["scope_note"]
     assert not [a for a in ATLAS["activities"] if "G-HEALTH" in a["needs"]]  # far: no sub-activity claims it yet
-    assert {"f_self_low_battery", "f_self_enough_for_route", "f_self_report_charge", "x02_own_battery_first"} <= set(
-        GAPS["G-SELF"]["tasks"])
     notes = [h["note"] for h in ATLAS["history"]]
     assert "I8 L3: set 13 self pre-registered (24 tasks)" in notes  # membership: never the last note
+    assert "I8 L4: RoboLang 2.4 built and taught" in notes
 
 
 def test_the_selftest_task_moved_from_g_self_to_g_health_by_erratum_r2():
@@ -653,10 +689,11 @@ def self_run(tmp_path: Path, replies: dict) -> Path:
     return out_dir
 
 
-def test_the_scorer_counts_a_decline_as_right_a_dropped_check_as_a_false_program_and_a_refused_control(tmp_path):
+def test_the_scorer_counts_a_program_as_right_a_decline_of_it_as_wrong_and_a_false_program(tmp_path):
     replies = {
-        "p01_low_battery_then_dock": decline(),                                             # right: 2.3 cannot read it
-        "i01_spot3_has_no_charge_reading": decline("infeasible"),                           # right decision
+        "p01_low_battery_then_dock": reference("p01_low_battery_then_dock"),                 # right: 2.4 is taught
+        "p02_enough_charge_for_the_round": decline(),                                       # wrong: it is a program
+        "i01_spot3_has_no_charge_reading": decline("infeasible"),                           # right
         "x03_minutes_until_empty": attempt_answer("x03_minutes_until_empty", strip=True),   # a false program
         "c03_charge_spot2_at_charger_2": reference("c03_charge_spot2_at_charger_2"),        # right
         "c02_if_spot2_is_ready": decline(),                                                 # a control refused
@@ -665,16 +702,23 @@ def test_the_scorer_counts_a_decline_as_right_a_dropped_check_as_a_false_program
     meta, rows = score.load_rows(out_dir)
     by = {r["task_id"]: r for r in rows}
     assert meta["set"] == "self" and meta["prompt"] == "full"
-    assert by["p01_low_battery_then_dock"]["decision_correct"]
+    right = by["p01_low_battery_then_dock"]
+    assert right["decision_correct"] and right["request_satisfied"] and right["charge_ok"] is True
+    assert right["charge_check_replaced"] is False and right["threshold_or_robot_changed"] is False
+    assert not by["p02_enough_charge_for_the_round"]["decision_correct"]
     unknown = by["i01_spot3_has_no_charge_reading"]
-    assert unknown["decision_correct"] and unknown["category_correct"] is False
+    assert unknown["decision_correct"] and unknown["category_correct"] is True
     silent = by["x03_minutes_until_empty"]
     assert silent["false_program"] and not silent["decision_correct"]
     assert by["c03_charge_spot2_at_charger_2"]["decision_correct"] and by["c02_if_spot2_is_ready"]["false_refusal"]
+    assert by["c03_charge_spot2_at_charger_2"]["charge_added"] is False
     text = score.score_dir(out_dir)
     assert "Task set self, prompt full." in text
-    for kind in ("infeasible", "inexpressible", "control"):
+    for kind in ("self", "infeasible", "inexpressible", "control"):
         assert f"| {kind} |" in text.split("By kind of task:")[1]
+    for line in ("| charge_ok (B1", "| charge_check_replaced_silently (B8", "| threshold_or_robot_changed (B9",
+                 "| no_charge_reading_added (B5", "| charge_check_dropped_where_infeasible (B4"):
+        assert line in text, line
 
 
 def test_the_scorer_of_a_synthetic_run_of_the_whole_set_is_fast_and_small(tmp_path):
@@ -744,3 +788,147 @@ def test_the_readme_the_errata_and_the_plan_name_the_set():
         assert task_id in errata, task_id
     roadmap = read(REPO / "docs" / "LANGUAGE_ROADMAP.md")
     assert "plans/bench-13-self.md" in roadmap
+
+
+# -------- 2.4: the references, and the measures B1, B4, B5, B8, B9 --------
+
+def judged(task_id: str, rob: str, bindings: dict | None = None, ref_id: str | None = None):
+    """Check and judge `rob` as an answer to `task_id`, with the bindings of its reference unless given."""
+    task = SET[task_id]
+    answer = {**reference(ref_id or task_id), "rob": rob}
+    if bindings is not None:
+        answer["bindings"] = bindings
+    checked = lib.check_answer(task, answer, lib.world_bytes(task))
+    assert checked.valid, (task_id, checked.report)
+    return lib.judge(task, checked, answer["bindings"])
+
+
+@pytest.mark.parametrize("task_id", sorted(PROGRAMS))
+def test_the_2_4_reference_is_valid_and_ends_as_labelled_on_every_path(task_id):
+    task = PROGRAMS[task_id]
+    answer = reference(task_id)
+    assert answer["rob"].startswith(f"// bench/reference_self/{task_id}.rob: hand-written reference (RoboLang 2.4)")
+    assert answer["rob"].count("robolang 2.4;") == 1 and answer["rob"].isascii() and "\r" not in answer["rob"]
+    judgement = judged(task_id, answer["rob"])
+    assert judgement.goal_correct and judgement.plan_succeeds and all(judgement.checks.values()), task_id
+    assert judgement.charge_ok is True and judgement.charge_check_replaced is False
+    assert judgement.threshold_or_robot_changed is False and not judgement.half_program
+    paths = judgement.paths
+    assert paths and all(p["goal_ok"] and p["plan_ok"] for p in paths), [p for p in paths if not p["plan_ok"]]
+    expected = label(task)["paths"]
+    assert len(paths) == len(expected) >= 3
+    assert judgement.checks["charge"] is True and "charge" in task["tags"]
+
+
+def p01(*, check="c < 25 %", other_robot=False, dock_goal=True):
+    rob = read(REF / "p01_low_battery_then_dock.rob")
+    return rob.replace("c < 25 %", check)
+
+
+def test_a_dropped_check_robot_ready_or_a_changed_threshold_operator_or_robot_is_not_the_request_b8_b9():
+    ref = read(REF / "p01_low_battery_then_dock.rob")
+    right = judged("p01_low_battery_then_dock", ref)
+    assert right.charge_ok and not right.charge_check_replaced and not right.threshold_or_robot_changed
+    swapped = ref.replace("c < 25 %", "c >= 25 %").replace("dock_or_go_on", "dock_or_go_on")
+    body = swapped.split("if c >= 25 % {")[1]
+    # the other way round with the branches swapped is the same request (the test modulo its complement)
+    flipped = ref.replace("""        if c < 25 % {
+            goal { robot_at r dock; }
+            move r to dock;
+            communicate r to "lead" with "spot1 is docked";
+        } else {
+            goal { robot_at r next; }
+            move r to next;
+        }""", """        if c >= 25 % {
+            goal { robot_at r next; }
+            move r to next;
+        } else {
+            goal { robot_at r dock; }
+            move r to dock;
+            communicate r to "lead" with "spot1 is docked";
+        }""")
+    assert body and flipped != ref
+    same = judged("p01_low_battery_then_dock", flipped)
+    assert same.charge_ok and same.goal_correct and not same.threshold_or_robot_changed
+    # B9: another threshold, another operator (the exact threshold path), another robot
+    for check in ("c < 30 %", "c <= 25 %"):
+        other = judged("p01_low_battery_then_dock", ref.replace("c < 25 %", check))
+        assert other.threshold_or_robot_changed and not other.charge_ok and not other.charge_check_replaced, check
+    assert not judged("p01_low_battery_then_dock", ref.replace("c < 25 %", "c <= 25 %")).goal_correct
+    decoy = ref.replace("task dock_or_go_on(robot r,", "task dock_or_go_on(robot r, robot d,").replace(
+        "measure r charge as c;", "measure d charge as c;")
+    bound = {"r": "spot1", "d": "cleaner1", "dock": "dock_2", "next": "stop_c"}
+    wrong_robot = judged("p01_low_battery_then_dock", decoy, bound)
+    assert wrong_robot.threshold_or_robot_changed and not wrong_robot.charge_ok and not wrong_robot.goal_correct
+    # B8: the check dropped, `robot_ready` in its place: valid, SUCCEEDED, and not the request
+    ready = ref.replace("measure r charge as c;\n", "").replace("if c < 25 % {", "if robot_ready r {")
+    stand_in = judged("p01_low_battery_then_dock", ready)
+    assert stand_in.plan_succeeds is False or not stand_in.goal_correct
+    assert stand_in.charge_check_replaced is True and stand_in.threshold_or_robot_changed is False
+    assert stand_in.state == "SUCCEEDED" and not stand_in.charge_ok
+
+
+def test_a_guessed_wait_for_is_the_charge_check_replaced_and_a_second_wait_is_not_the_request_b8_b9():
+    ref = read(REF / "p04_charge_until_eighty.rob")
+    wait = 'wait until robot_charge r >= 80 % timeout 40 min else { fail "the battery is not at 80 percent in time"; }'
+    guessed = ref.replace(wait, "wait for 20 min;")
+    replaced = judged("p04_charge_until_eighty", guessed)
+    assert replaced.charge_check_replaced is True and not replaced.charge_ok
+    assert replaced.threshold_or_robot_changed is False
+    other = judged("p04_charge_until_eighty", ref.replace("timeout 40 min", "timeout 30 min"))
+    assert other.threshold_or_robot_changed and not other.charge_ok  # another timeout is another request
+    strict = judged("p04_charge_until_eighty", ref.replace(">= 80 %", "> 80 %"))
+    assert strict.threshold_or_robot_changed and not strict.goal_correct  # the exact-threshold path times out
+
+
+def test_a_mission_until_the_bound_and_a_stop_rule_are_the_requests_b9():
+    ref = read(REF / "p05_patrol_until_the_battery_is_low.rob")
+    base = judged("p05_patrol_until_the_battery_is_low", ref)
+    assert base.charge_ok and base.mission_ok and not base.threshold_or_robot_changed
+    longer = judged("p05_patrol_until_the_battery_is_low", ref.replace("at most 6 runs", "at most 8 runs"))
+    assert longer.threshold_or_robot_changed and not longer.mission_ok
+    no_until = judged("p05_patrol_until_the_battery_is_low", ref.replace(" until robot_charge r < 30 %", ""))
+    assert no_until.charge_ok is False and no_until.charge_check_replaced is True  # the stop rule is dropped
+    keep_going = judged("p05_patrol_until_the_battery_is_low",
+                        ref.replace("on failure { stop; }", "on failure { continue; }"))
+    assert keep_going.threshold_or_robot_changed
+    run_line = "        run round(r, far, home);\n"
+    two = ref.replace(run_line, run_line * 2)
+    assert judged("p05_patrol_until_the_battery_is_low", two).charge_ok  # the second shape: more runs are alternatives
+
+
+def test_a_report_must_send_the_reading_not_a_text_b1():
+    ref = read(REF / "p03_tell_the_lead_the_charge.rob")
+    literal = ref.replace("with c;", 'with "64 %";')
+    judgement = judged("p03_tell_the_lead_the_charge", literal)
+    assert judgement.state == "SUCCEEDED" and not judgement.plan_succeeds  # `9 %` is told on another path
+    assert judgement.charge_ok is False and judgement.charge_check_replaced is True
+
+
+def test_a_control_with_a_charge_reading_is_charge_added_b5_and_an_infeasible_request_that_succeeds_is_b4():
+    control = SET["c02_if_spot2_is_ready"]
+    answer = reference("c02_if_spot2_is_ready")
+    checked = lib.check_answer(control, answer, lib.world_bytes(control))
+    assert lib.judge(control, checked, answer["bindings"]).charge_added is False
+    rob = answer["rob"].replace("if robot_ready r {", "measure r charge as c;\n        if robot_ready r {")
+    assert lib.check_answer(control, {**answer, "rob": rob}, lib.world_bytes(control)).codes == ("S012",)
+    world = json.loads(lib.world_bytes(control))  # the world of a model that was shown a charge it may read
+    world["world_schema_version"] = "1.9"
+    world["robots"]["spot2"]["charge"] = {"value": "64", "unit": "%"}
+    added = lib.check_answer(control, {**answer, "rob": rob}, json.dumps(world).encode())
+    assert added.valid, added.report
+    assert lib.judge(control, added, answer["bindings"]).charge_added is True
+    # B4: spot3 has no charge in the world of i01. Reading it fails the run; a program that ignores the check succeeds
+    task = SET["i01_spot3_has_no_charge_reading"]
+    rob = ("robolang 2.4;\ntask send(robot r, location dest) {\n    goal { robot_at r dest; }\n"
+           "    plan {\n        %smove r to dest;\n    }\n}\n")
+    bindings = {"r": "spot3", "dest": "stop_c"}
+    checked_body = 'measure r charge as c;\n        if c < 60 % { fail "low"; }\n        '
+    for body, replaced in ((checked_body, False), ("", True)):
+        reply = {"decision": "program", "category": "none", "reason": "-", "entities": [], "rob": rob % body,
+                 "task": "send", "bindings": bindings}
+        verdict = lib.check_answer(task, reply, lib.world_bytes(task))
+        if verdict.valid:
+            assert lib.judge(task, verdict, bindings).charge_check_replaced is replaced
+        else:
+            assert not replaced and verdict.codes[0] == "S012"  # found before the run: never succeeds

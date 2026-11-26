@@ -1,9 +1,13 @@
 {
   "id": "p03_tell_the_lead_the_charge",
   "prompt": "With spot1, go to dock_3 and tell channel \"lead\" how much charge you have left.",
-  "world": "bench/worlds/site.json",
+  "world": "bench/worlds/charge_p03_tell_the_lead_the_charge.json",
+  "world_2_3": "bench/worlds/site.json",
   "group": "self",
   "expect": {
+    "decision": "program"
+  },
+  "expect_2_3": {
     "decision": "cannot",
     "category": "inexpressible"
   },
@@ -28,13 +32,6 @@
       },
       "charge_events": []
     },
-    "expected_charge": [
-      {
-        "use": "report",
-        "robot": "spot1",
-        "decoy": "cleaner1"
-      }
-    ],
     "paths": [
       {
         "when": "spot1 has 64 % (+-1): the lead is told `64 %`, value and unit (S5); cleaner1 has 31 %",
@@ -125,6 +122,13 @@
       }
     ]
   },
+  "expected_charge": [
+    {
+      "use": "report",
+      "robot": "spot1",
+      "decoy": "cleaner1"
+    }
+  ],
   "gap": "G-SELF",
   "tags": [
     "charge",
@@ -135,5 +139,6 @@
     "unknown_fails_closed"
   ],
   "why": "A `charge` binding sent in a message (0048 S5): `communicate r to \"lead\" with c;` sends `64 %` with its unit. A literal text, no report, or another robot's charge is a different request. 2.3 has no such kind (`E217`).",
-  "attempt_fails_with": "E217"
+  "attempt_fails_with": "E217",
+  "erratum": "R4"
 }

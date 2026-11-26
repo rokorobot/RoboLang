@@ -8,6 +8,11 @@ approved. Where 0048 does not decide what a label needs, the label states the re
 below: an owner answer that differs changes the labels named there.** The acceptance bounds are placeholders, to be fixed with the baseline
 in hand (rule 6, [STRATEGY.md](../STRATEGY.md); LE-11). No language, spec, validator or simulator change: that is L4.
 
+**L4 (2026-11-26):** 2.4 is built and taught. `expect` is now the 2.4 label and `expect_2_3` the label the baseline scored; the checks are task
+keys; each non-control task has a world file 1.9 copy (`worlds/charge_<id>.json`) and each program a reference in `reference_self/`; the scorer judges
+`charge_ok`, `charge_check_replaced`, `threshold_or_robot_changed` and `charge_added`. See errata R4 to R9 of
+[bench-errata-2-4.md](../evidence/bench-errata-2-4.md). The sections below describe the pre-registration (L3), as written then.
+
 ## How the set is used
 
 - **Labels.** `expect` is the **2.3** label and is what the baseline scores: every non-control task expects `cannot / inexpressible`,

@@ -1653,5 +1653,5 @@ Earlier sources write their records unchanged, byte for byte.
 `choose ... where robot_charge t >= 50 %` is allowed: a candidate whose charge is unknown, or whose interval holds the threshold, is
 excluded (`where_unknown`); the charge is the fleet manager's world fact, not a reading of an object (point 5). `export-goal` is
 unaffected: a goal holds no binding. `delegate` refuses a task that reads the charge, as it refuses any `measure`
-(`measure_unsupported`), and the ROS 2 / Gazebo and G1 backends refuse it with `S509` before any motion. The robot's own low-battery
+(`measure_unsupported`), and the ROS 2 / Gazebo backend refuses it with `S509` before any motion (the G1 backend, which has no value sensors, refuses it with `S508`). The robot's own low-battery
 protection always takes precedence: RoboLang asks, it never overrides the controller (S9).

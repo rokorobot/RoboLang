@@ -1,9 +1,13 @@
 {
   "id": "p09_wait_for_go_then_look_if_charged",
   "prompt": "With spot1, wait up to 15 minutes for channel \"ops\" to send \"GO\". Then, if your battery is at least 40 percent, read how full bin_1 is with cam_s1 and, if it is over 70 percent, tell channel \"lead\" \"empty bin_1\". If your battery is lower, tell channel \"lead\" \"battery low\" and stop the job as failed. If GO does not come in time, stop the job as failed.",
-  "world": "bench/worlds/charge_hall.json",
+  "world": "bench/worlds/charge_p09_wait_for_go_then_look_if_charged.json",
+  "world_2_3": "bench/worlds/charge_hall.json",
   "group": "self",
   "expect": {
+    "decision": "program"
+  },
+  "expect_2_3": {
     "decision": "cannot",
     "category": "inexpressible"
   },
@@ -28,39 +32,6 @@
       },
       "charge_events": []
     },
-    "expected_charge": [
-      {
-        "use": "if",
-        "robot": "spot1",
-        "op": ">=",
-        "value": "40",
-        "unit": "%",
-        "decoy": "spot2"
-      }
-    ],
-    "expected_readings": [
-      [
-        "spot1",
-        "fill",
-        "bin_1"
-      ]
-    ],
-    "expected_comparisons": [
-      {
-        "kind": "fill",
-        "op": ">",
-        "value": "70",
-        "unit": "%"
-      }
-    ],
-    "expected_message_waits": [
-      {
-        "use": "wait",
-        "channel": "ops",
-        "text": "GO",
-        "timeout": "15 min"
-      }
-    ],
     "paths": [
       {
         "when": "GO at 300 s, spot1 has 70 %, bin_1 is 85 % full: the lead is told",
@@ -287,6 +258,39 @@
       }
     ]
   },
+  "expected_charge": [
+    {
+      "use": "if",
+      "robot": "spot1",
+      "op": ">=",
+      "value": "40",
+      "unit": "%",
+      "decoy": "spot2"
+    }
+  ],
+  "expected_readings": [
+    [
+      "spot1",
+      "fill",
+      "bin_1"
+    ]
+  ],
+  "expected_comparisons": [
+    {
+      "kind": "fill",
+      "op": ">",
+      "value": "70",
+      "unit": "%"
+    }
+  ],
+  "expected_message_waits": [
+    {
+      "use": "wait",
+      "channel": "ops",
+      "text": "GO",
+      "timeout": "15 min"
+    }
+  ],
   "goal_free": true,
   "attempt_world_patch": {
     "messages": [
@@ -316,5 +320,6 @@
     "else_message"
   ],
   "why": "A charge check between a 2.1 message wait and a 2.2 `fill` reading: all three must stay. The request names no end state, so the program is goal-free. 2.3 has no such kind (`E217`); without the charge lines the program keeps the wait and the reading.",
-  "attempt_fails_with": "E217"
+  "attempt_fails_with": "E217",
+  "erratum": "R4"
 }

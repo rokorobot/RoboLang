@@ -1,0 +1,16 @@
+// bench/reference_future/f_self_low_battery.rob: hand-written reference (RoboLang 2.4)
+robolang 2.4;
+
+task check_battery(robot r, location dock, location next) {
+    plan {
+        measure r charge as c;
+        if c < 25 % {
+            goal { robot_at r dock; }
+            move r to dock;
+            communicate r to "lead" with "battery low";
+        } else {
+            goal { robot_at r next; }
+            move r to next;
+        }
+    }
+}

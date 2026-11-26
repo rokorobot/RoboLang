@@ -1,0 +1,10 @@
+// bench/reference_self/p06_the_peer_with_enough_charge.rob: hand-written reference (RoboLang 2.4)
+robolang 2.4;
+
+task send_charged(robot a, robot b, location dest) {
+    goal { robot_at who dest; }
+    plan {
+        choose robot who from (a, b) where robot_charge who >= 50 % else { fail "no robot has enough charge"; }
+        move who to dest;
+    }
+}

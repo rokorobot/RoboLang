@@ -1,9 +1,9 @@
 # RoboLang 2.4: the robot's own state
 
 **Status:** front end, Task IR 1.12 (Mission IR 1.4 for a file with a mission), world file 1.9, the simulation (run record 1.12, mission
-record 1.4), `delegate`, the backends' refusals and the IR reader complete in code. **Not taught yet:** the language reference and the
-benchmark prompts still teach 2.3 (L4, second commit); the acceptance run on benchmark set 13 is the step after (L5), and until it passes
-the bounds B1 to B9 2.4 is not accepted.
+record 1.4), `delegate`, the backends' refusals and the IR reader complete in code. The language reference and the benchmark prompts teach
+2.4 (L4 of decision 0048); the acceptance run on benchmark set 13 is the next step (L5), and until it passes the bounds B1 to B9 2.4 is
+not accepted.
 Decision: [0048](decisions/0048-the-robots-own-state.md) (S1 to S11, and the clarifications approved 2026-11-25).
 Grammar: [grammar-v2.4.ebnf](grammar-v2.4.ebnf). IR: [Task IR 1.12](ir-schema-v1.12.md) and [Mission IR 1.4](mission-ir-v1.0.md).
 Simulation: [section 22](simulation-v1.0.md). Everything not stated here is exactly as in [RoboLang 2.3](robolang-v2.3.md).
@@ -140,8 +140,8 @@ tasks ([mission-ir-v1.0.md](mission-ir-v1.0.md)). The reader re-validates both i
 ## 10. Backends and delegation (S8)
 
 `export-goal` is unaffected: a goal never holds a binding (0036). **`delegate` refuses a task that reads the charge**
-(`measure_unsupported`, as for any `measure`), and the **ROS 2 / Gazebo backend** (and the G1 backend) **refuses it with `S509`** before
-any motion: no battery topic is defined in their profiles yet. Mapping the charge to `sensor_msgs/BatteryState` belongs with the
+(`measure_unsupported`, as for any `measure`), and the **ROS 2 / Gazebo backend refuses it with `S509`** before any motion: no battery topic
+is defined in its profile yet. The G1 backend refuses the step and the live form with `S508` (a step kind it does not know), before any command. Mapping the charge to `sensor_msgs/BatteryState` belongs with the
 backend's own step.
 
 ## 11. Safety (S9)
@@ -171,7 +171,8 @@ battery. In physical mode the charge comes from the fleet manager, not from a fi
 | `S013` | authorization | A `wait until robot_charge` that no charge the world gives can meet, with no fallback |
 | `S239` | run | A charge reading of a robot with no charge in the world: unknown, fails closed |
 | `S402` | mission | (existing) an `until` on the charge is unknown |
-| `S509` | ROS 2 / G1 backend | (existing) the charge is refused before any motion |
+| `S509` | ROS 2 backend | (existing) the charge is refused before any motion |
+| `S508` | G1 backend | (existing) the charge step and the live form are refused as a step kind and a condition it does not know |
 
 In the IR reader the forms are `I114` and `I115` (a charge operand or step in an older schema), `I125`, `I203`, `I204`, `I220`, `I221` and
 `I231` (the narrowed `E330`). `E213` lists `1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0, 2.1, 2.2, 2.3 and 2.4`.

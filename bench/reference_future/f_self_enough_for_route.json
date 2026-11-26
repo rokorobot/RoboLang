@@ -1,0 +1,8 @@
+{
+  "task": "check_then_dock",
+  "bindings": {
+    "r": "spot1",
+    "dock": "dock_1",
+    "here": "stop_a"
+  }
+}

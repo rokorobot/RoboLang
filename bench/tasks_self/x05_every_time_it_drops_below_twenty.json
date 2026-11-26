@@ -1,9 +1,14 @@
 {
   "id": "x05_every_time_it_drops_below_twenty",
   "prompt": "With spot1, patrol between stop_a and stop_b for 3 hours, 20 minutes at stop_b each round. The moment your battery drops below 20 percent, even in the middle of a round, go to charger_1 and charge, then carry on patrolling.",
-  "world": "bench/worlds/charge_hall.json",
+  "world": "bench/worlds/charge_x05_every_time_it_drops_below_twenty.json",
+  "world_2_3": "bench/worlds/charge_hall.json",
   "group": "inexpressible",
   "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_3": {
     "decision": "cannot",
     "category": "inexpressible"
   },
@@ -39,5 +44,6 @@
     "charge"
   ],
   "why": "A self-state trigger (0048 S10, 0041 M6, G-TRIGGER): the charge is to be acted on at the moment it drops, even inside a round. A check at the start of each run only sees it at the next run, which is a different request. Under 2.3 the attempt fails at the kind (`E217`).",
-  "attempt_fails_with": "E217"
+  "attempt_fails_with": "E217",
+  "erratum": "R4"
 }

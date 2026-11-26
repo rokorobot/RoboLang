@@ -1,0 +1,8 @@
+{
+  "task": "check_battery",
+  "bindings": {
+    "r": "spot1",
+    "dock": "dock_1",
+    "next": "stop_c"
+  }
+}

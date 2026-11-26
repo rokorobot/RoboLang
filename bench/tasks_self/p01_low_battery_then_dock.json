@@ -1,9 +1,13 @@
 {
   "id": "p01_low_battery_then_dock",
   "prompt": "With spot1, if your battery is below 25 percent, go to dock_2 and tell channel \"lead\" \"spot1 is docked\"; otherwise go on to stop_c.",
-  "world": "bench/worlds/site.json",
+  "world": "bench/worlds/charge_p01_low_battery_then_dock.json",
+  "world_2_3": "bench/worlds/site.json",
   "group": "self",
   "expect": {
+    "decision": "program"
+  },
+  "expect_2_3": {
     "decision": "cannot",
     "category": "inexpressible"
   },
@@ -28,16 +32,6 @@
       },
       "charge_events": []
     },
-    "expected_charge": [
-      {
-        "use": "if",
-        "robot": "spot1",
-        "op": "<",
-        "value": "25",
-        "unit": "%",
-        "decoy": "cleaner1"
-      }
-    ],
     "paths": [
       {
         "when": "spot1 has 18 % (+-1), below 25 %: it docks and the lead is told; cleaner1 has 90 %",
@@ -160,6 +154,16 @@
       }
     ]
   },
+  "expected_charge": [
+    {
+      "use": "if",
+      "robot": "spot1",
+      "op": "<",
+      "value": "25",
+      "unit": "%",
+      "decoy": "cleaner1"
+    }
+  ],
   "gap": "G-SELF",
   "tags": [
     "charge",
@@ -171,5 +175,6 @@
     "message"
   ],
   "why": "The robot's own charge (0048 S1, S2): `measure r charge as c;` and `c < 25 %`. A dropped check, `robot_ready` as a stand-in, another threshold or operator, or another robot's charge is a different request; the paths tell them apart. 2.3 has no such kind (`E217`).",
-  "attempt_fails_with": "E217"
+  "attempt_fails_with": "E217",
+  "erratum": "R4"
 }

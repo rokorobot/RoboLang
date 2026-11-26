@@ -1,0 +1,15 @@
+// bench/reference_future/f_self_enough_for_route.rob: hand-written reference (RoboLang 2.4)
+robolang 2.4;
+
+task check_then_dock(robot r, location dock, location here) {
+    plan {
+        measure r charge as c;
+        if c < 60 % {
+            goal { robot_at r dock; }
+            move r to dock;
+        } else {
+            goal { robot_at r here; }
+            move r to here;
+        }
+    }
+}

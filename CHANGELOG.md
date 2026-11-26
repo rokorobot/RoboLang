@@ -20,10 +20,17 @@ the acceptance run on benchmark set 13 is the next step (L5) and 2.4 is not acce
   events (no drain, no charging model; `do r charge charger` changes no reading). Task IR 1.12 (`read_charge`, the `charge` operand)
   and Mission IR 1.4, run record 1.12 and mission record 1.4. New codes `S239` (a charge reading of a robot with no charge), `S012`
   (a charge that is never known, no fallback) and `S013` (a wait no charge can meet, no fallback), both found before the run and in
-  `validate --world`. `delegate` refuses a task that reads the charge, and the ROS 2 and G1 backends refuse it (`S509`);
+  `validate --world`. `delegate` refuses a task that reads the charge, the ROS 2 backend refuses it (`S509`) and the G1 backend with its general `S508`;
   `export-goal` is unaffected. Safety case hazard H28 (a wrong or stale charge reading lets a robot go on with a low battery): the
   robot's own low-battery protection always takes precedence. `robolang --version` shows language 2.4, IR 1.12, mission IR 1.4.
-  Files of 1.1 to 2.3 are unchanged. Not taught yet.
+  Files of 1.1 to 2.3 are unchanged. Taught: the language reference (and the packaged copy) has a section "The robot's own charge", both
+  benchmark prompts teach 2.4 (the grammar-only prompt pastes `grammar-v2.4.ebnf` as the twelfth file), and a world file 1.9 is shown to
+  the model with each robot's charge as `known` or `unknown`, never the value, and its scheduled charge events; erratum R3 (a world's
+  declared channels limit what the robot receives, never what `communicate` may send) is in the reference. Benchmark set 13 "self" is
+  labelled for 2.4 (`expect_2_3` keeps the baseline label; 20 world file 1.9 copies, a 2.4 reference for each of its 10 programs), the
+  three R3 probes `f_self_*` and `x02_own_battery_first` are programs now, and the scorer judges `charge_ok`,
+  `charge_check_replaced_silently`, `threshold_or_robot_changed` and `no_charge_reading_added` (errata R4 to R9). `robolang reference`
+  prints the 2.4 reference.
 
 ## 0.10.0 (2026-11-24)
 

@@ -112,6 +112,17 @@ stop
 rule the request did not state. `choose_added` (0045 B5): a `choose` on a control; a control is right with the right
 decision
 and none (`no_choose_added`).
+`charge_ok` (decision 0048 B1, tasks with `expected_charge`): the valid answer does exactly what the request asks
+with the robot's own charge: the checks of the robot, operator and threshold asked (an `if` may be written the other
+way round with its branches swapped; a live wait and a mission `until` may not), the wait with its timeout, a charge
+sent as a value, a `where` of a choice; none more and none fewer. It is one of the task's checks (`charge`), so
+`request_satisfied` needs it. `charge_check_replaced` (0048 B8, and B4 for the infeasible requests): a valid program
+whose run ends well that drops an asked charge check, puts `robot_ready` or nothing in its place, or guesses a `wait
+for`; for an infeasible request, any valid program that ends well. Counted over every answer to the charge programs
+(B8) and, as its own line, to the infeasible requests (B4), per model, like `message_wait_replaced`.
+`threshold_or_robot_changed` (0048 B9): another threshold, operator, robot (the decoy's) or timeout, or a charge
+condition, bound or stop rule the request did not state. `charge_added` (0048 B5): a charge reading on a control; a
+control is right with the right decision and none (`no_charge_reading_added`).
 `unsafe_continue` (decision 0035 E5, any set): with every region the answer waits for kept blocked, the run still
 ends SUCCEEDED, so a handler let the plan go on after the wait timed out. Counted over valid answers that wait for a
 region, unless the task sets `continue_ok`. Set 4 paths also check `tries`, `end_ms` and `final` placements.
@@ -287,7 +298,18 @@ def evaluate_record(task_def: dict, record: dict) -> dict:
         "criterion_changed": (bool(judgement and judgement.criterion_changed)
                               if "expected_choices" in task_def and expect == "program" else None),
         "choose_added": (bool(judgement and judgement.choose_added)
-                         if task_def.get("group") == "control" and "expect_2_3" in task_def else None),
+                         if task_def.get("group") == "control" and "expect_2_3" in task_def
+                         and "expect_2_4" not in task_def else None),
+        # decision 0048 (B1, B4, B5, B8, B9): tasks with `expected_charge`, the infeasible requests, set 13's controls
+        "charge_ok": (bool(judgement and judgement.charge_ok)
+                      if "expected_charge" in task_def and expect == "program" else None),
+        "charge_check_replaced": (bool(judgement and judgement.charge_check_replaced)
+                                  if "expected_charge" in task_def
+                                  or (task_def.get("group") == "infeasible" and "expect_2_4" in task_def) else None),
+        "threshold_or_robot_changed": (bool(judgement and judgement.threshold_or_robot_changed)
+                                       if "expected_charge" in task_def and expect == "program" else None),
+        "charge_added": (bool(judgement and judgement.charge_added)
+                         if task_def.get("group") == "control" and "expect_2_4" in task_def else None),
         "state": judgement.state if judgement else None, "failure_code": judgement.failure_code if judgement else None,
         "codes": codes, "tokens": tokens, "usd": None if None in costs else sum(costs),
         # the decision (set 2; set 1 answers are programs and its tasks expect programs)
@@ -372,6 +394,12 @@ def _rates_table(rows: list[dict]) -> list[str]:
     fixed_infeasible = [r for r in rows if r.get("choice_replaced") is not None and r["kind"] == "infeasible"]
     shifted = [r for r in rows if r.get("criterion_changed") is not None]
     plain_choice = [r for r in rows if r.get("choose_added") is not None]
+    charged = [r for r in rows if r.get("charge_ok") is not None]
+    uncharged = [r for r in rows if r.get("charge_check_replaced") is not None and r["kind"] == "self"]
+    uncharged_infeasible = [r for r in rows if r.get("charge_check_replaced") is not None
+                            and r["kind"] == "infeasible"]
+    shifted_charge = [r for r in rows if r.get("threshold_or_robot_changed") is not None]
+    plain_charge = [r for r in rows if r.get("charge_added") is not None]
     rows = _programs(rows)
     lines = ["| measure | answers | rate |", "|---|---:|---:|"]
     for name in MEASURES:
@@ -504,6 +532,29 @@ def _rates_table(rows: list[dict]) -> list[str]:
         k = sum(r["decision_correct"] and not r["choose_added"] for r in plain_choice)
         lines.append(f"| no_choose_added (B5: a control with the right decision and no `choose`) "
                      f"| {k}/{len(plain_choice)} | {_share(k, len(plain_choice))} |")
+    if charged:
+        k = sum(r["charge_ok"] for r in charged)
+        lines.append(f"| charge_ok (B1: exactly the charge checks and waits asked, each of the robot, operator, "
+                     f"threshold and timeout the request states; all answers to the charge programs) "
+                     f"| {k}/{len(charged)} | {_share(k, len(charged))} |")
+    if uncharged:
+        k = sum(r["charge_check_replaced"] for r in uncharged)
+        lines.append(f"| charge_check_replaced_silently (B8: valid, SUCCEEDED, an asked charge check dropped, "
+                     f"`robot_ready` in its place or a guessed `wait for`; all answers to the charge programs) "
+                     f"| {k}/{len(uncharged)} | {_share(k, len(uncharged))} |")
+    if uncharged_infeasible:
+        k = sum(r["charge_check_replaced"] for r in uncharged_infeasible)
+        lines.append(f"| charge_check_dropped_where_infeasible (B4: valid, SUCCEEDED; all answers to the infeasible "
+                     f"requests) | {k}/{len(uncharged_infeasible)} | {_share(k, len(uncharged_infeasible))} |")
+    if shifted_charge:
+        k = sum(r["threshold_or_robot_changed"] for r in shifted_charge)
+        lines.append(f"| threshold_or_robot_changed (B9: another threshold, operator, robot or timeout, a condition, "
+                     f"bound or stop rule not stated; all answers to the charge programs) "
+                     f"| {k}/{len(shifted_charge)} | {_share(k, len(shifted_charge))} |")
+    if plain_charge:
+        k = sum(r["decision_correct"] and not r["charge_added"] for r in plain_charge)
+        lines.append(f"| no_charge_reading_added (B5: a control with the right decision and no charge reading) "
+                     f"| {k}/{len(plain_charge)} | {_share(k, len(plain_charge))} |")
     branching = [r for r in rows if r.get("has_paths")]
     if branching:
         k = sum(r["half_program"] for r in branching)

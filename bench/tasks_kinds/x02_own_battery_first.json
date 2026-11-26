@@ -1,12 +1,135 @@
 {
   "id": "x02_own_battery_first",
   "prompt": "With crawler1, if its own battery is below 20 percent, drive to charging first; then drive to pump_2.",
-  "world": "bench/worlds/plant_room.json",
-  "group": "inexpressible",
+  "world": "bench/worlds/charge_x02_own_battery_first.json",
+  "world_2_3": "bench/worlds/plant_room.json",
+  "group": "self",
   "expect": {
+    "decision": "program"
+  },
+  "expect_2_3": {
     "decision": "cannot",
     "category": "inexpressible"
   },
+  "expect_2_4": {
+    "decision": "program",
+    "world_2_4": {
+      "robots": {
+        "crawler1": {
+          "charge": {
+            "value": "64",
+            "unit": "%",
+            "uncertainty": "1"
+          }
+        }
+      }
+    },
+    "paths": [
+      {
+        "when": "crawler1 has 12 % (+-1), below 20 %: it drives to charging first, then to pump_2",
+        "world_patch": {
+          "robots": {
+            "crawler1": {
+              "charge": {
+                "value": "12",
+                "unit": "%",
+                "uncertainty": "1"
+              }
+            }
+          }
+        },
+        "goal": [
+          [
+            "rl:robot:crawler1",
+            "located_in",
+            "rl:place:pump_2"
+          ]
+        ],
+        "messages": [],
+        "tries": [
+          "move",
+          2
+        ]
+      },
+      {
+        "when": "crawler1 has 64 % (+-1): it drives to pump_2 only",
+        "world_patch": {
+          "robots": {
+            "crawler1": {
+              "charge": {
+                "value": "64",
+                "unit": "%",
+                "uncertainty": "1"
+              }
+            }
+          }
+        },
+        "goal": [
+          [
+            "rl:robot:crawler1",
+            "located_in",
+            "rl:place:pump_2"
+          ]
+        ],
+        "messages": [],
+        "tries": [
+          "move",
+          1
+        ]
+      },
+      {
+        "when": "crawler1 has exactly 20 % (no uncertainty): not below 20 %, pump_2 only",
+        "world_patch": {
+          "robots": {
+            "crawler1": {
+              "charge": {
+                "value": "20",
+                "unit": "%",
+                "uncertainty": "0"
+              }
+            }
+          }
+        },
+        "goal": [
+          [
+            "rl:robot:crawler1",
+            "located_in",
+            "rl:place:pump_2"
+          ]
+        ],
+        "messages": [],
+        "tries": [
+          "move",
+          1
+        ]
+      },
+      {
+        "when": "crawler1 has 21 % +-2: the interval holds 20 %, unknown, the step fails closed",
+        "world_patch": {
+          "robots": {
+            "crawler1": {
+              "charge": {
+                "value": "21",
+                "unit": "%",
+                "uncertainty": "2"
+              }
+            }
+          }
+        },
+        "fails": true,
+        "messages": []
+      }
+    ]
+  },
+  "expected_charge": [
+    {
+      "use": "if",
+      "robot": "crawler1",
+      "op": "<",
+      "value": "20",
+      "unit": "%"
+    }
+  ],
   "expect_2_1": {
     "decision": "cannot",
     "category": "inexpressible"
@@ -20,8 +143,11 @@
   "tags": [
     "battery",
     "self_state",
-    "if"
+    "if",
+    "charge",
+    "threshold_below"
   ],
-  "why": "The robot's own battery (0044 K8, G-SELF): a reading of the robot itself belongs to iteration I8, which will reuse `fill`. 2.2 reads objects with a sensor, not the robot that carries it.",
-  "attempt_fails_with": "E101"
+  "attempt_fails_with": "E101",
+  "erratum": "R9",
+  "why": "The robot's own battery (0044 K8, G-SELF): a reading of the robot itself belongs to iteration I8, which will reuse `fill`. 2.2 reads objects with a sensor, not the robot that carries it. (L4 of I8: a 2.4 program, see R9 of docs/evidence/bench-errata-2-4.md.)"
 }

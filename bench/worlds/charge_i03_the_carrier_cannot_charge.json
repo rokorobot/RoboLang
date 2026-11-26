@@ -1,0 +1,183 @@
+{
+  "world_schema": "robolang.sim.world",
+  "world_schema_version": "1.9",
+  "clock": {
+    "start": "2026-11-24T21:30:00",
+    "zone": "Europe/Prague"
+  },
+  "locations": [
+    "stop_a",
+    "stop_b",
+    "stop_c",
+    "dock_1",
+    "dock_3",
+    "charger_1",
+    "charger_2",
+    "swap_bay",
+    "inbound",
+    "bay_1"
+  ],
+  "regions": {
+    "fence_a": {
+      "clear": true
+    }
+  },
+  "robots": {
+    "spot1": {
+      "ready": true,
+      "location": "stop_a",
+      "gripper": false,
+      "max_speed": [
+        {
+          "value": "1.6",
+          "unit": "m/s"
+        }
+      ],
+      "honours": [
+        "no_go_region",
+        "in_region"
+      ],
+      "actions": {
+        "charge": {
+          "target": "location",
+          "result": "charging"
+        },
+        "swap_battery": {
+          "target": "location",
+          "result": "swapped"
+        },
+        "self_test": {
+          "target": "location",
+          "result": "tested"
+        }
+      }
+    },
+    "spot2": {
+      "ready": true,
+      "location": "stop_b",
+      "gripper": false,
+      "max_speed": [
+        {
+          "value": "1.6",
+          "unit": "m/s"
+        }
+      ],
+      "honours": [
+        "no_go_region",
+        "in_region"
+      ],
+      "actions": {
+        "charge": {
+          "target": "location",
+          "result": "charging"
+        }
+      }
+    },
+    "spot3": {
+      "ready": true,
+      "location": "dock_3",
+      "gripper": false,
+      "max_speed": [
+        {
+          "value": "1.6",
+          "unit": "m/s"
+        }
+      ],
+      "honours": [
+        "no_go_region",
+        "in_region"
+      ],
+      "actions": {
+        "charge": {
+          "target": "location",
+          "result": "charging"
+        }
+      }
+    },
+    "carrier1": {
+      "ready": true,
+      "location": "inbound",
+      "gripper": true,
+      "max_speed": [
+        {
+          "value": "0.8",
+          "unit": "m/s"
+        }
+      ],
+      "honours": [
+        "no_go_region",
+        "in_region"
+      ],
+      "actions": {},
+      "charge": {
+        "value": "30",
+        "unit": "%",
+        "uncertainty": "1"
+      }
+    }
+  },
+  "objects": {
+    "bin_1": {
+      "present": true,
+      "location": "bay_1",
+      "class": "bin",
+      "properties": {
+        "fill": {
+          "value": "12",
+          "unit": "%"
+        }
+      }
+    },
+    "crate_1": {
+      "present": true,
+      "location": "inbound",
+      "class": "crate"
+    }
+  },
+  "sensors": {
+    "cam_s1": {
+      "robot": "spot1",
+      "available": true,
+      "measures": {
+        "fill": {
+          "unit": "%",
+          "uncertainty": "2",
+          "contact": false
+        }
+      }
+    }
+  },
+  "events": [],
+  "tasks": {},
+  "location_states": {
+    "charger_1": "free",
+    "charger_2": "free",
+    "swap_bay": "ready"
+  },
+  "channels": {
+    "ops": {
+      "from": [
+        "rl:agent:ops-ctl"
+      ]
+    },
+    "lead": {
+      "from": [
+        "rl:agent:lead"
+      ]
+    }
+  },
+  "charge_events": [
+    {
+      "at": {
+        "value": "10",
+        "unit": "min"
+      },
+      "robot": "carrier1",
+      "charge": {
+        "value": "90",
+        "unit": "%",
+        "uncertainty": "1"
+      }
+    }
+  ]
+}

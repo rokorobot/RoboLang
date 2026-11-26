@@ -1,9 +1,13 @@
 {
   "id": "p07_charge_the_other_robot_if_low",
   "prompt": "Spot1 and spot2 work together. Drive spot1 to stop_c. If spot2's battery is below 40 percent, also send spot2 to charger_2 and have it charge there; if it is not, leave spot2 where it is.",
-  "world": "bench/worlds/charge_hall.json",
+  "world": "bench/worlds/charge_p07_charge_the_other_robot_if_low.json",
+  "world_2_3": "bench/worlds/charge_hall.json",
   "group": "self",
   "expect": {
+    "decision": "program"
+  },
+  "expect_2_3": {
     "decision": "cannot",
     "category": "inexpressible"
   },
@@ -28,24 +32,6 @@
       },
       "charge_events": []
     },
-    "expected_charge": [
-      {
-        "use": "if",
-        "robot": "spot2",
-        "op": "<",
-        "value": "40",
-        "unit": "%",
-        "decoy": "spot1"
-      }
-    ],
-    "expected_actions": [
-      {
-        "robot": "spot2",
-        "action": "charge",
-        "target": "charger_2",
-        "when": "spot2 has less than 40 %"
-      }
-    ],
     "paths": [
       {
         "when": "spot2 has 30 % (+-1), spot1 (the decoy) has 80 %: spot2 charges at charger_2",
@@ -197,6 +183,24 @@
       }
     ]
   },
+  "expected_charge": [
+    {
+      "use": "if",
+      "robot": "spot2",
+      "op": "<",
+      "value": "40",
+      "unit": "%",
+      "decoy": "spot1"
+    }
+  ],
+  "expected_actions": [
+    {
+      "robot": "spot2",
+      "action": "charge",
+      "target": "charger_2",
+      "when": "spot2 has less than 40 %"
+    }
+  ],
   "gap": "G-SELF",
   "tags": [
     "charge",
@@ -207,5 +211,6 @@
     "threshold_below"
   ],
   "why": "The decoy (0048 S1): the charge to read is `spot2`'s, written `measure b charge as c;` for the robot of the task `b`, and spot1 has the opposite state in every path. Reading spot1, a fixed charge, or no check is a different request. 2.3 has no such kind (`E217`).",
-  "attempt_fails_with": "E217"
+  "attempt_fails_with": "E217",
+  "erratum": "R4"
 }

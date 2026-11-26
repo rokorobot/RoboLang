@@ -1,5 +1,5 @@
-// bench/reference_self/c02_if_spot2_is_ready.rob: hand-written reference (RoboLang 2.3)
-robolang 2.3;
+// bench/reference_self/c02_if_spot2_is_ready.rob: hand-written reference (RoboLang 2.4)
+robolang 2.4;
 
 task go_if_ready(robot r, location dest) {
     goal { robot_at r dest; }

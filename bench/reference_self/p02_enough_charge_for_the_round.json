@@ -1,0 +1,8 @@
+{
+  "task": "checked_round",
+  "bindings": {
+    "r": "spot1",
+    "a": "stop_b",
+    "b": "stop_c"
+  }
+}

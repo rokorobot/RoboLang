@@ -1,19 +1,115 @@
 {
   "id": "f_self_report_charge",
   "prompt": "With spot1, go to stop_b and tell channel \"lead\" how much charge you have left.",
-  "world": "bench/worlds/site.json",
-  "group": "inexpressible",
+  "world": "bench/worlds/charge_f_self_report_charge.json",
+  "world_2_3": "bench/worlds/site.json",
+  "group": "self",
   "expect": {
+    "decision": "program"
+  },
+  "expect_2_3": {
     "decision": "cannot",
     "category": "inexpressible"
   },
+  "expect_2_4": {
+    "decision": "program",
+    "world_2_4": {
+      "robots": {
+        "spot1": {
+          "charge": {
+            "value": "64",
+            "unit": "%",
+            "uncertainty": "1"
+          }
+        }
+      }
+    },
+    "paths": [
+      {
+        "when": "spot1 has 64 % (+-1): the lead is told `64 %`, value and unit",
+        "world_patch": {
+          "robots": {
+            "spot1": {
+              "charge": {
+                "value": "64",
+                "unit": "%",
+                "uncertainty": "1"
+              }
+            }
+          }
+        },
+        "goal": [
+          [
+            "rl:robot:spot1",
+            "located_in",
+            "rl:place:stop_b"
+          ]
+        ],
+        "messages": [
+          [
+            "lead",
+            "64 %"
+          ]
+        ]
+      },
+      {
+        "when": "spot1 has 9 % (+-1): the lead is told `9 %`",
+        "world_patch": {
+          "robots": {
+            "spot1": {
+              "charge": {
+                "value": "9",
+                "unit": "%",
+                "uncertainty": "1"
+              }
+            }
+          }
+        },
+        "goal": [
+          [
+            "rl:robot:spot1",
+            "located_in",
+            "rl:place:stop_b"
+          ]
+        ],
+        "messages": [
+          [
+            "lead",
+            "9 %"
+          ]
+        ]
+      },
+      {
+        "when": "spot1 has no charge fact: unknown, the reading fails and nothing is sent",
+        "world_patch": {
+          "robots": {
+            "spot1": {
+              "charge": null
+            }
+          }
+        },
+        "fails": true,
+        "messages": []
+      }
+    ]
+  },
+  "expected_charge": [
+    {
+      "use": "report",
+      "robot": "spot1"
+    }
+  ],
   "activity": "ACT-AUTO-001",
   "gap": "G-SELF",
   "tags": [
     "self",
     "battery",
-    "communicate"
+    "communicate",
+    "charge",
+    "report",
+    "unit_sent"
   ],
-  "why": "A message carries a fixed string or a measured reading; the robot's own charge is neither (language reference: 'Sending a value').",
-  "attempt_fails_with": "E317"
+  "attempt_fails_with": "E317",
+  "erratum": "R8",
+  "why": "A message carries a fixed string or a measured reading; the robot's own charge is neither (language reference: 'Sending a value'). (L4 of I8: a 2.4 program, see R8 of docs/evidence/bench-errata-2-4.md.)"
 }

@@ -1,0 +1,9 @@
+{
+  "task": "",
+  "mission": "patrol",
+  "bindings": {
+    "r": "spot1",
+    "far": "stop_b",
+    "home": "stop_a"
+  }
+}

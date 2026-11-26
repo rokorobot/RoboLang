@@ -1,9 +1,13 @@
 {
   "id": "p05_patrol_until_the_battery_is_low",
   "prompt": "With spot1, patrol: drive to stop_b, wait 10 minutes there, drive back to stop_a, for at most 6 rounds. Stop as soon as your battery is below 30 percent.",
-  "world": "bench/worlds/charge_hall.json",
+  "world": "bench/worlds/charge_p05_patrol_until_the_battery_is_low.json",
+  "world_2_3": "bench/worlds/charge_hall.json",
   "group": "self",
   "expect": {
+    "decision": "program"
+  },
+  "expect_2_3": {
     "decision": "cannot",
     "category": "inexpressible"
   },
@@ -27,96 +31,6 @@
         }
       },
       "charge_events": []
-    },
-    "expected_charge": [
-      {
-        "use": "until",
-        "robot": "spot1",
-        "op": "<",
-        "value": "30",
-        "unit": "%",
-        "decoy": "spot2"
-      }
-    ],
-    "expected_mission": {
-      "runs": [
-        {
-          "task": "round",
-          "entities": [
-            "spot1",
-            "stop_b",
-            "stop_a"
-          ],
-          "goal": [
-            [
-              "rl:robot:spot1",
-              "located_in",
-              "rl:place:stop_a"
-            ]
-          ]
-        }
-      ],
-      "repeat": {
-        "max_runs": 6,
-        "max_duration": null
-      },
-      "until": {
-        "condition": "robot_charge spot1 < 30 %"
-      },
-      "on_failure": "stop",
-      "policy_stated": false
-    },
-    "mission_alternatives": [
-      {
-        "runs": [
-          {
-            "task": "out",
-            "entities": [
-              "spot1",
-              "stop_b"
-            ],
-            "goal": [
-              [
-                "rl:robot:spot1",
-                "located_in",
-                "rl:place:stop_b"
-              ]
-            ]
-          },
-          {
-            "task": "back",
-            "entities": [
-              "spot1",
-              "stop_a"
-            ],
-            "goal": [
-              [
-                "rl:robot:spot1",
-                "located_in",
-                "rl:place:stop_a"
-              ]
-            ]
-          }
-        ],
-        "repeat": {
-          "max_runs": 12,
-          "max_duration": null
-        },
-        "until": {
-          "condition": "robot_charge spot1 < 30 %"
-        },
-        "on_failure": "stop",
-        "policy_stated": false
-      }
-    ],
-    "mission_clock": {
-      "main_run_min": [
-        10
-      ],
-      "alt_run_min": [
-        10,
-        0
-      ]
     },
     "paths": [
       {
@@ -286,6 +200,257 @@
       }
     ]
   },
+  "expected_charge": [
+    {
+      "use": "until",
+      "robot": "spot1",
+      "op": "<",
+      "value": "30",
+      "unit": "%",
+      "decoy": "spot2"
+    }
+  ],
+  "expected_mission": {
+    "runs": [
+      {
+        "task": "round",
+        "entities": [
+          "spot1",
+          "stop_b",
+          "stop_a"
+        ],
+        "goal": [
+          [
+            "rl:robot:spot1",
+            "located_in",
+            "rl:place:stop_a"
+          ]
+        ]
+      }
+    ],
+    "repeat": {
+      "max_runs": 6,
+      "max_duration": null
+    },
+    "until": {
+      "condition": "robot_charge spot1 < 30 %"
+    },
+    "on_failure": "stop",
+    "policy_stated": false
+  },
+  "mission_alternatives": [
+    {
+      "runs": [
+        {
+          "task": "out",
+          "entities": [
+            "spot1",
+            "stop_b"
+          ],
+          "goal": [
+            [
+              "rl:robot:spot1",
+              "located_in",
+              "rl:place:stop_b"
+            ]
+          ]
+        },
+        {
+          "task": "back",
+          "entities": [
+            "spot1",
+            "stop_a"
+          ],
+          "goal": [
+            [
+              "rl:robot:spot1",
+              "located_in",
+              "rl:place:stop_a"
+            ]
+          ]
+        }
+      ],
+      "repeat": {
+        "max_runs": 12,
+        "max_duration": null
+      },
+      "until": {
+        "condition": "robot_charge spot1 < 30 %"
+      },
+      "on_failure": "stop",
+      "policy_stated": false,
+      "paths": [
+        {
+          "when": "spot1 has 80 % and nothing changes: no round ends below 30 %, the count ends it; spot2 (the decoy) has 20 %",
+          "world_patch": {
+            "robots": {
+              "spot1": {
+                "charge": {
+                  "value": "80",
+                  "unit": "%",
+                  "uncertainty": "1"
+                }
+              },
+              "spot2": {
+                "charge": {
+                  "value": "20",
+                  "unit": "%",
+                  "uncertainty": "1"
+                }
+              }
+            },
+            "charge_events": []
+          },
+          "outcome": "bounded",
+          "runs": 12,
+          "runs_verified": 12
+        },
+        {
+          "when": "spot1 has 80 %, a charge event at 25 min makes it 28 %: seen after the third round (30 min), the until holds",
+          "world_patch": {
+            "robots": {
+              "spot1": {
+                "charge": {
+                  "value": "80",
+                  "unit": "%",
+                  "uncertainty": "1"
+                }
+              },
+              "spot2": {
+                "charge": {
+                  "value": "90",
+                  "unit": "%",
+                  "uncertainty": "1"
+                }
+              }
+            },
+            "charge_events": [
+              {
+                "at": {
+                  "value": "25",
+                  "unit": "min"
+                },
+                "robot": "spot1",
+                "charge": {
+                  "value": "28",
+                  "unit": "%",
+                  "uncertainty": "1"
+                }
+              }
+            ]
+          },
+          "outcome": "completed",
+          "runs": 5,
+          "runs_verified": 5
+        },
+        {
+          "when": "spot1 starts with 27 %: the until holds after the first round",
+          "world_patch": {
+            "robots": {
+              "spot1": {
+                "charge": {
+                  "value": "27",
+                  "unit": "%",
+                  "uncertainty": "1"
+                }
+              },
+              "spot2": {
+                "charge": {
+                  "value": "90",
+                  "unit": "%",
+                  "uncertainty": "1"
+                }
+              }
+            },
+            "charge_events": []
+          },
+          "outcome": "completed",
+          "runs": 1,
+          "runs_verified": 1
+        },
+        {
+          "when": "spot1 starts with exactly 30 %: not below 30 %, nothing ends it but the count (a `<=` ends it after one round)",
+          "world_patch": {
+            "robots": {
+              "spot1": {
+                "charge": {
+                  "value": "30",
+                  "unit": "%",
+                  "uncertainty": "0"
+                }
+              },
+              "spot2": {
+                "charge": {
+                  "value": "20",
+                  "unit": "%",
+                  "uncertainty": "1"
+                }
+              }
+            },
+            "charge_events": []
+          },
+          "outcome": "bounded",
+          "runs": 12,
+          "runs_verified": 12
+        },
+        {
+          "when": "spot1 has no charge fact: the until is unknown after the first round and the mission fails (S6)",
+          "world_patch": {
+            "robots": {
+              "spot1": {
+                "charge": null
+              },
+              "spot2": {
+                "charge": {
+                  "value": "90",
+                  "unit": "%",
+                  "uncertainty": "1"
+                }
+              }
+            },
+            "charge_events": []
+          },
+          "outcome": "failed",
+          "runs": 1,
+          "runs_verified": 1
+        },
+        {
+          "when": "spot1 has 31 % +-2: the interval holds 30 %, the until is unknown and the mission fails (S2, S6)",
+          "world_patch": {
+            "robots": {
+              "spot1": {
+                "charge": {
+                  "value": "31",
+                  "unit": "%",
+                  "uncertainty": "2"
+                }
+              },
+              "spot2": {
+                "charge": {
+                  "value": "90",
+                  "unit": "%",
+                  "uncertainty": "1"
+                }
+              }
+            },
+            "charge_events": []
+          },
+          "outcome": "failed",
+          "runs": 1,
+          "runs_verified": 1
+        }
+      ]
+    }
+  ],
+  "mission_clock": {
+    "main_run_min": [
+      10
+    ],
+    "alt_run_min": [
+      10,
+      0
+    ]
+  },
   "gap": "G-SELF",
   "tags": [
     "charge",
@@ -298,5 +463,6 @@
     "near_threshold"
   ],
   "why": "A mission `until robot_charge r < 30 %` (0048 S6) with the bound the request states: `at most 6 runs`. The until is not a bound by itself (0041 M2). Dropping the until, inventing a duration, or another threshold or robot is a different request. A round may be one task (6 runs) or two run lines `out` and `back` (12 runs): both are accepted. 2.3 has no `robot_charge` (`E204`).",
-  "attempt_fails_with": "E204"
+  "attempt_fails_with": "E204",
+  "erratum": "R4"
 }

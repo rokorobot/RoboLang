@@ -1,0 +1,16 @@
+// bench/reference_self/p10_swap_then_check_ninety.rob: hand-written reference (RoboLang 2.4)
+robolang 2.4;
+
+task swap_and_check(robot r, location bay, location dest) {
+    goal { robot_at r dest; in_state bay "swapped"; }
+    plan {
+        move r to bay;
+        do r swap_battery bay;
+        wait for 2 min;
+        measure r charge as c;
+        if c < 90 % {
+            fail "the new battery is not charged to 90 percent";
+        }
+        move r to dest;
+    }
+}

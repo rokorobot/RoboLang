@@ -1,9 +1,13 @@
 {
   "id": "p04_charge_until_eighty",
   "prompt": "With spot2, drive to charger_1 and charge there until your battery is at least 80 percent, waiting up to 40 minutes. If it is not that high in time, stop the job as failed; otherwise drive on to stop_c.",
-  "world": "bench/worlds/charge_hall.json",
+  "world": "bench/worlds/charge_p04_charge_until_eighty.json",
+  "world_2_3": "bench/worlds/charge_hall.json",
   "group": "self",
   "expect": {
+    "decision": "program"
+  },
+  "expect_2_3": {
     "decision": "cannot",
     "category": "inexpressible"
   },
@@ -26,26 +30,21 @@
           }
         }
       },
-      "charge_events": []
+      "charge_events": [
+        {
+          "at": {
+            "value": "20",
+            "unit": "min"
+          },
+          "robot": "spot2",
+          "charge": {
+            "value": "90",
+            "unit": "%",
+            "uncertainty": "1"
+          }
+        }
+      ]
     },
-    "expected_charge": [
-      {
-        "use": "wait",
-        "robot": "spot2",
-        "op": ">=",
-        "value": "80",
-        "unit": "%",
-        "timeout": "40 min",
-        "decoy": "spot3"
-      }
-    ],
-    "expected_actions": [
-      {
-        "robot": "spot2",
-        "action": "charge",
-        "target": "charger_1"
-      }
-    ],
     "paths": [
       {
         "when": "spot2 has 35 %, a charge event at 20 min makes it 90 %: the wait is met at 20 min",
@@ -294,6 +293,24 @@
       }
     ]
   },
+  "expected_charge": [
+    {
+      "use": "wait",
+      "robot": "spot2",
+      "op": ">=",
+      "value": "80",
+      "unit": "%",
+      "timeout": "40 min",
+      "decoy": "spot3"
+    }
+  ],
+  "expected_actions": [
+    {
+      "robot": "spot2",
+      "action": "charge",
+      "target": "charger_1"
+    }
+  ],
   "gap": "G-SELF",
   "tags": [
     "charge",
@@ -305,5 +322,6 @@
     "decoy"
   ],
   "why": "The live form (0048 S3, S4): `wait until robot_charge r >= 80 % timeout 40 min else { fail ... }` after `do r charge charger`. The charge changes only by scheduled events. A `wait for` that guesses the time, a dropped wait, or a `charge` that is never checked is a different request: it succeeds where the request fails. 2.3 has no `robot_charge` (`E204`).",
-  "attempt_fails_with": "E204"
+  "attempt_fails_with": "E204",
+  "erratum": "R4, R5"
 }

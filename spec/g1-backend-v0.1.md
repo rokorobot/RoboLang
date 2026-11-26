@@ -78,7 +78,7 @@ detach and stance. A test fails if an executor module refers to the oracle, `Spo
 be sent.
 
 **Refused before any command** (as the ROS 2 backend, after the guard): S507 (a binding or entity the site does not
-have, an object without a marker, an `object_at` location without a region), S509 `measure` and (RoboLang 2.4) the robot's own charge, S510 a clock reading, S515
+have, an object without a marker, an `object_at` location without a region), S509 `measure`, S510 a clock reading, S515
 `message_received`, S514 a mission (before the guard), and S508 for everything else: other steps, failure handlers, speed
 and region limits, `do`, a task without a goal, and any condition other than `object_at`, `robot_at`, `holding`,
 `robot_ready` and their `and`, `or`, `not` (in a precondition or the goal).

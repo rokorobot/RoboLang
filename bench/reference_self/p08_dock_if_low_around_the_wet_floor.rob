@@ -1,0 +1,16 @@
+// bench/reference_self/p08_dock_if_low_around_the_wet_floor.rob: hand-written reference (RoboLang 2.4)
+robolang 2.4;
+
+task go_by_charge(robot r, location far, location dock, region wet) {
+    @safety no_go_region wet;
+    plan {
+        measure r charge as c;
+        if c >= 40 % {
+            goal { robot_at r far; }
+            move r to far;
+        } else {
+            goal { robot_at r dock; }
+            move r to dock;
+        }
+    }
+}

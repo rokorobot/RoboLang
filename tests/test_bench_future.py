@@ -45,6 +45,7 @@ CLOCKS = {t: d for t, d in SET.items() if d["group"] == "clock"}  # 1.9: program
 MESSAGES = {t: d for t, d in SET.items() if d["group"] == "message"}  # 2.1: programs that wait for a message (0043)
 KINDS = {t: d for t, d in SET.items() if d["group"] == "kind"}  # 2.2: programs that read a new kind (0044)
 CHOICES = {t: d for t, d in SET.items() if d["group"] == "choose"}  # 2.3: programs that choose at run time (0045)
+SELFS = {t: d for t, d in SET.items() if d["group"] == "self"}  # 2.4: programs that read the robot's charge (0048)
 CONTROLS = {t: d for t, d in SET.items() if d["group"] == "control"}
 # R3 refutations: (activity, gap) -> the control whose reference program expresses the claim
 REFUTED = {("ACT-HOS-001", "G-PERCEIVE"): "c_fries_too_dark", ("ACT-SOL-001", "G-PERCEIVE"): "c_table_out_of_tolerance"}
@@ -80,20 +81,21 @@ def decline(category: str = "inexpressible") -> dict:
 
 def test_the_mix_of_tasks():
     assert len(SET) == 37
-    assert Counter(d["group"] for d in SET.values()) == {"inexpressible": 12, "control": 8, "region": 3,
+    assert Counter(d["group"] for d in SET.values()) == {"inexpressible": 9, "control": 8, "region": 3,
                                                            "action": 3, "clock": 3, "message": 3, "kind": 2,
-                                                           "choose": 3}
+                                                           "choose": 3, "self": 3}
     assert set(REGIONS) == {"f_path_avoid_wet_floor", "f_path_stay_in_zone", "f_path_keep_off_road"}
     assert set(ACTIONS) == {"f_act_set_fryer", "f_act_open_closet", "f_act_print_layout"}
     assert set(CLOCKS) == {"f_clock_scan_stamp", "f_clock_shift_cutoff", "f_clock_clean_at_2300"}
     assert set(MESSAGES) == {"f_msg_line_docked", "f_msg_nurse_confirm", "f_msg_wind_clear"}
     assert set(KINDS) == {"f_perceive_shelf_fill", "f_perceive_weed_confidence"}
     assert set(CHOICES) == {"f_choose_nearest_tugger", "f_choose_nearest_dock", "f_choose_nearer_cart"}
+    assert set(SELFS) == {"f_self_low_battery", "f_self_enough_for_route", "f_self_report_charge"}
     # probes per gap: change on purpose (R3 evidence, docs/evidence/rsi-r3-gap-verification.md)
     assert Counter(d["gap"] for d in PROBES.values()) == {
         "G-CALC": 3, "G-CONC": 2,
-        "G-SELF": 3, "G-TRIGGER": 2, "G-DATE": 2}  # R3b adds the last two
-    # G-PATH, G-ACT, G-CLOCK, G-MSG, G-PERCEIVE and G-CHOOSE: 1.7 to 2.3 programs now
+        "G-TRIGGER": 2, "G-DATE": 2}  # R3b adds the last two
+    # G-PATH, G-ACT, G-CLOCK, G-MSG, G-PERCEIVE, G-CHOOSE and G-SELF: 1.7 to 2.4 programs now (G-SELF closes at L6)
     for task_id, task in SET.items():
         assert task["id"] == task_id and (lib.FUTURE_TASKS_DIR / f"{task_id}.json").is_file()
         assert (REPO / task["world"]).is_file() and task["tags"] and task["prompt"].endswith(".")
@@ -108,6 +110,9 @@ def test_every_task_names_a_near_activity_and_every_probe_an_open_gap_that_activ
             assert "gap" not in task
             continue
         gap = GAPS[task["gap"]]
+        if task["group"] == "self":  # 2.4 (0048): the gap stays open until L6 and holds none of them
+            assert gap["scope"] == "open" and task_id not in gap["tasks"] and task["gap"] == "G-SELF", task_id
+            continue
         if task["group"] in ("region", "action", "clock", "message", "kind", "choose"):  # 1.7-2.3: closed at L6
             assert gap["scope"] == "closed" and task_id not in gap["tasks"], task_id
             continue
@@ -118,13 +123,13 @@ def test_every_task_names_a_near_activity_and_every_probe_an_open_gap_that_activ
     # each of the nine gaps has probes from the activities that claim it, in the atlas, and nowhere else
     in_atlas = {t for g in GAPS.values() for t in g["tasks"]}
     assert set(PROBES) <= in_atlas and not (set(CONTROLS) | set(REGIONS) | set(ACTIONS) | set(CLOCKS)
-                                            | set(KINDS) | set(CHOICES)) & in_atlas
+                                            | set(KINDS) | set(CHOICES) | set(SELFS)) & in_atlas
 
 
 def test_every_gap_a_near_activity_claims_is_probed_except_the_proven_loop():
     claimed = {g for a in ATLAS["activities"] if atlas_report.is_near(a) for g in a["needs"]
                if GAPS[g]["scope"] == "open" and g != "G-LOOP"}  # G-LOOP: 12 standing tasks prove it; reopened by 0041
-    assert claimed == {t["gap"] for t in PROBES.values()}
+    assert claimed == {t["gap"] for t in PROBES.values()} | {"G-SELF"}  # G-SELF: 2.4 programs, closes at L6
     assert {t["gap"] for t in CHOICES.values()} == {"G-CHOOSE"} and GAPS["G-CHOOSE"]["scope"] == "closed"  # L6 of I7
     assert {t["gap"] for t in MESSAGES.values()} == {"G-MSG"} and GAPS["G-MSG"]["scope"] == "closed"  # L6 of I5
     assert {t["gap"] for t in KINDS.values()} == {"G-PERCEIVE"} and GAPS["G-PERCEIVE"]["scope"] == "closed"  # L6 of I6
@@ -155,14 +160,16 @@ def test_references_and_attempts_are_where_they_should_be():
     names = [p.name for p in REF.iterdir()]
     refs = {n.split(".")[0] for n in names if n.endswith((".rob", ".json")) and ".attempt" not in n}
     attempts = {n.split(".")[0] for n in names if ".attempt." in n}
-    programs = set(CONTROLS) | set(REGIONS) | set(ACTIONS) | set(CLOCKS) | set(MESSAGES) | set(KINDS) | set(CHOICES)
+    programs = (set(CONTROLS) | set(REGIONS) | set(ACTIONS) | set(CLOCKS) | set(MESSAGES) | set(KINDS) | set(CHOICES)
+                | set(SELFS))
     # the 2.0 attempts of the message probes, the 1.6 attempts of the kind probes and the 2.2 attempts of the choice
     # probes stay as evidence
-    assert refs == programs and attempts == set(PROBES) | set(MESSAGES) | set(KINDS) | set(CHOICES)
+    assert refs == programs and attempts == set(PROBES) | set(MESSAGES) | set(KINDS) | set(CHOICES) | set(SELFS)
     assert {p.stem for p in REF.glob("*.rob") if ".attempt" not in p.stem} == programs
     assert {p.stem for p in REF.glob("*.json") if ".attempt" not in p.stem} == programs
     assert {p.name for p in REF.glob("*.attempt.*")} >= {f"{t}.attempt.rob" for t in PROBES}
-    assert {p.name for p in REF.glob("*.attempt.json")} <= {f"{t}.attempt.json" for t in {**PROBES, **KINDS, **CHOICES}}
+    assert {p.name for p in REF.glob("*.attempt.json")} <= {
+        f"{t}.attempt.json" for t in {**PROBES, **KINDS, **CHOICES, **SELFS}}
     for name in names:
         assert "\r" not in (REF / name).read_text(encoding="utf-8")  # Windows-safe: LF only, never compared as CRLF
 
@@ -225,7 +232,6 @@ def test_no_probe_is_a_bug_in_disguise():
                                                  "src": "trailer_4"}),
         "f_calc_text_line": ('"case_2 weighs " + m + " kg"', "m", {"r": "stretch1", "c": "case_2",
                                                                     "scale": "scale_stretch1", "src": "trailer_4"}),
-        "f_self_report_charge": ("battery_level", '"low"', {"r": "spot1", "spot": "stop_b"}),
         # R3b: a mission bounded by a duration, and a time on the day the task starts
         "f_trigger_rounds_every_hour": ("repeat every 1 h until 13:00", "repeat for at most 180 min",
                                         {"r": "moxi1", "home": "nurse_station", "ward": "ward_3", "lab": "lab"}),
@@ -337,7 +343,8 @@ def test_the_new_worlds_are_world_1_2_files_and_nothing_else_new_is_added():
                                                               "fry_station_hot_1_4", "warehouse_1_5_1420",
                                                               "fulfilment_1_5_2115", "site_1_5_2220",
                                                               "ward_1_5_0950"} | {
-        f"msg_{t}" for t in MESSAGES} | {f"kinds_{t}" for t in KINDS} | {f"choose_{t}" for t in CHOICES}
+        f"msg_{t}" for t in MESSAGES} | {f"kinds_{t}" for t in KINDS} | {f"choose_{t}" for t in CHOICES} | {
+        f"charge_{t}" for t in SELFS}
     # 0042 copies; the 1.6 copies of the message programs (0043); the world file 1.7 copies of the two 2.2 reading
     # programs (0044); the world file 1.8 copies of the three 2.3 choice programs (0045, erratum Q5)
     for name in NEW_WORLDS:
@@ -480,3 +487,31 @@ def test_the_1_9_reference_reads_the_clock_exactly_as_asked_on_every_path(task_i
         stripped = stripped.replace(old, new)
     replaced = lib.judge(task, lib.check_answer(task, dict(answer, rob=stripped)), answer["bindings"])
     assert replaced.state == "SUCCEEDED" and replaced.time_replaced and not replaced.clock_ok
+
+
+# -------- the three R3 probes of the robot's own charge: 2.4 programs (0048, errata R6 to R8) --------
+
+@pytest.mark.parametrize("task_id", sorted(SELFS))
+def test_the_2_4_reference_reads_the_charge_and_is_right_on_every_path(task_id):
+    task = SELFS[task_id]
+    answer = reference(task_id)
+    assert answer["rob"].count("robolang 2.4;") == 1 and answer["rob"].isascii()
+    assert task["expect"] == {"decision": "program"} and task["expect_2_3"] == CANNOT
+    assert task["erratum"] in ("R6", "R7", "R8")
+    assert task["world"] == f"bench/worlds/charge_{task_id}.json" and task["world_2_3"] == "bench/worlds/site.json"
+    assert json.loads((REPO / task["world"]).read_text(encoding="utf-8"))["world_schema_version"] == "1.9"
+    checked = lib.check_answer(task, answer, lib.world_bytes(task))
+    assert checked.valid and checked.language_version == "2.4", checked.report
+    judgement = lib.judge(task, checked, answer["bindings"])
+    assert judgement.goal_correct and judgement.plan_succeeds and judgement.charge_ok, task_id
+    assert judgement.charge_check_replaced is False and judgement.threshold_or_robot_changed is False
+    assert all(p["goal_ok"] and p["plan_ok"] for p in judgement.paths) and len(judgement.paths) >= 3
+    # the program without its reading ends well on the path that does not need it and loses another
+    stripped = answer["rob"].replace("measure r charge as c;\n", "")
+    stand_in = re.sub(r"if c [<>=]+ \d+ % \{", "if robot_ready r {", stripped)
+    told = stand_in.replace('communicate r to "lead" with c;', 'communicate r to "lead" with "ok";')
+    dropped = {**answer, "rob": told}
+    checked = lib.check_answer(task, dropped, lib.world_bytes(task))
+    assert checked.valid, (task_id, checked.report)
+    lost = lib.judge(task, checked, answer["bindings"])
+    assert lost.charge_ok is False and lost.charge_check_replaced is True and not lost.goal_correct, task_id

@@ -1,9 +1,13 @@
 {
   "id": "p06_the_peer_with_enough_charge",
   "prompt": "Send whichever of spot2 and spot3 has at least 50 percent charge to stop_c. If neither has, stop the job as failed.",
-  "world": "bench/worlds/charge_hall.json",
+  "world": "bench/worlds/charge_p06_the_peer_with_enough_charge.json",
+  "world_2_3": "bench/worlds/charge_hall.json",
   "group": "self",
   "expect": {
+    "decision": "program"
+  },
+  "expect_2_3": {
     "decision": "cannot",
     "category": "inexpressible"
   },
@@ -28,26 +32,6 @@
       },
       "charge_events": []
     },
-    "choices": [
-      {
-        "type": "robot",
-        "from": [
-          "spot2",
-          "spot3"
-        ],
-        "where": "robot_charge >= 50 %",
-        "order": null
-      }
-    ],
-    "expected_charge": [
-      {
-        "use": "where",
-        "robot": "candidate",
-        "op": ">=",
-        "value": "50",
-        "unit": "%"
-      }
-    ],
     "paths": [
       {
         "when": "spot2 has 40 %, spot3 70 %: only spot3 has enough (the first written does not)",
@@ -214,6 +198,26 @@
       }
     ]
   },
+  "expected_charge": [
+    {
+      "use": "where",
+      "robot": "candidate",
+      "op": ">=",
+      "value": "50",
+      "unit": "%"
+    }
+  ],
+  "expected_choices": [
+    {
+      "type": "robot",
+      "from": [
+        "spot2",
+        "spot3"
+      ],
+      "where": "robot_charge >= 50 %",
+      "order": null
+    }
+  ],
   "gap": "G-SELF",
   "tags": [
     "charge",
@@ -226,5 +230,6 @@
     "indifferent"
   ],
   "why": "A choice by charge (0048 S7, narrowing 0045 point 5): `choose robot t from (spot2, spot3) where robot_charge t >= 50 %`. One robot fixed in advance, the `where` dropped, or another threshold is a different request. The request is indifferent when both have enough, so its goal accepts either. 2.3 has no `robot_charge` (`E204`).",
-  "attempt_fails_with": "E204"
+  "attempt_fails_with": "E204",
+  "erratum": "R4"
 }

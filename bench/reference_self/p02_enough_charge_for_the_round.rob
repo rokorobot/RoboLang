@@ -1,0 +1,15 @@
+// bench/reference_self/p02_enough_charge_for_the_round.rob: hand-written reference (RoboLang 2.4)
+robolang 2.4;
+
+task checked_round(robot r, location a, location b) {
+    goal { robot_at r b; }
+    plan {
+        measure r charge as c;
+        if c >= 60 % {
+            move r to a;
+            move r to b;
+        } else {
+            fail "spot1 has less than 60 percent charge";
+        }
+    }
+}
