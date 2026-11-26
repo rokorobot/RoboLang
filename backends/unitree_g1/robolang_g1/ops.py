@@ -43,6 +43,12 @@ CONFIRM_TIMEOUT_S = 3.0  # a stop must be confirmed (upright and still, from low
 CONFIRM_WINDOW_MS = 500
 CONFIRM_GYRO = 0.045  # rad/s: the pelvis rotates no faster than this ...
 CONFIRM_JOINT_VEL = 0.09  # rad/s: ... and no joint moves faster than this (the held arms included)
+# ... and the legs and the waist have not moved over the window, as a whole: a robot coasting to rest after a walk passed
+# the two bounds above at 0.089 rad/s while its whole body still slid 1.6 cm in the window (x86 CI, E5 twice). Joint
+# travel over the window catches what a velocity bound let through: 0.01 rad at the hip is under a centimetre at the
+# pelvis. From lowstate only.
+CONFIRM_LEG_TRAVEL_RAD = 0.01
+LEG_AND_WAIST = slice(0, 15)  # SDK order: the 12 leg joints, then the 3 waist joints
 CONFIRM_TILT_RAD = math.radians(15)
 SETTLE_GYRO, SETTLE_LEG_VEL, SETTLE_WINDOW_MS, SETTLE_TIMEOUT_S = 0.03, 0.05, 600, 9.0
 # ---- localization and walking
@@ -1594,7 +1600,8 @@ class G1Operations:
 
     def confirm_stopped(self) -> dict:
         """Confirm from lowstate that the robot is upright and still: over a window of 0.5 s of simulation time the
-        pelvis IMU's rate, the tilt and every joint's velocity are within tolerance, within 3 s of the stop."""
+        pelvis IMU's rate, the tilt and every joint's velocity are within tolerance, and the legs and waist have moved
+        no more than CONFIRM_LEG_TRAVEL_RAD from the window's start to its end, within 3 s of the stop."""
         t0 = self.now_ms()
         result = {
             "confirmed": False,
@@ -1603,6 +1610,7 @@ class G1Operations:
             "tolerances": {
                 "gyro_rad_s": CONFIRM_GYRO,
                 "joint_velocity_rad_s": CONFIRM_JOINT_VEL,
+                "leg_travel_rad": CONFIRM_LEG_TRAVEL_RAD,
                 "tilt_deg": round(math.degrees(CONFIRM_TILT_RAD), 1),
             },
             "t_stop_ms": t0,
@@ -1624,14 +1632,21 @@ class G1Operations:
             ):
                 gyro = max(float(np.linalg.norm(x.gyro)) for x in s)
                 joints = max(float(np.max(np.abs(x.dq))) for x in s)
+                travel = float(np.max(np.abs(s[-1].q[LEG_AND_WAIST] - s[0].q[LEG_AND_WAIST])))
                 tilt = max(math.acos(max(-1.0, min(1.0, 1 - 2 * (x.quat[1] ** 2 + x.quat[2] ** 2)))) for x in s)
                 result.update(
                     max_gyro_rad_s=round(gyro, 4),
                     max_joint_velocity_rad_s=round(joints, 4),
+                    leg_travel_rad=round(travel, 4),
                     max_tilt_deg=round(math.degrees(tilt), 2),
                     samples=len(s),
                 )
-                if gyro <= CONFIRM_GYRO and joints <= CONFIRM_JOINT_VEL and tilt <= CONFIRM_TILT_RAD:
+                if (
+                    gyro <= CONFIRM_GYRO
+                    and joints <= CONFIRM_JOINT_VEL
+                    and travel <= CONFIRM_LEG_TRAVEL_RAD
+                    and tilt <= CONFIRM_TILT_RAD
+                ):
                     result.update(
                         confirmed=True, window_start_ms=s[0].tick, window_end_ms=s[-1].tick, after_ms=s[-1].tick - t0
                     )

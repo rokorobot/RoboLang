@@ -203,8 +203,10 @@ the clearance check above stands in for the collisions the scene does not have.
 **Stop and S516.** On a failed step, cancel, revoke or deadline: `SetVelocity(0)`, the arms held where they are through
 `arm_sdk` (the target becomes the measured joints), the hands unchanged (a held object stays held), the robot kept
 standing, never `Damp`, zero torque, `SwitchToUserCtrl` or `rt/lowcmd`. The stop is confirmed from `lowstate` within 3 s of
-simulation time: over 0.5 s the IMU rate is at most 0.06 rad/s, every joint's velocity at most 0.12 rad/s and the tilt at
-most 15 degrees; the record has the numbers. If the IMU's tilt reaches 40 degrees at any time the run ends with **S516**
+simulation time: over 0.5 s the IMU rate is at most 0.045 rad/s, every joint's velocity at most 0.09 rad/s, the legs and
+the waist have travelled at most 0.01 rad from the window's start to its end, and the tilt is at most 15 degrees; the
+record has the numbers. (The travel bound came from x86 CI: a robot coasting to rest after a walk met the two velocity
+bounds at 0.089 rad/s while its whole body still slid 1.6 cm in the window.) If the IMU's tilt reaches 40 degrees at any time the run ends with **S516**
 and **nothing more is sent**, the stop's own commands included.
 
 **Record.** Schema `robolang.g1.run` 0.2 (0.2 adds the verdicts, `snapshots` and `goal_evaluated`), mirroring the ROS 2 record: `backend: {kind: "unitree-g1-mujoco", versions,

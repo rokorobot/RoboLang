@@ -280,3 +280,53 @@ def test_a_place_out_of_reach_at_the_centre_aims_nearer_the_robot_inside_the_reg
         ops.place("box", "shelf")
     assert err.value.code == "S502" and len(tried) == 3
     assert (loc["region"]["max"][0] - loc["region"]["min"][0]) / 2 - 0.03 >= PLACE_INSIDE_M - 1e-9
+
+
+def test_a_stop_is_not_confirmed_while_the_body_still_slides_under_the_velocity_bounds():
+    """x86 CI, E5: every joint under 0.09 rad/s and the IMU under 0.045 rad/s, but the legs travelled 0.03 rad in the
+    window and the body slid 1.6 cm. The travel bound waits for a still window; a quiet stance confirms at once."""
+    import numpy as np
+
+    from robolang_g1 import ops as ops_mod
+    from robolang_g1.robot import LowSample
+
+    def run(drift_rad_s, until_ms=None):
+        ops = _ops()
+        clock = {"t": 1000}
+        samples = []
+
+        def tick():
+            t = clock["t"]
+            moving = until_ms is None or t < until_ms
+            q = np.zeros(29)
+            q[ops_mod.LEG_AND_WAIST] = (drift_rad_s if moving else 0.0) * (min(t, until_ms or t) - 1000) / 1000
+            dq = np.zeros(29)
+            dq[ops_mod.LEG_AND_WAIST] = drift_rad_s if moving else 0.0
+            samples.append(LowSample(t, q, dq, (1.0, 0.0, 0.0, 0.0), (0.0, 0.0, 0.01)))
+            clock["t"] += 4
+
+        class Robot:
+            @staticmethod
+            def samples_since(t0):
+                return [s for s in samples if s.tick >= t0]
+
+        ops.robot = Robot()
+        ops.tilt_rad = lambda: 0.0
+
+        def now():
+            tick()
+            return clock["t"]
+
+        ops.now_ms = now
+        ops_mod.time.sleep, sleep = (lambda s: None), ops_mod.time.sleep
+        try:
+            return ops.confirm_stopped()
+        finally:
+            ops_mod.time.sleep = sleep
+
+    quiet = run(0.0)
+    assert quiet["confirmed"] and quiet["leg_travel_rad"] <= 0.001 and quiet["after_ms"] <= 600
+    sliding = run(0.06)  # 0.06 rad/s: under the velocity bound, 0.03 rad over a window
+    assert sliding["max_joint_velocity_rad_s"] <= ops_mod.CONFIRM_JOINT_VEL and not sliding["confirmed"]
+    settles = run(0.06, until_ms=2000)  # slides for a second, then stands still
+    assert settles["confirmed"] and settles["window_start_ms"] >= 2000 - 4
