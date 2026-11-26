@@ -7,7 +7,9 @@ and precondition verdicts from observations (checks O1–O7, [evidence](../docs/
 one exception to 0046 U8 for observing a carried object (approved by the owner 2026-11-21; see "Observations and
 verdicts"). Two prerequisites of the phase 4 acceptance run followed ([evidence](../docs/evidence/g1-phase4-prereqs.md)):
 `move`'s heading between marker fixes comes from the IMU ("The IMU"), and the stand-in keeps pace with real time on a
-loaded 4-CPU host ("Time"). Code: [`backends/unitree_g1/`](../backends/unitree_g1/).
+loaded 4-CPU host ("Time"). **Phase 4, the acceptance run, has run once and did not meet the bar** (2026-11-26: 37 of 42
+runs `SUCCEEDED`, 38 needed; no false success, 98.2% agreement with the oracle, 5 of 5 failure cases;
+[evidence](../docs/evidence/g1-phase4-acceptance.md)). Code: [`backends/unitree_g1/`](../backends/unitree_g1/).
 
 ## Scope and safety boundary
 
@@ -270,6 +272,40 @@ The codes and meanings of the [ROS 2 backend](ros2-backend-v0.1.md#failure-codes
 | S516 | The robot fell or lost balance (IMU tilt beyond the limit, or the walking service left its standing and walking states). The run stops; no further command |
 | S517 | Localization lost: a station marker that `move` or an observation needs was not seen within its timeout |
 
+## Acceptance scenes and the acceptance run (phase 4)
+
+[`scenes.py`](../backends/unitree_g1/robolang_g1/scenes.py) makes one site per task of the acceptance family (0046
+section 3: the 11 single-arm tasks that passed in Gazebo and `e_park_amr`, `w_carry_hold`, `w_clear_dock`), with the
+entity IDs of `bench/reference/<task>.json`, so the reference `.rob` files run unchanged. Every object is an 8 cm box
+with its marker on top. Every location is a region on a table in front of a station, or a station alone.
+
+**Layout rules, each from a measurement:**
+
+- **One camera, so goals that are named together stand together.** Locations that a goal names together are slots of
+  one table, seen from one station (`a_sort_three`, `w_split_boxes`, `l_vial_hold`), and the dock of `e_box_then_dock`
+  is a standing place 12 cm behind the destination's, with its own plate. `scenes.check_visibility` applies
+  `perception.visibility_violations` and one more limit: the centre of an `object_at` region is at most **0.52 m ahead
+  of the pelvis**. Further out a box's 5.7 cm marker is not read surely (confidence 0.4 at 0.61 m in one x86 run, which
+  the backend refuses as not seen).
+- **A hand for each side of a table.** The arm planner takes a box between 5 and 20 cm to the side of the pelvis with
+  the hand of that side (measured on the robot's own model). So a table holds two boxes with a hand each (12 cm either
+  side), or three with two for one hand (20 and 7 cm), which leaves about 2 cm to spare against where the robot stops.
+  A box outside that band is refused with S502 before the arm moves.
+- **A wide table is no wider on the right than the verified one.** Five centimetres more and the arm, swung out beside
+  the body, came within its 3 cm margin of the table's corner (S502).
+- **The robot stands 1.30 m from the plate to grasp and 1.35 m to place**, as verified in phases 2 and 3.
+
+The five scripted failure cases run on `e_pick_place`: the box absent (S506), the box on the other table (S506), the
+destination's region 0.8 m ahead (S502 at the place, the box still in the hand), the head camera covered (S517), and a
+push while walking (S516, no command after the fall).
+
+[`phase4.py`](../backends/unitree_g1/robolang_g1/phase4.py) is the acceptance run: each task three times on a fresh
+stand-in through `robolang_g1.cli`, then the cases, judged against the oracle with the bar of 0046 section 3 (at least
+90% of the runs `SUCCEEDED`, at least 98% of the atoms agreeing with the oracle, no false success, every case `FAILED`
+with its code). A run that fell behind real time does not count (0046 U13) and is repeated, at most twice per task; a
+false success in such a run still blocks acceptance. The run can be resumed: a run that has written its `result.json`
+is not run again.
+
 ## Where it runs
 
 `.github/workflows/g1-sim.yml`: on demand, nightly, and on pull requests that change `backends/unitree_g1/` or the
@@ -278,5 +314,6 @@ that a backend change is checked on x86_64 before it merges). Plain x86_64 runne
 CycloneDDS build are cached. The job runs the backend's tests, the phase 1 harness (P1-P6, about 2 minutes), the phase 2
 checks (E1-E7, about 35 minutes of simulated real time) and the phase 3 checks (O1-O7, about 40 minutes), and uploads
 `harness.json`, `phase2.json`, `phase3.json` and every run's record.
+The acceptance run is a second job, started by hand (`acceptance: true`): about four hours of simulated real time.
 The simulation runs in real time, so a run's `realtime_valid` (every second within 5% of real time, no stall) is part of
 its record; an invalid run does not count towards acceptance (0046 U13).

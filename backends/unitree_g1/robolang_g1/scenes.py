@@ -37,7 +37,7 @@ WALL_X = 3.75  # the station plates stand on this line, facing the robot (-x)
 PLATE = {"size": 0.24, "z": 0.19, "facing": 3.14159265}
 TABLE_X, TABLE_HALF_X, TABLE_HALF_Z = 2.81, 0.13, 0.375  # the table top is at 0.75 m
 BOX_Z = 0.79  # centre of an 8 cm box standing on a table
-STAND_GRASP, STAND_PLACE = 1.3, 1.35  # the pelvis this far in front of the plate: where grasps, and places, were verified
+STAND_GRASP, STAND_PLACE = 1.3, 1.35  # the pelvis this far from the plate: where grasps, and places, were verified
 STEP_BACK = 0.12  # the dock of e_box_then_dock: this far behind the destination's standing place
 SEEN_AHEAD_M = 0.52  # a box's marker further ahead of the pelvis than this is not counted as in view
 REGION_Y, REGION_Z = (0.56, 0.76), (0.91, 1.09)  # a region in the plate's frame: height above its centre, distance out
@@ -271,7 +271,7 @@ def build(scene: str) -> dict:
     case = CASES.get(scene)
     if case:
         if case.get("scene") == "absent":
-            world["objects"][0]["pos"] = [-3.0, -2.0, 0.04]  # on the floor behind the start, seen from nowhere on the way
+            world["objects"][0]["pos"] = [-3.0, -2.0, 0.04]  # on the floor behind the start, never in view
         elif case.get("scene") == "moved":
             world["objects"][0]["pos"][1] = round(B + SLOT["M"], 4)
         if case.get("site") == "far_region":

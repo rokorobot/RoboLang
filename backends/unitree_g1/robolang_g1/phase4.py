@@ -12,7 +12,7 @@ The bar (0046 section 3, item 3), over the runs that count:
 * at least 90% of the task runs end `SUCCEEDED`, decided from observations;
 * the observed verdict of every goal and precondition atom agrees with the oracle on at least 98% of the atoms the
   oracle decides;
-* **no false success**: no run ends `SUCCEEDED` while the oracle says its goal is not met (this alone blocks acceptance);
+* **no false success**: no run ends `SUCCEEDED` while the oracle says its goal is not met (this alone blocks it);
 * every scripted failure case ends `FAILED` with its code, and none ends `SUCCEEDED`.
 
 **Runs that do not count.** A run in which the simulation fell more than 5% behind real time in any second is a
@@ -35,8 +35,7 @@ from pathlib import Path
 import numpy as np
 
 from . import assets, scenes
-from . import site as site_mod
-from .phase2 import PUSH_N, PUSH_S, _Push, _Tail, realtime_of
+from .phase2 import PUSH_N, PUSH_S, _Push, realtime_of
 from .phase3 import COMMAND_KEYS, Ctx as Ctx3, collect
 from .run_task import Session
 

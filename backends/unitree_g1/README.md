@@ -20,6 +20,8 @@ MUJOCO_GL=egl python -m robolang_g1.harness --out harness.json    # P1-P6; exit 
 MUJOCO_GL=egl python -m robolang_g1.phase2 --out phase2.json      # E1-E7; exit 0 = all pass; about half an hour
 MUJOCO_GL=egl python -m robolang_g1.phase3 --out phase3.json      # O1-O7; verdicts against the oracle; about half an hour
 MUJOCO_GL=egl python -m robolang_g1.phase2 --only move-stress --out stress.json   # 20 shelf arrivals; add --carry for the box in hand; about an hour
+MUJOCO_GL=egl python -m robolang_g1.phase4 --out phase4.json      # the acceptance run: 14 tasks x 3, 5 failure cases; about 4 hours; can be resumed
+python -m robolang_g1.scenes --list                               # the acceptance scenes; `scenes NAME --out DIR` writes one
 ```
 
 Run a task (the stand-in starts for it; `python -m robolang_g1.cli` runs one against a stand-in that is already up):
@@ -60,6 +62,7 @@ if you do not activate it. It needs `git`, `cmake`, a C compiler and `python3-de
 | `robolang_g1/response.py` | what each burst of velocity command does to a standing robot (measured, empty and loaded) and `plan_correction`, which `move`'s last centimetres use (pure: no DDS, no ground truth) |
 | `robolang_g1/observe.py` | verdicts from observations: `object_at`, `holding`, `robot_at`, `robot_ready`, three-valued logic, `@verify`, the Core outcome (pure: no DDS, no ground truth) |
 | `robolang_g1/phase2.py`, `phase3.py`, `run_task.py` | checks E1-E7 and O1-O7 (they read the oracle; the executor never does); start a stand-in and run one task |
+| `robolang_g1/scenes.py`, `phase4.py` | phase 4: a site for each of the 14 tasks of the acceptance family and for the 5 scripted failure cases, with the visibility rule checked from the geometry; the acceptance run and its judge (0046 section 3). `phase4.py` reads the oracle, the executor never does |
 | `robolang_g1/sites/` | `phase1.json` (the harness's, `/1`), `pick_place.json`, `carry_hold.json` and `part_precheck.json` (for `bench/reference/e_pick_place.rob`, `w_carry_hold.rob` and `w_part_precheck.rob`) |
 
 ## The stand-in
