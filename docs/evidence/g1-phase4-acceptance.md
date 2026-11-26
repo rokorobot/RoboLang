@@ -3,25 +3,25 @@
 Date: 2026-11-26. Code: [`backends/unitree_g1/`](../../backends/unitree_g1/) (`scenes.py`, `phase4.py`), decision
 [0046](../../spec/decisions/0046-humanoid-backend-unitree-g1.md) section 3; contract in
 [`g1-backend-v0.1.md`](../../spec/g1-backend-v0.1.md), "Acceptance scenes and the acceptance run". Simulation only.
-Result file: [`g1-phase4/phase4-run1.json`](g1-phase4/phase4-run1.json); every run's record, result, site and scene:
-[`g1-phase4/run1-records.tar.gz`](g1-phase4/run1-records.tar.gz).
 
-**Result: the bar is not met. 37 of 42 runs ended `SUCCEEDED` (88.1%); the bar is 90%, which is 38.** The other three
-parts of the bar are met: no false success, 54 of 55 atoms agree with the oracle (98.2%, bar 98%), and all five scripted
-failure cases end `FAILED` with their codes. Every one of the five failed runs is a refusal or an `unknown`: the robot
-declined or could not confirm, and never reported a goal that was not met. Eleven of the 14 tasks pass 3 of 3.
+**Result: run 3 meets the bar, with no margin.** 38 of 42 runs `SUCCEEDED` (90.5%; 90% is 38), 57 of 57 atoms agree
+with the oracle, no false success, 5 of 5 scripted failure cases. Runs 1 and 2 did not meet it (37 of 42; then 39 of
+42 but 96.8% agreement). **No run of any of the three ended `SUCCEEDED` with its goal not met.** Run 3 found a fault in
+`move` that the bar does not measure: an arrival confirmed without a valid marker fix (section 9, follow-up F1).
 
-| Bar (0046 section 3, item 3) | Required | Run 1 | |
-|---|---|---|---|
-| Runs `SUCCEEDED`, from observations | ≥ 90% | 37 of 42, 88.1% | **not met, by one run** |
-| Atoms agreeing with the oracle | ≥ 98% | 54 of 55, 98.2% | met |
-| False successes | 0 | 0 | met |
-| Scripted failure cases `FAILED` with their code | 5 of 5 | 5 of 5 | met |
+| Bar (0046 section 3, item 3) | Required | Run 1 | Run 2 | Run 3 |
+|---|---|---|---|---|
+| Runs `SUCCEEDED`, from observations | ≥ 90% (38 of 42) | 37, 88.1% | 39, 92.9% | **38, 90.5%** |
+| Atoms agreeing with the oracle | ≥ 98% | 54 of 55, 98.2% | 61 of 63, 96.8% | **57 of 57, 100%** |
+| False successes | 0 | 0 | 0 | **0** |
+| Scripted failure cases `FAILED` with their code | 5 of 5 | 5 | 5 | **5** |
+| Bar | | not met | not met | **met** |
 
-Host: a Cloudroom sandbox, x86_64, 4 vCPUs, no GPU; stance `free`, arm work `supported` (0046 open point 1). The run
-took 3 h 4 min. Versions are in the result file.
+Host for all three: a Cloudroom sandbox, x86_64, 4 vCPUs, no GPU; stance `free`, arm work `supported` (0046 open point
+1). Sections 1–7 are run 1, section 8 run 2, section 9 run 3. Results and every run's record, result, site and scene
+are in [`g1-phase4/`](g1-phase4/).
 
-## 1. The tasks
+## 1. Run 1: the tasks
 
 Each task ran unchanged from `bench/reference/`, three times, each on a fresh stand-in through `robolang_g1.cli`.
 
@@ -44,7 +44,7 @@ Each task ran unchanged from `bench/reference/`, three times, each on a fresh st
 
 The visibility rule holds for all 14 scenes, checked from the geometry before the run. No task left the family.
 
-## 2. The five failed runs
+## 2. Run 1: the five failed runs
 
 | Run | Code | What the record says | Cause |
 |---|---|---|---|
@@ -57,14 +57,14 @@ All five end with the arm and the legs stopped as the backend's stop prescribes,
 have. Two of the causes are scene choices made in this phase (`a_sort_three`'s three slots, `l_vial_hold`'s shared
 station). Two are the backend's (`move` over a very short distance; standing 4.9 cm off after arriving inside 4.2 cm).
 
-## 3. Runs that did not count
+## 3. Run 1: runs that did not count
 
 Two runs of `a_sort_three` (`_1`: S517, `_4`: S502) fell behind real time in one second each (ratio 0.60 and 0.76, with
 the loop neither computing nor waiting for a CPU: the virtual machine paused). They are harness failures under 0046
 U13 and were repeated. Neither ended `SUCCEEDED`, so neither could hide a false success. Over the 42 runs that count,
 the worst second was 0.989 of real time.
 
-## 4. The scripted failure cases
+## 4. Run 1: the scripted failure cases
 
 All on `e_pick_place`, once each.
 
@@ -76,7 +76,7 @@ All on `e_pick_place`, once each.
 | The head camera is covered from the start | S517 | no arm or hand command; the box did not move |
 | A push on the torso while walking | S516 | the oracle confirms the fall; no command of any kind after it |
 
-## 5. What this run does and does not show
+## 5. What the acceptance run does and does not show
 
 - **It shows** that the executor, the observations and the verdicts hold over 14 tasks: 54 atoms decided `true` and
   true, one `unknown`, none wrong, no false success in 44 task runs.
@@ -87,7 +87,7 @@ All on `e_pick_place`, once each.
 - **The left hand is new.** `w_split_boxes`, `a_sort_three` and `l_vial_hold` are its first runs; phases 2 and 3 use
   the right hand only.
 
-## 6. Before the run
+## 6. Before run 1
 
 The scenes were built and tried before the run started, and changed while they were tried. For the record:
 
@@ -102,7 +102,7 @@ The scenes were built and tried before the run started, and changed while they w
 
 No scene and no code changed during the run.
 
-## 7. For the owner
+## 7. Run 1: for the owner
 
 The bar is missed by one run. Two ways on, and one thing not to do:
 
@@ -118,7 +118,7 @@ The bar is missed by one run. Two ways on, and one thing not to do:
    section 7).
 3. **Not this:** counting runs again until 38 succeed. A run counts or does not by the rule written before it.
 
-## 9. Run 2 (2026-11-26): the fixes of section 7, and the bar missed on agreement
+## 8. Run 2 (2026-11-26): the fixes of section 7, and the bar missed on agreement
 
 The owner chose "fix and run again" (section 7, option 1). Code `650cd48`:
 
@@ -157,7 +157,52 @@ the window, against the check's 1.5 cm. The stop is now confirmed only when the 
 most 0.01 rad over the window. With it, P1–P6, E1–E7 and O1–O7 pass on x86_64 (CI run of `fd71842`). This changes no
 outcome of a task run: it only decides when a stop counts as confirmed.
 
-## 8. Reproduce
+## 9. Run 3 (2026-11-26): the bar met
+
+Code `e01b9a8` (run 2's code, the dock's plate raised to 0.40 m, the plate check of the visibility rule, and the stop
+confirmed only when the legs have not travelled). [`phase4-run3.json`](g1-phase4/phase4-run3.json),
+[records](g1-phase4/run3-records.tar.gz). All 42 runs counted (worst second 0.971 of real time). Run time 2 h 32 min.
+
+| Task | Run 1 | Run 2 | Run 3 |
+|---|---|---|---|
+| `a_sort_three` | 1 of 3 | 2 of 3 | 2 of 3 (S502 at a grasp) |
+| `e_box_then_dock` | 1 of 3 | 1 of 3 | **3 of 3** (the dock's plate read at confidence 1.00) |
+| `l_vial_hold` | 2 of 3 | 3 of 3 | 2 of 3 (S502 at the place, same station: the held box 1.1 cm inside the table's margin) |
+| `l_vial_to_fridge` | 3 of 3 | 3 of 3 | 2 of 3 (S517: see F1) |
+| `w_split_boxes` | 3 of 3 | 3 of 3 | 2 of 3 (S517: see F2) |
+| the other 9 | 27 of 27 | 27 of 27 | 27 of 27 |
+
+Over the three runs 114 of 126 task runs succeeded (90.5%), and every one of the 12 that did not was a refusal (S502),
+a lost marker (S517), a timeout (S504) or an `unknown` (S302): never a wrong verdict.
+
+### Follow-ups found by run 3 (not part of the bar)
+
+**F1. `move` confirmed an arrival without a valid marker fix (`l_vial_to_fridge_2`).** The record says the robot
+arrived within 3.5 cm of the destination's station; the oracle had it 0.45 m away. At the station every reading of
+its plate was **rejected** by the localization (its vertical 0.07–0.08 rad from the IMU's: the wrong one of the two
+poses a flat marker allows), so the belief kept its dead reckoning. `_confirm_pose` checks only that the station's
+marker is among the readings, not that the look fixed the pose from it, and so confirmed the stale belief. The look
+before the place found the plate's confidence too low and ended the run with S517 before the arm moved. **The verdicts
+are not affected:** `robot_at` and `object_at` count only frames whose vertical agrees with the IMU, so such a reading
+gives `unknown`, never `true`. Proposed fix (one condition, not made: it changes the code this run accepted):
+`_confirm_pose` also requires `self.last_look[1]`, a fix from this look; then phases 2 and 3 in CI.
+
+**F2. A marker fix from far off the plate's axis (`w_split_boxes_3`).** Walking between the tables with a box in each
+hand, the robot fixed its pose from the first station's plate seen 2.7 m away and about 39° off its axis; the fix put
+it 1 m from where it was, and it then looked for the next plate where it was not (S517 after a 90 s scan). Proposed: a
+station marker fixes the pose only within an angle of its axis (to be measured), as it already does only within 2.9 m.
+
+**F3. Three slots and one shared station are still marginal.** `a_sort_three` failed one run in each of the three
+runs, and `l_vial_hold`'s place from its shared station failed once in runs 1 and 3: the arm planner's margins, not the
+executor's logic. Two hand-sized slots per table and a station each would remove them; that changes the scenes, and
+the family's tasks run unchanged either way.
+
+**F4. Phase 2's E2 had its own scene fault, found and fixed in CI during these runs** (pull request #192): its
+out-of-reach box was enlarged so that its marker would be read, but the executor was told the original 8 cm box, read
+the 10.7 cm marker as 5.7 cm, put the box at half its distance and reached for it. The scene is now also the
+executor's site. Phase 2 is not part of the acceptance run.
+
+## 10. Reproduce
 
 ```sh
 bash backends/unitree_g1/scripts/fetch_assets.sh

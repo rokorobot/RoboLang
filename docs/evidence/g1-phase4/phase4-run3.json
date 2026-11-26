@@ -1,0 +1,4132 @@
+{
+ "stance_model": "free",
+ "versions": {
+  "arch": "x86_64",
+  "python": "3.11.2",
+  "assets": {
+   "unitree_mujoco": "1eb6642e3f3fdfb7fb13a9794fd6a2dd93ea0e7d",
+   "unitree_rl_lab": "4960b84732b0c2ec593dccbfe963fda1bcd7b1e3",
+   "mujoco_menagerie": "370c43965323c0944b433b202aac5058b5f907a9",
+   "unitree_rl_gym": "276801e46c5d433564f24658bac64f254b7d2d4b",
+   "unitree_sdk2_python": "814556d15970dd2ecf1c9984e845ca02ab07e206",
+   "cyclonedds_c": "abb064e35b6fbc79554c255ff8b371333e87b029"
+  },
+  "packages": {
+   "mujoco": "4.0.1",
+   "onnxruntime": "1.32.0",
+   "numpy": "2.4.6",
+   "opencv-python-headless": "5.1.0.95",
+   "cyclonedds": "0.10.2",
+   "unitree_sdk2py": "1.0.1"
+  }
+ },
+ "arch": "x86_64",
+ "left_out": [],
+ "visibility": {
+  "a_scrap_part": "holds",
+  "a_sort_three": "holds",
+  "e_box_then_dock": "holds",
+  "e_hold_box": "holds",
+  "e_pause_home": "holds",
+  "e_pick_place": "holds",
+  "l_vial_hold": "holds",
+  "l_vial_to_fridge": "holds",
+  "w_part_precheck": "holds",
+  "w_pick_from_table": "holds",
+  "w_split_boxes": "holds",
+  "e_park_amr": "holds",
+  "w_carry_hold": "holds",
+  "w_clear_dock": "holds"
+ },
+ "tasks": {
+  "a_scrap_part": [
+   {
+    "name": "a_scrap_part_1",
+    "task": "a_scrap_part",
+    "exit": 0,
+    "state": "SUCCEEDED",
+    "failure": null,
+    "succeeded": true,
+    "goal_true_per_oracle": true,
+    "false_success": false,
+    "atoms": [
+     {
+      "run": "a_scrap_part_1",
+      "phase": "goal",
+      "atom": {
+       "kind": "object_at",
+       "object": "part",
+       "location": "bin"
+      },
+      "verdict": "true",
+      "truth": true,
+      "expected_unknown": false,
+      "t_ms": 154280
+     }
+    ],
+    "fallen_per_oracle": false,
+    "stance_model": "free",
+    "arm_stance": "supported",
+    "observation_motion": [],
+    "steps": [
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 37.8
+     },
+     {
+      "kind": "grasp",
+      "status": "succeeded",
+      "sim_s": 28.1
+     },
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 56.9
+     },
+     {
+      "kind": "place",
+      "status": "succeeded",
+      "sim_s": 25.3
+     }
+    ],
+    "realtime": {
+     "realtime_ratio": 0.9992,
+     "worst_second_ratio": 0.996,
+     "stalls": 0,
+     "realtime_valid": true,
+     "step_compute_ms": {
+      "budget": 2.0,
+      "mean": 0.247,
+      "p99": 0.863,
+      "max": 7.8,
+      "over_budget": 0.0001
+     },
+     "gc": [
+      0.1,
+      0.83,
+      11.07
+     ],
+     "slow_steps": [],
+     "slow_windows": [],
+     "camera": {
+      "frames": 774,
+      "dropped": 0,
+      "render_ms": 62.4,
+      "hz": 5.0
+     }
+    },
+    "counts": true,
+    "wall_s": 158.6,
+    "log_tail": null
+   },
+   {
+    "name": "a_scrap_part_2",
+    "task": "a_scrap_part",
+    "exit": 0,
+    "state": "SUCCEEDED",
+    "failure": null,
+    "succeeded": true,
+    "goal_true_per_oracle": true,
+    "false_success": false,
+    "atoms": [
+     {
+      "run": "a_scrap_part_2",
+      "phase": "goal",
+      "atom": {
+       "kind": "object_at",
+       "object": "part",
+       "location": "bin"
+      },
+      "verdict": "true",
+      "truth": true,
+      "expected_unknown": false,
+      "t_ms": 233088
+     }
+    ],
+    "fallen_per_oracle": false,
+    "stance_model": "free",
+    "arm_stance": "supported",
+    "observation_motion": [],
+    "steps": [
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 59.7
+     },
+     {
+      "kind": "grasp",
+      "status": "succeeded",
+      "sim_s": 28.1
+     },
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 113.9
+     },
+     {
+      "kind": "place",
+      "status": "succeeded",
+      "sim_s": 25.4
+     }
+    ],
+    "realtime": {
+     "realtime_ratio": 0.9994,
+     "worst_second_ratio": 0.9957,
+     "stalls": 0,
+     "realtime_valid": true,
+     "step_compute_ms": {
+      "budget": 2.0,
+      "mean": 0.243,
+      "p99": 0.885,
+      "max": 8.0,
+      "over_budget": 0.0003
+     },
+     "gc": [
+      0.09,
+      0.77,
+      10.94
+     ],
+     "slow_steps": [],
+     "slow_windows": [],
+     "camera": {
+      "frames": 1168,
+      "dropped": 0,
+      "render_ms": 68.1,
+      "hz": 5.0
+     }
+    },
+    "counts": true,
+    "wall_s": 237.4,
+    "log_tail": null
+   },
+   {
+    "name": "a_scrap_part_3",
+    "task": "a_scrap_part",
+    "exit": 0,
+    "state": "SUCCEEDED",
+    "failure": null,
+    "succeeded": true,
+    "goal_true_per_oracle": true,
+    "false_success": false,
+    "atoms": [
+     {
+      "run": "a_scrap_part_3",
+      "phase": "goal",
+      "atom": {
+       "kind": "object_at",
+       "object": "part",
+       "location": "bin"
+      },
+      "verdict": "true",
+      "truth": true,
+      "expected_unknown": false,
+      "t_ms": 170668
+     }
+    ],
+    "fallen_per_oracle": false,
+    "stance_model": "free",
+    "arm_stance": "supported",
+    "observation_motion": [],
+    "steps": [
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 39.4
+     },
+     {
+      "kind": "grasp",
+      "status": "succeeded",
+      "sim_s": 28.1
+     },
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 71.9
+     },
+     {
+      "kind": "place",
+      "status": "succeeded",
+      "sim_s": 25.3
+     }
+    ],
+    "realtime": {
+     "realtime_ratio": 0.9992,
+     "worst_second_ratio": 0.9952,
+     "stalls": 0,
+     "realtime_valid": true,
+     "step_compute_ms": {
+      "budget": 2.0,
+      "mean": 0.244,
+      "p99": 0.905,
+      "max": 8.3,
+      "over_budget": 0.0001
+     },
+     "gc": [
+      0.1,
+      0.79,
+      11.43
+     ],
+     "slow_steps": [],
+     "slow_windows": [],
+     "camera": {
+      "frames": 856,
+      "dropped": 0,
+      "render_ms": 65.2,
+      "hz": 5.0
+     }
+    },
+    "counts": true,
+    "wall_s": 175.0,
+    "log_tail": null
+   }
+  ],
+  "a_sort_three": [
+   {
+    "name": "a_sort_three_1",
+    "task": "a_sort_three",
+    "exit": 0,
+    "state": "SUCCEEDED",
+    "failure": null,
+    "succeeded": true,
+    "goal_true_per_oracle": true,
+    "false_success": false,
+    "atoms": [
+     {
+      "run": "a_sort_three_1",
+      "phase": "goal",
+      "atom": {
+       "kind": "object_at",
+       "object": "x",
+       "location": "sx"
+      },
+      "verdict": "true",
+      "truth": true,
+      "expected_unknown": false,
+      "t_ms": 709479
+     },
+     {
+      "run": "a_sort_three_1",
+      "phase": "goal",
+      "atom": {
+       "kind": "object_at",
+       "object": "y",
+       "location": "sy"
+      },
+      "verdict": "true",
+      "truth": true,
+      "expected_unknown": false,
+      "t_ms": 709479
+     },
+     {
+      "run": "a_sort_three_1",
+      "phase": "goal",
+      "atom": {
+       "kind": "object_at",
+       "object": "z",
+       "location": "sz"
+      },
+      "verdict": "true",
+      "truth": true,
+      "expected_unknown": false,
+      "t_ms": 709479
+     }
+    ],
+    "fallen_per_oracle": false,
+    "stance_model": "free",
+    "arm_stance": "supported",
+    "observation_motion": [],
+    "steps": [
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 80.8
+     },
+     {
+      "kind": "grasp",
+      "status": "succeeded",
+      "sim_s": 126.7
+     },
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 66.3
+     },
+     {
+      "kind": "place",
+      "status": "succeeded",
+      "sim_s": 25.3
+     },
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 92.1
+     },
+     {
+      "kind": "grasp",
+      "status": "succeeded",
+      "sim_s": 28.0
+     },
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 81.4
+     },
+     {
+      "kind": "place",
+      "status": "succeeded",
+      "sim_s": 25.3
+     },
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 52.3
+     },
+     {
+      "kind": "grasp",
+      "status": "succeeded",
+      "sim_s": 28.2
+     },
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 72.0
+     },
+     {
+      "kind": "place",
+      "status": "succeeded",
+      "sim_s": 25.1
+     }
+    ],
+    "realtime": {
+     "realtime_ratio": 0.9998,
+     "worst_second_ratio": 0.9994,
+     "stalls": 0,
+     "realtime_valid": true,
+     "step_compute_ms": {
+      "budget": 2.0,
+      "mean": 0.253,
+      "p99": 0.907,
+      "max": 8.1,
+      "over_budget": 0.0001
+     },
+     "gc": [
+      0.09,
+      0.8,
+      10.59
+     ],
+     "slow_steps": [
+      [
+       245.84,
+       66.3,
+       0
+      ]
+     ],
+     "slow_windows": [],
+     "camera": {
+      "frames": 3550,
+      "dropped": 0,
+      "render_ms": 64.1,
+      "hz": 5.0
+     }
+    },
+    "counts": true,
+    "wall_s": 713.8,
+    "log_tail": null
+   },
+   {
+    "name": "a_sort_three_2",
+    "task": "a_sort_three",
+    "exit": 1,
+    "state": "FAILED",
+    "failure": {
+     "code": "S502",
+     "message": "no clear path for the arm: every reach that has an inverse-kinematics solution comes within the margins of a declared table or obstacle, or leaves no carry pose that clears the object ({'clear': False, 'boxes': ['a_table', 'b_table'], 'pelvis_in_map': [2.39, 2.378, -0.025], 'margins_m': {'sideways': 0.03, 'vertical': 0.015, 'contact_overlap': 0.01}, 'legs': ['carry->clear of the hip', 'clear of the hip->raised', 'raised->above', 'above->pre-place', 'pre-place->place', 'place->pre-place', 'pre-place->above', 'above->raised', 'raised->clear of the hip', 'clear of the hip->carry'], 'closest': {'over_limit_m': -0.0271, 'clearance_m': -0.0271, 'group': 'hand', 'link': 'right_hand_middle_1_link', 'box': 'b_table', 'leg': 'above->raised', 'at': 0.44}})",
+     "step": 4
+    },
+    "succeeded": false,
+    "goal_true_per_oracle": null,
+    "false_success": false,
+    "atoms": [],
+    "fallen_per_oracle": false,
+    "stance_model": "free",
+    "arm_stance": "supported",
+    "observation_motion": [],
+    "steps": [
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 52.6
+     },
+     {
+      "kind": "grasp",
+      "status": "succeeded",
+      "sim_s": 93.9
+     },
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 100.5
+     },
+     {
+      "kind": "place",
+      "status": "failed",
+      "sim_s": 7.2
+     }
+    ],
+    "realtime": {
+     "realtime_ratio": 0.9994,
+     "worst_second_ratio": 0.9993,
+     "stalls": 0,
+     "realtime_valid": true,
+     "step_compute_ms": {
+      "budget": 2.0,
+      "mean": 0.277,
+      "p99": 0.915,
+      "max": 2.2,
+      "over_budget": 0.0001
+     },
+     "gc": [
+      0.1,
+      0.8,
+      11.12
+     ],
+     "slow_steps": [
+      [
+       127.42,
+       99.4,
+       0
+      ]
+     ],
+     "slow_windows": [],
+     "camera": {
+      "frames": 1297,
+      "dropped": 0,
+      "render_ms": 66.0,
+      "hz": 5.0
+     }
+    },
+    "counts": true,
+    "wall_s": 263.3,
+    "log_tail": null
+   },
+   {
+    "name": "a_sort_three_3",
+    "task": "a_sort_three",
+    "exit": 0,
+    "state": "SUCCEEDED",
+    "failure": null,
+    "succeeded": true,
+    "goal_true_per_oracle": true,
+    "false_success": false,
+    "atoms": [
+     {
+      "run": "a_sort_three_3",
+      "phase": "goal",
+      "atom": {
+       "kind": "object_at",
+       "object": "x",
+       "location": "sx"
+      },
+      "verdict": "true",
+      "truth": true,
+      "expected_unknown": false,
+      "t_ms": 709479
+     },
+     {
+      "run": "a_sort_three_3",
+      "phase": "goal",
+      "atom": {
+       "kind": "object_at",
+       "object": "y",
+       "location": "sy"
+      },
+      "verdict": "true",
+      "truth": true,
+      "expected_unknown": false,
+      "t_ms": 709479
+     },
+     {
+      "run": "a_sort_three_3",
+      "phase": "goal",
+      "atom": {
+       "kind": "object_at",
+       "object": "z",
+       "location": "sz"
+      },
+      "verdict": "true",
+      "truth": true,
+      "expected_unknown": false,
+      "t_ms": 709479
+     }
+    ],
+    "fallen_per_oracle": false,
+    "stance_model": "free",
+    "arm_stance": "supported",
+    "observation_motion": [],
+    "steps": [
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 64.8
+     },
+     {
+      "kind": "grasp",
+      "status": "succeeded",
+      "sim_s": 28.1
+     },
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 101.9
+     },
+     {
+      "kind": "place",
+      "status": "succeeded",
+      "sim_s": 25.3
+     },
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 62.9
+     },
+     {
+      "kind": "grasp",
+      "status": "succeeded",
+      "sim_s": 28.0
+     },
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 117.8
+     },
+     {
+      "kind": "place",
+      "status": "succeeded",
+      "sim_s": 25.2
+     },
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 61.4
+     },
+     {
+      "kind": "grasp",
+      "status": "succeeded",
+      "sim_s": 79.9
+     },
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 82.7
+     },
+     {
+      "kind": "place",
+      "status": "succeeded",
+      "sim_s": 25.3
+     }
+    ],
+    "realtime": {
+     "realtime_ratio": 0.9998,
+     "worst_second_ratio": 0.9936,
+     "stalls": 0,
+     "realtime_valid": true,
+     "step_compute_ms": {
+      "budget": 2.0,
+      "mean": 0.255,
+      "p99": 0.911,
+      "max": 8.5,
+      "over_budget": 0.0001
+     },
+     "gc": [
+      0.09,
+      0.82,
+      11.0
+     ],
+     "slow_steps": [],
+     "slow_windows": [],
+     "camera": {
+      "frames": 3550,
+      "dropped": 0,
+      "render_ms": 64.1,
+      "hz": 5.0
+     }
+    },
+    "counts": true,
+    "wall_s": 713.9,
+    "log_tail": null
+   }
+  ],
+  "e_box_then_dock": [
+   {
+    "name": "e_box_then_dock_1",
+    "task": "e_box_then_dock",
+    "exit": 0,
+    "state": "SUCCEEDED",
+    "failure": null,
+    "succeeded": true,
+    "goal_true_per_oracle": true,
+    "false_success": false,
+    "atoms": [
+     {
+      "run": "e_box_then_dock_1",
+      "phase": "goal",
+      "atom": {
+       "kind": "object_at",
+       "object": "box",
+       "location": "dst"
+      },
+      "verdict": "true",
+      "truth": true,
+      "expected_unknown": false,
+      "t_ms": 217480
+     },
+     {
+      "run": "e_box_then_dock_1",
+      "phase": "goal",
+      "atom": {
+       "kind": "robot_at",
+       "robot": "r",
+       "location": "dock"
+      },
+      "verdict": "true",
+      "truth": true,
+      "expected_unknown": false,
+      "t_ms": 217480
+     }
+    ],
+    "fallen_per_oracle": false,
+    "stance_model": "free",
+    "arm_stance": "supported",
+    "observation_motion": [],
+    "steps": [
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 53.8
+     },
+     {
+      "kind": "grasp",
+      "status": "succeeded",
+      "sim_s": 28.0
+     },
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 79.1
+     },
+     {
+      "kind": "place",
+      "status": "succeeded",
+      "sim_s": 25.4
+     },
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 25.0
+     }
+    ],
+    "realtime": {
+     "realtime_ratio": 0.9993,
+     "worst_second_ratio": 0.9987,
+     "stalls": 0,
+     "realtime_valid": true,
+     "step_compute_ms": {
+      "budget": 2.0,
+      "mean": 0.251,
+      "p99": 0.856,
+      "max": 7.3,
+      "over_budget": 0.0001
+     },
+     "gc": [
+      0.09,
+      0.76,
+      12.8
+     ],
+     "slow_steps": [],
+     "slow_windows": [],
+     "camera": {
+      "frames": 1090,
+      "dropped": 0,
+      "render_ms": 62.7,
+      "hz": 5.0
+     }
+    },
+    "counts": true,
+    "wall_s": 221.8,
+    "log_tail": null
+   },
+   {
+    "name": "e_box_then_dock_2",
+    "task": "e_box_then_dock",
+    "exit": 0,
+    "state": "SUCCEEDED",
+    "failure": null,
+    "succeeded": true,
+    "goal_true_per_oracle": true,
+    "false_success": false,
+    "atoms": [
+     {
+      "run": "e_box_then_dock_2",
+      "phase": "goal",
+      "atom": {
+       "kind": "object_at",
+       "object": "box",
+       "location": "dst"
+      },
+      "verdict": "true",
+      "truth": true,
+      "expected_unknown": false,
+      "t_ms": 188264
+     },
+     {
+      "run": "e_box_then_dock_2",
+      "phase": "goal",
+      "atom": {
+       "kind": "robot_at",
+       "robot": "r",
+       "location": "dock"
+      },
+      "verdict": "true",
+      "truth": true,
+      "expected_unknown": false,
+      "t_ms": 188264
+     }
+    ],
+    "fallen_per_oracle": false,
+    "stance_model": "free",
+    "arm_stance": "supported",
+    "observation_motion": [],
+    "steps": [
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 33.4
+     },
+     {
+      "kind": "grasp",
+      "status": "succeeded",
+      "sim_s": 28.0
+     },
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 82.6
+     },
+     {
+      "kind": "place",
+      "status": "succeeded",
+      "sim_s": 25.0
+     },
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 13.1
+     }
+    ],
+    "realtime": {
+     "realtime_ratio": 0.9991,
+     "worst_second_ratio": 0.9926,
+     "stalls": 0,
+     "realtime_valid": true,
+     "step_compute_ms": {
+      "budget": 2.0,
+      "mean": 0.236,
+      "p99": 0.832,
+      "max": 8.3,
+      "over_budget": 0.0001
+     },
+     "gc": [
+      0.1,
+      0.77,
+      10.57
+     ],
+     "slow_steps": [],
+     "slow_windows": [],
+     "camera": {
+      "frames": 944,
+      "dropped": 0,
+      "render_ms": 57.2,
+      "hz": 5.01
+     }
+    },
+    "counts": true,
+    "wall_s": 192.6,
+    "log_tail": null
+   },
+   {
+    "name": "e_box_then_dock_3",
+    "task": "e_box_then_dock",
+    "exit": 0,
+    "state": "SUCCEEDED",
+    "failure": null,
+    "succeeded": true,
+    "goal_true_per_oracle": true,
+    "false_success": false,
+    "atoms": [
+     {
+      "run": "e_box_then_dock_3",
+      "phase": "goal",
+      "atom": {
+       "kind": "object_at",
+       "object": "box",
+       "location": "dst"
+      },
+      "verdict": "true",
+      "truth": true,
+      "expected_unknown": false,
+      "t_ms": 178476
+     },
+     {
+      "run": "e_box_then_dock_3",
+      "phase": "goal",
+      "atom": {
+       "kind": "robot_at",
+       "robot": "r",
+       "location": "dock"
+      },
+      "verdict": "true",
+      "truth": true,
+      "expected_unknown": false,
+      "t_ms": 178476
+     }
+    ],
+    "fallen_per_oracle": false,
+    "stance_model": "free",
+    "arm_stance": "supported",
+    "observation_motion": [],
+    "steps": [
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 43.6
+     },
+     {
+      "kind": "grasp",
+      "status": "succeeded",
+      "sim_s": 28.2
+     },
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 65.5
+     },
+     {
+      "kind": "place",
+      "status": "succeeded",
+      "sim_s": 25.2
+     },
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 10.0
+     }
+    ],
+    "realtime": {
+     "realtime_ratio": 0.9991,
+     "worst_second_ratio": 0.9996,
+     "stalls": 0,
+     "realtime_valid": true,
+     "step_compute_ms": {
+      "budget": 2.0,
+      "mean": 0.236,
+      "p99": 0.847,
+      "max": 3.0,
+      "over_budget": 0.0001
+     },
+     "gc": [
+      0.1,
+      0.79,
+      10.91
+     ],
+     "slow_steps": [],
+     "slow_windows": [],
+     "camera": {
+      "frames": 895,
+      "dropped": 0,
+      "render_ms": 62.7,
+      "hz": 5.0
+     }
+    },
+    "counts": true,
+    "wall_s": 182.8,
+    "log_tail": null
+   }
+  ],
+  "e_hold_box": [
+   {
+    "name": "e_hold_box_1",
+    "task": "e_hold_box",
+    "exit": 0,
+    "state": "SUCCEEDED",
+    "failure": null,
+    "succeeded": true,
+    "goal_true_per_oracle": true,
+    "false_success": false,
+    "atoms": [
+     {
+      "run": "e_hold_box_1",
+      "phase": "goal",
+      "atom": {
+       "kind": "holding",
+       "robot": "r",
+       "object": "box"
+      },
+      "verdict": "true",
+      "truth": true,
+      "expected_unknown": false,
+      "t_ms": 127495
+     }
+    ],
+    "fallen_per_oracle": false,
+    "stance_model": "free",
+    "arm_stance": "supported",
+    "observation_motion": [
+     [
+      "goal",
+      true
+     ]
+    ],
+    "steps": [
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 38.0
+     },
+     {
+      "kind": "grasp",
+      "status": "succeeded",
+      "sim_s": 77.5
+     }
+    ],
+    "realtime": {
+     "realtime_ratio": 0.9985,
+     "worst_second_ratio": 0.9986,
+     "stalls": 0,
+     "realtime_valid": true,
+     "step_compute_ms": {
+      "budget": 2.0,
+      "mean": 0.232,
+      "p99": 0.845,
+      "max": 7.4,
+      "over_budget": 0.0001
+     },
+     "gc": [
+      0.1,
+      0.81,
+      11.2
+     ],
+     "slow_steps": [],
+     "slow_windows": [],
+     "camera": {
+      "frames": 665,
+      "dropped": 0,
+      "render_ms": 64.3,
+      "hz": 5.02
+     }
+    },
+    "counts": true,
+    "wall_s": 136.8,
+    "log_tail": null
+   },
+   {
+    "name": "e_hold_box_2",
+    "task": "e_hold_box",
+    "exit": 0,
+    "state": "SUCCEEDED",
+    "failure": null,
+    "succeeded": true,
+    "goal_true_per_oracle": true,
+    "false_success": false,
+    "atoms": [
+     {
+      "run": "e_hold_box_2",
+      "phase": "goal",
+      "atom": {
+       "kind": "holding",
+       "robot": "r",
+       "object": "box"
+      },
+      "verdict": "true",
+      "truth": true,
+      "expected_unknown": false,
+      "t_ms": 75492
+     }
+    ],
+    "fallen_per_oracle": false,
+    "stance_model": "free",
+    "arm_stance": "supported",
+    "observation_motion": [
+     [
+      "goal",
+      true
+     ]
+    ],
+    "steps": [
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 35.6
+     },
+     {
+      "kind": "grasp",
+      "status": "succeeded",
+      "sim_s": 28.0
+     }
+    ],
+    "realtime": {
+     "realtime_ratio": 0.9992,
+     "worst_second_ratio": 0.994,
+     "stalls": 0,
+     "realtime_valid": true,
+     "step_compute_ms": {
+      "budget": 2.0,
+      "mean": 0.228,
+      "p99": 0.847,
+      "max": 7.6,
+      "over_budget": 0.0001
+     },
+     "gc": [
+      0.11,
+      0.78,
+      10.99
+     ],
+     "slow_steps": [],
+     "slow_windows": [],
+     "camera": {
+      "frames": 405,
+      "dropped": 0,
+      "render_ms": 62.8,
+      "hz": 5.01
+     }
+    },
+    "counts": true,
+    "wall_s": 84.6,
+    "log_tail": null
+   },
+   {
+    "name": "e_hold_box_3",
+    "task": "e_hold_box",
+    "exit": 0,
+    "state": "SUCCEEDED",
+    "failure": null,
+    "succeeded": true,
+    "goal_true_per_oracle": true,
+    "false_success": false,
+    "atoms": [
+     {
+      "run": "e_hold_box_3",
+      "phase": "goal",
+      "atom": {
+       "kind": "holding",
+       "robot": "r",
+       "object": "box"
+      },
+      "verdict": "true",
+      "truth": true,
+      "expected_unknown": false,
+      "t_ms": 88091
+     }
+    ],
+    "fallen_per_oracle": false,
+    "stance_model": "free",
+    "arm_stance": "supported",
+    "observation_motion": [
+     [
+      "goal",
+      true
+     ]
+    ],
+    "steps": [
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 48.2
+     },
+     {
+      "kind": "grasp",
+      "status": "succeeded",
+      "sim_s": 27.9
+     }
+    ],
+    "realtime": {
+     "realtime_ratio": 0.9998,
+     "worst_second_ratio": 0.9997,
+     "stalls": 0,
+     "realtime_valid": true,
+     "step_compute_ms": {
+      "budget": 2.0,
+      "mean": 0.228,
+      "p99": 0.84,
+      "max": 7.7,
+      "over_budget": 0.0001
+     },
+     "gc": [
+      0.1,
+      0.82,
+      10.96
+     ],
+     "slow_steps": [],
+     "slow_windows": [],
+     "camera": {
+      "frames": 468,
+      "dropped": 0,
+      "render_ms": 62.6,
+      "hz": 5.01
+     }
+    },
+    "counts": true,
+    "wall_s": 97.2,
+    "log_tail": null
+   }
+  ],
+  "e_pause_home": [
+   {
+    "name": "e_pause_home_1",
+    "task": "e_pause_home",
+    "exit": 0,
+    "state": "SUCCEEDED",
+    "failure": null,
+    "succeeded": true,
+    "goal_true_per_oracle": true,
+    "false_success": false,
+    "atoms": [
+     {
+      "run": "e_pause_home_1",
+      "phase": "goal",
+      "atom": {
+       "kind": "robot_at",
+       "robot": "r",
+       "location": "home"
+      },
+      "verdict": "true",
+      "truth": true,
+      "expected_unknown": false,
+      "t_ms": 82675
+     }
+    ],
+    "fallen_per_oracle": false,
+    "stance_model": "free",
+    "arm_stance": "supported",
+    "observation_motion": [],
+    "steps": [
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 21.2
+     },
+     {
+      "kind": "wait_for",
+      "status": "succeeded",
+      "sim_s": 0.5
+     },
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 54.9
+     }
+    ],
+    "realtime": {
+     "realtime_ratio": 0.9985,
+     "worst_second_ratio": 0.9998,
+     "stalls": 0,
+     "realtime_valid": true,
+     "step_compute_ms": {
+      "budget": 2.0,
+      "mean": 0.231,
+      "p99": 0.797,
+      "max": 1.2,
+      "over_budget": 0.0
+     },
+     "gc": [
+      0.11,
+      0.83,
+      11.69
+     ],
+     "slow_steps": [],
+     "slow_windows": [],
+     "camera": {
+      "frames": 416,
+      "dropped": 0,
+      "render_ms": 62.5,
+      "hz": 5.0
+     }
+    },
+    "counts": true,
+    "wall_s": 87.0,
+    "log_tail": null
+   },
+   {
+    "name": "e_pause_home_2",
+    "task": "e_pause_home",
+    "exit": 0,
+    "state": "SUCCEEDED",
+    "failure": null,
+    "succeeded": true,
+    "goal_true_per_oracle": true,
+    "false_success": false,
+    "atoms": [
+     {
+      "run": "e_pause_home_2",
+      "phase": "goal",
+      "atom": {
+       "kind": "robot_at",
+       "robot": "r",
+       "location": "home"
+      },
+      "verdict": "true",
+      "truth": true,
+      "expected_unknown": false,
+      "t_ms": 88859
+     }
+    ],
+    "fallen_per_oracle": false,
+    "stance_model": "free",
+    "arm_stance": "supported",
+    "observation_motion": [],
+    "steps": [
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 45.4
+     },
+     {
+      "kind": "wait_for",
+      "status": "succeeded",
+      "sim_s": 0.5
+     },
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 36.9
+     }
+    ],
+    "realtime": {
+     "realtime_ratio": 0.9984,
+     "worst_second_ratio": 0.9997,
+     "stalls": 0,
+     "realtime_valid": true,
+     "step_compute_ms": {
+      "budget": 2.0,
+      "mean": 0.236,
+      "p99": 0.779,
+      "max": 1.2,
+      "over_budget": 0.0
+     },
+     "gc": [
+      0.09,
+      0.78,
+      10.5
+     ],
+     "slow_steps": [
+      [
+       27.42,
+       79.9,
+       0
+      ]
+     ],
+     "slow_windows": [],
+     "camera": {
+      "frames": 447,
+      "dropped": 0,
+      "render_ms": 60.4,
+      "hz": 5.01
+     }
+    },
+    "counts": true,
+    "wall_s": 93.2,
+    "log_tail": null
+   },
+   {
+    "name": "e_pause_home_3",
+    "task": "e_pause_home",
+    "exit": 0,
+    "state": "SUCCEEDED",
+    "failure": null,
+    "succeeded": true,
+    "goal_true_per_oracle": true,
+    "false_success": false,
+    "atoms": [
+     {
+      "run": "e_pause_home_3",
+      "phase": "goal",
+      "atom": {
+       "kind": "robot_at",
+       "robot": "r",
+       "location": "home"
+      },
+      "verdict": "true",
+      "truth": true,
+      "expected_unknown": false,
+      "t_ms": 81259
+     }
+    ],
+    "fallen_per_oracle": false,
+    "stance_model": "free",
+    "arm_stance": "supported",
+    "observation_motion": [],
+    "steps": [
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 31.0
+     },
+     {
+      "kind": "wait_for",
+      "status": "succeeded",
+      "sim_s": 0.5
+     },
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 43.7
+     }
+    ],
+    "realtime": {
+     "realtime_ratio": 0.9983,
+     "worst_second_ratio": 0.9998,
+     "stalls": 0,
+     "realtime_valid": true,
+     "step_compute_ms": {
+      "budget": 2.0,
+      "mean": 0.234,
+      "p99": 0.778,
+      "max": 1.2,
+      "over_budget": 0.0
+     },
+     "gc": [
+      0.09,
+      0.78,
+      10.5
+     ],
+     "slow_steps": [],
+     "slow_windows": [],
+     "camera": {
+      "frames": 409,
+      "dropped": 0,
+      "render_ms": 56.6,
+      "hz": 5.0
+     }
+    },
+    "counts": true,
+    "wall_s": 85.6,
+    "log_tail": null
+   }
+  ],
+  "e_pick_place": [
+   {
+    "name": "e_pick_place_1",
+    "task": "e_pick_place",
+    "exit": 0,
+    "state": "SUCCEEDED",
+    "failure": null,
+    "succeeded": true,
+    "goal_true_per_oracle": true,
+    "false_success": false,
+    "atoms": [
+     {
+      "run": "e_pick_place_1",
+      "phase": "goal",
+      "atom": {
+       "kind": "object_at",
+       "object": "box",
+       "location": "dst"
+      },
+      "verdict": "true",
+      "truth": true,
+      "expected_unknown": false,
+      "t_ms": 158468
+     }
+    ],
+    "fallen_per_oracle": false,
+    "stance_model": "free",
+    "arm_stance": "supported",
+    "observation_motion": [],
+    "steps": [
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 31.2
+     },
+     {
+      "kind": "grasp",
+      "status": "succeeded",
+      "sim_s": 28.1
+     },
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 67.9
+     },
+     {
+      "kind": "place",
+      "status": "succeeded",
+      "sim_s": 25.3
+     }
+    ],
+    "realtime": {
+     "realtime_ratio": 0.9991,
+     "worst_second_ratio": 0.9995,
+     "stalls": 0,
+     "realtime_valid": true,
+     "step_compute_ms": {
+      "budget": 2.0,
+      "mean": 0.239,
+      "p99": 0.848,
+      "max": 1.4,
+      "over_budget": 0.0
+     },
+     "gc": [
+      0.09,
+      0.8,
+      11.55
+     ],
+     "slow_steps": [],
+     "slow_windows": [],
+     "camera": {
+      "frames": 795,
+      "dropped": 0,
+      "render_ms": 66.5,
+      "hz": 5.0
+     }
+    },
+    "counts": true,
+    "wall_s": 162.8,
+    "log_tail": null
+   },
+   {
+    "name": "e_pick_place_2",
+    "task": "e_pick_place",
+    "exit": 0,
+    "state": "SUCCEEDED",
+    "failure": null,
+    "succeeded": true,
+    "goal_true_per_oracle": true,
+    "false_success": false,
+    "atoms": [
+     {
+      "run": "e_pick_place_2",
+      "phase": "goal",
+      "atom": {
+       "kind": "object_at",
+       "object": "box",
+       "location": "dst"
+      },
+      "verdict": "true",
+      "truth": true,
+      "expected_unknown": false,
+      "t_ms": 169676
+     }
+    ],
+    "fallen_per_oracle": false,
+    "stance_model": "free",
+    "arm_stance": "supported",
+    "observation_motion": [],
+    "steps": [
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 43.4
+     },
+     {
+      "kind": "grasp",
+      "status": "succeeded",
+      "sim_s": 28.2
+     },
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 66.6
+     },
+     {
+      "kind": "place",
+      "status": "succeeded",
+      "sim_s": 25.5
+     }
+    ],
+    "realtime": {
+     "realtime_ratio": 0.9991,
+     "worst_second_ratio": 0.9967,
+     "stalls": 0,
+     "realtime_valid": true,
+     "step_compute_ms": {
+      "budget": 2.0,
+      "mean": 0.242,
+      "p99": 0.886,
+      "max": 8.1,
+      "over_budget": 0.0002
+     },
+     "gc": [
+      0.1,
+      0.76,
+      10.85
+     ],
+     "slow_steps": [],
+     "slow_windows": [],
+     "camera": {
+      "frames": 851,
+      "dropped": 0,
+      "render_ms": 64.0,
+      "hz": 5.0
+     }
+    },
+    "counts": true,
+    "wall_s": 174.0,
+    "log_tail": null
+   },
+   {
+    "name": "e_pick_place_3",
+    "task": "e_pick_place",
+    "exit": 0,
+    "state": "SUCCEEDED",
+    "failure": null,
+    "succeeded": true,
+    "goal_true_per_oracle": true,
+    "false_success": false,
+    "atoms": [
+     {
+      "run": "e_pick_place_3",
+      "phase": "goal",
+      "atom": {
+       "kind": "object_at",
+       "object": "box",
+       "location": "dst"
+      },
+      "verdict": "true",
+      "truth": true,
+      "expected_unknown": false,
+      "t_ms": 159284
+     }
+    ],
+    "fallen_per_oracle": false,
+    "stance_model": "free",
+    "arm_stance": "supported",
+    "observation_motion": [],
+    "steps": [
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 44.0
+     },
+     {
+      "kind": "grasp",
+      "status": "succeeded",
+      "sim_s": 28.0
+     },
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 56.0
+     },
+     {
+      "kind": "place",
+      "status": "succeeded",
+      "sim_s": 25.2
+     }
+    ],
+    "realtime": {
+     "realtime_ratio": 0.9991,
+     "worst_second_ratio": 0.9993,
+     "stalls": 0,
+     "realtime_valid": true,
+     "step_compute_ms": {
+      "budget": 2.0,
+      "mean": 0.249,
+      "p99": 0.884,
+      "max": 6.7,
+      "over_budget": 0.0001
+     },
+     "gc": [
+      0.09,
+      0.81,
+      11.03
+     ],
+     "slow_steps": [],
+     "slow_windows": [],
+     "camera": {
+      "frames": 799,
+      "dropped": 0,
+      "render_ms": 60.6,
+      "hz": 5.0
+     }
+    },
+    "counts": true,
+    "wall_s": 163.6,
+    "log_tail": null
+   }
+  ],
+  "l_vial_hold": [
+   {
+    "name": "l_vial_hold_1",
+    "task": "l_vial_hold",
+    "exit": 1,
+    "state": "FAILED",
+    "failure": {
+     "code": "S502",
+     "message": "no clear path for the arm: every reach that has an inverse-kinematics solution comes within the margins of a declared table or obstacle, or leaves no carry pose that clears the object ({'clear': False, 'boxes': ['a_table', 'b_table'], 'pelvis_in_map': [2.444, -0.03, -0.047], 'margins_m': {'sideways': 0.03, 'vertical': 0.015, 'contact_overlap': 0.01}, 'legs': ['carry->clear of the hip', 'clear of the hip->raised', 'raised->above', 'above->pre-place', 'pre-place->place', 'place->pre-place', 'pre-place->above', 'above->raised', 'raised->clear of the hip', 'clear of the hip->carry'], 'closest': {'over_limit_m': -0.0106, 'clearance_m': -0.0106, 'group': 'held', 'link': 'left_wrist_yaw_link', 'box': 'a_table', 'leg': 'clear of the hip->raised', 'at': 0.22}})",
+     "step": 4
+    },
+    "succeeded": false,
+    "goal_true_per_oracle": null,
+    "false_success": false,
+    "atoms": [],
+    "fallen_per_oracle": false,
+    "stance_model": "free",
+    "arm_stance": "supported",
+    "observation_motion": [],
+    "steps": [
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 37.2
+     },
+     {
+      "kind": "grasp",
+      "status": "succeeded",
+      "sim_s": 221.3
+     },
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 10.7
+     },
+     {
+      "kind": "place",
+      "status": "failed",
+      "sim_s": 9.0
+     }
+    ],
+    "realtime": {
+     "realtime_ratio": 0.9997,
+     "worst_second_ratio": 0.9707,
+     "stalls": 0,
+     "realtime_valid": true,
+     "step_compute_ms": {
+      "budget": 2.0,
+      "mean": 0.24,
+      "p99": 0.865,
+      "max": 7.6,
+      "over_budget": 0.0001
+     },
+     "gc": [
+      0.09,
+      0.9,
+      12.92
+     ],
+     "slow_steps": [
+      [
+       150.96,
+       66.4,
+       0
+      ]
+     ],
+     "slow_windows": [],
+     "camera": {
+      "frames": 1417,
+      "dropped": 0,
+      "render_ms": 65.1,
+      "hz": 5.02
+     }
+    },
+    "counts": true,
+    "wall_s": 287.3,
+    "log_tail": null
+   },
+   {
+    "name": "l_vial_hold_2",
+    "task": "l_vial_hold",
+    "exit": 0,
+    "state": "SUCCEEDED",
+    "failure": null,
+    "succeeded": true,
+    "goal_true_per_oracle": true,
+    "false_success": false,
+    "atoms": [
+     {
+      "run": "l_vial_hold_2",
+      "phase": "goal",
+      "atom": {
+       "kind": "object_at",
+       "object": "a",
+       "location": "spin"
+      },
+      "verdict": "true",
+      "truth": true,
+      "expected_unknown": false,
+      "t_ms": 324296
+     },
+     {
+      "run": "l_vial_hold_2",
+      "phase": "goal",
+      "atom": {
+       "kind": "holding",
+       "robot": "r",
+       "object": "b"
+      },
+      "verdict": "true",
+      "truth": true,
+      "expected_unknown": false,
+      "t_ms": 324296
+     },
+     {
+      "run": "l_vial_hold_2",
+      "phase": "goal",
+      "atom": {
+       "kind": "robot_at",
+       "robot": "r",
+       "location": "bench"
+      },
+      "verdict": "true",
+      "truth": true,
+      "expected_unknown": false,
+      "t_ms": 324296
+     }
+    ],
+    "fallen_per_oracle": false,
+    "stance_model": "free",
+    "arm_stance": "supported",
+    "observation_motion": [
+     [
+      "goal",
+      true
+     ]
+    ],
+    "steps": [
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 41.7
+     },
+     {
+      "kind": "grasp",
+      "status": "succeeded",
+      "sim_s": 93.4
+     },
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 6.4
+     },
+     {
+      "kind": "place",
+      "status": "succeeded",
+      "sim_s": 25.1
+     },
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 53.3
+     },
+     {
+      "kind": "grasp",
+      "status": "succeeded",
+      "sim_s": 28.0
+     },
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 64.6
+     }
+    ],
+    "realtime": {
+     "realtime_ratio": 0.9994,
+     "worst_second_ratio": 0.9939,
+     "stalls": 0,
+     "realtime_valid": true,
+     "step_compute_ms": {
+      "budget": 2.0,
+      "mean": 0.258,
+      "p99": 0.896,
+      "max": 4.3,
+      "over_budget": 0.0001
+     },
+     "gc": [
+      0.09,
+      0.78,
+      10.27
+     ],
+     "slow_steps": [],
+     "slow_windows": [],
+     "camera": {
+      "frames": 1649,
+      "dropped": 0,
+      "render_ms": 62.9,
+      "hz": 5.01
+     }
+    },
+    "counts": true,
+    "wall_s": 333.6,
+    "log_tail": null
+   },
+   {
+    "name": "l_vial_hold_3",
+    "task": "l_vial_hold",
+    "exit": 0,
+    "state": "SUCCEEDED",
+    "failure": null,
+    "succeeded": true,
+    "goal_true_per_oracle": true,
+    "false_success": false,
+    "atoms": [
+     {
+      "run": "l_vial_hold_3",
+      "phase": "goal",
+      "atom": {
+       "kind": "object_at",
+       "object": "a",
+       "location": "spin"
+      },
+      "verdict": "true",
+      "truth": true,
+      "expected_unknown": false,
+      "t_ms": 336504
+     },
+     {
+      "run": "l_vial_hold_3",
+      "phase": "goal",
+      "atom": {
+       "kind": "holding",
+       "robot": "r",
+       "object": "b"
+      },
+      "verdict": "true",
+      "truth": true,
+      "expected_unknown": false,
+      "t_ms": 336504
+     },
+     {
+      "run": "l_vial_hold_3",
+      "phase": "goal",
+      "atom": {
+       "kind": "robot_at",
+       "robot": "r",
+       "location": "bench"
+      },
+      "verdict": "true",
+      "truth": true,
+      "expected_unknown": false,
+      "t_ms": 336504
+     }
+    ],
+    "fallen_per_oracle": false,
+    "stance_model": "free",
+    "arm_stance": "supported",
+    "observation_motion": [
+     [
+      "goal",
+      true
+     ]
+    ],
+    "steps": [
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 38.6
+     },
+     {
+      "kind": "grasp",
+      "status": "succeeded",
+      "sim_s": 78.8
+     },
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 6.4
+     },
+     {
+      "kind": "place",
+      "status": "succeeded",
+      "sim_s": 25.2
+     },
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 85.8
+     },
+     {
+      "kind": "grasp",
+      "status": "succeeded",
+      "sim_s": 28.1
+     },
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 61.5
+     }
+    ],
+    "realtime": {
+     "realtime_ratio": 0.9995,
+     "worst_second_ratio": 0.9974,
+     "stalls": 0,
+     "realtime_valid": true,
+     "step_compute_ms": {
+      "budget": 2.0,
+      "mean": 0.259,
+      "p99": 0.91,
+      "max": 1.5,
+      "over_budget": 0.0
+     },
+     "gc": [
+      0.09,
+      0.77,
+      10.43
+     ],
+     "slow_steps": [],
+     "slow_windows": [],
+     "camera": {
+      "frames": 1710,
+      "dropped": 0,
+      "render_ms": 64.9,
+      "hz": 5.01
+     }
+    },
+    "counts": true,
+    "wall_s": 345.8,
+    "log_tail": null
+   }
+  ],
+  "l_vial_to_fridge": [
+   {
+    "name": "l_vial_to_fridge_1",
+    "task": "l_vial_to_fridge",
+    "exit": 0,
+    "state": "SUCCEEDED",
+    "failure": null,
+    "succeeded": true,
+    "goal_true_per_oracle": true,
+    "false_success": false,
+    "atoms": [
+     {
+      "run": "l_vial_to_fridge_1",
+      "phase": "goal",
+      "atom": {
+       "kind": "object_at",
+       "object": "vial",
+       "location": "dst"
+      },
+      "verdict": "true",
+      "truth": true,
+      "expected_unknown": false,
+      "t_ms": 152267
+     }
+    ],
+    "fallen_per_oracle": false,
+    "stance_model": "free",
+    "arm_stance": "supported",
+    "observation_motion": [],
+    "steps": [
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 32.4
+     },
+     {
+      "kind": "grasp",
+      "status": "succeeded",
+      "sim_s": 27.9
+     },
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 60.9
+     },
+     {
+      "kind": "place",
+      "status": "succeeded",
+      "sim_s": 25.1
+     }
+    ],
+    "realtime": {
+     "realtime_ratio": 0.9989,
+     "worst_second_ratio": 0.9993,
+     "stalls": 0,
+     "realtime_valid": true,
+     "step_compute_ms": {
+      "budget": 2.0,
+      "mean": 0.244,
+      "p99": 0.872,
+      "max": 24.0,
+      "over_budget": 0.0003
+     },
+     "gc": [
+      0.09,
+      0.77,
+      12.17
+     ],
+     "slow_steps": [
+      [
+       142.42,
+       24.0,
+       0
+      ],
+      [
+       142.46,
+       22.4,
+       0
+      ]
+     ],
+     "slow_windows": [],
+     "camera": {
+      "frames": 764,
+      "dropped": 0,
+      "render_ms": 65.4,
+      "hz": 5.0
+     }
+    },
+    "counts": true,
+    "wall_s": 156.6,
+    "log_tail": null
+   },
+   {
+    "name": "l_vial_to_fridge_2",
+    "task": "l_vial_to_fridge",
+    "exit": 1,
+    "state": "FAILED",
+    "failure": {
+     "code": "S517",
+     "message": "station marker 21 was not seen before arm work",
+     "step": 4
+    },
+    "succeeded": false,
+    "goal_true_per_oracle": null,
+    "false_success": false,
+    "atoms": [],
+    "fallen_per_oracle": false,
+    "stance_model": "free",
+    "arm_stance": "supported",
+    "observation_motion": [],
+    "steps": [
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 34.2
+     },
+     {
+      "kind": "grasp",
+      "status": "succeeded",
+      "sim_s": 28.1
+     },
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 98.5
+     },
+     {
+      "kind": "place",
+      "status": "failed",
+      "sim_s": 1.6
+     }
+    ],
+    "realtime": {
+     "realtime_ratio": 0.9992,
+     "worst_second_ratio": 0.9995,
+     "stalls": 0,
+     "realtime_valid": true,
+     "step_compute_ms": {
+      "budget": 2.0,
+      "mean": 0.254,
+      "p99": 0.858,
+      "max": 1.5,
+      "over_budget": 0.0
+     },
+     "gc": [
+      0.09,
+      0.79,
+      11.0
+     ],
+     "slow_steps": [],
+     "slow_windows": [],
+     "camera": {
+      "frames": 838,
+      "dropped": 0,
+      "render_ms": 63.0,
+      "hz": 5.0
+     }
+    },
+    "counts": true,
+    "wall_s": 171.4,
+    "log_tail": null
+   },
+   {
+    "name": "l_vial_to_fridge_3",
+    "task": "l_vial_to_fridge",
+    "exit": 0,
+    "state": "SUCCEEDED",
+    "failure": null,
+    "succeeded": true,
+    "goal_true_per_oracle": true,
+    "false_success": false,
+    "atoms": [
+     {
+      "run": "l_vial_to_fridge_3",
+      "phase": "goal",
+      "atom": {
+       "kind": "object_at",
+       "object": "vial",
+       "location": "dst"
+      },
+      "verdict": "true",
+      "truth": true,
+      "expected_unknown": false,
+      "t_ms": 231868
+     }
+    ],
+    "fallen_per_oracle": false,
+    "stance_model": "free",
+    "arm_stance": "supported",
+    "observation_motion": [],
+    "steps": [
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 49.2
+     },
+     {
+      "kind": "grasp",
+      "status": "succeeded",
+      "sim_s": 77.7
+     },
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 73.5
+     },
+     {
+      "kind": "place",
+      "status": "succeeded",
+      "sim_s": 25.4
+     }
+    ],
+    "realtime": {
+     "realtime_ratio": 0.9993,
+     "worst_second_ratio": 0.9997,
+     "stalls": 0,
+     "realtime_valid": true,
+     "step_compute_ms": {
+      "budget": 2.0,
+      "mean": 0.248,
+      "p99": 0.895,
+      "max": 7.2,
+      "over_budget": 0.0001
+     },
+     "gc": [
+      0.09,
+      0.84,
+      11.09
+     ],
+     "slow_steps": [],
+     "slow_windows": [],
+     "camera": {
+      "frames": 1162,
+      "dropped": 0,
+      "render_ms": 65.3,
+      "hz": 5.0
+     }
+    },
+    "counts": true,
+    "wall_s": 236.2,
+    "log_tail": null
+   }
+  ],
+  "w_part_precheck": [
+   {
+    "name": "w_part_precheck_1",
+    "task": "w_part_precheck",
+    "exit": 0,
+    "state": "SUCCEEDED",
+    "failure": null,
+    "succeeded": true,
+    "goal_true_per_oracle": true,
+    "false_success": false,
+    "atoms": [
+     {
+      "run": "w_part_precheck_1",
+      "phase": "preconditions",
+      "atom": {
+       "kind": "object_at",
+       "object": "item",
+       "location": "src"
+      },
+      "verdict": "true",
+      "truth": true,
+      "expected_unknown": false,
+      "t_ms": 6091
+     },
+     {
+      "run": "w_part_precheck_1",
+      "phase": "goal",
+      "atom": {
+       "kind": "object_at",
+       "object": "item",
+       "location": "dst"
+      },
+      "verdict": "true",
+      "truth": true,
+      "expected_unknown": false,
+      "t_ms": 131271
+     }
+    ],
+    "fallen_per_oracle": false,
+    "stance_model": "free",
+    "arm_stance": "supported",
+    "observation_motion": [],
+    "steps": [
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 11.2
+     },
+     {
+      "kind": "grasp",
+      "status": "succeeded",
+      "sim_s": 28.0
+     },
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 58.6
+     },
+     {
+      "kind": "place",
+      "status": "succeeded",
+      "sim_s": 25.4
+     }
+    ],
+    "realtime": {
+     "realtime_ratio": 0.999,
+     "worst_second_ratio": 0.9996,
+     "stalls": 0,
+     "realtime_valid": true,
+     "step_compute_ms": {
+      "budget": 2.0,
+      "mean": 0.246,
+      "p99": 0.887,
+      "max": 8.1,
+      "over_budget": 0.0001
+     },
+     "gc": [
+      0.09,
+      0.77,
+      9.94
+     ],
+     "slow_steps": [],
+     "slow_windows": [],
+     "camera": {
+      "frames": 659,
+      "dropped": 0,
+      "render_ms": 62.7,
+      "hz": 5.0
+     }
+    },
+    "counts": true,
+    "wall_s": 135.6,
+    "log_tail": null
+   },
+   {
+    "name": "w_part_precheck_2",
+    "task": "w_part_precheck",
+    "exit": 0,
+    "state": "SUCCEEDED",
+    "failure": null,
+    "succeeded": true,
+    "goal_true_per_oracle": true,
+    "false_success": false,
+    "atoms": [
+     {
+      "run": "w_part_precheck_2",
+      "phase": "preconditions",
+      "atom": {
+       "kind": "object_at",
+       "object": "item",
+       "location": "src"
+      },
+      "verdict": "true",
+      "truth": true,
+      "expected_unknown": false,
+      "t_ms": 6087
+     },
+     {
+      "run": "w_part_precheck_2",
+      "phase": "goal",
+      "atom": {
+       "kind": "object_at",
+       "object": "item",
+       "location": "dst"
+      },
+      "verdict": "true",
+      "truth": true,
+      "expected_unknown": false,
+      "t_ms": 213480
+     }
+    ],
+    "fallen_per_oracle": false,
+    "stance_model": "free",
+    "arm_stance": "supported",
+    "observation_motion": [],
+    "steps": [
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 25.2
+     },
+     {
+      "kind": "grasp",
+      "status": "succeeded",
+      "sim_s": 28.1
+     },
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 126.9
+     },
+     {
+      "kind": "place",
+      "status": "succeeded",
+      "sim_s": 25.2
+     }
+    ],
+    "realtime": {
+     "realtime_ratio": 0.9994,
+     "worst_second_ratio": 0.9995,
+     "stalls": 0,
+     "realtime_valid": true,
+     "step_compute_ms": {
+      "budget": 2.0,
+      "mean": 0.241,
+      "p99": 0.876,
+      "max": 7.6,
+      "over_budget": 0.0003
+     },
+     "gc": [
+      0.09,
+      0.79,
+      10.26
+     ],
+     "slow_steps": [],
+     "slow_windows": [],
+     "camera": {
+      "frames": 1070,
+      "dropped": 0,
+      "render_ms": 56.5,
+      "hz": 5.01
+     }
+    },
+    "counts": true,
+    "wall_s": 217.8,
+    "log_tail": null
+   },
+   {
+    "name": "w_part_precheck_3",
+    "task": "w_part_precheck",
+    "exit": 0,
+    "state": "SUCCEEDED",
+    "failure": null,
+    "succeeded": true,
+    "goal_true_per_oracle": true,
+    "false_success": false,
+    "atoms": [
+     {
+      "run": "w_part_precheck_3",
+      "phase": "preconditions",
+      "atom": {
+       "kind": "object_at",
+       "object": "item",
+       "location": "src"
+      },
+      "verdict": "true",
+      "truth": true,
+      "expected_unknown": false,
+      "t_ms": 6087
+     },
+     {
+      "run": "w_part_precheck_3",
+      "phase": "goal",
+      "atom": {
+       "kind": "object_at",
+       "object": "item",
+       "location": "dst"
+      },
+      "verdict": "true",
+      "truth": true,
+      "expected_unknown": false,
+      "t_ms": 208488
+     }
+    ],
+    "fallen_per_oracle": false,
+    "stance_model": "free",
+    "arm_stance": "supported",
+    "observation_motion": [],
+    "steps": [
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 18.0
+     },
+     {
+      "kind": "grasp",
+      "status": "succeeded",
+      "sim_s": 76.8
+     },
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 80.4
+     },
+     {
+      "kind": "place",
+      "status": "succeeded",
+      "sim_s": 25.2
+     }
+    ],
+    "realtime": {
+     "realtime_ratio": 0.9994,
+     "worst_second_ratio": 0.9988,
+     "stalls": 0,
+     "realtime_valid": true,
+     "step_compute_ms": {
+      "budget": 2.0,
+      "mean": 0.251,
+      "p99": 0.859,
+      "max": 4.4,
+      "over_budget": 0.0001
+     },
+     "gc": [
+      0.09,
+      0.81,
+      11.32
+     ],
+     "slow_steps": [],
+     "slow_windows": [],
+     "camera": {
+      "frames": 1045,
+      "dropped": 0,
+      "render_ms": 62.0,
+      "hz": 5.0
+     }
+    },
+    "counts": true,
+    "wall_s": 212.8,
+    "log_tail": null
+   }
+  ],
+  "w_pick_from_table": [
+   {
+    "name": "w_pick_from_table_1",
+    "task": "w_pick_from_table",
+    "exit": 0,
+    "state": "SUCCEEDED",
+    "failure": null,
+    "succeeded": true,
+    "goal_true_per_oracle": true,
+    "false_success": false,
+    "atoms": [
+     {
+      "run": "w_pick_from_table_1",
+      "phase": "goal",
+      "atom": {
+       "kind": "object_at",
+       "object": "item",
+       "location": "dst"
+      },
+      "verdict": "true",
+      "truth": true,
+      "expected_unknown": false,
+      "t_ms": 146875
+     }
+    ],
+    "fallen_per_oracle": false,
+    "stance_model": "free",
+    "arm_stance": "supported",
+    "observation_motion": [],
+    "steps": [
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 44.6
+     },
+     {
+      "kind": "grasp",
+      "status": "succeeded",
+      "sim_s": 28.0
+     },
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 43.2
+     },
+     {
+      "kind": "place",
+      "status": "succeeded",
+      "sim_s": 24.9
+     }
+    ],
+    "realtime": {
+     "realtime_ratio": 0.999,
+     "worst_second_ratio": 0.9968,
+     "stalls": 0,
+     "realtime_valid": true,
+     "step_compute_ms": {
+      "budget": 2.0,
+      "mean": 0.241,
+      "p99": 0.852,
+      "max": 7.9,
+      "over_budget": 0.0003
+     },
+     "gc": [
+      0.09,
+      0.78,
+      9.9
+     ],
+     "slow_steps": [],
+     "slow_windows": [],
+     "camera": {
+      "frames": 737,
+      "dropped": 0,
+      "render_ms": 64.1,
+      "hz": 5.0
+     }
+    },
+    "counts": true,
+    "wall_s": 151.2,
+    "log_tail": null
+   },
+   {
+    "name": "w_pick_from_table_2",
+    "task": "w_pick_from_table",
+    "exit": 0,
+    "state": "SUCCEEDED",
+    "failure": null,
+    "succeeded": true,
+    "goal_true_per_oracle": true,
+    "false_success": false,
+    "atoms": [
+     {
+      "run": "w_pick_from_table_2",
+      "phase": "goal",
+      "atom": {
+       "kind": "object_at",
+       "object": "item",
+       "location": "dst"
+      },
+      "verdict": "true",
+      "truth": true,
+      "expected_unknown": false,
+      "t_ms": 158684
+     }
+    ],
+    "fallen_per_oracle": false,
+    "stance_model": "free",
+    "arm_stance": "supported",
+    "observation_motion": [],
+    "steps": [
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 27.6
+     },
+     {
+      "kind": "grasp",
+      "status": "succeeded",
+      "sim_s": 27.9
+     },
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 71.8
+     },
+     {
+      "kind": "place",
+      "status": "succeeded",
+      "sim_s": 25.2
+     }
+    ],
+    "realtime": {
+     "realtime_ratio": 0.9991,
+     "worst_second_ratio": 0.9996,
+     "stalls": 0,
+     "realtime_valid": true,
+     "step_compute_ms": {
+      "budget": 2.0,
+      "mean": 0.239,
+      "p99": 0.848,
+      "max": 7.7,
+      "over_budget": 0.0001
+     },
+     "gc": [
+      0.15,
+      0.78,
+      10.18
+     ],
+     "slow_steps": [],
+     "slow_windows": [],
+     "camera": {
+      "frames": 796,
+      "dropped": 0,
+      "render_ms": 64.4,
+      "hz": 5.0
+     }
+    },
+    "counts": true,
+    "wall_s": 163.0,
+    "log_tail": null
+   },
+   {
+    "name": "w_pick_from_table_3",
+    "task": "w_pick_from_table",
+    "exit": 0,
+    "state": "SUCCEEDED",
+    "failure": null,
+    "succeeded": true,
+    "goal_true_per_oracle": true,
+    "false_success": false,
+    "atoms": [
+     {
+      "run": "w_pick_from_table_3",
+      "phase": "goal",
+      "atom": {
+       "kind": "object_at",
+       "object": "item",
+       "location": "dst"
+      },
+      "verdict": "true",
+      "truth": true,
+      "expected_unknown": false,
+      "t_ms": 231284
+     }
+    ],
+    "fallen_per_oracle": false,
+    "stance_model": "free",
+    "arm_stance": "supported",
+    "observation_motion": [],
+    "steps": [
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 28.8
+     },
+     {
+      "kind": "grasp",
+      "status": "succeeded",
+      "sim_s": 77.1
+     },
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 94.1
+     },
+     {
+      "kind": "place",
+      "status": "succeeded",
+      "sim_s": 25.2
+     }
+    ],
+    "realtime": {
+     "realtime_ratio": 0.9995,
+     "worst_second_ratio": 0.9992,
+     "stalls": 0,
+     "realtime_valid": true,
+     "step_compute_ms": {
+      "budget": 2.0,
+      "mean": 0.256,
+      "p99": 0.911,
+      "max": 7.8,
+      "over_budget": 0.0001
+     },
+     "gc": [
+      0.09,
+      0.77,
+      10.38
+     ],
+     "slow_steps": [],
+     "slow_windows": [],
+     "camera": {
+      "frames": 1159,
+      "dropped": 0,
+      "render_ms": 62.5,
+      "hz": 5.0
+     }
+    },
+    "counts": true,
+    "wall_s": 235.6,
+    "log_tail": null
+   }
+  ],
+  "w_split_boxes": [
+   {
+    "name": "w_split_boxes_1",
+    "task": "w_split_boxes",
+    "exit": 0,
+    "state": "SUCCEEDED",
+    "failure": null,
+    "succeeded": true,
+    "goal_true_per_oracle": true,
+    "false_success": false,
+    "atoms": [
+     {
+      "run": "w_split_boxes_1",
+      "phase": "goal",
+      "atom": {
+       "kind": "object_at",
+       "object": "a",
+       "location": "ta"
+      },
+      "verdict": "true",
+      "truth": true,
+      "expected_unknown": false,
+      "t_ms": 402688
+     },
+     {
+      "run": "w_split_boxes_1",
+      "phase": "goal",
+      "atom": {
+       "kind": "object_at",
+       "object": "b",
+       "location": "tb"
+      },
+      "verdict": "true",
+      "truth": true,
+      "expected_unknown": false,
+      "t_ms": 402688
+     }
+    ],
+    "fallen_per_oracle": false,
+    "stance_model": "free",
+    "arm_stance": "supported",
+    "observation_motion": [],
+    "steps": [
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 44.8
+     },
+     {
+      "kind": "grasp",
+      "status": "succeeded",
+      "sim_s": 28.1
+     },
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 104.5
+     },
+     {
+      "kind": "place",
+      "status": "succeeded",
+      "sim_s": 25.2
+     },
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 58.0
+     },
+     {
+      "kind": "grasp",
+      "status": "succeeded",
+      "sim_s": 28.3
+     },
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 82.5
+     },
+     {
+      "kind": "place",
+      "status": "succeeded",
+      "sim_s": 25.1
+     }
+    ],
+    "realtime": {
+     "realtime_ratio": 0.9996,
+     "worst_second_ratio": 0.995,
+     "stalls": 0,
+     "realtime_valid": true,
+     "step_compute_ms": {
+      "budget": 2.0,
+      "mean": 0.246,
+      "p99": 0.925,
+      "max": 7.9,
+      "over_budget": 0.0003
+     },
+     "gc": [
+      0.09,
+      0.79,
+      10.63
+     ],
+     "slow_steps": [
+      [
+       102.42,
+       65.5,
+       0
+      ],
+      [
+       292.42,
+       21.4,
+       0
+      ],
+      [
+       292.46,
+       35.9,
+       0
+      ]
+     ],
+     "slow_windows": [],
+     "camera": {
+      "frames": 2016,
+      "dropped": 0,
+      "render_ms": 63.9,
+      "hz": 5.0
+     }
+    },
+    "counts": true,
+    "wall_s": 407.0,
+    "log_tail": null
+   },
+   {
+    "name": "w_split_boxes_2",
+    "task": "w_split_boxes",
+    "exit": 0,
+    "state": "SUCCEEDED",
+    "failure": null,
+    "succeeded": true,
+    "goal_true_per_oracle": true,
+    "false_success": false,
+    "atoms": [
+     {
+      "run": "w_split_boxes_2",
+      "phase": "goal",
+      "atom": {
+       "kind": "object_at",
+       "object": "a",
+       "location": "ta"
+      },
+      "verdict": "true",
+      "truth": true,
+      "expected_unknown": false,
+      "t_ms": 396688
+     },
+     {
+      "run": "w_split_boxes_2",
+      "phase": "goal",
+      "atom": {
+       "kind": "object_at",
+       "object": "b",
+       "location": "tb"
+      },
+      "verdict": "true",
+      "truth": true,
+      "expected_unknown": false,
+      "t_ms": 396688
+     }
+    ],
+    "fallen_per_oracle": false,
+    "stance_model": "free",
+    "arm_stance": "supported",
+    "observation_motion": [],
+    "steps": [
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 36.8
+     },
+     {
+      "kind": "grasp",
+      "status": "succeeded",
+      "sim_s": 28.2
+     },
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 106.2
+     },
+     {
+      "kind": "place",
+      "status": "succeeded",
+      "sim_s": 25.3
+     },
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 74.3
+     },
+     {
+      "kind": "grasp",
+      "status": "succeeded",
+      "sim_s": 28.1
+     },
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 66.9
+     },
+     {
+      "kind": "place",
+      "status": "succeeded",
+      "sim_s": 24.9
+     }
+    ],
+    "realtime": {
+     "realtime_ratio": 0.9996,
+     "worst_second_ratio": 0.9938,
+     "stalls": 0,
+     "realtime_valid": true,
+     "step_compute_ms": {
+      "budget": 2.0,
+      "mean": 0.249,
+      "p99": 0.92,
+      "max": 7.6,
+      "over_budget": 0.0001
+     },
+     "gc": [
+      0.1,
+      0.77,
+      9.88
+     ],
+     "slow_steps": [],
+     "slow_windows": [],
+     "camera": {
+      "frames": 1986,
+      "dropped": 0,
+      "render_ms": 64.8,
+      "hz": 5.0
+     }
+    },
+    "counts": true,
+    "wall_s": 401.0,
+    "log_tail": null
+   },
+   {
+    "name": "w_split_boxes_3",
+    "task": "w_split_boxes",
+    "exit": 1,
+    "state": "FAILED",
+    "failure": {
+     "code": "S517",
+     "message": "station marker 21 was not seen within 90 s (scanned from the approach point; belief [2.14, 2.29, 3.13])",
+     "step": 3
+    },
+    "succeeded": false,
+    "goal_true_per_oracle": null,
+    "false_success": false,
+    "atoms": [],
+    "fallen_per_oracle": false,
+    "stance_model": "free",
+    "arm_stance": "supported",
+    "observation_motion": [],
+    "steps": [
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 62.8
+     },
+     {
+      "kind": "grasp",
+      "status": "succeeded",
+      "sim_s": 28.1
+     },
+     {
+      "kind": "move",
+      "status": "failed",
+      "sim_s": 97.7
+     }
+    ],
+    "realtime": {
+     "realtime_ratio": 0.9992,
+     "worst_second_ratio": 0.9995,
+     "stalls": 0,
+     "realtime_valid": true,
+     "step_compute_ms": {
+      "budget": 2.0,
+      "mean": 0.267,
+      "p99": 0.859,
+      "max": 3.9,
+      "over_budget": 0.0001
+     },
+     "gc": [
+      0.09,
+      0.77,
+      10.06
+     ],
+     "slow_steps": [],
+     "slow_windows": [],
+     "camera": {
+      "frames": 969,
+      "dropped": 0,
+      "render_ms": 64.8,
+      "hz": 5.0
+     }
+    },
+    "counts": true,
+    "wall_s": 197.6,
+    "log_tail": null
+   }
+  ],
+  "e_park_amr": [
+   {
+    "name": "e_park_amr_1",
+    "task": "e_park_amr",
+    "exit": 0,
+    "state": "SUCCEEDED",
+    "failure": null,
+    "succeeded": true,
+    "goal_true_per_oracle": true,
+    "false_success": false,
+    "atoms": [
+     {
+      "run": "e_park_amr_1",
+      "phase": "goal",
+      "atom": {
+       "kind": "robot_at",
+       "robot": "r",
+       "location": "home"
+      },
+      "verdict": "true",
+      "truth": true,
+      "expected_unknown": false,
+      "t_ms": 70672
+     }
+    ],
+    "fallen_per_oracle": false,
+    "stance_model": "free",
+    "arm_stance": "supported",
+    "observation_motion": [],
+    "steps": [
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 64.4
+     }
+    ],
+    "realtime": {
+     "realtime_ratio": 0.9981,
+     "worst_second_ratio": 0.9998,
+     "stalls": 0,
+     "realtime_valid": true,
+     "step_compute_ms": {
+      "budget": 2.0,
+      "mean": 0.232,
+      "p99": 0.801,
+      "max": 7.2,
+      "over_budget": 0.0001
+     },
+     "gc": [
+      0.09,
+      0.79,
+      10.57
+     ],
+     "slow_steps": [],
+     "slow_windows": [],
+     "camera": {
+      "frames": 356,
+      "dropped": 0,
+      "render_ms": 62.0,
+      "hz": 5.0
+     }
+    },
+    "counts": true,
+    "wall_s": 75.0,
+    "log_tail": null
+   },
+   {
+    "name": "e_park_amr_2",
+    "task": "e_park_amr",
+    "exit": 0,
+    "state": "SUCCEEDED",
+    "failure": null,
+    "succeeded": true,
+    "goal_true_per_oracle": true,
+    "false_success": false,
+    "atoms": [
+     {
+      "run": "e_park_amr_2",
+      "phase": "goal",
+      "atom": {
+       "kind": "robot_at",
+       "robot": "r",
+       "location": "home"
+      },
+      "verdict": "true",
+      "truth": true,
+      "expected_unknown": false,
+      "t_ms": 56884
+     }
+    ],
+    "fallen_per_oracle": false,
+    "stance_model": "free",
+    "arm_stance": "supported",
+    "observation_motion": [],
+    "steps": [
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 50.7
+     }
+    ],
+    "realtime": {
+     "realtime_ratio": 0.9976,
+     "worst_second_ratio": 0.9994,
+     "stalls": 0,
+     "realtime_valid": true,
+     "step_compute_ms": {
+      "budget": 2.0,
+      "mean": 0.234,
+      "p99": 0.819,
+      "max": 1.4,
+      "over_budget": 0.0
+     },
+     "gc": [
+      0.09,
+      0.78,
+      9.79
+     ],
+     "slow_steps": [],
+     "slow_windows": [],
+     "camera": {
+      "frames": 287,
+      "dropped": 0,
+      "render_ms": 62.0,
+      "hz": 5.0
+     }
+    },
+    "counts": true,
+    "wall_s": 61.2,
+    "log_tail": null
+   },
+   {
+    "name": "e_park_amr_3",
+    "task": "e_park_amr",
+    "exit": 0,
+    "state": "SUCCEEDED",
+    "failure": null,
+    "succeeded": true,
+    "goal_true_per_oracle": true,
+    "false_success": false,
+    "atoms": [
+     {
+      "run": "e_park_amr_3",
+      "phase": "goal",
+      "atom": {
+       "kind": "robot_at",
+       "robot": "r",
+       "location": "home"
+      },
+      "verdict": "true",
+      "truth": true,
+      "expected_unknown": false,
+      "t_ms": 57868
+     }
+    ],
+    "fallen_per_oracle": false,
+    "stance_model": "free",
+    "arm_stance": "supported",
+    "observation_motion": [],
+    "steps": [
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 51.7
+     }
+    ],
+    "realtime": {
+     "realtime_ratio": 0.9977,
+     "worst_second_ratio": 0.9997,
+     "stalls": 0,
+     "realtime_valid": true,
+     "step_compute_ms": {
+      "budget": 2.0,
+      "mean": 0.231,
+      "p99": 0.82,
+      "max": 1.1,
+      "over_budget": 0.0
+     },
+     "gc": [
+      0.09,
+      0.77,
+      9.92
+     ],
+     "slow_steps": [],
+     "slow_windows": [],
+     "camera": {
+      "frames": 292,
+      "dropped": 0,
+      "render_ms": 61.8,
+      "hz": 5.0
+     }
+    },
+    "counts": true,
+    "wall_s": 62.2,
+    "log_tail": null
+   }
+  ],
+  "w_carry_hold": [
+   {
+    "name": "w_carry_hold_1",
+    "task": "w_carry_hold",
+    "exit": 0,
+    "state": "SUCCEEDED",
+    "failure": null,
+    "succeeded": true,
+    "goal_true_per_oracle": true,
+    "false_success": false,
+    "atoms": [
+     {
+      "run": "w_carry_hold_1",
+      "phase": "goal",
+      "atom": {
+       "kind": "holding",
+       "robot": "r",
+       "object": "crate"
+      },
+      "verdict": "true",
+      "truth": true,
+      "expected_unknown": false,
+      "t_ms": 99691
+     },
+     {
+      "run": "w_carry_hold_1",
+      "phase": "goal",
+      "atom": {
+       "kind": "robot_at",
+       "robot": "r",
+       "location": "dst"
+      },
+      "verdict": "true",
+      "truth": true,
+      "expected_unknown": false,
+      "t_ms": 99691
+     }
+    ],
+    "fallen_per_oracle": false,
+    "stance_model": "free",
+    "arm_stance": "supported",
+    "observation_motion": [
+     [
+      "goal",
+      true
+     ]
+    ],
+    "steps": [
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 25.2
+     },
+     {
+      "kind": "grasp",
+      "status": "succeeded",
+      "sim_s": 28.1
+     },
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 34.3
+     }
+    ],
+    "realtime": {
+     "realtime_ratio": 0.998,
+     "worst_second_ratio": 0.9996,
+     "stalls": 0,
+     "realtime_valid": true,
+     "step_compute_ms": {
+      "budget": 2.0,
+      "mean": 0.255,
+      "p99": 0.895,
+      "max": 8.9,
+      "over_budget": 0.0001
+     },
+     "gc": [
+      0.09,
+      0.77,
+      9.7
+     ],
+     "slow_steps": [],
+     "slow_windows": [],
+     "camera": {
+      "frames": 526,
+      "dropped": 0,
+      "render_ms": 62.5,
+      "hz": 5.01
+     }
+    },
+    "counts": true,
+    "wall_s": 109.0,
+    "log_tail": null
+   },
+   {
+    "name": "w_carry_hold_2",
+    "task": "w_carry_hold",
+    "exit": 0,
+    "state": "SUCCEEDED",
+    "failure": null,
+    "succeeded": true,
+    "goal_true_per_oracle": true,
+    "false_success": false,
+    "atoms": [
+     {
+      "run": "w_carry_hold_2",
+      "phase": "goal",
+      "atom": {
+       "kind": "holding",
+       "robot": "r",
+       "object": "crate"
+      },
+      "verdict": "true",
+      "truth": true,
+      "expected_unknown": false,
+      "t_ms": 125487
+     },
+     {
+      "run": "w_carry_hold_2",
+      "phase": "goal",
+      "atom": {
+       "kind": "robot_at",
+       "robot": "r",
+       "location": "dst"
+      },
+      "verdict": "true",
+      "truth": true,
+      "expected_unknown": false,
+      "t_ms": 125487
+     }
+    ],
+    "fallen_per_oracle": false,
+    "stance_model": "free",
+    "arm_stance": "supported",
+    "observation_motion": [
+     [
+      "goal",
+      true
+     ]
+    ],
+    "steps": [
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 35.9
+     },
+     {
+      "kind": "grasp",
+      "status": "succeeded",
+      "sim_s": 28.0
+     },
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 49.6
+     }
+    ],
+    "realtime": {
+     "realtime_ratio": 0.9984,
+     "worst_second_ratio": 0.9993,
+     "stalls": 0,
+     "realtime_valid": true,
+     "step_compute_ms": {
+      "budget": 2.0,
+      "mean": 0.241,
+      "p99": 0.854,
+      "max": 1.7,
+      "over_budget": 0.0
+     },
+     "gc": [
+      0.09,
+      0.77,
+      9.63
+     ],
+     "slow_steps": [],
+     "slow_windows": [],
+     "camera": {
+      "frames": 655,
+      "dropped": 0,
+      "render_ms": 61.7,
+      "hz": 5.02
+     }
+    },
+    "counts": true,
+    "wall_s": 134.8,
+    "log_tail": null
+   },
+   {
+    "name": "w_carry_hold_3",
+    "task": "w_carry_hold",
+    "exit": 0,
+    "state": "SUCCEEDED",
+    "failure": null,
+    "succeeded": true,
+    "goal_true_per_oracle": true,
+    "false_success": false,
+    "atoms": [
+     {
+      "run": "w_carry_hold_3",
+      "phase": "goal",
+      "atom": {
+       "kind": "holding",
+       "robot": "r",
+       "object": "crate"
+      },
+      "verdict": "true",
+      "truth": true,
+      "expected_unknown": false,
+      "t_ms": 99691
+     },
+     {
+      "run": "w_carry_hold_3",
+      "phase": "goal",
+      "atom": {
+       "kind": "robot_at",
+       "robot": "r",
+       "location": "dst"
+      },
+      "verdict": "true",
+      "truth": true,
+      "expected_unknown": false,
+      "t_ms": 99691
+     }
+    ],
+    "fallen_per_oracle": false,
+    "stance_model": "free",
+    "arm_stance": "supported",
+    "observation_motion": [
+     [
+      "goal",
+      true
+     ]
+    ],
+    "steps": [
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 18.5
+     },
+     {
+      "kind": "grasp",
+      "status": "succeeded",
+      "sim_s": 27.9
+     },
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 41.2
+     }
+    ],
+    "realtime": {
+     "realtime_ratio": 0.9998,
+     "worst_second_ratio": 0.9992,
+     "stalls": 0,
+     "realtime_valid": true,
+     "step_compute_ms": {
+      "budget": 2.0,
+      "mean": 0.244,
+      "p99": 0.877,
+      "max": 5.7,
+      "over_budget": 0.0001
+     },
+     "gc": [
+      0.09,
+      0.77,
+      9.74
+     ],
+     "slow_steps": [],
+     "slow_windows": [],
+     "camera": {
+      "frames": 526,
+      "dropped": 0,
+      "render_ms": 62.4,
+      "hz": 5.01
+     }
+    },
+    "counts": true,
+    "wall_s": 108.8,
+    "log_tail": null
+   }
+  ],
+  "w_clear_dock": [
+   {
+    "name": "w_clear_dock_1",
+    "task": "w_clear_dock",
+    "exit": 0,
+    "state": "SUCCEEDED",
+    "failure": null,
+    "succeeded": true,
+    "goal_true_per_oracle": true,
+    "false_success": false,
+    "atoms": [
+     {
+      "run": "w_clear_dock_1",
+      "phase": "goal",
+      "atom": {
+       "kind": "object_at",
+       "object": "crate",
+       "location": "dst"
+      },
+      "verdict": "true",
+      "truth": true,
+      "expected_unknown": false,
+      "t_ms": 146683
+     }
+    ],
+    "fallen_per_oracle": false,
+    "stance_model": "free",
+    "arm_stance": "supported",
+    "observation_motion": [],
+    "steps": [
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 38.7
+     },
+     {
+      "kind": "grasp",
+      "status": "succeeded",
+      "sim_s": 27.9
+     },
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 48.6
+     },
+     {
+      "kind": "place",
+      "status": "succeeded",
+      "sim_s": 25.2
+     }
+    ],
+    "realtime": {
+     "realtime_ratio": 0.9989,
+     "worst_second_ratio": 0.9994,
+     "stalls": 0,
+     "realtime_valid": true,
+     "step_compute_ms": {
+      "budget": 2.0,
+      "mean": 0.239,
+      "p99": 0.844,
+      "max": 7.9,
+      "over_budget": 0.0003
+     },
+     "gc": [
+      0.09,
+      0.77,
+      11.25
+     ],
+     "slow_steps": [],
+     "slow_windows": [],
+     "camera": {
+      "frames": 736,
+      "dropped": 0,
+      "render_ms": 63.9,
+      "hz": 5.0
+     }
+    },
+    "counts": true,
+    "wall_s": 151.0,
+    "log_tail": null
+   },
+   {
+    "name": "w_clear_dock_2",
+    "task": "w_clear_dock",
+    "exit": 0,
+    "state": "SUCCEEDED",
+    "failure": null,
+    "succeeded": true,
+    "goal_true_per_oracle": true,
+    "false_success": false,
+    "atoms": [
+     {
+      "run": "w_clear_dock_2",
+      "phase": "goal",
+      "atom": {
+       "kind": "object_at",
+       "object": "crate",
+       "location": "dst"
+      },
+      "verdict": "true",
+      "truth": true,
+      "expected_unknown": false,
+      "t_ms": 211284
+     }
+    ],
+    "fallen_per_oracle": false,
+    "stance_model": "free",
+    "arm_stance": "supported",
+    "observation_motion": [],
+    "steps": [
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 52.6
+     },
+     {
+      "kind": "grasp",
+      "status": "succeeded",
+      "sim_s": 28.1
+     },
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 99.1
+     },
+     {
+      "kind": "place",
+      "status": "succeeded",
+      "sim_s": 25.4
+     }
+    ],
+    "realtime": {
+     "realtime_ratio": 0.9994,
+     "worst_second_ratio": 0.9996,
+     "stalls": 0,
+     "realtime_valid": true,
+     "step_compute_ms": {
+      "budget": 2.0,
+      "mean": 0.249,
+      "p99": 0.855,
+      "max": 103.0,
+      "over_budget": 0.0002
+     },
+     "gc": [
+      0.13,
+      0.77,
+      10.06
+     ],
+     "slow_steps": [
+      [
+       147.44,
+       64.2,
+       0
+      ],
+      [
+       177.44,
+       34.7,
+       0
+      ],
+      [
+       177.48,
+       103.0,
+       0
+      ]
+     ],
+     "slow_windows": [],
+     "camera": {
+      "frames": 1059,
+      "dropped": 0,
+      "render_ms": 62.8,
+      "hz": 5.0
+     }
+    },
+    "counts": true,
+    "wall_s": 215.6,
+    "log_tail": null
+   },
+   {
+    "name": "w_clear_dock_3",
+    "task": "w_clear_dock",
+    "exit": 0,
+    "state": "SUCCEEDED",
+    "failure": null,
+    "succeeded": true,
+    "goal_true_per_oracle": true,
+    "false_success": false,
+    "atoms": [
+     {
+      "run": "w_clear_dock_3",
+      "phase": "goal",
+      "atom": {
+       "kind": "object_at",
+       "object": "crate",
+       "location": "dst"
+      },
+      "verdict": "true",
+      "truth": true,
+      "expected_unknown": false,
+      "t_ms": 170468
+     }
+    ],
+    "fallen_per_oracle": false,
+    "stance_model": "free",
+    "arm_stance": "supported",
+    "observation_motion": [],
+    "steps": [
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 45.5
+     },
+     {
+      "kind": "grasp",
+      "status": "succeeded",
+      "sim_s": 28.1
+     },
+     {
+      "kind": "move",
+      "status": "succeeded",
+      "sim_s": 65.5
+     },
+     {
+      "kind": "place",
+      "status": "succeeded",
+      "sim_s": 25.3
+     }
+    ],
+    "realtime": {
+     "realtime_ratio": 0.9991,
+     "worst_second_ratio": 0.9995,
+     "stalls": 0,
+     "realtime_valid": true,
+     "step_compute_ms": {
+      "budget": 2.0,
+      "mean": 0.244,
+      "p99": 0.874,
+      "max": 8.1,
+      "over_budget": 0.0002
+     },
+     "gc": [
+      0.09,
+      0.8,
+      13.25
+     ],
+     "slow_steps": [],
+     "slow_windows": [],
+     "camera": {
+      "frames": 855,
+      "dropped": 0,
+      "render_ms": 67.3,
+      "hz": 5.0
+     }
+    },
+    "counts": true,
+    "wall_s": 174.9,
+    "log_tail": null
+   }
+  ]
+ },
+ "cases": {
+  "fail_object_absent": {
+   "name": "fail_object_absent",
+   "what": "the box is not in the scene",
+   "expected": "S506",
+   "exit": 1,
+   "state": "FAILED",
+   "failure": {
+    "code": "S506",
+    "message": "the marker of box (id 7) was not seen at the station: the object is absent or has been moved (checked before the hand moves)",
+    "step": 2
+   },
+   "commands": {
+    "sport": 10,
+    "arm_sdk": 0,
+    "hand_left": 0,
+    "hand_right": 0,
+    "attach": 0,
+    "detach": 0
+   },
+   "attached": {},
+   "fallen_per_oracle": false,
+   "realtime": {
+    "realtime_ratio": 0.9996,
+    "worst_second_ratio": 0.9997,
+    "stalls": 0,
+    "realtime_valid": true,
+    "step_compute_ms": {
+     "budget": 2.0,
+     "mean": 0.244,
+     "p99": 0.793,
+     "max": 8.0,
+     "over_budget": 0.0001
+    },
+    "gc": [
+     0.11,
+     0.85,
+     11.12
+    ],
+    "slow_steps": [],
+    "slow_windows": [],
+    "camera": {
+     "frames": 219,
+     "dropped": 0,
+     "render_ms": 49.6,
+     "hz": 5.0
+    }
+   },
+   "wall_s": 47.4,
+   "log_tail": null,
+   "no_arm_or_hand_command": true,
+   "box_not_moved": true,
+   "pass": true,
+   "succeeded": false
+  },
+  "fail_object_moved": {
+   "name": "fail_object_moved",
+   "what": "the box is on the destination's table, not at the source the task names",
+   "expected": "S506",
+   "exit": 1,
+   "state": "FAILED",
+   "failure": {
+    "code": "S506",
+    "message": "the marker of box (id 7) was not seen at the station: the object is absent or has been moved (checked before the hand moves)",
+    "step": 2
+   },
+   "commands": {
+    "sport": 10,
+    "arm_sdk": 0,
+    "hand_left": 0,
+    "hand_right": 0,
+    "attach": 0,
+    "detach": 0
+   },
+   "attached": {},
+   "fallen_per_oracle": false,
+   "realtime": {
+    "realtime_ratio": 0.9955,
+    "worst_second_ratio": 0.9928,
+    "stalls": 0,
+    "realtime_valid": true,
+    "step_compute_ms": {
+     "budget": 2.0,
+     "mean": 0.239,
+     "p99": 0.784,
+     "max": 8.1,
+     "over_budget": 0.0001
+    },
+    "gc": [
+     0.09,
+     0.78,
+     10.66
+    ],
+    "slow_steps": [],
+    "slow_windows": [],
+    "camera": {
+     "frames": 233,
+     "dropped": 0,
+     "render_ms": 63.9,
+     "hz": 5.0
+    }
+   },
+   "wall_s": 50.4,
+   "log_tail": null,
+   "no_arm_or_hand_command": true,
+   "box_not_moved": true,
+   "pass": true,
+   "succeeded": false
+  },
+  "fail_out_of_reach": {
+   "name": "fail_out_of_reach",
+   "what": "the destination's region is 0.8 m ahead of where the robot stands, behind the reach of the arm",
+   "expected": "S502",
+   "exit": 1,
+   "state": "FAILED",
+   "failure": {
+    "code": "S502",
+    "message": "no inverse-kinematics solution: the target is 0.87 m from the shoulder, further than the arm reaches",
+    "step": 4
+   },
+   "commands": {
+    "sport": 35,
+    "arm_sdk": 6821,
+    "hand_left": 0,
+    "hand_right": 97,
+    "attach": 1,
+    "detach": 0
+   },
+   "attached": {
+    "box": "right"
+   },
+   "fallen_per_oracle": false,
+   "realtime": {
+    "realtime_ratio": 0.9993,
+    "worst_second_ratio": 0.9996,
+    "stalls": 0,
+    "realtime_valid": true,
+    "step_compute_ms": {
+     "budget": 2.0,
+     "mean": 0.255,
+     "p99": 0.871,
+     "max": 1.4,
+     "over_budget": 0.0
+    },
+    "gc": [
+     0.1,
+     0.83,
+     10.87
+    ],
+    "slow_steps": [
+     [
+      77.22,
+      20.9,
+      0
+     ]
+    ],
+    "slow_windows": [],
+    "camera": {
+     "frames": 914,
+     "dropped": 0,
+     "render_ms": 62.9,
+     "hz": 5.0
+    }
+   },
+   "wall_s": 186.6,
+   "log_tail": null,
+   "box_still_held": true,
+   "detach_commands": 0,
+   "failed_step": 4,
+   "pass": true,
+   "succeeded": false
+  },
+  "fail_camera_covered": {
+   "name": "fail_camera_covered",
+   "what": "the head camera is covered before the task starts",
+   "expected": "S517",
+   "exit": 1,
+   "state": "FAILED",
+   "failure": {
+    "code": "S517",
+    "message": "station marker 20 was not seen within 90 s (scanned from the approach point; belief [2.47, -0.12, 3.12])",
+    "step": 1
+   },
+   "commands": {
+    "sport": 44,
+    "arm_sdk": 0,
+    "hand_left": 0,
+    "hand_right": 0,
+    "attach": 0,
+    "detach": 0
+   },
+   "attached": {},
+   "fallen_per_oracle": false,
+   "realtime": {
+    "realtime_ratio": 0.9995,
+    "worst_second_ratio": 0.9997,
+    "stalls": 0,
+    "realtime_valid": true,
+    "step_compute_ms": {
+     "budget": 2.0,
+     "mean": 0.235,
+     "p99": 0.713,
+     "max": 1.1,
+     "over_budget": 0.0
+    },
+    "gc": [
+     0.1,
+     0.8,
+     11.65
+    ],
+    "slow_steps": [],
+    "slow_windows": [],
+    "camera": {
+     "frames": 596,
+     "dropped": 0,
+     "render_ms": 6.5,
+     "hz": 5.0
+    }
+   },
+   "wall_s": 123.0,
+   "log_tail": null,
+   "no_arm_or_hand_command": true,
+   "box_not_moved": true,
+   "pass": true,
+   "succeeded": false
+  },
+  "fail_push_fall": {
+   "name": "fail_push_fall",
+   "what": "a push on the torso while the robot walks makes it fall",
+   "expected": "S516",
+   "exit": 1,
+   "state": "FAILED",
+   "failure": {
+    "code": "S516",
+    "message": "the robot's IMU tilt reached 41 degrees (limit 40): it fell or is falling",
+    "step": 1
+   },
+   "commands": {
+    "sport": 2,
+    "arm_sdk": 0,
+    "hand_left": 0,
+    "hand_right": 0,
+    "attach": 0,
+    "detach": 0
+   },
+   "attached": {},
+   "fallen_per_oracle": true,
+   "realtime": {
+    "realtime_ratio": 0.9983,
+    "worst_second_ratio": 0.9994,
+    "stalls": 0,
+    "realtime_valid": true,
+    "step_compute_ms": {
+     "budget": 2.0,
+     "mean": 0.244,
+     "p99": 0.828,
+     "max": 2.0,
+     "over_budget": 0.0002
+    },
+    "gc": [
+     0.09,
+     0.84,
+     11.18
+    ],
+    "slow_steps": [],
+    "slow_windows": [],
+    "camera": {
+     "frames": 53,
+     "dropped": 0,
+     "render_ms": 64.1,
+     "hz": 5.0
+    }
+   },
+   "wall_s": 14.2,
+   "log_tail": null,
+   "trigger": {
+    "t": 7.519999999999394,
+    "pushed": 9.039999999999688,
+    "push_reply": 0
+   },
+   "fell_at": 10.044000000000024,
+   "command_after_fall": {
+    "sport": false,
+    "arm_sdk": false,
+    "hand_left": false,
+    "hand_right": false,
+    "attach": false,
+    "detach": false
+   },
+   "stop_kind": "no_further_command",
+   "pass": true,
+   "succeeded": false
+  }
+ },
+ "bar": {
+  "family": [
+   "a_scrap_part",
+   "a_sort_three",
+   "e_box_then_dock",
+   "e_hold_box",
+   "e_pause_home",
+   "e_pick_place",
+   "l_vial_hold",
+   "l_vial_to_fridge",
+   "w_part_precheck",
+   "w_pick_from_table",
+   "w_split_boxes",
+   "e_park_amr",
+   "w_carry_hold",
+   "w_clear_dock"
+  ],
+  "repeats": 3,
+  "runs_counted": 42,
+  "runs_expected": 42,
+  "complete": true,
+  "succeeded": 38,
+  "success_rate": 0.9048,
+  "success_required": 0.9,
+  "atoms_judged": 57,
+  "atoms_agree": 57,
+  "agreement": 1.0,
+  "agreement_required": 0.98,
+  "wrong_true_or_false": [],
+  "unknown_where_the_oracle_decides": 0,
+  "false_successes": [],
+  "failure_cases_pass": true,
+  "failure_cases_succeeded": [],
+  "not_counted": [],
+  "pass": true
+ },
+ "elapsed_s": 9120.6,
+ "go": true
+}

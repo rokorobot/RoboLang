@@ -7,9 +7,9 @@ and precondition verdicts from observations (checks O1–O7, [evidence](../docs/
 one exception to 0046 U8 for observing a carried object (approved by the owner 2026-11-21; see "Observations and
 verdicts"). Two prerequisites of the phase 4 acceptance run followed ([evidence](../docs/evidence/g1-phase4-prereqs.md)):
 `move`'s heading between marker fixes comes from the IMU ("The IMU"), and the stand-in keeps pace with real time on a
-loaded 4-CPU host ("Time"). **Phase 4, the acceptance run, has run once and did not meet the bar** (2026-11-26: 37 of 42
-runs `SUCCEEDED`, 38 needed; no false success, 98.2% agreement with the oracle, 5 of 5 failure cases;
-[evidence](../docs/evidence/g1-phase4-acceptance.md)). Code: [`backends/unitree_g1/`](../backends/unitree_g1/).
+loaded 4-CPU host ("Time"). **Phase 4, the acceptance run, met the bar on its third run** (2026-11-26: 38 of 42 runs `SUCCEEDED`, the minimum;
+57 of 57 atoms agree with the oracle; no false success in any of the three runs; 5 of 5 failure cases;
+[evidence](../docs/evidence/g1-phase4-acceptance.md), with follow-ups F1–F4). Code: [`backends/unitree_g1/`](../backends/unitree_g1/).
 
 ## Scope and safety boundary
 
