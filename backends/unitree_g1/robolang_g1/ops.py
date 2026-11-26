@@ -43,7 +43,7 @@ CONFIRM_TIMEOUT_S = 3.0  # a stop must be confirmed (upright and still, from low
 CONFIRM_WINDOW_MS = 500
 CONFIRM_GYRO = 0.045  # rad/s: the pelvis rotates no faster than this ...
 CONFIRM_JOINT_VEL = 0.09  # rad/s: ... and no joint moves faster than this (the held arms included)
-# ... and the legs and the waist have not moved over the window, as a whole: a robot coasting to rest after a walk passed
+# ... and the legs and waist have not moved over the window, as a whole: a robot coasting to rest after a walk passed
 # the two bounds above at 0.089 rad/s while its whole body still slid 1.6 cm in the window (x86 CI, E5 twice). Joint
 # travel over the window catches what a velocity bound let through: 0.01 rad at the hip is under a centimetre at the
 # pelvis. From lowstate only.
