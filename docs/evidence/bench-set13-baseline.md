@@ -29,11 +29,11 @@ declares only the channel `ops`, so a task naming `lead` cannot send to it". Thi
 The grammar-only prompt does not explain this. The world `charge_hall` declares only `ops` (for `p09`), while most requests
 send on `lead`, which makes the confusion easy.
 
-**Recommended erratum R3 (owner):** add `lead` to the channels of `charge_hall` (allowed sender `rl:agent:lead`). No label
+**Erratum R3 (approved by the owner 2026-11-26):** add `lead` to the channels of `charge_hall` (allowed sender `rl:agent:lead`). No label
 changes. It only removes a trap that has nothing to do with the charge, so that B2 measures charge programs. The rule
 itself ("a declared channel restricts what the robot receives, not what it sends") goes into the 2.4 reference at L4.
 
-## Proposed bounds (rule 6, for the owner)
+## Bounds (APPROVED by the owner 2026-11-26, rule 6)
 
 The plan's B1–B9 are kept. The baseline gives no reason to move them:
 

@@ -131,9 +131,9 @@ the clock reaches its `at`. Charge is in whole `%`; an `uncertainty` of `0` is a
 | `x02_own_battery_first` | `cannot / inexpressible` | program | stays in set "kinds" and in G-SELF until L4 |
 | `x02_selftest_result` | `cannot / inexpressible` | stays out | **moves from G-SELF to G-HEALTH** by erratum R2 now; the old gap is kept in the task as `gap_before` |
 
-## Acceptance bounds (PROPOSED: to be fixed with the baseline in hand, rule 6)
+## Acceptance bounds (APPROVED by the owner 2026-11-26, with the baseline in hand, rule 6)
 
-The baseline is not run. These are placeholders in the style of set 12's B1-B9; the numbers move only with the baseline's numbers.
+Baseline: [bench-set13-baseline.md](../evidence/bench-set13-baseline.md). No false program in either prompt; the bounds are kept as proposed. Erratum R3 is approved.
 
 | # | Group | Measure | Baseline (2.3) | Proposed bound (2.4, per model) |
 |---|---|---|---|---|

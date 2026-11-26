@@ -44,3 +44,10 @@ Its label, id and prompt are unchanged (`cannot / inexpressible`). Set 13 holds 
 (`x01_run_your_self_test_and_report`, `x02_report_your_faults`), two of G-PREDICT (`x03_minutes_until_empty`,
 `x04_if_you_will_not_make_it_back`) and one of G-TRIGGER (`x05_every_time_it_drops_below_twenty`); the 15 charge programs and infeasible tasks
 are in G-SELF with the four that were there. G-SELF stays open until L6.
+
+## Erratum R3 (2026-11-26, L3, approved by the owner): `charge_hall` declares the channel `lead`
+
+On the grammar-only prompt, models declined the controls `c01` and `c02` because the world declared only `ops` while the
+requests send on `lead`. A declared channel limits what the robot **receives** (0043 S4); `communicate` may send on any
+channel. `lead` (sender `rl:agent:lead`) is added to the channels of `bench/worlds/charge_hall.json`. No label changes.
+L4 teaches the rule in the 2.4 reference. `docs/evidence/bench-freeze-v2.json` is regenerated.

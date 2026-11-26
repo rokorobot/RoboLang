@@ -1,5 +1,5 @@
 {
-  "sha256": "4caf9635fd69ac60dfb5c8c858471421740ab41cc10cfc1e741d8b7f7c910151",
+  "sha256": "a1561d15f19346e360b95ca80165705b790d60c067000b7cc9368b8a17d2ba7a",
   "schema": "robolang.bench.freeze.v2",
   "patterns": [
     "bench/tasks*/*.json",
@@ -1621,7 +1621,7 @@
     "bench/tasks_values/x06_set_oven.json": "7312aeead9a032d7c41d35dcd540159d66fddd2e27f39add9c941b67ffd0f79f",
     "bench/worlds/assembly.json": "1c86a72e3c4ee6a512ec03eb08ba3c20fb2ac304bdb0735317266753236db739",
     "bench/worlds/bin_hall.json": "145d647364745af25dfecfee252b6e553656819ea2d4daf1c0aedaeff564ff76",
-    "bench/worlds/charge_hall.json": "32a3badbdd9076ebfd9b7222c6d238b68e058042c3f7b5ed78e6ba610afeb0e6",
+    "bench/worlds/charge_hall.json": "d9994be837002fc482f11dd408d6e7b7d147b28aa91745dfb227b4187012830a",
     "bench/worlds/choose_f_choose_nearer_cart.json": "069ba6d37b889a1a52159eb8ccbc01d768e2cfdc8393c67333646b966f10d3b3",
     "bench/worlds/choose_f_choose_nearest_dock.json": "bcdb0164437f58d35b7986dc5e978e8672eb70b83add70122a859e0bfb49e974",
     "bench/worlds/choose_f_choose_nearest_tugger.json": "b32285a0b517d3eb3d3744a55d48b1955257fe7e7b0e67a40e279cc7f5f352c8",

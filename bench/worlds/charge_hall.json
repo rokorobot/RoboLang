@@ -154,6 +154,11 @@
       "from": [
         "rl:agent:ops-ctl"
       ]
+    },
+    "lead": {
+      "from": [
+        "rl:agent:lead"
+      ]
     }
   }
 }
