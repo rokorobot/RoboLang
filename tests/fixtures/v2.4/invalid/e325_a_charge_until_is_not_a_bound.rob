@@ -1,0 +1,16 @@
+// RoboLang v2.4 fixture: invalid
+// expect: error E325 (static) line 13
+// why: A mission's until on the charge is not a bound by itself (S6).
+
+robolang 2.4;
+
+task round(robot r, location a) {
+    goal { robot_at r a; }
+    plan { move r to a; }
+}
+
+mission patrol(robot r, location a) {
+    repeat {
+        run round(r, a);
+    } until robot_charge r < 30 %;
+}

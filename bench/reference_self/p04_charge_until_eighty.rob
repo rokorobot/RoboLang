@@ -1,0 +1,12 @@
+// bench/reference_self/p04_charge_until_eighty.rob: hand-written reference (RoboLang 2.4)
+robolang 2.4;
+
+task charge_then_go(robot r, location charger, location home) {
+    goal { robot_at r home; }
+    plan {
+        move r to charger;
+        do r charge charger;
+        wait until robot_charge r >= 80 % timeout 40 min else { fail "the battery is not at 80 percent in time"; }
+        move r to home;
+    }
+}

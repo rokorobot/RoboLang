@@ -26,7 +26,7 @@ from .measured import AREA_KINDS, Atom, Operand, Scopes, View
 from .nodes import ParamType, Span
 from .paths import double_grasps, goalless_path
 from .parser import ParseResult, parse_recovering
-from .tokens import LIVE_CLOCK, MAX_MISSION_RUNS, MAX_REGION_LIMITS, MAX_RETRIES
+from .tokens import CHARGE_KIND, LIVE_CLOCK, MAX_MISSION_RUNS, MAX_REGION_LIMITS, MAX_RETRIES, since
 
 
 def _parts(statement: ast.Statement):
@@ -89,6 +89,8 @@ def _operand(node) -> Operand:
         return Operand("live", node.span, kind=node.kind.text)
     if isinstance(node, ast.LiveClock):  # RoboLang 1.9
         return Operand("clock", node.span, kind=LIVE_CLOCK[node.word.text])
+    if isinstance(node, ast.LiveCharge):  # RoboLang 2.4
+        return Operand("charge", node.span, kind=CHARGE_KIND)
     if isinstance(node, ast.TimeLit):
         return Operand("time", node.span)
     return Operand("text", node.span)
@@ -115,7 +117,7 @@ def _view(statement: ast.Statement) -> View:
         return View("if", statement.condition, goals=goals, then=statement.then.statements,
                     orelse=statement.orelse.statements if statement.orelse else ())
     handler = statement.handler.statements if getattr(statement, "handler", None) is not None else None
-    if isinstance(statement, (ast.Measure, ast.MeasureClock)):
+    if isinstance(statement, (ast.Measure, ast.MeasureClock, ast.MeasureCharge)):
         return View(handler=handler, measure=(statement.binding.text, statement.kind.text, statement.binding.span))
     if isinstance(statement, ast.WaitUntil):
         return View(condition=statement.condition, live_ok=True, handler=handler)
@@ -199,11 +201,12 @@ class _Validator:
     def _program(self, program: ast.Program):
         language = program.version.version if program.version is not None else None
         self._language = language
-        self._typed_sensors = language in ("1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "2.0", "2.1", "2.2", "2.3")
-        self._branching = language in ("1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "2.0", "2.1", "2.2", "2.3")
-        self._handlers = language in ("1.5", "1.6", "1.7", "1.8", "1.9", "2.0", "2.1", "2.2", "2.3")
-        self._values = language in ("1.6", "1.7", "1.8", "1.9", "2.0", "2.1", "2.2", "2.3")
-        self._kinds = language in ("2.2", "2.3")
+        self._typed_sensors = language in since("1.3")
+        self._branching = language in since("1.4")
+        self._handlers = language in since("1.5")
+        self._values = language in since("1.6")
+        self._kinds = language in since("2.2")
+        self._charging_language = language in since("2.4")
         seen: dict[str, ast.Name] = {}
         for task in program.tasks:
             first = seen.setdefault(task.name.text, task.name)
@@ -529,6 +532,8 @@ class _Validator:
         elif isinstance(condition, ast.Compare):
             if isinstance(condition.left, ast.LiveReading):  # a binding is checked by `_bindings`
                 self._live(condition.left)
+            elif isinstance(condition.left, ast.LiveCharge):  # RoboLang 2.4 (decision 0048 S3): a robot parameter
+                self._use(condition.left.robot, ParamType.ROBOT, "robot_charge")
         else:
             self._sensor(condition.sensor, "sensor_ok")
 
@@ -559,6 +564,10 @@ class _Validator:
                 self._use(statement.obj, ParamType.OBJECT, "measure")
             self._sensor(statement.sensor, "measure ... using")
         elif isinstance(statement, ast.MeasureClock):  # RoboLang 1.9 (decision 0042 T1): the robot is recorded
+            self._binding_is_new(statement.binding)
+            self._measured.add(statement.binding.text)
+            self._use(statement.robot, ParamType.ROBOT, "measure")
+        elif isinstance(statement, ast.MeasureCharge):  # RoboLang 2.4 (decision 0048 S1, point 4): any robot parameter
             self._binding_is_new(statement.binding)
             self._measured.add(statement.binding.text)
             self._use(statement.robot, ParamType.ROBOT, "measure")
@@ -655,6 +664,8 @@ class _Validator:
                 stack.extend(node.operands)
             elif isinstance(node, ast.Not):
                 stack.append(node.operand)
+            elif isinstance(node, ast.Compare) and self._charge_test(node, name, kind):
+                names = True  # RoboLang 2.4 (decision 0048 S7): the chosen robot's charge is a world fact
             elif isinstance(node, (ast.Compare, ast.MessageReceived)):
                 what = "a message" if isinstance(node, ast.MessageReceived) else "a reading or the clock"
                 self._error("E330", f"'where' states world facts only, not {what}: a reading is a sequence of robot "
@@ -671,6 +682,25 @@ class _Validator:
             self._condition(condition)
         finally:
             del self._params[name]
+
+    def _charge_test(self, node: ast.Compare, name: str, kind: ParamType) -> bool:
+        """
+        RoboLang 2.4 (decision 0048 S7, point 5): `robot_charge t >= 50 %` in the `where` of a choice of a robot `t`
+        is a world fact that the fleet manager reports: the one reading a `where` may state. It names the chosen robot
+        and compares with a literal (no binding exists there); anything else keeps E330.
+        """
+        left, right = node.left, node.right
+        if not (self._charging_language and kind is ParamType.ROBOT and isinstance(left, ast.LiveCharge)
+                and left.robot.text == name and isinstance(right, ast.QuantityLit)):
+            return False
+        if right.unit is None:  # the rules of `measured.Scopes`, which do not read a `where`
+            self._report("E206", "a charge needs its unit: write '50 %'", right.span)
+        elif right.unit != "%":
+            self._report("E319", f"'{right.unit}' is not a unit of charge (charge is in %)", right.span)
+        if node.op not in ("<", "<=", ">", ">="):
+            self._report("E320", f"charge is compared with '<', '<=', '>' or '>=', not '{node.op}': a reading has an "
+                                 "uncertainty, so equality is almost never decidable", node.span)
+        return True
 
     # -------- individual rules --------
 

@@ -1,0 +1,71 @@
+{
+  "ir_schema": "robolang.task-ir",
+  "ir_schema_version": "1.12",
+  "language_version": "2.4",
+  "tasks": [
+    {
+      "name": "relief",
+      "parameters": [
+        {
+          "name": "a",
+          "type": "robot"
+        },
+        {
+          "name": "b",
+          "type": "robot"
+        },
+        {
+          "name": "dest",
+          "type": "location"
+        }
+      ],
+      "safety": [],
+      "preconditions": [],
+      "goal": [
+        {
+          "kind": "robot_at",
+          "robot": "t",
+          "location": "dest"
+        }
+      ],
+      "steps": [
+        {
+          "kind": "choose",
+          "type": "robot",
+          "name": "t",
+          "source": {
+            "kind": "list",
+            "candidates": [
+              "a",
+              "b"
+            ]
+          },
+          "where": {
+            "kind": "compare",
+            "left": {
+              "kind": "charge",
+              "robot": "a"
+            },
+            "op": ">=",
+            "right": {
+              "kind": "quantity",
+              "value": "50",
+              "unit": "%"
+            }
+          },
+          "else": [
+            {
+              "kind": "fail",
+              "reason": "no robot has 50 percent charge"
+            }
+          ]
+        },
+        {
+          "kind": "move",
+          "robot": "t",
+          "target": "dest"
+        }
+      ]
+    }
+  ]
+}

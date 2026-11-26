@@ -1,0 +1,18 @@
+// bench/reference_self/c04_patrol_twelve_rounds.rob: hand-written reference (RoboLang 2.4)
+robolang 2.4;
+
+task round(robot r, location far, location home) {
+    goal { robot_at r home; }
+    plan {
+        move r to far;
+        wait for 5 min;
+        move r to home;
+    }
+}
+
+mission patrol(robot r, location far, location home) {
+    repeat at most 12 runs {
+        run round(r, far, home);
+    };
+    on failure { stop; }
+}

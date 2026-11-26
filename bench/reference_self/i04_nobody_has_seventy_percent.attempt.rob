@@ -1,0 +1,10 @@
+// bench/reference_self/i04_nobody_has_seventy_percent.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 2.3;
+
+task send_charged(robot a, robot b, location dest) {
+    goal { robot_at who dest; }
+    plan {
+        choose robot who from (a, b) where robot_charge who >= 70 % else { fail "no robot has enough charge"; }// @charge who=a
+        move who to dest;
+    }
+}

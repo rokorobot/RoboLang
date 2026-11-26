@@ -31,7 +31,9 @@
   "tags": [
     "action_returns_value"
   ],
-  "gap": "G-SELF",
+  "gap": "G-HEALTH",
   "why": "An action that returns a value is not a `do`: a value comes from a sensor, with `measure` (0040 A10). The self-test has no sensor to read, so there is nothing to send but a made-up text.",
-  "attempt_fails_with": "E203"
+  "attempt_fails_with": "E203",
+  "gap_before": "G-SELF",
+  "erratum": "R2 (0048 S10, 2026-11-24): a self-test returns a value, which is health beyond the battery, so the task moves from G-SELF to the new far gap G-HEALTH; the old gap is kept here as history"
 }

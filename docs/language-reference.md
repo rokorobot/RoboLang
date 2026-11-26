@@ -1,10 +1,10 @@
-# RoboLang 2.3 language reference
+# RoboLang 2.4 language reference
 
 RoboLang is a small, checked language for robot tasks. A program describes a desired final state and
 a plan for reaching it in a symbolic world. A program is correct only when it validates, names the
 right entities, states the operator's requested outcome in `goal`, and reaches that goal.
 
-RoboLang 2.3 has bounded branching (`if`/`else`, see "Branching"), step failure handlers (a step
+RoboLang 2.4 has bounded branching (`if`/`else`, see "Branching"), step failure handlers (a step
 `else { ... }` that runs when that step fails, see "Failure handlers"), measured values (`measure`
 reads a temperature, a mass, a distance, a label, **how full something is, how sure the detector is, a
 pressure or a count** from a sensor, see "Measured values"), region
@@ -15,21 +15,23 @@ time of day, `22:00` is a time, `wait until clock_time >= 23:00 ...` waits for o
 **missions** (a `mission` runs tasks one after another, again and again, with a hard bound: a count, a duration or a
 time of day, see "Missions"), **incoming messages** (`message_received "line" with "DOCKED"` is true once a message has
 arrived on a channel, see "Incoming messages") and **choosing at run time** (`choose robot t from (a, b)
-nearest to spot else { ... }` binds a name to one robot, object or location when the job runs, see "Choosing at run time").
+nearest to spot else { ... }` binds a name to one robot, object or location when the job runs, see "Choosing at run time") and
+**the robot's own charge** (`measure r charge as c;` reads a robot's battery charge in percent, `wait until robot_charge r >= 80 % ...`
+waits for it, see "The robot's own charge").
 A task itself never loops: it runs once. **A fixed count is not a mission:** "three round
 trips" is one task with the steps written out three times (a mission with `at most 3 runs` is also accepted), and
 "try the grasp once more" or "retry the step up to 3 times" is a failure handler, a program, not a decline. It has no
 repeat without a bound ("forever", "until it works" with no count or time), triggers ("every hour", "every morning",
 "at 06:00", "when a message arrives"), loops inside loops, choosing by a reading of each candidate, acting on each member of a set chosen at run time, dates, arithmetic,
 string formatting, confirming that a message the robot sent was delivered, the content of a message as a value, patterns
-in a message text, readings of anything but the eight kinds, of a person or of the robot itself, limits on one step only,
+in a message text, readings of anything but the nine kinds, of a person, or of the robot itself beyond its charge (its self-test, its faults), time until its battery is empty, limits on one step only,
 limits on an arm or a person, or variables beyond typed
 parameters and the names that `measure` binds. Do not silently drop part of a request. If a request needs an unsupported construct, or the available
 world and robots cannot perform it, say that it cannot be represented or completed.
 
 ## File and task structure
 
-A file starts with `robolang 2.3;` and holds one or more tasks, and missions that run them (see "Missions"). A file of
+A file starts with `robolang 2.4;` and holds one or more tasks, and missions that run them (see "Missions"). A file of
 tasks only needs no mission. `//` starts a comment. The language
 is case-sensitive. Whitespace only separates tokens.
 
@@ -245,7 +247,7 @@ program uses the value afterwards.
 ### More kinds: fill, confidence, pressure, count
 
 ```rob
-robolang 2.3;
+robolang 2.4;
 
 task shelf_check(robot r, location shelf, location aisle, object gauge, sensor cam, sensor tag, sensor pcam) {
     goal { robot_at r aisle; }
@@ -288,7 +290,7 @@ task shelf_check(robot r, location shelf, location aisle, object gauge, sensor c
   measure the kind (`S234`), or is on another robot (`S231`), or is not available (`S232`), or an object that is not there, makes
   the request `infeasible`: say so.
 - **Not in 2.2** (decline as `inexpressible`): a kind no sensor can declare ("how worn it looks", "if it smells burnt"); a
-  reading of a person ("how far the nearest person is"); a reading of the robot itself ("if its battery is below 20 percent");
+  reading of a person ("how far the nearest person is"); a reading of the robot itself other than its charge (see "The robot's own charge");
   counting objects chosen at run time and acting on each one ("carry as many cartons as counted": a plan has a fixed number of
   steps); and arithmetic on readings (an average, a difference).
 
@@ -299,7 +301,7 @@ choose TYPE NAME from CANDIDATES [where CONDITION] [nearest to X | farthest from
 ```
 
 ```rob
-robolang 2.3;
+robolang 2.4;
 
 task send_tugger(robot a, robot b, location handoff) {
     goal { robot_at t handoff; }
@@ -323,7 +325,7 @@ statement. Use it when the request leaves the entity to the world: "whichever tu
   "a clean one": `where in_state p "clean"`). "Whichever is nearer" has no `where`: an added `where robot_ready t` would
   send the farther robot when the nearer one is not ready, which the request did not ask. It is a condition over the new name, evaluated from the world as it is at the choice: `robot_ready t`,
   `object_at p dock`, `in_state p "clean"`, `not`, `and`, `or`. A value the world does not know **excludes** the
-  candidate. It states **world facts only**: a reading, the clock or a message is `E330`.
+  candidate. It states **world facts only**: a reading, the clock or a message is `E330`; the one exception is the chosen robot's charge, `where robot_charge t >= 50 %` (see "The robot's own charge").
 - **`nearest to X`** or **`farthest from X`**, where `X` is a location, a robot or an object parameter, orders the
   candidates by straight-line distance. The world list gives each location's position, `dock_1 (50, 30)`, in metres; a
   location shown `(no position)` is unknown, and an unknown candidate or reference point is left out. **A tie, and a
@@ -356,13 +358,101 @@ statement. Use it when the request leaves the entity to the world: "whichever tu
 - **`choose` is not a loop:** it picks one entity. A request for **every** member of a set ("check every pan", "carry as many
   as counted") has no `choose`: a plan has a fixed number of steps.
 
-**Not in 2.3** (decline as `inexpressible`): choosing by a **reading** of each candidate ("the fullest bin", "any pan above
+**Not in 2.4** (decline as `inexpressible`): choosing by a **reading** of each candidate ("the fullest bin", "any pan above
 80 degC"); acting on **each** candidate in turn, with a memory of which are done ("every pan", "as many crates as there
 are bins"); **detecting objects the world does not list** ("if the camera sees something the stock list does not know":
 `objects at L` yields only what the world lists); **choosing a person** ("the robot nearest the person who called": a person
 is not an entity of the world, and a stand-in place for them is another request); **several choices that depend on each
 other**. Do not replace a choice by one fixed candidate, by the first of a list with the order dropped, or by a stand-in:
 write the `choose` with the criteria the request states, or decline.
+
+## The robot's own charge
+
+```text
+measure r charge as c;
+if c < 25 % { ... } else { ... }
+wait until robot_charge r >= 80 % timeout 40 min else { fail "the battery is not at 80 percent in time"; }
+repeat at most 6 runs { run round(r, a, b); } until robot_charge r < 30 %;
+choose robot t from (a, b) where robot_charge t >= 50 % else { fail "..."; }
+```
+
+A request such as "if your battery is below 25 percent, go to dock_2 and tell channel "lead" "spot1 is docked"; otherwise go on
+to stop_c" reads the robot's own charge. It is a program, not a decline:
+
+```rob
+robolang 2.4;
+
+task round_or_dock(robot r, location dock, location stop_c) {
+    plan {
+        measure r charge as c;
+        if c < 25 % {
+            goal { robot_at r dock; }
+            move r to dock;
+            communicate r to "lead" with "spot1 is docked";
+        } else {
+            goal { robot_at r stop_c; }
+            move r to stop_c;
+        }
+    }
+}
+```
+
+- **`measure r charge as c;`** binds the charge of robot `r` in `%` (0 to 100) to `c`. It has **no `of ... using ...`**: the charge
+  comes from the robot, not from a sensor, and there is no sensor to name. `r` may be any robot of the task: "if spot2's battery
+  is low" reads spot2's charge, not the robot that moves. `KIND` `charge` is the ninth kind; a `measure` of it may have a failure
+  handler like any other.
+- **Comparing.** `c` is compared with `<`, `<=`, `>`, `>=` against a number with `%` (`25 %`) or against another charge binding.
+  **There is no `==`** (`E320`): a charge is never exactly a value. A unit that is not `%`, or another kind (a `fill`, a
+  temperature), is `E319`; a number with no unit is `E206`. **Write the threshold, the operator and the robot the request
+  states**: "below 25 percent" is `c < 25 %`, "at least 60 percent" is `c >= 60 %`, "more than" is `>`. "At least" is not "more
+  than", and a different threshold, another robot's charge or a condition the request does not state is another request.
+- **The world list shows whether a robot has a charge, never its value**: `charge known` or `charge unknown`. The value is read when
+  the job runs, so a program reads it with `measure`, it does not decide from the list. A robot shown with an **unknown** charge
+  gives no reading: the step fails (`S239`), and a task that must read it with no fallback fails before anything moves (`S012`). When
+  the request names no fallback ("check that spot3 has at least 60 percent charge, then send it to stop_c" and spot3's charge is
+  unknown), the request is `infeasible`: say so. A reading near the threshold may be unknown too (the charge has an
+  uncertainty, as any reading): an unknown `if` takes no branch and the run fails (`S261`), it never guesses.
+- **A charge is sent as a value**: `communicate r to "lead" with c;` sends `64 %` (the number and its unit). "Tell the lead how
+  much charge you have left" is `measure r charge as c;` and `communicate r to "lead" with c;`, never a text you made up.
+- **`robot_charge r` is the live reading**, in a `wait until` (and in a mission's `until`, below), and nowhere else (`E322`): "charge
+  until your battery is at least 80 percent, waiting up to 40 minutes" is `wait until robot_charge r >= 80 % timeout 40 min else {
+  fail "the battery is not at 80 percent in time"; }`. In an `if`, read the charge with `measure` and compare the name.
+- **Charging is `do r charge charger;` (the action the robot lists) followed by the wait.** The charge changes **only when the
+  world's scheduled charge events say so**: the world list shows them (`scheduled: after 20 min, the charge of spot2 becomes 90 %`).
+  There is no drain and no charging rate, and `do r charge charger` changes no reading, so the wait for the event is how the
+  program sees the charge rise. Do **not** replace the wait by a `wait for` of a guessed time, and do not drop it. Only `wait for`
+  and the waits move time; a `move` and a `do` take none. If no scheduled event brings the charge to the threshold before the
+  timeout (the only event gives 70 % and the request wants 90 %), or the robot does not list the action (`S006`), the request is
+  `infeasible`: say so.
+- **In a mission**, `until robot_charge r < 30 %` ends the repeats as soon as the charge is below 30 %. It is checked after each
+  `run` line, an unknown value ends the mission as failed, and it is **not a bound**: the request still needs a count, a duration
+  or a time of day ("for at most 6 rounds"). Write the bound the request states, no other, and no stop rule it does not state.
+- **In a choice**, `where robot_charge t >= 50 %` keeps the candidates with at least that charge ("send whichever of spot2 and
+  spot3 has at least 50 percent charge"); a candidate whose charge is unknown is left out. It is the one reading a `where` may
+  state, for the robot chosen only:
+
+```rob
+robolang 2.4;
+
+task relief(robot a, robot b, location dest) {
+    goal { robot_at t dest; }
+    plan {
+        choose robot t from (a, b) where robot_charge t >= 50 % else { fail "neither robot has 50 percent charge"; }
+        move t to dest;
+    }
+}
+```
+
+- **The robot's own low-battery protection always comes first.** RoboLang asks; it never overrides the robot's controller, and a
+  charge check in a task is never the protection.
+- **Do not replace a charge check.** "If your battery is low" is a charge reading, never `robot_ready`, never dropped, never a
+  `wait for` of a guessed time.
+
+**Not in 2.4** (decline as `inexpressible`): the robot's **health** beyond `robot_ready` and `sensor_ok`: a self-test and its result,
+its faults, a request for service; **a prediction from the charge**: how many minutes the robot can still run, whether it will make it
+back to the dock, how much charge a route costs (a charge cannot be predicted: there is no drain model, and a threshold the request
+does not give is a number you would invent); **arithmetic on a charge**; and **a trigger**: "the moment your battery drops below 20
+percent, even in the middle of a round" (a check at the start of each run is a different request).
 
 ## Clock readings
 
@@ -376,7 +466,7 @@ communicate r to "lead" with now;          // a time is sent as HH:MM:SS; an ela
 ```
 
 ```rob
-robolang 2.3;
+robolang 2.4;
 
 task tote_if_open(robot r, object tote, location inb, location outb) {
     plan {
@@ -453,7 +543,7 @@ goal { in_state door "open"; }      // the result is checked, never assumed
 ```
 
 ```rob
-robolang 2.3;
+robolang 2.4;
 
 task restock(robot r, object closet, object kit, location ward, location store) {
     goal { in_state closet "open"; object_at kit ward; }
@@ -570,7 +660,7 @@ Both words go after `@safety`, name a `region` parameter, and are written before
 order with `max_speed`. Bind the parameter to the region of the world that the request names, by its exact ID.
 
 ```rob
-robolang 2.3;
+robolang 2.4;
 
 task to_lobby(robot r, location lobby, region wet) {
     @safety no_go_region wet;
@@ -626,7 +716,7 @@ mission NAME(type param, ...) {
 ```
 
 ```rob
-robolang 2.3;
+robolang 2.4;
 
 task round(robot r, location home, location far) {
     goal { robot_at r home; }
@@ -680,7 +770,7 @@ mission shuttle(robot r, location home, location far, region quay) {
   with `at most 3 runs` is also accepted); "retry the grasp up to twice" is a failure handler (see "Failure handlers"):
 
 ```rob
-robolang 2.3;
+robolang 2.4;
 
 task three_round_trips(robot r, location a, location b) {
     goal { robot_at r a; }
@@ -710,7 +800,7 @@ message_received "nurse"                         // any message at all on that c
 ```
 
 ```rob
-robolang 2.3;
+robolang 2.4;
 
 task feed(robot r, object tote, location src, location handoff, location line) {
     goal { object_at tote line; }
@@ -746,6 +836,9 @@ task feed(robot r, object tote, location src, location handoff, location line) {
 - **Never in a goal** (`E327`): a message is not an end state of the world. "The job is done only when the line has sent RECEIVED" is
   the end state in `goal` (`object_at tote line`) and, as the **last step of the plan**, `wait until message_received "line"
   with "RECEIVED" timeout 10 min else { fail "no confirmation"; }`: a program, not a decline.
+- **A channel the world lists limits what the robot receives, never what it may send.** `communicate r to "lead" with "..."` may
+  name any channel the request gives, whether or not the world's `channels` line lists it: the list says who may send on a channel
+  to the robot (`message_received`), and a task that only sends needs no listed channel.
 - **Not asked, not added.** A channel in the world list is not a request: a request that does not ask to wait for or check a message
   has none. `communicate r to "ops" with "done"` only sends: what a task sends is never a message it receives.
 - **What the world says** decides what is infeasible, not inexpressible. Say `infeasible` when the world cannot give the message:
@@ -784,6 +877,9 @@ task feed(robot r, object tote, location src, location handoff, location line) {
 - `message_received "CH" with "TEXT"` is true once a message with exactly that text has arrived on channel `CH` from a
   sender the world lists for it, at or after the start of the run (see "Incoming messages"). The simulation applies the
   world's scheduled messages in time order, as it does events.
+- `measure r charge` reads the charge the world gives robot `r` (any robot of the task), takes no time and needs no sensor; a robot the
+  world shows with an unknown charge fails the step (`S239`). The charge changes only when the world's scheduled charge events
+  say so: `do r charge charger` changes no reading.
 - `communicate` records a message and changes no other state. A message a task sends is never a message it receives.
 - A task can bind more than one robot. Their steps still run sequentially in written order.
 
@@ -801,7 +897,7 @@ are:
 | `E208` | task blocks in the wrong order, an empty branch or handler, a `goal` block that is not first in a branch, or a `goal` block in a handler |
 | `E212` | reserved word used as a name |
 | `E214` | `and` and `or` mixed without parentheses |
-| `E217` | a kind that is not `temperature`, `mass`, `distance`, `label`, `time` or `elapsed` |
+| `E217` | a kind that is not `temperature`, `mass`, `distance`, `label`, `time`, `elapsed` or `charge` |
 | `E216` | `if` statements and handlers nested more than 4 deep |
 | `E303` | name is not a task parameter |
 | `E304` | parameter used with the wrong type |
@@ -813,7 +909,7 @@ are:
 | `E316` | `wait until` without a failure handler |
 | `E317` | a name used as a value that is not a visible binding (before its `measure`, outside its branch or handler, a parameter) |
 | `E318` | a binding named like a parameter or another binding (except a retry in the handler of its own `measure`) |
-| `E319` | kinds that do not match: a unit of another kind, a string against a quantity, a time against a duration or an elapsed value, a retry of another kind |
+| `E319` | kinds that do not match: a charge against a unit that is not `%` or against another kind, a unit of another kind, a string against a quantity, a time against a duration or an elapsed value, a retry of another kind |
 | `E320` | `==` or `!=` on a quantity, a time or an elapsed value, or ordering on a label |
 | `E321` | a comparison in `pre` or `goal` |
 | `E327` | a `message_received` in a `goal` (a message is not an end state: wait for it in the plan) |
@@ -822,8 +918,11 @@ are:
 | `E326` | a `run` of something that is not a task of the file (a mission, an unknown name), or with the wrong number of arguments |
 | `S401` | a mission's task cannot fit its duration bound even once: its waits alone are longer |
 | `S402` | a mission's `until` is unknown after a run: the mission stops |
-| `E322` | a live reading or `clock_time` / `clock_elapsed` anywhere but the condition of a `wait until` |
+| `E322` | a live reading, `clock_time` / `clock_elapsed` or `robot_charge` anywhere but the condition of a `wait until` (and a mission's `until` for `robot_charge`) |
 | `S010` | `wait until clock_time >= T` where T has already passed when the task starts |
+| `S012` | a charge that is never known (the robot has none and no event gives it one), and the step has no fallback: fails before anything moves |
+| `S013` | `wait until robot_charge r >= T` that no charge the world gives the robot can meet, and no fallback: fails before anything moves |
+| `S239` | a charge reading of a robot the world gives no charge: unknown, fails closed |
 | `S237` | a `time` reading and the world has no clock |
 | `S238` | a `time` reading after the clock has reached the end of the day the task started on |
 | `S006` | a `do` names an action the robot does not list in the world |
@@ -847,7 +946,7 @@ records completion. Its parameters still
 need bindings to concrete world entities before simulation.
 
 ```rob
-robolang 2.3;
+robolang 2.4;
 
 task deliver(robot r, object box, location src, location dst, region cell, sensor camera) {
     @safety max_speed 0.5 m/s;
@@ -871,7 +970,7 @@ This task chooses at run time. If the cell is clear when the job reaches the `if
 `a`; otherwise it goes to `b`. Each path has its own goal.
 
 ```rob
-robolang 2.3;
+robolang 2.4;
 
 task route(robot r, object box, location src, location a, location b, region cell) {
     plan {
@@ -893,7 +992,7 @@ task route(robot r, object box, location src, location a, location b, region cel
 This task retries a failed grasp once. If the second grasp also fails, it reports and stops.
 
 ```rob
-robolang 2.3;
+robolang 2.4;
 
 task fetch(robot r, object box, location src, location dst) {
     goal { object_at box dst; }
@@ -917,7 +1016,7 @@ reading to the "pass" channel, and moves the pan only if the reading is clearly 
 may be too hot.
 
 ```rob
-robolang 2.3;
+robolang 2.4;
 
 task check_pan(robot r, object pan, sensor probe, location src, location dst) {
     goal { object_at pan dst; }

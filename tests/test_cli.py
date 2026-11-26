@@ -451,9 +451,9 @@ def test_version_reports_distribution_language_and_schema_versions_separately(ca
     assert code == EXIT_OK
     assert re.fullmatch(
         r"robolang (\d+\.\d+\.\d+\S*|unknown \(not installed, running from source\)) "
-        r"\(language 1\.1, 1\.2, 1\.3, 1\.4, 1\.5, 1\.6, 1\.7, 1\.8, 1\.9, 2\.0, 2\.1, 2\.2 and 2\.3, "
-        r"IR schema 1\.0, 1\.1, 1\.2, 1\.3, 1\.4, 1\.5, 1\.6, 1\.7, 1\.8, 1\.9, 1\.10 and 1\.11, "
-        r"mission IR 1\.0, 1\.1, 1\.2 and 1\.3\)\n",
+        r"\(language 1\.1, 1\.2, 1\.3, 1\.4, 1\.5, 1\.6, 1\.7, 1\.8, 1\.9, 2\.0, 2\.1, 2\.2, 2\.3 and 2\.4, "
+        r"IR schema 1\.0, 1\.1, 1\.2, 1\.3, 1\.4, 1\.5, 1\.6, 1\.7, 1\.8, 1\.9, 1\.10, 1\.11 and 1\.12, "
+        r"mission IR 1\.0, 1\.1, 1\.2, 1\.3 and 1\.4\)\n",
         text,
     ), text
 
@@ -463,8 +463,9 @@ def test_version_text_uses_the_installed_distribution_version(monkeypatch):
 
     monkeypatch.setattr(cli_module.metadata, "version", lambda name: "9.8.7")
     assert cli_module.version_text() == (
-        "robolang 9.8.7 (language 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0, 2.1, 2.2 and 2.3, "
-        "IR schema 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 1.10 and 1.11, mission IR 1.0, 1.1, 1.2 and 1.3)"
+        "robolang 9.8.7 (language 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0, 2.1, 2.2, 2.3 and 2.4, "
+        "IR schema 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 1.10, 1.11 and 1.12, "
+        "mission IR 1.0, 1.1, 1.2, 1.3 and 1.4)"
     )
 
 
@@ -477,8 +478,9 @@ def test_version_text_when_running_from_source(monkeypatch):
     monkeypatch.setattr(cli_module.metadata, "version", missing)
     assert cli_module.version_text() == (
         "robolang unknown (not installed, running from source) "
-        "(language 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0, 2.1, 2.2 and 2.3, "
-        "IR schema 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 1.10 and 1.11, mission IR 1.0, 1.1, 1.2 and 1.3)"
+        "(language 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0, 2.1, 2.2, 2.3 and 2.4, "
+        "IR schema 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 1.10, 1.11 and 1.12, "
+        "mission IR 1.0, 1.1, 1.2, 1.3 and 1.4)"
     )
 
 

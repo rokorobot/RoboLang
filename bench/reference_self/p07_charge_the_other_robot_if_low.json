@@ -1,0 +1,10 @@
+{
+  "task": "round_and_charge",
+  "bindings": {
+    "a": "spot1",
+    "b": "spot2",
+    "dest": "stop_c",
+    "charger": "charger_2",
+    "stay": "stop_b"
+  }
+}

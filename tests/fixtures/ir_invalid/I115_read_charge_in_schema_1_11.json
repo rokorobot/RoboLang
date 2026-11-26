@@ -1,0 +1,51 @@
+{
+  "ir_schema": "robolang.task-ir",
+  "ir_schema_version": "1.11",
+  "language_version": "2.3",
+  "tasks": [
+    {
+      "name": "t",
+      "parameters": [
+        {
+          "name": "r",
+          "type": "robot"
+        },
+        {
+          "name": "dest",
+          "type": "location"
+        },
+        {
+          "name": "dock",
+          "type": "location"
+        }
+      ],
+      "safety": [],
+      "preconditions": [],
+      "goal": [
+        {
+          "kind": "robot_at",
+          "robot": "r",
+          "location": "dest"
+        }
+      ],
+      "steps": [
+        {
+          "kind": "move",
+          "robot": "r",
+          "target": "dest"
+        },
+        {
+          "kind": "read_charge",
+          "robot": "r",
+          "binding": "c"
+        },
+        {
+          "kind": "communicate",
+          "robot": "r",
+          "channel": "lead",
+          "binding": "c"
+        }
+      ]
+    }
+  ]
+}

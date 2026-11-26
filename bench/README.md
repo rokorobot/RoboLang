@@ -510,3 +510,35 @@ every path, what the new measures see, the controls, the atlas, the scorer and t
 `set_only: choose` (full and minimal prompts, 3 repeats, Sonnet and Haiku, `--max-usd 3` each, not gated, not in the per-PR or weekly runs).
 Locally: `python bench/run.py --set choose --repeats 3 --models claude-sonnet-5-5,claude-haiku-5-5` (a paid run: confirm it first; estimate ~$4.0
 for the full prompt and ~$3.9 for the grammar-only one).
+
+## Set 13: the robot's own state (`--set self`)
+
+24 tasks in `tasks_self/`, the references of the 4 controls and the obvious 2.3 attempts in `reference_self/`, decision record
+[0048](../spec/decisions/0048-the-robots-own-state.md), plan, proposed bounds and open points in
+[bench-13-self.md](../docs/plans/bench-13-self.md) (a draft for the owner). Pre-registered against 2.3 (L3 of I8), **labelled for 2.4 at
+L4 (errata R4 to R9)**: `expect` is now the 2.4 label (10 programs, 5 `infeasible` tasks, 5 `inexpressible` tasks that stay out and 4
+`control` programs), `expect_2_3` the label the baseline scored (every non-control task `cannot / inexpressible`, each with an attempt
+that fails with `E217`, no `charge` kind, or `E204`, no `robot_charge` condition), `expect_2_4` the pre-registered 2.4 label with `world_2_4` (the world file 1.9 facts: a robot's `charge` and the scheduled
+`charge_events`), `expected_charge` (where the check stands, the operator, the threshold, the decoy robot) and `paths` (each forced by
+a patch of charges and events, with the check that holds, fails or is unknown and fails closed). Three tasks combine a charge check
+with an older feature (`p08` region limit, `p09` message wait and a `fill` reading, `p10` a declared action). The one new world file of L3 is
+`worlds/charge_hall.json` (world file 1.8, no charge: the baseline world shows what 2.3 can read); at L4 each non-control task has a
+world file 1.9 copy `worlds/charge_<id>.json` (the 2.3 world, `world_2_3`, with the `world_2_4` notes laid over it): the model is shown
+each robot's charge as `known` or `unknown`, never the value, and the scheduled charge events. The attempts mark the lines that read
+the robot's own state with `// @charge` (or `// @charge => TEXT` for a line that is replaced, or `// @charge who=a` for a choice): without
+them each is a valid 2.3 program that succeeds, the charge check replaced silently.
+
+The R3 probes `f_self_low_battery`, `f_self_enough_for_route` and `f_self_report_charge` (set "future") and the standing task
+`x02_own_battery_first` (set "kinds") are programs in 2.4 (errata R6 to R9), each with a world file 1.9 copy and a reference. The
+references of the 10 programs and the 4 relabelled tasks are in `reference_self/`, `reference_future/` and `reference_kinds/`. Scorer
+measures (erratum R4), per model like `criterion_changed`: `charge_ok` (B1; one of the checks), `charge_check_replaced_silently` (B8, and
+`charge_check_dropped_where_infeasible` for B4), `threshold_or_robot_changed` (B9) and `no_charge_reading_added` (B5). Erratum R2 of [bench-errata-2-4.md](../docs/evidence/bench-errata-2-4.md) moved `x02_selftest_result`
+from G-SELF to the new far gap G-HEALTH.
+
+`tests/test_bench_self.py` checks the counts, the labels, a small model of 0048 S2 to S7 over every path (which comparison holds, fails
+or is unknown; when a scheduled event meets a wait; how a mission ends; which peer is chosen), that a dropped check, `robot_ready` as a
+stand-in, another threshold, operator or robot each lose a path, that every attempt fails with its code and every stripped attempt
+succeeds, the controls, the atlas, the scorer and the workflow. On demand from GitHub Actions: `Benchmark`, `set_only: self` (full and
+minimal prompts, 3 repeats, Sonnet and Haiku, `--max-usd 3` each, not gated, not in the per-PR or weekly runs). Locally:
+`python bench/run.py --set self --repeats 3 --models claude-sonnet-5-5,claude-haiku-5-5` (a paid run: confirm it first; estimate ~$3.9
+for the full prompt and ~$3.7 for the grammar-only one).

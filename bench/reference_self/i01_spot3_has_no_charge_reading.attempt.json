@@ -1,0 +1,7 @@
+{
+  "task": "checked_send",
+  "bindings": {
+    "r": "spot3",
+    "dest": "stop_c"
+  }
+}

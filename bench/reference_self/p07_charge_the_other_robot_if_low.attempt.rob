@@ -1,0 +1,14 @@
+// bench/reference_self/p07_charge_the_other_robot_if_low.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 2.3;
+
+task round_and_charge(robot a, robot b, location dest, location charger) {
+    goal { robot_at a dest; }
+    plan {
+        move a to dest;
+        measure b charge as c;                                                                      // @charge
+        if c < 40 % {                                                                               // @charge
+            move b to charger;                                                                      // @charge
+            do b charge charger;                                                                    // @charge
+        }                                                                                           // @charge
+    }
+}

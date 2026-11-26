@@ -43,8 +43,9 @@ CANNOT = {"decision": "cannot", "category": "inexpressible"}
 PROGRAMS = {t: d for t, d in SET.items() if d["group"] == "kind"}
 INFEASIBLE = {t: d for t, d in SET.items() if d["group"] == "infeasible"}
 INEXPRESSIBLE = {t: d for t, d in SET.items() if d["group"] == "inexpressible"}
+SELFS = {t: d for t, d in SET.items() if d["group"] == "self"}  # `x02_own_battery_first`: a 2.4 program (0048, R9)
 CONTROLS = {t: d for t, d in SET.items() if d["group"] == "control"}
-DECLINED = {**PROGRAMS, **INFEASIBLE, **INEXPRESSIBLE}  # what 2.1 declines: an attempt each
+DECLINED = {**PROGRAMS, **INFEASIBLE, **INEXPRESSIBLE, **SELFS}  # what 2.1 declines: an attempt each
 NEW_KINDS = ("fill", "confidence", "pressure", "count")
 UNITS = {"fill": {"%"}, "confidence": {"%"}, "pressure": {"Pa", "kPa", "bar"}, "count": set()}
 FACTOR = {"%": Decimal(1), "Pa": Decimal(1), "kPa": Decimal(1000), "bar": Decimal(100000)}  # 1 bar = 100 kPa (0044 K2)
@@ -122,8 +123,9 @@ def label_2_2(task: dict) -> dict:
 
 def test_the_mix_of_tasks():
     assert len(SET) == 24
-    assert Counter(d["group"] for d in SET.values()) == {"kind": 10, "infeasible": 5, "inexpressible": 5, "control": 4}
-    prefixes = {"kind": "k", "infeasible": "i", "inexpressible": "x", "control": "c"}
+    assert Counter(d["group"] for d in SET.values()) == {"kind": 10, "infeasible": 5, "inexpressible": 4, "control": 4,
+                                                           "self": 1}
+    prefixes = {"kind": "k", "infeasible": "i", "inexpressible": "x", "control": "c", "self": "x"}
     for task_id, task in SET.items():
         assert task["id"] == task_id and (lib.KINDS_TASKS_DIR / f"{task_id}.json").is_file()
         assert (REPO / task["world"]).is_file() and task["tags"] and task["prompt"].endswith(".")
@@ -387,16 +389,15 @@ def test_the_infeasible_tasks_each_break_one_rule():
 
 def test_the_inexpressible_tasks_each_stay_out_for_one_reason_of_0044_k8():
     assert {t: d["gap"] for t, d in INEXPRESSIBLE.items()} == {
-        "x01_packaging_looks_worn": "G-QUALITY", "x02_own_battery_first": "G-SELF",
+        "x01_packaging_looks_worn": "G-QUALITY",
         "x03_carry_as_many_as_counted": "G-EACH", "x04_average_fill": "G-CALC", "x05_nearest_person": "G-PROX"}
     assert {t: set(d["tags"]) for t, d in INEXPRESSIBLE.items()} == {
         "x01_packaging_looks_worn": {"wear", "free_kind", "if"},
-        "x02_own_battery_first": {"battery", "self_state", "if"},
         "x03_carry_as_many_as_counted": {"count", "run_time_choice", "each"},
         "x04_average_fill": {"fill", "arithmetic", "average"},
         "x05_nearest_person": {"person", "distance", "proximity"}}
     assert "looks worn" in SET["x01_packaging_looks_worn"]["prompt"]
-    assert "own battery" in SET["x02_own_battery_first"]["prompt"]
+    assert "own battery" in SET["x02_own_battery_first"]["prompt"] and set(SELFS) == {"x02_own_battery_first"}
     assert "that many" in SET["x03_carry_as_many_as_counted"]["prompt"]
     assert "the average" in SET["x04_average_fill"]["prompt"]
     assert "nearest person" in SET["x05_nearest_person"]["prompt"]
@@ -455,7 +456,8 @@ def test_references_and_attempts_are_where_they_should_be():
     names = [p.name for p in REF.iterdir()]
     refs = {n.split(".")[0] for n in names if ".attempt" not in n}
     attempts = {n.split(".")[0] for n in names if ".attempt." in n}
-    assert refs == set(CONTROLS) | set(PROGRAMS) and attempts == set(DECLINED)  # a 2.2 reference per program (L4)
+    # a 2.2 reference per program (L4), and the 2.4 reference of `x02_own_battery_first` (0048)
+    assert refs == set(CONTROLS) | set(PROGRAMS) | set(SELFS) and attempts == set(DECLINED)
     for task_id in DECLINED:
         assert (REF / f"{task_id}.attempt.rob").is_file() and (REF / f"{task_id}.attempt.json").is_file()
     for name in names:
@@ -593,11 +595,12 @@ def test_erratum_k6_relabels_the_two_ask_tasks_as_infeasible_and_keeps_the_old_l
 
 def test_only_what_2_2_still_declines_is_in_an_atlas_gap_and_g_perceive_is_closed():
     in_gaps = [(t, g["id"]) for g in ATLAS["gaps"] for t in g["tasks"] if t in SET]
-    assert len(in_gaps) == len({t for t, _ in in_gaps}) == len(INEXPRESSIBLE) == 5
+    assert len(in_gaps) == len({t for t, _ in in_gaps}) == len(INEXPRESSIBLE) == 4
     assert {t for t, _ in in_gaps} == set(INEXPRESSIBLE)  # the programs and the infeasible tasks are in no gap
     for task_id, gap in in_gaps:
         assert INEXPRESSIBLE[task_id]["gap"] == gap and GAPS[gap]["scope"] == "open"
-    assert Counter(gap for _, gap in in_gaps) == {"G-QUALITY": 1, "G-SELF": 1, "G-EACH": 1, "G-CALC": 1, "G-PROX": 1}
+    assert Counter(gap for _, gap in in_gaps) == {"G-QUALITY": 1, "G-EACH": 1, "G-CALC": 1, "G-PROX": 1}
+    assert not any(t in GAPS["G-SELF"]["tasks"] for t in SELFS)  # a 2.4 program leaves the gap (0048, L4)
     assert GAPS["G-PERCEIVE"]["scope"] == "closed" and GAPS["G-PERCEIVE"]["tasks"] == []  # L6 of I6
     assert GAPS["G-PERCEIVE"]["closed_in"] == "RoboLang 2.2"
     quality = GAPS["G-QUALITY"]  # D14: far, open
@@ -891,7 +894,7 @@ def test_the_set_only_input_lists_kinds_and_keeps_the_input_count():
     steps = re.split(r"\n      - ", workflow)
     for value in ("set3", "set4", "future", "regions", "actions", "clock", "missions", "messages", "kinds"):
         assert sum(f"inputs.set_only == '{value}'" in s for s in steps) == 1, value
-    assert "kinds or choose. Empty" in block
+    assert "choose or self. Empty" in block
 
 
 def test_the_readme_the_errata_and_the_plan_name_the_set():
@@ -913,3 +916,22 @@ def test_the_readme_the_errata_and_the_plan_name_the_set():
                     "x01_packaging_looks_worn", "G-QUALITY", "location_properties"):
         assert task_id in errata, task_id
 
+
+
+def test_x02_own_battery_first_is_a_2_4_program_with_a_reference_right_on_every_path_erratum_r9():
+    task = SELFS["x02_own_battery_first"]
+    ref = json.loads(read(REF / "x02_own_battery_first.json"))
+    rob = read(REF / "x02_own_battery_first.rob")
+    answer = {"decision": "program", "category": "none", "reason": "-", "entities": [], "rob": rob, **ref}
+    assert task["expect"] == {"decision": "program"} and task["expect_2_3"] == CANNOT and task["erratum"] == "R9"
+    assert task["world"] == "bench/worlds/charge_x02_own_battery_first.json"
+    assert task["world_2_3"] == "bench/worlds/plant_room.json" and task["gap"] == "G-SELF"
+    checked = lib.check_answer(task, answer, lib.world_bytes(task))
+    assert checked.valid and checked.language_version == "2.4", checked.report
+    judgement = lib.judge(task, checked, answer["bindings"])
+    assert judgement.goal_correct and judgement.plan_succeeds and judgement.charge_ok
+    assert [p["goal_ok"] and p["plan_ok"] for p in judgement.paths] == [True] * 4
+    unchecked = rob.replace("if c < 20 % {\n            move r to charger;\n        }\n", "")
+    always = lib.check_answer(task, {**answer, "rob": unchecked}, lib.world_bytes(task))
+    lost = lib.judge(task, always, answer["bindings"])
+    assert lost.charge_check_replaced is True and not lost.goal_correct  # the low-charge path needs the second move

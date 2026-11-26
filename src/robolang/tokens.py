@@ -97,11 +97,25 @@ NEW_KINDS_V2_2 = ("fill", "confidence", "pressure", "count")
 # `farthest`, `objects` and `robots` are recognised by position and are not reserved: a 2.2 program that uses them as
 # names still parses, and in a file below 2.3 `choose` is an unknown statement (E203).
 CHOOSE_TYPES = ("robot", "object", "location")
+# RoboLang 2.4 adds the robot's own charge (decision 0048 S1, S3): the kind `charge` (after `measure r`) and the live
+# `robot_charge r` (in a `wait until` and a mission's `until`). Both are recognised by position and are not reserved
+# (S3): `charge` is already a world action name, and a 2.3 program may use either word as a name.
+CHARGE_KIND = "charge"
+LIVE_CHARGE = "robot_charge"
+# Every language version, oldest first. `since("1.6")` is the versions from 1.6 on.
+VERSIONS = ("1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "2.0", "2.1", "2.2", "2.3", "2.4")
+
+
+def since(first: str) -> tuple[str, ...]:
+    """The language versions from `first` on (a feature added in `first` is in each of them)."""
+    return VERSIONS[VERSIONS.index(first):]
+
+
 # Language version -> its reserved words. Versions not listed read as 1.1.
 RESERVED_BY_VERSION = {
     "1.2": RESERVED_V1_2, "1.3": RESERVED_V1_3, "1.4": RESERVED_V1_4, "1.5": RESERVED_V1_4, "1.6": RESERVED_V1_6,
     "1.7": RESERVED_V1_6, "1.8": RESERVED_V1_8, "1.9": RESERVED_V1_9, "2.0": RESERVED_V2_0,
-    "2.1": RESERVED_V2_0, "2.2": RESERVED_V2_0, "2.3": RESERVED_V2_0,
+    "2.1": RESERVED_V2_0, "2.2": RESERVED_V2_0, "2.3": RESERVED_V2_0, "2.4": RESERVED_V2_0,
 }
 
 # Recognized only in their grammatical position; not reserved.
@@ -117,6 +131,8 @@ KIND_UNITS = {"temperature": ("degC", "K"), "mass": ("g", "kg"), "distance": ("m
 # RoboLang 2.2 (decision 0044 K1, K2): `%` for fill and confidence (0 to 100), Pa, kPa and bar for pressure; a count has
 # no unit. The 1.6 mapping above stays for files below 2.2 and for the kinds a world action takes.
 KIND_UNITS_V2_2 = {**KIND_UNITS, "fill": ("%",), "confidence": ("%",), "pressure": ("Pa", "kPa", "bar"), "count": ()}
+# RoboLang 2.4 (decision 0048 S1): the robot's own charge, in `%` (0 to 100) like fill and confidence.
+KIND_UNITS_V2_4 = {**KIND_UNITS_V2_2, CHARGE_KIND: ("%",)}
 COMPARISON_OPERATORS = ("<", "<=", ">", ">=", "==", "!=")
 
 ESCAPES = {'"': '"', "\\": "\\", "n": "\n", "t": "\t"}

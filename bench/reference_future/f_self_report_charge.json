@@ -1,0 +1,7 @@
+{
+  "task": "report_charge",
+  "bindings": {
+    "r": "spot1",
+    "spot": "stop_b"
+  }
+}

@@ -1,0 +1,23 @@
+// bench/reference_self/x05_every_time_it_drops_below_twenty.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 2.3;
+
+task round(robot r, location a, location b, location charger) {
+    goal { robot_at r a; }
+    plan {
+        measure r charge as c;                                                                      // @charge
+        if c < 20 % {                                                                               // @charge
+            move r to charger;                                                                      // @charge
+            do r charge charger;                                                                    // @charge
+        }                                                                                           // @charge
+        move r to b;
+        wait for 20 min;
+        move r to a;
+    }
+}
+
+mission patrol(robot r, location a, location b, location charger) {
+    repeat for at most 180 min {
+        run round(r, a, b, charger);
+    };
+    on failure { stop; }
+}

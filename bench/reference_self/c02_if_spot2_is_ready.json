@@ -1,0 +1,7 @@
+{
+  "task": "go_if_ready",
+  "bindings": {
+    "r": "spot2",
+    "dest": "stop_c"
+  }
+}

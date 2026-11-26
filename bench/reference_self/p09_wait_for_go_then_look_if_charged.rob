@@ -1,0 +1,18 @@
+// bench/reference_self/p09_wait_for_go_then_look_if_charged.rob: hand-written reference (RoboLang 2.4)
+robolang 2.4;
+
+task wait_then_look(robot r, object bin, sensor cam, location home) {
+    goal { robot_at r home; }
+    plan {
+        wait until message_received "ops" with "GO" timeout 15 min else { fail "no GO"; }
+        measure r charge as c;
+        if c < 40 % {
+            communicate r to "lead" with "battery low";
+            fail "battery too low";
+        }
+        measure r fill of bin using cam as f;
+        if f > 70 % {
+            communicate r to "lead" with "empty bin_1";
+        }
+    }
+}

@@ -1,0 +1,14 @@
+// RoboLang v2.4 fixture: invalid
+// expect: error E330 (static) line 11
+// why: A where has no binding to compare with.
+
+robolang 2.4;
+
+task relief(robot a, robot b, location dest) {
+    goal { robot_at t dest; }
+    plan {
+        measure a charge as c;
+        choose robot t from (a, b) where robot_charge t >= c else { fail "none"; }
+        move t to dest;
+    }
+}

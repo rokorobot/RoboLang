@@ -1,0 +1,11 @@
+// bench/reference_future/f_self_report_charge.rob: hand-written reference (RoboLang 2.4)
+robolang 2.4;
+
+task report_charge(robot r, location spot) {
+    goal { robot_at r spot; }
+    plan {
+        move r to spot;
+        measure r charge as c;
+        communicate r to "lead" with c;
+    }
+}

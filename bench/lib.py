@@ -58,18 +58,20 @@ KINDS_REFERENCE_DIR = BENCH / "reference_kinds"
 # set 12: choosing at run time, pre-registered on 2.2, labelled for 2.3 (0045)
 CHOOSE_TASKS_DIR = BENCH / "tasks_choose"
 CHOOSE_REFERENCE_DIR = BENCH / "reference_choose"
+SELF_TASKS_DIR = BENCH / "tasks_self"  # set 13: the robot's own state, pre-registered on 2.3, labelled for 2.4 (0048)
+SELF_REFERENCE_DIR = BENCH / "reference_self"
 PROMPT_FILE = BENCH / "prompt.md"
 REFERENCE_FILE = ROOT / "docs" / "language-reference.md"
 MINIMAL_PROMPT_FILE = BENCH / "prompt_minimal.md"
-# 2.3 is a delta over 2.2, over 2.1, over 2.0, over 1.9, over 1.8, over 1.7, over 1.6, over 1.5, over 1.4, over 1.3: the
-# grammar-only prompt pastes all eleven
-GRAMMAR_FILE = ROOT / "spec" / "grammar-v2.3.ebnf"
+# 2.4 is a delta over 2.3, over 2.2, over 2.1, over 2.0, over 1.9, over 1.8, over 1.7, over 1.6, over 1.5, over 1.4,
+# over 1.3: the grammar-only prompt pastes all twelve
+GRAMMAR_FILE = ROOT / "spec" / "grammar-v2.4.ebnf"
 BASE_GRAMMAR_FILE = ROOT / "spec" / "grammar-v1.3.ebnf"
 GRAMMAR_FILES = (BASE_GRAMMAR_FILE, ROOT / "spec" / "grammar-v1.4.ebnf", ROOT / "spec" / "grammar-v1.5.ebnf",
                  ROOT / "spec" / "grammar-v1.6.ebnf", ROOT / "spec" / "grammar-v1.7.ebnf",
                  ROOT / "spec" / "grammar-v1.8.ebnf", ROOT / "spec" / "grammar-v1.9.ebnf",
                  ROOT / "spec" / "grammar-v2.0.ebnf", ROOT / "spec" / "grammar-v2.1.ebnf",
-                 ROOT / "spec" / "grammar-v2.2.ebnf", GRAMMAR_FILE)
+                 ROOT / "spec" / "grammar-v2.2.ebnf", ROOT / "spec" / "grammar-v2.3.ebnf", GRAMMAR_FILE)
 GRAMMAR_MARK = "{{GRAMMAR}}"  # in prompt_minimal.md: replaced by the text of the grammar file
 REFERENCE_MARK = "{{LANGUAGE_REFERENCE}}"  # in prompt.md: replaced by the shipped, tested reference
 
@@ -86,7 +88,8 @@ SETS = {"1": (TASKS_DIR, REFERENCE_DIR), "hard": (HARD_TASKS_DIR, HARD_REFERENCE
         "missions": (MISSIONS_TASKS_DIR, MISSIONS_REFERENCE_DIR),
         "messages": (MESSAGES_TASKS_DIR, MESSAGES_REFERENCE_DIR),
         "kinds": (KINDS_TASKS_DIR, KINDS_REFERENCE_DIR),
-        "choose": (CHOOSE_TASKS_DIR, CHOOSE_REFERENCE_DIR)}
+        "choose": (CHOOSE_TASKS_DIR, CHOOSE_REFERENCE_DIR),
+        "self": (SELF_TASKS_DIR, SELF_REFERENCE_DIR)}
 PROMPTS = ("full", "minimal")
 
 # $ per million tokens: (input, output, cache read). A cache write (5 minutes) costs 1.25 x input.
@@ -117,13 +120,13 @@ ANSWER_SCHEMA = {
                      "description": "\"program\" to answer with RoboLang source, \"cannot\" to decline the request, "
                                     "\"clarify\" to ask which reading is meant."},
         "category": {"type": "string", "enum": list(CATEGORIES),
-                     "description": "Why it cannot be done: \"inexpressible\" (RoboLang 2.3 cannot say it) or "
+                     "description": "Why it cannot be done: \"inexpressible\" (RoboLang 2.4 cannot say it) or "
                                     "\"infeasible\" (this world or robot cannot do it). \"none\" for a program."},
         "reason": {"type": "string", "description": "One sentence: what the program does, or why it cannot be done."},
         "entities": {"type": "array", "items": {"type": "string"},
                      "description": "World entity IDs: for cannot, the ones that block the request; for clarify, every "
                                     "candidate the request could mean. Empty for a program."},
-        "rob": {"type": "string", "description": "The complete RoboLang 2.3 source. Empty when decision is cannot."},
+        "rob": {"type": "string", "description": "The complete RoboLang 2.4 source. Empty when decision is cannot."},
         "task": {"type": "string", "description": "The name of the task in the source to run. Empty when cannot, "
                                                   "and when the answer is a mission."},
         "bindings": {  # a list of pairs: structured outputs require additionalProperties false on objects
@@ -199,9 +202,10 @@ def world_bytes(task_def: dict) -> bytes:
 # -------- what the model is shown --------
 
 def _locations(world: dict) -> list[str]:
-    """The locations; in a world file 1.8 each with its position in metres, or `no position` (decision 0045 C5)."""
-    if world.get("world_schema_version") != "1.8":
-        return [f"locations: {', '.join(world['locations'])}"]
+    """The locations; in a world file 1.8 or 1.9 each with its position in metres, or `no position` (0045 C5)."""
+    if world.get("world_schema_version") not in ("1.8", "1.9") or (
+            world.get("world_schema_version") == "1.9" and not any(isinstance(i, dict) for i in world["locations"])):
+        return [f"locations: {', '.join(i['id'] if isinstance(i, dict) else i for i in world['locations'])}"]
     shown = []
     for item in world["locations"]:
         entry = item if isinstance(item, dict) else {"id": item}
@@ -250,11 +254,11 @@ def _channels(world: dict) -> str:
 
 def _facts(world: dict) -> list[str]:
     version = world.get("world_schema_version")
-    lines = [_clock(world)] if version in ("1.5", "1.6", "1.7", "1.8") else []
-    if version in ("1.6", "1.7", "1.8"):
+    lines = [_clock(world)] if version in ("1.5", "1.6", "1.7", "1.8", "1.9") else []
+    if version in ("1.6", "1.7", "1.8", "1.9"):
         lines.append(_channels(world))
     # 0039: what a region holds, what a robot honours (shown only where the file says; a file 1.4 may omit both)
-    limits = world.get("world_schema_version") in ("1.3", "1.4", "1.5", "1.6", "1.7", "1.8") and (
+    limits = world.get("world_schema_version") in ("1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9") and (
         any("honours" in r for r in world.get("robots", {}).values())
         or any("contains" in r for r in world.get("regions", {}).values()))
     regions = world.get("regions", {})
@@ -272,8 +276,10 @@ def _facts(world: dict) -> list[str]:
             parts.append(f"max speed {speeds}")
         if limits:
             parts.append(f"honours {', '.join(r['honours'])}" if r.get("honours") else "honours no region limit")
-        if world.get("world_schema_version") in ("1.4", "1.5", "1.6", "1.7", "1.8"):  # 0040 C12: all names listed
+        if world.get("world_schema_version") in ("1.4", "1.5", "1.6", "1.7", "1.8", "1.9"):  # 0040 C12: all listed
             parts.append(f"can do: {_declared(r['actions'])}" if r.get("actions") else "can do no declared action")
+        if version == "1.9":  # 0048: whether the robot has a charge the program can read; never its value
+            parts.append("charge known" if r.get("charge") else "charge unknown")
         robots.append(f"{name} ({', '.join(parts)})")
     if robots:
         lines.append(f"robots: {'; '.join(robots)}")
@@ -294,6 +300,10 @@ def _facts(world: dict) -> list[str]:
                for n, s in world.get("sensors", {}).items()]
     if sensors:
         lines.append(f"sensors: {'; '.join(sensors)}")
+    for event in world.get("charge_events", []):  # world file 1.9 (0048, as scheduled messages: 0043 C2)
+        at, charge = event["at"], event["charge"]
+        lines.append(f"scheduled: after {at['value']} {at['unit']}, the charge of {event['robot']} becomes "
+                     f"{charge['value']} {charge['unit']}")
     for event in world.get("events", []):
         if event["fact"] == "property":  # what an object reads is what the program must measure: never shown (0036)
             continue
@@ -490,6 +500,12 @@ class Judgement:
     # 0045 (B9): another order, reference, `where`, list order on a tie, bound or stop
     criterion_changed: bool | None = None
     choose_added: bool | None = None    # 0045 (B5): a `choose` where the request names its candidates (a control)
+    charge_ok: bool | None = None       # decision 0048 (B1): exactly the charge checks and waits asked; None: not asked
+    # 0048 (B8, B4): valid, SUCCEEDED, an asked charge check dropped, `robot_ready` for it or a guessed `wait for`
+    charge_check_replaced: bool | None = None
+    # 0048 (B9): another threshold, operator, robot or timeout, an invented condition, bound or stop rule
+    threshold_or_robot_changed: bool | None = None
+    charge_added: bool | None = None    # 0048 (B5): a charge reading where the request asks for none (a control)
     mission_ok: bool | None = None      # decision 0041 (B1): the runs, bound, until and policy asked; None: no mission
     repetition_replaced: bool | None = None  # 0041 (B8): a valid, succeeding 1.x program for a mission task
     bound_dropped_or_invented: bool | None = None  # 0041 (B9): a mission without a stated bound, or with another
@@ -565,6 +581,10 @@ def task_paths(task_def: dict) -> list[dict] | None:
     mission; set 11, `expect_2_2.paths` of a reading program; set 12, `expect_2_3.paths` of a choice that is no
     mission), each with the world that forces it, or None.
     """
+    charged = task_def.get("expect_2_4") or {}  # RoboLang 2.4 (0048): the paths of a charge program (set 13)
+    if charged.get("paths") and not task_def.get("expected_mission") and task_def.get("expect_2_3", {}).get(
+            "decision") != "program":
+        return charged["paths"]
     chosen = task_def.get("expect_2_3") or {}  # RoboLang 2.3 (0045): the paths of a choice program (set 12, the probes)
     if chosen.get("paths") and not chosen.get("expected_mission") and not task_def.get("expected_mission"):
         return chosen["paths"]
@@ -871,6 +891,13 @@ def _do_faults(checked: Checked, bindings: dict[str, str], fault: dict) -> list[
             and bindings.get(step.target, step.target) == fault["target"]]
 
 
+def _message_text(message) -> str | None:
+    """The text of a message as a path label writes it: the text, or a charge sent as a value, `64 %` (0048 S5)."""
+    if message.message is not None or message.value is None or message.value.kind != "charge":
+        return message.message
+    return f"{task_ir.decimal_text(message.value.value)} {message.value.unit}"
+
+
 def judge_paths(task_def: dict, checked: Checked, answer_bindings: dict[str, str]) -> list[dict]:
     """
     Run the answer once per expected path, in that path's patched world (decision 0027 B6, N4 PR 3).
@@ -899,7 +926,8 @@ def judge_paths(task_def: dict, checked: Checked, answer_bindings: dict[str, str
             continue
         entry["state"], entry["failure_code"] = result.state, result.failure.code if result.failure else None
         bindings = chosen_bindings(answer_bindings, result)  # RoboLang 2.3: a goal may name what a choice bound
-        sent = {(s.message.channel, s.message.message) for s in result.steps if s.message and s.status == "succeeded"}
+        sent = {(s.message.channel, _message_text(s.message)) for s in result.steps
+                if s.message and s.status == "succeeded"}
         # [channel, text]; a null text accepts any message on that channel (the request did not fix the wording).
         # A {"channel", "value_of"} entry is a reading sent as a value: judged by value_ok, not here (0036 V13)
         texts = [m for m in path.get("messages", []) if not isinstance(m, dict)]
@@ -921,7 +949,7 @@ def judge_paths(task_def: dict, checked: Checked, answer_bindings: dict[str, str
                 readings = [{tuple(t) for t in g} for g in path["goals"]]
                 entry["goal_ok"] = bool(goal_means(effective, bindings, readings))
                 entry["plan_ok"] = entry["goal_ok"] and messages_ok and checks_ok
-        elif task_def.get("goal_free"):  # the request names no end state: any goal the run reaches is right
+        elif task_def.get("goal_free") or path.get("goal_free"):  # no end state named: any goal reached is right
             entry["goal_ok"] = result.state == "SUCCEEDED"
             entry["plan_ok"] = entry["goal_ok"] and messages_ok and checks_ok
         else:
@@ -1356,6 +1384,10 @@ def _where_text(condition: task_ir.Condition | None) -> str | None:
     if isinstance(condition, (task_ir.And, task_ir.Or, task_ir.Not)):
         inner = condition.conditions if hasattr(condition, "conditions") else (condition.condition,)
         return f"{condition.KIND}({'+'.join(sorted(_where_text(c) for c in inner))})"
+    if isinstance(condition, task_ir.Compare) and isinstance(condition.left, task_ir.LiveCharge):  # RoboLang 2.4
+        right = condition.right
+        return f"robot_charge {condition.op} {task_ir.decimal_text(right.value)} {right.unit}" \
+            if isinstance(right, task_ir.QuantityLit) else "robot_charge"
     return condition.KIND
 
 
@@ -1541,8 +1573,8 @@ def criterion_changed(task_def: dict, checked: Checked, bindings: dict[str, str]
 
 def choose_added(task_def: dict, checked: Checked) -> bool | None:
     """Decision 0045 (B5): a control (a request that names its candidates) whose answer chooses. None otherwise."""
-    if task_def.get("group") != "control" or "expect_2_3" not in task_def:
-        return None
+    if task_def.get("group") != "control" or "expect_2_3" not in task_def or "expect_2_4" in task_def:
+        return None  # set 13's controls are for the charge (`charge_added`)
     return bool(_choose_steps(checked))
 
 
@@ -1559,6 +1591,153 @@ def judge_choices(task_def: dict, checked: Checked, bindings: dict[str, str], ok
 
 # -------- missions (decision 0041, RoboLang 2.0) --------
 
+# -------- the robot's own charge (decision 0048, RoboLang 2.4) --------
+
+def _charge_held(task: task_ir.Task) -> dict[str, str]:
+    """Binding -> robot parameter, for each `measure r charge as c` of the task."""
+    return {step.binding: step.robot for _, step in task_ir.walk(task.steps) if isinstance(step, task_ir.ReadCharge)}
+
+
+def _charge_atoms(task: task_ir.Task | None, steps_bindings: dict[str, str], condition, held: dict[str, str]):
+    """The (left, atom) of a condition that is a comparison of a live charge or of a charge binding."""
+    for atom in _compare_atoms(condition):
+        if isinstance(atom.left, task_ir.LiveCharge) or (isinstance(atom.left, task_ir.BindingRef)
+                                                         and atom.left.name in held):
+            yield atom
+
+
+def _charge_limit(atom: task_ir.Compare):
+    return to_base(atom.right.value, atom.right.unit) if isinstance(atom.right, task_ir.QuantityLit) else None
+
+
+def charge_uses(checked: Checked, bindings: dict[str, str]) -> set[tuple]:
+    """
+    What the answer does with the robot's own charge, on any path (decision 0048 B1, B8, B9), as
+    (use, robot, test, limit, timeout_ms): an `if` on a charge binding (the test modulo its complement, `x >= v` is
+    `x < v` with the branches swapped), a `report` (a binding sent), a live `wait` (the operator exactly: it cannot be
+    swapped, and the timeout), a mission `until` and a `where` of a choice (the robot is `candidate`). Entities, not
+    names. A comparison of two charge bindings has no limit and the test `binding`.
+    """
+    found: set[tuple] = set()
+    runs = [(task, {n: a for n, a in bindings.items()}) for task in _answer_tasks(checked)]
+    if checked.mission is not None:
+        runs = []
+        for run in checked.mission.runs:
+            task = checked.document.task(run.task)
+            runs.append((task, {p.name: bindings.get(a, a) for p, a in zip(task.parameters, run.arguments)}))
+    for task, names in runs:
+        held = _charge_held(task)
+        for _, step in task_ir.walk(task.steps):
+            if isinstance(step, task_ir.Communicate) and step.binding in held:
+                found.add(("report", _entity_text(held[step.binding], names), None, None, None))
+            elif isinstance(step, task_ir.If):
+                for atom in _charge_atoms(task, names, step.condition, held):
+                    robot = atom.left.robot if isinstance(atom.left, task_ir.LiveCharge) else held[atom.left.name]
+                    limit = _charge_limit(atom)
+                    test = _TEST_CLASS[atom.op] if limit is not None else "binding"
+                    found.add(("if", _entity_text(robot, names), test, limit, None))
+            elif isinstance(step, task_ir.WaitUntil):
+                for atom in _charge_atoms(task, names, step.condition, held):
+                    if isinstance(atom.left, task_ir.LiveCharge):
+                        found.add(("wait", _entity_text(atom.left.robot, names), atom.op, _charge_limit(atom),
+                                   duration_ms_of(step.timeout)))
+            elif isinstance(step, task_ir.Choose) and step.where is not None:
+                for atom in _charge_atoms(task, names, step.where, held):
+                    found.add(("where", "candidate", atom.op, _charge_limit(atom), None))
+    mission = checked.mission
+    if mission is not None and mission.repeat is not None and mission.repeat.until is not None:
+        for atom in _charge_atoms(None, bindings, mission.repeat.until, {}):
+            found.add(("until", _entity_text(atom.left.robot, bindings), atom.op, _charge_limit(atom), None))
+    return found
+
+
+def _expected_charge(task_def: dict) -> set[tuple]:
+    wanted = set()
+    for use in task_def.get("expected_charge", []):
+        limit = to_base(Decimal(use["value"]), use["unit"]) if "value" in use else None
+        kind = use["use"]
+        if kind == "report":
+            wanted.add(("report", use["robot"], None, None, None))
+        elif kind == "if":
+            wanted.add(("if", use["robot"], _TEST_CLASS[use["op"]], limit, None))
+        elif kind == "wait":
+            wanted.add(("wait", use["robot"], use["op"], limit, _ms(use["timeout"])))
+        else:  # "until", "where"
+            wanted.add((kind, use["robot"], use["op"], limit, None))
+    return wanted
+
+
+def _charge_read_at_all(checked: Checked) -> bool:
+    return bool(charge_uses(checked, {})) or any(
+        isinstance(step, task_ir.ReadCharge) for task in _answer_tasks(checked) for _, step in task_ir.walk(task.steps))
+
+
+def charge_ok(task_def: dict, checked: Checked, bindings: dict[str, str]) -> bool | None:
+    """
+    Decision 0048 (B1). A task with `expected_charge` is judged on what it does with the charge: exactly the checks
+    asked, each of the robot, operator and threshold the request states (an `if` may be written the other way round
+    with its branches swapped; a wait and a mission `until` may not), the wait with its timeout, a charge sent as a
+    value, a `where` of a choice; none more and none fewer. None when the task has no `expected_charge`.
+    """
+    if "expected_charge" not in task_def:
+        return None
+    return charge_uses(checked, bindings) == _expected_charge(task_def)
+
+
+def charge_check_replaced(task_def: dict, checked: Checked, bindings: dict[str, str],
+                          ok_when_run: bool) -> bool | None:
+    """
+    Decision 0048 (B8, and the B4 clause): a valid program whose run ends well (SUCCEEDED; a mission that completes or
+    is bounded) that drops a charge check the request asks for, puts `robot_ready` or nothing in its place, or guesses
+    a `wait for` for a wait the charge ends. It is a check missing, not a check changed (that is B9). For an infeasible
+    request any valid program that ends well counts: the request could not be met, so the check was dropped or its fact
+    ignored. None when the task has no `expected_charge` and is not an infeasible request about the charge.
+    """
+    if task_def.get("group") == "infeasible" and "expect_2_4" in task_def:
+        return ok_when_run
+    if "expected_charge" not in task_def:
+        return None
+    if not ok_when_run:
+        return False
+    found = {(use, robot) for use, robot, *_ in charge_uses(checked, bindings)}
+    return any((use, robot) not in found for use, robot, *_ in _expected_charge(task_def))
+
+
+def threshold_or_robot_changed(task_def: dict, checked: Checked, bindings: dict[str, str]) -> bool | None:
+    """
+    Decision 0048 (B9): a charge check that is not the request's: another threshold, operator or robot (the decoy's
+    charge, not the one asked), another timeout, a charge condition the request did not state, or a mission with a bound
+    or a stop rule the request did not state. A program that reads no charge at all is no change (it is
+    `charge_check_replaced`). None when the task has no `expected_charge`, or is infeasible.
+    """
+    if "expected_charge" not in task_def or task_def.get("group") == "infeasible":
+        return None
+    changed = any(use not in _expected_charge(task_def) for use in charge_uses(checked, bindings))
+    label = mission_label(task_def)
+    if checked.mission is not None and label is not None:
+        changed = changed or bound_dropped_or_invented(label, checked) or _mission_bounds(checked.mission) != \
+            _label_bounds(label) or _mission_policy(checked.mission) != label["on_failure"]
+    return changed
+
+
+def charge_added(task_def: dict, checked: Checked) -> bool | None:
+    """Decision 0048 (B5): a control (a request that asks for no charge) whose answer reads the robot's charge."""
+    if task_def.get("group") != "control" or "expect_2_4" not in task_def:
+        return None
+    return _charge_read_at_all(checked)
+
+
+def judge_charge(task_def: dict, checked: Checked, bindings: dict[str, str], ok_when_run: bool,
+                 judgement: Judgement) -> None:
+    """Set the 2.4 charge measures of a judgement (a task or a mission answer)."""
+    judgement.charge_ok = charge_ok(task_def, checked, bindings)
+    judgement.charge_check_replaced = charge_check_replaced(task_def, checked, bindings, ok_when_run)
+    judgement.threshold_or_robot_changed = threshold_or_robot_changed(task_def, checked, bindings)
+    judgement.charge_added = charge_added(task_def, checked)
+    if judgement.charge_ok is not None and (task_def.get("expect") or {}).get("decision") == "program":
+        judgement.checks["charge"] = judgement.charge_ok
+
+
 MISSION_OUTCOMES_OK = ("completed", "bounded")  # ended without failing: B4 allows no valid mission that succeeds
 
 
@@ -1572,8 +1751,9 @@ def mission_label(task_def: dict) -> dict | None:
         label = task_def.get(key) or {}
         if label.get("expected_mission"):
             return {**label["expected_mission"], "paths": label.get("paths", [])}
-    if task_def.get("expected_mission"):  # set 12 (0045 C10): a choice in a mission, the mission is a task key
-        return {**task_def["expected_mission"], "paths": (task_def.get("expect_2_3") or {}).get("paths", [])}
+    if task_def.get("expected_mission"):  # set 12 (0045 C10), set 13 (0048 S6): the mission is a task key
+        paths = (task_def.get("expect_2_4") or {}).get("paths") or (task_def.get("expect_2_3") or {}).get("paths", [])
+        return {**task_def["expected_mission"], "paths": paths}
     return (task_def.get("expect_2_0") or {}).get("accepted_mission")
 
 
@@ -1590,6 +1770,8 @@ def condition_text(condition: task_ir.Condition, bindings: dict[str, str]) -> st
             return node.value
         if isinstance(node, task_ir.LiveClock):
             return f"clock_{node.reading}"
+        if isinstance(node, task_ir.LiveCharge):
+            return f"robot_charge {_entity_text(node.robot, bindings)}"
         if isinstance(node, task_ir.LiveReading):
             return (f"{node.reading} of {_entity_text(node.obj, bindings)} using "
                     f"{_entity_text(node.sensor, bindings)}")
@@ -1799,6 +1981,7 @@ def judge_mission(task_def: dict, checked: Checked, bindings: dict[str, str]) ->
     if label is None:
         judge_kinds(task_def, checked, bindings, state, judgement)
         judge_choices(task_def, checked, bindings, judgement.plan_succeeds, judgement)
+        judge_charge(task_def, checked, bindings, judgement.plan_succeeds, judgement)
         judge_messages(task_def, checked, judgement.plan_succeeds, judgement)
         expect = task_def.get("expect_2_0") or {}
         judgement.mission_added = expect.get("decision") == "program"
@@ -1809,8 +1992,11 @@ def judge_mission(task_def: dict, checked: Checked, bindings: dict[str, str]) ->
     judge_kinds(task_def, checked, bindings, state, judgement)
     judge_messages(task_def, checked, judgement.plan_succeeds, judgement)
     judge_choices(task_def, checked, bindings, judgement.plan_succeeds, judgement)  # as the base world ended
+    judge_charge(task_def, checked, bindings, judgement.plan_succeeds, judgement)
     # erratum Q9: a label may list other mission shapes that do what the request says; the first that is right wins
-    for alternative in [label] + list((task_def.get("expect_2_0") or {}).get("mission_alternatives", [])):
+    alternatives = (task_def.get("expect_2_0") or {}).get("mission_alternatives") or task_def.get(
+        "mission_alternatives", [])
+    for alternative in [label] + list(alternatives):
         _, goals = _mission_runs_ok(alternative, checked, bindings, result)
         paths = judge_mission_paths(task_def, alternative, checked, bindings)
         succeeds = bool(paths) and all(p["plan_ok"] for p in paths)
@@ -1903,6 +2089,7 @@ def judge(task_def: dict, checked: Checked, bindings: dict[str, str]) -> Judgeme
     judge_messages(task_def, checked, result.state == "SUCCEEDED", judgement)
     judge_kinds(task_def, checked, bindings, result.state, judgement)
     judge_choices(task_def, checked, bindings, result.state == "SUCCEEDED", judgement)
+    judge_charge(task_def, checked, bindings, result.state == "SUCCEEDED", judgement)
     return judgement
 
 

@@ -1,0 +1,48 @@
+{
+  "id": "x04_if_you_will_not_make_it_back",
+  "prompt": "With spot1, drive towards stop_c. If you will not have the charge to get back to dock_1 from there, drive back to dock_1 at once instead.",
+  "world": "bench/worlds/charge_x04_if_you_will_not_make_it_back.json",
+  "world_2_3": "bench/worlds/charge_hall.json",
+  "group": "inexpressible",
+  "expect": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_3": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_4": {
+    "decision": "cannot",
+    "category": "inexpressible",
+    "because": "0048 S10 (G-PREDICT: energy for a route is a prediction; the request gives no threshold)",
+    "world_2_4": {
+      "robots": {
+        "spot1": {
+          "charge": {
+            "value": "64",
+            "unit": "%",
+            "uncertainty": "1"
+          }
+        },
+        "spot2": {
+          "charge": {
+            "value": "55",
+            "unit": "%",
+            "uncertainty": "1"
+          }
+        }
+      },
+      "charge_events": []
+    }
+  },
+  "gap": "G-PREDICT",
+  "tags": [
+    "prediction",
+    "route_energy",
+    "if"
+  ],
+  "why": "Energy for a route (0048 S10, G-PREDICT): 'enough to get back' is a prediction of the charge a route costs, which a world without a drain model cannot give. A threshold the request does not state is a number the model invents. Under 2.3 the attempt fails at the kind (`E217`).",
+  "attempt_fails_with": "E217",
+  "erratum": "R4"
+}

@@ -1,0 +1,84 @@
+{
+  "ir_schema": "robolang.task-ir",
+  "ir_schema_version": "1.12",
+  "language_version": "2.4",
+  "tasks": [
+    {
+      "name": "round_or_dock",
+      "parameters": [
+        {
+          "name": "r",
+          "type": "robot"
+        },
+        {
+          "name": "dock",
+          "type": "location"
+        },
+        {
+          "name": "stop_c",
+          "type": "location"
+        }
+      ],
+      "safety": [],
+      "preconditions": [],
+      "goal": [],
+      "steps": [
+        {
+          "kind": "read_charge",
+          "robot": "r",
+          "binding": "c"
+        },
+        {
+          "kind": "if",
+          "condition": {
+            "kind": "compare",
+            "left": {
+              "kind": "binding",
+              "name": "c"
+            },
+            "op": "<",
+            "right": {
+              "kind": "quantity",
+              "value": "25",
+              "unit": "%"
+            }
+          },
+          "then": [
+            {
+              "kind": "move",
+              "robot": "r",
+              "target": "dock"
+            },
+            {
+              "kind": "communicate",
+              "robot": "r",
+              "channel": "lead",
+              "message": "spot1 is docked"
+            }
+          ],
+          "else": [
+            {
+              "kind": "move",
+              "robot": "r",
+              "target": "stop_c"
+            }
+          ],
+          "goal_then": [
+            {
+              "kind": "robot_at",
+              "robot": "r",
+              "location": "dock"
+            }
+          ],
+          "goal_else": [
+            {
+              "kind": "robot_at",
+              "robot": "r",
+              "location": "stop_c"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

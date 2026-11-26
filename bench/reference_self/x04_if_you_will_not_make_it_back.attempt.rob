@@ -1,0 +1,14 @@
+// bench/reference_self/x04_if_you_will_not_make_it_back.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 2.3;
+
+task go_or_turn_back(robot r, location far, location home) {
+    goal { robot_at r far; }
+    plan {
+        measure r charge as c;                                                                      // @charge
+        if c < 50 % {                                                                               // @charge
+            move r to home;                                                                         // @charge
+        } else {                                                                                    // @charge
+            move r to far;
+        }                                                                                           // @charge
+    }
+}

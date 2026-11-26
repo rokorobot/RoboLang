@@ -165,6 +165,10 @@ def execute(task: ir.Task, bindings: dict[str, str], site: Site, ops: Operations
             raise BackendFailure("S507", "this site supports exactly its declared robot")
         if any(isinstance(step, ir.Measure) for _, step in ir.walk(task.steps)):
             raise BackendFailure("S509", "measure reads values, and this backend has no value sensors")
+        if ir.reads_charge(task):
+            raise BackendFailure("S509", "the robot's own charge (RoboLang 2.4) is refused: no battery topic is "
+                                         "defined in this backend's profile yet, and the robot's own low-battery "
+                                         "protection decides (decision 0048 S8, S9)")
         if any(isinstance(step, ir.ReadClock) for _, step in ir.walk(task.steps)):
             raise BackendFailure("S510", "a clock reading (measure r time, measure r elapsed) is refused: this backend "
                                          "has no wall clock, and `elapsed` from /clock needs value bindings it does "

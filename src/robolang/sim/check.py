@@ -12,6 +12,7 @@ from dataclasses import dataclass
 
 from .. import ir
 from .actions import action_problems
+from .charge import charge_problems
 from .choice import choice_problems
 from .clock import clock_problems
 from .executor import _sensor_id
@@ -63,9 +64,10 @@ def check_task(task: ir.Task, world: World) -> list[Finding]:
                                         ("safety", index)))
                 break
     # section 16.3 (RoboLang 1.8), section 17.3 (RoboLang 1.9, K3), section 19.3 (RoboLang 2.1, S011) and section 21.3
-    # (RoboLang 2.3, S273), every problem
+    # (RoboLang 2.3, S273) and section 22.3 (RoboLang 2.4, S012, S013), every problem
     for problem in (*action_problems(task, world, bound), *clock_problems(task, world, bound),
-                    *message_problems(task, world), *choice_problems(task, world, bound)):
+                    *message_problems(task, world), *choice_problems(task, world, bound),
+                    *charge_problems(task, world, bound)):
         if problem.goal is not None:
             findings.append(Finding(problem.code, problem.message, ("goal", problem.goal)))
             continue

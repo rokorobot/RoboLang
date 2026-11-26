@@ -1,7 +1,36 @@
 # Changelog
 
-The distribution version (this file) is independent of the language versions (1.1 to 2.3), the Task IR schema
-versions (1.0 to 1.11) and the Mission IR schema (1.0 to 1.3). Decision records are in [`spec/decisions/`](https://github.com/rokorobot/RoboLang/tree/main/spec/decisions).
+The distribution version (this file) is independent of the language versions (1.1 to 2.4), the Task IR schema
+versions (1.0 to 1.12) and the Mission IR schema (1.0 to 1.4). Decision records are in [`spec/decisions/`](https://github.com/rokorobot/RoboLang/tree/main/spec/decisions).
+
+## Unreleased
+
+RoboLang 2.4, the robot's own state: iteration I8 of the [roadmap](docs/LANGUAGE_ROADMAP.md) (decision 0048). Built in step L4;
+the acceptance run on benchmark set 13 is the next step (L5) and 2.4 is not accepted until it passes the bounds B1 to B9.
+
+- **RoboLang 2.4: the robot's own state** (decision 0048, step L4 of iteration I8). A `.rob` file `robolang 2.4;` may read the robot's
+  charge: `measure r charge as c;` binds it in `%` (no `of ... using ...`; any robot of the task), compared with `<`, `<=`, `>` or `>=`
+  against a literal in `%` or another charge binding (no `==`; another kind is `E319`). An unknown charge, or an uncertainty interval
+  that holds the threshold, makes a comparison unknown and fails closed. The live form `robot_charge r` is read in a `wait until` and
+  in a mission's `until` only (`E322` elsewhere); a mission's `until` is checked after each run line, an unknown one ends the mission
+  `failed`, and it is not a bound by itself. `choose ... where robot_charge t >= 50 %` is allowed (it narrows `E330` for this one form):
+  a candidate with an unknown charge is excluded. A charge is sent as `64 %`. `charge` and `robot_charge` are recognised by position
+  and are not reserved; in a file below 2.4 `charge` is still `E217` and `robot_charge` `E204`. World file 1.9 gives a robot a
+  `charge` (`value`, `unit`, optional `uncertainty`) and a top-level `charge_events` list; a charge changes only by those scheduled
+  events (no drain, no charging model; `do r charge charger` changes no reading). Task IR 1.12 (`read_charge`, the `charge` operand)
+  and Mission IR 1.4, run record 1.12 and mission record 1.4. New codes `S239` (a charge reading of a robot with no charge), `S012`
+  (a charge that is never known, no fallback) and `S013` (a wait no charge can meet, no fallback), both found before the run and in
+  `validate --world`. `delegate` refuses a task that reads the charge, the ROS 2 backend refuses it (`S509`) and the G1 backend with its general `S508`;
+  `export-goal` is unaffected. Safety case hazard H28 (a wrong or stale charge reading lets a robot go on with a low battery): the
+  robot's own low-battery protection always takes precedence. `robolang --version` shows language 2.4, IR 1.12, mission IR 1.4.
+  Files of 1.1 to 2.3 are unchanged. Taught: the language reference (and the packaged copy) has a section "The robot's own charge", both
+  benchmark prompts teach 2.4 (the grammar-only prompt pastes `grammar-v2.4.ebnf` as the twelfth file), and a world file 1.9 is shown to
+  the model with each robot's charge as `known` or `unknown`, never the value, and its scheduled charge events; erratum R3 (a world's
+  declared channels limit what the robot receives, never what `communicate` may send) is in the reference. Benchmark set 13 "self" is
+  labelled for 2.4 (`expect_2_3` keeps the baseline label; 20 world file 1.9 copies, a 2.4 reference for each of its 10 programs), the
+  three R3 probes `f_self_*` and `x02_own_battery_first` are programs now, and the scorer judges `charge_ok`,
+  `charge_check_replaced_silently`, `threshold_or_robot_changed` and `no_charge_reading_added` (errata R4 to R9). `robolang reference`
+  prints the 2.4 reference.
 
 ## 0.10.0 (2026-11-24)
 

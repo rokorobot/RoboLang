@@ -1,19 +1,138 @@
 {
   "id": "f_self_low_battery",
   "prompt": "With spot1, if your battery is below 25 percent, go to dock_1 and tell channel \"lead\"; otherwise carry on to stop_c.",
-  "world": "bench/worlds/site.json",
-  "group": "inexpressible",
+  "world": "bench/worlds/charge_f_self_low_battery.json",
+  "world_2_3": "bench/worlds/site.json",
+  "group": "self",
   "expect": {
+    "decision": "program"
+  },
+  "expect_2_3": {
     "decision": "cannot",
     "category": "inexpressible"
   },
+  "expect_2_4": {
+    "decision": "program",
+    "world_2_4": {
+      "robots": {
+        "spot1": {
+          "charge": {
+            "value": "64",
+            "unit": "%",
+            "uncertainty": "1"
+          }
+        }
+      }
+    },
+    "paths": [
+      {
+        "when": "spot1 has 18 % (+-1), below 25 %: it docks and the lead is told (the request gives no text)",
+        "world_patch": {
+          "robots": {
+            "spot1": {
+              "charge": {
+                "value": "18",
+                "unit": "%",
+                "uncertainty": "1"
+              }
+            }
+          }
+        },
+        "goal": [
+          [
+            "rl:robot:spot1",
+            "located_in",
+            "rl:place:dock_1"
+          ]
+        ],
+        "messages": [
+          [
+            "lead",
+            null
+          ]
+        ]
+      },
+      {
+        "when": "spot1 has 64 % (+-1): it carries on to stop_c",
+        "world_patch": {
+          "robots": {
+            "spot1": {
+              "charge": {
+                "value": "64",
+                "unit": "%",
+                "uncertainty": "1"
+              }
+            }
+          }
+        },
+        "goal": [
+          [
+            "rl:robot:spot1",
+            "located_in",
+            "rl:place:stop_c"
+          ]
+        ],
+        "messages": []
+      },
+      {
+        "when": "spot1 has exactly 25 % (no uncertainty): not below 25 %, so it carries on",
+        "world_patch": {
+          "robots": {
+            "spot1": {
+              "charge": {
+                "value": "25",
+                "unit": "%",
+                "uncertainty": "0"
+              }
+            }
+          }
+        },
+        "goal": [
+          [
+            "rl:robot:spot1",
+            "located_in",
+            "rl:place:stop_c"
+          ]
+        ],
+        "messages": []
+      },
+      {
+        "when": "spot1 has 24 % +-2: the interval holds 25 %, unknown, the step fails closed",
+        "world_patch": {
+          "robots": {
+            "spot1": {
+              "charge": {
+                "value": "24",
+                "unit": "%",
+                "uncertainty": "2"
+              }
+            }
+          }
+        },
+        "fails": true,
+        "messages": []
+      }
+    ]
+  },
+  "expected_charge": [
+    {
+      "use": "if",
+      "robot": "spot1",
+      "op": "<",
+      "value": "25",
+      "unit": "%"
+    }
+  ],
   "activity": "ACT-AUTO-001",
   "gap": "G-SELF",
   "tags": [
     "self",
     "battery",
-    "if"
+    "if",
+    "charge",
+    "threshold_below"
   ],
-  "why": "The robot's own charge is not a measured kind and no condition reads it: `robot_ready` says ready or not, never how much charge is left (language reference: 'Measured values', 'Conditions').",
-  "attempt_fails_with": "E217"
+  "attempt_fails_with": "E217",
+  "erratum": "R6",
+  "why": "The robot's own charge is not a measured kind and no condition reads it: `robot_ready` says ready or not, never how much charge is left (language reference: 'Measured values', 'Conditions'). (L4 of I8: a 2.4 program, see R6 of docs/evidence/bench-errata-2-4.md.)"
 }

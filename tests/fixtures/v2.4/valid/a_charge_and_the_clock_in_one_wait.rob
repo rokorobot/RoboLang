@@ -1,0 +1,13 @@
+// RoboLang v2.4 fixture: valid
+// expect: ok
+// why: The live charge may be one operand of an and with the clock.
+
+robolang 2.4;
+
+task t(robot r, location dest, location dock) {
+    goal { robot_at r dest; }
+    plan {
+        wait until robot_charge r >= 90 % and clock_time < 23:00 timeout 120 min else { fail "not charged by 23:00"; }
+        move r to dest;
+    }
+}

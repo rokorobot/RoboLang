@@ -12,7 +12,7 @@ import re
 
 from .diagnostics import Diagnostic, RoboLangError
 from .nodes import Span
-from .tokens import ESCAPES, RESERVED, RESERVED_BY_VERSION, SPEED_UNITS, Token, TokenKind
+from .tokens import ESCAPES, RESERVED, RESERVED_BY_VERSION, SPEED_UNITS, Token, TokenKind, since
 
 _LETTERS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 _DIGITS = "0123456789"
@@ -49,10 +49,10 @@ class Lexer:
         """Switch to the words and annotations of language `version` (a `robolang` marker was read)."""
         if version in RESERVED_BY_VERSION:
             self.reserved = RESERVED_BY_VERSION[version]
-        self.verify = version in ("1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "2.0", "2.1", "2.2", "2.3")
-        self.values = version in ("1.6", "1.7", "1.8", "1.9", "2.0", "2.1", "2.2", "2.3")
-        self.clock = version in ("1.9", "2.0", "2.1", "2.2", "2.3")
-        self.percent = version in ("2.2", "2.3")
+        self.verify = version in since("1.3")
+        self.values = version in since("1.6")
+        self.clock = version in since("1.9")
+        self.percent = version in since("2.2")
 
     # -------- helpers --------
 

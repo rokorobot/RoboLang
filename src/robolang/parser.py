@@ -27,6 +27,7 @@ from .diagnostics import MAX_ERRORS, Diagnostic, RoboLangError, Severity
 from .lexer import Lexer
 from .nodes import Span
 from .tokens import (
+    CHARGE_KIND,
     CHOOSE_TYPES,
     CONDITIONS,
     CONDITIONS_V1_3,
@@ -36,6 +37,7 @@ from .tokens import (
     DURATION_UNITS,
     KIND_UNITS,
     KIND_UNITS_V2_2,
+    LIVE_CHARGE,
     LIVE_CLOCK,
     PARAM_TYPES,
     PARAM_TYPES_V1_3,
@@ -46,12 +48,14 @@ from .tokens import (
     STATEMENTS_V1_6,
     STATEMENTS_V1_8,
     VERIFY_KEYS,
+    VERSIONS,
     Token,
     TokenKind,
+    since,
 )
 
 DEFAULT_VERSION = "1.1"  # the version of a file without a marker
-SUPPORTED_VERSIONS = ("1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "2.0", "2.1", "2.2", "2.3")
+SUPPORTED_VERSIONS = VERSIONS
 SUPPORTED_VERSION = DEFAULT_VERSION  # kept for existing imports
 MAX_CONDITION_DEPTH = 8  # spec/robolang-v1.2.md section 3.3
 MAX_IF_DEPTH = 4  # spec/robolang-v1.4.md section 3.3 (E216)
@@ -119,52 +123,57 @@ class _Parser:
     @property
     def _typed(self) -> bool:
         """True in 1.3 to 1.8 files: goal blocks, outcome atoms and sensor parameters."""
-        return self._language in ("1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "2.0", "2.1", "2.2", "2.3")
+        return self._language in since("1.3")
 
     @property
     def _branching(self) -> bool:
         """True in 1.4 to 1.8 files: `if`, `else` and `fail`."""
-        return self._language in ("1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "2.0", "2.1", "2.2", "2.3")
+        return self._language in since("1.4")
 
     @property
     def _handlers(self) -> bool:
         """True in 1.5 to 1.8 files: a step may end with a failure handler `else { ... }`."""
-        return self._language in ("1.5", "1.6", "1.7", "1.8", "1.9", "2.0", "2.1", "2.2", "2.3")
+        return self._language in since("1.5")
 
     @property
     def _values(self) -> bool:
         """True in 1.6 to 1.8 files: `measure`, comparisons, live readings and sending a binding (decision 0036)."""
-        return self._language in ("1.6", "1.7", "1.8", "1.9", "2.0", "2.1", "2.2", "2.3")
+        return self._language in since("1.6")
 
     @property
     def _regions(self) -> bool:
         """True in 1.7 and 1.8 files: `@safety no_go_region R;` and `@safety in_region R;` (decision 0039)."""
-        return self._language in ("1.7", "1.8", "1.9", "2.0", "2.1", "2.2", "2.3")
+        return self._language in since("1.7")
 
     @property
     def _actions(self) -> bool:
         """True in 1.8 files: `do` and `in_state` (decision 0040)."""
-        return self._language in ("1.8", "1.9", "2.0", "2.1", "2.2", "2.3")
+        return self._language in since("1.8")
 
     @property
     def _clock(self) -> bool:
         """True in 1.9 files: `measure r time as t;`, time literals and `clock_time` (decision 0042)."""
-        return self._language in ("1.9", "2.0", "2.1", "2.2", "2.3")
+        return self._language in since("1.9")
 
     @property
     def _messages(self) -> bool:
         """True in 2.1 files: the condition `message_received` (decision 0043)."""
-        return self._language in ("2.1", "2.2", "2.3")
+        return self._language in since("2.1")
 
     @property
     def _kinds(self) -> bool:
         """True in 2.2 files: the kinds `fill`, `confidence`, `pressure` and `count` and the unit `%` (0044)."""
-        return self._language in ("2.2", "2.3")
+        return self._language in since("2.2")
 
     @property
     def _choosing(self) -> bool:
         """True in 2.3 files: the statement `choose` (decision 0045); the word is recognised by position."""
-        return self._language == "2.3"
+        return self._language in since("2.3")
+
+    @property
+    def _charging(self) -> bool:
+        """True in 2.4 files: `measure r charge as c;` and `robot_charge r` (decision 0048), recognised by position."""
+        return self._language in since("2.4")
 
     @property
     def _kind_units(self) -> dict[str, tuple[str, ...]]:
@@ -173,7 +182,7 @@ class _Parser:
     @property
     def _missions(self) -> bool:
         """True in 2.0 files: the top-level `mission` (decision 0041)."""
-        return self._language in ("2.0", "2.1", "2.2", "2.3")
+        return self._language in since("2.0")
 
     @property
     def _statements(self) -> tuple[str, ...]:
@@ -735,6 +744,10 @@ class _Parser:
         if self._clock and self._at_keyword(*LIVE_CLOCK):  # RoboLang 1.9 (decision 0042 T6)
             self._advance()
             left = ast.LiveClock(ast.Name(token.text, token.span), token.span)
+        elif self._charging and token.text == LIVE_CHARGE and after is not None and after.kind is TokenKind.IDENT:
+            self._advance()  # RoboLang 2.4 (decision 0048 S3): by position; `robot_charge < 5 %` is still a binding
+            robot = self._name("a robot name after 'robot_charge'")
+            left = ast.LiveCharge(ast.Name(token.text, token.span), robot, token.span.to(robot.span))
         elif live:
             left = self._live()
         elif after is not None and after.kind is TokenKind.OPERATOR:
@@ -782,6 +795,7 @@ class _Parser:
         token = self._tok
         if self._at(TokenKind.IDENT) and token.text not in self._kind_units:
             kinds = (*self._kind_units, *CLOCK_KINDS) if self._clock else self._kind_units
+            kinds = (*kinds, CHARGE_KIND) if self._charging else kinds
             self._error("E217", f"unknown measured kind '{token.text}'; expected one of {_listed(kinds)}")
         if not self._at(TokenKind.IDENT):
             self._error("E201", f"expected a measured kind ({_listed(self._kind_units)}), found {self._found()}")
@@ -1049,6 +1063,13 @@ class _Parser:
             binding = self._name("a binding name after 'as'")
             handler, end = self._end("the measure statement")
             return ast.MeasureClock(robot, ast.Name(kind.text, kind.span), binding, start.span.to(end.span), handler)
+        if self._charging and self._at(TokenKind.IDENT) and self._tok.text == CHARGE_KIND:  # decision 0048 S1
+            kind = self._advance()
+            self._expect_keyword("as", "after the kind: the robot's charge is bound to a name (it has no 'of' and "
+                                       "no 'using')")
+            binding = self._name("a binding name after 'as'")
+            handler, end = self._end("the measure statement")
+            return ast.MeasureCharge(robot, ast.Name(kind.text, kind.span), binding, start.span.to(end.span), handler)
         kind = self._kind()
         self._expect_word("of", "after the kind")
         obj = self._name("an object name after 'of'")

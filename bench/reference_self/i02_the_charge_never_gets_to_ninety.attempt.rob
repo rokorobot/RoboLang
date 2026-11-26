@@ -1,0 +1,12 @@
+// bench/reference_self/i02_the_charge_never_gets_to_ninety.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 2.3;
+
+task charge_then_go(robot r, location charger, location home) {
+    goal { robot_at r home; in_state charger "charging"; }
+    plan {
+        move r to charger;
+        do r charge charger;
+        wait until robot_charge r >= 90 % timeout 20 min else { fail "not charged in time"; }       // @charge
+        move r to home;
+    }
+}

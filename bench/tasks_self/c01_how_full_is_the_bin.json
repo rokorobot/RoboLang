@@ -1,0 +1,90 @@
+{
+  "id": "c01_how_full_is_the_bin",
+  "prompt": "With spot1, drive to bay_1 and read how full bin_1 is with cam_s1 and, if it is under 30 percent, tell channel \"lead\" \"restock bin_1\"; if it is not, tell no one.",
+  "world": "bench/worlds/charge_hall.json",
+  "group": "control",
+  "expect": {
+    "decision": "program"
+  },
+  "expect_2_3": {
+    "decision": "program",
+    "paths": [
+      {
+        "when": "bin_1 is 12 % full: below 30 %, so the lead is told",
+        "goal": [
+          [
+            "rl:robot:spot1",
+            "located_in",
+            "rl:place:bay_1"
+          ]
+        ],
+        "messages": [
+          [
+            "lead",
+            "restock bin_1"
+          ]
+        ],
+        "world_patch": {
+          "objects": {
+            "bin_1": {
+              "properties": {
+                "fill": {
+                  "value": "12",
+                  "unit": "%"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "when": "bin_1 is 70 % full: not below 30 %, nobody is told",
+        "goal": [
+          [
+            "rl:robot:spot1",
+            "located_in",
+            "rl:place:bay_1"
+          ]
+        ],
+        "messages": [],
+        "world_patch": {
+          "objects": {
+            "bin_1": {
+              "properties": {
+                "fill": {
+                  "value": "70",
+                  "unit": "%"
+                }
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "expect_2_4": {
+    "decision": "program"
+  },
+  "expected_readings": [
+    [
+      "spot1",
+      "fill",
+      "bin_1"
+    ]
+  ],
+  "expected_comparisons": [
+    {
+      "kind": "fill",
+      "op": "<",
+      "value": "30",
+      "unit": "%"
+    }
+  ],
+  "tags": [
+    "fill",
+    "object_reading",
+    "if",
+    "no_charge_reading",
+    "threshold_below"
+  ]
+}

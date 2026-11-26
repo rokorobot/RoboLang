@@ -1,19 +1,121 @@
 {
   "id": "f_self_enough_for_route",
   "prompt": "Before the night round, check that spot1 has at least 60 percent charge; if it has not, move it to dock_1 and stop there.",
-  "world": "bench/worlds/site.json",
-  "group": "inexpressible",
+  "world": "bench/worlds/charge_f_self_enough_for_route.json",
+  "world_2_3": "bench/worlds/site.json",
+  "group": "self",
   "expect": {
+    "decision": "program"
+  },
+  "expect_2_3": {
     "decision": "cannot",
     "category": "inexpressible"
   },
+  "expect_2_4": {
+    "decision": "program",
+    "world_2_4": {
+      "robots": {
+        "spot1": {
+          "charge": {
+            "value": "80",
+            "unit": "%",
+            "uncertainty": "1"
+          }
+        }
+      }
+    },
+    "paths": [
+      {
+        "when": "spot1 has 80 % (+-1): at least 60 %, nothing more is asked",
+        "world_patch": {
+          "robots": {
+            "spot1": {
+              "charge": {
+                "value": "80",
+                "unit": "%",
+                "uncertainty": "1"
+              }
+            }
+          }
+        },
+        "goal_free": true,
+        "messages": []
+      },
+      {
+        "when": "spot1 has exactly 60 %: at least 60 %, nothing more is asked (a `>` docks it)",
+        "world_patch": {
+          "robots": {
+            "spot1": {
+              "charge": {
+                "value": "60",
+                "unit": "%",
+                "uncertainty": "0"
+              }
+            }
+          }
+        },
+        "goal_free": true,
+        "messages": []
+      },
+      {
+        "when": "spot1 has 52 % (+-1): below 60 %, it moves to dock_1 and stops there",
+        "world_patch": {
+          "robots": {
+            "spot1": {
+              "charge": {
+                "value": "52",
+                "unit": "%",
+                "uncertainty": "1"
+              }
+            }
+          }
+        },
+        "goal": [
+          [
+            "rl:robot:spot1",
+            "located_in",
+            "rl:place:dock_1"
+          ]
+        ],
+        "messages": []
+      },
+      {
+        "when": "spot1 has 61 % +-3: the interval holds 60 %, unknown, the step fails closed",
+        "world_patch": {
+          "robots": {
+            "spot1": {
+              "charge": {
+                "value": "61",
+                "unit": "%",
+                "uncertainty": "3"
+              }
+            }
+          }
+        },
+        "fails": true,
+        "messages": []
+      }
+    ]
+  },
+  "expected_charge": [
+    {
+      "use": "if",
+      "robot": "spot1",
+      "op": ">=",
+      "value": "60",
+      "unit": "%"
+    }
+  ],
   "activity": "ACT-AUTO-001",
   "gap": "G-SELF",
   "tags": [
     "self",
     "battery",
-    "if"
+    "if",
+    "charge",
+    "threshold_at_least"
   ],
-  "why": "No condition reads the robot's charge, and a percentage is not a unit (language reference: 'Conditions', 'Measured values').",
-  "attempt_fails_with": "E206"
+  "attempt_fails_with": "E206",
+  "erratum": "R7",
+  "why": "No condition reads the robot's charge, and a percentage is not a unit (language reference: 'Conditions', 'Measured values'). (L4 of I8: a 2.4 program, see R7 of docs/evidence/bench-errata-2-4.md.)"
 }

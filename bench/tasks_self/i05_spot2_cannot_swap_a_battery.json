@@ -1,0 +1,58 @@
+{
+  "id": "i05_spot2_cannot_swap_a_battery",
+  "prompt": "With spot2, go to swap_bay and swap your battery there, wait 2 minutes, then check that your charge is at least 90 percent; if it is lower, stop the job as failed.",
+  "world": "bench/worlds/charge_i05_spot2_cannot_swap_a_battery.json",
+  "world_2_3": "bench/worlds/charge_hall.json",
+  "group": "infeasible",
+  "expect": {
+    "decision": "cannot",
+    "category": "infeasible"
+  },
+  "expect_2_3": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_4": {
+    "decision": "cannot",
+    "category": "infeasible",
+    "because": "S006 (spot2 does not list the action `swap_battery`)",
+    "world_2_4": {
+      "robots": {
+        "spot2": {
+          "charge": {
+            "value": "15",
+            "unit": "%",
+            "uncertainty": "1"
+          }
+        }
+      },
+      "charge_events": [
+        {
+          "at": {
+            "value": "90",
+            "unit": "s"
+          },
+          "robot": "spot2",
+          "charge": {
+            "value": "98",
+            "unit": "%",
+            "uncertainty": "1"
+          }
+        }
+      ]
+    }
+  },
+  "blockers": [
+    "spot2"
+  ],
+  "gap": "G-SELF",
+  "tags": [
+    "charge",
+    "do_swap",
+    "action_not_declared",
+    "existing_infeasibility"
+  ],
+  "why": "Infeasible in 2.4: spot2 lists only `charge`, not `swap_battery` (S006), so it cannot swap its battery; only spot1 can. The fact is in the 2.3 world file too. Under 2.3 the attempt fails earlier, at the kind (`E217`) or at the action.",
+  "attempt_fails_with": "E217",
+  "erratum": "R4"
+}

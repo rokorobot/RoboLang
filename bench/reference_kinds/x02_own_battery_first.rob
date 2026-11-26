@@ -1,0 +1,13 @@
+// bench/reference_kinds/x02_own_battery_first.rob: hand-written reference (RoboLang 2.4)
+robolang 2.4;
+
+task battery_first(robot r, location charger, location pump) {
+    goal { robot_at r pump; }
+    plan {
+        measure r charge as c;
+        if c < 20 % {
+            move r to charger;
+        }
+        move r to pump;
+    }
+}

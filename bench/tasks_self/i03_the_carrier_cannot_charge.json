@@ -1,0 +1,58 @@
+{
+  "id": "i03_the_carrier_cannot_charge",
+  "prompt": "With carrier1, charge at charger_1 until your battery is at least 80 percent, waiting up to 30 minutes, then drive to stop_c.",
+  "world": "bench/worlds/charge_i03_the_carrier_cannot_charge.json",
+  "world_2_3": "bench/worlds/charge_hall.json",
+  "group": "infeasible",
+  "expect": {
+    "decision": "cannot",
+    "category": "infeasible"
+  },
+  "expect_2_3": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_4": {
+    "decision": "cannot",
+    "category": "infeasible",
+    "because": "S006 (carrier1 does not list the action `charge`)",
+    "world_2_4": {
+      "robots": {
+        "carrier1": {
+          "charge": {
+            "value": "30",
+            "unit": "%",
+            "uncertainty": "1"
+          }
+        }
+      },
+      "charge_events": [
+        {
+          "at": {
+            "value": "10",
+            "unit": "min"
+          },
+          "robot": "carrier1",
+          "charge": {
+            "value": "90",
+            "unit": "%",
+            "uncertainty": "1"
+          }
+        }
+      ]
+    }
+  },
+  "blockers": [
+    "carrier1"
+  ],
+  "gap": "G-SELF",
+  "tags": [
+    "charge",
+    "wait_until",
+    "action_not_declared",
+    "existing_infeasibility"
+  ],
+  "why": "Infeasible in 2.4: carrier1 lists no `charge` action (S006, as in 1.8), so it cannot charge, whatever the scheduled events say. The fact is in the 2.3 world file too (`\"actions\": {}`; erratum Q3 of 2.3). Under 2.3 the attempt fails earlier, at `robot_charge` (`E204`).",
+  "attempt_fails_with": "E204",
+  "erratum": "R4"
+}

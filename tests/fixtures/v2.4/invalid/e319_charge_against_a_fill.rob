@@ -1,0 +1,14 @@
+// RoboLang v2.4 fixture: invalid
+// expect: error E319 (static) line 12
+// why: A charge binding is not compared with a fill binding (another kind).
+
+robolang 2.4;
+
+task t(robot r, object bin, sensor cam, location dest, location dock) {
+    goal { robot_at r dest; }
+    plan {
+        measure r charge as c;
+        measure r fill of bin using cam as f;
+        if c < f { move r to dock; } else { move r to dest; }
+    }
+}

@@ -1,0 +1,19 @@
+// RoboLang v2.4 fixture: valid
+// expect: ok
+// why: `charge` and `robot_charge` stay usable as names (S3).
+
+robolang 2.4;
+
+task charge(robot r, location robot_charge, location dest) {
+    goal { robot_at r dest; }
+    plan {
+        measure r charge as level;
+        measure r charge as robot_charge_level;
+        if level < robot_charge_level {
+            move r to robot_charge;
+        } else {
+            move r to dest;
+        }
+        move r to dest;
+    }
+}

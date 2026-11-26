@@ -1,0 +1,8 @@
+{
+  "task": "dock_or_go_on",
+  "bindings": {
+    "r": "spot1",
+    "dock": "dock_2",
+    "next": "stop_c"
+  }
+}

@@ -1,0 +1,14 @@
+// bench/reference_self/p02_enough_charge_for_the_round.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 2.3;
+
+task checked_round(robot r, location a, location b) {
+    goal { robot_at r b; }
+    plan {
+        measure r charge as c;                                                                      // @charge
+        if c < 60 % {                                                                               // @charge
+            fail "not enough charge for the round";                                                 // @charge
+        }                                                                                           // @charge
+        move r to a;
+        move r to b;
+    }
+}

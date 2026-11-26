@@ -831,7 +831,7 @@ def test_version_shows_language_2_3(capsys):
     code, _, _ = cli("--version")
     out = capsys.readouterr().out
     assert code == 0
-    assert "2.1, 2.2 and 2.3" in out and "1.9, 1.10 and 1.11" in out and "mission IR 1.0, 1.1, 1.2 and 1.3" in out
+    assert "2.2, 2.3 and 2.4" in out and "1.10, 1.11 and 1.12" in out and "mission IR 1.0, 1.1, 1.2, 1.3 and 1.4" in out
 
 
 def test_validate_simulate_and_inspect_work_on_a_2_3_file(tmp_path):
@@ -887,7 +887,7 @@ def test_the_economy_one_statement_one_world_field_no_reserved_word_about_four_n
     assert tokens.RESERVED_V2_0 == RESERVED_BY_VERSION["2.3"] and tokens.CHOOSE_TYPES == ("robot", "object", "location")
     assert tokens.STATEMENTS_V1_8 == ("move", "grasp", "place", "inspect", "wait", "communicate", "measure", "do")
     from robolang.sim import world
-    assert world.WORLD_SCHEMA_VERSIONS[-1] == "1.8"
+    assert "1.8" in world.WORLD_SCHEMA_VERSIONS
 
 
 def test_no_dataclass_of_a_choice_has_a_mutable_default_python_3_11():

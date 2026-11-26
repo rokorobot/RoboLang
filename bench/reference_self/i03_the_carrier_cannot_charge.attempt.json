@@ -1,0 +1,8 @@
+{
+  "task": "charge_then_go",
+  "bindings": {
+    "r": "carrier1",
+    "charger": "charger_1",
+    "home": "stop_c"
+  }
+}

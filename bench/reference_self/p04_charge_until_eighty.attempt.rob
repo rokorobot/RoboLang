@@ -1,0 +1,12 @@
+// bench/reference_self/p04_charge_until_eighty.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 2.3;
+
+task charge_then_go(robot r, location charger, location home) {
+    goal { robot_at r home; in_state charger "charging"; }
+    plan {
+        move r to charger;
+        do r charge charger;
+        wait until robot_charge r >= 80 % timeout 40 min else { fail "not charged in time"; }       // @charge
+        move r to home;
+    }
+}

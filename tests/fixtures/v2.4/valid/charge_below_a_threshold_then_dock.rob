@@ -1,0 +1,19 @@
+// RoboLang v2.4 fixture: valid
+// expect: ok
+// why: A charge read once, compared in an if; both branches have their own goal.
+
+robolang 2.4;
+
+task round_or_dock(robot r, location dock, location stop_c) {
+    plan {
+        measure r charge as c;
+        if c < 25 % {
+            goal { robot_at r dock; }
+            move r to dock;
+            communicate r to "lead" with "spot1 is docked";
+        } else {
+            goal { robot_at r stop_c; }
+            move r to stop_c;
+        }
+    }
+}

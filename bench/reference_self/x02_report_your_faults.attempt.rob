@@ -1,0 +1,11 @@
+// bench/reference_self/x02_report_your_faults.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 2.3;
+
+task report_faults(robot r, location d) {
+    goal { robot_at r d; }
+    plan {
+        move r to d;
+        measure r faults as f;                                                                      // @charge
+        communicate r to "lead" with f;                                                             // @charge
+    }
+}

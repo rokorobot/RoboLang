@@ -1,0 +1,13 @@
+// RoboLang v2.4 fixture: valid
+// expect: ok
+// why: The live robot_charge in a wait until, with its timeout and failure handler.
+
+robolang 2.4;
+
+task t(robot r, location dest, location dock) {
+    goal { robot_at r dest; }
+    plan {
+        wait until robot_charge r >= 80 % timeout 40 min else { fail "the battery is not at 80 percent in time"; }
+        move r to dest;
+    }
+}

@@ -21,7 +21,7 @@ from decimal import Decimal
 from . import ir
 from .core import ReadError, read_document
 from .diagnostics import MAX_ERRORS
-from .measured import AREA_KINDS, KINDS, KINDS_V2_2, Atom, Operand, Scopes, View
+from .measured import AREA_KINDS, CHARGE, KINDS, KINDS_V2_2, Atom, Operand, Scopes, View
 from .parser import MAX_CONDITION_DEPTH, MAX_IF_DEPTH
 from .paths import double_grasps, goalless_path
 from .tokens import (
@@ -54,6 +54,7 @@ _CLOCK_RANK = 8  # the first schema with the step `read_clock`, `time` and `cloc
 _MESSAGE_RANK = 9  # the first schema with the condition `message_received` (RoboLang 2.1)
 _KINDS_RANK = 10  # the first schema with the kinds fill, confidence, pressure, count and a unitless count literal (2.2)
 _CHOOSE_RANK = 11  # the first schema with the step `choose` (RoboLang 2.3, decision 0045)
+_CHARGE_RANK = 12  # the first schema with the step `read_charge` and the `charge` operand (RoboLang 2.4, decision 0048)
 MAX_DECIMAL_CHARS = 64
 _POLICIES = ("stop", "continue", "retry")  # a mission's failure policy (Mission IR 1.0)
 
@@ -86,11 +87,13 @@ _STEPS = {
 _MEASURE_KEYS = ("robot", "reading", "object", "sensor", "binding")  # schema 1.5 (rank 5)
 _VALUES_RANK = 5  # the first schema with `measure`, `compare` and a `binding` in `communicate`
 _OPERAND_KEYS = {"binding": ("name",), "quantity": ("value", "unit"), "text": ("value",),
-                 "live": ("reading", "object", "sensor"), "time": ("value",), "clock": ("reading",)}
+                 "live": ("reading", "object", "sensor"), "time": ("value",), "clock": ("reading",),
+                 "charge": ("robot",)}
 _LEFT_OPERANDS, _RIGHT_OPERANDS = ("binding", "live"), ("binding", "quantity", "text")
 _QUANTITY_UNITS_V1_6 = tuple(unit for units in KIND_UNITS.values() for unit in units)
 _QUANTITY_UNITS = tuple(dict.fromkeys(unit for units in KIND_UNITS_V2_2.values() for unit in units))  # schema 1.10
 _CLOCK_LEFT, _CLOCK_RIGHT = ("clock",), ("time",)  # the operands schema 1.8 adds to a comparison
+_CHARGE_LEFT = ("charge",)  # the operand schema 1.12 adds to a comparison (RoboLang 2.4)
 _CLOCK_UNITS = ("ms", "s", "min")  # a duration an `elapsed` value compares with (schema 1.8)
 _VALUE_CODES = {"scope": "I218", "clash": "I219", "kind": "I220", "operator": "I221", "goal": "I222", "live": "I223",
                 "unit": "I117", "count": "I229"}  # schema 1.10: a quantity with no unit is a count's, and whole
@@ -110,6 +113,8 @@ _USES = {
     "inspect": (("robot", "robot"), ("object", "object")),
     "measure": (("robot", "robot"), ("object", "object")),
     "read_clock": (("robot", "robot"),),
+    "read_charge": (("robot", "robot"),),
+    "charge": (("robot", "robot"),),
     "communicate": (("robot", "robot"),),
     "do": (("robot", "robot"), ("target", ("object", "location"))),
     "in_state": (("target", ("object", "location")),),
@@ -118,7 +123,8 @@ _USES = {
 _PARAM_TYPES = {"robot": 0, "object": 0, "location": 0, "region": 0, "sensor": 2}
 _BRANCH_STEPS = {"if": 3, "fail": 3}  # kind -> first schema rank that has it
 # a failure handler: schema 1.4 (rank 4)
-_HANDLED = ("move", "grasp", "place", "inspect", "measure", "read_clock", "do", "wait_until", "choose")
+_HANDLED = ("move", "grasp", "place", "inspect", "measure", "read_clock", "read_charge", "do", "wait_until",
+            "choose")
 _CHOOSE_SOURCES = {"list": ("candidates",), "objects_at": ("location",), "robots": ()}  # kind -> its other keys
 _HANDLER_KEYS = ("else",)  # a handler has no goal (decision 0034)
 
@@ -321,7 +327,9 @@ class _Reader:
         elif "op" in node:
             ok = False
         clock = self._rank >= _CLOCK_RANK
-        for side, allowed in (("left", _LEFT_OPERANDS + (_CLOCK_LEFT if clock else ())),
+        charge = self._rank >= _CHARGE_RANK
+        left = _LEFT_OPERANDS + (_CLOCK_LEFT if clock else ()) + (_CHARGE_LEFT if charge else ())
+        for side, allowed in (("left", left),
                               ("right", _RIGHT_OPERANDS + (_CLOCK_RIGHT if clock else ()))):
             if side in node:
                 ok = self.operand(node[side], _pointer(ptr, side), allowed, durations=clock) and ok
@@ -491,6 +499,13 @@ class _Reader:
             ok = self.strings(node, ptr, ("kind", "robot", "reading", "binding"), ("robot", "binding"), handled)
             if "reading" in node:
                 ok = self.reading(node["reading"], _pointer(ptr, "reading"), clock=True) and ok
+            if "binding" in node:
+                ok = self.name(node["binding"], _pointer(ptr, "binding")) and ok
+            return self.handler(node, ptr, ifs) and ok
+        if kind == "read_charge":
+            if not self._needs("step kind 'read_charge'", _CHARGE_RANK, _pointer(ptr, "kind")):
+                return False
+            ok = self.strings(node, ptr, ("kind", "robot", "binding"), ("robot", "binding"), handled)
             if "binding" in node:
                 ok = self.name(node["binding"], _pointer(ptr, "binding")) and ok
             return self.handler(node, ptr, ifs) and ok
@@ -872,6 +887,8 @@ class _Reader:
         elif kind == "compare":
             if node["left"]["kind"] == "live":
                 self.live(node["left"], _pointer(ptr, "left"))
+            elif node["left"]["kind"] == "charge":
+                self.uses(node["left"], _pointer(ptr, "left"))
         elif kind == "message_received":  # schema 1.9 (E307 for an empty channel or text)
             self.not_empty(node["channel"], "channel name", _pointer(ptr, "channel"))
             if "text" in node and node["text"].strip(" ") == "":
@@ -935,6 +952,8 @@ class _Reader:
                 stack.extend((c, _pointer(_pointer(at, "conditions"), i)) for i, c in enumerate(node["conditions"]))
             elif node["kind"] == "not":
                 stack.append((node["condition"], _pointer(at, "condition")))
+            elif node["kind"] == "compare" and self.charge_test(node, at, name, kind):
+                names = True  # schema 1.12 (RoboLang 2.4, decision 0048 S7): the chosen robot's charge
             elif node["kind"] in ("compare", "message_received"):
                 self.error("I231", "'where' states world facts only: not a reading, the clock or a message "
                                    "(decision 0045 C3, C9)", at)
@@ -949,6 +968,19 @@ class _Reader:
             self.condition_meaning(condition, ptr)
         finally:
             del self._params[name]
+
+    def charge_test(self, node: dict, ptr: str, name: str, kind: str) -> bool:
+        """The one reading a `where` may state (E330 narrowed, decision 0048 S7): `robot_charge t >= 50 %`, t chosen."""
+        left, right = node["left"], node["right"]
+        if not (self._rank >= _CHARGE_RANK and kind == "robot" and left["kind"] == "charge" and left["robot"] == name
+                and right["kind"] == "quantity"):
+            return False
+        if right.get("unit") != "%":
+            self.error("I220", "a charge is compared with a quantity in % (decision 0048 S1)", _pointer(ptr, "right"))
+        if node["op"] not in ("<", "<=", ">", ">="):
+            self.error("I221", "charge is compared with '<', '<=', '>' or '>=', not '" + node["op"] + "'",
+                       _pointer(ptr, "op"))
+        return True
 
     def live(self, node: dict, ptr: str):
         """The object and sensor of a live reading are parameters of the right types (E303, E304, E310)."""
@@ -985,7 +1017,7 @@ class _Reader:
                 self.error("I217", "in IR schema 1.4 a 'wait_until' needs a failure handler ('else') (E316)", ptr)
         else:
             self.uses(node, ptr)
-            if kind in ("measure", "read_clock"):
+            if kind in ("measure", "read_clock", "read_charge"):
                 if node["binding"] in self._chosen:
                     taken = _article(self._params[node["binding"]])
                     self.error("I219", f"binding '{node['binding']}' has the name of {taken} that a 'choose' bound",
@@ -1316,6 +1348,8 @@ def _operand_of(node: dict, ptr: str) -> Operand:
         return Operand("live", ptr, kind=node["reading"])
     if kind == "clock":
         return Operand("clock", ptr, kind=node["reading"])
+    if kind == "charge":
+        return Operand("charge", ptr, kind=CHARGE)
     if kind == "time":
         return Operand("time", ptr)
     return Operand("text", ptr)
@@ -1349,6 +1383,8 @@ def _view(handle: tuple) -> View:
     handler = _handles(step["else"], _pointer(ptr, "else")) if "else" in step else None
     if kind in ("measure", "read_clock"):
         return View(handler=handler, measure=(step["binding"], step["reading"], _pointer(ptr, "binding")))
+    if kind == "read_charge":
+        return View(handler=handler, measure=(step["binding"], CHARGE, _pointer(ptr, "binding")))
     if kind == "wait_until":
         return View(condition=(step["condition"], _pointer(ptr, "condition")), live_ok=True, handler=handler)
     if kind == "communicate" and "binding" in step:
@@ -1395,7 +1431,7 @@ def _operand(node: dict) -> ir.Operand:
     if kind == "quantity":
         return ir.QuantityLit(Decimal(node["value"]), node.get("unit"))
     classes = {"binding": ir.BindingRef, "text": ir.TextLit, "live": ir.LiveReading, "time": ir.TimeLit,
-               "clock": ir.LiveClock}
+               "clock": ir.LiveClock, "charge": ir.LiveCharge}
     return _of(classes[kind], node)
 
 
@@ -1405,7 +1441,8 @@ def _of(cls, node: dict):
 
 
 _CONDITIONS = (ir.RobotReady, ir.RegionClear, ir.ObjectExists, ir.SensorOk, ir.ObjectAt, ir.RobotAt, ir.Holding)
-_STEP_TYPES = {cls.KIND: cls for cls in (ir.Move, ir.Grasp, ir.Place, ir.Inspect, ir.Measure, ir.ReadClock)}
+_STEP_TYPES = {cls.KIND: cls for cls in (ir.Move, ir.Grasp, ir.Place, ir.Inspect, ir.Measure, ir.ReadClock,
+                                         ir.ReadCharge)}
 
 
 def _goal(node: list | None) -> tuple[ir.Condition, ...] | None:

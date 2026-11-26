@@ -1,5 +1,5 @@
 """
-Abstract syntax tree for RoboLang v1.1 to v2.3 (robolang-v1.1.md section 7, v1.2 section 6, v1.3 section 6).
+Abstract syntax tree for RoboLang v1.1 to v2.4 (robolang-v1.1.md section 7, v1.2 section 6, v1.3 section 6).
 
 Nodes are immutable and record the source faithfully: names are unresolved,
 units are kept as written and nothing is normalized. Binding and type checks
@@ -204,6 +204,18 @@ class LiveClock:
 
 
 @dataclass(frozen=True)
+class LiveCharge:
+    """
+    RoboLang 2.4 (decision 0048 S3): `robot_charge r`, the charge of robot `r`, read when its `wait until` (or a
+    mission's `until`) is evaluated. `word` is the name `robot_charge`; it is recognised by position, not reserved.
+    """
+
+    word: Name
+    robot: Name
+    span: Span
+
+
+@dataclass(frozen=True)
 class Compare:
     """
     RoboLang 1.6: `t < 60 degC`, `batch == "LOT-7"`, `a <= b`, `temperature of pan using probe < 60 degC`
@@ -211,7 +223,7 @@ class Compare:
     adds the live clock on the left and a time of day on the right (decision 0042 T3, T6).
     """
 
-    left: Name | LiveReading | LiveClock
+    left: Name | LiveReading | LiveClock | LiveCharge
     op: str
     right: Name | QuantityLit | StringLit | TimeLit
     span: Span
@@ -291,6 +303,17 @@ class Measure:
 @dataclass(frozen=True)
 class MeasureClock:
     """RoboLang 1.9 (decision 0042 T1): `measure r time as t;` or `measure r elapsed as d;`. No object, no sensor."""
+
+    robot: Name
+    kind: Name
+    binding: Name
+    span: Span
+    handler: Branch | None = None
+
+
+@dataclass(frozen=True)
+class MeasureCharge:
+    """RoboLang 2.4 (decision 0048 S1): `measure r charge as c;`, the charge of robot `r` in %. No object, no sensor."""
 
     robot: Name
     kind: Name
@@ -417,9 +440,10 @@ class Choose:
     handler: Branch | None = None
 
 
-Statement = Union[Move, Grasp, Place, Inspect, Measure, MeasureClock, Do, WaitFor, WaitUntil, Communicate, If, Fail,
-                 Choose]
-HANDLED = (Move, Grasp, Place, Inspect, Measure, MeasureClock, Do, WaitUntil, Choose)  # the statements with a handler
+Statement = Union[Move, Grasp, Place, Inspect, Measure, MeasureClock, MeasureCharge, Do, WaitFor, WaitUntil,
+                  Communicate, If, Fail, Choose]
+# the statements with a failure handler
+HANDLED = (Move, Grasp, Place, Inspect, Measure, MeasureClock, MeasureCharge, Do, WaitUntil, Choose)
 
 
 # -------- structure --------

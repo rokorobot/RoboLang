@@ -1,0 +1,325 @@
+{
+  "id": "p09_wait_for_go_then_look_if_charged",
+  "prompt": "With spot1, wait up to 15 minutes for channel \"ops\" to send \"GO\". Then, if your battery is at least 40 percent, read how full bin_1 is with cam_s1 and, if it is over 70 percent, tell channel \"lead\" \"empty bin_1\". If your battery is lower, tell channel \"lead\" \"battery low\" and stop the job as failed. If GO does not come in time, stop the job as failed.",
+  "world": "bench/worlds/charge_p09_wait_for_go_then_look_if_charged.json",
+  "world_2_3": "bench/worlds/charge_hall.json",
+  "group": "self",
+  "expect": {
+    "decision": "program"
+  },
+  "expect_2_3": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_4": {
+    "decision": "program",
+    "world_2_4": {
+      "robots": {
+        "spot1": {
+          "charge": {
+            "value": "70",
+            "unit": "%",
+            "uncertainty": "1"
+          }
+        },
+        "spot2": {
+          "charge": {
+            "value": "10",
+            "unit": "%",
+            "uncertainty": "1"
+          }
+        }
+      },
+      "charge_events": []
+    },
+    "paths": [
+      {
+        "when": "GO at 300 s, spot1 has 70 %, bin_1 is 85 % full: the lead is told",
+        "check": true,
+        "messages": [
+          [
+            "lead",
+            "empty bin_1"
+          ]
+        ],
+        "world_patch": {
+          "robots": {
+            "spot1": {
+              "charge": {
+                "value": "70",
+                "unit": "%",
+                "uncertainty": "1"
+              }
+            },
+            "spot2": {
+              "charge": {
+                "value": "10",
+                "unit": "%",
+                "uncertainty": "1"
+              }
+            }
+          },
+          "objects": {
+            "bin_1": {
+              "properties": {
+                "fill": {
+                  "value": "85",
+                  "unit": "%"
+                }
+              }
+            }
+          },
+          "messages": [
+            {
+              "at": {
+                "value": "300",
+                "unit": "s"
+              },
+              "channel": "ops",
+              "text": "GO",
+              "from": "rl:agent:ops-ctl"
+            }
+          ]
+        }
+      },
+      {
+        "when": "GO at 300 s, spot1 has exactly 40 %, bin_1 is 30 % full: nobody is told",
+        "check": true,
+        "messages": [],
+        "world_patch": {
+          "robots": {
+            "spot1": {
+              "charge": {
+                "value": "40",
+                "unit": "%",
+                "uncertainty": "0"
+              }
+            },
+            "spot2": {
+              "charge": {
+                "value": "10",
+                "unit": "%",
+                "uncertainty": "1"
+              }
+            }
+          },
+          "objects": {
+            "bin_1": {
+              "properties": {
+                "fill": {
+                  "value": "30",
+                  "unit": "%"
+                }
+              }
+            }
+          },
+          "messages": [
+            {
+              "at": {
+                "value": "300",
+                "unit": "s"
+              },
+              "channel": "ops",
+              "text": "GO",
+              "from": "rl:agent:ops-ctl"
+            }
+          ]
+        }
+      },
+      {
+        "when": "GO at 300 s, spot1 has 20 %: the lead is told `battery low` and the job fails; spot2 has 90 %",
+        "check": false,
+        "messages": [
+          [
+            "lead",
+            "battery low"
+          ]
+        ],
+        "world_patch": {
+          "robots": {
+            "spot1": {
+              "charge": {
+                "value": "20",
+                "unit": "%",
+                "uncertainty": "1"
+              }
+            },
+            "spot2": {
+              "charge": {
+                "value": "90",
+                "unit": "%",
+                "uncertainty": "1"
+              }
+            }
+          },
+          "objects": {
+            "bin_1": {
+              "properties": {
+                "fill": {
+                  "value": "85",
+                  "unit": "%"
+                }
+              }
+            }
+          },
+          "messages": [
+            {
+              "at": {
+                "value": "300",
+                "unit": "s"
+              },
+              "channel": "ops",
+              "text": "GO",
+              "from": "rl:agent:ops-ctl"
+            }
+          ]
+        },
+        "fails": true
+      },
+      {
+        "when": "GO at 300 s, spot1 has 41 % +-2: unknown, fails closed, nobody is told",
+        "check": null,
+        "messages": [],
+        "world_patch": {
+          "robots": {
+            "spot1": {
+              "charge": {
+                "value": "41",
+                "unit": "%",
+                "uncertainty": "2"
+              }
+            },
+            "spot2": {
+              "charge": {
+                "value": "90",
+                "unit": "%",
+                "uncertainty": "1"
+              }
+            }
+          },
+          "objects": {
+            "bin_1": {
+              "properties": {
+                "fill": {
+                  "value": "85",
+                  "unit": "%"
+                }
+              }
+            }
+          },
+          "messages": [
+            {
+              "at": {
+                "value": "300",
+                "unit": "s"
+              },
+              "channel": "ops",
+              "text": "GO",
+              "from": "rl:agent:ops-ctl"
+            }
+          ]
+        },
+        "fails": true
+      },
+      {
+        "when": "GO never comes: the wait times out at 15 min and the job fails; spot1 has 70 %",
+        "check": true,
+        "messages": [],
+        "world_patch": {
+          "robots": {
+            "spot1": {
+              "charge": {
+                "value": "70",
+                "unit": "%",
+                "uncertainty": "1"
+              }
+            },
+            "spot2": {
+              "charge": {
+                "value": "10",
+                "unit": "%",
+                "uncertainty": "1"
+              }
+            }
+          },
+          "objects": {
+            "bin_1": {
+              "properties": {
+                "fill": {
+                  "value": "85",
+                  "unit": "%"
+                }
+              }
+            }
+          },
+          "messages": []
+        },
+        "fails": true
+      }
+    ]
+  },
+  "expected_charge": [
+    {
+      "use": "if",
+      "robot": "spot1",
+      "op": ">=",
+      "value": "40",
+      "unit": "%",
+      "decoy": "spot2"
+    }
+  ],
+  "expected_readings": [
+    [
+      "spot1",
+      "fill",
+      "bin_1"
+    ]
+  ],
+  "expected_comparisons": [
+    {
+      "kind": "fill",
+      "op": ">",
+      "value": "70",
+      "unit": "%"
+    }
+  ],
+  "expected_message_waits": [
+    {
+      "use": "wait",
+      "channel": "ops",
+      "text": "GO",
+      "timeout": "15 min"
+    }
+  ],
+  "goal_free": true,
+  "attempt_world_patch": {
+    "messages": [
+      {
+        "at": {
+          "value": "300",
+          "unit": "s"
+        },
+        "channel": "ops",
+        "text": "GO",
+        "from": "rl:agent:ops-ctl"
+      }
+    ]
+  },
+  "gap": "G-SELF",
+  "tags": [
+    "charge",
+    "if",
+    "message_wait",
+    "fill",
+    "1_7_feature",
+    "2_1_feature",
+    "2_2_feature",
+    "threshold_at_least",
+    "decoy",
+    "near_threshold",
+    "else_message"
+  ],
+  "why": "A charge check between a 2.1 message wait and a 2.2 `fill` reading: all three must stay. The request names no end state, so the program is goal-free. 2.3 has no such kind (`E217`); without the charge lines the program keeps the wait and the reading.",
+  "attempt_fails_with": "E217",
+  "erratum": "R4"
+}

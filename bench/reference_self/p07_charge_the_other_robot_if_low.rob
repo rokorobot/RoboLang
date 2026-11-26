@@ -1,0 +1,17 @@
+// bench/reference_self/p07_charge_the_other_robot_if_low.rob: hand-written reference (RoboLang 2.4)
+robolang 2.4;
+
+task round_and_charge(robot a, robot b, location dest, location charger, location stay) {
+    plan {
+        measure b charge as c;
+        if c >= 40 % {
+            goal { robot_at a dest; robot_at b stay; }
+            move a to dest;
+        } else {
+            goal { robot_at a dest; robot_at b charger; }
+            move a to dest;
+            move b to charger;
+            do b charge charger;
+        }
+    }
+}

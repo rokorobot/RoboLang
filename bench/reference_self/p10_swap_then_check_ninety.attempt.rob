@@ -1,0 +1,16 @@
+// bench/reference_self/p10_swap_then_check_ninety.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 2.3;
+
+task swap_and_check(robot r, location bay, location dest) {
+    goal { robot_at r dest; in_state bay "swapped"; }
+    plan {
+        move r to bay;
+        do r swap_battery bay;
+        wait for 2 min;
+        measure r charge as c;                                                                      // @charge
+        if c < 90 % {                                                                               // @charge
+            fail "the new battery is not charged";                                                  // @charge
+        }                                                                                           // @charge
+        move r to dest;
+    }
+}

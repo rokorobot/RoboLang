@@ -1,7 +1,7 @@
 """
-Developer commands for RoboLang 1.1 to 2.3.
+Developer commands for RoboLang 1.1 to 2.4.
 
-    reference              print the shipped RoboLang 2.3 language reference
+    reference              print the shipped RoboLang 2.4 language reference
     example [DIR]          write a sample task (fetch.rob) and world (world.json) to start from
     validate FILE          check a .rob file against the language contract
     inspect  FILE          show what a validated file describes (text or JSON IR)
@@ -13,7 +13,7 @@ Developer commands for RoboLang 1.1 to 2.3.
                            send the task's goal to a robot that runs its own plan; print the delegate record
 
 validate, inspect, simulate, export-goal and delegate take `--ir IR` instead of FILE: a Task IR JSON
-document (schema 1.0 to 1.11) or a Mission IR document (1.0 to 1.3), read strictly and re-validated in full
+document (schema 1.0 to 1.12) or a Mission IR document (1.0 to 1.4), read strictly and re-validated in full
 (spec/ir-reader-v0.1.md). export-goal and delegate never take a mission: a robot is sent tasks only (X607).
     arch02 --scenario SCENARIO --cases CASES --case ID
                            run one case of the RFC-001 reference scenario in simulation
@@ -83,9 +83,9 @@ NOT_A_SAFETY_CHECK_IR = (
 NOTHING_EXECUTED = "This is a description only. Nothing was executed."
 
 _DESCRIPTION = f"""\
-Tools for RoboLang 1.1 to 2.3 task and mission files.
+Tools for RoboLang 1.1 to 2.4 task and mission files.
 
-reference prints the shipped 2.3 language reference. validate and inspect check and describe .rob
+reference prints the shipped 2.4 language reference. validate and inspect check and describe .rob
 files; they never execute anything.
 simulate runs a validated task in a symbolic, deterministic simulation only: it never loads a
 robot adapter or connects to ROS 2 or hardware, and its result is not evidence that a task is
@@ -359,6 +359,8 @@ def _value(operand: task_ir.Operand, typed: bool) -> str:
         return operand.value
     if isinstance(operand, task_ir.LiveClock):
         return f"clock_{operand.reading}"
+    if isinstance(operand, task_ir.LiveCharge):
+        return f"robot_charge {operand.robot}"
     return f"{operand.reading} of {operand.obj} using {_sensor(operand.sensor, typed)}"
 
 
@@ -422,6 +424,8 @@ def _step(step: task_ir.Step, typed: bool = False) -> str:
                 f"as {step.binding}")
     if isinstance(step, task_ir.ReadClock):
         return f"measure {step.robot} {step.reading} as {step.binding}"
+    if isinstance(step, task_ir.ReadCharge):  # RoboLang 2.4 (decision 0048 S1)
+        return f"measure {step.robot} charge as {step.binding}"
     if isinstance(step, task_ir.Do):
         value = "" if step.value is None else f" to {_value(step.value, typed)}"
         return f"do {step.robot} {step.action} {step.target}{value}"
@@ -577,6 +581,9 @@ _FAILURE_MEANING = {
     "S007": "the target of a do step is not of the kind (object or location) the robot's action acts on",
     "S008": "the value of a do step is missing, unexpected or not of the kind the robot's action takes",
     "S009": "a goal in_state that no declared action of the task's robots produces and the world does not hold",
+    "S012": "a robot's charge is read and the world gives it none (no charge, no event), and the step has no fallback",
+    "S013": "a wait until robot_charge can never be met: no charge the world gives the robot reaches it",
+    "S239": "a charge reading needs the robot's charge, and the world file gives it none (an unknown charge)",
     "S011": "a message_received names a channel that the world does not declare (the world has channels)",
     "S010": "a wait until clock_time names a time that has already passed at the start (the wait would not wait)",
     "S101": "a pre condition is false",
@@ -976,7 +983,7 @@ def _input_arguments(command: argparse.ArgumentParser, what: str, note: str = ""
         "--ir",
         metavar="IR",
         help=(
-            "path to a Task IR JSON file (schema 1.0 to 1.11) instead of FILE. It is read strictly and "
+            "path to a Task IR JSON file (schema 1.0 to 1.12) instead of FILE. It is read strictly and "
             f"re-validated in full, whatever versions it claims (spec/ir-reader-v0.1.md){note}"
         ),
     )
@@ -999,8 +1006,8 @@ def _parser(prog: str) -> argparse.ArgumentParser:
 
     reference = commands.add_parser(
         "reference",
-        help="print the shipped RoboLang 2.3 language reference",
-        description="Print the exact RoboLang 2.3 reference shipped with this installation. Nothing is executed.",
+        help="print the shipped RoboLang 2.4 language reference",
+        description="Print the exact RoboLang 2.4 reference shipped with this installation. Nothing is executed.",
     )
     reference.set_defaults(run=_reference)
 

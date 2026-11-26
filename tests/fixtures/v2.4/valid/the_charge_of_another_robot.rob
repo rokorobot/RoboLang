@@ -1,0 +1,20 @@
+// RoboLang v2.4 fixture: valid
+// expect: ok
+// why: A robot of the task other than the one that moves may be read (open point 4).
+
+robolang 2.4;
+
+task t(robot r, robot b, location dest, location dock) {
+    goal { robot_at r dest; }
+    plan {
+        measure b charge as cb;
+        if cb < 40 % {
+            goal { robot_at b dock; }
+            move b to dock;
+        } else {
+            goal { robot_at b dest; }
+            move b to dest;
+        }
+        move r to dest;
+    }
+}

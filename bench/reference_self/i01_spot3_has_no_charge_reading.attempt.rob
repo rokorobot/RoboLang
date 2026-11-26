@@ -1,0 +1,13 @@
+// bench/reference_self/i01_spot3_has_no_charge_reading.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 2.3;
+
+task checked_send(robot r, location dest) {
+    goal { robot_at r dest; }
+    plan {
+        measure r charge as c;                                                                      // @charge
+        if c < 60 % {                                                                               // @charge
+            fail "not enough charge";                                                               // @charge
+        }                                                                                           // @charge
+        move r to dest;
+    }
+}

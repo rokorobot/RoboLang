@@ -1,0 +1,14 @@
+// bench/reference_self/c02_if_spot2_is_ready.rob: hand-written reference (RoboLang 2.4)
+robolang 2.4;
+
+task go_if_ready(robot r, location dest) {
+    goal { robot_at r dest; }
+    plan {
+        if robot_ready r {
+            move r to dest;
+        } else {
+            communicate r to "lead" with "spot2 is not ready";
+            fail "spot2 is not ready";
+        }
+    }
+}

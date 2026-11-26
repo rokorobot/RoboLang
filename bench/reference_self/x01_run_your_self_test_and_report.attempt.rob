@@ -1,0 +1,11 @@
+// bench/reference_self/x01_run_your_self_test_and_report.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 2.3;
+
+task self_test_report(robot r, location spot) {
+    goal { in_state spot "tested"; }
+    plan {
+        do r self_test spot;
+        measure r self_test as result;                                                              // @charge
+        communicate r to "lead" with result;                                                        // @charge
+    }
+}

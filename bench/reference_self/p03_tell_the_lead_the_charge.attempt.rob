@@ -1,0 +1,11 @@
+// bench/reference_self/p03_tell_the_lead_the_charge.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 2.3;
+
+task report_charge(robot r, location d) {
+    goal { robot_at r d; }
+    plan {
+        move r to d;
+        measure r charge as c;                                                                      // @charge
+        communicate r to "lead" with c;                                                             // @charge
+    }
+}

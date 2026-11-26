@@ -926,7 +926,7 @@ def test_the_set_only_input_lists_choose_and_keeps_the_input_count():
     steps = re.split(r"\n      - ", workflow)
     for value in ("set3", "set4", "future", "regions", "actions", "clock", "missions", "messages", "kinds", "choose"):
         assert sum(f"inputs.set_only == '{value}'" in s for s in steps) == 1, value
-    assert "kinds or choose. Empty" in block
+    assert "choose or self. Empty" in block
 
 
 def test_the_readme_the_errata_and_the_plan_name_the_set():

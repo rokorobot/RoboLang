@@ -1,0 +1,320 @@
+{
+  "id": "p10_swap_then_check_ninety",
+  "prompt": "With spot1, go to swap_bay and swap your battery there, wait 2 minutes, then check that your charge is at least 90 percent; if it is lower, stop the job as failed. Then drive to stop_c.",
+  "world": "bench/worlds/charge_p10_swap_then_check_ninety.json",
+  "world_2_3": "bench/worlds/charge_hall.json",
+  "group": "self",
+  "expect": {
+    "decision": "program"
+  },
+  "expect_2_3": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_4": {
+    "decision": "program",
+    "world_2_4": {
+      "robots": {
+        "spot1": {
+          "charge": {
+            "value": "15",
+            "unit": "%",
+            "uncertainty": "1"
+          }
+        },
+        "spot2": {
+          "charge": {
+            "value": "95",
+            "unit": "%",
+            "uncertainty": "1"
+          }
+        }
+      },
+      "charge_events": [
+        {
+          "at": {
+            "value": "90",
+            "unit": "s"
+          },
+          "robot": "spot1",
+          "charge": {
+            "value": "98",
+            "unit": "%",
+            "uncertainty": "1"
+          }
+        }
+      ]
+    },
+    "paths": [
+      {
+        "when": "spot1 has 15 %; a charge event at 90 s (the new battery) makes it 98 %: the check at 120 s passes",
+        "check": true,
+        "check_at_s": 120,
+        "messages": [],
+        "world_patch": {
+          "robots": {
+            "spot1": {
+              "charge": {
+                "value": "15",
+                "unit": "%",
+                "uncertainty": "1"
+              }
+            },
+            "spot2": {
+              "charge": {
+                "value": "10",
+                "unit": "%",
+                "uncertainty": "1"
+              }
+            }
+          },
+          "charge_events": [
+            {
+              "at": {
+                "value": "90",
+                "unit": "s"
+              },
+              "robot": "spot1",
+              "charge": {
+                "value": "98",
+                "unit": "%",
+                "uncertainty": "1"
+              }
+            }
+          ]
+        },
+        "goals": [
+          [
+            [
+              "rl:robot:spot1",
+              "located_in",
+              "rl:place:stop_c"
+            ]
+          ],
+          [
+            [
+              "rl:robot:spot1",
+              "located_in",
+              "rl:place:stop_c"
+            ],
+            [
+              "rl:place:swap_bay",
+              "in_state",
+              "swapped"
+            ]
+          ]
+        ]
+      },
+      {
+        "when": "a charge event at 90 s makes it 85 %: the check at 120 s fails",
+        "check": false,
+        "check_at_s": 120,
+        "messages": [],
+        "world_patch": {
+          "robots": {
+            "spot1": {
+              "charge": {
+                "value": "15",
+                "unit": "%",
+                "uncertainty": "1"
+              }
+            },
+            "spot2": {
+              "charge": {
+                "value": "95",
+                "unit": "%",
+                "uncertainty": "1"
+              }
+            }
+          },
+          "charge_events": [
+            {
+              "at": {
+                "value": "90",
+                "unit": "s"
+              },
+              "robot": "spot1",
+              "charge": {
+                "value": "85",
+                "unit": "%",
+                "uncertainty": "1"
+              }
+            }
+          ]
+        },
+        "fails": true
+      },
+      {
+        "when": "the charge event of the new battery comes at 5 min: at 120 s spot1 still has 15 % and the check fails (a `wait for` of 10 minutes would pass)",
+        "check": false,
+        "check_at_s": 120,
+        "messages": [],
+        "world_patch": {
+          "robots": {
+            "spot1": {
+              "charge": {
+                "value": "15",
+                "unit": "%",
+                "uncertainty": "1"
+              }
+            },
+            "spot2": {
+              "charge": {
+                "value": "95",
+                "unit": "%",
+                "uncertainty": "1"
+              }
+            }
+          },
+          "charge_events": [
+            {
+              "at": {
+                "value": "5",
+                "unit": "min"
+              },
+              "robot": "spot1",
+              "charge": {
+                "value": "98",
+                "unit": "%",
+                "uncertainty": "1"
+              }
+            }
+          ]
+        },
+        "fails": true
+      },
+      {
+        "when": "a charge event at 90 s makes it exactly 90 %: at least 90 %, the check passes (a `>` fails)",
+        "check": true,
+        "check_at_s": 120,
+        "messages": [],
+        "world_patch": {
+          "robots": {
+            "spot1": {
+              "charge": {
+                "value": "15",
+                "unit": "%",
+                "uncertainty": "1"
+              }
+            },
+            "spot2": {
+              "charge": {
+                "value": "10",
+                "unit": "%",
+                "uncertainty": "1"
+              }
+            }
+          },
+          "charge_events": [
+            {
+              "at": {
+                "value": "90",
+                "unit": "s"
+              },
+              "robot": "spot1",
+              "charge": {
+                "value": "90",
+                "unit": "%",
+                "uncertainty": "0"
+              }
+            }
+          ]
+        },
+        "goals": [
+          [
+            [
+              "rl:robot:spot1",
+              "located_in",
+              "rl:place:stop_c"
+            ]
+          ],
+          [
+            [
+              "rl:robot:spot1",
+              "located_in",
+              "rl:place:stop_c"
+            ],
+            [
+              "rl:place:swap_bay",
+              "in_state",
+              "swapped"
+            ]
+          ]
+        ]
+      },
+      {
+        "when": "a charge event at 90 s makes it 91 % +-2: the interval holds 90 %, unknown, fails closed",
+        "check": null,
+        "check_at_s": 120,
+        "messages": [],
+        "world_patch": {
+          "robots": {
+            "spot1": {
+              "charge": {
+                "value": "15",
+                "unit": "%",
+                "uncertainty": "1"
+              }
+            },
+            "spot2": {
+              "charge": {
+                "value": "95",
+                "unit": "%",
+                "uncertainty": "1"
+              }
+            }
+          },
+          "charge_events": [
+            {
+              "at": {
+                "value": "90",
+                "unit": "s"
+              },
+              "robot": "spot1",
+              "charge": {
+                "value": "91",
+                "unit": "%",
+                "uncertainty": "2"
+              }
+            }
+          ]
+        },
+        "fails": true
+      }
+    ]
+  },
+  "expected_charge": [
+    {
+      "use": "if",
+      "robot": "spot1",
+      "op": ">=",
+      "value": "90",
+      "unit": "%",
+      "decoy": "spot2",
+      "at_s": 120
+    }
+  ],
+  "expected_actions": [
+    {
+      "robot": "spot1",
+      "action": "swap_battery",
+      "target": "swap_bay"
+    }
+  ],
+  "gap": "G-SELF",
+  "tags": [
+    "charge",
+    "if",
+    "do_swap",
+    "declared_action",
+    "wait_for",
+    "scheduled_event",
+    "threshold_at_least",
+    "decoy",
+    "near_threshold",
+    "battery_swap"
+  ],
+  "why": "A battery swap (0048 'what it makes expressible'): a declared action (1.8), a stated wait, then a charge check. The swap changes the charge only by a scheduled event, so a program that checks before the wait, or not at all, reads the old charge. 2.3 has no such kind (`E217`).",
+  "attempt_fails_with": "E217",
+  "erratum": "R4"
+}

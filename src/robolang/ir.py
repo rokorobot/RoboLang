@@ -8,6 +8,7 @@ ir-schema-v1.8.md). RoboLang 2.0 keeps Task IR 1.8 for its tasks and adds the Mi
 Task IR 1.9 (ir-schema-v1.9.md: the condition `message_received`) and, for a file with a mission, Mission IR 1.1.
 RoboLang 2.2 has Task IR 1.10 (ir-schema-v1.10.md: the kinds fill, confidence, pressure and count) and Mission IR 1.2.
 RoboLang 2.3 has Task IR 1.11 (ir-schema-v1.11.md: the step `choose`) and Mission IR 1.3.
+RoboLang 2.4 has Task IR 1.12 (ir-schema-v1.12.md: the step `read_charge` and the operand `charge`) and Mission IR 1.4.
 
 The IR is a description of validated tasks with source details removed:
 no spans, comments or formatting. Two sources that differ only in layout
@@ -29,7 +30,7 @@ from typing import ClassVar, Union
 from . import nodes as ast
 from .diagnostics import Diagnostic
 from .parser import DEFAULT_VERSION
-from .tokens import LIVE_CLOCK
+from .tokens import LIVE_CLOCK, since
 from .validator import check, validate
 
 IR_SCHEMA = "robolang.task-ir"
@@ -38,16 +39,16 @@ LANGUAGE_VERSION = DEFAULT_VERSION
 # Language version -> the IR schema version it compiles to (ir-schema-v1.1.md section 1).
 IR_SCHEMA_VERSIONS = {"1.1": "1.0", "1.2": "1.1", "1.3": "1.2", "1.4": "1.3", "1.5": "1.4", "1.6": "1.5", "1.7": "1.6",
                      "1.8": "1.7", "1.9": "1.8", "2.0": "1.8", "2.1": "1.9",
-                     "2.2": "1.10", "2.3": "1.11"}  # 2.0: no new task, so Task IR 1.8
+                     "2.2": "1.10", "2.3": "1.11", "2.4": "1.12"}  # 2.0: no new task, so Task IR 1.8
 MISSION_IR_SCHEMA = "robolang.mission-ir"
 # Language version (of a file that has a mission) -> Mission IR version: 1.1 holds Task IR 1.9 tasks (RoboLang 2.1),
 # 1.2 holds Task IR 1.10 tasks (RoboLang 2.2)
-MISSION_IR_SCHEMA_VERSIONS = {"2.0": "1.0", "2.1": "1.1", "2.2": "1.2", "2.3": "1.3"}
+MISSION_IR_SCHEMA_VERSIONS = {"2.0": "1.0", "2.1": "1.1", "2.2": "1.2", "2.3": "1.3", "2.4": "1.4"}
 MISSION_IR_SCHEMA_VERSION = MISSION_IR_SCHEMA_VERSIONS["2.0"]  # the first version
 
 
 # a task has no goal of its own (1.4 on)
-_BRANCHING = ("1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "2.0", "2.1", "2.2", "2.3")
+_BRANCHING = since("1.4")
 
 
 def _key(name: str):
@@ -235,7 +236,18 @@ class LiveClock:
     reading: str
 
 
-Operand = Union[BindingRef, QuantityLit, TextLit, LiveReading, TimeLit, LiveClock]
+@dataclass(frozen=True)
+class LiveCharge:
+    """
+    Schema 1.12 (RoboLang 2.4, decision 0048 S3): the charge of `robot` in %, read when the `wait_until` (or the
+    mission's `until`) that holds it is evaluated.
+    """
+
+    KIND: ClassVar[str] = "charge"
+    robot: str
+
+
+Operand = Union[BindingRef, QuantityLit, TextLit, LiveReading, TimeLit, LiveClock, LiveCharge]
 
 
 @dataclass(frozen=True)
@@ -252,7 +264,7 @@ class Compare:
     """Schema 1.5: `left op right`; `left` is a binding or a live reading, `right` a binding, quantity or text."""
 
     KIND: ClassVar[str] = "compare"
-    left: BindingRef | LiveReading | LiveClock
+    left: BindingRef | LiveReading | LiveClock | LiveCharge
     op: str
     right: BindingRef | QuantityLit | TextLit | TimeLit
 
@@ -334,6 +346,19 @@ class ReadClock:
     KIND: ClassVar[str] = "read_clock"
     robot: str
     reading: str
+    binding: str = _key("binding")
+    orelse: tuple[Step, ...] | None = _handler()
+
+
+@dataclass(frozen=True)
+class ReadCharge:
+    """
+    Schema 1.12 (RoboLang 2.4, decision 0048 S1): read the charge of `robot` in % and bind it to `binding`. It reads no
+    object and no sensor. A robot with no known charge fails the step.
+    """
+
+    KIND: ClassVar[str] = "read_charge"
+    robot: str
     binding: str = _key("binding")
     orelse: tuple[Step, ...] | None = _handler()
 
@@ -450,8 +475,30 @@ class Choose:
     orelse: tuple[Step, ...] = _key("else")
 
 
-Step = Union[Move, Grasp, Place, Inspect, Measure, ReadClock, Do, WaitFor, WaitUntil, Communicate, If, Fail, Choose]
-HANDLED = (Move, Grasp, Place, Inspect, Measure, ReadClock, Do, WaitUntil, Choose)  # the step kinds with a handler
+Step = Union[Move, Grasp, Place, Inspect, Measure, ReadClock, ReadCharge, Do, WaitFor, WaitUntil, Communicate, If, Fail,
+             Choose]
+# the step kinds with a failure handler
+HANDLED = (Move, Grasp, Place, Inspect, Measure, ReadClock, ReadCharge, Do, WaitUntil, Choose)
+
+
+def reads_charge(task: Task) -> bool:
+    """
+    True when the task reads the robot's own charge (RoboLang 2.4, decision 0048 S8): a `read_charge` step, or a
+    `robot_charge` in the condition of an `if`, a `wait until` or a choice's `where`. `delegate` and the backends
+    refuse it.
+    """
+    def live(condition) -> bool:
+        if isinstance(condition, (And, Or)):
+            return any(live(inner) for inner in condition.conditions)
+        if isinstance(condition, Not):
+            return live(condition.condition)
+        return isinstance(condition, Compare) and isinstance(condition.left, LiveCharge)
+
+    for _, step in walk(task.steps):
+        if isinstance(step, ReadCharge) or (isinstance(step, (If, WaitUntil)) and live(step.condition)) \
+                or (isinstance(step, Choose) and step.where is not None and live(step.where)):
+            return True
+    return False
 
 
 def handler_of(step: Step) -> tuple[Step, ...] | None:
@@ -645,6 +692,8 @@ def _operand(node) -> Operand:
         return LiveReading(node.kind.text, node.obj.text, _sensor(node.sensor))
     if isinstance(node, ast.LiveClock):
         return LiveClock(LIVE_CLOCK[node.word.text])
+    if isinstance(node, ast.LiveCharge):
+        return LiveCharge(node.robot.text)
     if isinstance(node, ast.TimeLit):
         return TimeLit(time_text(node.seconds))
     return TextLit(node.value)
@@ -693,6 +742,8 @@ def _plain_step(node: ast.Statement) -> Step:
         return Measure(node.robot.text, node.kind.text, node.obj.text, _sensor(node.sensor), node.binding.text)
     if isinstance(node, ast.MeasureClock):
         return ReadClock(node.robot.text, node.kind.text, node.binding.text)
+    if isinstance(node, ast.MeasureCharge):
+        return ReadCharge(node.robot.text, node.binding.text)
     if isinstance(node, ast.Do):
         return Do(node.robot.text, node.action.text, node.target.text,
                   None if node.value is None else _operand(node.value))

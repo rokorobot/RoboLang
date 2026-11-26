@@ -1,0 +1,13 @@
+// RoboLang v2.4 fixture: invalid
+// expect: error E320 (static) line 11
+// why: A charge is never exactly a value: no == (S2).
+
+robolang 2.4;
+
+task t(robot r, location dest, location dock) {
+    goal { robot_at r dest; }
+    plan {
+        measure r charge as c;
+        if c == 50 % { move r to dock; } else { move r to dest; }
+    }
+}

@@ -1,0 +1,144 @@
+{
+  "id": "p03_tell_the_lead_the_charge",
+  "prompt": "With spot1, go to dock_3 and tell channel \"lead\" how much charge you have left.",
+  "world": "bench/worlds/charge_p03_tell_the_lead_the_charge.json",
+  "world_2_3": "bench/worlds/site.json",
+  "group": "self",
+  "expect": {
+    "decision": "program"
+  },
+  "expect_2_3": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_4": {
+    "decision": "program",
+    "world_2_4": {
+      "robots": {
+        "spot1": {
+          "charge": {
+            "value": "64",
+            "unit": "%",
+            "uncertainty": "1"
+          }
+        },
+        "cleaner1": {
+          "charge": {
+            "value": "31",
+            "unit": "%",
+            "uncertainty": "1"
+          }
+        }
+      },
+      "charge_events": []
+    },
+    "paths": [
+      {
+        "when": "spot1 has 64 % (+-1): the lead is told `64 %`, value and unit (S5); cleaner1 has 31 %",
+        "world_patch": {
+          "robots": {
+            "spot1": {
+              "charge": {
+                "value": "64",
+                "unit": "%",
+                "uncertainty": "1"
+              }
+            },
+            "cleaner1": {
+              "charge": {
+                "value": "31",
+                "unit": "%",
+                "uncertainty": "1"
+              }
+            }
+          }
+        },
+        "goal": [
+          [
+            "rl:robot:spot1",
+            "located_in",
+            "rl:place:dock_3"
+          ]
+        ],
+        "messages": [
+          [
+            "lead",
+            "64 %"
+          ]
+        ]
+      },
+      {
+        "when": "spot1 has 9 % (+-1): the lead is told `9 %`; cleaner1 has 88 %",
+        "world_patch": {
+          "robots": {
+            "spot1": {
+              "charge": {
+                "value": "9",
+                "unit": "%",
+                "uncertainty": "1"
+              }
+            },
+            "cleaner1": {
+              "charge": {
+                "value": "88",
+                "unit": "%",
+                "uncertainty": "1"
+              }
+            }
+          }
+        },
+        "goal": [
+          [
+            "rl:robot:spot1",
+            "located_in",
+            "rl:place:dock_3"
+          ]
+        ],
+        "messages": [
+          [
+            "lead",
+            "9 %"
+          ]
+        ]
+      },
+      {
+        "when": "spot1 has no charge fact: unknown, the reading fails and nothing is sent (fails closed)",
+        "world_patch": {
+          "robots": {
+            "spot1": {
+              "charge": null
+            },
+            "cleaner1": {
+              "charge": {
+                "value": "88",
+                "unit": "%",
+                "uncertainty": "1"
+              }
+            }
+          }
+        },
+        "fails": true,
+        "messages": []
+      }
+    ]
+  },
+  "expected_charge": [
+    {
+      "use": "report",
+      "robot": "spot1",
+      "decoy": "cleaner1"
+    }
+  ],
+  "gap": "G-SELF",
+  "tags": [
+    "charge",
+    "report",
+    "communicate",
+    "unit_sent",
+    "decoy",
+    "unknown_fails_closed"
+  ],
+  "why": "A `charge` binding sent in a message (0048 S5): `communicate r to \"lead\" with c;` sends `64 %` with its unit. A literal text, no report, or another robot's charge is a different request. 2.3 has no such kind (`E217`).",
+  "attempt_fails_with": "E217",
+  "erratum": "R4"
+}

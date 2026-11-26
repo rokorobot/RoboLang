@@ -328,7 +328,7 @@ def test_pressure_converts_exactly_between_pa_kpa_and_bar_k2():
     assert measured.convert(Decimal("0.1"), "kPa", "Pa") == Decimal("100")
     assert measured.convert(Decimal("30"), "%", "%") == Decimal("30")
     assert measured.to_base(Decimal("3"), None) == Decimal("3")  # a count has no unit
-    assert measured.unit_kinds("%") == ("fill", "confidence") and measured.unit_kinds("bar") == ("pressure",)
+    assert measured.unit_kinds("%") == ("fill", "confidence", "charge") and measured.unit_kinds("bar") == ("pressure",)
     assert measured.unit_kinds("s") == ("elapsed",)
 
 
@@ -444,7 +444,7 @@ def test_a_do_value_still_needs_its_unit_in_the_reader():
 def test_the_reader_checks_the_header_of_mission_ir_1_2():
     source = (FIXTURES / "valid" / "a_mission_runs_a_task_that_reads_a_count.rob").read_text(encoding="utf-8")
     document = document_of(source)
-    for key, value in (("ir_schema_version", "1.4"), ("task_ir_schema_version", "1.9"), ("language_version", "2.1")):
+    for key, value in (("ir_schema_version", "1.5"), ("task_ir_schema_version", "1.9"), ("language_version", "2.1")):
         bad = copy.deepcopy(document)
         bad[key] = value
         assert ("I113", f"/{key}") in problems(bad), key
@@ -838,8 +838,8 @@ def test_ir_input_round_trips_through_every_command(files, tmp_path):
 def test_version_shows_language_2_2(capsys):
     code, _, _ = cli("--version")
     out = capsys.readouterr().out
-    assert code == 0 and "2.1, 2.2 and 2.3" in out and "1.9, 1.10 and 1.11" in out \
-        and "mission IR 1.0, 1.1, 1.2 and 1.3" in out
+    assert code == 0 and "2.2, 2.3 and 2.4" in out and "1.10, 1.11 and 1.12" in out \
+        and "mission IR 1.0, 1.1, 1.2, 1.3 and 1.4" in out
 
 
 def test_export_goal_is_unaffected_a_goal_holds_no_value(files):

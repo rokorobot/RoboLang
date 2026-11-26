@@ -136,7 +136,7 @@ def _consider(plan: Plan, task: ir.Task, robot_world: bytes, world_name: str, ro
         return "no_goal", None
     if any(isinstance(step, ir.Choose) for _, step in ir.walk(task.steps)):
         return "choose_unsupported", None  # a robot runs a plan with every ID fixed (RoboLang 2.3, 0045 C8)
-    if any(isinstance(step, (ir.Measure, ir.ReadClock)) for _, step in ir.walk(task.steps)):
+    if ir.reads_charge(task) or any(isinstance(step, (ir.Measure, ir.ReadClock)) for _, step in ir.walk(task.steps)):
         return "measure_unsupported", None  # RoboLang 1.6 values are not delegated yet (spec/robolang-v1.6.md)
     if has_message(task):
         return "message_unsupported", None  # a robot needs the channel's trust configuration (RoboLang 2.1, 0043 S8)

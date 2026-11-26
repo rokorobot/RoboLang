@@ -1,0 +1,59 @@
+{
+  "id": "i02_the_charge_never_gets_to_ninety",
+  "prompt": "With spot2, charge at charger_1 until your battery is at least 90 percent, waiting up to 20 minutes, then drive to stop_c.",
+  "world": "bench/worlds/charge_i02_the_charge_never_gets_to_ninety.json",
+  "world_2_3": "bench/worlds/charge_hall.json",
+  "group": "infeasible",
+  "expect": {
+    "decision": "cannot",
+    "category": "infeasible"
+  },
+  "expect_2_3": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_4": {
+    "decision": "cannot",
+    "category": "infeasible",
+    "because": "0048 S4 (the only scheduled charge event brings spot2 to 70 %: the wait can never be met before its timeout)",
+    "world_2_4": {
+      "robots": {
+        "spot2": {
+          "charge": {
+            "value": "40",
+            "unit": "%",
+            "uncertainty": "1"
+          }
+        }
+      },
+      "charge_events": [
+        {
+          "at": {
+            "value": "8",
+            "unit": "min"
+          },
+          "robot": "spot2",
+          "charge": {
+            "value": "70",
+            "unit": "%",
+            "uncertainty": "1"
+          }
+        }
+      ]
+    }
+  },
+  "blockers": [
+    "spot2"
+  ],
+  "gap": "G-SELF",
+  "tags": [
+    "charge",
+    "wait_until",
+    "scheduled_event",
+    "never_reached",
+    "no_fallback"
+  ],
+  "why": "Infeasible in 2.4: the charge changes only by the scheduled events of the world, and the only one brings spot2 to 70 %, so `robot_charge r >= 90 %` is never true within the 20 minutes (as set 8's `i03_timeout_too_short`). The request names no fallback. Under 2.3 the attempt fails earlier, at `robot_charge` (`E204`).",
+  "attempt_fails_with": "E204",
+  "erratum": "R4"
+}

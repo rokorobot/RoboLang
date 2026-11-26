@@ -1,0 +1,12 @@
+// bench/reference_self/i03_the_carrier_cannot_charge.attempt.rob: the obvious attempt; it does not do what the request asks
+robolang 2.3;
+
+task charge_then_go(robot r, location charger, location home) {
+    goal { robot_at r home; }
+    plan {
+        move r to charger;
+        do r charge charger;                                                                        // @charge
+        wait until robot_charge r >= 80 % timeout 30 min else { fail "not charged in time"; }       // @charge
+        move r to home;
+    }
+}

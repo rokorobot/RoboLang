@@ -1,0 +1,327 @@
+{
+  "id": "p04_charge_until_eighty",
+  "prompt": "With spot2, drive to charger_1 and charge there until your battery is at least 80 percent, waiting up to 40 minutes. If it is not that high in time, stop the job as failed; otherwise drive on to stop_c.",
+  "world": "bench/worlds/charge_p04_charge_until_eighty.json",
+  "world_2_3": "bench/worlds/charge_hall.json",
+  "group": "self",
+  "expect": {
+    "decision": "program"
+  },
+  "expect_2_3": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_4": {
+    "decision": "program",
+    "world_2_4": {
+      "robots": {
+        "spot2": {
+          "charge": {
+            "value": "35",
+            "unit": "%",
+            "uncertainty": "1"
+          }
+        },
+        "spot3": {
+          "charge": {
+            "value": "95",
+            "unit": "%",
+            "uncertainty": "1"
+          }
+        }
+      },
+      "charge_events": [
+        {
+          "at": {
+            "value": "20",
+            "unit": "min"
+          },
+          "robot": "spot2",
+          "charge": {
+            "value": "90",
+            "unit": "%",
+            "uncertainty": "1"
+          }
+        }
+      ]
+    },
+    "paths": [
+      {
+        "when": "spot2 has 35 %, a charge event at 20 min makes it 90 %: the wait is met at 20 min",
+        "reached_min": 20,
+        "world_patch": {
+          "robots": {
+            "spot2": {
+              "charge": {
+                "value": "35",
+                "unit": "%",
+                "uncertainty": "1"
+              }
+            },
+            "spot3": {
+              "charge": {
+                "value": "95",
+                "unit": "%",
+                "uncertainty": "1"
+              }
+            }
+          },
+          "charge_events": [
+            {
+              "at": {
+                "value": "20",
+                "unit": "min"
+              },
+              "robot": "spot2",
+              "charge": {
+                "value": "90",
+                "unit": "%",
+                "uncertainty": "1"
+              }
+            }
+          ]
+        },
+        "goals": [
+          [
+            [
+              "rl:robot:spot2",
+              "located_in",
+              "rl:place:stop_c"
+            ]
+          ],
+          [
+            [
+              "rl:robot:spot2",
+              "located_in",
+              "rl:place:stop_c"
+            ],
+            [
+              "rl:place:charger_1",
+              "in_state",
+              "charging"
+            ]
+          ]
+        ],
+        "messages": []
+      },
+      {
+        "when": "spot2 has 35 %, the only event at 20 min makes it 78 %: 80 % is never reached, the wait times out at 40 min",
+        "reached_min": null,
+        "world_patch": {
+          "robots": {
+            "spot2": {
+              "charge": {
+                "value": "35",
+                "unit": "%",
+                "uncertainty": "1"
+              }
+            },
+            "spot3": {
+              "charge": {
+                "value": "95",
+                "unit": "%",
+                "uncertainty": "1"
+              }
+            }
+          },
+          "charge_events": [
+            {
+              "at": {
+                "value": "20",
+                "unit": "min"
+              },
+              "robot": "spot2",
+              "charge": {
+                "value": "78",
+                "unit": "%",
+                "uncertainty": "1"
+              }
+            }
+          ]
+        },
+        "fails": true,
+        "messages": []
+      },
+      {
+        "when": "spot2 has 35 %, the event that makes it 95 % comes at 50 min: too late, the wait times out at 40 min",
+        "reached_min": null,
+        "world_patch": {
+          "robots": {
+            "spot2": {
+              "charge": {
+                "value": "35",
+                "unit": "%",
+                "uncertainty": "1"
+              }
+            },
+            "spot3": {
+              "charge": {
+                "value": "95",
+                "unit": "%",
+                "uncertainty": "1"
+              }
+            }
+          },
+          "charge_events": [
+            {
+              "at": {
+                "value": "50",
+                "unit": "min"
+              },
+              "robot": "spot2",
+              "charge": {
+                "value": "95",
+                "unit": "%",
+                "uncertainty": "1"
+              }
+            }
+          ]
+        },
+        "fails": true,
+        "messages": []
+      },
+      {
+        "when": "spot2 already has 85 %: the wait is met at once; spot3 (the decoy) has 20 %",
+        "reached_min": 0,
+        "world_patch": {
+          "robots": {
+            "spot2": {
+              "charge": {
+                "value": "85",
+                "unit": "%",
+                "uncertainty": "1"
+              }
+            },
+            "spot3": {
+              "charge": {
+                "value": "20",
+                "unit": "%",
+                "uncertainty": "1"
+              }
+            }
+          },
+          "charge_events": []
+        },
+        "goals": [
+          [
+            [
+              "rl:robot:spot2",
+              "located_in",
+              "rl:place:stop_c"
+            ]
+          ],
+          [
+            [
+              "rl:robot:spot2",
+              "located_in",
+              "rl:place:stop_c"
+            ],
+            [
+              "rl:place:charger_1",
+              "in_state",
+              "charging"
+            ]
+          ]
+        ],
+        "messages": []
+      },
+      {
+        "when": "spot2 has exactly 80 %: at least 80 %, the wait is met at once (a `>` times out)",
+        "reached_min": 0,
+        "world_patch": {
+          "robots": {
+            "spot2": {
+              "charge": {
+                "value": "80",
+                "unit": "%",
+                "uncertainty": "0"
+              }
+            },
+            "spot3": {
+              "charge": {
+                "value": "20",
+                "unit": "%",
+                "uncertainty": "1"
+              }
+            }
+          },
+          "charge_events": []
+        },
+        "goals": [
+          [
+            [
+              "rl:robot:spot2",
+              "located_in",
+              "rl:place:stop_c"
+            ]
+          ],
+          [
+            [
+              "rl:robot:spot2",
+              "located_in",
+              "rl:place:stop_c"
+            ],
+            [
+              "rl:place:charger_1",
+              "in_state",
+              "charging"
+            ]
+          ]
+        ],
+        "messages": []
+      },
+      {
+        "when": "spot2 has no charge fact and no event gives it one: unknown at every look, the wait fails closed",
+        "reached_min": null,
+        "world_patch": {
+          "robots": {
+            "spot2": {
+              "charge": null
+            },
+            "spot3": {
+              "charge": {
+                "value": "95",
+                "unit": "%",
+                "uncertainty": "1"
+              }
+            }
+          },
+          "charge_events": []
+        },
+        "fails": true,
+        "messages": []
+      }
+    ]
+  },
+  "expected_charge": [
+    {
+      "use": "wait",
+      "robot": "spot2",
+      "op": ">=",
+      "value": "80",
+      "unit": "%",
+      "timeout": "40 min",
+      "decoy": "spot3"
+    }
+  ],
+  "expected_actions": [
+    {
+      "robot": "spot2",
+      "action": "charge",
+      "target": "charger_1"
+    }
+  ],
+  "gap": "G-SELF",
+  "tags": [
+    "charge",
+    "wait_until",
+    "live_reading",
+    "scheduled_event",
+    "do_charge",
+    "timeout",
+    "decoy"
+  ],
+  "why": "The live form (0048 S3, S4): `wait until robot_charge r >= 80 % timeout 40 min else { fail ... }` after `do r charge charger`. The charge changes only by scheduled events. A `wait for` that guesses the time, a dropped wait, or a `charge` that is never checked is a different request: it succeeds where the request fails. 2.3 has no `robot_charge` (`E204`).",
+  "attempt_fails_with": "E204",
+  "erratum": "R4, R5"
+}

@@ -1,0 +1,180 @@
+{
+  "id": "p01_low_battery_then_dock",
+  "prompt": "With spot1, if your battery is below 25 percent, go to dock_2 and tell channel \"lead\" \"spot1 is docked\"; otherwise go on to stop_c.",
+  "world": "bench/worlds/charge_p01_low_battery_then_dock.json",
+  "world_2_3": "bench/worlds/site.json",
+  "group": "self",
+  "expect": {
+    "decision": "program"
+  },
+  "expect_2_3": {
+    "decision": "cannot",
+    "category": "inexpressible"
+  },
+  "expect_2_4": {
+    "decision": "program",
+    "world_2_4": {
+      "robots": {
+        "spot1": {
+          "charge": {
+            "value": "64",
+            "unit": "%",
+            "uncertainty": "1"
+          }
+        },
+        "cleaner1": {
+          "charge": {
+            "value": "90",
+            "unit": "%",
+            "uncertainty": "1"
+          }
+        }
+      },
+      "charge_events": []
+    },
+    "paths": [
+      {
+        "when": "spot1 has 18 % (+-1), below 25 %: it docks and the lead is told; cleaner1 has 90 %",
+        "check": true,
+        "world_patch": {
+          "robots": {
+            "spot1": {
+              "charge": {
+                "value": "18",
+                "unit": "%",
+                "uncertainty": "1"
+              }
+            },
+            "cleaner1": {
+              "charge": {
+                "value": "90",
+                "unit": "%",
+                "uncertainty": "1"
+              }
+            }
+          }
+        },
+        "goal": [
+          [
+            "rl:robot:spot1",
+            "located_in",
+            "rl:place:dock_2"
+          ]
+        ],
+        "messages": [
+          [
+            "lead",
+            "spot1 is docked"
+          ]
+        ]
+      },
+      {
+        "when": "spot1 has 64 % (+-1): it goes on to stop_c; cleaner1 (the decoy) has 12 %",
+        "check": false,
+        "world_patch": {
+          "robots": {
+            "spot1": {
+              "charge": {
+                "value": "64",
+                "unit": "%",
+                "uncertainty": "1"
+              }
+            },
+            "cleaner1": {
+              "charge": {
+                "value": "12",
+                "unit": "%",
+                "uncertainty": "1"
+              }
+            }
+          }
+        },
+        "goal": [
+          [
+            "rl:robot:spot1",
+            "located_in",
+            "rl:place:stop_c"
+          ]
+        ],
+        "messages": []
+      },
+      {
+        "when": "spot1 has exactly 25 % (no uncertainty): not below 25 %, so it goes on (a `<=` docks)",
+        "check": false,
+        "world_patch": {
+          "robots": {
+            "spot1": {
+              "charge": {
+                "value": "25",
+                "unit": "%",
+                "uncertainty": "0"
+              }
+            },
+            "cleaner1": {
+              "charge": {
+                "value": "90",
+                "unit": "%",
+                "uncertainty": "1"
+              }
+            }
+          }
+        },
+        "goal": [
+          [
+            "rl:robot:spot1",
+            "located_in",
+            "rl:place:stop_c"
+          ]
+        ],
+        "messages": []
+      },
+      {
+        "when": "spot1 has 24 % +-2: the interval holds 25 %, the comparison is unknown and the step fails closed (S2)",
+        "check": null,
+        "world_patch": {
+          "robots": {
+            "spot1": {
+              "charge": {
+                "value": "24",
+                "unit": "%",
+                "uncertainty": "2"
+              }
+            },
+            "cleaner1": {
+              "charge": {
+                "value": "90",
+                "unit": "%",
+                "uncertainty": "1"
+              }
+            }
+          }
+        },
+        "fails": true,
+        "messages": []
+      }
+    ]
+  },
+  "expected_charge": [
+    {
+      "use": "if",
+      "robot": "spot1",
+      "op": "<",
+      "value": "25",
+      "unit": "%",
+      "decoy": "cleaner1"
+    }
+  ],
+  "gap": "G-SELF",
+  "tags": [
+    "charge",
+    "if",
+    "threshold_below",
+    "decoy",
+    "near_threshold",
+    "fails_closed",
+    "message"
+  ],
+  "why": "The robot's own charge (0048 S1, S2): `measure r charge as c;` and `c < 25 %`. A dropped check, `robot_ready` as a stand-in, another threshold or operator, or another robot's charge is a different request; the paths tell them apart. 2.3 has no such kind (`E217`).",
+  "attempt_fails_with": "E217",
+  "erratum": "R4"
+}
