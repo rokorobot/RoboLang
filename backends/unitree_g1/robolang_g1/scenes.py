@@ -28,6 +28,8 @@ import math
 import sys
 from pathlib import Path
 
+import numpy as np
+
 from . import site as site_mod
 
 REPO = Path(__file__).resolve().parents[3]
@@ -38,7 +40,12 @@ PLATE = {"size": 0.24, "z": 0.19, "facing": 3.14159265}
 TABLE_X, TABLE_HALF_X, TABLE_HALF_Z = 2.81, 0.13, 0.375  # the table top is at 0.75 m
 BOX_Z = 0.79  # centre of an 8 cm box standing on a table
 STAND_GRASP, STAND_PLACE = 1.3, 1.35  # the pelvis this far from the plate: where grasps, and places, were verified
+DOCK_PLATE_Z = 0.40
 STEP_BACK = 0.12  # the dock of e_box_then_dock: this far behind the destination's standing place
+# The line from the head camera to each corner of a plate the goal reads passes this far clear of every table and every
+# box where the goal puts it. Set from run 2: the dock's plate, whose lower corner's line met the table's edge, read
+# with confidence 0.00 in two runs of three; the destination's plate in the same scene, 3 cm clear, read 1.00 in all.
+SIGHT_MARGIN_M = 0.02
 SEEN_AHEAD_M = 0.52  # a box's marker further ahead of the pelvis than this is not counted as in view
 REGION_Y, REGION_Z = (0.56, 0.76), (0.91, 1.09)  # a region in the plate's frame: height above its centre, distance out
 # Slots across a table, as the pelvis's sideways offset to the slot's centre (right is negative). "M" is where phases 2
@@ -235,9 +242,11 @@ def build(scene: str) -> dict:
         # its own plate, on the wall to the right of the table as the unit's is to the left, and as far to the side:
         # seen 0.6 m to the side (24 degrees off the axis at 1.6 m), the pose from it was 1.6 cm off what the arrival
         # had measured two seconds earlier, and `robot_at` was `unknown` (S302)
+        # Raised (its centre 0.40 m up, not 0.19): the line to it crosses the table, and at 0.19 m its lower edge met
+        # the table's far edge (run 2: confidence 0.00, `robot_at` unknown in two runs of three).
         st = {
             "name": param,
-            "marker": {"id": marker, "size": PLATE["size"], "pos": [WALL_X, round(y0 - 0.45, 4), PLATE["z"]],
+            "marker": {"id": marker, "size": PLATE["size"], "pos": [WALL_X, round(y0 - 0.45, 4), DOCK_PLATE_Z],
                        "facing": PLATE["facing"]},
             "stand": [round(stand + back, 4), -0.45, 0.0],
         }
@@ -303,7 +312,9 @@ def check_visibility(built: dict) -> list[str]:
     `perception.visibility_violations` checks the rule itself: every location a goal atom names is in the head
     camera's field of view, over the tables, from the station where the plan ends, and every location a precondition
     names from the start pose. This adds the range at which a box's marker is read: the centre of an `object_at`
-    region is no further ahead of the pelvis than `SEEN_AHEAD_M`."""
+    region is no further ahead of the pelvis than `SEEN_AHEAD_M`; and that the station plates the goal reads (for
+    `robot_at`, and for the frame of an `object_at` region) are not hidden, corner by corner, by a table or by a box
+    standing where the goal puts it (run 2: a box placed at the destination hid the dock's plate, `robot_at` unknown)."""
     from robolang import ir
 
     from . import executor, kinematics, perception
@@ -319,6 +330,35 @@ def check_visibility(built: dict) -> list[str]:
         if moves
         else site["robot"]["start"]
     )
+    from .sim.scene import STAND_HEIGHT
+
+    kin = kinematics.Kinematics(site["camera"])
+    _, pc = kin.camera_pose(np.zeros(29))
+    goal_atoms = [a for c in task.goal or () for a in O.atoms_of(c)]
+    placed = []  # an object standing where the goal puts it, as a box that can hide a plate
+    for atom in goal_atoms:
+        if isinstance(atom, ir.ObjectAt):
+            loc = site_mod.location(site, names[atom.location])
+            R, p = site_mod.marker_frame(site_mod.station(site, loc["station"])["marker"])
+            centre = R @ site_mod.region_centre_in_marker(loc) + p
+            half = site_mod.obj(site, names[atom.obj])["half_size"]
+            placed.append({"name": f"{names[atom.obj]} at {loc['name']}",
+                           "pos": [centre[0], centre[1], 2 * TABLE_HALF_Z + half[2]], "half_size": list(half)})
+    eye = np.array([end[0], end[1], STAND_HEIGHT]) + site_mod.rot_z(end[2]) @ pc
+    occluders = [  # grown by SIGHT_MARGIN_M
+        {**b, "half_size": [v + SIGHT_MARGIN_M for v in b["half_size"]]} for b in site["tables"] + placed
+    ]
+    plates = {site_mod.location(site, names[a.location])["station"] for a in goal_atoms
+              if isinstance(a, (ir.ObjectAt, ir.RobotAt))}
+    for name in sorted(plates):
+        marker = site_mod.station(site, name)["marker"]
+        R, p = site_mod.marker_frame(marker)
+        h = marker["size"] / 2  # the whole plate: the detector needs the white border too
+        for cx, cy in ((-h, -h), (-h, h), (h, -h), (h, h)):
+            blocked = perception.line_of_sight_blocked(eye, R @ np.array([cx, cy, 0.0]) + p, occluders)
+            if blocked is not None:
+                problems.append(f"goal: a corner of the plate of station {name} is hidden by {blocked}")
+                break
     for label, conditions, pose in (("goal", task.goal or (), end), ("precondition", task.preconditions,
                                                                      site["robot"]["start"])):
         for atom in (a for c in conditions for a in O.atoms_of(c)):

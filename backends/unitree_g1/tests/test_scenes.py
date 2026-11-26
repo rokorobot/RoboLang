@@ -191,3 +191,31 @@ def test_a_task_left_out_of_the_family_is_not_judged():
     tasks = {t: [_run(t, k) for k in (1, 2, 3)] for t in family}
     bar = judge(tasks, _cases(), family, 3)
     assert bar["pass"] and bar["runs_expected"] == 36
+
+
+@needs_assets
+def test_a_plate_whose_line_of_sight_grazes_a_table_breaks_the_rule():
+    # run 2: the dock's plate at 0.19 m, its lower edge in line with the table's far edge, read with confidence 0.00
+    built = scenes.build("e_box_then_dock")
+    dock = next(s for s in built["site"]["stations"] if s["name"] == "dock")
+    assert dock["marker"]["pos"][2] == scenes.DOCK_PLATE_Z
+    assert scenes.check_visibility(built) == []
+    dock["marker"]["pos"][2] = 0.19
+    assert scenes.check_visibility(built) == ["goal: a corner of the plate of station dock is hidden by b_table"]
+
+
+@needs_assets
+def test_the_plates_are_checked_against_the_tables_and_a_box_where_the_goal_puts_it(monkeypatch):
+    from robolang_g1 import perception
+
+    seen = []
+
+    def blocked(start, end, boxes):
+        seen.append(sorted(b["name"] for b in boxes))
+        return None
+
+    monkeypatch.setattr(perception, "line_of_sight_blocked", blocked)
+    scenes.check_visibility(scenes.build("e_box_then_dock"))
+    # (the first calls are perception.visibility_violations' own, against the tables alone)
+    assert ["a_table", "b_table", "box at dst"] in seen
+    assert len([s for s in seen if "box at dst" in s]) == 8  # four corners of the two plates the goal reads (dst, dock)
