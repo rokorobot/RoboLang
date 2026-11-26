@@ -49,8 +49,8 @@ There is no new statement. The charge comes from the robot, not from a sensor pa
 ```rob
 robolang 2.4;
 
-task round_or_dock(robot r, location dock, location stop) {
-    goal { robot_at r stop; }
+task round_or_dock(robot r, location dock, location next_stop) {
+    goal { robot_at r next_stop; }
     plan {
         measure r charge as c;
         if c < 25 % {
@@ -58,7 +58,7 @@ task round_or_dock(robot r, location dock, location stop) {
             move r to dock;
             communicate r to "lead" with "spot1 docked to charge";
         } else {
-            move r to stop;
+            move r to next_stop;
         }
     }
 }
