@@ -156,6 +156,11 @@ two looks. After four looks without a better error a servo goes on from a wider 
 look from 4.2 cm and 0.07 rad, which still decides; the approach point, which no confirmation follows, from 12 cm and
 0.15 rad, which the last walk corrects: under a creep of 0.025 rad/s the heading was inside 0.07 rad for a moment in each
 5 s look, and one move spent its whole 150 s at the approach point).
+**A move to a station the robot already stands beside** (it has arrived at a station before, the belief is within 25 cm
+and 0.2 rad of this station's pose, and this station's marker is seen now) is the servo alone, from where it stands,
+and the record says `direct: true`: the same station named twice (`l_vial_hold`'s bench and spinner), or a dock one
+step behind a destination. Walking out to the approach point and in again had moved a robot with a box in hand by
+several centimetres before the place that followed (S502), and once made the belief jump 0.5 m on the way (S504).
 
 **`grasp r O`.** Re-observe the station marker (and re-servo if the robot moved); observe the object's marker (**S506**
 before anything moves if it is not seen); choose the hand (the site's, or the nearer side); inverse kinematics on the

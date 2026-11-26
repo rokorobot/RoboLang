@@ -232,12 +232,14 @@ def build(scene: str) -> dict:
         loc_bind[bind[param]] = param
     for param, (unit, back) in spec.get("extra", {}).items():
         y0, stand, _ = spec["units"][unit]
-        # its own plate, on the wall to the right of the table as the unit's is to the left
+        # its own plate, on the wall to the right of the table as the unit's is to the left, and as far to the side:
+        # seen 0.6 m to the side (24 degrees off the axis at 1.6 m), the pose from it was 1.6 cm off what the arrival
+        # had measured two seconds earlier, and `robot_at` was `unknown` (S302)
         st = {
             "name": param,
-            "marker": {"id": marker, "size": PLATE["size"], "pos": [WALL_X, round(y0 - 0.60, 4), PLATE["z"]],
+            "marker": {"id": marker, "size": PLATE["size"], "pos": [WALL_X, round(y0 - 0.45, 4), PLATE["z"]],
                        "facing": PLATE["facing"]},
-            "stand": [round(stand + back, 4), -0.60, 0.0],
+            "stand": [round(stand + back, 4), -0.45, 0.0],
         }
         marker += 1
         stations.append(st)

@@ -85,6 +85,11 @@ LEG_MAX_M = 1.6  # the longest walk between two looks
 SCAN_STEP_RAD = 0.6  # a scan for a marker turns this much between looks
 SIDESTEPS, SIDESTEP_M = 3, 0.2  # ... after this many sidesteps of about this much toward the marker's side
 MOVE_TIMEOUT_S, SERVO_TIMEOUT_S, MARKER_TIMEOUT_S = 300.0, 150.0, 90.0  # simulation time: S504, S504, S517
+# A move to a station the robot already stands beside (the same station, or one a step away, as a dock 12 cm behind a
+# destination) is the servo alone, from where it stands: walking out to the approach point 0.5 m short and coming in
+# again moved a robot with a box in hand by several centimetres (S502 at the place that followed) and, once, made the
+# belief jump 0.5 m on the way back (S504). Within COARSE_M the servo's measured corrections apply.
+DIRECT_M, DIRECT_RAD = COARSE_M, 0.2
 # ---- arms
 ARM_TRACK_TOL_RAD = 0.12  # S503: a joint further than this from its target when a motion has finished
 HAND_TOL_RAD = 0.25  # S505
@@ -113,6 +118,12 @@ HAND_STATE_AGE_S = 1.0  # a hand state older than this (wall clock) is not used
 # the release) the hand and the object, which rests on the table there, are checked with no vertical margin and may
 # overlap the table by 1 cm (the object's position, from its marker, is known to about a centimetre).
 CONTACT_OVERLAP_M = 0.01  # (see above)
+# A place aims at its region's centre; if the arm cannot reach it (S502), at a point this far nearer the robot's side
+# across the region, in turn, if the region is wide enough that the object's marker still lands PLACE_INSIDE_M inside
+# it. Measured: with three slots on one table the outer one was out of reach in 2 of 3 runs when the robot stood 2-5 cm
+# off, inside its tolerance (docs/evidence/g1-phase4-acceptance.md).
+PLACE_SHIFTS_M = (0.015, 0.03)
+PLACE_INSIDE_M = 0.03  # twice the verdict's margin (observe.REGION_MARGIN_M)
 PLACE_ABOVE_M = 0.012  # the object is released this far above the table's surface and drops (the hand then clears it)
 RAISED_ABOVE_PRE_M = (0.12, 0.10, 0.08, 0.06, 0.04)  # the hand is raised this far above the pre-grasp height, in turn
 RAISED_OUT_M = (0.0, 0.05, 0.10)  # the raised pose beside the body is tried this much further out, in turn
@@ -667,6 +678,9 @@ class G1Operations:
         t0 = self.now_ms()
         deadline = t0 + int(MOVE_TIMEOUT_S * 1000)
         self.look(frames=3)
+        direct = self._direct(station, deadline)
+        if direct is not None:
+            return direct
         ax, ay = gx - APPROACH_M * math.cos(gyaw), gy - APPROACH_M * math.sin(gyaw)
         sx, sy = gx - (APPROACH_M + STAGING_M) * math.cos(gyaw), gy - (APPROACH_M + STAGING_M) * math.sin(gyaw)
         scan_end = self.now_ms() + int(MARKER_TIMEOUT_S * 1000)  # one budget for all the searching, replans included
@@ -693,6 +707,30 @@ class G1Operations:
             "creep_rad_s": round(self.creep, 4),
             "creep_imu_reads": self.creep_reads,
         }
+        return result
+
+    def _direct(self, station: dict, deadline_ms: int) -> dict | None:
+        """The servo alone, if the robot has arrived at a station before and stands within DIRECT_M and DIRECT_RAD of
+        this one, and sees its marker now. None otherwise: then `move` walks the usual way."""
+        if self.station is None:
+            return None
+        gx, gy, gyaw = station["pose"]
+        if (
+            math.hypot(gx - self.pose[0], gy - self.pose[1]) > DIRECT_M
+            or abs(site_mod.wrap(gyaw - self.pose[2])) > DIRECT_RAD
+        ):
+            return None
+        mid = station["marker"]["id"]
+        reading = self.look(frames=5, ids={mid}).get(mid)
+        if reading is None or reading.confidence < MARKER_MIN_CONF or reading.range_m > MARKER_MAX_RANGE_M:
+            return None
+        self.events.append({"t_ms": self.now_ms(), "event": "direct", "from": [round(float(v), 3) for v in self.pose]})
+        result = self._servo(station, reading, deadline_ms)
+        self.station = station["name"]
+        result["direct"] = True
+        result["events"] = self.events
+        result["heading"] = {**self.tracker.summary(), "creep_rad_s": round(self.creep, 4),
+                             "creep_imu_reads": self.creep_reads}
         return result
 
     def _find_marker(self, station: dict, deadline_ms: int, scan_end_ms: int, approach: tuple):
@@ -1491,17 +1529,33 @@ class G1Operations:
             [(lo[0] + hi[0]) / 2, lo[1] + obj["half_size"][2] + PLACE_ABOVE_M, (lo[2] + hi[2]) / 2]
         )
         # the marker frame is (x right, y up, z out) with a vertical panel: y is the height above the marker's centre
-        centre = reading.rotation @ target_marker + reading.position
-        details["target_in_pelvis"] = [round(float(v), 4) for v in centre]
         half = obj["half_size"]
         accept = self._place_accept(side, half, self.robot.low_q.copy())
-        plan = self._plan_reach(
-            side,
-            lambda R: centre - R @ self.held["offset_in_hand"],
-            extra=(("above", (0.0, 0.0, 0.10)),),
-            degs=(self.held["fingers_down_deg"],),
-            accept=accept,
-        )
+        # across the region (the marker frame's x), the way that brings the target toward the pelvis's centre line
+        toward = -1.0 if (reading.rotation @ np.array([1.0, 0.0, 0.0]))[1] * (
+            reading.rotation @ target_marker + reading.position
+        )[1] > 0 else 1.0
+        room = (hi[0] - lo[0]) / 2 - PLACE_INSIDE_M
+        shifts = [0.0] + [d for d in PLACE_SHIFTS_M if d <= room + 1e-9]
+        for k, shift in enumerate(shifts):
+            centre = reading.rotation @ (target_marker + np.array([toward * shift, 0.0, 0.0])) + reading.position
+            try:
+                plan = self._plan_reach(
+                    side,
+                    lambda R, c=centre: c - R @ self.held["offset_in_hand"],
+                    extra=(("above", (0.0, 0.0, 0.10)),),
+                    degs=(self.held["fingers_down_deg"],),
+                    accept=accept,
+                )
+            except BackendFailure as exc:
+                if exc.code != "S502" or k == len(shifts) - 1:
+                    raise
+                self.events.append({"t_ms": self.now_ms(), "event": "place_shift", "shift_m": shifts[k + 1],
+                                    "because": str(exc)[:120]})
+                continue
+            break
+        details["target_in_pelvis"] = [round(float(v), 4) for v in centre]
+        details["target_shift_m"] = round(float(shift), 3)
         details["reach"] = {k: plan[k] for k in ("fingers_down_deg", "waist_rad", "position_error_m")}
         details["clearance"] = plan["clearance"]
         self._arm_begin()

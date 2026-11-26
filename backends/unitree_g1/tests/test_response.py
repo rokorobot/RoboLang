@@ -192,3 +192,91 @@ def test_a_leg_straight_to_the_side_is_walked_as_two_diagonals_the_policy_answer
     assert ops.walk_legs(0.25, 0.3, 0.0, 3.4) == [(0.25, 0.3, 0.0, 3.4)]
     assert ops.walk_legs(-0.41, 0.28, 0.0, 3.4) == [(-0.41, 0.28, 0.0, 3.4)]
     assert ops.walk_legs(0.5, 0.0, 0.0, 3.4) == [(0.5, 0.0, 0.0, 3.4)]
+
+
+def test_a_move_to_a_station_the_robot_stands_beside_is_the_servo_alone():
+    """The same station, or one a step away (the dock 12 cm behind a destination): no walk out to the approach point
+    0.5 m short and back. Any other move, a first move, or a marker not seen now: the usual walk (None)."""
+    from robolang_g1 import ops as ops_mod
+
+    class Reading:
+        confidence, range_m = 0.95, 1.4
+
+    ops = _ops()
+    shelf = ops.stations["shelf"]
+    calls = []
+    ops.look = lambda frames=4, ids=None: {shelf["marker"]["id"]: Reading()}
+    ops.now_ms = lambda: 0
+
+    class Tracker:
+        def summary(self):
+            return {}
+
+    ops.tracker = Tracker()
+    ops._servo = lambda station, reading, deadline: calls.append(station["name"]) or {"settled": True}
+    gx, gy, gyaw = shelf["pose"]
+    ops.pose = [gx - 0.12, gy, gyaw]
+    assert ops._direct(shelf, 10_000) is None and calls == []  # no station arrived at yet: a first move walks
+    ops.station = "bench"
+    out = ops._direct(shelf, 10_000)
+    assert out["direct"] is True and calls == ["shelf"] and ops.station == "shelf"
+    ops.pose = [gx - ops_mod.DIRECT_M - 0.01, gy, gyaw]
+    assert ops._direct(shelf, 10_000) is None  # too far: walk
+    ops.pose = [gx, gy, gyaw + ops_mod.DIRECT_RAD + 0.01]
+    assert ops._direct(shelf, 10_000) is None  # turned too far: walk
+    ops.pose = [gx, gy, gyaw]
+    ops.look = lambda frames=4, ids=None: {}
+    assert ops._direct(shelf, 10_000) is None and calls == ["shelf"]  # its marker not seen now: walk
+
+
+def test_a_place_out_of_reach_at_the_centre_aims_nearer_the_robot_inside_the_region():
+    """S502 at the region's centre: the place tries 1.5 cm and then 3 cm nearer the pelvis's centre line, across the
+    region, never closer than 3 cm to its edge; S502 when none is reachable."""
+    import numpy as np
+
+    from robolang_g1 import site as site_mod
+    from robolang_g1.executor import BackendFailure
+    from robolang_g1.ops import PLACE_INSIDE_M
+
+    class Stop(Exception):
+        pass
+
+    ops = _ops()
+    shelf = ops.stations["shelf"]
+    loc = site_mod.location(ops.site, "shelf")
+    R = np.array([[0.0, 0.0, -1.0], [-1.0, 0.0, 0.0], [0.0, 1.0, 0.0]])  # the plate facing the robot: x to its right
+
+    class Reading:
+        confidence, rotation, position = 0.95, R, np.array([1.35, 0.45, -0.6])
+
+    ops.held = {"object": "box", "hand": "right", "offset_in_hand": np.zeros(3), "fingers_down_deg": 0}
+    ops.station = "shelf"
+    ops._reposition = lambda: {}
+    ops._arm_stance = lambda model: model
+    ops._place_accept = lambda side, half, start: None
+    ops.robot = type("R", (), {"low_q": np.zeros(29)})()
+    ops.look = lambda frames=4, ids=None: {shelf["marker"]["id"]: Reading()}
+    ops.now_ms = lambda: 0
+    tried = []
+
+    def plan_reach(side, target_for, **kw):
+        tried.append(target_for(np.eye(3)))
+        if len(tried) < reach_at:
+            raise BackendFailure("S502", "no inverse-kinematics solution")
+        raise Stop
+
+    ops._plan_reach = plan_reach
+    for reach_at, n in ((1, 1), (2, 2), (3, 3)):
+        tried.clear()
+        with pytest.raises(Stop):
+            ops.place("box", "shelf")
+        assert len(tried) == n
+    lateral = [t[1] for t in tried]
+    centre = 0.45 - (loc["region"]["min"][0] + loc["region"]["max"][0]) / 2  # the region centre is to the right
+    assert lateral == pytest.approx([centre, centre + 0.015, centre + 0.03])  # toward the centre line
+    reach_at = 99
+    tried.clear()
+    with pytest.raises(BackendFailure) as err:
+        ops.place("box", "shelf")
+    assert err.value.code == "S502" and len(tried) == 3
+    assert (loc["region"]["max"][0] - loc["region"]["min"][0]) / 2 - 0.03 >= PLACE_INSIDE_M - 1e-9
