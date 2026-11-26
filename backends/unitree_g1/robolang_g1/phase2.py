@@ -397,9 +397,11 @@ def check_e2(ctx: Ctx) -> dict:
         # the arm's 0.62 m from the shoulder (x86 CI: the hand closed short of it, S506 after the arm moved)
         d["objects"][0].update(pos=[3.13, -0.10, 0.79], half_size=[0.075, 0.075, 0.04])
 
-    status, rec2, log, s, samples2, commands2 = run_scenario(
-        ctx, "e2_far", ctx.variant("pick_place", far), "pick_place", src, "grab", bind
-    )
+    # The executor is told this scene as its site: it must know the box's size, whose marker it measures. Told the
+    # 8 cm box of `pick_place.json` it read the 10.7 cm marker as one of 5.7 cm, put the box at half its distance,
+    # within reach, and the hand closed on air (x86 CI: S506 after the arm moved).
+    far_scene = ctx.variant("pick_place", far)
+    status, rec2, log, s, samples2, commands2 = run_scenario(ctx, "e2_far", far_scene, far_scene, src, "grab", bind)
     box0, box1 = samples2[0]["objects"]["box"]["pos"], samples2[-1]["objects"]["box"]["pos"]
     far_ok = bool(
         rec2
