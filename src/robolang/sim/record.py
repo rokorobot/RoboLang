@@ -14,7 +14,7 @@ from collections.abc import Mapping
 from .. import ir
 from .executor import RunResult
 from .outcome import core_outcome
-from ..tokens import CLOCK_KINDS
+from ..tokens import CLOCK_KINDS, since
 from .clock import clock_text
 from .values import ms_text
 from .world import WORLD_SCHEMA_VERSION
@@ -24,12 +24,12 @@ RUN_RECORD_SCHEMA_VERSION = "1.0"
 # Language version -> run record schema version (robolang-v1.2.md section 8.3; v1.3 section 8.3).
 RUN_RECORD_SCHEMA_VERSIONS = {
     "1.1": "1.0", "1.2": "1.1", "1.3": "1.2", "1.4": "1.3", "1.5": "1.4", "1.6": "1.5", "1.7": "1.6",
-    "1.8": "1.7", "1.9": "1.8", "2.0": "1.8", "2.1": "1.9", "2.2": "1.10", "2.3": "1.11",
+    "1.8": "1.7", "1.9": "1.8", "2.0": "1.8", "2.1": "1.9", "2.2": "1.10", "2.3": "1.11", "2.4": "1.12",
 }
 MISSION_RECORD_SCHEMA = "robolang.sim.mission-run"  # RoboLang 2.0 (decision 0041): the record of a mission
 MISSION_RECORD_SCHEMA_VERSION = "1.0"
 MISSION_RECORD_SCHEMA_VERSIONS = {"2.0": "1.0", "2.1": "1.1", "2.2": "1.2",
-                                  "2.3": "1.3"}  # 1.1 (2.1) adds `messages`; 1.2: 2.2; 1.3: 2.3
+                                  "2.3": "1.3", "2.4": "1.4"}  # 1.1 (2.1) adds `messages`; 1.2: 2.2; 1.3: 2.3; 1.4: 2.4
 SEED = re.compile(r"[A-Za-z0-9._-]{1,64}")
 DEFAULT_SEED = "0"
 
@@ -146,6 +146,10 @@ def _event(event) -> dict:
         return {**out, "property": prop.kind,
                 "value": {"value": ir.decimal_text(prop.value) if quantity else prop.value,
                           **({"unit": prop.unit} if prop.unit is not None else {})}}
+    if event.fact == "charge":  # world file 1.9 (decision 0048 S4): the robot's charge became this
+        charge = event.value
+        return {**out, "value": {"value": ir.decimal_text(charge.value), "unit": "%",
+                                 "uncertainty": ir.decimal_text(charge.uncertainty)}}
     return {**out, "value": event.value}
 
 
@@ -294,14 +298,14 @@ def to_record(
         "ir_schema_version": ir.IR_SCHEMA_VERSIONS[language_version],
         "world_schema_version": world_schema_version,
     }
-    if language_version in ("1.9", "2.0", "2.1", "2.2", "2.3"):
+    if language_version in since("1.9"):
         inputs["world_clock"] = None if world_clock is None else {"start": world_clock.start, "zone": world_clock.zone}
     if bindings_source != "world":  # a record without the key has world-file bindings (section 5.1)
         inputs["bindings_source"] = bindings_source
-    branching = language_version in ("1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "2.0", "2.1", "2.2", "2.3")
-    handlers = language_version in ("1.5", "1.6", "1.7", "1.8", "1.9", "2.0", "2.1", "2.2", "2.3")
-    values = language_version in ("1.6", "1.7", "1.8", "1.9", "2.0", "2.1", "2.2", "2.3")
-    actions = language_version in ("1.8", "1.9", "2.0", "2.1", "2.2", "2.3")
+    branching = language_version in since("1.4")
+    handlers = language_version in since("1.5")
+    values = language_version in since("1.6")
+    actions = language_version in since("1.8")
     return {
         "run_record_schema": RUN_RECORD_SCHEMA,
         "run_record_schema_version": RUN_RECORD_SCHEMA_VERSIONS[language_version],
@@ -318,10 +322,10 @@ def to_record(
         "preconditions": _results(result.preconditions),
         **({} if result.goal is None else {"goal": _results(result.goal, branching)}),
         **({"decisions": [_decision(d) for d in result.decisions]} if branching else {}),
-        **({"choices": [choice_entry(c) for c in result.choices]} if language_version == "2.3" else {}),
+        **({"choices": [choice_entry(c) for c in result.choices]} if language_version in since("2.3") else {}),
         "steps": [_step(s, branching, handlers, values, actions) for s in result.steps],
         "events_applied": [_event(e) for e in result.events_applied],
-        **({"messages": [_received(m) for m in result.messages]} if language_version in ("2.1", "2.2", "2.3") else {}),
+        **({"messages": [_received(m) for m in result.messages]} if language_version in since("2.1") else {}),
         "end_t_ms": ms_text(result.end_t_ms),
         "final_world": _final_world(result.final_world, actions),
         **({} if result.goal is None else {"core_outcome": core_outcome(result, task, run_id, core=core)}),
@@ -403,7 +407,7 @@ def to_mission_record(
         "runs": runs,
         "events_applied": [_event(e) for e in result.events_applied],
         **({"messages": [_received(m) for m in result.messages]}
-           if document.language_version in ("2.1", "2.2", "2.3") else {}),
+           if document.language_version in since("2.1") else {}),
         "end_t_ms": ms_text(result.end_t_ms),
         "final_world": _final_world(result.final_world, True),
     }

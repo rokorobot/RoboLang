@@ -1,0 +1,13 @@
+// RoboLang v2.4 fixture: invalid
+// expect: error E217 (syntax) line 10
+// why: `charge` is no measured kind below 2.4.
+
+robolang 2.3;
+
+task t(robot r, location dest, location dock) {
+    goal { robot_at r dest; }
+    plan {
+        measure r charge as c;
+        move r to dest;
+    }
+}

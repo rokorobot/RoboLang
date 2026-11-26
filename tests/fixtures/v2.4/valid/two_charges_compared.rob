@@ -1,0 +1,19 @@
+// RoboLang v2.4 fixture: valid
+// expect: ok
+// why: One charge binding is compared with another.
+
+robolang 2.4;
+
+task t(robot r, robot b, location dest) {
+    plan {
+        measure r charge as mine;
+        measure b charge as theirs;
+        if mine >= theirs {
+            goal { robot_at r dest; }
+            move r to dest;
+        } else {
+            goal { robot_at b dest; }
+            move b to dest;
+        }
+    }
+}

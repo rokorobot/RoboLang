@@ -1,0 +1,81 @@
+{
+  "ir_schema": "robolang.task-ir",
+  "ir_schema_version": "1.12",
+  "language_version": "2.4",
+  "tasks": [
+    {
+      "name": "charge",
+      "parameters": [
+        {
+          "name": "r",
+          "type": "robot"
+        },
+        {
+          "name": "robot_charge",
+          "type": "location"
+        },
+        {
+          "name": "dest",
+          "type": "location"
+        }
+      ],
+      "safety": [],
+      "preconditions": [],
+      "goal": [
+        {
+          "kind": "robot_at",
+          "robot": "r",
+          "location": "dest"
+        }
+      ],
+      "steps": [
+        {
+          "kind": "read_charge",
+          "robot": "r",
+          "binding": "level"
+        },
+        {
+          "kind": "read_charge",
+          "robot": "r",
+          "binding": "robot_charge_level"
+        },
+        {
+          "kind": "if",
+          "condition": {
+            "kind": "compare",
+            "left": {
+              "kind": "binding",
+              "name": "level"
+            },
+            "op": "<",
+            "right": {
+              "kind": "binding",
+              "name": "robot_charge_level"
+            }
+          },
+          "then": [
+            {
+              "kind": "move",
+              "robot": "r",
+              "target": "robot_charge"
+            }
+          ],
+          "else": [
+            {
+              "kind": "move",
+              "robot": "r",
+              "target": "dest"
+            }
+          ],
+          "goal_then": null,
+          "goal_else": null
+        },
+        {
+          "kind": "move",
+          "robot": "r",
+          "target": "dest"
+        }
+      ]
+    }
+  ]
+}

@@ -206,5 +206,25 @@
   "I232_choose_uses_an_earlier_choice.json": [
     "I232",
     "/tasks/0/steps/1/order/reference"
+  ],
+  "I231_choose_where_reads_another_robots_charge.json": [
+    "I231",
+    "/tasks/0/steps/0/where"
+  ],
+  "I114_a_charge_operand_in_schema_1_11.json": [
+    "I114",
+    "/tasks/0/steps/0/where/left/kind"
+  ],
+  "I115_read_charge_in_schema_1_11.json": [
+    "I115",
+    "/tasks/0/steps/1/kind"
+  ],
+  "I125_measure_of_a_charge_with_a_sensor.json": [
+    "I125",
+    "/tasks/0/steps/1/reading"
+  ],
+  "I203_robot_charge_of_an_undeclared_robot.json": [
+    "I203",
+    "/tasks/0/steps/0/condition/left/robot"
   ]
 }

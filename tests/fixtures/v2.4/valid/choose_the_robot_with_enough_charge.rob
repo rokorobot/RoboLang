@@ -1,0 +1,13 @@
+// RoboLang v2.4 fixture: valid
+// expect: ok
+// why: A choice may keep only the candidates with enough charge (E330 narrowed).
+
+robolang 2.4;
+
+task relief(robot a, robot b, location dest) {
+    goal { robot_at t dest; }
+    plan {
+        choose robot t from (a, b) where robot_charge t >= 50 % else { fail "no robot has 50 percent charge"; }
+        move t to dest;
+    }
+}

@@ -1,5 +1,5 @@
 """
-World file, schemas 1.0 to 1.6 (spec/simulation-v1.0.md sections 3, 14, 15, 16, 17 and 19).
+World file, schemas 1.0 to 1.9 (spec/simulation-v1.0.md sections 3, 14, 15, 16, 17 and 19).
 
 `load_world` reads the bytes of a world file and returns a validated, immutable `World`,
 or raises `WorldError` for the first error found (codes E501 to E519, sections 3.9, 14.1, 15.1, 16.1, 17.1 and 19.1).
@@ -26,13 +26,16 @@ WORLD_SCHEMA_VERSION = "1.0"
 # 1.1 adds `class` and `mass` to objects (3.3); 1.2 measured values (14); 1.3 region limits (15); 1.4 actions (16);
 # 1.5 the clock (17); 1.6 channels and incoming messages (19); 1.7 four more measured kinds (20); 1.8 the position of
 # a location (21, decision 0045 C5)
-WORLD_SCHEMA_VERSIONS = ("1.0", "1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8")
-_MEASURED = ("1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8")  # the world files with measured values
-_REGIONS = ("1.3", "1.4", "1.5", "1.6", "1.7", "1.8")  # the world files with `contains` and `honours`
-_ACTIONS = ("1.4", "1.5", "1.6", "1.7", "1.8")  # the world files with `actions`, `state` and `location_states`
-_CLOCKS = ("1.5", "1.6", "1.7", "1.8")  # the world files with a `clock`
-_CHANNELS = ("1.6", "1.7", "1.8")  # the world files with `channels` and `messages`
-_KINDS = ("1.7", "1.8")  # the world files with the kinds fill, confidence, pressure, count; `location_properties`
+WORLD_SCHEMA_VERSIONS = ("1.0", "1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9")
+_MEASURED = ("1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9")  # the world files with measured values
+_REGIONS = ("1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9")  # the world files with `contains` and `honours`
+_ACTIONS = ("1.4", "1.5", "1.6", "1.7", "1.8", "1.9")  # the world files with `actions`, `state` and `location_states`
+_CLOCKS = ("1.5", "1.6", "1.7", "1.8", "1.9")  # the world files with a `clock`
+_CHANNELS = ("1.6", "1.7", "1.8", "1.9")  # the world files with `channels` and `messages`
+_KINDS = ("1.7", "1.8", "1.9")  # the world files with fill, confidence, pressure, count and `location_properties`
+_POSITIONS = ("1.8", "1.9")  # the world files whose `locations` may carry a `position`
+_CHARGES = ("1.9",)  # the world files with a robot's `charge` and the top-level `charge_events` (decision 0048 S4)
+FACT_CHARGE = "charge"  # the fact of a `charge_events` entry, an event like the others (decision 0048 S4)
 MAX_POSITION_CHARS = 32
 SENDER = re.compile(r"rl:(agent|robot):[A-Za-z0-9][A-Za-z0-9._:@-]{0,127}")  # a sender of a message (world file 1.6)
 FACT_MESSAGE = "message"  # the fact of a `messages` entry, which is an event like the others (decision 0043 S6)
@@ -113,9 +116,18 @@ class Robot:
     max_speed: tuple[Speed, ...]
     honours: tuple[str, ...] = ()  # world file 1.3: the region limits it can honour; before 1.3 it honours none (C1)
     actions: tuple[Action, ...] = ()  # world file 1.4: the actions it declares; before 1.4 it declares none
+    charge: "Charge | None" = None  # world file 1.9 (decision 0048 S4): None is an unknown charge
 
     def action(self, name: str) -> Action | None:
         return next((a for a in self.actions if a.name == name), None)
+
+
+@dataclass(frozen=True)
+class Charge:
+    """World file 1.9 (decision 0048 S4): a robot's charge in %, 0 to 100, `value` +- `uncertainty` (0: exact)."""
+
+    value: Decimal
+    uncertainty: Decimal
 
 
 @dataclass(frozen=True)
@@ -181,13 +193,14 @@ class Incoming:
 class Event:
     """
     `value` is a Property for the fact `property` (world file 1.2, `target` an object), an Incoming for the fact
-    `message` (world file 1.6, `target` a channel), else a flag.
+    `message` (world file 1.6, `target` a channel), a Charge for the fact `charge` (world file 1.9, `target` a robot),
+    else a flag.
     """
 
     at_ms: Decimal
     fact: str
     target: str
-    value: bool | Property | Incoming
+    value: bool | Property | Incoming | Charge
 
 
 @dataclass(frozen=True)
@@ -407,6 +420,7 @@ class _Loader:
         ) + (("location_states",) if self.version in _ACTIONS else ()) + (("clock",) if self.version in _CLOCKS else ())
         top += ("channels", "messages") if self.version in _CHANNELS else ()
         top += ("location_properties",) if self.version in _KINDS else ()
+        top += ("charge_events",) if self.version in _CHARGES else ()
         self.obj(doc, "", top, "the world file")
         self.require(doc, "", "locations", "tasks")
         locations = self.locations(self.need(doc, "", "locations"))
@@ -434,6 +448,7 @@ class _Loader:
         events = [self.event(i, v) for i, v in enumerate(events_raw)]
         channels = self.channels(doc)
         events += self.messages(doc)
+        events += self.charge_events(doc)
         entries = {k: self.task_entry(k, v) for k, v in tasks_raw.items()}
 
         # Identity: IDs are unique across the four kinds (3.2). Duplicates inside
@@ -476,7 +491,7 @@ class _Loader:
     def locations(self, value):
         if not isinstance(value, list):
             self.fail("E504", "/locations", "'locations' must be an array")
-        if self.version == "1.8":  # an entry is an ID, or `{ "id": ID, "position": [x, y] }` (decision 0045 C5)
+        if self.version in _POSITIONS:  # an entry is an ID, or `{ "id": ID, "position": [x, y] }` (decision 0045 C5)
             value = [self.positioned(item, i) for i, item in enumerate(value)]
         out = [self.entity_id(item, _pointer("locations", i)) for i, item in enumerate(value)]
         for i, item in enumerate(out):
@@ -690,6 +705,7 @@ class _Loader:
         p = _pointer("robots", name)
         allowed = ("ready", "location", "gripper", "max_speed") + (("honours",) if self.version in _REGIONS else ())
         allowed += ("actions",) if self.version in _ACTIONS else ()
+        allowed += ("charge",) if self.version in _CHARGES else ()
         self.obj(value, p, allowed, "a robot")
         self.require(value, p, "location", "gripper")
         ready = self.optional_bool(value, p, "ready")
@@ -717,7 +733,53 @@ class _Loader:
                 if item in honours:
                     self.fail("E504", hp + _pointer(i), f"'{item}' is listed twice")
                 honours.append(item)
-        return Robot(name, ready, location, gripper, tuple(speeds), tuple(honours), self.actions(value, p))
+        charge = self.charge(value["charge"], p + _pointer("charge")) if "charge" in value else None
+        return Robot(name, ready, location, gripper, tuple(speeds), tuple(honours), self.actions(value, p), charge)
+
+    def charge(self, value, p) -> Charge:
+        """
+        `{ "value": "64", "unit": "%", "uncertainty": "1" }` (world file 1.9, decision 0048 S4, open point 1): a
+        decimal string from 0 to 100 and a spread; `uncertainty` is optional and absent means exact. A robot without
+        a `charge` has an unknown one.
+        """
+        self.obj(value, p, ("value", "unit", "uncertainty"), "a charge")
+        self.require(value, p, "value", "unit")
+        try:
+            number = parse_decimal(self.need(value, p, "value"))
+        except ValueError:
+            self.fail("E504", p + _pointer("value"), "must be a decimal string such as \"64\"")
+        if self.need(value, p, "unit") != "%":
+            self.fail("E504", p + _pointer("unit"), "unit must be %")
+        if not 0 <= number <= 100:
+            self.fail("E504", p + _pointer("value"), "a charge is from 0 to 100 %")
+        spread = Decimal(0)
+        if "uncertainty" in value:
+            try:
+                spread = parse_decimal(value["uncertainty"])
+            except ValueError:
+                self.fail("E504", p + _pointer("uncertainty"), "must be a decimal string such as \"1\" (zero allowed)")
+        return Charge(number, spread)
+
+    def charge_events(self, doc) -> list[Event]:
+        """
+        `charge_events: [ { "at", "robot", "charge" } ]` (world file 1.9, decision 0048 S4, point 1): at `at` (after the
+        start) the charge of `robot` becomes `charge`. The only thing that changes a charge: there is no drain and no
+        charging model, and `do r charge charger` changes no reading (point 7).
+        """
+        if "charge_events" not in doc:
+            return []
+        if not isinstance(doc["charge_events"], list):
+            self.fail("E504", "/charge_events", "'charge_events' must be an array")
+        events = []
+        for i, value in enumerate(doc["charge_events"]):
+            p = _pointer("charge_events", i)
+            self.obj(value, p, ("at", "robot", "charge"), "a charge event")
+            self.require(value, p, "at", "robot", "charge")
+            number, unit = self.quantity(value["at"], p + _pointer("at"), tuple(DURATION_UNITS), "an event time")
+            robot = self.string(value["robot"], p + _pointer("robot"), "robot")
+            events.append(Event(duration_ms(number, unit), FACT_CHARGE, robot,
+                                self.charge(value["charge"], p + _pointer("charge"))))
+        return events
 
     def object(self, name, value):
         p = _pointer("objects", name)
@@ -978,8 +1040,12 @@ class _Loader:
                 self.fail("E519", _pointer("messages", i, "from"), f"'{sender}' is not a robot of this world")
 
     def check_events(self, world, events):
+        charged = [e for e in events if e.fact == FACT_CHARGE]
+        for i, event in enumerate(charged):  # world file 1.9: the target is a declared robot
+            if world.kind_of(event.target) != "robot":
+                self.fail("E505", _pointer("charge_events", i, "robot"), f"'{event.target}' is not a declared robot")
         for i, event in enumerate(events):
-            if event.fact == FACT_MESSAGE:  # checked by check_channels
+            if event.fact in (FACT_MESSAGE, FACT_CHARGE):  # a message is checked by check_channels
                 continue
             p = _pointer("events", i, "target")
             if event.fact == "property":  # the target is a declared object (E515 if it is not declared at all)

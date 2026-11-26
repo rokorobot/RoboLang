@@ -1,0 +1,60 @@
+(* RoboLang v2.4 grammar, implemented in src/robolang/parser.py.
+   RoboLang 2.3 plus the robot's own charge (decision 0048): one kind, "charge", and one live form, "robot_charge". Differences
+   from grammar-v2.3.ebnf are marked [2.4]. No new statement and no new reserved word.
+   Everything not shown here is as in grammar-v2.3.ebnf (and the grammars below it): a task and a mission are unchanged.
+   Normative text, diagnostics and static rules: spec/robolang-v2.4.md *)
+
+version_decl  = "robolang" , NUMBER , ";" ;                (* [2.4] NUMBER written exactly 2.4 *)
+
+statement     = ... | measure_charge ;                      (* [2.4] one more form of measure; it ends with ";" *)
+measure_charge = "measure" , NAME , "charge" , "as" , NAME , [ else_block ] , ";" ;
+                                                            (* [2.4] NO "of ... using ...": the charge comes from the robot *)
+
+atom          = ... | live_charge_cmp ;                     (* [2.4] a comparison *)
+live_charge_cmp = "robot_charge" , NAME , OP , operand ;    (* [2.4] allowed in a wait until, in a mission's until, and in a choose's where *)
+OP            = "<" | "<=" | ">" | ">=" ;                   (* [2.4] a charge has no == and no != (E320) *)
+operand       = NUMBER , "%" | NAME ;                       (* [2.4] a literal in % (the unit is required), or a binding of kind charge *)
+
+(* [2.4] "charge" and "robot_charge" are recognised by their position and are NOT reserved: a program of any version may still
+   use them as names. In a file below 2.4 "measure r charge as c;" is E217 and "robot_charge r" is E204.
+   [2.4] The kind: measure r charge as c; binds the charge of the robot r in % (0 to 100). r is any robot of the task, so another
+   robot's charge may be read too. It compares with <, <=, >, >= against a literal in % ("25 %") or another charge binding, and
+   there is NO ==. A charge is not compared with another kind (E319) and a number needs its unit % (E206). Example:
+       measure r charge as c;
+       if c < 25 % { ... } else { ... }
+   [2.4] An unknown charge (the robot has none in the world) or an uncertainty interval that holds the threshold makes the
+   comparison unknown, and an unknown if takes no branch: it fails closed. A charge is sent as a value with its unit:
+       communicate r to "lead" with c;      (* sends 64 % *)
+   [2.4] The live form: robot_charge r reads the charge each time the wait until is evaluated. It is written ONLY in a wait until
+   and in a mission's until (E322 elsewhere: in an if, measure the charge and compare the binding). Example:
+       wait until robot_charge r >= 80 % timeout 40 min else { fail "the battery is not at 80 percent in time"; }
+   A mission's until may be "robot_charge r < 30 %": it is read after each run line. It is NOT a bound by itself: the mission still
+   needs a count, a duration or a time of day (E325).
+   [2.4] A choose may keep the robot with enough charge, and ONLY this reading is allowed in a where (E330 otherwise):
+       choose robot t from (a, b) where robot_charge t >= 50 % else { fail "no robot has 50 percent"; }
+   A candidate whose charge is unknown is excluded. The charge of a candidate is a world fact reported by the fleet manager.
+   [2.4] The charge changes ONLY by the scheduled events of the world: there is no drain and no charging model. "do r charge
+   charger" is a request to the robot's controller and changes no reading. A request to charge until a threshold is a charge
+   action followed by a wait until robot_charge r >= T with the timeout the request states: wait for the event. Only wait for
+   advances time in a world with no positions.
+   [2.4] The robot's own low-battery protection ALWAYS takes precedence. RoboLang asks; it never overrides the controller, and a
+   charge check in a task is never the protection.
+   [2.4] A world's declared channels limit what the robot RECEIVES (message_received), never what communicate may send: communicate
+   may send on any channel name the request gives.
+   [2.4] What 2.4 cannot say (decision 0048 S10; erratum E5 of docs/evidence/bench-errata-1-8.md states why this belongs in the
+   grammar file). Decline each as inexpressible:
+   - self-tests and their results, faults, requests for service: "run your self-test and tell the lead the result", "tell the lead
+     which faults you have". Health beyond robot_ready and sensor_ok is not a charge (G-HEALTH);
+   - time until empty and energy for a route: "how many minutes can you still run", "if you will not make it back to the dock".
+     A charge cannot be predicted: there is no drain model, and the request gives no threshold (G-PREDICT);
+   - arithmetic on a charge (G-CALC);
+   - a trigger on the charge: "the moment your battery drops below 20 percent, even in the middle of a round". A mission starts a
+     run only when the last one is done, and a check at the start of each run is a different request (G-TRIGGER).
+   [2.4] Do not replace a charge check: a request "if your battery is low", "at least 60 percent charge" or "until your battery is
+   at least 80 percent" is never robot_ready, never the check dropped, never a wait for of a guessed time, and never another
+   robot's charge. Write the charge with the robot, operator and threshold the request states, or decline. Do not invent a
+   threshold, an operator, a bound or a stop rule the request does not state.
+   [2.4] A request that needs a charge the world does not give (the robot has no charge in the world, or no scheduled event brings it
+   to the threshold before the timeout) and that names no fallback is infeasible, not a program. *)
+
+(* Reserved words in a 2.4 file: those of grammar-v2.3.ebnf. "charge" and "robot_charge" are not reserved. *)

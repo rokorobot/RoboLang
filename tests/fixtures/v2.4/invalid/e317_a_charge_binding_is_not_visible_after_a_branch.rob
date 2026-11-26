@@ -1,0 +1,18 @@
+// RoboLang v2.4 fixture: invalid
+// expect: error E317 (static) line 16
+// why: A charge binding made in a branch is not visible after it.
+
+robolang 2.4;
+
+task t(robot r, location dest, location dock) {
+    goal { robot_at r dest; }
+    plan {
+        if robot_ready r {
+            measure r charge as c;
+            move r to dock;
+        } else {
+            move r to dest;
+        }
+        if c < 25 % { move r to dock; } else { move r to dest; }
+    }
+}

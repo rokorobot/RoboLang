@@ -604,6 +604,8 @@ Section 3.9 (`E501`–`E519`). They stop processing with exit status 3; no run i
 | `S009` | authorization | RoboLang 1.8: a goal `in_state` that no declared action of the task's robots produces and the world does not hold (section 16.3) |
 | `S010` | authorization | RoboLang 1.9: a `wait until clock_time >= T` (or `> T`) whose T is before the clock's start: the time has already passed (section 17.3) |
 | `S011` | authorization | RoboLang 2.1: a `message_received` names a channel that the world does not declare, in a world that declares channels (section 19.3) |
+| `S012` | authorization | RoboLang 2.4: a `measure r charge`, or a `wait until robot_charge r ...`, of a robot that has no charge in the world and is given none by an event, with no fallback (section 22.4) |
+| `S013` | authorization | RoboLang 2.4: a `wait until robot_charge r OP T` that no charge the world gives the robot by the end of the wait can meet, with no fallback (section 22.4) |
 | `S101` | precondition | A `pre` condition is false |
 | `S102` | precondition | A `pre` condition is unknown |
 | `S201` | step | The robot is not ready |
@@ -623,6 +625,7 @@ Section 3.9 (`E501`–`E519`). They stop processing with exit status 3; no run i
 | `S236` | step | RoboLang 1.6 `measure`: the object has no value for the kind |
 | `S237` | step | RoboLang 1.9: a `time` reading (`measure r time`, or `clock_time` in a `wait until`) and the world file has no `clock` (section 17.2) |
 | `S238` | step | RoboLang 1.9: a `time` reading when the clock has reached the end of the day the run started on (section 17.2) |
+| `S239` | step | RoboLang 2.4: a charge reading of a robot that has no charge in the world file: an unknown charge, which fails closed (section 22.2) |
 | `S271` | step | RoboLang 1.8 `do`: the robot is not at the target location, or at the location of the target object (section 16.4) |
 | `S241` | step | `wait until`: the timeout expired before the condition was true |
 | `S251` | step | A scripted fault |
@@ -1582,3 +1585,73 @@ level of the plan with only other `choose` statements before it, and the choices
 is refused with **`X609`**. The task they send has each chosen name as a parameter bound to the entity chosen and no `choose`; the
 delegate record has a `choices` array (as 21.4) after `robot`. A library task with a `choose` is `choose_unsupported`. The ROS 2
 backend refuses a `choose` with `S508` before any motion.
+
+## 22. RoboLang 2.4: the robot's own charge
+
+Decision record [0048](decisions/0048-the-robots-own-state.md) (S1 to S11 and the clarifications of 2026-11-25); language in
+[robolang-v2.4.md](robolang-v2.4.md). A task of language 1.1 to 2.3 runs exactly as before, whatever the world file's version.
+
+### 22.1 World file 1.9
+
+`"world_schema_version": "1.9"` is 1.8 plus two things:
+
+- a robot may have a **`charge`**: `{ "value": "64", "unit": "%", "uncertainty": "1" }`. `value` and `uncertainty` are decimal
+  strings (no float), `value` is from 0 to 100 and `unit` is `%`. `uncertainty` is optional and **absent means exact** (0). A
+  robot without a `charge` has an **unknown charge** (open point 1);
+- a top-level list **`charge_events`**: `{ "at": { "value": "20", "unit": "min" }, "robot": "spot2", "charge": { ... } }`. At the
+  time `at` (after the start: zero is `E504`) the charge of `robot` becomes `charge`. A robot that is not declared is `E505`. The
+  events are events like those of `events` and `messages`: sorted by time, equal times keep the file's order (S4, point 1).
+
+Files 1.0 to 1.8 are accepted and unchanged; in them `charge` and `charge_events` are `E503`. A charge changes **only** by a
+scheduled event: there is no drain and no charging model. `do r charge charger` is a request to the robot's controller and changes
+no reading (point 7). A task that needs "charged by now" waits for the event.
+
+### 22.2 A reading
+
+`measure r charge as c;` (robolang-v2.4.md section 2) reads the charge of any robot parameter of the task now: its `value` in `%`
+with the world's `uncertainty` (0 when the world gives none), recorded with `sensor` `robot` and no `object`. A robot with no
+charge fails the step with **`S239`** (fails closed); a failure handler takes over as for any step. A comparison is the three-valued
+comparison of 1.6 V7: true if every value of the two intervals satisfies it, false if none does, **unknown otherwise**, so a reading
+whose uncertainty holds the threshold fails closed (`S261` in an `if`). The intervals are closed, as for an object's reading: `26 +- 1`
+is not below `25` (false), `24 +- 1` may be `25` (unknown) (point 9). An unknown live reading makes the comparison unknown.
+
+Only `wait for` advances time in a world with no positions: a `move`, a `do` and a `grasp` take none (point 2). An event is applied
+when the clock reaches its `at`; a `wait until` ends at the exact instant of the first event that makes its condition true, as it
+does for any event, and at its timeout (`S241`) otherwise.
+
+### 22.3 Live reading and missions
+
+`robot_charge r` in a `wait until` is read at every evaluation, with the clock's and the events' instants as the places where it can
+change. In a mission's `until` it is read after **each `run` line** (a mission with two lines is checked twice per pass), at the
+mission's time; an unknown value (no charge, an interval that holds the threshold) ends the mission `failed` with `S402`, and the runs
+before it stay verified (point 6, S6).
+
+### 22.4 `S012` and `S013`: before the run (point 3)
+
+Two certain failures are found before the run reaches `AUTHORIZED`, and in `validate --world`, so that `delegate` and a reviewer see
+them first. They are checked for a step in the plan's own sequence (not in an `if` branch or a handler), as `S010` is, and for the
+first run of a mission only, and only when the step has **no fallback**: no failure handler, or one that always ends in `fail`.
+
+- **`S012`**: a `measure r charge` or a `wait until robot_charge r ...` of a robot that has no charge in the world and no event gives
+  it one: every reading is unknown.
+- **`S013`**: a `wait until robot_charge r OP T` (alone, or as a member of an `and`) that none of the charges the world gives the
+  robot, the one it starts with and the events up to the latest end of the wait, can meet (`>=` against a charge of `80 %` when the
+  highest is 70 %). The latest end of the wait is the sum of the earlier `wait for` durations and `wait until` timeouts, and its own.
+
+A wait that an event meets too late is not `S013`: it times out at run time (`S241`).
+
+### 22.5 Run record 1.12
+
+A 2.4 source writes `run_record_schema_version` `1.12` and embeds Task IR 1.12; a mission record is `1.4`. A reading of the charge is
+a `reading` as any (`subject` the robot, `kind` `charge`, `value`, `unit` `%`, `uncertainty`, `sensor` `robot`, `t_ms`); a charge event
+applied is an entry of `events_applied` with `fact` `charge`, `target` the robot and `value` `{ "value", "unit", "uncertainty" }`.
+A charge sent in a message is the reading: it is shown as `64 %` (S5, point 12). `inputs.world_schema_version` is `1.9`.
+Earlier sources write their records unchanged, byte for byte.
+
+### 22.6 `choose`, `delegate`, the backends (S7, S8)
+
+`choose ... where robot_charge t >= 50 %` is allowed: a candidate whose charge is unknown, or whose interval holds the threshold, is
+excluded (`where_unknown`); the charge is the fleet manager's world fact, not a reading of an object (point 5). `export-goal` is
+unaffected: a goal holds no binding. `delegate` refuses a task that reads the charge, as it refuses any `measure`
+(`measure_unsupported`), and the ROS 2 / Gazebo and G1 backends refuse it with `S509` before any motion. The robot's own low-battery
+protection always takes precedence: RoboLang asks, it never overrides the controller (S9).

@@ -1,0 +1,12 @@
+// RoboLang v2.4 fixture: invalid
+// expect: error E322 (static) line 10
+// why: The live charge is for a wait until and a mission's until only (S3).
+
+robolang 2.4;
+
+task t(robot r, location dest, location dock) {
+    goal { robot_at r dest; }
+    plan {
+        if robot_charge r < 20 % { move r to dock; } else { move r to dest; }
+    }
+}

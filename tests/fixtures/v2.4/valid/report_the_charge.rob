@@ -1,0 +1,14 @@
+// RoboLang v2.4 fixture: valid
+// expect: ok
+// why: A charge binding is sent as a value.
+
+robolang 2.4;
+
+task t(robot r, location dest, location dock) {
+    goal { robot_at r dest; }
+    plan {
+        move r to dest;
+        measure r charge as c;
+        communicate r to "lead" with c;
+    }
+}

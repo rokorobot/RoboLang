@@ -1,0 +1,20 @@
+// RoboLang v2.4 fixture: valid
+// expect: ok
+// why: A mission's until reads the charge live; the count is the bound.
+
+robolang 2.4;
+
+task round(robot r, location a, location b) {
+    goal { robot_at r a; }
+    plan {
+        move r to b;
+        wait for 10 min;
+        move r to a;
+    }
+}
+
+mission patrol(robot r, location a, location b) {
+    repeat at most 6 runs {
+        run round(r, a, b);
+    } until robot_charge r < 30 %;
+}

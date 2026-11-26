@@ -1,0 +1,13 @@
+// RoboLang v2.4 fixture: invalid
+// expect: error E330 (static) line 10
+// why: A where may state the chosen robot's charge only.
+
+robolang 2.4;
+
+task relief(robot a, robot b, location dest) {
+    goal { robot_at t dest; }
+    plan {
+        choose robot t from (a, b) where robot_charge a >= 50 % else { fail "none"; }
+        move t to dest;
+    }
+}

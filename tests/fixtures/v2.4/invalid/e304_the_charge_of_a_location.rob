@@ -1,0 +1,13 @@
+// RoboLang v2.4 fixture: invalid
+// expect: error E304 (static) line 10
+// why: A charge is read of a robot, not of a location.
+
+robolang 2.4;
+
+task t(robot r, location dest, location dock) {
+    goal { robot_at r dest; }
+    plan {
+        measure dest charge as c;
+        move r to dest;
+    }
+}

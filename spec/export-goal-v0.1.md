@@ -128,3 +128,8 @@ inside a `not`) keeps `X601`. More than 16 distinct alternatives is `X604`.
 With `--core 0.1` (the default) a goal that needs two or more alternatives is not exported: exit 6, `X603` or `X601`, and
 the message says to use `--core 0.2`. Alternatives are never dropped (decision 0028 C8). A goal with one alternative
 exports either way.
+
+RoboLang 2.4 (decision 0048 S8): **`export-goal` is unaffected by the robot's charge.** A goal never holds a binding (0036), so a task that reads the
+charge (`measure r charge`, `robot_charge r`) exports its goal as any other task does; a `choose` whose `where` states the chosen robot's
+charge is made by the planner from the world file's charge, as any `choose` is (X609 otherwise). `delegate` refuses a library task that reads
+the charge (`measure_unsupported`).

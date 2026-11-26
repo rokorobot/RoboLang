@@ -17,7 +17,7 @@ from dataclasses import dataclass
 from decimal import Context, Decimal, localcontext
 from typing import Callable, Iterable, NamedTuple
 
-from .tokens import KIND_UNITS, KIND_UNITS_V2_2
+from .tokens import CHARGE_KIND, KIND_UNITS, KIND_UNITS_V2_2, KIND_UNITS_V2_4
 
 KINDS = tuple(KIND_UNITS)  # the kinds of 1.6
 KINDS_V2_2 = tuple(KIND_UNITS_V2_2)  # RoboLang 2.2 (decision 0044 K1): also fill, confidence, pressure and count
@@ -51,11 +51,12 @@ assert {u for units in KIND_UNITS_V2_2.values() for u in units} | {"ms", "s", "m
 CLOCK_UNITS = {"time": (), "elapsed": ("ms", "s", "min")}  # the clock kinds (RoboLang 1.9) and their units
 TIME = "time"
 ELAPSED = "elapsed"
+CHARGE = CHARGE_KIND  # RoboLang 2.4 (decision 0048 S1): the robot's own charge, in %; compared like fill
 
 
 def kind_units(kind: str) -> tuple[str, ...]:
     """The units a kind compares with: a measured kind's, or a clock kind's. A count has none."""
-    return KIND_UNITS_V2_2[kind] if kind in KIND_UNITS_V2_2 else CLOCK_UNITS[kind]
+    return KIND_UNITS_V2_4[kind] if kind in KIND_UNITS_V2_4 else CLOCK_UNITS[kind]
 _EXACT = Context(prec=200)  # world and source numbers have at most a few dozen digits: arithmetic here is exact
 
 
@@ -65,8 +66,8 @@ def unit_kind(unit: str) -> str | None:
 
 
 def unit_kinds(unit: str) -> tuple[str, ...]:
-    """Every kind a unit belongs to: `%` is a unit of both fill and confidence (decision 0044 K2, D3)."""
-    kinds = tuple(kind for kind, units in KIND_UNITS_V2_2.items() if unit in units)
+    """Every kind a unit belongs to: `%` is a unit of fill, confidence (decision 0044 K2, D3) and charge (0048 S1)."""
+    kinds = tuple(kind for kind, units in KIND_UNITS_V2_4.items() if unit in units)
     other = unit_kind(unit)
     return kinds or ((other,) if other else ())
 
@@ -134,7 +135,8 @@ def compare_intervals(op: str, a: Interval, b: Interval) -> bool | None:
 class Operand:
     """One side of a comparison, as the rules see it. `at` is whatever locates it in a diagnostic."""
 
-    form: str  # "binding", "quantity", "text", "live", and (RoboLang 1.9) "time" or "clock" (`clock_time`)
+    # "binding", "quantity", "text", "live", and (RoboLang 1.9) "time" or "clock" (`clock_time`); (2.4) "charge"
+    form: str
     at: object
     name: str | None = None  # binding: its name
     unit: str | None = None  # quantity: its unit
@@ -279,6 +281,12 @@ class Scopes:
                                      f"of a 'wait until'; elsewhere 'measure r {left.kind} as t;' it and compare the "
                                      "binding", left.at)
             kind = left.kind
+        elif left.form == "charge":  # RoboLang 2.4 (decision 0048 S3): `robot_charge r`
+            if not live_ok:
+                self._report("live", "a live charge reading ('robot_charge r') is allowed only in the condition of a "
+                                     "'wait until' or a mission's 'until'; elsewhere 'measure r charge as c;' it and "
+                                     "compare the binding", left.at)
+            kind = CHARGE
         elif left.form == "live":
             if not live_ok:
                 self._report("live", f"a live reading ('{left.kind} of ... using ...') is allowed only in the "

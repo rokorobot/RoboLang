@@ -13,12 +13,13 @@ from decimal import Decimal
 from .. import ir
 from ..measured import COUNT, LABEL, Interval, compare_intervals, convert, reading_interval, to_base
 from .actions import _step_problem as _action_problem, action_problems
+from .charge import NO_CHARGE, charge_problems
 from .choice import NO_CANDIDATE, Choice, choice_problems, choose
 from .clock import DAY_S, clock_problems
 from .regions import CHECKED, limit_problems
 from .messages import ReceivedMessage, message_events, message_problems, received, same_text
 from .values import Truth, duration_ms_of
-from .world import Property, World
+from .world import Charge, Property, World
 
 
 @dataclass(frozen=True)
@@ -130,7 +131,7 @@ class AppliedEvent:
     t_ms: Decimal
     fact: str
     target: str
-    value: bool | Property
+    value: bool | Property | Charge
 
 
 @dataclass(frozen=True)
@@ -222,6 +223,7 @@ class _State:
         self.props = {k: {p.kind: p for p in v.properties} for k, v in world.objects.items()}  # world file 1.2
         # world file 1.7 (decision 0044 D1): the fill and count of a location, read as an object's are
         self.props.update({k: {p.kind: p for p in world.location_properties.get(k, ())} for k in world.locations})
+        self.charge = {k: v.charge for k, v in world.robots.items()}  # world file 1.9: None is an unknown charge
         self.state = {k: v.state for k, v in world.objects.items()}  # world file 1.4
         self.location_state = dict(world.location_states)
         self.request: ActionRequest | None = None  # what the step just run requested (RoboLang 1.8)
@@ -248,6 +250,8 @@ class _State:
                 self.clear[event.target] = event.value
             elif event.fact == "property":
                 self.props[event.target][event.value.kind] = event.value
+            elif event.fact == "charge":  # world file 1.9 (decision 0048 S4): the only thing that changes a charge
+                self.charge[event.target] = event.value
             else:
                 self.available[event.target] = event.value
             self.applied.append(AppliedEvent(event.at_ms, event.fact, event.target, event.value))
@@ -346,6 +350,18 @@ def _clock_reading(state: _State, kind: str, robot: str | None) -> Reading:
     return Reading(robot or "clock", kind, seconds, "s", Decimal(0), "clock", state.clock)
 
 
+def _charge_reading(state: _State, robot: str) -> Reading:
+    """
+    One reading of the charge of `robot` now (RoboLang 2.4, decision 0048 S1, S4): its value in %, with the uncertainty
+    of the world's fact (exact when the world gives none). A robot with no charge in the world has an unknown one: the
+    step fails (S239), which fails closed.
+    """
+    charge = state.charge[robot]
+    if charge is None:
+        raise _StepFailed(NO_CHARGE)
+    return Reading(robot, "charge", charge.value, "%", charge.uncertainty, "robot", state.clock)
+
+
 def _side(task: ir.Task, state: _State, bound: dict[str, str], operand: ir.Operand) -> Interval | str | None:
     """A comparison operand as an interval (a quantity) or text (a label); None when a live reading cannot be taken."""
     if isinstance(operand, ir.QuantityLit):
@@ -359,6 +375,12 @@ def _side(task: ir.Task, state: _State, bound: dict[str, str], operand: ir.Opera
         return operand.value
     if isinstance(operand, ir.LiveClock):  # not taken with no clock or after the day's end: the step fails (T7, T4)
         reading = _clock_reading(state, operand.reading, None)
+        return reading_interval(reading.value, reading.uncertainty, reading.unit)
+    if isinstance(operand, ir.LiveCharge):  # RoboLang 2.4 (decision 0048 S3): an unknown charge is unknown
+        try:
+            reading = _charge_reading(state, bound[operand.robot])
+        except _StepFailed:
+            return None
         return reading_interval(reading.value, reading.uncertainty, reading.unit)
     if isinstance(operand, ir.LiveReading):
         try:
@@ -471,7 +493,8 @@ def _authorize(task: ir.Task, world: World, bindings: tuple[tuple[str, str], ...
             failure = Failure(code, "authorization", None, None, index, culprit)
     if failure is None:  # RoboLang 1.8: the declared actions, after the limits (decision 0040 A6, C7)
         problems = action_problems(task, world, bound) or clock_problems(task, world, bound, elapsed_ms) \
-            or message_problems(task, world) or choice_problems(task, world, bound)
+            or message_problems(task, world) or choice_problems(task, world, bound) \
+            or charge_problems(task, world, bound, elapsed_ms)
         if problems:
             failure = Failure(problems[0].code, "authorization", problems[0].step, problems[0].precondition, None,
                               problems[0].robot)
@@ -560,6 +583,10 @@ def _execute(task: ir.Task, state: _State, bound: dict[str, str], step: ir.Step)
         reading = _clock_reading(state, step.reading, bound[step.robot])
         state.values[step.binding] = reading
         return None, None, None, reading
+    elif isinstance(step, ir.ReadCharge):  # RoboLang 2.4 (decision 0048 S1, point 4): any robot of the task
+        reading = _charge_reading(state, bound[step.robot])
+        state.values[step.binding] = reading
+        return None, None, None, reading
     elif isinstance(step, ir.WaitFor):
         state.advance(state.clock + duration_ms_of(step.duration))
     elif isinstance(step, ir.WaitUntil):
@@ -624,9 +651,9 @@ def _names(node, typed_sensors: bool) -> list[str]:
             else [source.location] if isinstance(source, ir.ObjectsAt) else []
         found = [*named, *([node.order.reference] if node.order else [])]
         return found + [n for n in _names(node.where, typed_sensors) if n != node.name] if node.where else found
-    if isinstance(node, ir.Compare):  # only a live reading names parameters: its object and sensor
-        return [name for side in (node.left, node.right) if isinstance(side, ir.LiveReading)
-                for name in (side.obj, side.sensor)]
+    if isinstance(node, ir.Compare):  # only a live reading names parameters: its object and sensor, or its robot
+        return [name for side in (node.left, node.right) if isinstance(side, (ir.LiveReading, ir.LiveCharge))
+                for name in ((side.obj, side.sensor) if isinstance(side, ir.LiveReading) else (side.robot,))]
     if isinstance(node, (ir.WaitUntil, ir.Not)):
         return _names(node.condition, typed_sensors)
     fields = ("robot", "region", "obj", "target", "location") + (("sensor",) if typed_sensors else ())

@@ -1,0 +1,101 @@
+{
+  "ir_schema": "robolang.mission-ir",
+  "ir_schema_version": "1.4",
+  "task_ir_schema_version": "1.12",
+  "language_version": "2.4",
+  "tasks": [
+    {
+      "name": "round",
+      "parameters": [
+        {
+          "name": "r",
+          "type": "robot"
+        },
+        {
+          "name": "a",
+          "type": "location"
+        },
+        {
+          "name": "b",
+          "type": "location"
+        }
+      ],
+      "safety": [],
+      "preconditions": [],
+      "goal": [
+        {
+          "kind": "robot_at",
+          "robot": "r",
+          "location": "a"
+        }
+      ],
+      "steps": [
+        {
+          "kind": "move",
+          "robot": "r",
+          "target": "b"
+        },
+        {
+          "kind": "wait_for",
+          "duration": {
+            "value": "10",
+            "unit": "min"
+          }
+        },
+        {
+          "kind": "move",
+          "robot": "r",
+          "target": "a"
+        }
+      ]
+    }
+  ],
+  "missions": [
+    {
+      "name": "patrol",
+      "parameters": [
+        {
+          "name": "r",
+          "type": "robot"
+        },
+        {
+          "name": "a",
+          "type": "location"
+        },
+        {
+          "name": "b",
+          "type": "location"
+        }
+      ],
+      "repeat": {
+        "max_runs": 6,
+        "until": {
+          "kind": "compare",
+          "left": {
+            "kind": "charge",
+            "robot": "r"
+          },
+          "op": "<",
+          "right": {
+            "kind": "quantity",
+            "value": "30",
+            "unit": "%"
+          }
+        }
+      },
+      "runs": [
+        {
+          "task": "round",
+          "arguments": [
+            "r",
+            "a",
+            "b"
+          ]
+        }
+      ],
+      "on_failure": {
+        "policy": "stop"
+      }
+    }
+  ]
+}

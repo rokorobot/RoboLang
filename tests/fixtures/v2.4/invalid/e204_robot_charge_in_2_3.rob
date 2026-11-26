@@ -1,0 +1,13 @@
+// RoboLang v2.4 fixture: invalid
+// expect: error E204 (syntax) line 10
+// why: `robot_charge` is no condition below 2.4.
+
+robolang 2.3;
+
+task t(robot r, location dest, location dock) {
+    goal { robot_at r dest; }
+    plan {
+        wait until robot_charge r >= 80 % timeout 40 min else { fail "no"; }
+        move r to dest;
+    }
+}
