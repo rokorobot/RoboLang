@@ -3,7 +3,8 @@
 Date: 2026-11-26. Code: [`backends/unitree_g1/`](../../backends/unitree_g1/) (`scenes.py`, `phase4.py`), decision
 [0046](../../spec/decisions/0046-humanoid-backend-unitree-g1.md) section 3; contract in
 [`g1-backend-v0.1.md`](../../spec/g1-backend-v0.1.md), "Acceptance scenes and the acceptance run". Simulation only.
-Result file: [`g1-phase4/phase4-run1.json`](g1-phase4/phase4-run1.json).
+Result file: [`g1-phase4/phase4-run1.json`](g1-phase4/phase4-run1.json); every run's record, result, site and scene:
+[`g1-phase4/run1-records.tar.gz`](g1-phase4/run1-records.tar.gz).
 
 **Result: the bar is not met. 37 of 42 runs ended `SUCCEEDED` (88.1%); the bar is 90%, which is 38.** The other three
 parts of the bar are met: no false success, 54 of 55 atoms agree with the oracle (98.2%, bar 98%), and all five scripted
