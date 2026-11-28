@@ -156,6 +156,9 @@ two looks. After four looks without a better error a servo goes on from a wider 
 look from 4.2 cm and 0.07 rad, which still decides; the approach point, which no confirmation follows, from 12 cm and
 0.15 rad, which the last walk corrects: under a creep of 0.025 rad/s the heading was inside 0.07 rad for a moment in each
 5 s look, and one move spent its whole 150 s at the approach point).
+**If the sidesteps do not find the station's marker** and the robot is more than 15 cm from the approach point, it
+walks there (to within 8 cm), faces the station and looks again, once, before it scans by turning (F2: a robot with
+a box in each hand often takes no sidestep, and the scan turned it round).
 **A move to a station the robot already stands beside** (it has arrived at a station before, the belief is within 25 cm
 and 0.2 rad of this station's pose, and this station's marker is seen now) is the servo alone, from where it stands,
 and the record says `direct: true`: the same station named twice (`l_vial_hold`'s bench and spinner), or a dock one
@@ -300,6 +303,11 @@ with its marker on top. Every location is a region on a table in front of a stat
   A box outside that band is refused with S502 before the arm moves.
 - **A wide table is no wider on the right than the verified one.** Five centimetres more and the arm, swung out beside
   the body, came within its 3 cm margin of the table's corner (S502).
+- **A wide table's plate stands as far to the side as its table does, and higher.** Its plate is 0.65 m to the left
+  of the station and 0.40 m up (a narrow table's: 0.45 m and 0.19 m), with its regions lowered in the plate's frame
+  by as much, so they stay on the table. At 0.45 m and 0.19 m the table hid the plate from the approach point (F2).
+- **Every plate is checked from where `move` looks for it**: the approach point, or the station before it when the
+  move is a direct one, all four corners 2 cm clear of every table (`scenes.check_visibility`).
 - **The robot stands 1.30 m from the plate to grasp and 1.35 m to place**, as verified in phases 2 and 3.
 
 The five scripted failure cases run on `e_pick_place`: the box absent (S506), the box on the other table (S506), the
