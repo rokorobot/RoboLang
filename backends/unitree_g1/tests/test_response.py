@@ -365,3 +365,61 @@ def test_an_arrival_or_arm_work_is_not_confirmed_from_a_reading_the_localization
         ops._reposition()
     assert err.value.code == "S517" and "no pose fix" in str(err.value)
     assert Reading.confidence >= MARKER_MIN_CONF
+
+
+def test_when_the_sidesteps_do_not_find_the_plate_the_robot_walks_to_the_approach_point_before_it_scans():
+    """F2: a robot with a box in each hand stopped 0.4 m short and to the side of the approach point, took no sidestep,
+    scanned, turned round and ended S517. Now, after the sidesteps, it walks to the approach point and looks again;
+    once, and only from further than APPROACH_AGAIN_M."""
+    from robolang_g1 import ops as ops_mod
+
+    class Reading:
+        confidence, range_m = 0.95, 1.9
+
+    class Scanning(Exception):
+        pass
+
+    def scan(a):
+        raise Scanning
+
+    def run(start, seen_at_approach):
+        ops = _ops()
+        shelf = ops.stations["shelf"]
+        gx, gy, gyaw = shelf["pose"]
+        ax, ay = gx - ops_mod.APPROACH_M, gy
+        calls = []
+        ops.pose = list(start)
+        ops.now_ms = lambda: 0
+        ops.settle = lambda: True
+        ops.command = lambda *a, **k: calls.append("sidestep")
+        ops.turn_by = lambda a: calls.append("scan") or scan(a)
+        ops.turn_to = lambda yaw, tolerance=0.06: None
+
+        def walk_to(x, y, yaw, stop_short=0.25, deadline_ms=None):
+            calls.append(("walk", round(x, 3), round(y, 3), stop_short))
+            ops.pose = [x, y, yaw]
+
+        ops.walk_to = walk_to
+
+        def look(frames=4, ids=None):
+            ops.last_look = (0, False)
+            near = abs(ops.pose[0] - ax) < 1e-9 and abs(ops.pose[1] - ay) < 1e-9
+            return {shelf["marker"]["id"]: Reading()} if (near and seen_at_approach) else {}
+
+        ops.look = look
+        try:
+            found = ops._find_marker(shelf, 10**9, 10**9, (ax, ay))
+        except Scanning:
+            found = "scanning"
+        return found, calls
+
+    gx, gy, gyaw = _ops().stations["shelf"]["pose"]
+    off = (gx - ops_mod.APPROACH_M - 0.1, gy - 0.34, gyaw)  # 0.35 m from the approach point, to the side
+    found, calls = run(off, True)
+    assert isinstance(found, Reading)
+    assert calls[:3] == ["sidestep"] * 3 and calls[3][0] == "walk" and calls[3][3] == ops_mod.APPROACH_AGAIN_STOP_M
+    found, calls = run(off, False)  # not seen from there either: one walk, then the scan
+    assert found == "scanning" and [c for c in calls if isinstance(c, tuple)] == [calls[3]] and calls[-1] == "scan"
+    near = (gx - ops_mod.APPROACH_M - 0.05, gy - 0.05, gyaw)  # already at the approach point: no walk, the scan
+    found, calls = run(near, False)
+    assert found == "scanning" and not [c for c in calls if isinstance(c, tuple)]

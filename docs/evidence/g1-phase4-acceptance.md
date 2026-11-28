@@ -191,10 +191,55 @@ latter otherwise ends S517 "no pose fix". **The fix changes no run that succeede
 of run 2, and this one), and no grasp or place step saw a rejected reading. So the acceptance holds for the fixed code
 without a fourth run.
 
-**F2. A marker fix from far off the plate's axis (`w_split_boxes_3`).** Walking between the tables with a box in each
-hand, the robot fixed its pose from the first station's plate seen 2.7 m away and about 39° off its axis; the fix put
-it 1 m from where it was, and it then looked for the next plate where it was not (S517 after a 90 s scan). Proposed: a
-station marker fixes the pose only within an angle of its axis (to be measured), as it already does only within 2.9 m.
+**F2. The next station's plate not found (`w_split_boxes_3`; also `a_sort_three_1` of run 1, which did not count).**
+The first reading of this record was wrong: it was not a bad marker fix. **Fixed after the run** (2026-11-28, its own
+pull request), from measurements:
+
+- *Marker fixes are accurate.* Measured against the oracle: 39 fixes from standing viewpoints up to 55° off a plate's
+  axis and 2.9 m away, and 43 fixes made while walking a box in each hand: every accepted fix within 2.5 cm and 0.016
+  rad; the readings that were wrong (up to 22 cm) were all rejected by the IMU's vertical. An angle limit would have
+  removed good fixes and no bad one.
+- *What happened.* Both failures stopped at the same place, holding a box, about 0.4 m short of the approach point and
+  0.34 m to the side of the station's axis (`move` walks to the approach point only when more than 0.4 m from it). From
+  there the **wide** table (it reaches 13 cm further left than a narrow one) hid the plate. Before the scan, the robot
+  sidesteps toward the plate, and a robot with a box in each hand often takes no sidestep. The scan then turned it
+  round: S517. Of the 324 moves in the archived records, 142 needed sidesteps (118 found the plate with them, without
+  a scan) and 24 scanned; of those, 5 failed: these two, and the three covered-camera cases, which must fail.
+- *The scene also hid the plate from the approach point itself*, which the visibility rule did not check.
+
+Reproduced: the robot started at that place with a box welded in each hand, sidesteps switched off in the executor (a
+test-only wrapper), task `move r to tb`:
+
+| Scene | After the sidesteps, walk to the approach point | Result |
+|---|---|---|
+| run 3's | no | 3 of 3 S517 |
+| run 3's | yes | 3 of 3 S517 (the approach point does not see the plate either) |
+| fixed | no | 3 of 3 S517 |
+| fixed | yes | **3 of 3 `SUCCEEDED`** |
+
+(With sidesteps on, the same start failed 1 of 3 on run 3's code and scene.) The fix is both:
+
+1. **Scenes:** a wide table's plate stands 0.65 m to the side (not 0.45) and 0.40 m up (not 0.19), and its regions,
+   which are in the plate's frame, are lowered by as much: in the map every station pose and region is unchanged
+   (checked against run 3's sites, 0.0 m difference). The visibility rule now also checks, for each move of the plan,
+   the plate of its station from where `move` looks for it (the approach point, or the station before it for a direct
+   move), corner by corner, 2 cm clear of the tables: run 3's three wide-table scenes fail it, all 14 new ones pass.
+   The 11 scenes with narrow tables are byte for byte unchanged.
+2. **`move`:** after the sidesteps, if the robot is more than 15 cm from the approach point, it walks there (to within
+   8 cm), faces the station and looks again, once, before it scans. This runs only on the path that used to scan, 24
+   of 324 moves.
+
+**Confirmation** (not an acceptance run: the three wide-table tasks only, three counted runs each, on the fixed code;
+[`f2/confirm-wide-tables.json`](g1-phase4/f2/confirm-wide-tables.json)): 7 of 9 `SUCCEEDED`, no false success, 100%
+agreement. Every one of the 40 moves arrived. Sidesteps were needed in 6 of 40 moves (old scenes: 89 of 117), the scan
+in none (old: 17), no move failed (old: 2). The two failed runs are F3's: `a_sort_three` S502 at a grasp, and
+`l_vial_hold` S503 at the place from its shared station (the left arm 0.141 rad from its pre-place target, tolerance
+0.12, a new code there but the same marginal place). The measurement scripts and data are in
+[`g1-phase4/f2/`](g1-phase4/f2/).
+
+**What this means for the acceptance:** the 11 narrow-table scenes and their runs are unchanged; `move`'s change runs
+only where a move used to scan; the three wide-table scenes changed their plates, not their stations or regions, and
+were confirmed above. The acceptance of run 3 is not re-run.
 
 **F3. Three slots and one shared station are still marginal.** `a_sort_three` failed one run in each of the three
 runs, and `l_vial_hold`'s place from its shared station failed once in runs 1 and 3: the arm planner's margins, not the
