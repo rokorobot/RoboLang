@@ -261,12 +261,14 @@ def approach_ops(kin, site_name):
     o.kin = kin
     o.site = S.load_site(Path(__file__).resolve().parents[1] / "robolang_g1" / "sites" / f"{site_name}.json")
     o.stations = {s["name"]: s for s in o.site["stations"]}
+    o.tracker, o.robot = None, None  # no robot: the belief heading is the one set
+    o._xy, o._heading0 = [0.0, 0.0], 0.0
     return o
 
 
-def test_a_shuffle_turn_moves_the_belief_back_as_the_robot_does(kin):
+def test_a_shuffle_moves_the_belief_back_as_the_robot_does_and_leaves_the_heading_to_the_imu(kin):
     o = approach_ops(kin, "pick_place")
     o.pose = [1.0, 2.0, math.pi / 2]  # facing +y
-    o._dead_reckon(0.0, 0.3, 0.2, ops.SHUFFLE_S, shuffle=True)
+    o._dead_reckon(0.0, 0.3, 0.2, ops.SHUFFLE_S, True, 0, 1200)
     assert o.pose[0] == pytest.approx(1.0, abs=1e-9) and o.pose[1] == pytest.approx(2.0 - ops.SHUFFLE_BACK_M)
-    assert o.pose[2] > math.pi / 2  # and it turned
+    assert o.pose[2] == pytest.approx(math.pi / 2)  # the commanded yaw rate does not turn the belief (heading.py does)

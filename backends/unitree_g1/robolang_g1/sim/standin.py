@@ -6,6 +6,8 @@ What it serves, on DDS domain 1 and the loopback interface only (both fixed):
 
 * `rt/lowstate` (unitree_hg `LowState_`) at 250 Hz: joint q, dq and torque for the 29 body motors,
   the pelvis IMU, and `tick` = SIMULATION time in milliseconds (the robot's `tick` is its own millisecond counter).
+  The IMU is not MuJoCo's exact sensor: a gyro bias, noise and a drifting yaw (`imu.py`). The message is serialized
+  once and its changing fields patched in a buffer (`fastdds.py`): the SDK's own bytes, for a twentieth of the CPU.
 * `rt/arm_sdk` (`LowCmd_`) in: the weight is `motor_cmd[29].q`; joints 12-28 (waist and arms) are blended over the
   stance's targets as on the robot: torque = (1-w) x its own PD + w x (kp (q* - q) + kd (dq* - dq) + tau). The last
   command stays in force if the publisher stops (the arms hold where they are).
@@ -36,7 +38,9 @@ integrates a torque explicitly, which is stable only for dt x kd / I < 2, and wi
 arm joints of inertia I down to 0.011 kg m^2 that is 4.5 at dt 0.005 (1.8 at 0.002). At 0.005 the arm torques chatter
 between their limits (64% of steps saturated at rest) and nothing downstream is reproducible; see
 docs/evidence/g1-phase1-harness.md. The loop measures its own lag (`status`): the overall ratio and the worst
-one-second ratio.
+one-second ratio, and for a second below 0.95 whether the loop thread was computing or waiting for a CPU. The camera
+thread runs at nice 19 and the executor at nice 10 (harness.YIELD_NICE), so that the loop, at nice 0, is never queued
+behind them (docs/evidence/g1-phase4-prereqs.md).
 """
 from __future__ import annotations
 
@@ -62,12 +66,20 @@ from .. import INTERFACE
 from .. import SIM_API_VERSION
 from .. import SIM_SERVICE, assets
 from . import scene
+from .fastdds import PatchedSample
+from .imu import Imu
 from .policy import STEP_DT, WholeBodyPolicy
 from .scene import HAND_ACT, HAND_BODY, N_BODY
 from .stance import STANCES, Body, make_stance
 
 CAMERA_HZ = 5.0
 ORACLE_HZ = 50.0
+# The camera thread (rendering, PNG encoding) and the renderer's worker threads it starts are the stand-in's largest
+# consumer of CPU (about 0.7 of a core at 5 Hz), and none of it is time-critical. They yield to the physics loop: at the
+# lowest priority, so that a wake-up of the loop (500 a second) is never queued behind a render. Measured with the
+# executor starting up on two CPUs: the loop waited 0.4-0.6 s in the run queue in one second at nice 5 (docs/evidence/
+# g1-phase4-prereqs.md).
+CAMERA_NICE = 19
 POLICY_EVERY = round(STEP_DT / scene.TIMESTEP)  # physics steps per policy step (50 Hz)
 LOWSTATE_EVERY = round(1 / (250 * scene.TIMESTEP))  # lowstate at 250 Hz
 HAND_EVERY = round(1 / (100 * scene.TIMESTEP))  # hand states at 100 Hz
@@ -109,7 +121,10 @@ class Timing:
     camera_dropped: int = 0
     camera_ms: float = 0.0
     camera_stamps: list = field(default_factory=list)
-    slow_windows: list = field(default_factory=list)  # (sim time, ratio) of seconds below 0.95
+    # (sim time, ratio, loop thread CPU s, loop thread run-queue wait s) of the seconds below 0.95: a second that was
+    # slow because the loop waited for a CPU shows a wait of tenths of a second (Linux; both None elsewhere)
+    slow_windows: list = field(default_factory=list)
+    sched_prev: tuple | None = None  # the loop thread's (CPU s, run-queue wait s) at the last window boundary
     step_ms: collections.deque = field(default_factory=lambda: collections.deque(maxlen=20000))  # compute per step
     gc_count: list = field(default_factory=lambda: [0, 0, 0])  # collections by generation since start-up
     gc_max_ms: list = field(default_factory=lambda: [0.0, 0.0, 0.0])  # longest collection by generation
@@ -117,11 +132,24 @@ class Timing:
     slow_steps: list = field(default_factory=list)  # (sim time, ms, collections during it) of passes > 20 ms
 
 
+def thread_sched() -> tuple[float, float] | None:
+    """This thread's (CPU seconds, seconds waiting in the run queue for a CPU) since it started, from the kernel's
+    per-thread scheduler statistics; None where there are none."""
+    try:
+        with open("/proc/thread-self/schedstat") as f:
+            fields = f.read().split()
+        return int(fields[0]) / 1e9, int(fields[1]) / 1e9
+    except (OSError, ValueError, IndexError):
+        return None
+
+
 class Simulator:
     """MuJoCo, the policy, a stance, the arm blend, the hands, the camera thread and the oracle. No DDS in here."""
 
-    def __init__(self, site, stance: str = "free", run_dir=None, oracle=None, camera: bool = True):
+    def __init__(self, site, stance: str = "free", run_dir=None, oracle=None, camera: bool = True,
+                 imu_seed: int | None = None, imu_bias: float | None = None, imu_ideal: bool = False):
         self.model, self.robot, self.site = scene.build(site)
+        self.imu = Imu(imu_seed, imu_bias, imu_ideal)  # what `rt/lowstate` carries as the IMU (sim/imu.py)
         self.data = mujoco.MjData(self.model)
         m, d, r = self.model, self.data, self.robot
         pol_dir = assets.asset(*assets.POLICY_DIR)
@@ -380,6 +408,7 @@ class Simulator:
             "markers": {name: {"id": mid, "size": size, "pos": np.round(d.geom_xpos[g], 5).tolist()}
                         for name, (g, mid, size) in self._markers.items()},
             "attached": dict(self.attached),
+            "imu": self.imu.truth(),
             "hands": {side: np.round(d.qpos[r.hand_qadr[side]], 4).tolist() for side in ("left", "right")},
             "wrists": {side: np.round(d.xpos[self.model.body(HAND_BODY[side]).id], 4).tolist()
                        for side in ("left", "right")},
@@ -404,7 +433,7 @@ class Simulator:
 
         width, height = self.site["camera"]["width"], self.site["camera"]["height"]
         try:  # rendering yields to physics when the CPU is short; the renderer's worker threads inherit this
-            os.setpriority(os.PRIO_PROCESS, threading.get_native_id(), 5)
+            os.setpriority(os.PRIO_PROCESS, threading.get_native_id(), CAMERA_NICE)
         except OSError:
             pass
         renderer = mujoco.Renderer(self.model, height=height, width=width)  # the GL context belongs to this thread
@@ -461,6 +490,20 @@ class Simulator:
         budget = float(self.model.opt.timestep) * 1000
         return {"budget": budget, "mean": round(sum(ms) / len(ms), 3), "p99": round(ms[int(0.99 * (len(ms) - 1))], 3),
                 "max": round(ms[-1], 1), "over_budget": round(sum(m > budget for m in ms) / len(ms), 4)}
+
+    def _close_window(self, now: float) -> None:
+        """One simulated second has passed, at wall time `now`: its real-time ratio, and for a slow one (below 0.95) how
+        much of the second the loop thread spent computing and how much waiting in the run queue for a CPU."""
+        t = self.timing
+        ratio = 1.0 / max(now - t.window_wall, 1e-9)
+        t.window_ratio_min = min(t.window_ratio_min, ratio)
+        sched = thread_sched()
+        if ratio < 0.95:
+            used = (None, None) if sched is None or t.sched_prev is None else (
+                round(sched[0] - t.sched_prev[0], 3), round(sched[1] - t.sched_prev[1], 3))
+            t.slow_windows.append((round(self.sim_time, 2), round(ratio, 3), *used))
+        t.sched_prev = sched
+        t.window_wall = now
 
     def status(self) -> dict:
         t = self.timing
@@ -526,12 +569,7 @@ class Simulator:
             if self.oracle_path is not None and self.n % oracle_every == 0:
                 self._write_atomic(self.oracle_path, json.dumps(self.oracle()).encode(), ".tmp")
             if self.n % steps_per_second == 0:
-                now = time.perf_counter()
-                ratio = 1.0 / max(now - t.window_wall, 1e-9)
-                t.window_ratio_min = min(t.window_ratio_min, ratio)
-                if ratio < 0.95:
-                    t.slow_windows.append((round(self.sim_time, 2), round(ratio, 3)))
-                t.window_wall = now
+                self._close_window(time.perf_counter())
             took = (time.perf_counter() - loop_start) * 1000
             t.step_ms.append(took)
             if took > 20 and len(t.slow_steps) < 50:
@@ -565,7 +603,39 @@ class Bridge:
         self.sim = sim
         self.low = unitree_hg_msg_dds__LowState_()
         self.low.mode_machine = 5  # the 29-DoF G1
+        for i in range(N_BODY):
+            self.low.motor_state[i].mode = 1
         self.hand_state = {s: unitree_hg_msg_dds__HandState_() for s in ("left", "right")}
+        for state in self.hand_state.values():
+            for motor in state.motor_state[:7]:
+                motor.mode = 1
+        # The messages are serialized once and their changing fields patched in place (fastdds.py): the SDK's Python CDR
+        # serializer cost 250 us per lowstate, more than half of a physics step. The bytes on the wire are the same.
+        ms, imu = self.low.motor_state, self.low.imu_state
+        self._low_fast = PatchedSample(
+            self.low,
+            {
+                "q": [lambda v, i=i: setattr(ms[i], "q", v) for i in range(N_BODY)],
+                "dq": [lambda v, i=i: setattr(ms[i], "dq", v) for i in range(N_BODY)],
+                "tau": [lambda v, i=i: setattr(ms[i], "tau_est", v) for i in range(N_BODY)],
+                "quat": [lambda v, i=i: imu.quaternion.__setitem__(i, v) for i in range(4)],
+                "gyro": [lambda v, i=i: imu.gyroscope.__setitem__(i, v) for i in range(3)],
+                "acc": [lambda v, i=i: imu.accelerometer.__setitem__(i, v) for i in range(3)],
+                "rpy": [lambda v, i=i: imu.rpy.__setitem__(i, v) for i in range(3)],
+            },
+            {"tick": [lambda v: setattr(self.low, "tick", v)]},
+        )
+        self._hand_fast = {}
+        for side, state in self.hand_state.items():
+            hm = state.motor_state
+            self._hand_fast[side] = PatchedSample(
+                state,
+                {
+                    "q": [lambda v, i=i, hm=hm: setattr(hm[i], "q", v) for i in range(7)],
+                    "dq": [lambda v, i=i, hm=hm: setattr(hm[i], "dq", v) for i in range(7)],
+                    "tau": [lambda v, i=i, hm=hm: setattr(hm[i], "tau_est", v) for i in range(7)],
+                },
+            )
         self.low_pub = ChannelPublisher("rt/lowstate", LowState_)
         self.low_pub.Init()
         self.hand_pub = {}
@@ -602,34 +672,30 @@ class Bridge:
 
     def _publish_low(self, sim: Simulator) -> None:
         d, r = sim.data, sim.robot
-        low = self.low
-        q, dq = d.qpos[r.qadr], d.qvel[r.dadr]
-        tau = d.actuator_force[:N_BODY]
-        for i in range(N_BODY):
-            ms = low.motor_state[i]
-            ms.mode, ms.q, ms.dq, ms.tau_est = 1, float(q[i]), float(dq[i]), float(tau[i])
-        imu = low.imu_state
-        quat = d.sensordata[r.imu_quat:r.imu_quat + 4]
-        imu.quaternion[:] = quat
-        imu.gyroscope[:] = d.sensordata[r.imu_gyro:r.imu_gyro + 3]
-        imu.accelerometer[:] = d.sensordata[r.imu_acc:r.imu_acc + 3]
+        fast = self._low_fast
+        fast.set("q", d.qpos[r.qadr])
+        fast.set("dq", d.qvel[r.dadr])
+        fast.set("tau", d.actuator_force[:N_BODY])
+        quat, gyro, acc = sim.imu.read(sim.sim_time, d.sensordata[r.imu_quat:r.imu_quat + 4],
+                                       d.sensordata[r.imu_gyro:r.imu_gyro + 3], d.sensordata[r.imu_acc:r.imu_acc + 3])
+        fast.set("quat", quat)
+        fast.set("gyro", gyro)
+        fast.set("acc", acc)
         w, x, y, z = quat
-        imu.rpy[:] = [np.arctan2(2 * (w * x + y * z), 1 - 2 * (x * x + y * y)),
-                      np.arcsin(np.clip(2 * (w * y - z * x), -1, 1)),
-                      np.arctan2(2 * (w * z + x * y), 1 - 2 * (y * y + z * z))]
-        low.tick = int(sim.sim_time * 1000) & 0xFFFFFFFF  # simulation time, ms
-        self.low_pub.Write(low)
+        fast.set("rpy", [np.arctan2(2 * (w * x + y * z), 1 - 2 * (x * x + y * y)),
+                         np.arcsin(np.clip(2 * (w * y - z * x), -1, 1)),
+                         np.arctan2(2 * (w * z + x * y), 1 - 2 * (y * y + z * z))])
+        fast.set_int("tick", int(sim.sim_time * 1000) & 0xFFFFFFFF)  # simulation time, ms
+        self.low_pub.Write(self.low)
 
     def _publish_hands(self, sim: Simulator) -> None:
         d, r = sim.data, sim.robot
         for side in ("left", "right"):
-            hq, hdq = d.qpos[r.hand_qadr[side]], d.qvel[r.hand_dadr[side]]
-            htau = d.actuator_force[HAND_ACT[side]:HAND_ACT[side] + 7]
-            state = self.hand_state[side]
-            for i in range(7):
-                ms = state.motor_state[i]
-                ms.mode, ms.q, ms.dq, ms.tau_est = 1, float(hq[i]), float(hdq[i]), float(htau[i])
-            self.hand_pub[side].Write(state)
+            fast = self._hand_fast[side]
+            fast.set("q", d.qpos[r.hand_qadr[side]])
+            fast.set("dq", d.qvel[r.hand_dadr[side]])
+            fast.set("tau", d.actuator_force[HAND_ACT[side]:HAND_ACT[side] + 7])
+            self.hand_pub[side].Write(self.hand_state[side])
 
 
 def make_services(sim: Simulator, test_hooks: bool = False):
@@ -734,6 +800,11 @@ def main(argv=None) -> int:
     parser.add_argument("--stance", default="free", choices=sorted(STANCES),
                         help="what the robot does when it stands still: free (the policy alone) or "
                              "supported (the torso welded to a mocap body; the approved fallback)")
+    parser.add_argument("--imu-seed", type=int, help="the seed of the IMU's bias and noise (default: random, printed)")
+    parser.add_argument("--imu-bias", type=float,
+                        help="the gyro's z bias in rad/s, instead of the drawn one (a worst case for the stress check)")
+    parser.add_argument("--ideal-imu", action="store_true",
+                        help="measurement only: publish MuJoCo's exact IMU (no bias, no noise, no yaw drift)")
     parser.add_argument("--no-gc-freeze", action="store_true",
                         help="measurement only: leave the garbage collector as it is (to compare step_compute_ms)")
     parser.add_argument("--test-hooks", action="store_true",
@@ -742,7 +813,8 @@ def main(argv=None) -> int:
 
     from unitree_sdk2py.core.channel import ChannelFactoryInitialize
 
-    sim = Simulator(args.site, stance=args.stance, run_dir=args.run_dir, oracle=args.oracle)
+    sim = Simulator(args.site, stance=args.stance, run_dir=args.run_dir, oracle=args.oracle, imu_seed=args.imu_seed,
+                    imu_bias=args.imu_bias, imu_ideal=args.ideal_imu)
     sim.watch_gc()
     ChannelFactoryInitialize(DOMAIN, INTERFACE)  # domain 1 and loopback are not options
     bridge = Bridge(sim)
@@ -757,7 +829,8 @@ def main(argv=None) -> int:
     if not args.no_gc_freeze:
         sim.freeze_gc()
     print(json.dumps({"ready": True, "pid": os.getpid(), "domain": DOMAIN, "interface": INTERFACE,
-                      "stance_model": sim.stance.name, "run_dir": str(args.run_dir), "versions": assets.versions()}),
+                      "stance_model": sim.stance.name, "run_dir": str(args.run_dir), "imu": sim.imu.truth(),
+                      "versions": assets.versions()}),
           flush=True)
     try:
         sim.run(stop)

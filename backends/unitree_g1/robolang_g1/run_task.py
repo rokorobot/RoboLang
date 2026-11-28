@@ -21,16 +21,18 @@ import time
 from pathlib import Path
 
 from . import guard
-from .harness import OracleTail, StandIn
+from .harness import OracleTail, StandIn, yielding
 
 
 class Session:
     """One stand-in with its oracle tail, for one scenario. `with Session(...) as s:` starts and always stops it."""
 
-    def __init__(self, scene: str | Path, run_dir: Path, stance: str = "free", test_hooks: bool = True):
+    def __init__(self, scene: str | Path, run_dir: Path, stance: str = "free", test_hooks: bool = True,
+                 standin_args: list[str] | None = None):
         self.run_dir = Path(run_dir)
         self.run_dir.mkdir(parents=True, exist_ok=True)
-        self.standin = StandIn(str(scene), self.run_dir, stance, ["--test-hooks"] if test_hooks else [])
+        args = (["--test-hooks"] if test_hooks else []) + (standin_args or [])
+        self.standin = StandIn(str(scene), self.run_dir, stance, args)
         self.tail: OracleTail | None = None
         self.sim = None  # the harness's own robolang_sim client (status, and the test push)
         self.final: dict | None = None
@@ -97,6 +99,7 @@ class Session:
             cmd += ["--stop-file", str(stop_file)]
         if deadline_s is not None:
             cmd += ["--deadline-s", str(deadline_s)]
+        cmd = yielding(cmd)  # the executor yields the CPU to the stand-in (harness.YIELD_NICE)
         log = Path(out).with_suffix(".log")
         with log.open("w") as fh:
             proc = subprocess.Popen(cmd, stdout=fh, stderr=subprocess.STDOUT, env=dict(os.environ))

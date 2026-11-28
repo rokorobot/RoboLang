@@ -17,6 +17,10 @@ on:
         type: choice
         options: [free, supported]
         default: free
+      acceptance:
+        description: "also run the phase 4 acceptance run (14 tasks x 3, 5 failure cases: about 4 hours)"
+        type: boolean
+        default: false
   schedule:
     - cron: "11 5 * * *"
 
@@ -73,7 +77,9 @@ jobs:
                   print(f"- {name}: {'pass' if c['pass'] else '**FAIL**'}")
               for r in e.get("runs", []):
                   print(f"  - `{r['scenario']}`: realtime_valid `{r['realtime_valid']}`, worst second `{r['worst_second_ratio']}`, "
-                        f"step compute ms `{r['step_compute_ms']}`, gc max ms `{r['gc']}`")
+                        f"step compute ms `{r['step_compute_ms']}`, gc max ms `{r['gc']}`, camera `{r.get('camera')}`")
+                  if r.get("slow_windows"):  # (sim time, ratio, loop thread CPU s, loop thread run-queue wait s)
+                      print(f"    slow seconds (sim time, ratio, loop CPU s, loop run-queue wait s): `{r['slow_windows']}`")
               print()
           q = pathlib.Path("out/phase3.json")
           if q.exists():
@@ -87,7 +93,10 @@ jobs:
                     f"{m.get('largest_offset_rad_when_true')} rad (tolerance {m.get('tolerance_m')} m / "
                     f"{m.get('tolerance_rad')} rad)\n")
               for r in e.get("runs", []):
-                  print(f"  - `{r['scenario']}`: realtime_valid `{r['realtime_valid']}`, worst second `{r['worst_second_ratio']}`")
+                  print(f"  - `{r['scenario']}`: realtime_valid `{r['realtime_valid']}`, worst second `{r['worst_second_ratio']}`, "
+                        f"step compute ms `{r['step_compute_ms']}`, camera `{r.get('camera')}`")
+                  if r.get("slow_windows"):  # (sim time, ratio, loop thread CPU s, loop thread run-queue wait s)
+                      print(f"    slow seconds (sim time, ratio, loop CPU s, loop run-queue wait s): `{r['slow_windows']}`")
               print()
           p = pathlib.Path("out/harness.json")
           if p.exists():
@@ -115,4 +124,70 @@ jobs:
             out/phase3.run/**/*.json
             out/phase3.run/**/*.log
             out/phase3.run/**/*.rob
+          if-no-files-found: warn
+
+  # Decision 0046 section 3: the acceptance run. On demand only: it is about four hours of simulated real time, far over
+  # what a pull request or a night should wait for. It can be resumed: a run that has its result.json is not run again.
+  acceptance:
+    if: github.event_name == 'workflow_dispatch' && inputs.acceptance
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    env:
+      G1_ASSETS: ${{ github.workspace }}/.g1-assets
+      MUJOCO_GL: egl
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: System packages (software OpenGL through EGL, a C toolchain for CycloneDDS)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends cmake build-essential python3-dev \
+            libegl1 libegl-mesa0 libgl1 libgl1-mesa-dri libglu1-mesa libgles2 libosmesa6
+      - name: Cache the assets (models, policy, SDK, CycloneDDS build), keyed on the fetch script
+        uses: actions/cache@v6
+        with:
+          path: .g1-assets
+          key: g1-assets-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('backends/unitree_g1/scripts/fetch_assets.sh') }}
+      - name: Install robolang, fetch the assets, install the backend
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e .
+          bash backends/unitree_g1/scripts/fetch_assets.sh
+          python -m pip install -e "backends/unitree_g1[test]"
+      - name: Acceptance run (0046 section 3)
+        run: python -m robolang_g1.phase4 --stance "${{ inputs.stance || 'free' }}" --out out/phase4.json
+      - name: Summary
+        if: always()
+        run: |
+          python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json, pathlib
+          q = pathlib.Path("out/phase4.json")
+          if q.exists():
+              e = json.loads(q.read_text())
+              b = e["bar"]
+              print(f"### Phase 4 (acceptance): go **{e.get('go')}**, stance `{e['stance_model']}`, arch `{e['arch']}`\n")
+              print(f"- runs that count: {b['runs_counted']} of {b['runs_expected']}; succeeded {b['succeeded']} "
+                    f"({b['success_rate']:.1%}, required {b['success_required']:.0%})")
+              print(f"- agreement with the oracle: {b['atoms_agree']} of {b['atoms_judged']} atoms "
+                    f"({b['agreement']:.1%}, required {b['agreement_required']:.0%})")
+              print(f"- false successes: {b['false_successes'] or 'none'}")
+              print(f"- failure cases pass: {b['failure_cases_pass']}; not counted: {b['not_counted'] or 'none'}\n")
+              for task, runs in e["tasks"].items():
+                  marks = ", ".join(("SUCCEEDED" if r["succeeded"] else f"{r.get('state')} {(r.get('failure') or {}).get('code')}")
+                                    + ("" if r["counts"] else " (not counted)") for r in runs)
+                  print(f"- `{task}`: {marks}")
+              for name, c in e["cases"].items():
+                  print(f"- `{name}`: {'pass' if c['pass'] else '**FAIL**'} ({(c.get('failure') or {}).get('code')}, "
+                        f"expected {c.get('expected')})")
+          PY
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: g1-acceptance
+          path: |
+            out/phase4.json
+            out/phase4.run/**/*.json
+            out/phase4.run/**/*.log
           if-no-files-found: warn

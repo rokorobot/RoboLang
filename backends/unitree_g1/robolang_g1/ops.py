@@ -23,6 +23,7 @@ import numpy as np
 from . import assets, guard
 from . import site as site_mod
 from .executor import STOP_CODES, STOP_MESSAGES, BackendFailure, Stop
+from .heading import HeadingTracker, yaw_of
 from .kinematics import ARM_JOINTS, WAIST_PITCH, Clearance, Kinematics
 from .observe import HAND_CLOSED, HELD_RADIUS_M, READY_LOWSTATE_AGE_S, Hand, Ready, Snapshot
 from .observe import hand_state
@@ -42,6 +43,12 @@ CONFIRM_TIMEOUT_S = 3.0  # a stop must be confirmed (upright and still, from low
 CONFIRM_WINDOW_MS = 500
 CONFIRM_GYRO = 0.045  # rad/s: the pelvis rotates no faster than this ...
 CONFIRM_JOINT_VEL = 0.09  # rad/s: ... and no joint moves faster than this (the held arms included)
+# ... and the legs and waist have not moved over the window, as a whole: a robot coasting to rest after a walk passed
+# the two bounds above at 0.089 rad/s while its whole body still slid 1.6 cm in the window (x86 CI, E5 twice). Joint
+# travel over the window catches what a velocity bound let through: 0.01 rad at the hip is under a centimetre at the
+# pelvis. From lowstate only.
+CONFIRM_LEG_TRAVEL_RAD = 0.01
+LEG_AND_WAIST = slice(0, 15)  # SDK order: the 12 leg joints, then the 3 waist joints
 CONFIRM_TILT_RAD = math.radians(15)
 SETTLE_GYRO, SETTLE_LEG_VEL, SETTLE_WINDOW_MS, SETTLE_TIMEOUT_S = 0.03, 0.05, 600, 9.0
 # ---- localization and walking
@@ -54,6 +61,9 @@ STATION_TOL_M, STATION_TOL_RAD = 0.042, 0.09
 SERVO_TOL_M, SERVO_TOL_RAD = 0.035, 0.05
 # rad/s: a standing robot's heading drifts left at about this (measured 0.006 empty, 0.008 loaded; then observed)
 CREEP_PRIOR = 0.007
+# The creep as the IMU sees it: the yaw's slope over the last CREEP_WINDOW_MS, if that window began at least
+# CREEP_QUIET_MS after the last velocity command ended (the stance's own transient is over)
+CREEP_WINDOW_MS, CREEP_QUIET_MS = 1000, 2000
 COARSE_M, COARSE_RAD = 0.25, 0.3  # an error beyond this is for the coarse bursts (below), not the measured corrections
 # A step is 5-17 cm and a burst that moves less takes no step at all, so an error just outside the servo's tolerance may
 # have no correction that improves it (measured: a loaded robot 4 cm to the left of the shelf's station for 150 s).
@@ -61,20 +71,31 @@ COARSE_M, COARSE_RAD = 0.25, 0.3  # an error beyond this is for the coarse burst
 # confirm limits above and to nothing less: the station tolerance (5 cm, 0.1 rad) is not touched.
 STAGNANT_LOOKS = 4
 RELAXED_RAD = 0.07  # the servo's heading tolerance then: the confirm limit less what the creep may add
+# The approach point (0.5 m before the station, not confirmed) is only to line the robot up for the last walk, and the
+# final servo takes any error it is left with that is under COARSE_M and COARSE_RAD. When the servo to it stagnates
+# (under a creep of 0.025 rad/s the heading is inside 0.07 rad for a moment in each 5 s look, and one failed move spent
+# its 150 s at the approach point 0.1 m and 0.1 rad off) it goes on from this much error:
+APPROACH_RELAXED_M, APPROACH_RELAXED_RAD = 0.12, 0.15
 MARKER_MAX_RANGE_M, MARKER_MIN_CONF = 2.9, 0.5  # a station marker corrects the belief only when seen this well
 # ... and only if the vertical it implies is the IMU's, to within MAX_UP_DISAGREEMENT_RAD (perception.py)
 APPROACH_M = 0.5  # the walk ends this far before the station, facing it, and the marker is looked for there
 # ... after passing through a point this much further out on the station's axis, where the marker is in view
 STAGING_M = 1.5
 WALK_SPEED = 0.5
-WALK_GAIN, BACK_GAIN, SIDE_GAIN, YAW_GAIN = 0.95, 0.9, 0.64, 0.7  # travel (coast included) per unit commanded, measured
+WALK_GAIN, BACK_GAIN, SIDE_GAIN = 0.95, 0.9, 0.64  # travel (coast included) per unit commanded, measured
 SHUFFLE_S = 1.2  # one burst of the turn-in-place shuffle ...
 SHUFFLE_BACK_M = 0.035  # ... and drifts this far backward (measured: 0.03-0.04 m a burst), which the belief must carry
-SHUFFLE_RAD = {1: 0.127, -1: 0.111}  # ... turns this much to the left (+) and to the right (-): measured
+SHUFFLE_RAD = {1: 0.127, -1: 0.111}  # ... turns this much to the left (+) and to the right (-): measured (the plan's
+# aim; the belief's heading comes from the IMU, heading.py)
 LEG_MAX_M = 1.6  # the longest walk between two looks
 SCAN_STEP_RAD = 0.6  # a scan for a marker turns this much between looks
 SIDESTEPS, SIDESTEP_M = 3, 0.2  # ... after this many sidesteps of about this much toward the marker's side
 MOVE_TIMEOUT_S, SERVO_TIMEOUT_S, MARKER_TIMEOUT_S = 300.0, 150.0, 90.0  # simulation time: S504, S504, S517
+# A move to a station the robot already stands beside (the same station, or one a step away, as a dock 12 cm behind a
+# destination) is the servo alone, from where it stands: walking out to the approach point 0.5 m short and coming in
+# again moved a robot with a box in hand by several centimetres (S502 at the place that followed) and, once, made the
+# belief jump 0.5 m on the way back (S504). Within COARSE_M the servo's measured corrections apply.
+DIRECT_M, DIRECT_RAD = COARSE_M, 0.2
 # ---- arms
 ARM_TRACK_TOL_RAD = 0.12  # S503: a joint further than this from its target when a motion has finished
 HAND_TOL_RAD = 0.25  # S505
@@ -103,6 +124,12 @@ HAND_STATE_AGE_S = 1.0  # a hand state older than this (wall clock) is not used
 # the release) the hand and the object, which rests on the table there, are checked with no vertical margin and may
 # overlap the table by 1 cm (the object's position, from its marker, is known to about a centimetre).
 CONTACT_OVERLAP_M = 0.01  # (see above)
+# A place aims at its region's centre; if the arm cannot reach it (S502), at a point this far nearer the robot's side
+# across the region, in turn, if the region is wide enough that the object's marker still lands PLACE_INSIDE_M inside
+# it. Measured: with three slots on one table the outer one was out of reach in 2 of 3 runs when the robot stood 2-5 cm
+# off, inside its tolerance (docs/evidence/g1-phase4-acceptance.md).
+PLACE_SHIFTS_M = (0.015, 0.03)
+PLACE_INSIDE_M = 0.03  # twice the verdict's margin (observe.REGION_MARGIN_M)
 PLACE_ABOVE_M = 0.012  # the object is released this far above the table's surface and drops (the hand then clears it)
 RAISED_ABOVE_PRE_M = (0.12, 0.10, 0.08, 0.06, 0.04)  # the hand is raised this far above the pre-grasp height, in turn
 RAISED_OUT_M = (0.0, 0.05, 0.10)  # the raised pose beside the body is tried this much further out, in turn
@@ -152,6 +179,39 @@ def _burst(axis: str, error: float) -> tuple[float, float, float]:
     return (0.4 * sign, 0.0, seconds) if axis == "forward" else (0.1, 0.3 * sign, seconds)
 
 
+def servo_band(approach: bool, stagnant: bool, tol_m: float, tol_rad: float) -> tuple[float, float]:
+    """The position (m) and heading (rad) the servo stops inside. Normally its own tolerances (`tol_m`, `tol_rad`);
+    after STAGNANT_LOOKS looks without a better error, the confirm limit less what the creep may add for the final
+    servo (it then goes on to the confirming look, which still decides), and APPROACH_RELAXED_* for the approach point
+    (no confirmation follows it)."""
+    if not stagnant:
+        return tol_m, tol_rad
+    return (APPROACH_RELAXED_M, APPROACH_RELAXED_RAD) if approach else (STATION_TOL_M, RELAXED_RAD)
+
+
+# A leg straight to the side is a command the walking policy answers at random. Measured on the loaded robot (box in the
+# right hand, 3.4 s commands, docs/evidence/g1-phase4-prereqs/exp_lateral_gait.py): (0, 0.3) to the left moved it 0.52
+# and 0.59 m; (0.1, 0.3) to the left 0.005 and 0.005 m (to the right 0.51 and 0.58); (0.16, 0.3) 0.13 and 0.76 m;
+# (0, 0.3, -0.2) 0.003 and 0.34 m; and from (0.2, 0.3) up it always moved (0.69-0.84 m left, 0.78 right). A leg of the
+# walk that is mostly sideways is therefore walked as two diagonals, back and forward at that speed: it keeps the robot
+# on its line and keeps the command out of the policy's dead zone. (With the heading dead-reckoned from the commands
+# the heading error was seldom under 0.04 rad at the start of such a leg, so the leg carried a yaw rate; with the IMU's
+# heading it often does not, and a run of `e_pick_place`'s kind stood still for 20 s: S517.)
+LATERAL_VY, LATERAL_VX = 0.25, 0.2  # a leg with |vy| at least the first and |vx| under the second is "mostly sideways"
+LATERAL_MIN_S = 1.6  # shorter than this it is one diagonal (a policy needs about a second to settle into a gait)
+
+
+def walk_legs(vx: float, vy: float, wz: float, seconds: float) -> list[tuple[float, float, float, float]]:
+    """The commands of one leg of the walk: the leg itself, or, if it is mostly sideways (see above), two diagonals that
+    cancel in the forward direction, the second the way the leg's own forward component pointed."""
+    if abs(vy) < LATERAL_VY or abs(vx) >= LATERAL_VX:
+        return [(vx, vy, wz, seconds)]
+    way = 1.0 if vx >= 0 else -1.0
+    if seconds < LATERAL_MIN_S:
+        return [(way * LATERAL_VX, vy, wz, seconds)]
+    return [(-way * LATERAL_VX, vy, wz, seconds / 2), (way * LATERAL_VX, vy, wz, seconds / 2)]
+
+
 def _minjerk(a: float) -> float:
     return a**3 * (10 - 15 * a + 6 * a * a)
 
@@ -159,11 +219,19 @@ def _minjerk(a: float) -> float:
 class G1Operations:
     """The operations of the executor. `guard()` must run first: it creates the DDS participant and the clients."""
 
+    tracker: HeadingTracker | None = None  # the belief heading (made in guard(), once there is an IMU to read)
+    robot: Robot | None = None
+
     def __init__(self, site: dict, stop: Stop | None = None, head_dir: str | None = None):
         self.site, self.stop, self.head_dir = site, stop, head_dir
         self.stations = {s["name"]: s for s in site["stations"]}
         self.by_marker = {s["marker"]["id"]: s for s in site["stations"]}
-        self.pose = list(site["robot"]["start"])  # the belief: pelvis (x, y, yaw) in the map
+        start = site["robot"]["start"]
+        # The belief: pelvis (x, y, yaw) in the map (the `pose` property). Position is dead-reckoned from the commands
+        # and put right by a station marker; the heading is the last marker fix's plus the IMU's change in yaw since
+        # (heading.py), the dead reckoning of the commanded yaw rates having been 0.4 rad out under heading creep.
+        self._xy = [float(start[0]), float(start[1])]
+        self._heading0 = float(start[2])
         self.station: str | None = None  # the station the robot last arrived at
         self.held: dict | None = None  # {"object", "hand"} while an object is welded to a hand
         self.events: list[dict] = []  # what the current step did, for its record
@@ -177,6 +245,7 @@ class G1Operations:
         self.q_carry: np.ndarray | None = None
         self.fallen = False
         self.creep = CREEP_PRIOR  # rad/s: the heading's creep to the left while standing (observed in `_servo`)
+        self.creep_reads = 0  # how many times the IMU has told it (`_note_creep_imu`)
         self.fix: tuple[int, float] | None = None  # (simulation time, heading) of the last station-marker fix
         self.last_look: tuple[int, bool] = (0, False)  # (simulation time, whether it was a fix) of the last look
         self.moved_ms = 0  # the simulation time at which the last velocity command was to end
@@ -197,6 +266,8 @@ class G1Operations:
             raise BackendFailure("S501", "the robot reports no head camera frame source and none was given")
         self.robot = Robot()
         self.robot.wait_state()
+        self.tracker = HeadingTracker(self._heading0, yaw_of(self.robot.last.quat), self.robot.last.tick)
+        self._hold_heading(self.identity.get("stance_model") == "supported")  # (a stand-in started welded)
         self.kin = Kinematics(self.site["camera"])
         self.clr = Clearance(self.site["camera"], n_boxes=len(site_mod.declared_boxes(self.site)))
         self.perc = Perception(self.robot, self.kin, self.site, head)
@@ -213,6 +284,44 @@ class G1Operations:
     def status(self) -> dict | None:
         code, status = self.sim.Status()
         return status if code == 0 else None
+
+    # ------------------------------------------------------------------------------------------ belief
+
+    @property
+    def pose(self) -> list[float]:
+        """The belief pose of the pelvis in the map, [x, y, yaw]: the heading is read from the IMU now (heading.py)."""
+        return [self._xy[0], self._xy[1], self._heading()]
+
+    @pose.setter
+    def pose(self, value) -> None:
+        """Set the belief outright (a pose given, not seen: the heading is true from now on, nothing is learned)."""
+        self._xy = [float(value[0]), float(value[1])]
+        self._heading0 = float(value[2])
+        last = getattr(self.robot, "last", None)
+        if self.tracker is not None and last is not None:
+            self.tracker.reset(self._heading0, yaw_of(last.quat), last.tick)
+
+    def _heading(self) -> float:
+        last = getattr(self.robot, "last", None)
+        if self.tracker is None or last is None:
+            return self._heading0
+        return self.tracker.heading(yaw_of(last.quat), last.tick)
+
+    def _hold_heading(self, welded: bool) -> None:
+        """The pelvis is welded for arm work (`supported`), or free: a welded pelvis cannot turn, so the belief heading
+        holds while it is and the IMU's drift is not followed (heading.py)."""
+        last = getattr(self.robot, "last", None)
+        if self.tracker is not None and last is not None:
+            self.tracker.hold(welded, yaw_of(last.quat), last.tick)
+
+    def _fix_pose(self, new, stamp_ms: int) -> float:
+        """A station marker gave the pose `new` at simulation time `stamp_ms`: the position and the heading are right as
+        of then, and the IMU carries the heading on from there. Returns how far the fix moved the heading."""
+        self._xy = [float(new[0]), float(new[1])]
+        sample = self.robot.sample_at(stamp_ms)
+        if sample is None:
+            sample = self.robot.last
+        return self.tracker.fix(float(new[2]), yaw_of(sample.quat), sample.tick)
 
     # ------------------------------------------------------------------------------------------ checks
 
@@ -303,16 +412,18 @@ class G1Operations:
                     }
                 )
             else:
+                before = [round(float(v), 3) for v in self.pose]
+                jump = self._fix_pose(new, reading.stamp_ms)
                 self.events.append(
                     {
                         "t_ms": self.now_ms(),
                         "event": "localized",
                         "marker": mid,
-                        "from": [round(float(v), 3) for v in self.pose],
+                        "from": before,
                         "to": [round(v, 3) for v in new],
+                        "heading_jump_rad": round(jump, 4),
                     }
                 )
-                self.pose = list(new)
                 self.fix = (self.now_ms(), float(new[2]))
                 self.last_look = (self.now_ms(), True)
         return readings
@@ -462,38 +573,54 @@ class G1Operations:
 
     # ------------------------------------------------------------------------------------------ walking
 
-    def _dead_reckon(self, vx: float, vy: float, wz: float, seconds: float, shuffle: bool = False) -> None:
-        """Advance the belief by what a command should do (measured gains: the policy ramps up, coasts, and sidesteps at
-        about 0.64 of what is asked). A shuffle turns by its measured step and goes nowhere."""
-        x, y, yaw = self.pose
+    def _dead_reckon(
+        self, vx: float, vy: float, wz: float, seconds: float, shuffle: bool, t0_ms: int, t1_ms: int
+    ) -> None:
+        """Advance the belief's *position* by what a command should have done (measured gains: the policy ramps up,
+        coasts, and sidesteps at about 0.64 of what is asked; a shuffle goes nowhere but a little backward). The heading
+        is not dead-reckoned: it is the IMU's (`pose`), and the displacement is taken along the heading the robot had
+        while the command ran (the mean over [t0, t1] of the IMU's), not the one it had when the command was sent: a
+        walk that turns as it goes curves."""
+        yaw = self._mean_heading(t0_ms, t1_ms)
         if shuffle:
             back = SHUFFLE_BACK_M * seconds / SHUFFLE_S
-            self.pose = [
-                x - back * math.cos(yaw),
-                y - back * math.sin(yaw),
-                site_mod.wrap(yaw + SHUFFLE_RAD[1 if wz > 0 else -1] * np.sign(wz) * seconds / SHUFFLE_S),
-            ]
-            return
-        forward = (WALK_GAIN if vx > 0 else BACK_GAIN) * vx * seconds
-        left = SIDE_GAIN * vy * seconds
-        self.pose = [
+            forward, left = -back, 0.0
+        else:
+            forward = (WALK_GAIN if vx > 0 else BACK_GAIN) * vx * seconds
+            left = SIDE_GAIN * vy * seconds
+        x, y = self._xy
+        self._xy = [
             x + forward * math.cos(yaw) - left * math.sin(yaw),
             y + forward * math.sin(yaw) + left * math.cos(yaw),
-            site_mod.wrap(yaw + YAW_GAIN * wz * seconds),
         ]
+
+    def _mean_heading(self, t0_ms: int, t1_ms: int) -> float:
+        """The belief heading averaged over simulation time [t0, t1] from the lowstate samples in it (the heading now if
+        there are none)."""
+        h_now = self._heading()
+        if self.tracker is None or self.robot is None:
+            return h_now
+        samples = [x for x in self.robot.samples_since(t0_ms) if x.tick <= t1_ms][::10]
+        if not samples:
+            return h_now
+        rel = [site_mod.wrap(self.tracker.heading(yaw_of(x.quat), x.tick) - h_now) for x in samples]
+        return site_mod.wrap(h_now + sum(rel) / len(rel))
 
     def command(
         self, vx: float, vy: float, wz: float, seconds: float, wait: bool = True, shuffle: bool = False
     ) -> None:
         """One SetVelocity, the belief advanced by what it should do, and (unless `wait` is False) the wait for it."""
         self.check()
+        t0 = self.now_ms()
         code = self.robot.set_velocity(vx, vy, wz, seconds)
         if code != 0:
             raise BackendFailure("S503", f"SetVelocity({vx:.2f}, {vy:.2f}, {wz:.2f}, {seconds:.2f}) returned {code}")
-        self._dead_reckon(vx, vy, wz, seconds, shuffle)
         self.moved_ms = self.now_ms() + int(seconds * 1000)
-        if wait:
-            self.sleep(seconds)
+        try:
+            if wait:
+                self.sleep(seconds)
+        finally:
+            self._dead_reckon(vx, vy, wz, seconds, shuffle, t0, self.now_ms())
 
     def turn_by(self, angle: float) -> None:
         """Turn in place by `angle` rad (+ left) from the belief heading. See `turn_to`."""
@@ -543,7 +670,8 @@ class G1Operations:
             wz = float(np.clip(1.5 * err, -0.2, 0.2)) if abs(err) > 0.04 else 0.0
             if wz and math.hypot(vx, vy) < 0.3:  # the policy needs a command of about 0.3 to move at all
                 vx = 0.3
-            self.command(vx, vy, wz, seconds)
+            for leg in walk_legs(vx, vy, wz, seconds):
+                self.command(*leg)
             self.settle()
             self.look(frames=3)
 
@@ -556,6 +684,9 @@ class G1Operations:
         t0 = self.now_ms()
         deadline = t0 + int(MOVE_TIMEOUT_S * 1000)
         self.look(frames=3)
+        direct = self._direct(station, deadline)
+        if direct is not None:
+            return direct
         ax, ay = gx - APPROACH_M * math.cos(gyaw), gy - APPROACH_M * math.sin(gyaw)
         sx, sy = gx - (APPROACH_M + STAGING_M) * math.cos(gyaw), gy - (APPROACH_M + STAGING_M) * math.sin(gyaw)
         scan_end = self.now_ms() + int(MARKER_TIMEOUT_S * 1000)  # one budget for all the searching, replans included
@@ -577,6 +708,35 @@ class G1Operations:
         result = self._servo(station, marker, deadline)
         self.station = station_name
         result["events"] = self.events
+        result["heading"] = {  # what the IMU's heading got wrong between fixes; the creep the servo aimed against
+            **self.tracker.summary(),
+            "creep_rad_s": round(self.creep, 4),
+            "creep_imu_reads": self.creep_reads,
+        }
+        return result
+
+    def _direct(self, station: dict, deadline_ms: int) -> dict | None:
+        """The servo alone, if the robot has arrived at a station before and stands within DIRECT_M and DIRECT_RAD of
+        this one, and sees its marker now. None otherwise: then `move` walks the usual way."""
+        if self.station is None:
+            return None
+        gx, gy, gyaw = station["pose"]
+        if (
+            math.hypot(gx - self.pose[0], gy - self.pose[1]) > DIRECT_M
+            or abs(site_mod.wrap(gyaw - self.pose[2])) > DIRECT_RAD
+        ):
+            return None
+        mid = station["marker"]["id"]
+        reading = self.look(frames=5, ids={mid}).get(mid)
+        if reading is None or reading.confidence < MARKER_MIN_CONF or reading.range_m > MARKER_MAX_RANGE_M:
+            return None
+        self.events.append({"t_ms": self.now_ms(), "event": "direct", "from": [round(float(v), 3) for v in self.pose]})
+        result = self._servo(station, reading, deadline_ms)
+        self.station = station["name"]
+        result["direct"] = True
+        result["events"] = self.events
+        result["heading"] = {**self.tracker.summary(), "creep_rad_s": round(self.creep, 4),
+                             "creep_imu_reads": self.creep_reads}
         return result
 
     def _find_marker(self, station: dict, deadline_ms: int, scan_end_ms: int, approach: tuple):
@@ -653,19 +813,22 @@ class G1Operations:
         best, best_look = float("inf"), 0  # the smallest error (in tolerances) so far, and at which look
         while True:
             self.check()
+            self._note_creep_imu()
             dx, dy = gx - self.pose[0], gy - self.pose[1]
             ex = dx * math.cos(self.pose[2]) + dy * math.sin(self.pose[2])
             ey = -dx * math.sin(self.pose[2]) + dy * math.cos(self.pose[2])
             eyaw = site_mod.wrap(gyaw - self.pose[2])
             iterations.append([round(float(ex), 3), round(float(ey), 3), round(float(eyaw), 3)])
-            creep = self.creep if target is None else 0.0  # (the approach point is not confirmed: no aim)
+            # (the approach point is aimed against the creep too: the final servo starts after a settle and a look, 3-4
+            # s in which the heading creeps 0.08 rad at 0.025 rad/s)
+            creep = self.creep
             # the heading the stance will have when it is confirmed: it creeps to the left while the robot waits
             eyaw_confirmed = eyaw - creep * CONFIRM_DWELL_S
             score = math.hypot(ex, ey) / tol_m + abs(eyaw_confirmed) / tol_rad
             if score < best - 0.1:
                 best, best_look = score, len(iterations)
-            stagnant = target is None and len(iterations) - best_look >= STAGNANT_LOOKS
-            band_m, band_rad = (STATION_TOL_M, RELAXED_RAD) if stagnant else (tol_m, tol_rad)
+            stagnant = len(iterations) - best_look >= STAGNANT_LOOKS
+            band_m, band_rad = servo_band(target is not None, stagnant, tol_m, tol_rad)
             if math.hypot(ex, ey) <= band_m and abs(eyaw_confirmed) <= band_rad:
                 if target is not None:
                     self.settle()
@@ -735,12 +898,11 @@ class G1Operations:
     def _expect(self, pose_before: list, correction) -> None:
         """The belief after a correction, from what the table says it does (the commands' own dead reckoning uses gains
         that are right on average for a walk, and far off for a step to the side with a turn)."""
-        forward, left, heading = expected(correction, self.held is not None, self.seen)
+        forward, left, _ = expected(correction, self.held is not None, self.seen)  # (the heading is the IMU's)
         x, y, yaw = pose_before
-        self.pose = [
+        self._xy = [
             x + forward * math.cos(yaw) - left * math.sin(yaw),
             y + forward * math.sin(yaw) + left * math.cos(yaw),
-            site_mod.wrap(yaw + heading),
         ]
 
     def _coarse(self, error: tuple) -> None:
@@ -781,6 +943,28 @@ class G1Operations:
         if abs(row[2]) <= 0.06 and waited >= 1.5:  # the creep, from what the heading did beyond what the table says
             rate = (site_mod.wrap(self.pose[2] - yaw0) - row[2]) / waited
             self.creep = float(np.clip(0.7 * self.creep + 0.3 * rate, -0.03, 0.05))
+
+    def _note_creep_imu(self) -> None:
+        """The heading's creep, read from the IMU: how fast its yaw turns over a quiet second, the gyro's bias (learned
+        from the fixes, heading.py) taken out. A standing robot that no command has moved for two seconds turns at the
+        creep and at nothing else, and the IMU has it at once; the markers show it only between two looks with nothing
+        commanded in between, which a servo that keeps correcting does not have (so it aimed against 0.007 rad/s
+        while the stance, under a torque, was turning 0.025: docs/evidence/g1-phase4-prereqs.md). Blended into `creep`
+        as the other estimates are, and left alone when the window is not quiet or has too few samples."""
+        if self.tracker is None or self.tracker.held or self.robot is None:
+            return
+        now = self.now_ms()
+        start = now - CREEP_WINDOW_MS
+        if start < self.moved_ms + CREEP_QUIET_MS:
+            return
+        samples = self.robot.samples_since(start)
+        if len(samples) < 0.8 * CREEP_WINDOW_MS / 4:
+            return
+        t = np.array([x.tick for x in samples]) / 1000.0
+        yaw = np.unwrap([yaw_of(x.quat) for x in samples])
+        rate = float(np.polyfit(t - t[0], yaw, 1)[0]) - self.tracker.bias
+        self.creep = float(np.clip(0.7 * self.creep + 0.3 * np.clip(rate, -0.02, 0.05), -0.03, 0.05))
+        self.creep_reads += 1
 
     def _note_creep(self, before) -> None:
         """The heading's creep, as the robot saw it: how far the marker's heading moved between two looks with nothing
@@ -1222,6 +1406,7 @@ class G1Operations:
                 break
             time.sleep(0.1)
         self.stance_now = model
+        self._hold_heading(model == "supported")
         self.events.append({"t_ms": self.now_ms(), "event": "stance", "model": model})
         return model
 
@@ -1350,17 +1535,33 @@ class G1Operations:
             [(lo[0] + hi[0]) / 2, lo[1] + obj["half_size"][2] + PLACE_ABOVE_M, (lo[2] + hi[2]) / 2]
         )
         # the marker frame is (x right, y up, z out) with a vertical panel: y is the height above the marker's centre
-        centre = reading.rotation @ target_marker + reading.position
-        details["target_in_pelvis"] = [round(float(v), 4) for v in centre]
         half = obj["half_size"]
         accept = self._place_accept(side, half, self.robot.low_q.copy())
-        plan = self._plan_reach(
-            side,
-            lambda R: centre - R @ self.held["offset_in_hand"],
-            extra=(("above", (0.0, 0.0, 0.10)),),
-            degs=(self.held["fingers_down_deg"],),
-            accept=accept,
-        )
+        # across the region (the marker frame's x), the way that brings the target toward the pelvis's centre line
+        toward = -1.0 if (reading.rotation @ np.array([1.0, 0.0, 0.0]))[1] * (
+            reading.rotation @ target_marker + reading.position
+        )[1] > 0 else 1.0
+        room = (hi[0] - lo[0]) / 2 - PLACE_INSIDE_M
+        shifts = [0.0] + [d for d in PLACE_SHIFTS_M if d <= room + 1e-9]
+        for k, shift in enumerate(shifts):
+            centre = reading.rotation @ (target_marker + np.array([toward * shift, 0.0, 0.0])) + reading.position
+            try:
+                plan = self._plan_reach(
+                    side,
+                    lambda R, c=centre: c - R @ self.held["offset_in_hand"],
+                    extra=(("above", (0.0, 0.0, 0.10)),),
+                    degs=(self.held["fingers_down_deg"],),
+                    accept=accept,
+                )
+            except BackendFailure as exc:
+                if exc.code != "S502" or k == len(shifts) - 1:
+                    raise
+                self.events.append({"t_ms": self.now_ms(), "event": "place_shift", "shift_m": shifts[k + 1],
+                                    "because": str(exc)[:120]})
+                continue
+            break
+        details["target_in_pelvis"] = [round(float(v), 4) for v in centre]
+        details["target_shift_m"] = round(float(shift), 3)
         details["reach"] = {k: plan[k] for k in ("fingers_down_deg", "waist_rad", "position_error_m")}
         details["clearance"] = plan["clearance"]
         self._arm_begin()
@@ -1399,7 +1600,8 @@ class G1Operations:
 
     def confirm_stopped(self) -> dict:
         """Confirm from lowstate that the robot is upright and still: over a window of 0.5 s of simulation time the
-        pelvis IMU's rate, the tilt and every joint's velocity are within tolerance, within 3 s of the stop."""
+        pelvis IMU's rate, the tilt and every joint's velocity are within tolerance, and the legs and waist have moved
+        no more than CONFIRM_LEG_TRAVEL_RAD from the window's start to its end, within 3 s of the stop."""
         t0 = self.now_ms()
         result = {
             "confirmed": False,
@@ -1408,6 +1610,7 @@ class G1Operations:
             "tolerances": {
                 "gyro_rad_s": CONFIRM_GYRO,
                 "joint_velocity_rad_s": CONFIRM_JOINT_VEL,
+                "leg_travel_rad": CONFIRM_LEG_TRAVEL_RAD,
                 "tilt_deg": round(math.degrees(CONFIRM_TILT_RAD), 1),
             },
             "t_stop_ms": t0,
@@ -1429,14 +1632,21 @@ class G1Operations:
             ):
                 gyro = max(float(np.linalg.norm(x.gyro)) for x in s)
                 joints = max(float(np.max(np.abs(x.dq))) for x in s)
+                travel = float(np.max(np.abs(s[-1].q[LEG_AND_WAIST] - s[0].q[LEG_AND_WAIST])))
                 tilt = max(math.acos(max(-1.0, min(1.0, 1 - 2 * (x.quat[1] ** 2 + x.quat[2] ** 2)))) for x in s)
                 result.update(
                     max_gyro_rad_s=round(gyro, 4),
                     max_joint_velocity_rad_s=round(joints, 4),
+                    leg_travel_rad=round(travel, 4),
                     max_tilt_deg=round(math.degrees(tilt), 2),
                     samples=len(s),
                 )
-                if gyro <= CONFIRM_GYRO and joints <= CONFIRM_JOINT_VEL and tilt <= CONFIRM_TILT_RAD:
+                if (
+                    gyro <= CONFIRM_GYRO
+                    and joints <= CONFIRM_JOINT_VEL
+                    and travel <= CONFIRM_LEG_TRAVEL_RAD
+                    and tilt <= CONFIRM_TILT_RAD
+                ):
                     result.update(
                         confirmed=True, window_start_ms=s[0].tick, window_end_ms=s[-1].tick, after_ms=s[-1].tick - t0
                     )

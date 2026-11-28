@@ -1,0 +1,961 @@
+{
+  "checks": {
+    "move-stress": {
+      "pass": false,
+      "details": {
+        "protocol": "bench, then 20 x (shelf, bench): one stand-in, free stance, the oracle judges each, the box held throughout",
+        "grasp": {
+          "pass": true,
+          "carry_pose": {
+            "object_to_nearest_link_m": 0.0164,
+            "link": "right_hip_pitch_link",
+            "arm_deviation_rad": 0.045
+          }
+        },
+        "creep_torque_nm": 0.5,
+        "tolerance": {
+          "m": 0.05,
+          "rad": 0.1
+        },
+        "shelf": {
+          "arrivals": 20,
+          "pass": 15,
+          "sim_s": {
+            "min": 69.8,
+            "median": 95.2,
+            "max": 136.2,
+            "mean": 95.1
+          },
+          "worst_error_m": 1.2833,
+          "worst_error_rad": 1.3592
+        },
+        "bench": {
+          "arrivals": 20,
+          "pass": 19,
+          "sim_s": {
+            "min": 61.4,
+            "median": 91.4,
+            "max": 252.0,
+            "mean": 108.6
+          },
+          "worst_error_m": 0.0427,
+          "worst_error_rad": 0.0657
+        },
+        "moves": [
+          {
+            "n": 0,
+            "station": "bench",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0378,
+            "oracle_error_rad": 0.007,
+            "sim_s": 51.2,
+            "wall_s": 51.2,
+            "servo_looks": 7,
+            "events": {
+              "localized": 14,
+              "creep": 1
+            },
+            "trace": [
+              0,
+              32
+            ]
+          },
+          {
+            "n": 1,
+            "station": "shelf",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0138,
+            "oracle_error_rad": 0.0078,
+            "sim_s": 90.2,
+            "wall_s": 90.2,
+            "servo_looks": 12,
+            "events": {
+              "localized": 21,
+              "creep": 1
+            },
+            "trace": [
+              35,
+              84
+            ]
+          },
+          {
+            "n": 2,
+            "station": "bench",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0123,
+            "oracle_error_rad": 0.0193,
+            "sim_s": 83.4,
+            "wall_s": 83.4,
+            "servo_looks": 8,
+            "events": {
+              "localized": 18,
+              "creep": 1
+            },
+            "trace": [
+              84,
+              127
+            ]
+          },
+          {
+            "n": 3,
+            "station": "shelf",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.03,
+            "oracle_error_rad": 0.0378,
+            "sim_s": 78.6,
+            "wall_s": 79.7,
+            "servo_looks": 6,
+            "events": {
+              "localized": 17,
+              "creep": 1
+            },
+            "trace": [
+              127,
+              167
+            ]
+          },
+          {
+            "n": 4,
+            "station": "bench",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0427,
+            "oracle_error_rad": 0.0194,
+            "sim_s": 97.4,
+            "wall_s": 97.4,
+            "servo_looks": 6,
+            "events": {
+              "localized": 22,
+              "rejected": 1,
+              "blocked": 1,
+              "creep": 1
+            },
+            "trace": [
+              167,
+              218
+            ]
+          },
+          {
+            "n": 5,
+            "station": "shelf",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0302,
+            "oracle_error_rad": 0.0371,
+            "sim_s": 114.6,
+            "wall_s": 114.6,
+            "servo_looks": 2,
+            "events": {
+              "localized": 28,
+              "blocked": 2,
+              "creep": 1
+            },
+            "trace": [
+              218,
+              281
+            ]
+          },
+          {
+            "n": 6,
+            "station": "bench",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.036,
+            "oracle_error_rad": 0.0134,
+            "sim_s": 66.2,
+            "wall_s": 66.2,
+            "servo_looks": 4,
+            "events": {
+              "localized": 15,
+              "creep": 1
+            },
+            "trace": [
+              281,
+              314
+            ]
+          },
+          {
+            "n": 7,
+            "station": "shelf",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.033,
+            "oracle_error_rad": 0.031,
+            "sim_s": 87.4,
+            "wall_s": 87.4,
+            "servo_looks": 7,
+            "events": {
+              "localized": 19,
+              "creep": 2
+            },
+            "trace": [
+              314,
+              360
+            ]
+          },
+          {
+            "n": 8,
+            "station": "bench",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0287,
+            "oracle_error_rad": 0.0657,
+            "sim_s": 252.0,
+            "wall_s": 252.0,
+            "servo_looks": 16,
+            "events": {
+              "localized": 59,
+              "unseen": 4,
+              "blocked": 1,
+              "creep": 1
+            },
+            "trace": [
+              360,
+              509
+            ]
+          },
+          {
+            "n": 9,
+            "station": "shelf",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0143,
+            "oracle_error_rad": 0.0033,
+            "sim_s": 69.8,
+            "wall_s": 69.8,
+            "servo_looks": 6,
+            "events": {
+              "localized": 15,
+              "creep": 1
+            },
+            "trace": [
+              509,
+              545
+            ]
+          },
+          {
+            "n": 10,
+            "station": "bench",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0286,
+            "oracle_error_rad": 0.0437,
+            "sim_s": 128.2,
+            "wall_s": 128.2,
+            "servo_looks": 20,
+            "events": {
+              "localized": 29,
+              "creep": 1
+            },
+            "trace": [
+              545,
+              615
+            ]
+          },
+          {
+            "n": 11,
+            "station": "shelf",
+            "pass": false,
+            "failure": {
+              "code": "S517",
+              "message": "station marker 21 was not seen within 90 s (scanned from the approach point; belief [2.25, 2.48, -3.14])"
+            },
+            "oracle_error_m": 0.8971,
+            "oracle_error_rad": 1.2793,
+            "sim_s": 95.4,
+            "wall_s": 95.4,
+            "servo_looks": 0,
+            "events": {
+              "localized": 3,
+              "sidestep": 3,
+              "scan": 5
+            },
+            "trace": [
+              615,
+              672
+            ]
+          },
+          {
+            "n": 12,
+            "station": "bench",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0319,
+            "oracle_error_rad": 0.0087,
+            "sim_s": 80.4,
+            "wall_s": 80.4,
+            "servo_looks": 2,
+            "events": {
+              "localized": 13,
+              "creep": 1
+            },
+            "trace": [
+              672,
+              707
+            ]
+          },
+          {
+            "n": 13,
+            "station": "shelf",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0307,
+            "oracle_error_rad": 0.0253,
+            "sim_s": 105.2,
+            "wall_s": 105.2,
+            "servo_looks": 15,
+            "events": {
+              "localized": 24,
+              "creep": 1
+            },
+            "trace": [
+              707,
+              765
+            ]
+          },
+          {
+            "n": 14,
+            "station": "bench",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.035,
+            "oracle_error_rad": 0.0039,
+            "sim_s": 73.2,
+            "wall_s": 73.2,
+            "servo_looks": 2,
+            "events": {
+              "localized": 15,
+              "creep": 1
+            },
+            "trace": [
+              765,
+              802
+            ]
+          },
+          {
+            "n": 15,
+            "station": "shelf",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0255,
+            "oracle_error_rad": 0.013,
+            "sim_s": 104.1,
+            "wall_s": 104.1,
+            "servo_looks": 6,
+            "events": {
+              "localized": 24,
+              "creep": 1
+            },
+            "trace": [
+              802,
+              859
+            ]
+          },
+          {
+            "n": 16,
+            "station": "bench",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0026,
+            "oracle_error_rad": 0.0029,
+            "sim_s": 75.4,
+            "wall_s": 75.4,
+            "servo_looks": 6,
+            "events": {
+              "localized": 17,
+              "creep": 1
+            },
+            "trace": [
+              859,
+              898
+            ]
+          },
+          {
+            "n": 17,
+            "station": "shelf",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0246,
+            "oracle_error_rad": 0.0631,
+            "sim_s": 93.0,
+            "wall_s": 93.5,
+            "servo_looks": 9,
+            "events": {
+              "localized": 21,
+              "creep": 1
+            },
+            "trace": [
+              898,
+              948
+            ]
+          },
+          {
+            "n": 18,
+            "station": "bench",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0123,
+            "oracle_error_rad": 0.0165,
+            "sim_s": 91.4,
+            "wall_s": 91.4,
+            "servo_looks": 9,
+            "events": {
+              "localized": 21,
+              "creep": 1
+            },
+            "trace": [
+              948,
+              996
+            ]
+          },
+          {
+            "n": 19,
+            "station": "shelf",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0359,
+            "oracle_error_rad": 0.0079,
+            "sim_s": 127.8,
+            "wall_s": 127.8,
+            "servo_looks": 15,
+            "events": {
+              "localized": 28,
+              "creep": 1
+            },
+            "trace": [
+              996,
+              1065
+            ]
+          },
+          {
+            "n": 20,
+            "station": "bench",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0301,
+            "oracle_error_rad": 0.0414,
+            "sim_s": 114.6,
+            "wall_s": 114.6,
+            "servo_looks": 2,
+            "events": {
+              "localized": 28,
+              "blocked": 1,
+              "creep": 1
+            },
+            "trace": [
+              1065,
+              1128
+            ]
+          },
+          {
+            "n": 21,
+            "station": "shelf",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0289,
+            "oracle_error_rad": 0.0136,
+            "sim_s": 71.9,
+            "wall_s": 71.9,
+            "servo_looks": 8,
+            "events": {
+              "localized": 16,
+              "creep": 1
+            },
+            "trace": [
+              1128,
+              1166
+            ]
+          },
+          {
+            "n": 22,
+            "station": "bench",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0381,
+            "oracle_error_rad": 0.0516,
+            "sim_s": 78.2,
+            "wall_s": 78.2,
+            "servo_looks": 4,
+            "events": {
+              "localized": 17,
+              "creep": 1
+            },
+            "trace": [
+              1166,
+              1206
+            ]
+          },
+          {
+            "n": 23,
+            "station": "shelf",
+            "pass": false,
+            "failure": {
+              "code": "S517",
+              "message": "station marker 21 was not seen within 90 s (scanned from the approach point; belief [2.23, 2.51, -3.05])"
+            },
+            "oracle_error_m": 1.063,
+            "oracle_error_rad": 1.3592,
+            "sim_s": 95.2,
+            "wall_s": 95.2,
+            "servo_looks": 0,
+            "events": {
+              "localized": 3,
+              "sidestep": 3,
+              "scan": 5
+            },
+            "trace": [
+              1206,
+              1263
+            ]
+          },
+          {
+            "n": 24,
+            "station": "bench",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0322,
+            "oracle_error_rad": 0.0347,
+            "sim_s": 101.2,
+            "wall_s": 101.2,
+            "servo_looks": 9,
+            "events": {
+              "localized": 21,
+              "creep": 1
+            },
+            "trace": [
+              1263,
+              1314
+            ]
+          },
+          {
+            "n": 25,
+            "station": "shelf",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0334,
+            "oracle_error_rad": 0.02,
+            "sim_s": 99.2,
+            "wall_s": 99.2,
+            "servo_looks": 15,
+            "events": {
+              "localized": 24,
+              "blocked": 1,
+              "creep": 1
+            },
+            "trace": [
+              1314,
+              1369
+            ]
+          },
+          {
+            "n": 26,
+            "station": "bench",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0311,
+            "oracle_error_rad": 0.0038,
+            "sim_s": 78.6,
+            "wall_s": 78.6,
+            "servo_looks": 8,
+            "events": {
+              "localized": 17,
+              "creep": 1
+            },
+            "trace": [
+              1369,
+              1409
+            ]
+          },
+          {
+            "n": 27,
+            "station": "shelf",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0255,
+            "oracle_error_rad": 0.0184,
+            "sim_s": 136.2,
+            "wall_s": 136.2,
+            "servo_looks": 15,
+            "events": {
+              "localized": 31,
+              "creep": 1
+            },
+            "trace": [
+              1409,
+              1485
+            ]
+          },
+          {
+            "n": 28,
+            "station": "bench",
+            "pass": false,
+            "failure": {
+              "code": "S504",
+              "message": "did not converge on station bench in time (errors forward, left, yaw, last 14 looks: [[-0.026, 0.09, 0.003], [0.136, 0.058, -0.03], [-0.018, 0.045, 0.043], [-0.016, 0.046, 0.039], [-0.014, 0.047, 0.038], [-0.013, 0.044, 0.039], [-0.006, 0.041, 0.039], [-0.005, 0.041, 0.037], [-0.005, 0.043, 0.032], [-0.009, 0.047, 0.033], [-0.011, 0.045, 0.041], [-0.008, 0.043, 0.051], [-0.007, 0.042, 0.037], [-0.008, 0.04, 0.038]])"
+            },
+            "oracle_error_m": 0.042,
+            "oracle_error_rad": 0.0281,
+            "sim_s": 207.4,
+            "wall_s": 207.4,
+            "servo_looks": 0,
+            "events": {
+              "localized": 50,
+              "blocked": 3
+            },
+            "trace": [
+              1485,
+              1606
+            ]
+          },
+          {
+            "n": 29,
+            "station": "shelf",
+            "pass": false,
+            "failure": {
+              "code": "S517",
+              "message": "station marker 21 was not seen within 90 s (scanned from the approach point; belief [2.25, 2.49, -3.13])"
+            },
+            "oracle_error_m": 1.0493,
+            "oracle_error_rad": 1.2174,
+            "sim_s": 96.0,
+            "wall_s": 96.0,
+            "servo_looks": 0,
+            "events": {
+              "localized": 3,
+              "sidestep": 3,
+              "scan": 5
+            },
+            "trace": [
+              1606,
+              1663
+            ]
+          },
+          {
+            "n": 30,
+            "station": "bench",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.025,
+            "oracle_error_rad": 0.0281,
+            "sim_s": 108.2,
+            "wall_s": 108.2,
+            "servo_looks": 13,
+            "events": {
+              "localized": 21,
+              "creep": 1
+            },
+            "trace": [
+              1663,
+              1719
+            ]
+          },
+          {
+            "n": 31,
+            "station": "shelf",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0154,
+            "oracle_error_rad": 0.0166,
+            "sim_s": 82.2,
+            "wall_s": 82.2,
+            "servo_looks": 6,
+            "events": {
+              "localized": 18,
+              "creep": 1
+            },
+            "trace": [
+              1719,
+              1762
+            ]
+          },
+          {
+            "n": 32,
+            "station": "bench",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0304,
+            "oracle_error_rad": 0.0624,
+            "sim_s": 80.8,
+            "wall_s": 80.8,
+            "servo_looks": 3,
+            "events": {
+              "localized": 17,
+              "creep": 1
+            },
+            "trace": [
+              1762,
+              1803
+            ]
+          },
+          {
+            "n": 33,
+            "station": "shelf",
+            "pass": false,
+            "failure": {
+              "code": "S517",
+              "message": "station marker 21 was not seen within 90 s (scanned from the approach point; belief [2.2, 2.5, -3.06])"
+            },
+            "oracle_error_m": 1.2833,
+            "oracle_error_rad": 1.2267,
+            "sim_s": 98.8,
+            "wall_s": 98.8,
+            "servo_looks": 0,
+            "events": {
+              "localized": 3,
+              "sidestep": 3,
+              "scan": 5
+            },
+            "trace": [
+              1803,
+              1862
+            ]
+          },
+          {
+            "n": 34,
+            "station": "bench",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0344,
+            "oracle_error_rad": 0.0102,
+            "sim_s": 61.4,
+            "wall_s": 61.4,
+            "servo_looks": 2,
+            "events": {
+              "localized": 10,
+              "creep": 1
+            },
+            "trace": [
+              1862,
+              1889
+            ]
+          },
+          {
+            "n": 35,
+            "station": "shelf",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0046,
+            "oracle_error_rad": 0.0264,
+            "sim_s": 82.8,
+            "wall_s": 82.8,
+            "servo_looks": 6,
+            "events": {
+              "localized": 18,
+              "creep": 1
+            },
+            "trace": [
+              1889,
+              1934
+            ]
+          },
+          {
+            "n": 36,
+            "station": "bench",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0314,
+            "oracle_error_rad": 0.0059,
+            "sim_s": 114.8,
+            "wall_s": 114.8,
+            "servo_looks": 17,
+            "events": {
+              "localized": 26,
+              "creep": 1
+            },
+            "trace": [
+              1934,
+              1997
+            ]
+          },
+          {
+            "n": 37,
+            "station": "shelf",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0193,
+            "oracle_error_rad": 0.0145,
+            "sim_s": 80.4,
+            "wall_s": 80.4,
+            "servo_looks": 5,
+            "events": {
+              "localized": 18,
+              "creep": 1
+            },
+            "trace": [
+              1997,
+              2039
+            ]
+          },
+          {
+            "n": 38,
+            "station": "bench",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0281,
+            "oracle_error_rad": 0.0626,
+            "sim_s": 190.3,
+            "wall_s": 190.3,
+            "servo_looks": 31,
+            "events": {
+              "localized": 51,
+              "blocked": 6,
+              "creep": 1
+            },
+            "trace": [
+              2039,
+              2150
+            ]
+          },
+          {
+            "n": 39,
+            "station": "shelf",
+            "pass": false,
+            "failure": {
+              "code": "S517",
+              "message": "station marker 21 was not seen within 90 s (scanned from the approach point; belief [2.23, 2.5, -3.06])"
+            },
+            "oracle_error_m": 1.0566,
+            "oracle_error_rad": 1.3062,
+            "sim_s": 93.0,
+            "wall_s": 95.3,
+            "servo_looks": 0,
+            "events": {
+              "localized": 3,
+              "sidestep": 3,
+              "scan": 5
+            },
+            "trace": [
+              2150,
+              2205
+            ]
+          },
+          {
+            "n": 40,
+            "station": "bench",
+            "pass": true,
+            "failure": null,
+            "oracle_error_m": 0.0289,
+            "oracle_error_rad": 0.0268,
+            "sim_s": 88.0,
+            "wall_s": 88.0,
+            "servo_looks": 5,
+            "events": {
+              "localized": 17,
+              "creep": 1
+            },
+            "trace": [
+              2205,
+              2248
+            ]
+          }
+        ],
+        "realtime_ratio": null
+      },
+      "elapsed_s": 4165.1
+    }
+  },
+  "stance_model": "free",
+  "versions": {
+    "arch": "aarch64",
+    "python": "3.11.2",
+    "assets": {
+      "unitree_mujoco": "1eb6642e3f3fdfb7fb13a9794fd6a2dd93ea0e7d",
+      "unitree_rl_lab": "4960b84732b0c2ec593dccbfe963fda1bcd7b1e3",
+      "mujoco_menagerie": "370c43965323c0944b433b202aac5058b5f907a9",
+      "unitree_rl_gym": "276801e46c5d433564f24658bac64f254b7d2d4b",
+      "unitree_sdk2_python": "814556d15970dd2ecf1c9984e845ca02ab07e206",
+      "cyclonedds_c": "abb064e35b6fbc79554c255ff8b371333e87b029"
+    },
+    "packages": {
+      "mujoco": "4.0.1",
+      "onnxruntime": "1.32.0",
+      "numpy": "2.4.6",
+      "opencv-python-headless": "5.1.0.95",
+      "cyclonedds": "0.10.2",
+      "unitree_sdk2py": "1.0.1"
+    }
+  },
+  "arch": "aarch64",
+  "go": false,
+  "realtime_valid_all_runs": false,
+  "elapsed_s": 4165.1,
+  "runs": [
+    {
+      "scenario": "move_stress_carry_creep0.5",
+      "realtime_ratio": 0.999,
+      "worst_second_ratio": 0.3008,
+      "stalls": 4,
+      "realtime_valid": false,
+      "step_compute_ms": {
+        "budget": 2.0,
+        "mean": 0.627,
+        "p99": 2.845,
+        "max": 7.3,
+        "over_budget": 0.0182
+      },
+      "gc": [
+        0.1,
+        0.0,
+        13.5
+      ],
+      "slow_steps": [
+        [
+          485.024,
+          25.0,
+          0
+        ],
+        [
+          1209.44,
+          30.5,
+          0
+        ],
+        [
+          1685.56,
+          528.8,
+          0
+        ],
+        [
+          2138.036,
+          38.8,
+          0
+        ],
+        [
+          2690.474,
+          25.6,
+          0
+        ],
+        [
+          2696.84,
+          20.8,
+          0
+        ],
+        [
+          3163.272,
+          23.3,
+          0
+        ],
+        [
+          3729.032,
+          27.0,
+          0
+        ],
+        [
+          3984.3,
+          625.5,
+          0
+        ],
+        [
+          3984.34,
+          1703.8,
+          0
+        ]
+      ],
+      "failure": null,
+      "record": "move_stress_carry_creep0.5/record.json"
+    }
+  ]
+}

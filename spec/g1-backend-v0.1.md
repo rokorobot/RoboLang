@@ -5,7 +5,11 @@ the harness checks P1–P6 ([evidence](../docs/evidence/g1-phase1-harness.md)), 
 `place`, `wait for`, the stop, the records; checks E1–E7, [evidence](../docs/evidence/g1-phase2-executor.md)), and goal
 and precondition verdicts from observations (checks O1–O7, [evidence](../docs/evidence/g1-phase3-observations.md)), with
 one exception to 0046 U8 for observing a carried object (approved by the owner 2026-11-21; see "Observations and
-verdicts"). Code: [`backends/unitree_g1/`](../backends/unitree_g1/).
+verdicts"). Two prerequisites of the phase 4 acceptance run followed ([evidence](../docs/evidence/g1-phase4-prereqs.md)):
+`move`'s heading between marker fixes comes from the IMU ("The IMU"), and the stand-in keeps pace with real time on a
+loaded 4-CPU host ("Time"). **Phase 4, the acceptance run, met the bar on its third run** (2026-11-26: 38 of 42 runs `SUCCEEDED`, the minimum;
+57 of 57 atoms agree with the oracle; no false success in any of the three runs; 5 of 5 failure cases;
+[evidence](../docs/evidence/g1-phase4-acceptance.md), with follow-ups F1–F4). Code: [`backends/unitree_g1/`](../backends/unitree_g1/).
 
 ## Scope and safety boundary
 
@@ -31,7 +35,55 @@ Physics steps every 2 ms against the wall clock, the joint PD law is evaluated e
 every 10th step (50 Hz). A 5 ms step is not allowed: MuJoCo integrates the PD torque explicitly, which is stable only
 for dt·kd/I < 2, and the arms reach 4.5 at 5 ms (1.8 at 2 ms). Simulation time is in `LowState_.tick` (ms), in the
 identity API and in every camera frame. The SDK's timeouts are wall-clock, as on the robot. The stand-in reports its
-real-time ratio. A run in which any second falls more than 5% behind real time does not count towards acceptance.
+real-time ratio. A run in which any second falls more than 5% behind real time, or in which a step stalls for more than
+0.25 s, does not count towards acceptance; **that bar is unchanged**.
+
+**Keeping pace on a loaded host.** The loop is 0.3-0.5 ms of compute in a 2 ms step, so a second is lost only when the
+loop thread is kept off a CPU: measured, a second at 0.80 of real time had the loop waiting 0.4-0.6 s in the run queue
+while the executor started up and the camera rendered. Four things follow, none of which touches the 2 ms step or the PD
+law: (1) `rt/lowstate` and the hand states are serialized once and their changing fields patched in a byte buffer
+(`sim/fastdds.py`; 14 us a publish instead of 247 us, **the same bytes on the wire**, a test compares them); (2) the
+camera thread and the renderer's workers run at nice 19, and the executor process and the checks' oracle reader at nice
+10 (`harness.YIELD_NICE`; lowering a priority needs no privilege), so the loop thread, which keeps nice 0, wins every
+contention among the backend's own processes; (3) the stand-in's `status` says why a slow second was slow: each entry of
+`slow_windows` is `(sim time, ratio, loop thread CPU s, loop thread run-queue wait s)`; (4) the executor, when started by
+hand rather than by `run_task` or the checks, is not niced: start it with `nice -n 10`.
+
+**The head camera is a separate matter.** Software rendering is the stand-in's largest use of CPU (a 640x480 frame is 114 ms
+on four CPUs, 207-287 ms on two), and a host short of it keeps the loop in time and lets the camera fall from 5 Hz to
+2.5-3 Hz. `realtime_valid` does not look at the camera; the run records and the CI summary carry its rate (`camera`:
+`frames`, `dropped`, `render_ms`, `hz`), and the harness's P6 fails below 4.5 Hz.
+
+## The IMU
+
+`rt/lowstate` carries the pelvis IMU: quaternion, gyroscope, accelerometer. MuJoCo's own sensors are exact, and a heading
+taken from a perfect IMU would flatter the executor, so the stand-in spoils them as a MEMS IMU with an on-board attitude
+filter is spoiled ([`sim/imu.py`](../backends/unitree_g1/robolang_g1/sim/imu.py)):
+
+| | model | value |
+|---|---|---|
+| gyro bias | per axis, normal, drawn at start-up (what is left after turn-on calibration) | 1 sigma 0.002 rad/s (0.11 deg/s) |
+| gyro bias walk | random walk in the run | 2e-5 rad/s per root second |
+| gyro noise | white, per sample at 250 Hz | 0.002 rad/s rms (1.8e-4 rad/s per root hertz) |
+| quaternion yaw | the integral of the gyro's error about the vertical (no magnetometer: nothing pulls it back) | drifts at the bias: 0.12 rad a minute at 1 sigma |
+| quaternion roll, pitch | held by gravity: exact | |
+| accelerometer | white noise | 0.02 m/s^2 rms |
+
+`--imu-seed N` repeats a draw, `--imu-bias B` sets the gyro's z bias (rad/s; the stress check's worst case),
+`--ideal-imu` is the exact sensor (measurement only). The oracle has the true bias and yaw error; the executor cannot see them.
+
+**What the executor does with it** ([`heading.py`](../backends/unitree_g1/robolang_g1/heading.py), pure; the no-oracle
+test covers it). The belief heading is `the last marker fix's heading + the change in the IMU's yaw since that fix - bias x
+time`. The yaw is taken from the quaternion; nothing else (not the oracle, MuJoCo state or `SportModeState`) is read. A
+marker fix resets the belief, as before. **Bias:** the IMU's yaw drifts, so the tracker learns the gyro bias from the
+fixes themselves: over the time between two marker fixes the marker says how far the robot turned and the IMU says how far
+it thinks it did, and the difference per second is the bias (least squares over all pairs at least 4 s long, with a prior
+at zero, forgetting with a 300 s time constant, clipped at 0.01 rad/s; a rate above 0.02 rad/s between two fixes is taken
+for a bad fix and teaches nothing). While the pelvis is welded for arm work (the supported stance) the belief heading
+holds, since a welded pelvis cannot turn, and a pair of fixes across that interval is a pure bias measurement. The
+position between fixes is still dead-reckoned from the commands (measured gains), along the IMU's heading. Each `move`
+record has `heading: {source: "imu_yaw", fixes, bias_rad_s, jump_rad_max, jump_rad_mean}`, and each `localized` event
+`heading_jump_rad`: how far the fix moved the heading, which is the IMU's error since the last fix, as the markers saw it.
 
 ## Stance and stop
 
@@ -83,16 +135,32 @@ have, an object without a marker, an `object_at` location without a region), S50
 and region limits, `do`, a task without a goal, and any condition other than `object_at`, `robot_at`, `holding`,
 `robot_ready` and their `and`, `or`, `not` (in a precondition or the goal).
 
-**`move r to L`.** The executor keeps a **belief pose** of the pelvis in the map: dead reckoning from the velocities it
-commands, replaced whenever a station marker is seen (the marker's map pose composed with the inverse of its observed
-pose; a solution whose vertical disagrees with the IMU's is the wrong one of the two a planar marker allows, and is
-ignored). The walking stand-in turns in place only by a *shuffle* (alternating sideways commands, each with a yaw rate),
+**`move r to L`.** The executor keeps a **belief pose** of the pelvis in the map, replaced whenever a station marker is
+seen (the marker's map pose composed with the inverse of its observed pose; a solution whose vertical disagrees with the
+IMU's is the wrong one of the two a planar marker allows, and is ignored). Between fixes the **position** is dead
+reckoning from the velocities it commands, taken along the heading the robot had while the command ran, and the
+**heading** is the IMU's ("The IMU", below), not the commanded yaw rates'.
+
+The walking stand-in turns in place only by a *shuffle* (alternating sideways commands, each with a yaw rate),
 takes a step only when a command lasts about 0.3 s, and ignores commands smaller than about 0.3, so a move is: turn to face
 the approach point (0.5 m before the station, facing it), walk in legs with a look between them, turn to the station's
 heading, find the station marker (a scan by turning in place if it is not in view; **S517** if not seen within 70 s), then
-correct with short bursts chosen from the measured step sizes until the marker puts the robot within **4.4 cm and 0.085
-rad** of the station pose, wait for the stance to settle (from `lowstate` only: pelvis IMU rate and leg joint velocities
-quiet), and look again (within 4.7 cm and 0.09 rad). **S504** if it does not converge in 90 s.
+correct with short bursts chosen from the measured step sizes, first to the approach point (within 8 cm and 0.07 rad) and
+then until the marker puts the robot within **4.4 cm and 0.085 rad** of the station pose, wait for the stance to settle
+(from `lowstate` only: pelvis IMU rate and leg joint velocities quiet), and look again (within 4.7 cm and 0.09 rad).
+**S504** if it does not converge in 90 s. **The heading creeps**: a standing robot turns slowly to the left by itself
+(0.007 rad/s measured, 0.025 under the stress check's torque). The corrections are chosen to leave the heading, counted as
+it will be at the next look and at the confirming look, inside the band; the creep they are aimed against is read from the
+IMU's yaw over a quiet second (at least 2 s after the last command), less the learned bias, and from the markers between
+two looks. After four looks without a better error a servo goes on from a wider band (the final servo to the confirming
+look from 4.2 cm and 0.07 rad, which still decides; the approach point, which no confirmation follows, from 12 cm and
+0.15 rad, which the last walk corrects: under a creep of 0.025 rad/s the heading was inside 0.07 rad for a moment in each
+5 s look, and one move spent its whole 150 s at the approach point).
+**A move to a station the robot already stands beside** (it has arrived at a station before, the belief is within 25 cm
+and 0.2 rad of this station's pose, and this station's marker is seen now) is the servo alone, from where it stands,
+and the record says `direct: true`: the same station named twice (`l_vial_hold`'s bench and spinner), or a dock one
+step behind a destination. Walking out to the approach point and in again had moved a robot with a box in hand by
+several centimetres before the place that followed (S502), and once made the belief jump 0.5 m on the way (S504).
 
 **`grasp r O`.** Re-observe the station marker (and re-servo if the robot moved); observe the object's marker (**S506**
 before anything moves if it is not seen); choose the hand (the site's, or the nearer side); inverse kinematics on the
@@ -135,8 +203,10 @@ the clearance check above stands in for the collisions the scene does not have.
 **Stop and S516.** On a failed step, cancel, revoke or deadline: `SetVelocity(0)`, the arms held where they are through
 `arm_sdk` (the target becomes the measured joints), the hands unchanged (a held object stays held), the robot kept
 standing, never `Damp`, zero torque, `SwitchToUserCtrl` or `rt/lowcmd`. The stop is confirmed from `lowstate` within 3 s of
-simulation time: over 0.5 s the IMU rate is at most 0.06 rad/s, every joint's velocity at most 0.12 rad/s and the tilt at
-most 15 degrees; the record has the numbers. If the IMU's tilt reaches 40 degrees at any time the run ends with **S516**
+simulation time: over 0.5 s the IMU rate is at most 0.045 rad/s, every joint's velocity at most 0.09 rad/s, the legs and
+the waist have travelled at most 0.01 rad from the window's start to its end, and the tilt is at most 15 degrees; the
+record has the numbers. (The travel bound came from x86 CI: a robot coasting to rest after a walk met the two velocity
+bounds at 0.089 rad/s while its whole body still slid 1.6 cm in the window.) If the IMU's tilt reaches 40 degrees at any time the run ends with **S516**
 and **nothing more is sent**, the stop's own commands included.
 
 **Record.** Schema `robolang.g1.run` 0.2 (0.2 adds the verdicts, `snapshots` and `goal_evaluated`), mirroring the ROS 2 record: `backend: {kind: "unitree-g1-mujoco", versions,
@@ -209,6 +279,40 @@ The codes and meanings of the [ROS 2 backend](ros2-backend-v0.1.md#failure-codes
 | S516 | The robot fell or lost balance (IMU tilt beyond the limit, or the walking service left its standing and walking states). The run stops; no further command |
 | S517 | Localization lost: a station marker that `move` or an observation needs was not seen within its timeout |
 
+## Acceptance scenes and the acceptance run (phase 4)
+
+[`scenes.py`](../backends/unitree_g1/robolang_g1/scenes.py) makes one site per task of the acceptance family (0046
+section 3: the 11 single-arm tasks that passed in Gazebo and `e_park_amr`, `w_carry_hold`, `w_clear_dock`), with the
+entity IDs of `bench/reference/<task>.json`, so the reference `.rob` files run unchanged. Every object is an 8 cm box
+with its marker on top. Every location is a region on a table in front of a station, or a station alone.
+
+**Layout rules, each from a measurement:**
+
+- **One camera, so goals that are named together stand together.** Locations that a goal names together are slots of
+  one table, seen from one station (`a_sort_three`, `w_split_boxes`, `l_vial_hold`), and the dock of `e_box_then_dock`
+  is a standing place 12 cm behind the destination's, with its own plate. `scenes.check_visibility` applies
+  `perception.visibility_violations` and one more limit: the centre of an `object_at` region is at most **0.52 m ahead
+  of the pelvis**. Further out a box's 5.7 cm marker is not read surely (confidence 0.4 at 0.61 m in one x86 run, which
+  the backend refuses as not seen).
+- **A hand for each side of a table.** The arm planner takes a box between 5 and 20 cm to the side of the pelvis with
+  the hand of that side (measured on the robot's own model). So a table holds two boxes with a hand each (12 cm either
+  side), or three with two for one hand (20 and 7 cm), which leaves about 2 cm to spare against where the robot stops.
+  A box outside that band is refused with S502 before the arm moves.
+- **A wide table is no wider on the right than the verified one.** Five centimetres more and the arm, swung out beside
+  the body, came within its 3 cm margin of the table's corner (S502).
+- **The robot stands 1.30 m from the plate to grasp and 1.35 m to place**, as verified in phases 2 and 3.
+
+The five scripted failure cases run on `e_pick_place`: the box absent (S506), the box on the other table (S506), the
+destination's region 0.8 m ahead (S502 at the place, the box still in the hand), the head camera covered (S517), and a
+push while walking (S516, no command after the fall).
+
+[`phase4.py`](../backends/unitree_g1/robolang_g1/phase4.py) is the acceptance run: each task three times on a fresh
+stand-in through `robolang_g1.cli`, then the cases, judged against the oracle with the bar of 0046 section 3 (at least
+90% of the runs `SUCCEEDED`, at least 98% of the atoms agreeing with the oracle, no false success, every case `FAILED`
+with its code). A run that fell behind real time does not count (0046 U13) and is repeated, at most twice per task; a
+false success in such a run still blocks acceptance. The run can be resumed: a run that has written its `result.json`
+is not run again.
+
 ## Where it runs
 
 `.github/workflows/g1-sim.yml`: on demand, nightly, and on pull requests that change `backends/unitree_g1/` or the
@@ -217,5 +321,6 @@ that a backend change is checked on x86_64 before it merges). Plain x86_64 runne
 CycloneDDS build are cached. The job runs the backend's tests, the phase 1 harness (P1-P6, about 2 minutes), the phase 2
 checks (E1-E7, about 35 minutes of simulated real time) and the phase 3 checks (O1-O7, about 40 minutes), and uploads
 `harness.json`, `phase2.json`, `phase3.json` and every run's record.
+The acceptance run is a second job, started by hand (`acceptance: true`): about four hours of simulated real time.
 The simulation runs in real time, so a run's `realtime_valid` (every second within 5% of real time, no stall) is part of
 its record; an invalid run does not count towards acceptance (0046 U13).

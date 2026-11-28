@@ -198,6 +198,12 @@ def realtime_of(session: Session) -> dict:
         "step_compute_ms": f.get("step_compute_ms"),
         "gc": (f.get("gc") or {}).get("max_ms"),
         "slow_steps": (f.get("gc") or {}).get("slow_steps"),
+        # (sim time, ratio, loop thread CPU s, loop thread run-queue wait s) of every second below 0.95: a loop that
+        # waited for a CPU, against one that was computing (docs/evidence/g1-phase4-prereqs.md)
+        "slow_windows": f.get("slow_windows"),
+        # the head camera's rate (the spec is 5 Hz): rendering in software is the stand-in's biggest use of CPU, and a
+        # host that is short of it keeps the physics loop in time and lets the camera fall to 2.5-3 Hz
+        "camera": f.get("camera"),
     }
 
 
@@ -205,8 +211,9 @@ def realtime_of(session: Session) -> dict:
 
 
 class Ctx:
-    def __init__(self, run_dir: Path, stance: str):
+    def __init__(self, run_dir: Path, stance: str, standin_args: list[str] | None = None):
         self.dir, self.stance, self.runs, self.stay = run_dir, stance, [], []
+        self.standin_args = standin_args or []  # extra stand-in arguments for every session (--imu-bias, development)
         self.sites = {n: site_mod.load_site(SITES / f"{n}.json") for n in ("pick_place", "carry_hold")}
         self.n = 0
 
@@ -225,7 +232,7 @@ class Ctx:
         return p
 
     def session(self, name: str, scene: Path | str) -> Session:
-        return Session(scene, self.dir / name, self.stance)
+        return Session(scene, self.dir / name, self.stance, standin_args=self.standin_args)
 
     def done(self, name: str, session: Session, record: dict | None, extra: dict | None = None) -> None:
         self.runs.append({
@@ -382,11 +389,19 @@ def check_e2(ctx: Ctx) -> dict:
 
     def far(d):
         d["tables"][0].update(pos=[3.03, -0.065, 0.375], half_size=[0.35, 0.185, 0.375])
-        d["objects"][0]["pos"] = [3.03, -0.10, 0.79]  # 0.58 m ahead of the pelvis: seen, and beyond the arm
+        # Beyond the arm. The box is 15 cm wide so that its marker (10.7 cm) is read as
+        # surely as one at arm's length: the 8 cm box's 5.7 cm marker is about 20 pixels deep out there, and when the
+        # robot stopped 3 cm short of the station (x86 CI, inside the tolerance) its confidence was 0.4, so the grasp
+        # ended S506 (not seen), which is right, but is not the case this scene is here to check.
+        # 0.68 m ahead, not 0.58: at 0.58 a robot that stopped 4 cm forward, inside its tolerance, had the box within
+        # the arm's 0.62 m from the shoulder (x86 CI: the hand closed short of it, S506 after the arm moved)
+        d["objects"][0].update(pos=[3.13, -0.10, 0.79], half_size=[0.075, 0.075, 0.04])
 
-    status, rec2, log, s, samples2, commands2 = run_scenario(
-        ctx, "e2_far", ctx.variant("pick_place", far), "pick_place", src, "grab", bind
-    )
+    # The executor is told this scene as its site: it must know the box's size, whose marker it measures. Told the
+    # 8 cm box of `pick_place.json` it read the 10.7 cm marker as one of 5.7 cm, put the box at half its distance,
+    # within reach, and the hand closed on air (x86 CI: S506 after the arm moved).
+    far_scene = ctx.variant("pick_place", far)
+    status, rec2, log, s, samples2, commands2 = run_scenario(ctx, "e2_far", far_scene, far_scene, src, "grab", bind)
     box0, box1 = samples2[0]["objects"]["box"]["pos"], samples2[-1]["objects"]["box"]["pos"]
     far_ok = bool(
         rec2
@@ -886,6 +901,11 @@ def check_move_stress(ctx: Ctx, arrivals: int = 20, carry: bool = False, creep: 
                 "sim_s": round((t1 - t0) / 1000, 1), "wall_s": round(time.monotonic() - wall0, 1),
                 "servo_looks": len((details or {}).get("iterations", [])),
                 "events": _event_counts(ops.events),
+                # what the heading tracker has learned so far (the executor's own numbers) beside the IMU's true bias
+                # and yaw error (the oracle's: the executor cannot see them)
+                "heading": {**ops.tracker.summary(), "creep_rad_s": round(ops.creep, 4),
+                            "creep_imu_reads": ops.creep_reads},
+                "imu_truth": {k: v for k, v in _sample_at(samples, t1 / 1000).get("imu", {}).items() if k != "seed"},
                 "trace": [first, len(trace)],
             })
             m = moves[-1]
@@ -953,9 +973,14 @@ def main(argv=None) -> int:
     ap.add_argument("--arrivals", type=int, default=20, help="move-stress: arrivals at the shelf")
     ap.add_argument("--carry", action="store_true", help="move-stress: hold the box through every move")
     ap.add_argument("--creep", type=float, default=0.0, help="move-stress: a steady torque (N m) about the vertical")
+    ap.add_argument("--imu-bias", type=float, help="the stand-in IMU's gyro z bias in rad/s (default: drawn per start, "
+                    "sim/imu.py): a worst case for move-stress")
+    ap.add_argument("--standin-arg", action="append", default=[], metavar="ARG",
+                    help="development: an extra argument for every stand-in (e.g. --standin-arg=--ideal-imu)")
     args = ap.parse_args(argv)
     out = Path(args.out)
-    ctx = Ctx(Path(args.run_dir) if args.run_dir else out.with_suffix(".run"), args.stance)
+    ctx = Ctx(Path(args.run_dir) if args.run_dir else out.with_suffix(".run"), args.stance,
+              (["--imu-bias", str(args.imu_bias)] if args.imu_bias is not None else []) + args.standin_arg)
     ctx.dir.mkdir(parents=True, exist_ok=True)
     only = set(filter(None, args.only.split(",")))
     result: dict = {
