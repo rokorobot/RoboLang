@@ -61,14 +61,29 @@ FLOOR = {"center": [2.0, 1.2], "half_size": [5.5, 4.0], "friction": 1.0}
 OBJECT = {"half_size": [0.04, 0.04, 0.04], "mass": 0.2}
 
 
-def _region(slot: str | None, z=REGION_Z) -> dict:
+# The plate stands this far to the left of the station's pelvis. A wide table reaches 13 cm further left than a narrow
+# one, and with its plate at 0.45 m it hid the plate's inner lower corner from the approach point 0.5 m short of the
+# station: a robot found it only by stepping left, and a robot with a box in each hand, which often takes no sidestep,
+# ended S517 (acceptance runs 1 and 3, F2). So a wide table's plate moves as far left as its table does.
+# Moving it left alone was not enough: from the approach point the line to its lower corners dips below the table top
+# before it clears the table, so a wide table's plate is also raised (as the dock's is), and its regions, which are in
+# the plate's frame, are lowered by as much: they stay where they were on the table.
+PLATE_LAT, PLATE_LAT_WIDE = 0.45, 0.65
+PLATE_Z_WIDE = 0.40
+
+
+def _region(slot: str | None, z=REGION_Z, lat: float = PLATE_LAT, raised: float = 0.0) -> dict:
     """A slot's region in the plate's frame (x to the plate's right as the robot sees it, y up, z out of the plate).
-    The plate is 0.45 m to the left of the pelvis, so a sideways offset `s` of the pelvis frame is x = 0.45 - s."""
+    The plate is `lat` to the left of the pelvis, so a sideways offset `s` of the pelvis frame is x = lat - s; a plate
+    `raised` above the usual height has its regions that much lower in its frame."""
     if slot is None:  # the whole table, as in phases 2 and 3
-        x = (0.35, 0.75)
+        x = (lat - 0.10, lat + 0.30)
+    elif slot == "*":  # a wide table from side to side
+        x = (lat - 0.25, lat + 0.25)
     else:
-        x = (0.45 - SLOT[slot] - SLOT_HALF, 0.45 - SLOT[slot] + SLOT_HALF)
-    return {"min": [round(x[0], 3), REGION_Y[0], z[0]], "max": [round(x[1], 3), REGION_Y[1], z[1]]}
+        x = (lat - SLOT[slot] - SLOT_HALF, lat - SLOT[slot] + SLOT_HALF)
+    y = (round(REGION_Y[0] - raised, 3), round(REGION_Y[1] - raised, 3))
+    return {"min": [round(x[0], 3), y[0], z[0]], "max": [round(x[1], 3), y[1], z[1]]}
 
 
 def _unit(name: str, y0: float, marker: int, stand: float, wide: bool) -> tuple[dict, dict]:
@@ -80,11 +95,13 @@ def _unit(name: str, y0: float, marker: int, stand: float, wide: bool) -> tuple[
         "pos": [TABLE_X, round(y0 - (0.0 if wide else 0.065), 4), TABLE_HALF_Z],
         "half_size": [TABLE_HALF_X, 0.25 if wide else 0.185, TABLE_HALF_Z],
     }
+    lat = PLATE_LAT_WIDE if wide else PLATE_LAT
     station = {
         "name": name,
-        "marker": {"id": marker, "size": PLATE["size"], "pos": [WALL_X, round(y0 + 0.45, 4), PLATE["z"]],
+        "marker": {"id": marker, "size": PLATE["size"], "pos": [WALL_X, round(y0 + lat, 4),
+                                                                 PLATE_Z_WIDE if wide else PLATE["z"]],
                    "facing": PLATE["facing"]},
-        "stand": [stand, 0.45, 0.0],
+        "stand": [stand, lat, 0.0],
     }
     return table, station
 
@@ -231,10 +248,11 @@ def build(scene: str) -> dict:
     locations, loc_bind = [], {}
     for param, (unit, slot) in spec["locations"].items():
         loc = {"name": param, "station": by_unit[unit]["name"]}
-        if slot == "*":
-            loc["region"] = {"min": [0.20, REGION_Y[0], REGION_Z[0]], "max": [0.70, REGION_Y[1], REGION_Z[1]]}
-        elif slot != "-":
-            loc["region"] = _region(slot, spec.get("region_z", {}).get(unit, REGION_Z))
+        if slot != "-":
+            wide = bool(spec["units"][unit] and spec["units"][unit][2])
+            loc["region"] = _region(slot, spec.get("region_z", {}).get(unit, REGION_Z),
+                                    PLATE_LAT_WIDE if wide else PLATE_LAT,
+                                    PLATE_Z_WIDE - PLATE["z"] if wide else 0.0)
         locations.append(loc)
         loc_bind[bind[param]] = param
     for param, (unit, back) in spec.get("extra", {}).items():
@@ -358,6 +376,40 @@ def check_visibility(built: dict) -> list[str]:
             blocked = perception.line_of_sight_blocked(eye, R @ np.array([cx, cy, 0.0]) + p, occluders)
             if blocked is not None:
                 problems.append(f"goal: a corner of the plate of station {name} is hidden by {blocked}")
+                break
+    # Every station the plan moves to: its plate, from where `move` looks for it, in the image and clear of every
+    # table, corner by corner. That is the approach point 0.5 m short on the station's axis, or, for a station within
+    # DIRECT_M of the one the robot stands at, that station's pose (the servo alone). F2: a wide table hid the plate
+    # from the approach point.
+    from .ops import APPROACH_M, DIRECT_M
+
+    Rc, _ = kin.camera_pose(np.zeros(29))
+    grown = [{**b, "half_size": [v + SIGHT_MARGIN_M for v in b["half_size"]]} for b in site["tables"]]
+    checked, here = set(), None
+    for m in moves:
+        name = site_mod.location(site, names[m.target])["station"]
+        station = site_mod.station(site, name)
+        gx, gy, gyaw = station["pose"]
+        if here is not None and math.hypot(gx - here[0], gy - here[1]) <= DIRECT_M:
+            view, where = here, "the station before it"
+        else:
+            view = [gx - APPROACH_M * math.cos(gyaw), gy - APPROACH_M * math.sin(gyaw), gyaw]
+            where = "the approach point"
+        here = station["pose"]
+        if (name, where) in checked:
+            continue
+        checked.add((name, where))
+        R_body = site_mod.rot_z(view[2])
+        eye_v = np.array([view[0], view[1], STAND_HEIGHT]) + R_body @ pc
+        marker = station["marker"]
+        R, p = site_mod.marker_frame(marker)
+        h = marker["size"] / 2
+        for cx, cy in ((-h, -h), (-h, h), (h, -h), (h, h)):
+            corner = R @ np.array([cx, cy, 0.0]) + p
+            blocked = perception.line_of_sight_blocked(eye_v, corner, grown)
+            if blocked is not None or not perception.in_view(R_body @ Rc, eye_v, corner, site["camera"]):
+                problems.append(f"move to {name}, seen from {where}: a corner of its plate is "
+                                f"{'hidden by ' + blocked if blocked else 'out of the image'}")
                 break
     for label, conditions, pose in (("goal", task.goal or (), end), ("precondition", task.preconditions,
                                                                      site["robot"]["start"])):

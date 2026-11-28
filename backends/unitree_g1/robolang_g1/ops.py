@@ -89,6 +89,8 @@ SHUFFLE_RAD = {1: 0.127, -1: 0.111}  # ... turns this much to the left (+) and t
 # aim; the belief's heading comes from the IMU, heading.py)
 LEG_MAX_M = 1.6  # the longest walk between two looks
 SCAN_STEP_RAD = 0.6  # a scan for a marker turns this much between looks
+# ... and if they did not find it, from further than this from the approach point, a walk to it (to within the stop)
+APPROACH_AGAIN_M, APPROACH_AGAIN_STOP_M = 0.15, 0.08
 SIDESTEPS, SIDESTEP_M = 3, 0.2  # ... after this many sidesteps of about this much toward the marker's side
 MOVE_TIMEOUT_S, SERVO_TIMEOUT_S, MARKER_TIMEOUT_S = 300.0, 150.0, 90.0  # simulation time: S504, S504, S517
 # A move to a station the robot already stands beside (the same station, or one a step away, as a dock 12 cm behind a
@@ -754,6 +756,7 @@ class G1Operations:
         # marker, and turning to look for it only lost the heading)
         toward = 1.0 if -(mx - gx) * math.sin(gyaw) + (my - gy) * math.cos(gyaw) > 0 else -1.0
         sidesteps = 0
+        approached_again = False
         first = True
         while True:
             readings = self.look(frames=3 if first else 4)
@@ -777,6 +780,18 @@ class G1Operations:
                 self.command(vx, vy, 0.0, seconds)
                 self.settle()
                 first = False
+                continue
+            if not approached_again and away > APPROACH_AGAIN_M:
+                # The sidesteps did not clear the table (a robot with a box in each hand often takes no sidestep): walk
+                # to the approach point itself, on the station's axis, where the site keeps the plate in view, and look
+                # from there before turning away to scan (acceptance runs 1 and 3, F2: stopped 0.35-0.42 m short and to
+                # the side of it, the table in the way, no sidestep taken; the scan turned the robot round, S517).
+                approached_again = True
+                self.events.append(
+                    {"t_ms": self.now_ms(), "event": "approach_again", "from_approach_m": round(float(away), 3)}
+                )
+                self.walk_to(approach[0], approach[1], gyaw, stop_short=APPROACH_AGAIN_STOP_M, deadline_ms=deadline_ms)
+                self.turn_to(gyaw, tolerance=0.1)
                 continue
             # still not seen: face where the belief says it is, then sweep round in steps (a station marker seen on the
             # way corrects the belief, and the next step aims again)

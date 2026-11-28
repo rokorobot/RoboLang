@@ -219,3 +219,31 @@ def test_the_plates_are_checked_against_the_tables_and_a_box_where_the_goal_puts
     # (the first calls are perception.visibility_violations' own, against the tables alone)
     assert ["a_table", "b_table", "box at dst"] in seen
     assert len([s for s in seen if "box at dst" in s]) == 8  # four corners of the two plates the goal reads (dst, dock)
+
+
+@needs_assets
+def test_a_plate_hidden_from_where_move_looks_for_it_breaks_the_rule():
+    # F2: in acceptance run 3 the wide tables' plates stood 0.45 m to the side at 0.19 m, hidden from the approach point
+    built = scenes.build("w_split_boxes")
+    assert scenes.check_visibility(built) == []
+    for st in built["site"]["stations"]:
+        st["marker"]["pos"][1] += scenes.PLATE_LAT - scenes.PLATE_LAT_WIDE
+        st["marker"]["pos"][2] = scenes.PLATE["z"]
+        st["stand"][1] = scenes.PLATE_LAT
+    bad = scenes.check_visibility(built)
+    assert "move to a, seen from the approach point: a corner of its plate is hidden by a_table" in bad
+    assert "move to b, seen from the approach point: a corner of its plate is hidden by b_table" in bad
+
+
+def test_a_raised_plate_keeps_its_regions_where_they_were():
+    """Regions are in the plate's frame: a plate raised 0.21 m has them 0.21 m lower in it, so in the map every region
+    still spans the table top (0.75 m) to 0.2 m above it, on a wide table as on a narrow one."""
+    import numpy as np
+
+    for task, name in (("w_split_boxes", "ta"), ("e_pick_place", "dst")):
+        site = S.load_site(copy.deepcopy(scenes.build(task)["site"]))
+        loc = S.location(site, name)
+        R, p = S.marker_frame(S.station(site, loc["station"])["marker"])
+        z = sorted(float((R @ np.array(loc["region"][k]) + p)[2]) for k in ("min", "max"))
+        assert z == pytest.approx([2 * scenes.TABLE_HALF_Z, 2 * scenes.TABLE_HALF_Z + 0.20]), task
+    assert scenes.PLATE_Z_WIDE > scenes.PLATE["z"]
