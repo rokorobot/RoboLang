@@ -147,7 +147,7 @@ the approach point (0.5 m before the station, facing it), walk in legs with a lo
 heading, find the station marker (a scan by turning in place if it is not in view; **S517** if not seen within 70 s), then
 correct with short bursts chosen from the measured step sizes, first to the approach point (within 8 cm and 0.07 rad) and
 then until the marker puts the robot within **4.4 cm and 0.085 rad** of the station pose, wait for the stance to settle
-(from `lowstate` only: pelvis IMU rate and leg joint velocities quiet), and look again (within 4.7 cm and 0.09 rad).
+(from `lowstate` only: pelvis IMU rate and leg joint velocities quiet), and look again (within 4.7 cm and 0.09 rad). The confirming look counts only if it **fixed the pose** from the station's marker: a reading the localization rejects (its vertical not the IMU's, the wrong one of the two poses a flat marker allows) confirms nothing, and so does the re-observation before arm work, which ends **S517** "no pose fix" (F1 of the phase 4 evidence).
 **S504** if it does not converge in 90 s. **The heading creeps**: a standing robot turns slowly to the left by itself
 (0.007 rad/s measured, 0.025 under the stress check's torque). The corrections are chosen to leave the heading, counted as
 it will be at the next look and at the confirming look, inside the band; the creep they are aimed against is read from the
