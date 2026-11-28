@@ -184,8 +184,12 @@ poses a flat marker allows), so the belief kept its dead reckoning. `_confirm_po
 marker is among the readings, not that the look fixed the pose from it, and so confirmed the stale belief. The look
 before the place found the plate's confidence too low and ended the run with S517 before the arm moved. **The verdicts
 are not affected:** `robot_at` and `object_at` count only frames whose vertical agrees with the IMU, so such a reading
-gives `unknown`, never `true`. Proposed fix (one condition, not made: it changes the code this run accepted):
-`_confirm_pose` also requires `self.last_look[1]`, a fix from this look; then phases 2 and 3 in CI.
+gives `unknown`, never `true`. **Fixed after the run** (2026-11-28, its own pull request): the arrival's confirming
+look, and the re-observation before arm work, count only if the look fixed the pose from the station's marker; the
+latter otherwise ends S517 "no pose fix". **The fix changes no run that succeeded:** in the archived records of all
+126 task runs, 3 of 324 moves ended on a rejected reading, all three in runs that failed (`e_box_then_dock_1` and `_2`
+of run 2, and this one), and no grasp or place step saw a rejected reading. So the acceptance holds for the fixed code
+without a fourth run.
 
 **F2. A marker fix from far off the plate's axis (`w_split_boxes_3`).** Walking between the tables with a box in each
 hand, the robot fixed its pose from the first station's plate seen 2.7 m away and about 39° off its axis; the fix put

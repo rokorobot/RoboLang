@@ -330,3 +330,38 @@ def test_a_stop_is_not_confirmed_while_the_body_still_slides_under_the_velocity_
     assert sliding["max_joint_velocity_rad_s"] <= ops_mod.CONFIRM_JOINT_VEL and not sliding["confirmed"]
     settles = run(0.06, until_ms=2000)  # slides for a second, then stands still
     assert settles["confirmed"] and settles["window_start_ms"] >= 2000 - 4
+
+
+def test_an_arrival_or_arm_work_is_not_confirmed_from_a_reading_the_localization_rejected():
+    """F1 (acceptance run 3): every reading of the station's plate was rejected (its vertical not the IMU's), the belief
+    stayed at the dead reckoning, 3.5 cm from the station, while the robot stood 0.45 m away. Seen is not enough: the
+    look must have fixed the pose from the marker."""
+    from robolang_g1.executor import BackendFailure
+    from robolang_g1.ops import MARKER_MIN_CONF
+
+    class Reading:
+        confidence, range_m = 0.95, 1.75
+
+    ops = _ops()
+    shelf = ops.stations["shelf"]
+    mid = shelf["marker"]["id"]
+    ops.now_ms = lambda: 0
+    ops.settle = lambda: True
+    ops.station = "shelf"
+    ops.pose = list(shelf["pose"])  # the belief says: at the station
+
+    def look(fixed):
+        def f(frames=4, ids=None):
+            ops.last_look = (0, fixed)
+            return {mid: Reading()}
+        return f
+
+    ops.look = look(True)
+    assert ops._confirm_pose(shelf) is True
+    assert ops._reposition()["error_m"] == 0.0
+    ops.look = look(False)  # the same reading, rejected
+    assert ops._confirm_pose(shelf) is False
+    with pytest.raises(BackendFailure) as err:
+        ops._reposition()
+    assert err.value.code == "S517" and "no pose fix" in str(err.value)
+    assert Reading.confidence >= MARKER_MIN_CONF

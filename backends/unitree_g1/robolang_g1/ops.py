@@ -979,10 +979,13 @@ class G1Operations:
             self.events.append({"t_ms": self.now_ms(), "event": "creep", "rad_s": round(rate, 4)})
 
     def _confirm_pose(self, station: dict) -> bool:
-        """After the stance has settled: look once more, and be within the tolerance again."""
+        """After the stance has settled: look once more, fix the pose from the station's marker, and be within the
+        tolerance again. A reading the localization rejected (its vertical not the IMU's: the wrong one of the two poses
+        a flat marker allows) fixes nothing, and the belief it leaves is the dead reckoning: no confirmation from it
+        (acceptance run 3: an arrival confirmed 3.5 cm off while the robot stood 0.45 m away)."""
         readings = self.look(frames=5, ids={station["marker"]["id"]})
         gx, gy, gyaw = station["pose"]
-        if station["marker"]["id"] not in readings:
+        if station["marker"]["id"] not in readings or not self.last_look[1]:
             return False
         return (
             math.hypot(gx - self.pose[0], gy - self.pose[1]) <= STATION_TOL_M
@@ -1373,6 +1376,8 @@ class G1Operations:
             reading = readings.get(mid)
             if reading is None or reading.confidence < MARKER_MIN_CONF:
                 raise BackendFailure("S517", f"station marker {mid} was not seen before arm work")
+            if not self.last_look[1]:  # seen, but the localization rejected it: the belief is not from it (F1)
+                raise BackendFailure("S517", f"station marker {mid} gave no pose fix before arm work")
             err = math.hypot(gx - self.pose[0], gy - self.pose[1])
             info = {
                 "error_m": round(err, 4),
